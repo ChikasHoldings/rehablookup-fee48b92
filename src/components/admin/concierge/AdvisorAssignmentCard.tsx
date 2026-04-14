@@ -47,14 +47,23 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
   const assignAdvisorMutation = useMutation({
     mutationFn: async (advisorId: string) => {
       const actualId = advisorId === "unassigned" ? null : advisorId;
-      const { error } = await supabase
+      
+      // Use conditional update to prevent stale overwrites
+      const updateQuery = supabase
         .from("concierge_inquiries")
         .update({ assigned_advisor_id: actualId })
         .eq("id", caseData.id);
+      
+      // If unassigning, require current advisor matches what we see
+      if (caseData.assigned_advisor_id) {
+        updateQuery.eq("assigned_advisor_id", caseData.assigned_advisor_id);
+      }
 
+      const { error } = await updateQuery;
       if (error) throw error;
 
-      // Log event
+      // Log event with actor_id
+      const { data: { user } } = await supabase.auth.getUser();
       await supabase.from("concierge_case_events").insert({
         inquiry_id: caseData.id,
         event_type: "advisor_assigned",
@@ -62,6 +71,7 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
           advisor_id: advisorId === "unassigned" ? null : advisorId,
           previous_advisor_id: caseData.assigned_advisor_id 
         },
+        actor_id: user?.id || null,
         actor_type: "admin",
       });
     },
@@ -72,6 +82,7 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
     },
     onError: (error) => {
       toast.error("Failed to assign advisor: " + error.message);
+      onRefresh(); // Refresh to show current state
     },
   });
 
