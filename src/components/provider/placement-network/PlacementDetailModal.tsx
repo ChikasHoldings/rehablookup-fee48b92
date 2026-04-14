@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useSelectedFacilityOptional } from "@/contexts/SelectedFacilityContext";
+import { useMatchScore, MatchScoreBadge } from "./MatchScoreUtils";
 
 // ── Types ──────────────────────────────────────────────
 
@@ -160,6 +162,8 @@ export function PlacementDetailModal({
   const [activeTab, setActiveTab] = useState<"details" | "messages" | "timeline">("details");
   const [providerNote, setProviderNote] = useState("");
   const inquiry = introduction?.concierge_inquiries;
+  const { selectedFacility } = useSelectedFacilityOptional();
+  const matchScore = useMatchScore(selectedFacility, inquiry);
   const caseId = inquiry?.id?.slice(0, 8).toUpperCase() || introduction?.id.slice(0, 8).toUpperCase() || "";
   const firstName = inquiry?.user_name?.split(" ")[0] || "Client";
   const isPending = !introduction?.provider_response || introduction.provider_response === "pending";
