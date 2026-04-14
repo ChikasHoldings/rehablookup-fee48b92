@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useAuditLog } from '@/hooks/admin/useAuditLog';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -117,6 +118,7 @@ function ReviewCardSkeleton() {
 export default function AdminReviews() {
   const queryClient = useQueryClient();
   const { adminRole, isSuperAdmin } = useAdminAuth();
+  const { log: auditLog } = useAuditLog();
   const canModerateReviews = isSuperAdmin || adminRole === "super_admin" || adminRole === "manager";
   const [reviews, setReviews] = useState<ReviewWithDetails[]>([]);
   const [disputes, setDisputes] = useState<DisputeWithDetails[]>([]);
@@ -300,6 +302,7 @@ export default function AdminReviews() {
     } else {
       const review = reviews.find(r => r.id === reviewId);
       if (review) {
+        auditLog({ actionType: 'review_approved', targetType: 'review', targetId: reviewId, details: { facility_id: review.facility_id, facility_name: review.facility_name, reviewer: review.reviewer_name, rating: review.rating, admin_notes: sanitizedNotes || null } });
         supabase.functions.invoke('send-review-notification', {
           body: { type: 'review_approved', reviewId, facilityId: review.facility_id, seekerId: review.user_id }
         }).catch(() => {});
@@ -342,6 +345,7 @@ export default function AdminReviews() {
     } else {
       const review = reviews.find(r => r.id === reviewId);
       if (review) {
+        auditLog({ actionType: 'review_rejected', targetType: 'review', targetId: reviewId, details: { facility_id: review.facility_id, facility_name: review.facility_name, reviewer: review.reviewer_name, rating: review.rating, rejection_reason: sanitizedNotes } });
         supabase.functions.invoke('send-review-notification', {
           body: { type: 'review_rejected', reviewId, facilityId: review.facility_id, seekerId: review.user_id, rejectionReason: adminNotes[reviewId] }
         }).catch(() => {});
@@ -359,6 +363,7 @@ export default function AdminReviews() {
   const confirmDelete = async () => {
     if (!deleteConfirm) return;
 
+    const review = reviews.find(r => r.id === deleteConfirm.id);
     setProcessingId(deleteConfirm.id);
     
     const { error } = await supabase
@@ -372,6 +377,8 @@ export default function AdminReviews() {
     if (error) {
       toast.error('Failed to delete review');
     } else {
+      // Log with full review snapshot for traceability
+      auditLog({ actionType: 'review_deleted', targetType: 'review', targetId: deleteConfirm.id, details: { facility_id: review?.facility_id, facility_name: review?.facility_name, reviewer: review?.reviewer_name, rating: review?.rating, review_text: review?.review_text, status_before_delete: review?.status } });
       toast.success('Review deleted');
       fetchReviews();
       queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
@@ -400,6 +407,7 @@ export default function AdminReviews() {
     if (error) {
       toast.error('Failed to uphold dispute');
     } else {
+      auditLog({ actionType: 'dispute_upheld', targetType: 'review_dispute', targetId: dispute.id, details: { review_id: dispute.review_id, facility_name: dispute.facility_name, reason: dispute.reason, admin_notes: disputeNotes[dispute.id] || null } });
       toast.success('Dispute upheld — review hidden');
       fetchReviews();
       fetchDisputes();
@@ -427,6 +435,7 @@ export default function AdminReviews() {
     if (error) {
       toast.error('Failed to dismiss dispute');
     } else {
+      auditLog({ actionType: 'dispute_dismissed', targetType: 'review_dispute', targetId: dispute.id, details: { review_id: dispute.review_id, facility_name: dispute.facility_name, reason: dispute.reason, admin_notes: disputeNotes[dispute.id] || null } });
       toast.success('Dispute dismissed — review remains visible');
       fetchReviews();
       fetchDisputes();
