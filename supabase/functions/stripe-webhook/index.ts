@@ -875,6 +875,9 @@ Deno.serve(async (req) => {
                 </div>
               </div>
             `,
+          }, {
+            emailType: "stripe_payment_failed",
+            idempotencyKey: `stripe-pay-fail-${event.id}`,
           });
           logStep("Payment failure email sent");
         } catch (emailError) {
@@ -1021,6 +1024,9 @@ Deno.serve(async (req) => {
                       </div>
                     </div>
                   `,
+                }, {
+                  emailType: "stripe_payment_success",
+                  idempotencyKey: `stripe-pay-success-${event.id}`,
                 });
                 logStep("Payment confirmation email sent to provider");
               } catch (emailError) {
@@ -1194,6 +1200,9 @@ Deno.serve(async (req) => {
                   </div>
                 </div>
               `,
+            }, {
+              emailType: "stripe_new_subscription_admin",
+              idempotencyKey: `stripe-newsub-admin-${event.id}`,
             });
           } catch (emailError) {
             logStep("Email failed", { error: String(emailError) });
@@ -1377,6 +1386,9 @@ Deno.serve(async (req) => {
                       </div>
                     </div>
                   `,
+                }, {
+                  emailType: "stripe_cancel_admin",
+                  idempotencyKey: `stripe-cancel-admin-${event.id}`,
                 });
               } catch (emailError) {
                 logStep("Cancel admin email failed", { error: String(emailError) });
@@ -1410,6 +1422,9 @@ Deno.serve(async (req) => {
                         </div>
                       </div>
                     `,
+                  }, {
+                    emailType: "stripe_cancel_provider",
+                    idempotencyKey: `stripe-cancel-provider-${event.id}`,
                   });
                   logStep("Cancellation email sent to provider");
                 } catch (provEmailError) {

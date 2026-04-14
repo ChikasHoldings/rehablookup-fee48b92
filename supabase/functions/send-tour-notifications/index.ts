@@ -155,6 +155,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
               to: [facilityEmail],
               subject: `New Tour Request - ${emailData.seekerName}`,
               html: tourRequestedFacilityEmail(emailData),
+            }, {
+              emailType: "tour_requested_facility",
+              idempotencyKey: `tour-req-facility-${tourId}`,
             });
             results.facilityEmail = emailResult;
             console.log("Facility email sent:", emailResult);
@@ -199,6 +202,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
               to: ["placement@rehablookup.com"],
               subject: `[Tour Requested] ${emailData.seekerName} → ${emailData.facilityName}`,
               html: tourRequestedAdminEmail(emailData),
+            }, {
+              emailType: "tour_requested_admin",
+              idempotencyKey: `tour-req-admin-${tourId}`,
             });
             results.adminEmail = true;
           } catch (e) {
@@ -220,6 +226,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
               to: [userEmail],
               subject: `Tour Time Proposed - ${emailData.facilityName}`,
               html: tourProposedUserEmail(emailData),
+            }, {
+              emailType: "tour_proposed_user",
+              idempotencyKey: `tour-proposed-user-${tourId}`,
             });
             results.userEmail = emailResult;
             console.log("User email sent:", emailResult);
@@ -269,6 +278,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
               to: [facilityEmail],
               subject: `Tour Confirmed - ${emailData.seekerName}`,
               html: tourConfirmedFacilityEmail(emailData),
+            }, {
+              emailType: "tour_confirmed_facility",
+              idempotencyKey: `tour-confirmed-facility-${tourId}`,
             });
             results.facilityEmail = emailResult;
             console.log("Facility confirmation email sent:", emailResult);

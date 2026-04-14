@@ -180,6 +180,9 @@ Deno.serve(async (req) => {
       to: [adminEmail],
       subject: `Payment failed: ${providerName}`,
       html: adminEmailHtml,
+    }, {
+      emailType: "payment_failed_admin",
+      idempotencyKey: `payment-failed-admin-${userId}-${Date.now().toString(36)}`,
     });
 
     if (adminEmailError) {
@@ -289,6 +292,9 @@ Deno.serve(async (req) => {
       to: [providerEmail],
       subject: "Action needed: Update your payment method",
       html: providerEmailHtml,
+    }, {
+      emailType: "payment_failed_provider",
+      idempotencyKey: `payment-failed-provider-${userId}-${Date.now().toString(36)}`,
     });
 
     if (providerEmailError) {
