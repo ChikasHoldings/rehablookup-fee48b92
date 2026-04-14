@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -129,7 +130,7 @@ Deno.serve(async (req) => {
     const facilityEmail = facility.reply_email || facility.email;
     if (facilityEmail) {
       try {
-        await resend.emails.send({
+        await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [facilityEmail],
           subject: `New Inquiry for ${facility.name}`,

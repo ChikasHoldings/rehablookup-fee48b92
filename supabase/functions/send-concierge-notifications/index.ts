@@ -1,5 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "1.1.0";
 
@@ -423,7 +424,7 @@ async function sendIntakeReceivedEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await resend.emails.send({
+  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `We've Received Your Request - Case #${caseId}`,
@@ -495,7 +496,7 @@ async function sendMatchesFoundEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await resend.emails.send({
+  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `We Found ${matchCount} Matches for You - Case #${caseId}`,
@@ -556,7 +557,7 @@ async function sendIntroductionsSentEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await resend.emails.send({
+  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `Your Advisor is Contacting Facilities - Case #${caseId}`,
@@ -618,7 +619,7 @@ async function sendFacilitiesReadyForReviewEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await resend.emails.send({
+  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `Your Treatment Options Are Ready - Case #${caseId}`,
@@ -724,7 +725,7 @@ async function sendAdmissionStageNotification(
   `);
 
   try {
-    const { data: emailData, error: emailError } = await resend.emails.send({
+    const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup Concierge <no-reply@rehablookup.com>",
       to: [inquiry.user_email],
       subject: config.seekerSubject,
@@ -855,7 +856,7 @@ async function sendProviderInterestedNotification(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await resend.emails.send({
+  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `Progress Update on Your Case - Case #${caseId}`,
@@ -945,7 +946,7 @@ async function sendSignupPromptEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await resend.emails.send({
+  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `Create Your Account to Track Case #${caseId}`,
@@ -993,7 +994,7 @@ async function sendSeekerConfirmedEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await resend.emails.send({
+  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [recipientEmail],
     subject: `Client Confirmed Admission - Case #${caseId}`,
@@ -1057,7 +1058,7 @@ async function sendProviderConfirmedEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await resend.emails.send({
+  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `${facility.name} Confirmed Your Placement - Case #${caseId}`,
@@ -1135,7 +1136,7 @@ async function sendPlacementCompleteEmails(
     ${emailFooter()}
   `);
 
-  const { data: seekerEmailData, error: seekerEmailError } = await resend.emails.send({
+  const { data: seekerEmailData, error: seekerEmailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `Congratulations! Your Placement is Complete - Case #${caseId}`,
@@ -1171,7 +1172,7 @@ async function sendPlacementCompleteEmails(
       ${emailFooter()}
     `);
 
-    const { data: providerEmailData, error: providerEmailError } = await resend.emails.send({
+    const { data: providerEmailData, error: providerEmailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup Concierge <no-reply@rehablookup.com>",
       to: [recipientEmail],
       subject: `Placement Complete - Case #${caseId}`,
@@ -1290,7 +1291,7 @@ async function sendInvoiceIssuedEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await resend.emails.send({
+  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup <no-reply@rehablookup.com>",
     to: [recipientEmail],
     subject: `Placement Fee Invoice - ${amountFormatted} - Case #${caseId}`,
@@ -1365,7 +1366,7 @@ async function sendInvoicePaidEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await resend.emails.send({
+  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup <no-reply@rehablookup.com>",
     to: [recipientEmail],
     subject: `Payment Received - ${amountFormatted} - Case #${caseId}`,

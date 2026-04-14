@@ -6,6 +6,7 @@ import {
   messageToAdvisorEmail,
   type MessageEmailData,
 } from "../_shared/message-email-templates.ts";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -208,7 +209,7 @@ Deno.serve(async (req) => {
     // Send all emails
     for (const email of emails) {
       try {
-        const result = await resend.emails.send({
+        const result = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup Concierge <no-reply@rehablookup.com>",
           to: [email.to],
           subject: email.subject,

@@ -16,7 +16,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 
 interface EmailParams {
   from: string;
-  to: string[];
+  to: string | string[];
   subject: string;
   html: string;
   headers?: Record<string, string>;
@@ -69,17 +69,20 @@ export async function sendEmailWithRetry(
   supabase: SupabaseClient,
   resend: InstanceType<typeof Resend>,
   params: EmailParams,
-  options: SendOptions
+  options: SendOptions = { emailType: "general" }
 ): Promise<SendResult> {
   const {
-    emailType,
+    emailType = "general",
     idempotencyKey,
     maxRetries = 3,
     checkSuppression = true,
     metadata,
   } = options;
 
-  const recipientEmail = params.to[0]?.toLowerCase();
+  // Normalize to array
+  const toArray = Array.isArray(params.to) ? params.to : [params.to];
+  const normalizedParams = { ...params, to: toArray };
+  const recipientEmail = toArray[0]?.toLowerCase();
   if (!recipientEmail) {
     return { success: false, error: "No recipient email", attempts: 0 };
   }
@@ -129,13 +132,13 @@ export async function sendEmailWithRetry(
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const sendParams: Record<string, unknown> = {
-        from: params.from,
-        to: params.to,
-        subject: params.subject,
-        html: params.html,
+        from: normalizedParams.from,
+        to: normalizedParams.to,
+        subject: normalizedParams.subject,
+        html: normalizedParams.html,
       };
-      if (params.headers) sendParams.headers = params.headers;
-      if (params.replyTo) sendParams.reply_to = params.replyTo;
+      if (normalizedParams.headers) sendParams.headers = normalizedParams.headers;
+      if (normalizedParams.replyTo) sendParams.reply_to = normalizedParams.replyTo;
 
       // deno-lint-ignore no-explicit-any
       const { data, error } = await (resend.emails as any).send(sendParams);

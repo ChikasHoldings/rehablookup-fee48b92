@@ -1,5 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -169,7 +170,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 </html>`;
 
     const resend = new Resend(resendApiKey);
-    const emailResponse = await resend.emails.send({
+    const emailResponse = await sendEmailWithRetry(supabaseAdmin, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: ["Support@rehablookup.com"],
       subject: `[${subjectLabel}] Contact from ${escapeHtml(name.slice(0, 50))}`,

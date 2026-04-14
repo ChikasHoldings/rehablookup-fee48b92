@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,7 +63,7 @@ Deno.serve(async (req) => {
 
       // Send unblock email notification
       try {
-        await resend.emails.send({
+        await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup Security <no-reply@rehablookup.com>",
           to: ["Support@rehablookup.com"],
           subject: `🔓 Security: ${typeLabel} Unblocked - ${identifier}`,
@@ -138,7 +139,7 @@ Deno.serve(async (req) => {
       const headerBgColor = identifier_type === "ip" ? "#dc2626" : "#f59e0b";
 
       try {
-        await resend.emails.send({
+        await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup Security <no-reply@rehablookup.com>",
           to: ["Support@rehablookup.com"],
           subject: `🔒 Security: ${typeLabel} Blocked - ${identifier}`,

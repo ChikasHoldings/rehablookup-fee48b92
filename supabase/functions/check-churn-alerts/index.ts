@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "1.0.1";
 
@@ -215,7 +216,7 @@ Deno.serve(async (req) => {
       </html>
     `;
 
-    const { error: emailError } = await resend.emails.send({
+    const { error: emailError } = await sendEmailWithRetry(supabaseClient, resend, {
       from: "RehabLookup Admin <no-reply@rehablookup.com>",
       to: adminEmails,
       subject: `⚠️ High Churn Alert: ${churnRate.toFixed(1)}% churn rate detected`,

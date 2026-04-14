@@ -13,6 +13,7 @@ import {
   emailEnd,
   emailDivider,
 } from "../_shared/email-templates.ts";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "1.0.0";
 
@@ -436,7 +437,7 @@ Deno.serve(async (req) => {
       const html = dayConfig.generate(firstName);
 
       try {
-        const emailResult = await resend.emails.send({
+        const emailResult = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [drip.provider_email],
           subject: dayConfig.subject,

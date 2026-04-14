@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "1.0.1";
 
@@ -297,7 +298,7 @@ Deno.serve(async (req) => {
             const locationHint = lead.location_city_state || null;
             const levelOfCare = lead.level_of_care || null;
 
-            await resend.emails.send({
+            await sendEmailWithRetry(supabase, resend, {
               from: "RehabLookup <no-reply@rehablookup.com>",
               to: email,
               subject: `🔁 New discounted lead in your area (${discountPrice}) — ${facility.name}`,

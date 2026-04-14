@@ -9,6 +9,7 @@ import {
   tourCancelledUserEmail,
   TourEmailData,
 } from "../_shared/tour-email-templates.ts";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -149,7 +150,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         
         if (resend && facilityEmail) {
           try {
-            const emailResult = await resend.emails.send({
+            const emailResult = await sendEmailWithRetry(supabase, resend, {
               from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: [facilityEmail],
               subject: `New Tour Request - ${emailData.seekerName}`,
@@ -193,7 +194,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Notify admin team
         if (resend) {
           try {
-            await resend.emails.send({
+            await sendEmailWithRetry(supabase, resend, {
               from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: ["placement@rehablookup.com"],
               subject: `[Tour Requested] ${emailData.seekerName} → ${emailData.facilityName}`,
@@ -214,7 +215,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
         if (resend && userEmail) {
           try {
-            const emailResult = await resend.emails.send({
+            const emailResult = await sendEmailWithRetry(supabase, resend, {
               from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: [userEmail],
               subject: `Tour Time Proposed - ${emailData.facilityName}`,
@@ -263,7 +264,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
         if (resend && facilityEmail) {
           try {
-            const emailResult = await resend.emails.send({
+            const emailResult = await sendEmailWithRetry(supabase, resend, {
               from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: [facilityEmail],
               subject: `Tour Confirmed - ${emailData.seekerName}`,
@@ -307,7 +308,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Notify admin
         if (resend) {
           try {
-            await resend.emails.send({
+            await sendEmailWithRetry(supabase, resend, {
               from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: ["placement@rehablookup.com"],
               subject: `[Tour Confirmed] ${emailData.seekerName} → ${emailData.facilityName}`,
@@ -336,7 +337,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
           if (facilityEmail) {
             try {
-              await resend.emails.send({
+              await sendEmailWithRetry(supabase, resend, {
                 from: "RehabLookup Concierge <no-reply@rehablookup.com>",
                 to: [facilityEmail],
                 subject: `Tour Cancelled - ${emailData.seekerName}`,
@@ -371,7 +372,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
           if (userEmail) {
             try {
-              await resend.emails.send({
+              await sendEmailWithRetry(supabase, resend, {
                 from: "RehabLookup Concierge <no-reply@rehablookup.com>",
                 to: [userEmail],
                 subject: `Tour Update - ${emailData.facilityName}`,
@@ -412,7 +413,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         // Notify admin of all cancellations
         if (resend) {
           try {
-            await resend.emails.send({
+            await sendEmailWithRetry(supabase, resend, {
               from: "RehabLookup Concierge <no-reply@rehablookup.com>",
               to: ["placement@rehablookup.com"],
               subject: `[Tour Cancelled] ${emailData.seekerName} → ${emailData.facilityName}`,

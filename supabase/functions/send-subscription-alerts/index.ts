@@ -16,6 +16,7 @@ import {
   ctaButton,
   type PlanType,
 } from "../_shared/email-templates.ts";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -156,7 +157,7 @@ Deno.serve(async (req) => {
               const subjectPrefix = plan === "pro" ? "⭐ " : "";
               const planName = plan === "pro" ? "Pro" : "Free";
               
-              const { error: emailError } = await resend.emails.send({
+              const { error: emailError } = await sendEmailWithRetry(supabaseClient, resend, {
                 from: "RehabLookup <no-reply@rehablookup.com>",
                 to: [profile.email],
                 subject: `${subjectPrefix}Your ${planName} subscription renews in ${days} day${days > 1 ? "s" : ""}`,

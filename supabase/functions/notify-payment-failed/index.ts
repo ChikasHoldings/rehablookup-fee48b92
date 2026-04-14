@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -174,7 +175,7 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    const { error: adminEmailError } = await resend.emails.send({
+    const { error: adminEmailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [adminEmail],
       subject: `Payment failed: ${providerName}`,
@@ -283,7 +284,7 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    const { error: providerEmailError } = await resend.emails.send({
+    const { error: providerEmailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
       subject: "Action needed: Update your payment method",
