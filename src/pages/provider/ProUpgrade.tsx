@@ -15,8 +15,10 @@ import {
   CheckCircle,
   Crown,
   Zap,
-  BarChart3,
   X,
+  Handshake,
+  BarChart3,
+  Eye,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,15 +80,18 @@ const HERO_BENEFITS = [
   },
 ];
 
-const COMPARISON_ITEMS = [
+const COMPARISON_ITEMS: { feature: string; free: string | boolean; pro: string | boolean }[] = [
   { feature: "Facility Listings", free: "1", pro: "Up to 5" },
-  { feature: "Lead Unlock Discount", free: "—", pro: "20% off" },
+  { feature: "Lead Price", free: "Full Price", pro: "20% OFF" },
+  { feature: "Lead Access", free: "Limited", pro: "Priority" },
+  { feature: "Visibility", free: "Standard", pro: "Featured" },
+  { feature: "Placement Fees", free: "Full Price", pro: "20% OFF" },
   { feature: "Search Ranking", free: "Standard", pro: "Priority (+50)" },
   { feature: "Homepage Featured", free: false, pro: true },
   { feature: "Pro Badge", free: false, pro: true },
   { feature: "Google Reviews Import", free: false, pro: true },
   { feature: "Review Requests", free: false, pro: true },
-  { feature: "Profile Analytics", free: "Basic", pro: "Advanced" },
+  { feature: "Per-Facility Analytics", free: false, pro: true },
   { feature: "Support Priority", free: "Standard", pro: "Priority" },
 ];
 
@@ -101,7 +106,6 @@ export default function ProUpgradePage() {
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef = useRef(0);
 
-  // Post-checkout polling to catch delayed webhook processing
   const startPostCheckoutPolling = useCallback(() => {
     if (pollingRef.current) clearInterval(pollingRef.current);
     pollCountRef.current = 0;
@@ -121,7 +125,6 @@ export default function ProUpgradePage() {
     };
   }, []);
 
-  // Handle success/cancel URL params from Stripe checkout
   useEffect(() => {
     const proSuccess = searchParams.get("pro_success");
     const proCanceled = searchParams.get("pro_canceled");
@@ -198,7 +201,7 @@ export default function ProUpgradePage() {
 
   return (
     <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-8">
         {/* Header row */}
         <div className="flex items-center justify-between">
           <Button
@@ -215,32 +218,99 @@ export default function ProUpgradePage() {
           )}
         </div>
 
-        {/* Compact Hero */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0 shadow-md">
-            <Crown className="h-6 w-6 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight">
-              RehabLookup <span className="text-amber-600">Pro</span>
+        {/* ━━━ HERO SECTION ━━━ */}
+        <div className="relative rounded-2xl overflow-hidden border border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-background to-amber-600/5 p-6 sm:p-8 md:p-10">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
+          <div className="relative z-10 max-w-2xl">
+            <Badge className="bg-amber-500/10 text-amber-700 border-amber-500/30 text-xs mb-4">
+              <Crown className="h-3 w-3 mr-1" /> PRO MEMBERSHIP
+            </Badge>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-foreground leading-tight">
+              Get More Admissions.{" "}
+              <span className="text-amber-600">Spend Less Per Lead.</span>
             </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              More visibility, lower costs, faster admissions growth.
+            <p className="text-base sm:text-lg text-muted-foreground mt-3 max-w-xl">
+              Upgrade to Pro and unlock priority access, discounts, and higher visibility. Pro pays for itself with just a few extra admissions.
             </p>
-          </div>
-          <div className="hidden sm:block">
-            <UpgradeButton />
+            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <UpgradeButton />
+              {!isPro && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Shield className="h-3 w-3" /> 
+                  Cancel anytime · No lock-in
+                </span>
+              )}
+            </div>
           </div>
         </div>
-        <div className="sm:hidden">
-          <UpgradeButton className="w-full" />
+
+        {/* ━━━ SIDE-BY-SIDE COMPARISON TABLE ━━━ */}
+        <div className="space-y-4">
+          <div className="text-center">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground">Free vs Pro</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              See exactly what you get with Pro
+            </p>
+          </div>
+          <Card className="overflow-hidden border-border/60 shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/40">
+                    <th className="text-left py-3 px-5 font-semibold text-muted-foreground">Feature</th>
+                    <th className="text-center py-3 px-5 font-semibold text-muted-foreground w-32">Free</th>
+                    <th className="text-center py-3 px-5 w-36 bg-amber-500/5">
+                      <span className="inline-flex items-center gap-1.5 text-amber-700 font-bold text-sm">
+                        <Crown className="h-3.5 w-3.5" /> Pro
+                        <span className="text-[11px] font-normal text-amber-600/70">($399/mo)</span>
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARISON_ITEMS.map((item, i) => (
+                    <tr key={item.feature} className={cn("border-b last:border-0", i % 2 === 0 && "bg-muted/10")}>
+                      <td className="py-3 px-5 text-sm font-medium text-foreground">{item.feature}</td>
+                      <td className="py-3 px-5 text-center text-sm text-muted-foreground">
+                        {typeof item.free === "boolean" ? (
+                          item.free ? (
+                            <CheckCircle className="h-4 w-4 text-emerald-600 mx-auto" />
+                          ) : (
+                            <X className="h-4 w-4 text-muted-foreground/30 mx-auto" />
+                          )
+                        ) : (
+                          item.free
+                        )}
+                      </td>
+                      <td className="py-3 px-5 text-center text-sm font-semibold text-foreground bg-amber-500/[0.02]">
+                        {typeof item.pro === "boolean" ? (
+                          item.pro ? (
+                            <CheckCircle className="h-4 w-4 text-emerald-600 mx-auto" />
+                          ) : (
+                            <X className="h-4 w-4 text-muted-foreground/30 mx-auto" />
+                          )
+                        ) : (
+                          <span className={item.pro.includes("OFF") || item.pro.includes("Priority") || item.pro.includes("Featured") ? "text-amber-700" : ""}>
+                            {item.pro}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </div>
 
         {/* Benefits Grid */}
-        <div className="space-y-3">
-          <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">
-            What's Included
-          </h2>
+        <div className="space-y-4">
+          <div className="text-center">
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground">Everything Included</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Tools and features that help you grow faster
+            </p>
+          </div>
           <div className="grid gap-2.5 sm:grid-cols-2">
             {HERO_BENEFITS.map((benefit) => {
               const Icon = benefit.icon;
@@ -267,68 +337,27 @@ export default function ProUpgradePage() {
           </div>
         </div>
 
-        {/* Comparison Table */}
-        <div className="space-y-3">
-          <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">
-            Free vs Pro
-          </h2>
-          <Card className="overflow-hidden border-border/60">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/40">
-                    <th className="text-left py-2.5 px-4 font-medium text-muted-foreground text-sm">Feature</th>
-                    <th className="text-center py-2.5 px-4 font-medium text-muted-foreground text-sm w-24">Free</th>
-                    <th className="text-center py-2.5 px-4 w-28">
-                      <span className="inline-flex items-center gap-1 text-amber-700 font-semibold text-sm">
-                        <Crown className="h-3 w-3" /> Pro
-                      </span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {COMPARISON_ITEMS.map((item, i) => (
-                    <tr key={item.feature} className={cn("border-b last:border-0", i % 2 === 0 && "bg-muted/15")}>
-                      <td className="py-2.5 px-4 text-sm font-medium text-foreground">{item.feature}</td>
-                      <td className="py-2.5 px-4 text-center text-sm text-muted-foreground">
-                        {typeof item.free === "boolean" ? (
-                          item.free ? <CheckCircle className="h-3.5 w-3.5 text-emerald-600 mx-auto" /> : <X className="h-3.5 w-3.5 text-muted-foreground/40 mx-auto" />
-                        ) : item.free}
-                      </td>
-                      <td className="py-2.5 px-4 text-center text-sm font-medium text-foreground">
-                        {typeof item.pro === "boolean" ? (
-                          item.pro ? <CheckCircle className="h-3.5 w-3.5 text-emerald-600 mx-auto" /> : <X className="h-3.5 w-3.5 text-muted-foreground/40 mx-auto" />
-                        ) : item.pro}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
-
-        {/* ROI + Bottom CTA combined */}
+        {/* ROI + Bottom CTA */}
         {!isPro && (
           <Card className="border-amber-500/20 bg-gradient-to-r from-amber-500/5 to-amber-600/10">
-            <CardContent className="p-5 flex flex-col sm:flex-row items-center gap-4">
+            <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-4">
               <div className="flex-1 min-w-0 text-center sm:text-left">
-                <p className="font-semibold text-base">Pro pays for itself quickly</p>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  With 20% off every unlock, just a few extra admissions cover your membership.
+                <p className="font-bold text-lg text-foreground">Pro pays for itself quickly</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  With 20% off every unlock, just a few extra admissions cover your $399/mo membership. Most providers see ROI within the first week.
                 </p>
               </div>
               <Button
                 onClick={handleUpgrade}
                 disabled={upgradeLoading || !facilityId}
-                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md h-10 px-6 text-sm font-semibold shrink-0"
+                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md h-11 px-8 text-sm font-semibold shrink-0"
               >
                 {upgradeLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
                   <Zap className="h-4 w-4 mr-2" />
                 )}
-                Get Started
+                Get Started Now
               </Button>
             </CardContent>
           </Card>
