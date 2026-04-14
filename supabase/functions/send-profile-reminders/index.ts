@@ -157,6 +157,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const resend = new Resend(RESEND_API_KEY);
     const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" }) : null;
 
     const dashboardUrl = Deno.env.get("DASHBOARD_URL") || "https://rehablookup.com/provider";
