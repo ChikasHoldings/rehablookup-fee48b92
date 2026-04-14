@@ -152,41 +152,52 @@ export default function ProviderAnalyticsPage() {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <DropdownMenuItem
-                      onSelect={(e) => e.preventDefault()}
-                      className={cn(
-                        "cursor-pointer text-sm",
-                        selectedPreset === "custom" && "bg-primary/5 font-medium"
-                      )}
-                    >
-                      Custom Range...
-                    </DropdownMenuItem>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end" side="left">
-                    <Calendar
-                      mode="range"
-                      selected={{ from: dateRange.from, to: dateRange.to }}
-                      onSelect={(range) => {
-                        handleCustomDateSelect(range);
-                        if (range?.from && range?.to) setIsCalendarOpen(false);
-                      }}
-                      numberOfMonths={2}
-                      className="p-3 pointer-events-auto"
-                      disabled={(date) => date > new Date()}
-                    />
-                    {(dateRange.from || dateRange.to) && (
-                      <div className="border-t p-2 flex justify-end">
-                        <Button variant="ghost" size="sm" onClick={() => setIsCalendarOpen(false)}>
-                          Apply
-                        </Button>
-                      </div>
-                    )}
-                  </PopoverContent>
-                </Popover>
+                <DropdownMenuItem
+                  onClick={() => setIsCalendarOpen(true)}
+                  className={cn(
+                    "cursor-pointer text-sm",
+                    selectedPreset === "custom" && "bg-primary/5 font-medium"
+                  )}
+                >
+                  Custom Range...
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Standalone Calendar Popover (outside dropdown to prevent disappearing) */}
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <span className="sr-only">Open calendar</span>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 z-50" align="end" sideOffset={8}>
+                <Calendar
+                  mode="range"
+                  selected={{ from: dateRange.from, to: dateRange.to }}
+                  onSelect={(range) => {
+                    handleCustomDateSelect(range);
+                    if (range?.from && range?.to) setIsCalendarOpen(false);
+                  }}
+                  numberOfMonths={2}
+                  className="p-3 pointer-events-auto"
+                  disabled={(date) => date > new Date()}
+                />
+                <div className="border-t p-2 flex justify-between items-center">
+                  {dateRange.from && (
+                    <span className="text-xs text-muted-foreground">
+                      {dateRange.from ? format(dateRange.from, "MMM d") : ""}{dateRange.to ? ` – ${format(dateRange.to, "MMM d, yyyy")}` : " – select end date"}
+                    </span>
+                  )}
+                  <div className="flex gap-1.5 ml-auto">
+                    <Button variant="ghost" size="sm" onClick={() => { clearDateFilter(); setIsCalendarOpen(false); }}>
+                      Clear
+                    </Button>
+                    <Button size="sm" onClick={() => setIsCalendarOpen(false)} disabled={!dateRange.from || !dateRange.to}>
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {hasActiveFilter && (
               <Button variant="ghost" size="icon" onClick={clearDateFilter} className="h-9 w-9 text-muted-foreground hover:text-foreground">
