@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useAuditLog } from '@/hooks/admin/useAuditLog';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -117,6 +118,7 @@ function ReviewCardSkeleton() {
 export default function AdminReviews() {
   const queryClient = useQueryClient();
   const { adminRole, isSuperAdmin } = useAdminAuth();
+  const { log: auditLog } = useAuditLog();
   const canModerateReviews = isSuperAdmin || adminRole === "super_admin" || adminRole === "manager";
   const [reviews, setReviews] = useState<ReviewWithDetails[]>([]);
   const [disputes, setDisputes] = useState<DisputeWithDetails[]>([]);
