@@ -473,10 +473,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update lead_distributions to mark as unlocked
+    // Update lead status to 'unlocked' and mark distributions
+    const unlockTimestamp = new Date().toISOString();
+    
+    await supabaseAdmin
+      .from("leads")
+      .update({ status: "unlocked" })
+      .eq("id", leadId)
+      .eq("status", "new"); // Only transition from 'new' (idempotent)
+
     await supabaseAdmin
       .from("lead_distributions")
-      .update({ unlocked_at: new Date().toISOString() })
+      .update({ unlocked_at: unlockTimestamp })
       .eq("lead_id", leadId)
       .eq("facility_id", facilityId);
 

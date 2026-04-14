@@ -557,6 +557,20 @@ Deno.serve(async (req) => {
           totalExpired++;
         }
 
+        // Notify admin when leads approach expiry (20h stage)
+        if (stage.name === "20h") {
+          try {
+            await supabase.from("admin_notifications").insert({
+              type: "lead_expiring",
+              title: "Lead Approaching Expiry",
+              message: `${leadPreview.maskedName}'s inquiry to ${facility.name} has not been unlocked after ${Math.round(leadPreview.hoursAgo)}h. Expires in ~4 hours.`,
+              metadata: { lead_id: lead.id, facility_id: facility.id, hours_old: Math.round(leadPreview.hoursAgo) },
+            });
+          } catch (adminNotifErr) {
+            log("WARN", "Failed to create admin expiry notification", { leadId: lead.id, error: String(adminNotifErr) });
+          }
+        }
+
         await supabase.from("leads").update(updatePayload).eq("id", lead.id);
       }
     }

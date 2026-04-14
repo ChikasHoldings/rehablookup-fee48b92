@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
 
     let exclusiveWindowHours = 24;
     let extendedWindowHours = 48;
-    let maxRedistributionFacilities = 3;
+    let maxRedistributionFacilities = 2; // Max 2 providers per spec
 
     if (settings) {
       for (const setting of settings) {
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
         } else if (setting.setting_key === "extended_window_hours") {
           extendedWindowHours = (setting.setting_value as { value: number })?.value ?? 48;
         } else if (setting.setting_key === "max_redistribution_facilities") {
-          maxRedistributionFacilities = (setting.setting_value as { value: number })?.value ?? 3;
+          maxRedistributionFacilities = Math.min((setting.setting_value as { value: number })?.value ?? 2, 5); // Cap at 5, default 2
         }
       }
     }
@@ -190,23 +190,47 @@ Deno.serve(async (req) => {
       }
 
       // Find nearby facilities in same state (excluding original)
-      const { data: nearbyFacilities } = await supabase
+      // Also try to match by facility_type if lead has level_of_care
+      let facilityQuery = supabase
         .from("facilities")
-        .select("id, name, email, user_id, reply_email, reply_email_verified")
+        .select("id, name, email, user_id, reply_email, reply_email_verified, facility_type")
         .eq("state", leadState)
         .eq("status", "approved")
         .neq("suspended", true)
         .neq("id", lead.facility_id)
-        .limit(maxRedistributionFacilities * 2); // Get more to filter
+        .limit(maxRedistributionFacilities * 3); // Get more to filter
+
+      const { data: nearbyFacilities } = await facilityQuery;
 
       if (!nearbyFacilities || nearbyFacilities.length === 0) {
         log("WARN", "No nearby facilities found for redistribution", { leadId: lead.id, state: leadState });
         continue;
       }
 
-      // Shuffle and pick up to max facilities
-      const shuffled = nearbyFacilities.sort(() => Math.random() - 0.5);
-      const selectedFacilities = shuffled.slice(0, maxRedistributionFacilities);
+      // Score facilities by treatment relevance (level_of_care match)
+      const scoredFacilities = nearbyFacilities.map(f => {
+        let score = Math.random(); // Base randomness for fairness
+        // Boost score for facilities with matching care type
+        if (lead.level_of_care && f.facility_type) {
+          const loc = (lead.level_of_care || "").toLowerCase();
+          const ft = (f.facility_type || "").toLowerCase();
+          if (
+            (loc.includes("detox") && ft.includes("detox")) ||
+            (loc.includes("residential") && (ft.includes("residential") || ft.includes("inpatient"))) ||
+            (loc.includes("outpatient") && ft.includes("outpatient")) ||
+            (loc.includes("sober") && ft.includes("sober")) ||
+            (loc.includes("php") && ft.includes("partial")) ||
+            (loc.includes("iop") && ft.includes("intensive"))
+          ) {
+            score += 10; // Strong treatment match
+          }
+        }
+        return { ...f, score };
+      });
+
+      // Sort by score (highest first) and pick top N
+      scoredFacilities.sort((a, b) => b.score - a.score);
+      const selectedFacilities = scoredFacilities.slice(0, maxRedistributionFacilities);
 
       // Calculate extended_until
       const extendedUntil = new Date(now.getTime() + extendedWindowHours * 60 * 60 * 1000);
@@ -322,6 +346,20 @@ Deno.serve(async (req) => {
           .update({ redistribution_status: "expired" })
           .eq("id", lead.id);
         expiredCount++;
+      }
+    }
+
+    // Notify admin of redistribution activity
+    if (redistributedCount > 0 || expiredCount > 0) {
+      try {
+        await supabase.from("admin_notifications").insert({
+          type: "lead_redistribution",
+          title: "Lead Redistribution Summary",
+          message: `${redistributedCount} lead(s) redistributed, ${expiredCount} lead(s) expired without unlock.`,
+          metadata: { redistributedCount, notificationsSent, expiredCount },
+        });
+      } catch (e) {
+        log("WARN", "Failed to create admin notification", { error: String(e) });
       }
     }
 
