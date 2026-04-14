@@ -99,17 +99,23 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
   if (caseData.status === "placed" || caseData.placement_confirmed) {
     return (
       <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
-        <CardContent className="py-4">
+        <CardContent className="py-4 space-y-3">
           <div className="flex items-center gap-3">
             <CheckCircle2 className="h-5 w-5 text-emerald-600" />
             <div>
-              <p className="font-medium text-emerald-800 dark:text-emerald-400">Placement Confirmed</p>
+              <p className="font-medium text-emerald-800 dark:text-emerald-400">✅ Admission Successful</p>
               {caseData.placement_confirmed_at && (
                 <p className="text-sm text-muted-foreground">
                   Confirmed on {format(new Date(caseData.placement_confirmed_at), "MMM d, yyyy")}
                 </p>
               )}
             </div>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-emerald-100/50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200/50 dark:border-emerald-800/50">
+            <DollarSign className="h-4 w-4 text-emerald-600" />
+            <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+              💰 Placement completed — billing initiated
+            </span>
           </div>
         </CardContent>
       </Card>

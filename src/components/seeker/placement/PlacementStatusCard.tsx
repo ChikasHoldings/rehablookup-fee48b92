@@ -88,7 +88,7 @@ const GUIDED_STEPS = [
     shortLabel: "Admission",
     icon: Home, 
     statuses: ["placed"],
-    description: "You've been placed at a treatment center",
+    description: "✅ Admission successful — your placement is confirmed",
   },
 ];
 
@@ -142,7 +142,7 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
                 className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 bg-success/10 rounded-full shrink-0"
               >
                 <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
-                <span className="text-xs sm:text-sm font-medium text-success">Complete</span>
+                <span className="text-xs sm:text-sm font-medium text-success">✅ Admission Successful</span>
               </motion.div>
             )}
           </div>

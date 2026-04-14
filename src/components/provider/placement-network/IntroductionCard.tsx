@@ -234,40 +234,56 @@ export function IntroductionCard({
           </>
         )}
 
-        {/* ─── Speed Nudge ─── */}
-        <div className="px-4 sm:px-5 py-1.5 bg-primary/5 border-t flex items-center gap-1.5 text-xs text-primary font-medium">
-          <span>⚡</span>
-          <span>Faster response increases admission chances</span>
-        </div>
+        {/* ─── Placed: Billing Confirmation ─── */}
+        {inquiry?.placement_confirmed && inquiry?.placed_facility_id === facilityId ? (
+          <div className="px-4 sm:px-5 py-3 bg-emerald-500/5 border-t flex items-center gap-2 text-sm">
+            <DollarSign className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span className="font-medium text-emerald-700 dark:text-emerald-400">
+              💰 Placement completed — billing initiated
+            </span>
+          </div>
+        ) : (
+          <>
+            {/* ─── Speed Nudge ─── */}
+            {(!introduction.provider_response || introduction.provider_response === "pending") && (
+              <div className="px-4 sm:px-5 py-1.5 bg-primary/5 border-t flex items-center gap-1.5 text-xs text-primary font-medium">
+                <span>⚡</span>
+                <span>Faster response increases admission chances</span>
+              </div>
+            )}
 
-        {/* ─── Action Bar ─── */}
-        <div className="px-4 sm:px-5 py-3 bg-muted/20 border-t flex gap-3" onClick={(e) => e.stopPropagation()}>
-          <Button
-            className="flex-1 h-9 gap-1.5 text-sm"
-            onClick={handleAccept}
-            disabled={isResponding}
-          >
-            {isAccepting && isResponding ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-3.5 w-3.5" />
+            {/* ─── Action Bar ─── */}
+            {(!introduction.provider_response || introduction.provider_response === "pending") && (
+              <div className="px-4 sm:px-5 py-3 bg-muted/20 border-t flex gap-3" onClick={(e) => e.stopPropagation()}>
+                <Button
+                  className="flex-1 h-9 gap-1.5 text-sm"
+                  onClick={handleAccept}
+                  disabled={isResponding}
+                >
+                  {isAccepting && isResponding ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  )}
+                  Accept
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 h-9 gap-1.5 text-sm"
+                  onClick={handleDecline}
+                  disabled={isResponding}
+                >
+                  {isDeclining && isResponding ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <XCircle className="h-3.5 w-3.5" />
+                  )}
+                  Decline
+                </Button>
+              </div>
             )}
-            Accept
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 h-9 gap-1.5 text-sm"
-            onClick={handleDecline}
-            disabled={isResponding}
-          >
-            {isDeclining && isResponding ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <XCircle className="h-3.5 w-3.5" />
-            )}
-            Decline
-          </Button>
-        </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
