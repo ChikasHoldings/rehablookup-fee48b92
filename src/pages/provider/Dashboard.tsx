@@ -400,6 +400,14 @@ export default function ProviderDashboardPage() {
               discountPercent={proStatus.isPro ? 20 : 0}
             />
 
+            {/* Primary KPI Strip */}
+            {facilityId && (
+              <DashboardKPIStrip
+                facilityId={facilityId}
+                isPro={proStatus.isPro}
+              />
+            )}
+
             {/* Metrics Row */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
               <MetricCard
