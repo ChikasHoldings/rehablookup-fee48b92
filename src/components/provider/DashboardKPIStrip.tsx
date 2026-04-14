@@ -135,7 +135,10 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
                   {isLoading ? (
                     <Skeleton className="h-6 w-10 mt-0.5" />
                   ) : (
-                    <p className="text-lg sm:text-xl font-bold leading-tight tabular-nums text-foreground">
+                    <p className={cn(
+                      "text-lg sm:text-xl font-bold leading-tight tabular-nums",
+                      (m as any).highlight ? "text-destructive" : "text-foreground"
+                    )}>
                       {m.value}
                     </p>
                   )}
