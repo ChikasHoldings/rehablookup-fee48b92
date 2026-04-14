@@ -53,7 +53,7 @@ export function DashboardMissedLeads({ facilityId, isPro }: DashboardMissedLeads
 
   if (!missedLeads.length) return null;
 
-  const estimatedRevenueLost = missedLeads.length * 49;
+  const estimatedRevenueLost = missedLeads.length * 5000;
 
   return (
     <Card className="border-destructive/30 bg-destructive/[0.03]">
