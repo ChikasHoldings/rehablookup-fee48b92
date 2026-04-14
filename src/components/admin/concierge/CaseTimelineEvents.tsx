@@ -48,6 +48,11 @@ const EVENT_CONFIG: Record<string, { icon: React.ComponentType<any>; label: stri
   pii_disclosed: { icon: Eye, label: "PII Disclosed", color: "text-amber-500" },
   advisor_assigned: { icon: User, label: "Advisor Assigned", color: "text-purple-500" },
   notes_updated: { icon: FileText, label: "Notes Updated", color: "text-gray-400" },
+  seeker_notified_options: { icon: Send, label: "Seeker Notified of Options", color: "text-blue-500" },
+  seeker_rejected_facility: { icon: XCircle, label: "Seeker Rejected Facility", color: "text-red-400" },
+  seeker_cancelled: { icon: XCircle, label: "Seeker Cancelled", color: "text-red-500" },
+  placement_confirmed: { icon: CheckCircle, label: "Placement Confirmed", color: "text-emerald-600" },
+  provider_accepted: { icon: UserCheck, label: "Provider Accepted", color: "text-green-500" },
 };
 
 export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
