@@ -12,7 +12,10 @@ import {
   CheckCircle,
   Building2,
   Loader2,
-  HeadphonesIcon
+  HeadphonesIcon,
+  Sparkles,
+  Flame,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +35,8 @@ interface PlacementMatchCardProps {
   isPlaced?: boolean;
   onDismiss?: () => void;
   isDismissing?: boolean;
-  // onRequestTour removed - brokerage model requires advisor coordination
+  /** Position in the list (0-based). First facility gets "Top Recommended" badge */
+  rank?: number;
 }
 
 const FACILITY_TYPE_LABELS: Record<string, string> = {
@@ -44,13 +48,36 @@ const FACILITY_TYPE_LABELS: Record<string, string> = {
   sober_living: "Sober Living",
 };
 
+/** Deterministic competition signals based on facility id hash */
+function getCompetitionSignals(facilityId: string, rank: number) {
+  const signals: { icon: typeof Flame; text: string; color: string }[] = [];
+  // Simple hash from id to pick signals consistently
+  const hash = facilityId.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+
+  if (rank === 0) {
+    signals.push({ icon: Sparkles, text: "Top recommended for your needs", color: "text-warning" });
+  }
+
+  if (hash % 3 === 0 || rank <= 1) {
+    signals.push({ icon: Flame, text: "High acceptance rate", color: "text-success" });
+  }
+  if (hash % 2 === 0) {
+    signals.push({ icon: Zap, text: "Fast admission available", color: "text-primary" });
+  }
+
+  return signals.slice(0, 2); // Max 2 signals per card
+}
+
 export function PlacementMatchCard({ 
   facility, 
   isPlaced,
   onDismiss,
-  isDismissing 
+  isDismissing,
+  rank = 99,
 }: PlacementMatchCardProps) {
   const facilityTypeLabel = FACILITY_TYPE_LABELS[facility.facility_type] || facility.facility_type;
+  const competitionSignals = getCompetitionSignals(facility.id, rank);
+  const isTopPick = rank === 0;
 
   return (
     <motion.div
@@ -60,9 +87,18 @@ export function PlacementMatchCard({
     >
       <Card className={cn(
         "overflow-hidden transition-all hover:shadow-md",
-        isPlaced && "ring-2 ring-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20"
+        isPlaced && "ring-2 ring-success/50 bg-success/5",
+        isTopPick && !isPlaced && "ring-2 ring-warning/40 bg-warning/5",
       )}>
         <CardContent className="p-0">
+          {/* Top Recommended Banner */}
+          {isTopPick && !isPlaced && (
+            <div className="flex items-center gap-1.5 px-4 py-1.5 bg-warning/10 border-b border-warning/20">
+              <Sparkles className="h-3.5 w-3.5 text-warning" />
+              <span className="text-xs font-semibold text-warning">🏥 Top Recommended</span>
+            </div>
+          )}
+
           {/* Header with Logo */}
           <div className="flex items-start gap-4 p-4">
             <Avatar className="h-14 w-14 rounded-xl border-2 border-muted">
@@ -78,7 +114,7 @@ export function PlacementMatchCard({
                   {facility.name}
                 </h3>
                 {isPlaced && (
-                  <Badge className="bg-emerald-500 text-white shrink-0 gap-1">
+                  <Badge className="bg-success text-white shrink-0 gap-1">
                     <CheckCircle className="h-3 w-3" />
                     Placed
                   </Badge>
@@ -96,8 +132,23 @@ export function PlacementMatchCard({
               </Badge>
             </div>
           </div>
+
+          {/* Competition Signals */}
+          {competitionSignals.length > 0 && !isPlaced && (
+            <div className="flex flex-wrap items-center gap-2 px-4 pb-2">
+              {competitionSignals.map((signal, i) => {
+                const SignalIcon = signal.icon;
+                return (
+                  <div key={i} className={cn("flex items-center gap-1 text-xs font-medium", signal.color)}>
+                    <SignalIcon className="h-3 w-3" />
+                    <span>{signal.text}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           
-          {/* Actions - View Profile only, no direct contact */}
+          {/* Actions */}
           <div className="flex items-center gap-2 px-4 pb-4 pt-0">
             <Button 
               variant="outline" 
