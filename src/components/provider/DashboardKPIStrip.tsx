@@ -82,34 +82,38 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
 
   const effectiveSavings = proSavingsCents || monthlySavings;
 
+  const missed = kpis?.missed ?? 0;
+  const estRevenueLost = kpis?.estRevenueLost ?? 0;
+
   const metrics = [
     {
       label: "Leads Received",
-      value: kpis?.received ?? 0,
+      value: String(kpis?.received ?? 0),
       icon: Inbox,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
     },
     {
       label: "Leads Unlocked",
-      value: kpis?.unlocked ?? 0,
+      value: String(kpis?.unlocked ?? 0),
       icon: Unlock,
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-600 dark:text-emerald-400",
     },
     {
-      label: "Views",
-      value: kpis?.views ?? 0,
-      icon: Eye,
-      iconBg: "bg-blue-500/10",
-      iconColor: "text-blue-600 dark:text-blue-400",
+      label: "Missed Leads",
+      value: String(missed),
+      icon: AlertCircle,
+      iconBg: missed > 0 ? "bg-destructive/10" : "bg-muted/50",
+      iconColor: missed > 0 ? "text-destructive" : "text-muted-foreground",
     },
     {
-      label: "Reviews",
-      value: kpis?.reviews ?? 0,
-      icon: Star,
-      iconBg: "bg-amber-500/10",
-      iconColor: "text-amber-600 dark:text-amber-400",
+      label: "Est. Revenue L...",
+      value: `$${estRevenueLost.toLocaleString()}`,
+      icon: DollarSign,
+      iconBg: estRevenueLost > 0 ? "bg-destructive/10" : "bg-muted/50",
+      iconColor: estRevenueLost > 0 ? "text-destructive" : "text-muted-foreground",
+      highlight: estRevenueLost > 0,
     },
   ];
 
