@@ -1,4 +1,3 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import {
   emailStart,
@@ -11,6 +10,7 @@ import {
   ctaButton,
   emailFooter,
   emailEnd,
+  emailDivider,
   type PlanType,
 } from "../_shared/email-templates.ts";
 
@@ -31,6 +31,26 @@ interface WelcomeEmailRequest {
   selectedPlan: string;
 }
 
+const P = "#1B365D";
+const GOLD = "#CDA223";
+const PRO = "#7c3aed";
+
+function btn(text: string, url: string, bg: string): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
+    <tr><td align="center">
+      <a href="${url}" style="display:inline-block;background:${bg};color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">${text}</a>
+    </td></tr>
+  </table>`;
+}
+
+function linkBtn(text: string, url: string, color: string): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
+    <tr><td align="center">
+      <a href="${url}" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;color:${color};font-weight:600;text-decoration:underline;">${text}</a>
+    </td></tr>
+  </table>`;
+}
+
 function generateWelcomeEmail(
   providerFirstName: string,
   facilityName: string,
@@ -38,173 +58,120 @@ function generateWelcomeEmail(
 ): string {
   const isPro = selectedPlan === "pro" || selectedPlan === "professional" || selectedPlan === "featured";
   const plan: PlanType = isPro ? "pro" : "free";
-  const planDisplayName = isPro ? "Pro" : "Free";
 
-  const primaryColor = "#1B365D";
-  const accentColor = "#CDA223";
-  const accentBg = "#fef9e7";
-  const proBadgeColor = isPro ? "#7c3aed" : "#64748b";
-
-  let email = emailStart('#f4f6f9');
-  email += emailHeader(`Welcome to RehabLookup!`, plan, { 
-    subtitle: "Start receiving inquiries and placement opportunities" 
+  let html = emailStart();
+  html += emailHeader("Welcome to RehabLookup!", plan, {
+    subtitle: "Your provider account is ready — start receiving inquiries today",
   });
-  email += emailBodyStart();
-  email += emailGreeting(providerFirstName);
-  email += emailParagraph(`Thank you for registering <strong style="color: ${primaryColor};">${facilityName}</strong> on RehabLookup. We're thrilled to help you connect with families actively seeking treatment.`);
+  html += emailBodyStart();
+  html += emailGreeting(providerFirstName);
+  html += emailParagraph(`Thank you for registering <strong style="color:${P};">${facilityName}</strong> on RehabLookup. We connect treatment providers with families actively searching for care — and you're now part of that network.`);
 
-  // How it works section
-  email += `
-              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 700; color: ${primaryColor};">
-                How RehabLookup Works
-              </p>
-  `;
+  // How it works
+  html += `<p style="margin:0 0 12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;font-weight:700;color:${P};">How It Works</p>`;
 
   const steps = [
-    { num: "1", title: "List your facility", desc: "Showcase your programs, services, and insurance accepted" },
-    { num: "2", title: "Receive inquiries", desc: "Families find you directly from your listing page" },
-    { num: "3", title: "Unlock leads", desc: "Purchase credits to view full contact details" },
-    { num: "4", title: "Join placements", desc: "Opt into our placement network for pre-screened referrals" },
+    { icon: "🏥", title: "List your facility", desc: "Showcase programs, services, and insurance accepted" },
+    { icon: "📩", title: "Receive inquiries", desc: "Families contact you directly from your profile page" },
+    { icon: "🔓", title: "Unlock leads", desc: "Use credits to view full contact details instantly" },
+    { icon: "🤝", title: "Join placements", desc: "Opt in for pre-screened referrals from our concierge team" },
   ];
 
-  email += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">`;
-  for (const step of steps) {
-    email += `
-                <tr>
-                  <td style="padding: 10px 0;">
-                    <table role="presentation" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 36px; vertical-align: top;">
-                          <span style="display: inline-block; width: 28px; height: 28px; background: ${isPro ? '#ede9fe' : '#dbeafe'}; border-radius: 50%; text-align: center; line-height: 28px; font-size: 13px; font-weight: 700; color: ${isPro ? '#7c3aed' : primaryColor};">${step.num}</span>
-                        </td>
-                        <td style="padding-left: 12px;">
-                          <p style="margin: 0 0 2px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600; color: ${primaryColor};">${step.title}</p>
-                          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #64748b; line-height: 1.5;">${step.desc}</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-    `;
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">`;
+  for (const s of steps) {
+    html += `<tr><td style="padding:8px 0;">
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+        <td style="width:36px;vertical-align:top;font-size:20px;">${s.icon}</td>
+        <td style="padding-left:10px;">
+          <p style="margin:0 0 2px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;font-weight:600;color:${P};">${s.title}</p>
+          <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;color:#64748b;line-height:1.5;">${s.desc}</p>
+        </td>
+      </tr></table>
+    </td></tr>`;
   }
-  email += `</table>`;
+  html += `</table>`;
 
-  // Free vs Pro comparison
-  email += `
-              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 700; color: ${primaryColor};">
-                Your Plan: ${planDisplayName}
-              </p>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
-                <tr>
-                  <td style="width: 50%; vertical-align: top; padding-right: 8px;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: ${!isPro ? '#f0f7ff' : '#f8fafc'}; border: ${!isPro ? '2px solid ' + primaryColor : '1px solid #e2e8f0'}; border-radius: 12px;">
-                      <tr><td style="padding: 16px;">
-                        <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 700; color: ${primaryColor};">Free</p>
-                        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 700; color: ${primaryColor};">$0<span style="font-size: 12px; font-weight: 400; color: #64748b;">/mo</span></p>
-                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b;">✓ 1 facility listing</p>
-                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b;">✓ Direct inquiries</p>
-                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b;">✓ Placement network</p>
-                        <p style="margin: 0; font-size: 12px; color: #64748b;">✓ Performance tracking</p>
-                      </td></tr>
-                    </table>
-                  </td>
-                  <td style="width: 50%; vertical-align: top; padding-left: 8px;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: ${isPro ? '#faf5ff' : '#f8fafc'}; border: ${isPro ? '2px solid #7c3aed' : '1px solid #e2e8f0'}; border-radius: 12px;">
-                      <tr><td style="padding: 16px;">
-                        <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 700; color: #7c3aed;">Pro</p>
-                        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 700; color: #7c3aed;">$399<span style="font-size: 12px; font-weight: 400; color: #64748b;">/mo</span></p>
-                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #334155; font-weight: 500;">✓ Up to 5 listings</p>
-                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #334155; font-weight: 500;">✓ 20% off lead unlocks</p>
-                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #334155; font-weight: 500;">✓ 20% off placements</p>
-                        <p style="margin: 0; font-size: 12px; color: #334155; font-weight: 500;">✓ Featured visibility</p>
-                      </td></tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-  `;
+  html += emailDivider();
 
-  // Pro upsell for free users
+  // Free vs Pro
+  html += `<p style="margin:0 0 14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;font-weight:700;color:${P};">Free vs Pro</p>`;
+
+  const freeHighlight = !isPro ? `border:2px solid ${P};` : `border:1px solid #e2e8f0;`;
+  const proHighlight = isPro ? `border:2px solid ${PRO};` : `border:1px solid #e2e8f0;`;
+  const freeBg = !isPro ? "#f0f7ff" : "#f8fafc";
+  const proBg = isPro ? "#faf5ff" : "#f8fafc";
+
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr>
+    <td style="width:50%;vertical-align:top;padding-right:6px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${freeBg};${freeHighlight}border-radius:10px;">
+        <tr><td style="padding:14px;">
+          <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:${P};">Free</p>
+          <p style="margin:0 0 4px;font-size:12px;color:#475569;">✓ 1 facility listing</p>
+          <p style="margin:0 0 4px;font-size:12px;color:#475569;">✓ Direct inquiries</p>
+          <p style="margin:0 0 4px;font-size:12px;color:#475569;">✓ Placement network</p>
+          <p style="margin:0;font-size:12px;color:#475569;">✓ Performance tracking</p>
+        </td></tr>
+      </table>
+    </td>
+    <td style="width:50%;vertical-align:top;padding-left:6px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${proBg};${proHighlight}border-radius:10px;">
+        <tr><td style="padding:14px;">
+          <p style="margin:0 0 2px;font-size:14px;font-weight:700;color:${PRO};">⭐ Pro <span style="font-size:11px;font-weight:400;color:#64748b;">$399/mo</span></p>
+          <p style="margin:0 0 8px;font-size:11px;color:#7c3aed;">Everything in Free, plus:</p>
+          <p style="margin:0 0 4px;font-size:12px;color:#334155;font-weight:500;">✓ Up to 5 listings</p>
+          <p style="margin:0 0 4px;font-size:12px;color:#334155;font-weight:500;">✓ 20% off lead unlocks</p>
+          <p style="margin:0 0 4px;font-size:12px;color:#334155;font-weight:500;">✓ 20% off placement fees</p>
+          <p style="margin:0;font-size:12px;color:#334155;font-weight:500;">✓ Featured & priority ranking</p>
+        </td></tr>
+      </table>
+    </td>
+  </tr></table>`;
+
   if (isPro) {
-    email += proInsightsBox("Your Pro membership is active! You'll enjoy 20% off lead unlocks, up to 5 facility listings, and priority visibility in search results.");
+    html += proInsightsBox("Your Pro membership is active! Enjoy 20% off lead unlocks, up to 5 facility listings, featured placement, and priority visibility in search results.");
   }
 
-  // Welcome offer banner
-  email += `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, ${accentBg}, #fff7ed); border: 1px solid ${accentColor}40; border-radius: 12px; margin-bottom: 28px;">
-                <tr>
-                  <td style="padding: 20px;">
-                    <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; color: ${primaryColor};">
-                      🎁 Welcome Offer
-                    </p>
-                    <p style="margin: 0 0 14px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #78350f; line-height: 1.5;">
-                      Get bonus credits on your first top-up! Limited-time offer for new providers.
-                    </p>
-                    <table role="presentation" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="background: ${accentColor}; border-radius: 8px;">
-                          <a href="https://rehablookup.com/provider/billing?purchase_credits=true" style="display: inline-block; padding: 10px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                            Claim Credits →
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-  `;
+  html += emailDivider();
 
-  // Pending review notice
-  email += `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; margin-bottom: 28px;">
-                <tr>
-                  <td style="padding: 16px 20px;">
-                    <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #92400e;">
-                      ⏳ Your listing is under review
-                    </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #78350f; line-height: 1.5;">
-                      We'll review and approve your listing within 24-48 hours. You'll receive an email notification once it's live.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-  `;
+  // Welcome credit offer
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fef9e7;border:1px solid ${GOLD}50;border-radius:10px;margin-bottom:24px;">
+    <tr><td style="padding:20px;">
+      <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:${P};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">🎁 Welcome Credit Offer</p>
+      <p style="margin:0 0 14px;font-size:13px;color:#78350f;line-height:1.5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">Get <strong>bonus credits</strong> on your first top-up — limited-time offer for new providers. Use credits to unlock leads and connect with families faster.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+        <td style="background:${GOLD};border-radius:8px;">
+          <a href="https://rehablookup.com/provider/billing?purchase_credits=true" style="display:inline-block;padding:10px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">Claim Welcome Credits →</a>
+        </td>
+      </tr></table>
+    </td></tr>
+  </table>`;
 
-  // Primary CTA
-  email += ctaButton("Complete My Listing", "https://rehablookup.com/provider/listings", plan);
+  // Pending review
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:0 10px 10px 0;margin-bottom:24px;">
+    <tr><td style="padding:14px 18px;">
+      <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#92400e;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">⏳ Listing under review</p>
+      <p style="margin:0;font-size:12px;color:#78350f;line-height:1.5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">We'll review and approve your listing within 24–48 hours. You'll be notified once it's live.</p>
+    </td></tr>
+  </table>`;
 
-  // Secondary CTA
-  email += `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 12px; margin-bottom: 8px;">
-                <tr>
-                  <td align="center">
-                    <a href="https://rehablookup.com/provider/dashboard" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: ${primaryColor}; text-decoration: underline;">
-                      Go to Dashboard
-                    </a>
-                  </td>
-                </tr>
-              </table>
-  `;
+  html += emailDivider();
+
+  // CTAs
+  html += `<p style="margin:0 0 4px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;font-weight:700;color:${P};text-align:center;">Get Started</p>`;
+  html += btn("Complete My Listing", "https://rehablookup.com/provider/listings", P);
+  html += linkBtn("View My Dashboard", "https://rehablookup.com/provider/dashboard", P);
 
   if (!isPro) {
-    email += `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 8px; margin-bottom: 8px;">
-                <tr>
-                  <td align="center">
-                    <a href="https://rehablookup.com/provider/pro-upgrade" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #7c3aed; font-weight: 600; text-decoration: underline;">
-                      ⭐ Upgrade to Pro
-                    </a>
-                  </td>
-                </tr>
-              </table>
-    `;
+    html += linkBtn("⭐ Upgrade to Pro", "https://rehablookup.com/provider/pro-upgrade", PRO);
   }
 
-  email += emailBodyEnd();
-  email += emailFooter({ includeNotificationSettings: false });
-  email += emailEnd();
+  html += `<div style="height:12px;"></div>`;
 
-  return email;
+  html += emailBodyEnd();
+  html += emailFooter();
+  html += emailEnd();
+
+  return html;
 }
 
 Deno.serve(async (req) => {
@@ -225,19 +192,16 @@ Deno.serve(async (req) => {
     }
 
     const resend = new Resend(resendApiKey);
-
     const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan }: WelcomeEmailRequest = await req.json();
     logStep("Received request", { facilityId, facilityName, providerEmail, selectedPlan });
 
     const emailHtml = generateWelcomeEmail(providerFirstName, facilityName, selectedPlan);
-
     const isPro = selectedPlan === "pro" || selectedPlan === "professional" || selectedPlan === "featured";
-    const subjectPrefix = isPro ? "⭐ " : "";
 
     const { error: emailError } = await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
-      subject: `${subjectPrefix}Welcome to RehabLookup, ${providerFirstName}!`,
+      subject: `${isPro ? "⭐ " : ""}Welcome to RehabLookup, ${providerFirstName} — your provider account is ready!`,
       html: emailHtml,
     });
 
@@ -250,7 +214,6 @@ Deno.serve(async (req) => {
     }
 
     logStep("Welcome email sent successfully", { to: providerEmail });
-
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
