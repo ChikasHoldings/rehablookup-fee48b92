@@ -193,7 +193,22 @@ export default function ProviderDashboardPage() {
     refetchOnMount: true,
   });
 
-  // Fetch services count for profile completion
+  // Fetch concierge introductions count for this facility
+  const { data: conciergeCount = 0 } = useQuery({
+    queryKey: ["concierge-count", facilityId],
+    queryFn: async (): Promise<number> => {
+      if (!facilityId) return 0;
+      const { count, error } = await supabase
+        .from("concierge_introductions")
+        .select("id", { count: "exact", head: true })
+        .eq("facility_id", facilityId);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!facilityId,
+    staleTime: 1000 * 60 * 5,
+  });
+
   const { data: servicesCount = 0 } = useQuery({
     queryKey: ["services-count", facilityId],
     queryFn: async (): Promise<number> => {
