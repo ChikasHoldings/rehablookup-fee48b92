@@ -6,3 +6,4 @@ export { PlacementConfirmationCard } from "./PlacementConfirmationCard";
 export { PlacementSupportCard } from "./PlacementSupportCard";
 export { SeekerPlacementModal } from "./SeekerPlacementModal";
 export { SeekerProviderReviewCard } from "./SeekerProviderReviewCard";
+export { AdmissionStatusCard } from "./AdmissionStatusCard";
