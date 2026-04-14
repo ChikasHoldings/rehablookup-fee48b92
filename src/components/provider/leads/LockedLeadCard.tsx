@@ -265,7 +265,7 @@ export function LockedLeadCard({
             </Link>
           )}
         </div>
-      
+      </div>
       {/* Unlock CTA */}
       <UnlockLeadButton
         leadId={leadId}
