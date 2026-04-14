@@ -192,8 +192,31 @@ Deno.serve(async (req) => {
     }
 
     const resend = new Resend(resendApiKey);
-    const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan }: WelcomeOfferRequest = await req.json();
+    const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan, idempotencyKey }: WelcomeOfferRequest = await req.json();
     logStep("Received request", { facilityId, facilityName, providerEmail, selectedPlan });
+
+    // Server-side idempotency: prevent duplicate welcome offer emails
+    const dedupKey = idempotencyKey || `welcome-offer-${facilityId}`;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: existing } = await supabase
+      .from("email_tracking_events")
+      .select("id")
+      .eq("email_id", dedupKey)
+      .eq("email_type", "provider_welcome_offer")
+      .eq("event_type", "sent")
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      logStep("Duplicate detected, skipping", { dedupKey });
+      return new Response(
+        JSON.stringify({ success: true, deduplicated: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const emailHtml = generateWelcomeOfferEmail(providerFirstName, facilityName, selectedPlan);
 
@@ -211,6 +234,14 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Record send for idempotency
+    await supabase.from("email_tracking_events").insert({
+      email_id: dedupKey,
+      email_type: "provider_welcome_offer",
+      event_type: "sent",
+      recipient_email: providerEmail,
+    });
 
     logStep("Welcome offer email sent successfully", { to: providerEmail });
     return new Response(
