@@ -70,6 +70,12 @@ export function ReviewForm({
       return;
     }
 
+    // Client-side length validation
+    if (reviewText.length > 2000) {
+      toast.error('Review text must be 2000 characters or less');
+      return;
+    }
+
     setIsSubmitting(true);
     
     const { error } = userReview 
@@ -79,10 +85,14 @@ export function ReviewForm({
     setIsSubmitting(false);
 
     if (error) {
-      if (error.message.includes('duplicate')) {
+      if (error.message.includes('duplicate') || error.message.includes('unique')) {
         toast.error('You have already reviewed this facility');
+      } else if (error.message.includes('owner')) {
+        toast.error('Facility owners cannot review their own facilities');
+      } else if (error.message.includes('verify')) {
+        toast.error(error.message);
       } else {
-        toast.error('Failed to submit review');
+        toast.error(error.message || 'Failed to submit review');
       }
     } else {
       toast.success(userReview ? 'Review updated! It will be visible after moderation.' : 'Review submitted! It will be visible after moderation.');
