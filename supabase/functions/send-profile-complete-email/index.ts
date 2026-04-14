@@ -151,6 +151,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const resend = new Resend(RESEND_API_KEY);
 
     const { facilityId } = await req.json();
 
@@ -224,23 +225,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     console.log(`[PROFILE-COMPLETE] Sending email to ${profile.email}`);
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "RehabLookup <no-reply@rehablookup.com>",
-        to: [profile.email],
-        subject: `Nice work! ${facility.name} profile is 100% complete`,
-        html: emailHtml,
-      }),
+    const emailResult = await sendEmailWithRetry(supabase, resend, {
+      from: "RehabLookup <no-reply@rehablookup.com>",
+      to: [profile.email],
+      subject: `Nice work! ${facility.name} profile is 100% complete`,
+      html: emailHtml,
+    }, {
+      emailType: "profile_complete",
+      idempotencyKey: `profile-complete-${facilityId}`,
     });
 
-    if (!emailResponse.ok) {
-      const errorData = await emailResponse.text();
-      console.error("[PROFILE-COMPLETE] Email error:", errorData);
+    if (!emailResult.success) {
+      console.error("[PROFILE-COMPLETE] Email error:", emailResult.error);
       return new Response(
         JSON.stringify({ error: "Failed to send email" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
