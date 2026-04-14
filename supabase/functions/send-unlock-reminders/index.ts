@@ -174,6 +174,28 @@ function getMidUrgencyEmail(facilityName: string, lead: LeadPreview, dashboardUr
   );
 }
 
+function getStillAvailableEmail(facilityName: string, lead: LeadPreview, dashboardUrl: string, creditCost: string): string {
+  const signals = getIntentSignals(lead);
+  const hoursLeft = Math.max(1, Math.round(24 - lead.hoursAgo));
+  return emailWrapper("#d97706", "⏳", "REHABLOOKUP", `Lead Still Available — ${hoursLeft}h Left`,
+    `<p style="margin:0 0 20px 0;color:#374151;font-size:16px;line-height:1.6;">Hi ${facilityName} team,</p>
+    <p style="margin:0 0 20px 0;color:#374151;font-size:15px;line-height:1.6;">
+      <strong>${lead.maskedName}</strong> is still waiting for your response. It's been <strong>${Math.round(lead.hoursAgo)} hours</strong> since they reached out — and this lead may be <strong>shared with other providers</strong> if not unlocked soon.
+    </p>
+    ${buildSignalsHtml(signals)}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:2px solid #f59e0b;border-radius:8px;margin-bottom:20px;">
+      <tr><td style="padding:20px;text-align:center;">
+        <p style="margin:0 0 8px 0;font-size:16px;font-weight:600;color:#b45309;">🔥 ${hoursLeft} hours before this lead may be shared</p>
+        <p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">
+          Other providers in your area could receive this lead if you don't act. Don't let a competitor connect first.
+        </p>
+      </td></tr>
+    </table>
+    ${priceBox(creditCost, "Unlock before it's too late", "#f59e0b")}
+    ${ctaButton(dashboardUrl, "#d97706", "🔓 Unlock Now — Don't Miss Out")}`
+  );
+}
+
 function getFinalUrgencyEmail(facilityName: string, lead: LeadPreview, dashboardUrl: string, creditCost: string): string {
   return emailWrapper("#dc2626", "🚨", "REHABLOOKUP — FINAL NOTICE", "Last Chance to Unlock This Lead",
     `<p style="margin:0 0 20px 0;color:#374151;font-size:16px;line-height:1.6;">Hi ${facilityName} team,</p>
