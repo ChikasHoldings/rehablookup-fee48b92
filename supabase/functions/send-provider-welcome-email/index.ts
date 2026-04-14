@@ -36,116 +36,170 @@ function generateWelcomeEmail(
   facilityName: string,
   selectedPlan: string
 ): string {
-  // Map legacy plan names to new Free/Pro model
   const isPro = selectedPlan === "pro" || selectedPlan === "professional" || selectedPlan === "featured";
   const plan: PlanType = isPro ? "pro" : "free";
   const planDisplayName = isPro ? "Pro" : "Free";
 
+  const primaryColor = "#1B365D";
+  const accentColor = "#CDA223";
+  const accentBg = "#fef9e7";
+  const proBadgeColor = isPro ? "#7c3aed" : "#64748b";
+
   let email = emailStart('#f4f6f9');
   email += emailHeader(`Welcome to RehabLookup!`, plan, { 
-    subtitle: "Your facility is now registered" 
+    subtitle: "Start receiving inquiries and placement opportunities" 
   });
   email += emailBodyStart();
   email += emailGreeting(providerFirstName);
-  email += emailParagraph(`Thank you for registering <strong style="color: #1B365D;">${facilityName}</strong> on RehabLookup. We're excited to help you connect with families seeking treatment.`);
+  email += emailParagraph(`Thank you for registering <strong style="color: ${primaryColor};">${facilityName}</strong> on RehabLookup. We're thrilled to help you connect with families actively seeking treatment.`);
 
-  // Pro welcome message
-  if (isPro) {
-    email += proInsightsBox("As a Pro member, you get 20% off lead unlocks, up to 5 facility listings, and priority visibility in search results.");
+  // How it works section
+  email += `
+              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 700; color: ${primaryColor};">
+                How RehabLookup Works
+              </p>
+  `;
+
+  const steps = [
+    { num: "1", title: "List your facility", desc: "Showcase your programs, services, and insurance accepted" },
+    { num: "2", title: "Receive inquiries", desc: "Families find you directly from your listing page" },
+    { num: "3", title: "Unlock leads", desc: "Purchase credits to view full contact details" },
+    { num: "4", title: "Join placements", desc: "Opt into our placement network for pre-screened referrals" },
+  ];
+
+  email += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">`;
+  for (const step of steps) {
+    email += `
+                <tr>
+                  <td style="padding: 10px 0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width: 36px; vertical-align: top;">
+                          <span style="display: inline-block; width: 28px; height: 28px; background: ${isPro ? '#ede9fe' : '#dbeafe'}; border-radius: 50%; text-align: center; line-height: 28px; font-size: 13px; font-weight: 700; color: ${isPro ? '#7c3aed' : primaryColor};">${step.num}</span>
+                        </td>
+                        <td style="padding-left: 12px;">
+                          <p style="margin: 0 0 2px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 600; color: ${primaryColor};">${step.title}</p>
+                          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #64748b; line-height: 1.5;">${step.desc}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+    `;
   }
+  email += `</table>`;
+
+  // Free vs Pro comparison
+  email += `
+              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 700; color: ${primaryColor};">
+                Your Plan: ${planDisplayName}
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+                <tr>
+                  <td style="width: 50%; vertical-align: top; padding-right: 8px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: ${!isPro ? '#f0f7ff' : '#f8fafc'}; border: ${!isPro ? '2px solid ' + primaryColor : '1px solid #e2e8f0'}; border-radius: 12px;">
+                      <tr><td style="padding: 16px;">
+                        <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 700; color: ${primaryColor};">Free</p>
+                        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 700; color: ${primaryColor};">$0<span style="font-size: 12px; font-weight: 400; color: #64748b;">/mo</span></p>
+                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b;">✓ 1 facility listing</p>
+                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b;">✓ Direct inquiries</p>
+                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b;">✓ Placement network</p>
+                        <p style="margin: 0; font-size: 12px; color: #64748b;">✓ Performance tracking</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td style="width: 50%; vertical-align: top; padding-left: 8px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: ${isPro ? '#faf5ff' : '#f8fafc'}; border: ${isPro ? '2px solid #7c3aed' : '1px solid #e2e8f0'}; border-radius: 12px;">
+                      <tr><td style="padding: 16px;">
+                        <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 700; color: #7c3aed;">Pro</p>
+                        <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 700; color: #7c3aed;">$399<span style="font-size: 12px; font-weight: 400; color: #64748b;">/mo</span></p>
+                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #334155; font-weight: 500;">✓ Up to 5 listings</p>
+                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #334155; font-weight: 500;">✓ 20% off lead unlocks</p>
+                        <p style="margin: 0 0 4px 0; font-size: 12px; color: #334155; font-weight: 500;">✓ 20% off placements</p>
+                        <p style="margin: 0; font-size: 12px; color: #334155; font-weight: 500;">✓ Featured visibility</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+  `;
+
+  // Pro upsell for free users
+  if (isPro) {
+    email += proInsightsBox("Your Pro membership is active! You'll enjoy 20% off lead unlocks, up to 5 facility listings, and priority visibility in search results.");
+  }
+
+  // Welcome offer banner
+  email += `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, ${accentBg}, #fff7ed); border: 1px solid ${accentColor}40; border-radius: 12px; margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; color: ${primaryColor};">
+                      🎁 Welcome Offer
+                    </p>
+                    <p style="margin: 0 0 14px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #78350f; line-height: 1.5;">
+                      Get bonus credits on your first top-up! Limited-time offer for new providers.
+                    </p>
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="background: ${accentColor}; border-radius: 8px;">
+                          <a href="https://rehablookup.com/provider/billing?purchase_credits=true" style="display: inline-block; padding: 10px 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                            Claim Credits →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+  `;
 
   // Pending review notice
   email += `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; margin-bottom: 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; margin-bottom: 28px;">
                 <tr>
-                  <td style="padding: 20px;">
-                    <p style="margin: 0 0 6px 0; font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: 600; color: #92400e;">
-                      ⏳ Pending Review
+                  <td style="padding: 16px 20px;">
+                    <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #92400e;">
+                      ⏳ Your listing is under review
                     </p>
-                    <p style="margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #78350f; line-height: 1.5;">
-                      Your facility is being reviewed by our team. Once approved, your listing will be visible to families seeking treatment. We'll notify you as soon as you're approved!
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #78350f; line-height: 1.5;">
+                      We'll review and approve your listing within 24-48 hours. You'll receive an email notification once it's live.
                     </p>
                   </td>
                 </tr>
               </table>
   `;
 
-  // Plan info
+  // Primary CTA
+  email += ctaButton("Complete My Listing", "https://rehablookup.com/provider/listings", plan);
+
+  // Secondary CTA
   email += `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border-radius: 12px; margin-bottom: 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 12px; margin-bottom: 8px;">
                 <tr>
-                  <td style="padding: 20px;">
-                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">
-                      Your Plan
-                    </p>
-                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 600; color: ${isPro ? '#7c3aed' : '#1B365D'};">
-                      ${planDisplayName}
-                    </p>
-                    <p style="margin: 8px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: ${isPro ? '#10b981' : '#64748b'};">
-                      ${isPro ? '✓ Pro subscription active - 20% off unlocks' : 'Free listing - Pay per lead unlock'}
-                    </p>
+                  <td align="center">
+                    <a href="https://rehablookup.com/provider/dashboard" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: ${primaryColor}; text-decoration: underline;">
+                      Go to Dashboard
+                    </a>
                   </td>
                 </tr>
               </table>
   `;
 
-  // What's next
-  const accentColor = isPro ? '#7c3aed' : '#1B365D';
-  const bgColor = isPro ? '#ede9fe' : '#dbeafe';
-  email += `
-              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #1B365D;">
-                What's Next?
-              </p>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+  if (!isPro) {
+    email += `
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 8px; margin-bottom: 8px;">
                 <tr>
-                  <td style="padding: 12px 0;">
-                    <table role="presentation" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 32px; vertical-align: top;">
-                          <span style="display: inline-block; width: 24px; height: 24px; background: ${bgColor}; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: ${accentColor};">1</span>
-                        </td>
-                        <td style="padding-left: 12px;">
-                          <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 500; color: #1B365D;">Complete your profile</p>
-                          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">Add photos, description, and services to attract more families</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0;">
-                    <table role="presentation" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 32px; vertical-align: top;">
-                          <span style="display: inline-block; width: 24px; height: 24px; background: ${bgColor}; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: ${accentColor};">2</span>
-                        </td>
-                        <td style="padding-left: 12px;">
-                          <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 500; color: #1B365D;">Wait for approval</p>
-                          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">Our team will review and approve your listing shortly</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0;">
-                    <table role="presentation" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 32px; vertical-align: top;">
-                          <span style="display: inline-block; width: 24px; height: 24px; background: ${bgColor}; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; color: ${accentColor};">3</span>
-                        </td>
-                        <td style="padding-left: 12px;">
-                          <p style="margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 500; color: #1B365D;">Unlock leads to connect</p>
-                          <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #64748b;">${isPro ? 'Pay per lead with your 20% Pro discount' : 'Pay per lead to view contact details'}</p>
-                        </td>
-                      </tr>
-                    </table>
+                  <td align="center">
+                    <a href="https://rehablookup.com/provider/pro-upgrade" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #7c3aed; font-weight: 600; text-decoration: underline;">
+                      ⭐ Upgrade to Pro
+                    </a>
                   </td>
                 </tr>
               </table>
-  `;
+    `;
+  }
 
-  email += ctaButton("Go to Dashboard", "https://rehablookup.com/provider/dashboard", plan);
   email += emailBodyEnd();
   email += emailFooter({ includeNotificationSettings: false });
   email += emailEnd();
