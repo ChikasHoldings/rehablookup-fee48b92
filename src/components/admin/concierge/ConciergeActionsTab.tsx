@@ -28,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Save, XCircle, Loader2, History, AlertTriangle, HandMetal } from "lucide-react";
+import { Save, XCircle, Loader2, History, AlertTriangle, HandMetal, CheckCircle2, Bell } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
 import { AdminConfirmPlacement } from "./AdminConfirmPlacement";
@@ -241,7 +241,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
-              <CheckCircle2Icon className="h-5 w-5 text-emerald-600" />
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               <div>
                 <p className="font-medium text-emerald-800 dark:text-emerald-400">Seeker Confirmed</p>
                 <p className="text-sm text-muted-foreground">
