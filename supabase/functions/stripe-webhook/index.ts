@@ -1125,6 +1125,48 @@ Deno.serve(async (req) => {
                   .eq("id", f.id);
               }
               logStep("Pro benefits removed from all provider facilities", { count: allFacilities.length });
+
+              // DOWNGRADE: Suspend extra facilities beyond the free-tier limit of 1
+              // Keep the oldest facility (by created_at) active, suspend the rest
+              if (allFacilities.length > 1) {
+                // Fetch all facilities with created_at to determine which to keep
+                const { data: allFacilitiesOrdered } = await supabaseAdmin
+                  .from("facilities")
+                  .select("id, name, created_at")
+                  .eq("user_id", providerId)
+                  .order("created_at", { ascending: true });
+
+                if (allFacilitiesOrdered && allFacilitiesOrdered.length > 1) {
+                  // Keep the first (oldest) facility active, suspend the rest
+                  const facilitiesToSuspend = allFacilitiesOrdered.slice(1);
+                  for (const sf of facilitiesToSuspend) {
+                    await supabaseAdmin
+                      .from("facilities")
+                      .update({
+                        suspended: true,
+                        updated_at: new Date().toISOString(),
+                      })
+                      .eq("id", sf.id);
+                  }
+                  logStep("Extra facilities suspended on downgrade", {
+                    kept: allFacilitiesOrdered[0].name,
+                    suspended: facilitiesToSuspend.map(f => f.name),
+                  });
+
+                  // Notify provider about suspended facilities
+                  await supabaseAdmin.from("provider_notifications").insert({
+                    user_id: providerId,
+                    facility_id: allFacilitiesOrdered[0].id,
+                    type: "facilities_suspended",
+                    title: "Facilities Paused",
+                    message: `${facilitiesToSuspend.length} additional listing(s) have been paused. Upgrade to Pro to reactivate them. No data has been deleted.`,
+                    metadata: {
+                      suspended_facility_ids: facilitiesToSuspend.map(f => f.id),
+                      suspended_facility_names: facilitiesToSuspend.map(f => f.name),
+                    },
+                  });
+                }
+              }
             }
 
             // Record event
