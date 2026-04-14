@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Inbox,
   Unlock,
-  XCircle,
+  Eye,
   DollarSign,
   AlertTriangle,
   Sparkles,
@@ -24,6 +24,7 @@ interface DashboardKPIStripProps {
   isPro: boolean;
   /** Total Pro savings from discount_amount_cents on credit_transactions this month */
   proSavingsCents?: number;
+  viewsCount?: number;
 }
 
 interface WeeklyKPIs {
@@ -36,7 +37,7 @@ interface WeeklyKPIs {
 // Average revenue per admission (industry avg $2,000–$10,000; using $5,000 midpoint)
 const AVG_REVENUE_PER_LEAD_CENTS = 500000; // $5,000 average admission value
 
-export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: DashboardKPIStripProps) {
+export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, viewsCount = 0 }: DashboardKPIStripProps) {
   const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(), []);
 
   const { data: kpis, isLoading } = useQuery({
@@ -108,12 +109,11 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
       iconColor: "text-emerald-600 dark:text-emerald-400",
     },
     {
-      label: "Missed Leads",
-      value: kpis?.missed ?? 0,
-      icon: XCircle,
-      iconBg: "bg-destructive/10",
-      iconColor: "text-destructive",
-      highlight: (kpis?.missed ?? 0) > 0,
+      label: "Profile Views",
+      value: viewsCount,
+      icon: Eye,
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
     },
     {
       label: "Est. Revenue Lost",
