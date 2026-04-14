@@ -19,6 +19,8 @@ import {
   Handshake,
   BarChart3,
   Eye,
+  Phone,
+  Globe,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
