@@ -126,7 +126,7 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
         page++;
       }
 
-      const allEvents = (allEventsData || []) as ProviderEvent[];
+      const allEvents = allEventsData;
       const facilityMap = new Map(facilities.map((f) => [f.id, f.name]));
 
       // Split events by type
