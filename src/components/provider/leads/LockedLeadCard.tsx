@@ -1,4 +1,4 @@
-import { Lock, Sparkles, Phone, Mail, Clock, Zap, Building2, Timer } from "lucide-react";
+import { Lock, Sparkles, Phone, Mail, Clock, Zap, Building2, Timer, Flame, Eye, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -14,6 +14,7 @@ interface LockedLeadCardProps {
   source?: string | null;
   facilityName?: string;
   showFacility?: boolean;
+  isRedistributed?: boolean;
   onClick?: () => void;
   isSelected?: boolean;
   onUnlockSuccess?: () => void;
@@ -28,6 +29,7 @@ export function LockedLeadCard({
   source,
   facilityName,
   showFacility,
+  isRedistributed,
   onClick,
   isSelected,
   onUnlockSuccess,
@@ -123,6 +125,25 @@ export function LockedLeadCard({
               : `⏳ Exclusive access expires in ${countdown.formatted}`
             }
           </div>
+
+          {/* Scarcity / FOMO Signals */}
+          {isRedistributed ? (
+            <div className="mt-1.5 space-y-1">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-amber-700 dark:text-amber-400">
+                <Users className="h-3 w-3" />
+                ⚠️ Limited availability — max 2 providers only
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-orange-600 dark:text-orange-400">
+                <Eye className="h-3 w-3" />
+                👀 Another provider may have already seen this lead
+              </div>
+            </div>
+          ) : !countdown.isExpired && countdown.urgencyTier !== "safe" && (
+            <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-medium text-orange-600 dark:text-orange-400">
+              <Flame className="h-3 w-3" />
+              🔥 This lead may be shared with others if not unlocked
+            </div>
+          )}
         </div>
       </div>
       

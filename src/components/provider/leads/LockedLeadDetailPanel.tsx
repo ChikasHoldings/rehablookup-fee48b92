@@ -1,4 +1,4 @@
-import { Lock, Sparkles, TrendingUp, CheckCircle, Phone, Users, Coins, Timer } from "lucide-react";
+import { Lock, Sparkles, TrendingUp, CheckCircle, Phone, Users, Coins, Timer, Flame, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -8,11 +8,11 @@ import { cn } from "@/lib/utils";
 interface LockedLeadDetailPanelProps {
   totalLeadsCount: number;
   onClose: () => void;
-  /** Created time of the currently-selected locked lead */
   selectedLeadCreatedAt?: string;
+  isRedistributed?: boolean;
 }
 
-export function LockedLeadDetailPanel({ totalLeadsCount, onClose, selectedLeadCreatedAt }: LockedLeadDetailPanelProps) {
+export function LockedLeadDetailPanel({ totalLeadsCount, onClose, selectedLeadCreatedAt, isRedistributed }: LockedLeadDetailPanelProps) {
   const countdown = useLeadCountdown(selectedLeadCreatedAt || new Date().toISOString());
   const showCountdown = !!selectedLeadCreatedAt && !countdown.isExpired;
 
@@ -86,7 +86,31 @@ export function LockedLeadDetailPanel({ totalLeadsCount, onClose, selectedLeadCr
           </div>
         )}
 
-        {/* Waiting leads counter */}
+        {/* Scarcity / FOMO Signals */}
+        {isRedistributed ? (
+          <div className="py-3 px-4 rounded-xl bg-orange-50 border border-orange-200 dark:bg-orange-950/30 dark:border-orange-800 space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-orange-700 dark:text-orange-400">
+              <Flame className="h-4 w-4" />
+              Redistributed Lead
+            </div>
+            <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1.5">
+              <Users className="h-3 w-3 flex-shrink-0" />
+              ⚠️ Limited availability — max 2 providers only
+            </p>
+            <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1.5">
+              <Eye className="h-3 w-3 flex-shrink-0" />
+              👀 Another provider may have already seen this lead
+            </p>
+          </div>
+        ) : showCountdown && countdown.urgencyTier !== "safe" && (
+          <div className="py-2.5 px-4 rounded-xl bg-orange-50/70 border border-orange-200/60 dark:bg-orange-950/20 dark:border-orange-800/50">
+            <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-1.5 font-medium">
+              <Flame className="h-3.5 w-3.5" />
+              🔥 This lead may be shared with others if not unlocked
+            </p>
+          </div>
+        )}
+
         {totalLeadsCount > 0 && (
           <div className="py-4 px-6 rounded-xl bg-primary/5 border border-primary/20">
             <div className="text-4xl font-bold text-primary">
