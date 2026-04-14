@@ -105,13 +105,26 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
       }
 
       // Fetch ALL provider events (views + clicks) from the single source of truth
-      const { data: allEventsData, error: eventsError } = await supabase
-        .from("provider_events")
-        .select("id, facility_id, event_type, session_id, page_context, created_at")
-        .in("facility_id", facilityIds)
-        .order("created_at", { ascending: true });
+      // Paginate to avoid the default 1000-row limit
+      let allEventsData: ProviderEvent[] = [];
+      let page = 0;
+      const PAGE_SIZE = 1000;
+      while (true) {
+        const from = page * PAGE_SIZE;
+        const to = from + PAGE_SIZE - 1;
+        const { data: pageData, error: pageError } = await supabase
+          .from("provider_events")
+          .select("id, facility_id, event_type, session_id, page_context, created_at")
+          .in("facility_id", facilityIds)
+          .order("created_at", { ascending: true })
+          .range(from, to);
 
-      if (eventsError) throw eventsError;
+        if (pageError) throw pageError;
+        if (!pageData || pageData.length === 0) break;
+        allEventsData = allEventsData.concat(pageData as ProviderEvent[]);
+        if (pageData.length < PAGE_SIZE) break;
+        page++;
+      }
 
       const allEvents = (allEventsData || []) as ProviderEvent[];
       const facilityMap = new Map(facilities.map((f) => [f.id, f.name]));
