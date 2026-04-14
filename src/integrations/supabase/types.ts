@@ -5799,6 +5799,7 @@ export type Database = {
           status: string | null
           updated_at: string | null
           verified: boolean | null
+          website: string | null
           year_established: number | null
           zip_code: string | null
         }
@@ -5817,12 +5818,13 @@ export type Database = {
           last_featured_shown_at?: string | null
           logo_url?: string | null
           name?: string | null
-          phone?: string | null
+          phone?: never
           slug?: string | null
           state?: string | null
           status?: string | null
           updated_at?: string | null
           verified?: boolean | null
+          website?: never
           year_established?: number | null
           zip_code?: string | null
         }
@@ -5841,12 +5843,13 @@ export type Database = {
           last_featured_shown_at?: string | null
           logo_url?: string | null
           name?: string | null
-          phone?: string | null
+          phone?: never
           slug?: string | null
           state?: string | null
           status?: string | null
           updated_at?: string | null
           verified?: boolean | null
+          website?: never
           year_established?: number | null
           zip_code?: string | null
         }
