@@ -150,26 +150,6 @@ export default function ProviderReviews() {
       </div>
 
 
-      {/* Pro Upgrade Banner */}
-      {!isPro && (
-        <Card className="border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-amber-600/10">
-          <CardContent className="py-3 px-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-              <p className="text-sm text-muted-foreground truncate">
-                Upgrade to Pro to unlock Google Reviews Import & Review Requests
-              </p>
-            </div>
-            <Button 
-              size="sm" 
-              className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs h-7"
-              onClick={() => navigate('/provider/pro-upgrade')}
-            >
-              Upgrade
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Stats Cards */}
       <ReviewStatsCards stats={filteredStats} />
