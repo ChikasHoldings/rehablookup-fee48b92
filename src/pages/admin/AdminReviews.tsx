@@ -302,6 +302,7 @@ export default function AdminReviews() {
     } else {
       const review = reviews.find(r => r.id === reviewId);
       if (review) {
+        auditLog({ actionType: 'review_approved', targetType: 'review', targetId: reviewId, details: { facility_id: review.facility_id, facility_name: review.facility_name, reviewer: review.reviewer_name, rating: review.rating, admin_notes: sanitizedNotes || null } });
         supabase.functions.invoke('send-review-notification', {
           body: { type: 'review_approved', reviewId, facilityId: review.facility_id, seekerId: review.user_id }
         }).catch(() => {});
@@ -344,6 +345,7 @@ export default function AdminReviews() {
     } else {
       const review = reviews.find(r => r.id === reviewId);
       if (review) {
+        auditLog({ actionType: 'review_rejected', targetType: 'review', targetId: reviewId, details: { facility_id: review.facility_id, facility_name: review.facility_name, reviewer: review.reviewer_name, rating: review.rating, rejection_reason: sanitizedNotes } });
         supabase.functions.invoke('send-review-notification', {
           body: { type: 'review_rejected', reviewId, facilityId: review.facility_id, seekerId: review.user_id, rejectionReason: adminNotes[reviewId] }
         }).catch(() => {});
