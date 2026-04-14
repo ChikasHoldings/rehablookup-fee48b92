@@ -514,6 +514,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                         </Button>
                       </div>
                     </div>
+                    </div>
                   </div>
                 )}
               </div>
