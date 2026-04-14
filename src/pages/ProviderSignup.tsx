@@ -636,7 +636,7 @@ export default function ProviderSignup() {
         // Non-blocking - continue even if notification fails
       }
 
-      // 12. Send welcome email to provider
+      // 12. Send welcome email to provider (with idempotency key)
       try {
         await supabase.functions.invoke("send-provider-welcome-email", {
           body: {
@@ -645,6 +645,7 @@ export default function ProviderSignup() {
             providerEmail: formData.email,
             providerFirstName: formData.firstName,
             selectedPlan: "free",
+            idempotencyKey: `welcome-${facilityId}`,
           },
         });
       } catch (welcomeError) {
@@ -652,7 +653,7 @@ export default function ProviderSignup() {
         // Non-blocking - continue even if email fails
       }
 
-      // 12b. Send welcome offer email (separate, delayed send)
+      // 12b. Send welcome offer email (with idempotency key)
       try {
         await supabase.functions.invoke("send-provider-welcome-offer-email", {
           body: {
@@ -661,6 +662,7 @@ export default function ProviderSignup() {
             providerEmail: formData.email,
             providerFirstName: formData.firstName,
             selectedPlan: "free",
+            idempotencyKey: `welcome-offer-${facilityId}`,
           },
         });
       } catch (offerError) {
