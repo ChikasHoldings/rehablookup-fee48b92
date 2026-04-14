@@ -449,6 +449,9 @@ export default function ProviderDashboardPage() {
               <LeadConversionWidget facilityIds={facilityIds} />
             )}
 
+            {/* Facility Performance Panel (Pro-gated) */}
+            <DashboardFacilityPerformancePanel isPro={proStatus.isPro} />
+
             {/* Multi-Facility Overview (Pro only) */}
             {proStatus?.isPro && facilities && facilities.length > 1 && (
               <ProMultiFacilityOverview facilities={facilities} />
