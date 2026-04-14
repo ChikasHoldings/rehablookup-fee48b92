@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ListingPreviewModal } from "./listing/ListingPreviewModal";
 import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link, useNavigate } from "react-router-dom";
+import { useProviderCredits } from "@/hooks/useProviderCredits";
 import { formatDistanceToNow } from "date-fns";
 import { 
   ChevronDown, 
@@ -239,16 +240,23 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
             {mobileSearchOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Search className="h-4 w-4 sm:h-5 sm:w-5" />}
           </Button>
 
-          {/* Preview Listing */}
-          {facilityId && facilitySlug && (
-            <button
-              onClick={() => setPreviewOpen(true)}
-              className="hidden lg:inline-flex items-center gap-1.5 h-10 px-3.5 text-sm font-medium text-white hover:bg-white/15 rounded-lg transition-all duration-200 border border-white/20 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Eye className="h-4 w-4" />
-              <span>Preview</span>
-            </button>
-          )}
+          {/* Credit Balance */}
+          {(() => {
+            const { data: creditsData, isLoading: creditsLoading } = useProviderCredits(facilityId);
+            return (
+              <Link
+                to="/provider/billing"
+                className="hidden lg:inline-flex items-center gap-2 h-10 px-3.5 text-sm font-medium text-white hover:bg-white/15 rounded-lg transition-all duration-200 border border-white/20 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <CreditCard className="h-4 w-4" />
+                {creditsLoading ? (
+                  <span className="animate-pulse">···</span>
+                ) : (
+                  <span className="font-bold tabular-nums">${((creditsData?.balance_cents || 0) / 100).toFixed(2)}</span>
+                )}
+              </Link>
+            );
+          })()}
 
           {/* Notifications */}
           <DropdownMenu>
