@@ -93,18 +93,19 @@ export function useFacilityReviews(facilityId: string) {
       const builtName = firstName ? firstName + (lastInitial ? ` ${lastInitial}.` : '') : '';
       
       // Priority: stored reviewer_display_name → built from profile (name is required at signup)
-      const displayName = storedName || builtName || `${firstName || 'Anonymous'}`;
+      // Never fall back to "Anonymous" — name is mandatory at submission time
+      const displayName = storedName || builtName || null;
       
       return {
         ...review,
         user_display_name: displayName,
-        reviewer_first_name: firstName || displayName.charAt(0),
+        reviewer_first_name: firstName || displayName?.charAt(0) || '',
         reviewer_last_initial: lastInitial || '',
         reviewer_city: profile?.city || null,
         reviewer_state: profile?.state || null,
         has_voted_helpful: votedReviewIds.includes(review.id)
       };
-    });
+    }).filter(r => !!r.user_display_name);
 
     setReviews(enrichedReviews);
     setReviewCount(enrichedReviews.length);
