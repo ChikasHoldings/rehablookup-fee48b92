@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { sendEmailWithRetry, sleep, BULK_SEND_DELAY_MS } from "../_shared/resilient-email-sender.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -501,6 +501,7 @@ Deno.serve(async (req) => {
 
               totalSent++;
               log("INFO", `${stage.name} email sent`, { leadId: lead.id, email, tier: engagement.tier });
+              await sleep(BULK_SEND_DELAY_MS);
             } catch (e) {
               log("WARN", `Failed to send ${stage.name} email`, { leadId: lead.id, error: String(e) });
             }

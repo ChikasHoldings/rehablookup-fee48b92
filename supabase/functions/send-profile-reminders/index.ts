@@ -16,6 +16,8 @@ import {
   getPlanStyles,
   type PlanType,
 } from "../_shared/email-templates.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendEmailWithRetry, sleep, BULK_SEND_DELAY_MS } from "../_shared/resilient-email-sender.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -155,6 +157,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const resend = new Resend(RESEND_API_KEY);
     const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" }) : null;
 
     const dashboardUrl = Deno.env.get("DASHBOARD_URL") || "https://rehablookup.com/provider";
@@ -254,24 +257,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
           planInfo.plan
         );
 
-        const emailResponse = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "RehabLookup <no-reply@rehablookup.com>",
-            to: [profile.email],
-            subject: `Your ${facility.name} profile is ${completion.percentage}% complete`,
-            html: emailHtml,
-          }),
+        const emailResult = await sendEmailWithRetry(supabase, resend, {
+          from: "RehabLookup <no-reply@rehablookup.com>",
+          to: [profile.email],
+          subject: `Your ${facility.name} profile is ${completion.percentage}% complete`,
+          html: emailHtml,
+        }, {
+          emailType: "profile_reminder",
+          idempotencyKey: `profile-reminder-${facility.id}-${new Date().toISOString().slice(0, 10)}`,
         });
 
-        if (!emailResponse.ok) {
-          const errorData = await emailResponse.text();
-          console.error(`[PROFILE-REMINDERS] Email error for ${facility.id}:`, errorData);
-          errors.push(`Failed to send to ${profile.email}: ${errorData}`);
+        if (!emailResult.success) {
+          console.error(`[PROFILE-REMINDERS] Email error for ${facility.id}:`, emailResult.error);
+          errors.push(`Failed to send to ${profile.email}: ${emailResult.error}`);
           continue;
         }
 
@@ -285,6 +283,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
         sentCount++;
         console.log(`[PROFILE-REMINDERS] Sent reminder for facility ${facility.id}`);
+        await sleep(BULK_SEND_DELAY_MS);
 
       } catch (facilityError: unknown) {
         const errorMessage = facilityError instanceof Error ? facilityError.message : String(facilityError);

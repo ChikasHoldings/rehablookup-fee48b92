@@ -13,7 +13,7 @@ import {
   emailEnd,
   emailDivider,
 } from "../_shared/email-templates.ts";
-import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { sendEmailWithRetry, sleep, BULK_SEND_DELAY_MS } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "1.0.0";
 
@@ -466,6 +466,7 @@ Deno.serve(async (req) => {
           .eq("id", drip.id);
 
         sent++;
+        await sleep(BULK_SEND_DELAY_MS);
       } catch (emailError) {
         console.error(`[DRIP v${VERSION}] Error sending day ${drip.day_number} to ${drip.provider_email}:`, emailError);
         errors++;

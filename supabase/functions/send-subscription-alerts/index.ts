@@ -16,7 +16,7 @@ import {
   ctaButton,
   type PlanType,
 } from "../_shared/email-templates.ts";
-import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { sendEmailWithRetry, sleep, BULK_SEND_DELAY_MS } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -182,6 +182,7 @@ Deno.serve(async (req) => {
 
                 alertsSent.push({ type: `expiry_${days}days`, email: profile.email });
                 logStep("Sent expiry alert", { email: profile.email, days });
+                await sleep(BULK_SEND_DELAY_MS);
               } else {
                 logStep("Failed to send expiry email", { email: profile.email, error: emailError });
               }

@@ -1,7 +1,7 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { sendEmailWithRetry, sleep, BULK_SEND_DELAY_MS, BULK_BATCH_LIMIT } from "../_shared/resilient-email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -351,6 +351,7 @@ Deno.serve(async (req) => {
     const emailsFailed: string[] = [];
 
     for (const provider of atRiskProviders) {
+      if (emailsSent.length >= BULK_BATCH_LIMIT) break; // Rate-limit batch size
       // Check if we already sent a retention email to this provider recently
       const alertKey = `retention_${provider.facilityId}`;
       const sevenDaysAgoStr = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -433,6 +434,7 @@ Deno.serve(async (req) => {
 
         emailsSent.push(provider.email);
         logStep("Retention email sent", { email: provider.email, subject });
+        await sleep(BULK_SEND_DELAY_MS);
 
       } catch (err) {
         logStep("Email send error", { email: provider.email, error: String(err) });
