@@ -83,7 +83,7 @@ export function PlacementSuccessScreen({ caseId }: PlacementSuccessScreenProps) 
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild>
-              <Link to={`/signup?redirect=/account/placement&case=${caseId}`}>
+              <Link to={`/seeker/signup?redirect=${encodeURIComponent(`/account/placement?case=${caseId}`)}`}>
                 <UserPlus className="h-4 w-4 mr-2" />
                 Create Account
               </Link>
