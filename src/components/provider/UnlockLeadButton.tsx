@@ -90,13 +90,9 @@ export function UnlockLeadButton({
     }
   };
 
-  // One-click unlock: skip dialog if user has enough credits
+  // Always show confirmation dialog before charging credits
   const handleClick = () => {
-    if (hasEnoughCredits) {
-      handleUnlock();
-    } else {
-      setShowConfirmDialog(true);
-    }
+    setShowConfirmDialog(true);
   };
 
   const priceDisplay = formatPrice(finalPrice);
