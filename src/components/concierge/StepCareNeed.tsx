@@ -194,8 +194,9 @@ export function StepCareNeed({ data, errors, onChange }: Props) {
           <Label className="text-sm font-medium">Prior Treatment Details</Label>
           <Textarea
             value={data.priorTreatmentNotes}
-            onChange={(e) => onChange({ priorTreatmentNotes: e.target.value })}
+            onChange={(e) => onChange({ priorTreatmentNotes: e.target.value.replace(/<[^>]*>/g, "").slice(0, 500) })}
             rows={2}
+            maxLength={500}
             placeholder="What type, when, outcome"
             className="resize-none"
           />
@@ -209,8 +210,9 @@ export function StepCareNeed({ data, errors, onChange }: Props) {
         </Label>
         <Input
           value={data.currentMedications || ""}
-          onChange={(e) => onChange({ currentMedications: e.target.value })}
+          onChange={(e) => onChange({ currentMedications: e.target.value.replace(/<[^>]*>/g, "").slice(0, 500) })}
           placeholder="List any current medications"
+          maxLength={500}
           className="h-11"
         />
       </div>

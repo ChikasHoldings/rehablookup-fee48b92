@@ -274,6 +274,12 @@ export default function ConciergeIntake() {
       delete newErrors[key];
     });
     setStepErrors(newErrors);
+
+    // If email changed, invalidate stale verification
+    if ('email' in updates && updates.email !== formData.email) {
+      setEmailVerification({ verified: false, verifiedAt: null });
+      localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+    }
   };
 
   const validateStep = (step: number): boolean => {
@@ -326,9 +332,6 @@ export default function ConciergeIntake() {
           errors.email = "Email address is too long";
         }
         if (!formData.bestTimeToCall) errors.bestTimeToCall = "Best time to call is required";
-        if (!formData.notes || formData.notes.trim().length < 10) {
-          errors.notes = "Please add at least 10 characters of notes";
-        }
         if (formData.notes && formData.notes.length > 1000) {
           errors.notes = "Notes must be 1000 characters or less";
         }
@@ -520,7 +523,6 @@ export default function ConciergeIntake() {
             paymentState={{ sessionId: null, paid: false, verifiedAt: null }}
             onEdit={handleEditStep}
             onPay={handleProceedToPayment}
-            onSubmit={() => {}} // No longer used - payment redirects to thank you
             isSubmitting={false}
             isProcessingPayment={isProcessingPayment}
           />

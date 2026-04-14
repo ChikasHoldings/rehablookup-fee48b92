@@ -66,8 +66,9 @@ export function StepPaymentInfo({ data, errors, onChange }: Props) {
               </Label>
               <Input
                 value={data.insuranceCarrier}
-                onChange={(e) => onChange({ insuranceCarrier: e.target.value })}
+                onChange={(e) => onChange({ insuranceCarrier: e.target.value.replace(/<[^>]*>/g, "").slice(0, 100) })}
                 placeholder="Blue Cross, Aetna, etc."
+                maxLength={100}
                 className={`h-11 ${errors.insuranceCarrier ? "border-destructive ring-1 ring-destructive" : ""}`}
               />
               {errors.insuranceCarrier && <p className="text-xs text-destructive">{errors.insuranceCarrier}</p>}
@@ -77,8 +78,9 @@ export function StepPaymentInfo({ data, errors, onChange }: Props) {
               <Label className="text-sm font-medium">Employer</Label>
               <Input
                 value={data.employerName || ""}
-                onChange={(e) => onChange({ employerName: e.target.value })}
+                onChange={(e) => onChange({ employerName: e.target.value.replace(/<[^>]*>/g, "").slice(0, 100) })}
                 placeholder="If employer-sponsored"
+                maxLength={100}
                 className="h-11"
               />
             </div>
@@ -89,8 +91,9 @@ export function StepPaymentInfo({ data, errors, onChange }: Props) {
               <Label className="text-sm font-medium">Member ID</Label>
               <Input
                 value={data.insuranceMemberId || ""}
-                onChange={(e) => onChange({ insuranceMemberId: e.target.value })}
+                onChange={(e) => onChange({ insuranceMemberId: e.target.value.replace(/<[^>]*>/g, "").slice(0, 50) })}
                 placeholder="From card"
+                maxLength={50}
                 className="h-11"
               />
             </div>
@@ -99,8 +102,9 @@ export function StepPaymentInfo({ data, errors, onChange }: Props) {
               <Label className="text-sm font-medium">Group #</Label>
               <Input
                 value={data.insuranceGroupNumber || ""}
-                onChange={(e) => onChange({ insuranceGroupNumber: e.target.value })}
+                onChange={(e) => onChange({ insuranceGroupNumber: e.target.value.replace(/<[^>]*>/g, "").slice(0, 50) })}
                 placeholder="From card"
+                maxLength={50}
                 className="h-11"
               />
             </div>

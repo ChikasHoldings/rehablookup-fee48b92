@@ -100,8 +100,9 @@ export function StepLogistics({ data, errors, onChange }: Props) {
           </Label>
           <Input
             value={data.desiredCity || ""}
-            onChange={(e) => onChange({ desiredCity: e.target.value })}
+            onChange={(e) => onChange({ desiredCity: e.target.value.replace(/<[^>]*>/g, "").slice(0, 100) })}
             placeholder="Enter city name (optional)"
+            maxLength={100}
             className="h-11"
           />
         </div>

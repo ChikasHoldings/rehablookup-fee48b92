@@ -184,15 +184,15 @@ export function StepContact({ data, errors, onChange }: Props) {
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
           <Label className="text-sm font-medium">
-            Additional Notes <span className="text-destructive">*</span>
+            Additional Notes <span className="text-xs text-muted-foreground">(Optional)</span>
           </Label>
-          <span className={`text-xs ${data.notes.length >= 10 ? "text-green-600" : "text-muted-foreground"}`}>
-            {data.notes.length}/10 min
+          <span className="text-xs text-muted-foreground">
+            {data.notes.length}/1000
           </span>
         </div>
         <Textarea
           value={data.notes}
-          onChange={(e) => onChange({ notes: e.target.value.slice(0, 1000) })}
+          onChange={(e) => onChange({ notes: e.target.value.replace(/<[^>]*>/g, "").slice(0, 1000) })}
           rows={3}
           maxLength={1000}
           placeholder="Share any details that will help us process your placement..."

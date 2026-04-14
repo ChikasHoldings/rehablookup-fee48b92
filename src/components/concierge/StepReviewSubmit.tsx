@@ -19,7 +19,6 @@ interface StepReviewSubmitProps {
   paymentState: PaymentState;
   onEdit: (step: number) => void;
   onPay: () => void;
-  onSubmit: () => void;
   isSubmitting: boolean;
   isProcessingPayment: boolean;
 }
@@ -77,7 +76,6 @@ export function StepReviewSubmit({
   paymentState,
   onEdit,
   onPay,
-  onSubmit,
   isSubmitting,
   isProcessingPayment,
 }: StepReviewSubmitProps) {
