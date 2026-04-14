@@ -291,7 +291,7 @@ Deno.serve(async (req) => {
     // Find international abandoned carts
     const { data: abandonedInternational, error: internationalError } = await supabase
       .from("international_placement_cases")
-      .select("id, seeker_email, seeker_name, intake_data, created_at")
+      .select("id, client_email, client_name, intake_data, created_at")
       .eq("status", "pending_payment")
       .is("abandoned_cart_email_sent_at", null)
       .lt("created_at", twoHoursAgo.toISOString())
