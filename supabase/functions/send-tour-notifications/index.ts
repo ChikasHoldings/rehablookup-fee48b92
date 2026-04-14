@@ -155,6 +155,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
               to: [facilityEmail],
               subject: `New Tour Request - ${emailData.seekerName}`,
               html: tourRequestedFacilityEmail(emailData),
+            }, {
+              emailType: "tour_requested_facility",
+              idempotencyKey: `tour-req-facility-${tourId}`,
             });
             results.facilityEmail = emailResult;
             console.log("Facility email sent:", emailResult);
