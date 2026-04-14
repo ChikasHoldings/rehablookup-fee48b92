@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { Building2, Loader2 } from "lucide-react";
+import { useState, useCallback, useMemo } from "react";
+import { Building2, Loader2, Lock } from "lucide-react";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -85,8 +85,8 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
 
         {/* Listings Grid */}
         <div className="space-y-4">
-          {/* Existing Facilities */}
-          {facilities.map((facility) => (
+          {/* Active Facilities */}
+          {facilities.filter(f => !f.suspended).map((facility) => (
             <ListingCard
               key={facility.id}
               facility={facility}
@@ -94,6 +94,25 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
               onPreview={handlePreview}
             />
           ))}
+
+          {/* Suspended Facilities Section */}
+          {facilities.some(f => f.suspended) && (
+            <div className="space-y-3 pt-4 border-t border-dashed border-border/60">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Lock className="h-4 w-4" />
+                <span className="text-sm font-medium">Paused Listings</span>
+                <span className="text-xs">(Upgrade to Pro to reactivate)</span>
+              </div>
+              {facilities.filter(f => f.suspended).map((facility) => (
+                <ListingCard
+                  key={facility.id}
+                  facility={facility}
+                  onSelect={handleSelectFacility}
+                  onPreview={handlePreview}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Add New Listing Card */}
           <AddListingCard
