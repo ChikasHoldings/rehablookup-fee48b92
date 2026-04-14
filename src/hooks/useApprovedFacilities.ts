@@ -228,7 +228,6 @@ export const useApprovedFacilities = () => {
         ...f,
         facility_services: (servicesMap.get(f.id!) || []).map(name => ({ service_name: name })),
         facility_insurance: (insuranceMap.get(f.id!) || []).map(name => ({ insurance_name: name })),
-        reviewsConfig: reviewsMap.get(f.id!) || null,
       }));
     },
     staleTime: 1000 * 60 * 2, // 2 minutes for fresher data
