@@ -148,7 +148,8 @@ export default function SeekerConcierge() {
           seeker_confirmed, seeker_confirmed_at, placement_confirmed,
           placement_confirmed_at, placed_facility_id, seeker_rating,
           seeker_feedback, user_name,
-          tour_coordination_status, admission_status, move_in_date
+          tour_coordination_status, admission_status, move_in_date,
+          assigned_advisor_id
         `)
         .eq("user_id", userId)
         .in("payment_status", ["paid", "succeeded"])
