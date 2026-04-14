@@ -408,6 +408,64 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
   );
 }
 
+function NotifySeekerCard({ caseData, onRefresh }: { caseData: ConciergeInquiry; onRefresh: () => void }) {
+  const [sending, setSending] = useState(false);
+
+  const handleNotifySeeker = async () => {
+    setSending(true);
+    try {
+      await supabase.functions.invoke("send-concierge-notifications", {
+        body: {
+          type: "facilities_ready_for_review",
+          inquiryId: caseData.id,
+        },
+      });
+
+      await supabase.from("concierge_case_events").insert({
+        inquiry_id: caseData.id,
+        event_type: "seeker_notified_options",
+        event_data: {},
+        actor_type: "admin",
+      });
+
+      toast.success("Seeker has been notified to review provider options.");
+      onRefresh();
+    } catch {
+      toast.error("Failed to notify seeker.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20">
+      <CardContent className="py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">Notify Seeker of Options</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Send email + in-app notification asking the seeker to review and choose from interested facilities.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNotifySeeker}
+            disabled={sending}
+          >
+            {sending ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+            ) : (
+              <Bell className="h-4 w-4 mr-1.5" />
+            )}
+            Notify Seeker
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function EscalateCardInline({ caseData }: { caseData: ConciergeInquiry }) {
   const [open, setOpen] = useState(false);
   return (
