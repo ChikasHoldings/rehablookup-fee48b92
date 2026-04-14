@@ -43,6 +43,7 @@ import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal
 import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
 import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
 import { DashboardTopBar } from "@/components/provider/DashboardTopBar";
+import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
 
 // Compact Metric Card
 function MetricCard({ 
@@ -398,6 +399,14 @@ export default function ProviderDashboardPage() {
               isLoading={creditsLoading || proLoading}
               discountPercent={proStatus.isPro ? 20 : 0}
             />
+
+            {/* Primary KPI Strip */}
+            {facilityId && (
+              <DashboardKPIStrip
+                facilityId={facilityId}
+                isPro={proStatus.isPro}
+              />
+            )}
 
             {/* Metrics Row */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
