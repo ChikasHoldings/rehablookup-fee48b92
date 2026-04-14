@@ -39,6 +39,7 @@ interface Lead {
   facility_id: string;
   level_of_care: string | null;
   location_city_state: string | null;
+  location_zip: string | null;
   urgency: string | null;
   message: string | null;
   source: string | null;
@@ -47,6 +48,21 @@ interface Lead {
   provider_response_status: string | null;
   provider_responded_at: string | null;
   is_unlocked: boolean | null;
+  insurance_type: string | null;
+  insurance_provider: string | null;
+  primary_substance: string[] | null;
+  age_range: string | null;
+  gender: string | null;
+  preferred_contact: string | null;
+  relationship_to_patient: string | null;
+  budget_preference: string | null;
+  dual_diagnosis: string | null;
+  previous_treatment: string | null;
+  previous_treatment_details: string | null;
+  readiness_level: string | null;
+  best_time_to_call: string | null;
+  co_occurring_conditions: string[] | null;
+  special_needs: string[] | null;
 }
 
 interface LeadWithFacility extends Lead {
@@ -102,7 +118,7 @@ export default function ProviderInquiriesPage() {
       
       const { data: allLeads, error } = await supabase
         .from("leads_provider_view")
-        .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at")
+        .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, insurance_provider, message, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, age_range, gender, preferred_contact, relationship_to_patient, budget_preference, dual_diagnosis, previous_treatment, previous_treatment_details, readiness_level, best_time_to_call, co_occurring_conditions, special_needs")
         .order("created_at", { ascending: false });
       
       if (error) throw error;
