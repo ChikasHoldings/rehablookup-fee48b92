@@ -475,11 +475,19 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep(requestId, "ERROR", { message: errorMessage });
+    // Return 400 for client/validation errors, 500 for unexpected failures
+    const isClientError = errorMessage.includes("required") ||
+      errorMessage.includes("Invalid") ||
+      errorMessage.includes("not verified") ||
+      errorMessage.includes("Session ID") ||
+      errorMessage.includes("HIPAA") ||
+      errorMessage.includes("Name is") ||
+      errorMessage.includes("email format");
     return new Response(
       JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
+        status: isClientError ? 400 : 500,
       }
     );
   }

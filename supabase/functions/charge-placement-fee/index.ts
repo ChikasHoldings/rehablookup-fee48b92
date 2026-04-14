@@ -110,10 +110,10 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "Processing placement fee", { inquiryId, facilityId, feeType, adminInitiated, isInternational });
 
-    // Verify the inquiry and placement
+    // Verify the inquiry and placement — explicit column list per project guidelines
     const { data: inquiry, error: inquiryError } = await supabase
       .from('concierge_inquiries')
-      .select('*')
+      .select('id, status, placement_confirmed, placed_facility_id, payment_amount_cents, provider_fee_cents, provider_fee_status, provider_fee_type, provider_invoice_id, assigned_advisor_id')
       .eq('id', inquiryId)
       .single();
 
