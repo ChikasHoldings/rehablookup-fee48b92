@@ -229,6 +229,12 @@ export function IntroductionCard({
           </>
         )}
 
+        {/* ─── Speed Nudge ─── */}
+        <div className="px-4 sm:px-5 py-1.5 bg-primary/5 border-t flex items-center gap-1.5 text-xs text-primary font-medium">
+          <span>⚡</span>
+          <span>Faster response increases admission chances</span>
+        </div>
+
         {/* ─── Action Bar ─── */}
         <div className="px-4 sm:px-5 py-3 bg-muted/20 border-t flex gap-3" onClick={(e) => e.stopPropagation()}>
           <Button

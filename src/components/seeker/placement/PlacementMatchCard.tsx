@@ -16,6 +16,7 @@ import {
   Sparkles,
   Flame,
   Zap,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -133,9 +134,9 @@ export function PlacementMatchCard({
             </div>
           </div>
 
-          {/* Competition Signals */}
-          {competitionSignals.length > 0 && !isPlaced && (
-            <div className="flex flex-wrap items-center gap-2 px-4 pb-2">
+          {/* Competition Signals + Urgency */}
+          {!isPlaced && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 pb-2">
               {competitionSignals.map((signal, i) => {
                 const SignalIcon = signal.icon;
                 return (
@@ -145,6 +146,10 @@ export function PlacementMatchCard({
                   </div>
                 );
               })}
+              <div className="flex items-center gap-1 text-xs font-medium text-destructive">
+                <Clock className="h-3 w-3" />
+                <span>Availability may change quickly</span>
+              </div>
             </div>
           )}
           
