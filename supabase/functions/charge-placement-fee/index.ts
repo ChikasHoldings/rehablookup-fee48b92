@@ -121,6 +121,26 @@ Deno.serve(async (req) => {
       throw new Error("Inquiry not found");
     }
 
+    // Idempotency guard: if already paid, return success
+    if (inquiry.provider_fee_status === 'paid') {
+      logStep(requestId, "Fee already paid — idempotent return", { inquiryId });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          charged: true,
+          alreadyPaid: true,
+          amountCents: inquiry.provider_fee_cents,
+          message: "Fee already paid",
+          requestId,
+          _version: VERSION,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
     // For admin-initiated charges, update the inquiry to mark placement
     if (adminInitiated) {
       logStep(requestId, "Admin-initiated charge, updating placement status");
