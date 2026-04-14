@@ -25,7 +25,11 @@ type NotificationType =
   | 'placement_complete'   // Both: Congratulations on the placement!
   | 'invoice_issued'       // Provider: Your placement fee invoice
   | 'invoice_paid'         // Provider: Payment received
-  | 'signup_prompt';       // Seeker (no account): Create account to track
+  | 'signup_prompt'        // Seeker (no account): Create account to track
+  | 'tour_completed'       // Both: Tour has been completed
+  | 'admission_updated'    // Both: Admission status changed
+  | 'move_in_scheduled'    // Both: Move-in date has been set
+  | 'moved_in';            // Both: Client has moved in
 
 interface NotificationRequest {
   type: NotificationType;
@@ -106,7 +110,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate notification type
-    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'facilities_ready_for_review', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt'];
+    const validTypes = ['intake_received', 'matches_found', 'introductions_sent', 'facilities_ready_for_review', 'provider_interested', 'provider_declined', 'seeker_confirmed', 'provider_confirmed', 'placement_complete', 'invoice_issued', 'invoice_paid', 'signup_prompt', 'tour_completed', 'admission_updated', 'move_in_scheduled', 'moved_in'];
     if (!validTypes.includes(type)) {
       throw new Error("Invalid notification type");
     }
@@ -206,6 +210,22 @@ Deno.serve(async (req) => {
         if (!inquiry.user_id) {
           await sendSignupPromptEmail(resend, inquiry, results);
         }
+        break;
+
+      case 'tour_completed':
+        await sendAdmissionStageNotification(resend, inquiry, facility, supabase, results, 'tour_completed', metadata);
+        break;
+
+      case 'admission_updated':
+        await sendAdmissionStageNotification(resend, inquiry, facility, supabase, results, 'admission_updated', metadata);
+        break;
+
+      case 'move_in_scheduled':
+        await sendAdmissionStageNotification(resend, inquiry, facility, supabase, results, 'move_in_scheduled', metadata);
+        break;
+
+      case 'moved_in':
+        await sendAdmissionStageNotification(resend, inquiry, facility, supabase, results, 'moved_in', metadata);
         break;
     }
 
@@ -546,6 +566,7 @@ async function sendIntroductionsSentEmail(
     }).select('id').single();
     
     if (notif) results.push({ recipient: inquiry.user_id, notificationId: notif.id });
+  }
 }
 
 // Facilities ready for review — seeker can now choose from interested providers
@@ -609,6 +630,140 @@ async function sendFacilitiesReadyForReviewEmail(
     if (notif) results.push({ recipient: inquiry.user_id, notificationId: notif.id });
   }
 }
+
+// ============================================================================
+// ADMISSION STAGE NOTIFICATIONS
+// ============================================================================
+
+async function sendAdmissionStageNotification(
+  resend: Resend,
+  inquiry: InquiryData,
+  facility: FacilityData | null,
+  supabase: any,
+  results: Array<{ recipient: string; emailId?: string; notificationId?: string }>,
+  stage: 'tour_completed' | 'admission_updated' | 'move_in_scheduled' | 'moved_in',
+  metadata?: Record<string, unknown>
+) {
+  const firstName = inquiry.user_name.split(' ')[0];
+  const caseId = inquiry.id.slice(0, 8).toUpperCase();
+  const facilityName = facility?.name || 'your matched facility';
+
+  const stageConfig: Record<string, { icon: string; title: string; seekerSubject: string; seekerBody: string; adminTitle: string; adminMsg: string; providerTitle: string; providerMsg: string }> = {
+    tour_completed: {
+      icon: '✅',
+      title: 'Tour Completed',
+      seekerSubject: `Tour Completed - Case #${caseId}`,
+      seekerBody: `Your tour with <strong>${facilityName}</strong> has been marked as completed. Your advisor will be in touch with next steps regarding admission.`,
+      adminTitle: 'Tour Completed',
+      adminMsg: `Tour completed for Case #${caseId} at ${facilityName}. Next: coordinate admission.`,
+      providerTitle: 'Tour Completed',
+      providerMsg: `Tour for Case #${caseId} has been completed. Awaiting admission coordination.`,
+    },
+    admission_updated: {
+      icon: '📋',
+      title: 'Admission Update',
+      seekerSubject: `Admission Update - Case #${caseId}`,
+      seekerBody: `There's an update on your admission with <strong>${facilityName}</strong>. Your advisor is coordinating the details — no action needed from you right now.`,
+      adminTitle: 'Admission Status Updated',
+      adminMsg: `Admission status updated for Case #${caseId}. Status: ${(metadata as any)?.admission_status || 'updated'}.`,
+      providerTitle: 'Admission Update',
+      providerMsg: `Admission status for Case #${caseId} has been updated.`,
+    },
+    move_in_scheduled: {
+      icon: '📅',
+      title: 'Move-In Scheduled',
+      seekerSubject: `Move-In Date Set - Case #${caseId}`,
+      seekerBody: `Great news! A move-in date has been set for your placement at <strong>${facilityName}</strong>. Your advisor will share the details and help you prepare.`,
+      adminTitle: 'Move-In Scheduled',
+      adminMsg: `Move-in date set for Case #${caseId} at ${facilityName}. Date: ${(metadata as any)?.move_in_date || 'TBD'}.`,
+      providerTitle: 'Move-In Scheduled',
+      providerMsg: `Move-in date has been scheduled for Case #${caseId}.`,
+    },
+    moved_in: {
+      icon: '🏠',
+      title: 'Successfully Moved In',
+      seekerSubject: `Welcome to ${facilityName} - Case #${caseId}`,
+      seekerBody: `Congratulations! Your move-in at <strong>${facilityName}</strong> is complete. We're so proud of you for taking this step. Your advisor is here if you need anything.`,
+      adminTitle: 'Client Moved In',
+      adminMsg: `${inquiry.user_name} has moved in at ${facilityName} (Case #${caseId}). Placement lifecycle complete.`,
+      providerTitle: 'Client Moved In',
+      providerMsg: `Client for Case #${caseId} has successfully moved in. Welcome them to your program!`,
+    },
+  };
+
+  const config = stageConfig[stage];
+  if (!config) return;
+
+  // Seeker email
+  const seekerHtml = emailWrapper(`
+    ${emailHeader(config.title, `Case #${caseId}`, config.icon)}
+    <tr>
+      <td style="padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <p style="margin: 0 0 20px 0; font-size: 16px; color: #1a1a1a;">
+          Hi ${firstName},
+        </p>
+        <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+          ${config.seekerBody}
+        </p>
+        ${ctaButton('View Your Case', 'https://rehablookup.com/account/concierge')}
+      </td>
+    </tr>
+    ${emailFooter()}
+  `);
+
+  try {
+    const { data: emailData, error: emailError } = await resend.emails.send({
+      from: "RehabLookup Concierge <no-reply@rehablookup.com>",
+      to: [inquiry.user_email],
+      subject: config.seekerSubject,
+      html: seekerHtml,
+    });
+
+    if (!emailError) {
+      results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
+    }
+  } catch (e) {
+    logStep("Seeker admission email failed", { error: String(e) });
+  }
+
+  // Seeker in-app notification
+  if (inquiry.user_id) {
+    await supabase.from('seeker_notifications').insert({
+      user_id: inquiry.user_id,
+      type: `concierge_${stage}`,
+      title: config.title,
+      message: config.seekerBody.replace(/<[^>]*>/g, ''),
+      link: '/account/concierge',
+      metadata: { inquiry_id: inquiry.id, ...(metadata || {}) },
+    });
+
+    // SMS for move-in and moved-in milestones
+    if (stage === 'move_in_scheduled' || stage === 'moved_in') {
+      const smsMsg = stage === 'moved_in'
+        ? `RehabLookup: 🏠 Congratulations on your move-in! We're rooting for your recovery.`
+        : `RehabLookup: 📅 Your move-in date has been set! Check your dashboard for details.`;
+      await sendSeekerSmsNotification(supabase, inquiry.user_id, smsMsg);
+    }
+  }
+
+  // Admin notification
+  await createAdminNotification(supabase, {
+    type: `concierge_${stage}`,
+    title: config.adminTitle,
+    message: config.adminMsg,
+    metadata: { inquiry_id: inquiry.id, facility_id: facility?.id, ...(metadata || {}) },
+  });
+
+  // Provider notification
+  if (facility) {
+    await supabase.from('provider_notifications').insert({
+      user_id: facility.user_id,
+      type: `concierge_${stage}`,
+      title: config.providerTitle,
+      message: config.providerMsg,
+      metadata: { inquiry_id: inquiry.id, facility_id: facility.id },
+    });
+  }
 }
 
 // Provider interested — admin notification only (brokerage model: advisor coordinates, not direct contact)
