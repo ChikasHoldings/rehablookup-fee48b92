@@ -194,11 +194,31 @@ Deno.serve(async (req) => {
     }
 
     const resend = new Resend(resendApiKey);
-    const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan }: WelcomeEmailRequest = await req.json();
+    const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan, idempotencyKey }: WelcomeEmailRequest = await req.json();
     logStep("Received request", { facilityId, facilityName, providerEmail, selectedPlan });
 
-    const emailHtml = generateWelcomeEmail(providerFirstName, facilityName, selectedPlan);
-    const isPro = selectedPlan === "pro" || selectedPlan === "professional" || selectedPlan === "featured";
+    // Server-side idempotency: prevent duplicate welcome emails
+    const dedupKey = idempotencyKey || `welcome-${facilityId}`;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: existing } = await supabase
+      .from("email_tracking_events")
+      .select("id")
+      .eq("email_id", dedupKey)
+      .eq("email_type", "provider_welcome")
+      .eq("event_type", "sent")
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      logStep("Duplicate detected, skipping", { dedupKey });
+      return new Response(
+        JSON.stringify({ success: true, deduplicated: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const { error: emailError } = await resend.emails.send({
       from: "RehabLookup <no-reply@rehablookup.com>",
