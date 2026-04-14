@@ -161,8 +161,8 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
               <LegendDot color="hsl(280, 65%, 60%)" label="Website" />
             </div>
           </div>
-          <div className="rounded-lg border bg-muted/10 p-3">
-            <div className="h-[220px]">
+          <div className="rounded-lg border bg-muted/10 p-2 sm:p-3">
+            <div className="h-[180px] sm:h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={analytics.dailyTrends} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
                   <defs>
