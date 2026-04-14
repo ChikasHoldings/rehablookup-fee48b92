@@ -501,6 +501,7 @@ Deno.serve(async (req) => {
 
               totalSent++;
               log("INFO", `${stage.name} email sent`, { leadId: lead.id, email, tier: engagement.tier });
+              await sleep(BULK_SEND_DELAY_MS);
             } catch (e) {
               log("WARN", `Failed to send ${stage.name} email`, { leadId: lead.id, error: String(e) });
             }

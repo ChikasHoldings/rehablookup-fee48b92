@@ -433,6 +433,7 @@ Deno.serve(async (req) => {
 
         emailsSent.push(provider.email);
         logStep("Retention email sent", { email: provider.email, subject });
+        await sleep(BULK_SEND_DELAY_MS);
 
       } catch (err) {
         logStep("Email send error", { email: provider.email, error: String(err) });

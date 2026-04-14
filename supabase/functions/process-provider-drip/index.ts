@@ -466,6 +466,7 @@ Deno.serve(async (req) => {
           .eq("id", drip.id);
 
         sent++;
+        await sleep(BULK_SEND_DELAY_MS);
       } catch (emailError) {
         console.error(`[DRIP v${VERSION}] Error sending day ${drip.day_number} to ${drip.provider_email}:`, emailError);
         errors++;
