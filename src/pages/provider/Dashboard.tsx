@@ -671,7 +671,7 @@ export default function ProviderDashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground">Upgrade to Pro</p>
-                      <p className="text-xs text-muted-foreground">20% off unlocks + featured placement</p>
+                      <p className="text-xs text-muted-foreground">Increase visibility and admissions — save 20% on every lead</p>
                     </div>
                     <Button size="sm" className="h-7 text-xs bg-accent hover:bg-accent/90" asChild>
                       <Link to="/provider/pro-upgrade">
