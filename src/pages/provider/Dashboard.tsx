@@ -42,6 +42,7 @@ import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
 import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
 import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
+import { DashboardTopBar } from "@/components/provider/DashboardTopBar";
 
 // Compact Metric Card
 function MetricCard({ 
