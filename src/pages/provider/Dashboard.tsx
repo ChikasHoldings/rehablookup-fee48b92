@@ -42,7 +42,7 @@ import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
 import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
 import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
-import { DashboardTopBar } from "@/components/provider/DashboardTopBar";
+
 import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
 import { DashboardLeadFeed } from "@/components/provider/DashboardLeadFeed";
 import { DashboardFacilityPerformancePanel } from "@/components/provider/DashboardFacilityPerformancePanel";
@@ -381,13 +381,6 @@ export default function ProviderDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Top Bar - Credits, Warnings, Pro Status */}
-            <DashboardTopBar
-              balanceCents={creditsData?.balance_cents ?? 0}
-              isPro={proStatus.isPro}
-              isLoading={creditsLoading || proLoading}
-              discountPercent={proStatus.isPro ? 20 : 0}
-            />
 
             {/* Primary KPI Strip */}
             {facilityId && (
