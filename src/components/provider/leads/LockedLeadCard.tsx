@@ -1,9 +1,9 @@
-import { Lock, Sparkles, Phone, Mail, Clock, Zap, Building2, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Lock, Sparkles, Phone, Mail, Clock, Zap, Building2, Timer } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
+import { useLeadCountdown } from "@/hooks/useLeadCountdown";
 
 interface LockedLeadCardProps {
   leadId: string;
@@ -32,12 +32,10 @@ export function LockedLeadCard({
   isSelected,
   onUnlockSuccess,
 }: LockedLeadCardProps) {
-  // Get first letter of blurred name
   const initial = name.charAt(0).toUpperCase();
-  
-  // Blur the name - show first letter and dots
   const blurredName = `${initial}${"●".repeat(Math.min(name.length - 1, 8))}`;
-  
+  const countdown = useLeadCountdown(createdAt);
+
   return (
     <div
       className={cn(
@@ -85,7 +83,6 @@ export function LockedLeadCard({
           
           {/* Visible metadata */}
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            {/* Facility Badge */}
             {showFacility && facilityName && (
               <Badge variant="outline" className="h-5 text-[10px] px-1.5 border-primary/30 bg-primary/5 text-primary font-medium">
                 <Building2 className="h-2.5 w-2.5 mr-0.5" />
@@ -111,6 +108,20 @@ export function LockedLeadCard({
                 Urgent
               </Badge>
             )}
+          </div>
+
+          {/* Countdown Timer */}
+          <div className={cn(
+            "mt-2.5 flex items-center gap-1.5 text-xs font-mono font-semibold rounded-md px-2 py-1 w-fit",
+            countdown.urgencyTier === "critical" && "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 animate-pulse",
+            countdown.urgencyTier === "warning" && "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+            countdown.urgencyTier === "safe" && "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+          )}>
+            <Timer className="h-3.5 w-3.5" />
+            {countdown.isExpired 
+              ? "Expired — redistributing"
+              : `⏳ Exclusive access expires in ${countdown.formatted}`
+            }
           </div>
         </div>
       </div>
