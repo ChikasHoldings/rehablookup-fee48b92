@@ -7,6 +7,7 @@ import {
   Edit3,
   Eye,
   Users,
+  Lock,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ interface ListingCardProps {
     logo_url: string | null;
     gallery_urls?: string[] | null;
     created_at: string;
+    suspended?: boolean;
   };
   onSelect: (facilityId: string) => void;
   onPreview?: (facility: { name: string; slug: string }) => void;
@@ -65,7 +67,10 @@ const getStatusConfig = (status: string) => {
 };
 
 export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps) {
-  const statusConfig = getStatusConfig(facility.status);
+  const isSuspended = facility.suspended === true;
+  const statusConfig = isSuspended 
+    ? { label: "Paused", description: "Upgrade to reactivate", icon: Lock, dotColor: "bg-muted-foreground", badgeClass: "bg-muted text-muted-foreground border-border" }
+    : getStatusConfig(facility.status);
   const StatusIcon = statusConfig.icon;
   const createdDate = format(new Date(facility.created_at), "MMM d, yyyy");
   
@@ -110,7 +115,12 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
   });
 
   return (
-    <Card className="group border-border/60 shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 overflow-hidden">
+    <Card className={cn(
+      "group border-border/60 shadow-sm transition-all duration-300 overflow-hidden",
+      isSuspended 
+        ? "opacity-60 border-dashed border-muted-foreground/30" 
+        : "hover:shadow-lg hover:border-primary/30"
+    )}>
       <CardContent className="p-0">
         <div className="flex flex-col sm:flex-row">
           {/* Image Section */}
@@ -191,14 +201,21 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
                     <span className="hidden xs:inline sm:inline">Preview</span>
                   </Button>
                 )}
-                <Button
-                  size="sm"
-                  className="gap-1 sm:gap-1.5 h-7 sm:h-8 px-2.5 sm:px-3 text-[11px] sm:text-xs"
-                  onClick={() => onSelect(facility.id)}
-                >
-                  <Edit3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                  <span>Edit</span>
-                </Button>
+                {isSuspended ? (
+                  <Badge variant="outline" className="text-[10px] sm:text-xs text-muted-foreground">
+                    <Lock className="h-3 w-3 mr-1" />
+                    Upgrade to Pro to reactivate
+                  </Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="gap-1 sm:gap-1.5 h-7 sm:h-8 px-2.5 sm:px-3 text-[11px] sm:text-xs"
+                    onClick={() => onSelect(facility.id)}
+                  >
+                    <Edit3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span>Edit</span>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
