@@ -415,6 +415,7 @@ export default function ProviderDashboardPage() {
                 facilityId={facilityId}
                 isPro={proStatus.isPro}
                 viewsCount={viewsCount}
+                reviewCount={reviewCount}
               />
             )}
 
