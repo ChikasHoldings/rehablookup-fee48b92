@@ -1200,6 +1200,9 @@ Deno.serve(async (req) => {
                   </div>
                 </div>
               `,
+            }, {
+              emailType: "stripe_new_subscription_admin",
+              idempotencyKey: `stripe-newsub-admin-${event.id}`,
             });
           } catch (emailError) {
             logStep("Email failed", { error: String(emailError) });
