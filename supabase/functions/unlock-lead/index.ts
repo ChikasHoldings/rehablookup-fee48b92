@@ -554,6 +554,42 @@ Deno.serve(async (req) => {
       logStep(requestId, "WARN - Failed to track unlock event", { error: String(trackError) });
     }
 
+    // ── Auto-reload check: fire-and-forget after credit deduction ──
+    if (paymentMethod === 'credits') {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+        
+        // Get updated balance after deduction
+        const { data: updatedCredits } = await supabaseAdmin
+          .from("provider_credits")
+          .select("balance_cents")
+          .eq("provider_id", user.id)
+          .maybeSingle();
+        
+        const currentBalanceAfterUnlock = updatedCredits?.balance_cents ?? 0;
+        
+        // Fire-and-forget: don't block the unlock response
+        fetch(`${supabaseUrl}/functions/v1/auto-reload-credits`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceRoleKey}`,
+          },
+          body: JSON.stringify({
+            providerId: user.id,
+            currentBalanceCents: currentBalanceAfterUnlock,
+          }),
+        }).catch(err => {
+          logStep(requestId, "WARN - Auto-reload trigger failed (non-blocking)", { error: String(err) });
+        });
+        
+        logStep(requestId, "Auto-reload check triggered", { currentBalanceAfterUnlock });
+      } catch (autoReloadErr) {
+        logStep(requestId, "WARN - Auto-reload setup error (non-blocking)", { error: String(autoReloadErr) });
+      }
+    }
+
     logStep(requestId, "Lead unlock completed successfully", { 
       unlockId: unlock.id, 
       pricePaid: unlockPrice,

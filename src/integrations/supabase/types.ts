@@ -4402,6 +4402,54 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_auto_reload_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          facility_id: string | null
+          id: string
+          provider_id: string
+          reload_amount_cents: number
+          threshold_cents: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          facility_id?: string | null
+          id?: string
+          provider_id: string
+          reload_amount_cents?: number
+          threshold_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          facility_id?: string | null
+          id?: string
+          provider_id?: string
+          reload_amount_cents?: number
+          threshold_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_auto_reload_settings_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_auto_reload_settings_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_credits: {
         Row: {
           balance_cents: number

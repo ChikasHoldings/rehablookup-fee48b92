@@ -107,11 +107,11 @@ export function useProviderCredits(facilityId?: string) {
       !hasWarnedRef.current
     ) {
       toast.warning(
-        `Your credit balance is running low ($${(currentBalance / 100).toFixed(2)}). Consider adding more credits to continue unlocking leads.`,
+        `Your credit balance is running low ($${(currentBalance / 100).toFixed(2)}). Enable auto-reload or add credits to keep unlocking leads.`,
         { 
           duration: 8000,
           action: {
-            label: "Add Credits",
+            label: "Set Up Auto-Reload",
             onClick: () => window.location.href = "/provider/billing",
           },
         }

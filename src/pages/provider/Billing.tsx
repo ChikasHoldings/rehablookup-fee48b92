@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { lazy, Suspense } from "react";
 const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
+import { AutoReloadSettings } from "@/components/provider/AutoReloadSettings";
 
 const CREDIT_PACKAGES = [
   { amountCents: 20000, label: "$200", credits: 200, bonusCents: 0, badge: null, savingsNote: null, perLead: "~4-13 leads" },
@@ -440,6 +441,9 @@ export default function ProviderBillingPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Auto-Reload Settings */}
+        <AutoReloadSettings facilityId={facilityId} />
 
         {/* Recent Transactions */}
         <Card>
