@@ -38,6 +38,7 @@ import {
   SeekerPlacementModal,
   SeekerProviderReviewCard,
   AdmissionStatusCard,
+  AdvisorTrustCard,
 } from "@/components/seeker/placement";
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 
