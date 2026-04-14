@@ -110,15 +110,35 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "Processing placement fee", { inquiryId, facilityId, feeType, adminInitiated, isInternational });
 
-    // Verify the inquiry and placement
+    // Verify the inquiry and placement — explicit column list per project guidelines
     const { data: inquiry, error: inquiryError } = await supabase
       .from('concierge_inquiries')
-      .select('*')
+      .select('id, status, placement_confirmed, placed_facility_id, payment_amount_cents, provider_fee_cents, provider_fee_status, provider_fee_type, provider_invoice_id, assigned_advisor_id')
       .eq('id', inquiryId)
       .single();
 
     if (inquiryError || !inquiry) {
       throw new Error("Inquiry not found");
+    }
+
+    // Idempotency guard: if already paid, return success
+    if (inquiry.provider_fee_status === 'paid') {
+      logStep(requestId, "Fee already paid — idempotent return", { inquiryId });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          charged: true,
+          alreadyPaid: true,
+          amountCents: inquiry.provider_fee_cents,
+          message: "Fee already paid",
+          requestId,
+          _version: VERSION,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
     }
 
     // For admin-initiated charges, update the inquiry to mark placement
@@ -354,7 +374,8 @@ Deno.serve(async (req) => {
       throw new Error("No valid customer ID found for payment processing");
     }
 
-    // Create payment intent
+    // Create payment intent with idempotency key to prevent duplicate charges
+    const stripeIdempotencyKey = `placement_fee_${inquiryId}_${facilityId}`;
     const paymentIntent = await stripe.paymentIntents.create({
       amount: feeCents,
       currency: 'usd',
@@ -368,6 +389,8 @@ Deno.serve(async (req) => {
         facility_id: facilityId,
         fee_type: actualFeeType,
       },
+    }, {
+      idempotencyKey: stripeIdempotencyKey,
     });
 
     logStep(requestId, "Payment intent created", { 
