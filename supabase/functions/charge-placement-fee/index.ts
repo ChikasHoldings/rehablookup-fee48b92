@@ -374,7 +374,8 @@ Deno.serve(async (req) => {
       throw new Error("No valid customer ID found for payment processing");
     }
 
-    // Create payment intent
+    // Create payment intent with idempotency key to prevent duplicate charges
+    const stripeIdempotencyKey = `placement_fee_${inquiryId}_${facilityId}`;
     const paymentIntent = await stripe.paymentIntents.create({
       amount: feeCents,
       currency: 'usd',
@@ -388,6 +389,8 @@ Deno.serve(async (req) => {
         facility_id: facilityId,
         fee_type: actualFeeType,
       },
+    }, {
+      idempotencyKey: stripeIdempotencyKey,
     });
 
     logStep(requestId, "Payment intent created", { 
