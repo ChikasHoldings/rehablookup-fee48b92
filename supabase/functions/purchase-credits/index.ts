@@ -15,11 +15,11 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
   console.log(`[PURCHASE-CREDITS] [${VERSION}] [${requestId}] [${timestamp}] ${step}${detailsStr}`);
 };
 
-// Fixed credit tiers — $200, $500, $1,000 (with $100 bonus)
+// Fixed credit tiers — $200, $500 (+10% bonus), $1,000 (+20% bonus)
 const CREDIT_PACKAGES = [
   { amountCents: 20000, label: "$200", creditsCents: 20000, bonusCents: 0 },
-  { amountCents: 50000, label: "$500", creditsCents: 50000, bonusCents: 0 },
-  { amountCents: 100000, label: "$1,000", creditsCents: 100000, bonusCents: 10000 },
+  { amountCents: 50000, label: "$500", creditsCents: 50000, bonusCents: 5000 },
+  { amountCents: 100000, label: "$1,000", creditsCents: 100000, bonusCents: 20000 },
 ];
 
 const VALID_AMOUNTS: Set<number> = new Set(CREDIT_PACKAGES.map(p => p.amountCents));

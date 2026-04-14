@@ -51,9 +51,9 @@ import { lazy, Suspense } from "react";
 const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
 
 const CREDIT_PACKAGES = [
-  { amountCents: 20000, label: "$200", credits: 200, bonusCents: 0, badge: null, perLead: "~4-13 leads" },
-  { amountCents: 50000, label: "$500", credits: 500, bonusCents: 0, badge: null, perLead: "~10-33 leads" },
-  { amountCents: 100000, label: "$1,000", credits: 1000, bonusCents: 10000, badge: "Best Value", perLead: "~20-66 leads + $100 bonus" },
+  { amountCents: 20000, label: "$200", credits: 200, bonusCents: 0, badge: null, savingsNote: null, perLead: "~4-13 leads" },
+  { amountCents: 50000, label: "$500", credits: 550, bonusCents: 5000, badge: "Popular", savingsNote: "+10% bonus", perLead: "~11-36 leads" },
+  { amountCents: 100000, label: "$1,000", credits: 1200, bonusCents: 20000, badge: "Best Value", savingsNote: "+20% bonus", perLead: "~24-80 leads" },
 ];
 
 const PRO_BENEFITS = [
@@ -706,13 +706,18 @@ export default function ProviderBillingPage() {
                   const isPkgLoading = purchaseLoading === pkg.amountCents;
                   const isDisabled = purchaseLoading !== null;
                   const isBest = pkg.badge === "Best Value";
+                  const isPopular = pkg.badge === "Popular";
+                  const isHighlighted = isBest || isPopular;
                   return (
                     <div key={pkg.amountCents} className="relative">
-                      {isBest && (
+                      {pkg.badge && (
                         <div className="absolute -top-2.5 left-4 z-10">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                          <span className={cn(
+                            "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm",
+                            isBest ? "bg-emerald-600" : "bg-primary"
+                          )}>
                             <Star className="h-2.5 w-2.5 fill-current" />
-                            Best Value
+                            {pkg.badge}
                           </span>
                         </div>
                       )}
@@ -727,13 +732,15 @@ export default function ProviderBillingPage() {
                           isPkgLoading && "border-primary bg-primary/5 shadow-md scale-[1.01]",
                           isBest && !isPkgLoading
                             ? "border-emerald-500/50 bg-emerald-50/60 dark:bg-emerald-950/20 hover:border-emerald-500/70"
+                            : isPopular && !isPkgLoading
+                            ? "border-primary/40 bg-primary/[0.04] hover:border-primary/60"
                             : !isPkgLoading && "border-border hover:border-primary/40 hover:bg-primary/[0.03]"
                         )}
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
                           <div className={cn(
                             "h-11 w-11 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 transition-colors",
-                            isBest
+                            isHighlighted
                               ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
                               : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                           )}>
@@ -744,13 +751,13 @@ export default function ProviderBillingPage() {
                               {pkg.credits.toLocaleString()} credits
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              {pkg.bonusCents > 0 ? (
+                              {pkg.savingsNote ? (
                                 <>
-                                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">+${(pkg.bonusCents / 100).toFixed(0)} bonus included</span>
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{pkg.savingsNote} · +${(pkg.bonusCents / 100).toFixed(0)} free</span>
                                   <span className="mx-1.5 text-border">·</span>
                                 </>
                               ) : null}
-                              {pkg.perLead.replace(/ \+ \$100 bonus/, "")}
+                              {pkg.perLead}
                             </p>
                           </div>
                         </div>
