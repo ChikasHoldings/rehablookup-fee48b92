@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
         } else if (setting.setting_key === "extended_window_hours") {
           extendedWindowHours = (setting.setting_value as { value: number })?.value ?? 48;
         } else if (setting.setting_key === "max_redistribution_facilities") {
-          maxRedistributionFacilities = (setting.setting_value as { value: number })?.value ?? 3;
+          maxRedistributionFacilities = Math.min((setting.setting_value as { value: number })?.value ?? 2, 5); // Cap at 5, default 2
         }
       }
     }
