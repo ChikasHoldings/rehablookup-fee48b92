@@ -120,6 +120,10 @@ Deno.serve(async (req) => {
           to: [email],
           subject: `${unseenFacilities.length} New Treatment Center${unseenFacilities.length > 1 ? "s" : ""} Near ${location}`,
           html: generateNewFacilitiesEmail(name, location, unseenFacilities),
+          headers: {
+            "List-Unsubscribe": `<mailto:no-reply@rehablookup.com?subject=unsubscribe>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
         });
 
         // Track alerts

@@ -129,6 +129,25 @@ export async function sendEmailWithRetry(
   const trackingId = idempotencyKey || crypto.randomUUID();
   let lastError = "";
 
+  // Auto-generate plain-text fallback for better deliverability
+  const plainText = normalizedParams.html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/tr>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<a[^>]+href="([^"]*)"[^>]*>([^<]*)<\/a>/gi, "$2 ($1)")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const sendParams: Record<string, unknown> = {
@@ -136,6 +155,7 @@ export async function sendEmailWithRetry(
         to: normalizedParams.to,
         subject: normalizedParams.subject,
         html: normalizedParams.html,
+        text: plainText,
       };
       if (normalizedParams.headers) sendParams.headers = normalizedParams.headers;
       if (normalizedParams.replyTo) sendParams.reply_to = normalizedParams.replyTo;

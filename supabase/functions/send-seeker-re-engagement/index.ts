@@ -100,6 +100,10 @@ Deno.serve(async (req) => {
           to: [email],
           subject: "We're Still Here to Help You Find Treatment 💙",
           html: generateReEngagementEmail(name, location),
+          headers: {
+            "List-Unsubscribe": `<mailto:no-reply@rehablookup.com?subject=unsubscribe>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
         });
 
         // Track the send

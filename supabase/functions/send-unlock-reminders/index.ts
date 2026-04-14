@@ -482,6 +482,10 @@ Deno.serve(async (req) => {
                 to: email,
                 subject: stage.subject(facility.name),
                 html: stage.getEmail(facility.name, leadPreview, dashboardUrl, creditCost),
+                headers: {
+                  "List-Unsubscribe": `<mailto:no-reply@rehablookup.com?subject=unsubscribe>`,
+                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+                },
               });
 
               await supabase.from("notification_events").insert({
