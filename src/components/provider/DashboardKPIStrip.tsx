@@ -3,11 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Inbox,
   Unlock,
-  Eye,
-  Star,
+  AlertCircle,
+  DollarSign,
   Zap,
   TrendingUp,
-  Sparkles,
+  Crown,
   ArrowRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -27,8 +27,8 @@ interface DashboardKPIStripProps {
 interface WeeklyKPIs {
   received: number;
   unlocked: number;
-  views: number;
-  reviews: number;
+  missed: number;
+  estRevenueLost: number;
 }
 
 export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: DashboardKPIStripProps) {
@@ -37,33 +37,21 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
   const { data: kpis, isLoading } = useQuery({
     queryKey: ["dashboard-kpi-strip", facilityId, weekStart],
     queryFn: async (): Promise<WeeklyKPIs> => {
-      // Fetch leads, views, and reviews in parallel
-      const [leadsResult, viewsResult, reviewsResult] = await Promise.all([
-        supabase
-          .from("leads_provider_view")
-          .select("id, is_unlocked")
-          .eq("facility_id", facilityId)
-          .gte("created_at", weekStart)
-          .limit(500),
-        supabase
-          .from("facility_views")
-          .select("view_count")
-          .eq("facility_id", facilityId)
-          .gte("view_date", weekStart.split("T")[0]),
-        supabase
-          .from("facility_reviews")
-          .select("id", { count: "exact", head: true })
-          .eq("facility_id", facilityId)
-          .eq("status", "approved"),
-      ]);
+      // Fetch leads for the week
+      const { data } = await supabase
+        .from("leads_provider_view")
+        .select("id, is_unlocked")
+        .eq("facility_id", facilityId)
+        .gte("created_at", weekStart)
+        .limit(500);
 
-      const leads = leadsResult.data || [];
+      const leads = data || [];
       const received = leads.length;
       const unlocked = leads.filter(l => l.is_unlocked).length;
-      const views = (viewsResult.data || []).reduce((sum, v) => sum + (v.view_count || 0), 0);
-      const reviews = reviewsResult.count || 0;
+      const missed = received - unlocked;
+      const estRevenueLost = missed * 5000;
 
-      return { received, unlocked, views, reviews };
+      return { received, unlocked, missed, estRevenueLost };
     },
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 3,
@@ -94,34 +82,38 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
 
   const effectiveSavings = proSavingsCents || monthlySavings;
 
+  const missed = kpis?.missed ?? 0;
+  const estRevenueLost = kpis?.estRevenueLost ?? 0;
+
   const metrics = [
     {
       label: "Leads Received",
-      value: kpis?.received ?? 0,
+      value: String(kpis?.received ?? 0),
       icon: Inbox,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
     },
     {
       label: "Leads Unlocked",
-      value: kpis?.unlocked ?? 0,
+      value: String(kpis?.unlocked ?? 0),
       icon: Unlock,
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-600 dark:text-emerald-400",
     },
     {
-      label: "Views",
-      value: kpis?.views ?? 0,
-      icon: Eye,
-      iconBg: "bg-blue-500/10",
-      iconColor: "text-blue-600 dark:text-blue-400",
+      label: "Missed Leads",
+      value: String(missed),
+      icon: AlertCircle,
+      iconBg: missed > 0 ? "bg-destructive/10" : "bg-muted/50",
+      iconColor: missed > 0 ? "text-destructive" : "text-muted-foreground",
     },
     {
-      label: "Reviews",
-      value: kpis?.reviews ?? 0,
-      icon: Star,
-      iconBg: "bg-amber-500/10",
-      iconColor: "text-amber-600 dark:text-amber-400",
+      label: "Est. Revenue L...",
+      value: `$${estRevenueLost.toLocaleString()}`,
+      icon: DollarSign,
+      iconBg: estRevenueLost > 0 ? "bg-destructive/10" : "bg-muted/50",
+      iconColor: estRevenueLost > 0 ? "text-destructive" : "text-muted-foreground",
+      highlight: estRevenueLost > 0,
     },
   ];
 
@@ -143,7 +135,10 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
                   {isLoading ? (
                     <Skeleton className="h-6 w-10 mt-0.5" />
                   ) : (
-                    <p className="text-lg sm:text-xl font-bold leading-tight tabular-nums text-foreground">
+                    <p className={cn(
+                      "text-lg sm:text-xl font-bold leading-tight tabular-nums",
+                      (m as any).highlight ? "text-destructive" : "text-foreground"
+                    )}>
                       {m.value}
                     </p>
                   )}
@@ -153,6 +148,30 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0 }: Da
           </Card>
         ))}
       </div>
+
+      {/* Missed Leads Banner */}
+      {!isLoading && missed > 0 && (
+        <div className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/[0.04] px-4 py-3">
+          <div className="h-9 w-9 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+            <AlertCircle className="h-4.5 w-4.5 text-destructive" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              You missed {missed} lead{missed !== 1 ? "s" : ""} this week
+            </p>
+            <p className="text-xs text-muted-foreground">
+              That's ~${estRevenueLost.toLocaleString()} in potential revenue. {!isPro ? "Upgrade to Pro for priority access + save 20% on every unlock." : "Respond faster to avoid missing opportunities."}
+            </p>
+          </div>
+          {!isPro && (
+            <Button size="sm" className="shrink-0 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white" asChild>
+              <Link to="/provider/pro-upgrade">
+                Upgrade to Pro <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </Link>
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Contextual Banners */}
       {!isLoading && (
