@@ -16,7 +16,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 
 interface EmailParams {
   from: string;
-  to: string[];
+  to: string | string[];
   subject: string;
   html: string;
   headers?: Record<string, string>;
@@ -79,7 +79,10 @@ export async function sendEmailWithRetry(
     metadata,
   } = options;
 
-  const recipientEmail = params.to[0]?.toLowerCase();
+  // Normalize to array
+  const toArray = Array.isArray(params.to) ? params.to : [params.to];
+  const normalizedParams = { ...params, to: toArray };
+  const recipientEmail = toArray[0]?.toLowerCase();
   if (!recipientEmail) {
     return { success: false, error: "No recipient email", attempts: 0 };
   }
