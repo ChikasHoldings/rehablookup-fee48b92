@@ -16,6 +16,8 @@ import {
   getPlanStyles,
   type PlanType,
 } from "../_shared/email-templates.ts";
+import { Resend } from "https://esm.sh/resend@2.0.0";
+import { sendEmailWithRetry, sleep, BULK_SEND_DELAY_MS } from "../_shared/resilient-email-sender.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
