@@ -254,30 +254,14 @@ export default function ProviderDashboardPage() {
     }
   };
 
-  // Real-time subscription
+  // Poll for new leads every 30 seconds (leads table removed from Realtime for PII security)
   useEffect(() => {
     if (!facilityId) return;
-    
-    const leadsChannel = supabase
-      .channel(`dashboard-leads-${facilityId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "leads",
-          filter: `facility_id=eq.${facilityId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
-          queryClient.invalidateQueries({ queryKey: ["total-leads-count", facilityId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(leadsChannel);
-    };
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
+      queryClient.invalidateQueries({ queryKey: ["total-leads-count", facilityId] });
+    }, 30000);
+    return () => clearInterval(interval);
   }, [facilityId, queryClient]);
 
   const handleLeadClick = (lead: Lead) => {
