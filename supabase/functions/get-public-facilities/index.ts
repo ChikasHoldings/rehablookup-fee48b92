@@ -115,8 +115,6 @@ Deno.serve(async (req) => {
       yearEstablished: f.year_established,
       treatmentTypes: servicesMap.get(f.id) || [],
       insuranceAccepted: insuranceMap.get(f.id) || [],
-      googleRating: reviewsMap.get(f.id)?.rating ?? null,
-      googleReviewCount: reviewsMap.get(f.id)?.count ?? null,
     }));
 
     logStep("Successfully built facilities snapshot", { count: facilities.length });
