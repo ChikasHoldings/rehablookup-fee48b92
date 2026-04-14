@@ -17,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { DollarSign, RefreshCw, Loader2, CheckCircle2, AlertTriangle, Clock, FileText } from "lucide-react";
+import { DollarSign, RefreshCw, Loader2, CheckCircle2, AlertTriangle, FileText } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -38,9 +38,7 @@ const FEE_STATUS_BADGE: Record<string, { label: string; variant: "default" | "se
 
 export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProps) {
   const queryClient = useQueryClient();
-
-  // Only show for placed cases
-  if (caseData.status !== "placed") return null;
+  const isPlaced = caseData.status === "placed";
 
   const { data: invoice, isLoading } = useQuery({
     queryKey: ["case-invoice", caseData.id],
@@ -54,6 +52,7 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
       if (error) throw error;
       return data;
     },
+    enabled: isPlaced,
   });
 
   const { data: advisorEarning } = useQuery({
@@ -68,6 +67,7 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
       if (error) return null;
       return data;
     },
+    enabled: isPlaced,
   });
 
   const retryBillingMutation = useMutation({
@@ -84,7 +84,6 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
       if (response.error) throw response.error;
       if (response.data?.error) throw new Error(response.data.error);
 
-      // Log retry event
       await supabase.from("concierge_case_events").insert({
         inquiry_id: caseData.id,
         event_type: "charge_retried",
@@ -103,8 +102,6 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
     },
     onError: (error) => {
       toast.error("Billing retry failed: " + error.message);
-
-      // Log failure
       supabase.from("concierge_case_events").insert({
         inquiry_id: caseData.id,
         event_type: "charge_failed",
@@ -113,6 +110,9 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
       });
     },
   });
+
+  // Don't render for non-placed cases
+  if (!isPlaced) return null;
 
   if (isLoading) {
     return <Skeleton className="h-24 w-full" />;
@@ -131,7 +131,7 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
   return (
     <Card className={
       isPaid ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20" :
-      isFailed || isMissing ? "border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20" :
+      isFailed || isMissing ? "border-destructive/30 bg-destructive/5" :
       "border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20"
     }>
       <CardHeader className="py-3">
@@ -144,7 +144,6 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
         </CardTitle>
       </CardHeader>
       <CardContent className="py-2 space-y-3">
-        {/* Amount & Details */}
         {displayAmount ? (
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Fee Amount</span>
@@ -213,14 +212,14 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
 
         {/* Missing billing alert */}
         {isMissing && (
-          <div className="flex items-start gap-2 text-sm text-red-700 dark:text-red-400">
+          <div className="flex items-start gap-2 text-sm text-destructive">
             <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
             <span>No invoice found for this placed case. Click retry to generate billing.</span>
           </div>
         )}
 
         {isFailed && (
-          <div className="flex items-start gap-2 text-sm text-red-700 dark:text-red-400">
+          <div className="flex items-start gap-2 text-sm text-destructive">
             <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
             <span>Payment failed. Retry or manage via the Invoice Management tab.</span>
           </div>

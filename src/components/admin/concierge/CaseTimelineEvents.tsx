@@ -57,6 +57,8 @@ const EVENT_CONFIG: Record<string, { icon: React.ComponentType<any>; label: stri
   admission_updated: { icon: User, label: "Admission Updated", color: "text-indigo-500" },
   move_in_scheduled: { icon: Calendar, label: "Move-In Scheduled", color: "text-indigo-500" },
   moved_in: { icon: CheckCircle, label: "Moved In", color: "text-emerald-600" },
+  charge_failed: { icon: DollarSign, label: "Billing Failed", color: "text-red-500" },
+  charge_retried: { icon: DollarSign, label: "Billing Retried", color: "text-amber-500" },
 };
 
 export function CaseTimelineEvents({ caseData }: CaseTimelineEventsProps) {
