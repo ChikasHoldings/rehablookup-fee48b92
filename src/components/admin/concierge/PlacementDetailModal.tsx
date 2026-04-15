@@ -26,6 +26,7 @@ import { MessagesTab } from "./MessagesTab";
 import { ToursTab } from "./ToursTab";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
 import { PlacementNextSteps } from "./PlacementNextSteps";
+import { StageActionBar } from "./StageActionBar";
 import { getCaseBlocker } from "./placementActionUtils";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
@@ -178,6 +179,7 @@ export function PlacementDetailModal({
     { value: "messages", icon: MessageSquare, label: "Coord", badge: unreadMsgCount || 0 },
     { value: "tours", icon: CalendarCheck, label: "Tours", badge: activeToursCount || 0 },
     ...(canManageBilling ? [{ value: "billing", icon: DollarSign, label: "Billing", badge: 0 }] : []),
+    { value: "timeline", icon: History, label: "Timeline", badge: 0 },
     { value: "actions", icon: Settings, label: "Manage", badge: 0 },
   ];
 
@@ -246,6 +248,10 @@ export function PlacementDetailModal({
                 compact
               />
             </div>
+            {/* Stage Action Bar — always visible */}
+            <div className="mt-3">
+              <StageActionBar caseData={caseData} onRefresh={onRefresh} onSwitchTab={setActiveTab} />
+            </div>
           </div>
         </div>
 
@@ -300,6 +306,11 @@ export function PlacementDetailModal({
                   <InvoiceManagementTab caseData={caseData} />
                 </TabsContent>
               )}
+              <TabsContent value="timeline" className="m-0">
+                <div className="p-4">
+                  <CaseTimelineEvents caseData={caseData} />
+                </div>
+              </TabsContent>
               <TabsContent value="actions" className="m-0">
                 <ConciergeActionsTab
                   caseData={caseData}
@@ -479,16 +490,18 @@ function PlacementOverviewPanel({
 }
 
 function KpiCard({ label, value, onClick }: { label: string; value: string | number; onClick?: () => void }) {
+  const isZero = value === 0 || value === "0" || value === "—" || value === "none";
   return (
     <div
       className={cn(
-        "text-center p-1.5 rounded-lg border bg-muted/30",
-        onClick && "cursor-pointer hover:bg-muted/60 transition-colors"
+        "text-center p-2.5 rounded-lg border transition-colors",
+        isZero ? "bg-muted/20 border-border/50" : "bg-card border-border",
+        onClick && "cursor-pointer hover:bg-primary/5 hover:border-primary/30"
       )}
       onClick={onClick}
     >
-      <p className="text-sm font-bold tabular-nums capitalize">{typeof value === "string" ? value : value}</p>
-      <p className="text-[9px] text-muted-foreground uppercase">{label}</p>
+      <p className={cn("text-sm font-bold tabular-nums capitalize", isZero && "text-muted-foreground/50")}>{value}</p>
+      <p className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5">{label}</p>
     </div>
   );
 }

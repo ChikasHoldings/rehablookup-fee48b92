@@ -346,39 +346,34 @@ export default function AdminConcierge() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-muted/30">
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">ID</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Seeker</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Advisor</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Status</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Stage</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Next Action</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Activity</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Alerts</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Admission</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs w-[80px]">Alerts</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredCases.map((c) => {
                         const nextAction = getCaseNextAction(c);
-                        const admissionLabel = c.status === "placed" ? "Admitted"
-                          : c.admission_status === "admitted" ? "Admitted"
-                          : c.admission_status === "in_progress" ? "In Progress"
-                          : c.status === "closed" ? "Closed"
-                          : "Pending";
-                        const admissionColor = admissionLabel === "Admitted" ? "text-success"
-                          : admissionLabel === "In Progress" ? "text-primary"
-                          : admissionLabel === "Closed" ? "text-muted-foreground"
-                          : "text-muted-foreground/60";
                         return (
                           <tr key={c.id}
-                            className="border-b last:border-0 hover:bg-muted/20 cursor-pointer transition-colors"
+                            className="border-b last:border-0 hover:bg-primary/5 cursor-pointer transition-colors group"
                             onClick={() => setSelectedCaseId(c.id)}>
                             <td className="px-4 py-3">
-                              <code className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                                {c.id.slice(0, 8)}
-                              </code>
-                            </td>
-                            <td className="px-4 py-3">
-                              <p className="font-medium truncate max-w-[160px]">{c.user_name}</p>
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className={cn("h-2 w-2 rounded-full shrink-0",
+                                  c.status === "placed" ? "bg-success" :
+                                  c.status === "closed" ? "bg-muted-foreground/30" :
+                                  nextAction.priority === "blocker" ? "bg-destructive animate-pulse" :
+                                  "bg-primary"
+                                )} />
+                                <div className="min-w-0">
+                                  <p className="font-medium truncate max-w-[180px]">{c.user_name}</p>
+                                  <p className="text-[10px] text-muted-foreground font-mono">{c.id.slice(0, 8)}</p>
+                                </div>
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                               {getAdvisorName(c.assigned_advisor_id) === "—" ? (
@@ -399,9 +394,6 @@ export default function AdminConcierge() {
                                 {nextAction.priority === "blocker" && (
                                   <span className="h-2 w-2 rounded-full bg-destructive shrink-0" />
                                 )}
-                                {nextAction.priority === "high" && (
-                                  <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
-                                )}
                                 {nextAction.priority === "done" && (
                                   <CheckCircle className="h-3.5 w-3.5 text-success shrink-0" />
                                 )}
@@ -421,11 +413,6 @@ export default function AdminConcierge() {
                             </td>
                             <td className="px-4 py-3">
                               <CaseAlertIcons caseData={c} />
-                            </td>
-                            <td className="px-4 py-3">
-                              <span className={cn("text-xs font-medium", admissionColor)}>
-                                {admissionLabel}
-                              </span>
                             </td>
                           </tr>
                         );
