@@ -66,6 +66,7 @@ import {
 } from "@/hooks/useAdminUserManagement";
 import { CreateAdminUserDialog } from "@/components/admin/CreateAdminUserDialog";
 import { AdminUserPermissionsDialog } from "@/components/admin/AdminUserPermissionsDialog";
+import { AdminStaffDetailModal } from "@/components/admin/AdminStaffDetailModal";
 import { cn } from "@/lib/utils";
 
 const ROLE_ICONS: Record<AdminRoleType, React.ElementType> = {
@@ -129,6 +130,8 @@ export default function AdminStaff() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [detailUser, setDetailUser] = useState<AdminUser | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     action: "suspend" | "unsuspend" | "delete" | "reset_password" | "resend_invitation";
     user: AdminUser;
