@@ -247,7 +247,7 @@ function ModalNextActionBar({ caseData, onRefresh, onSwitchTab }: {
           {primaryStep && (
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5"
               onClick={() => onSwitchTab(primaryStep.tab)}>
-              Go to {primaryStep.tab === "providers" ? "Providers" : primaryStep.tab === "admission" ? "Admission" : primaryStep.tab === "manage" ? "Manage" : "Overview"}
+              Go to {TAB_LABELS_MAP[primaryStep.tab] || "Overview"}
             </Button>
           )}
           {next && nextConfig && (
