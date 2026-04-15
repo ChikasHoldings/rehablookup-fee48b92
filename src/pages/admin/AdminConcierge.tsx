@@ -258,27 +258,17 @@ export default function AdminConcierge() {
           </TabsList>
         </div>
 
-        {/* Domestic Tab */}
         <TabsContent value="domestic" className="space-y-4">
           {/* KPI Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            <AdminStatCard label="Total Cases" value={isLoading ? "—" : totalCases} icon={HeartHandshake}
+            <AdminStatCard label="Total" value={isLoading ? "—" : totalCases} icon={HeartHandshake}
               onClick={() => setStatusFilter("all")} active={statusFilter === "all"} />
-            <AdminStatCard label="New" value={isLoading ? "—" : newCases} icon={Clock} valueClassName="text-blue-600"
-              onClick={() => setStatusFilter("new")} active={statusFilter === "new"} />
-            <AdminStatCard label="Awaiting Advisor" value={isLoading ? "—" : awaitingAdvisor} icon={Users} valueClassName="text-warning"
-              onClick={() => setStatusFilter("all")} />
-            <AdminStatCard label="Matched / Intros" value={isLoading ? "—" : matchedCases} icon={Send} valueClassName="text-indigo-600"
-              onClick={() => setStatusFilter("matched")} active={statusFilter === "matched"} />
-            <AdminStatCard label="Tours Scheduled" value={isLoading ? "—" : toursScheduled} icon={CalendarCheck} valueClassName="text-cyan-600" />
-            <AdminStatCard label="Admitted" value={isLoading ? "—" : admittedCases} icon={CheckCircle} valueClassName="text-success"
+            <AdminStatCard label="Active" value={isLoading ? "—" : activeCases} icon={Clock} valueClassName="text-primary"
+              onClick={() => { setStatusFilter("all"); }} />
+            <AdminStatCard label="No Advisor" value={isLoading ? "—" : awaitingAdvisor} icon={Users} valueClassName="text-warning" />
+            <AdminStatCard label="Placed" value={isLoading ? "—" : placedCases} icon={CheckCircle} valueClassName="text-success"
               onClick={() => setStatusFilter("placed")} active={statusFilter === "placed"} />
-            <AdminStatCard label="Placed" value={isLoading ? "—" : placedCases} icon={UserCheck} valueClassName="text-success" />
-            <AdminStatCard label="Pending Billing" value={isLoading ? "—" : pendingBilling} icon={DollarSign} valueClassName="text-warning" />
-            <AdminStatCard label="Active" value={isLoading ? "—" : activeCases} icon={Loader2} valueClassName="text-primary" />
-            <AdminStatCard label="Closed" value={isLoading ? "—" : allCases.filter(c => c.status === "closed").length}
-              icon={XCircle} valueClassName="text-muted-foreground"
-              onClick={() => setStatusFilter("closed")} active={statusFilter === "closed"} />
+            <AdminStatCard label="Pending Bill" value={isLoading ? "—" : pendingBilling} icon={DollarSign} valueClassName="text-warning" />
           </div>
 
           {/* Filters */}
@@ -286,7 +276,7 @@ export default function AdminConcierge() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, phone, or case ID..."
+                placeholder="Search by name, email, phone, or ID..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="pl-9"
@@ -361,35 +351,47 @@ export default function AdminConcierge() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-muted/30">
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">ID</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Seeker</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Advisor</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Status</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Next Action</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Owner</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Care Type</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Location</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Advisor</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Payment</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Matches</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Date</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Activity</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Admission</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredCases.map((c) => {
                         const nextAction = getCaseNextAction(c);
-                        const ownerColors: Record<string, string> = {
-                          admin: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                          advisor: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-                          seeker: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                          facility: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
-                          system: "bg-muted text-muted-foreground",
-                        };
+                        const admissionLabel = c.status === "placed" ? "Admitted"
+                          : c.admission_status === "admitted" ? "Admitted"
+                          : c.admission_status === "in_progress" ? "In Progress"
+                          : c.status === "closed" ? "Closed"
+                          : "Pending";
+                        const admissionColor = admissionLabel === "Admitted" ? "text-success"
+                          : admissionLabel === "In Progress" ? "text-primary"
+                          : admissionLabel === "Closed" ? "text-muted-foreground"
+                          : "text-muted-foreground/60";
                         return (
                           <tr key={c.id}
                             className="border-b last:border-0 hover:bg-muted/20 cursor-pointer transition-colors"
                             onClick={() => setSelectedCaseId(c.id)}>
                             <td className="px-4 py-3">
-                              <p className="font-medium truncate max-w-[140px]">{c.user_name}</p>
-                              <p className="text-[10px] font-mono text-muted-foreground/60">{c.id.slice(0, 8)}</p>
+                              <code className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                {c.id.slice(0, 8)}
+                              </code>
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="font-medium truncate max-w-[160px]">{c.user_name}</p>
+                            </td>
+                            <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                              {getAdvisorName(c.assigned_advisor_id) === "—" ? (
+                                <Badge variant="outline" className="text-[9px] bg-destructive/10 text-destructive border-destructive/30">
+                                  Unassigned
+                                </Badge>
+                              ) : (
+                                <span>{getAdvisorName(c.assigned_advisor_id)}</span>
+                              )}
                             </td>
                             <td className="px-4 py-3">
                               <Badge variant="outline" className={cn("text-[10px]", STATUS_CONFIG[c.status]?.color || "")}>
@@ -416,34 +418,15 @@ export default function AdminConcierge() {
                                 </span>
                               </div>
                             </td>
-                            <td className="px-4 py-3">
-                              <Badge variant="outline" className={cn("text-[9px] capitalize", ownerColors[nextAction.owner] || "")}>
-                                {nextAction.owner}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-3 text-xs">{c.level_of_care || "—"}</td>
-                            <td className="px-4 py-3 text-xs whitespace-nowrap">
-                              {c.preferred_city ? `${c.preferred_city}, ` : ""}{c.desired_location_state || c.preferred_state || "Any"}
-                            </td>
-                            <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                              {getAdvisorName(c.assigned_advisor_id)}
-                            </td>
-                            <td className="px-4 py-3">
-                              <Badge variant="outline" className={cn("text-[10px]",
-                                isPaid(c.payment_status) ? "bg-success/10 text-success border-success/30" : "bg-destructive/10 text-destructive border-destructive/30"
-                              )}>
-                                {isPaid(c.payment_status) ? "✓ Paid" : "⚠ Unpaid"}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-1 tabular-nums text-xs">
-                                {c.match_count || 0}
-                                {(c.match_count || 0) > 0 && <UserCheck className="h-3.5 w-3.5 text-success" />}
-                              </div>
-                            </td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              <p className="text-xs tabular-nums">{format(new Date(c.created_at), "MMM d, yyyy")}</p>
-                              <p className="text-[10px] text-muted-foreground">{formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={cn("text-xs font-medium", admissionColor)}>
+                                {admissionLabel}
+                              </span>
                             </td>
                           </tr>
                         );
