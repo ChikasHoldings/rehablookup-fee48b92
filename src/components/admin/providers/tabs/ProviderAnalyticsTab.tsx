@@ -4,6 +4,7 @@ import { format, subDays, startOfDay, eachDayOfInterval } from "date-fns";
 import { Eye, Monitor, Phone, MousePointerClick, TrendingUp, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -24,7 +25,7 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
   const startDate = startOfDay(subDays(new Date(), parseInt(dateRange)));
 
   // Fetch all events in date range
-  const { data: events } = useQuery({
+  const { data: events, isLoading: loadingEvents } = useQuery({
     queryKey: ["admin-provider-analytics", provider.user_id, dateRange],
     queryFn: async () => {
       const { data } = await supabase
@@ -109,6 +110,21 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
       leads: fLeads.length,
     };
   });
+
+  if (loadingEvents) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-9 w-[140px]" />
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
+        </div>
+        <Skeleton className="h-[280px] w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
