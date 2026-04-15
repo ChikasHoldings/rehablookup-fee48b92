@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
 
       console.log("[ADMIN-DELETE-SEEKER] Successfully deleted seeker:", targetUserId);
       return new Response(
-        JSON.stringify({ success: true, message: "Seeker account deleted successfully" }),
+        JSON.stringify({ success: true, message: "Client account deleted successfully" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 

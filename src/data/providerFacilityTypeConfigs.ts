@@ -42,7 +42,7 @@ export const providerFacilityTypeConfigs: ProviderBusinessConfig[] = [
     insightHeadline: "Growing Your Faith-Based Program",
     insightContent: "Faith-based facilities that combine clinical evidence-based treatment with spiritual programming see the highest satisfaction scores and referral rates. The key is marketing the dual approach: clinical excellence AND spiritual support. RehabLookup listings allow you to highlight faith-based programming, chapel services, and spiritual counseling alongside clinical credentials, reaching the growing segment of patients who want both.",
     insightStats: [
-      { label: "Seekers Preferring Faith-Based", value: "30%" },
+      { label: "Clients Preferring Faith-Based", value: "30%" },
       { label: "'Christian Rehab' Searches/mo", value: "14,800" },
       { label: "Satisfaction Score Lift", value: "+22%" },
       { label: "Referral Rate (Faith Programs)", value: "3.5x" },

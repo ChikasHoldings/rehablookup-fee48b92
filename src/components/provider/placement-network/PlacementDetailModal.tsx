@@ -373,7 +373,7 @@ export function PlacementDetailModal({
   const tabs = [
     { key: "details" as const, label: "Case Summary", icon: FileText },
     ...(piiUnlocked ? [
-      { key: "seeker" as const, label: "Seeker Details", icon: Eye },
+      { key: "seeker" as const, label: "Client Details", icon: Eye },
     ] : []),
     ...(hasAccepted ? [
       { key: "messages" as const, label: "Messages", icon: MessageSquare, count: messages?.length },
@@ -664,7 +664,7 @@ export function PlacementDetailModal({
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-400">
-                      {seekerSelectedThisFacility ? "Seeker Selected Your Facility" : "PII Authorized by Advisor"}
+                      {seekerSelectedThisFacility ? "Client Selected Your Facility" : "PII Authorized by Advisor"}
                     </p>
                     <p className="text-xs text-emerald-700 dark:text-emerald-500 mt-0.5">
                       Full contact and intake details are now available. This disclosure has been logged for compliance.

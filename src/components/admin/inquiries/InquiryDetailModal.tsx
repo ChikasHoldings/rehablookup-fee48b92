@@ -303,7 +303,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                 {/* Info Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Seeker */}
-                  <InfoCard title="Seeker Details" icon={User} rows={[
+                  <InfoCard title="Client Details" icon={User} rows={[
                     ["Name", lead.name], ["Email", lead.email], ["Phone", lead.phone],
                     ["Location", lead.location_city_state || lead.location_zip],
                     ["Who Seeking", lead.who_seeking_help], ["Age Range", lead.age_range],

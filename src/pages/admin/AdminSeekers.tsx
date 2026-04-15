@@ -196,7 +196,7 @@ export default function AdminSeekers() {
     a.download = `seekers-export-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Seekers exported to CSV");
+    toast.success("Clients exported to CSV");
   };
 
   // Fetch total count for pagination
@@ -546,7 +546,7 @@ export default function AdminSeekers() {
               <p className="text-xs text-muted-foreground mt-1">
                 {hasActiveFilters
                   ? "Try adjusting your filters to see more results"
-                  : "Seekers will appear here when they create accounts"}
+                  : "Clients will appear here when they create accounts"}
               </p>
               {hasActiveFilters && (
                 <Button variant="link" size="sm" onClick={clearAllFilters} className="mt-3 text-primary">

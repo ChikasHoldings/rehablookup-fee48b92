@@ -297,7 +297,7 @@ export default function AdvisorInbox() {
                                 : "bg-blue-50 text-blue-600 border-blue-200"
                             }`}
                           >
-                            {isSeeker ? "Seeker" : "Facility"}
+                            {isSeeker ? "Client" : "Facility"}
                           </Badge>
                           {thread.hasUnread && (
                             <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
@@ -354,7 +354,7 @@ export default function AdvisorInbox() {
                   : "bg-blue-50 text-blue-600 border-blue-200"
               }`}
             >
-              {isSeeker ? "Seeker" : "Facility"}
+              {isSeeker ? "Client" : "Facility"}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -405,7 +405,7 @@ export default function AdvisorInbox() {
                         </div>
                       )}
                       <p className={`text-[10px] mt-1 ${isAdmin ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                        {msg.sender_type === "admin" ? "You" : msg.sender_type === "user" ? "Seeker" : "Facility"} • {format(new Date(msg.created_at), "MMM d, h:mm a")}
+                        {msg.sender_type === "admin" ? "You" : msg.sender_type === "user" ? "Client" : "Facility"} • {format(new Date(msg.created_at), "MMM d, h:mm a")}
                       </p>
                     </div>
                   </div>

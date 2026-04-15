@@ -120,7 +120,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Build email data object
     const emailData: TourEmailData = {
-      seekerName: tour.inquiry?.user_name || "Seeker",
+      seekerName: tour.inquiry?.user_name || "Client",
       facilityName: tour.facility?.name || "Facility",
       facilityCity: tour.facility?.city || "",
       facilityState: tour.facility?.state || "",

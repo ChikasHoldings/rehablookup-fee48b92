@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
         userName = [seekerProfile.first_name, seekerProfile.last_name].filter(Boolean).join(" ") || "Unknown";
         userEmail = seekerProfile.email || user.email || "Unknown";
       }
-      contextInfo = "Seeker Account";
+      contextInfo = "Client Account";
     } else {
       const { data: profile } = await supabase
         .from("profiles")
@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
         .eq('status', 'active');
       
       if (adminUsers && adminUsers.length > 0) {
-        const sourceLabel = isSeeker ? "Seeker" : "Provider";
+        const sourceLabel = isSeeker ? "Client" : "Provider";
         const notifications = adminUsers.map(admin => ({
           user_id: admin.user_id,
           type: 'support_ticket',
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const sourceLabel = isSeeker ? "Seeker" : "Provider";
+    const sourceLabel = isSeeker ? "Client" : "Provider";
     const emailHtml = `
 <!DOCTYPE html>
 <html>
