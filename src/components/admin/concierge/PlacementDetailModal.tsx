@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -518,33 +519,170 @@ function SeekerDecisionTab({ caseData }: { caseData: ConciergeInquiry }) {
 }
 
 /* ═══════════════════════════════════════════
-   TAB: Admission
+   TAB: Admission — Structured progress tracker
    ═══════════════════════════════════════════ */
+
+const ADMISSION_SUBSTAGES = [
+  { key: "contact_initiated", label: "Contact Initiated", description: "Advisor contacted provider admissions team", icon: Phone },
+  { key: "screening", label: "Screening", description: "Provider screening seeker eligibility", icon: ClipboardList },
+  { key: "accepted", label: "Accepted", description: "Provider accepted seeker for admission", icon: CheckCircle },
+  { key: "admission_scheduled", label: "Admission Scheduled", description: "Move-in / intake date confirmed", icon: CalendarCheck },
+  { key: "admitted", label: "Admitted", description: "Seeker admitted to facility", icon: Home },
+] as const;
+
 function AdmissionTab({ caseData, placedFacility }: { caseData: ConciergeInquiry; placedFacility: any }) {
+  const queryClient = useQueryClient();
   const isAdmitted = caseData.admission_status === "admitted" || caseData.placement_confirmed;
+  const currentSubstatus = caseData.admission_substatus || "pending";
+  const currentSubIdx = ADMISSION_SUBSTAGES.findIndex(s => s.key === currentSubstatus);
+
+  // Fetch admission-related case events
+  const { data: admissionEvents = [] } = useQuery({
+    queryKey: ["admission-events", caseData.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("concierge_case_events")
+        .select("id, event_type, event_data, created_at, actor_type, actor_id")
+        .eq("inquiry_id", caseData.id)
+        .in("event_type", [
+          "admission_substatus_changed", "provider_update", "seeker_update",
+          "admission_note_added", "placement_confirmed", "provider_accepted",
+          "seeker_selected", "pii_disclosed_to_provider", "status_changed",
+        ])
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 30000,
+  });
+
+  // Advance admission substatus
+  const advanceSubstatus = async (newSubstatus: string) => {
+    const { error } = await supabase
+      .from("concierge_inquiries")
+      .update({
+        admission_substatus: newSubstatus,
+        ...(newSubstatus === "admitted" ? {
+          admission_status: "admitted",
+          placement_confirmed: true,
+          placement_confirmed_at: new Date().toISOString(),
+        } : {}),
+      })
+      .eq("id", caseData.id);
+    if (error) { toast.error("Failed to update admission status"); return; }
+
+    // Log event
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("concierge_case_events").insert({
+      inquiry_id: caseData.id,
+      event_type: "admission_substatus_changed",
+      event_data: { from: currentSubstatus, to: newSubstatus },
+      actor_id: user?.id || null,
+      actor_type: "admin",
+    });
+
+    toast.success(`Admission updated to: ${newSubstatus.replace(/_/g, " ")}`);
+    queryClient.invalidateQueries({ queryKey: ["admin-concierge-case-detail", caseData.id] });
+    queryClient.invalidateQueries({ queryKey: ["admin-concierge-cases-full"] });
+    queryClient.invalidateQueries({ queryKey: ["admission-events", caseData.id] });
+  };
+
+  // Add admission note
+  const [noteText, setNoteText] = useState("");
+  const [noteType, setNoteType] = useState<"provider" | "seeker" | "advisor">("advisor");
+  const addNote = async () => {
+    if (!noteText.trim()) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("concierge_case_events").insert({
+      inquiry_id: caseData.id,
+      event_type: noteType === "provider" ? "provider_update" : noteType === "seeker" ? "seeker_update" : "admission_note_added",
+      event_data: { note: noteText.trim(), source: noteType },
+      actor_id: user?.id || null,
+      actor_type: "admin",
+    });
+    setNoteText("");
+    toast.success("Note added");
+    queryClient.invalidateQueries({ queryKey: ["admission-events", caseData.id] });
+  };
+
+  // Separate events by type
+  const providerUpdates = admissionEvents.filter(e => e.event_type === "provider_update" || e.event_type === "provider_accepted");
+  const seekerUpdates = admissionEvents.filter(e => e.event_type === "seeker_update" || e.event_type === "seeker_selected");
+  const allTimeline = admissionEvents;
+
+  const nextSubstage = currentSubIdx < ADMISSION_SUBSTAGES.length - 1
+    ? ADMISSION_SUBSTAGES[currentSubIdx + 1]
+    : null;
 
   return (
     <div className="p-5 space-y-5">
-      {/* Status Banner */}
+
+      {/* ── Progress Tracker ── */}
+      <div className="rounded-xl border bg-card p-4">
+        <h4 className="text-sm font-semibold flex items-center gap-2 mb-4">
+          <Building2 className="h-4 w-4 text-primary" />
+          Admission Progress
+        </h4>
+        <div className="flex gap-1">
+          {ADMISSION_SUBSTAGES.map((stage, i) => {
+            const isDone = i <= currentSubIdx;
+            const isCurrent = i === currentSubIdx;
+            const StageIcon = stage.icon;
+            return (
+              <div key={stage.key} className="flex-1 text-center">
+                <div className={cn(
+                  "h-2 rounded-full mb-2 transition-colors",
+                  isDone ? "bg-primary" : isCurrent ? "bg-primary/40 animate-pulse" : "bg-muted"
+                )} />
+                <div className={cn(
+                  "mx-auto h-8 w-8 rounded-lg flex items-center justify-center mb-1",
+                  isDone ? "bg-primary/10" : "bg-muted/50"
+                )}>
+                  <StageIcon className={cn("h-4 w-4", isDone ? "text-primary" : "text-muted-foreground")} />
+                </div>
+                <p className={cn("text-[10px] leading-tight", isDone ? "font-semibold text-foreground" : "text-muted-foreground")}>
+                  {stage.label}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Next action */}
+        {nextSubstage && !isAdmitted && (
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border bg-primary/5 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">Next: {nextSubstage.label}</p>
+              <p className="text-xs text-muted-foreground">{nextSubstage.description}</p>
+            </div>
+            <Button size="sm" onClick={() => advanceSubstatus(nextSubstage.key)} className="shrink-0 gap-1.5">
+              <CheckCircle className="h-3.5 w-3.5" /> Advance
+            </Button>
+          </div>
+        )}
+        {isAdmitted && (
+          <div className="mt-4 rounded-lg border-2 border-success/30 bg-success/5 px-4 py-3 flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-success" />
+            <p className="text-sm font-semibold text-success">Admission Complete</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Status Banner ── */}
       <div className={cn(
         "p-4 rounded-xl border-2",
         isAdmitted ? "border-success/30 bg-success/5" : "border-border bg-card"
       )}>
-        <div className="flex items-center gap-2 mb-3">
-          {isAdmitted ? <CheckCircle className="h-5 w-5 text-success" /> : <Building2 className="h-5 w-5 text-muted-foreground" />}
-          <h3 className={cn("font-semibold", isAdmitted ? "text-success" : "text-foreground")}>
-            {isAdmitted ? "Admitted — Placement Confirmed" : "Admission Status"}
-          </h3>
-        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-          <MetaField label="Admission Status" value={caseData.admission_status || "none"} />
+          <MetaField label="Admission Substatus" value={currentSubstatus.replace(/_/g, " ")} />
           <MetaField label="Placement Confirmed" value={caseData.placement_confirmed ? "Yes" : "No"} />
           <MetaField label="Confirmed At" value={caseData.placement_confirmed_at ? format(new Date(caseData.placement_confirmed_at), "MMM d, yyyy") : "—"} />
           <MetaField label="Seeker Confirmed" value={caseData.seeker_confirmed ? "Yes" : "No"} />
         </div>
       </div>
 
-      {/* Placed Facility */}
+      {/* ── Placed Facility ── */}
       <DetailSection icon={Home} title="Placed Facility">
         {placedFacility ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
@@ -558,7 +696,93 @@ function AdmissionTab({ caseData, placedFacility }: { caseData: ConciergeInquiry
         )}
       </DetailSection>
 
-      {/* Admission Notes */}
+      {/* ── Add Update ── */}
+      <DetailSection icon={MessageSquare} title="Add Update">
+        <div className="flex gap-2 mb-2">
+          {(["provider", "seeker", "advisor"] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setNoteType(t)}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-medium border transition-colors capitalize",
+                noteType === t ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+              )}
+            >
+              {t} Update
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder={`Log ${noteType} update...`}
+            value={noteText}
+            onChange={e => setNoteText(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && addNote()}
+            className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm"
+          />
+          <Button size="sm" onClick={addNote} disabled={!noteText.trim()}>Add</Button>
+        </div>
+      </DetailSection>
+
+      {/* ── Provider Updates ── */}
+      <DetailSection icon={Building2} title={`Provider Updates (${providerUpdates.length})`}>
+        {providerUpdates.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-3">No provider updates yet.</p>
+        ) : (
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {providerUpdates.map(ev => (
+              <EventRow key={ev.id} event={ev} />
+            ))}
+          </div>
+        )}
+      </DetailSection>
+
+      {/* ── Seeker Updates ── */}
+      <DetailSection icon={User} title={`Seeker Updates (${seekerUpdates.length})`}>
+        {seekerUpdates.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-3">No seeker updates yet.</p>
+        ) : (
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {seekerUpdates.map(ev => (
+              <EventRow key={ev.id} event={ev} />
+            ))}
+          </div>
+        )}
+      </DetailSection>
+
+      {/* ── Full Timeline ── */}
+      <DetailSection icon={History} title={`Admission Timeline (${allTimeline.length})`}>
+        {allTimeline.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-3">No admission activity yet.</p>
+        ) : (
+          <div className="space-y-0 max-h-64 overflow-y-auto">
+            {allTimeline.map(ev => (
+              <div key={ev.id} className="flex items-start gap-3 py-2.5 border-b last:border-0">
+                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                  <Activity className="h-3 w-3 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium capitalize">{ev.event_type.replace(/_/g, " ")}</p>
+                  {(ev.event_data as any)?.note && (
+                    <p className="text-xs text-muted-foreground mt-0.5 italic">"{(ev.event_data as any).note}"</p>
+                  )}
+                  {(ev.event_data as any)?.from && (ev.event_data as any)?.to && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {(ev.event_data as any).from.replace(/_/g, " ")} → {(ev.event_data as any).to.replace(/_/g, " ")}
+                    </p>
+                  )}
+                </div>
+                <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
+                  {ev.created_at ? format(new Date(ev.created_at), "MMM d, h:mm a") : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </DetailSection>
+
+      {/* ── Admission Notes ── */}
       <DetailSection icon={FileText} title="Admission Notes">
         {caseData.admission_notes ? (
           <p className="text-sm whitespace-pre-wrap">{caseData.admission_notes}</p>
@@ -567,7 +791,7 @@ function AdmissionTab({ caseData, placedFacility }: { caseData: ConciergeInquiry
         )}
       </DetailSection>
 
-      {/* Provider Fee Info */}
+      {/* ── Provider Fee ── */}
       <DetailSection icon={DollarSign} title="Provider Fee">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
           <InfoRow label="Fee Amount" value={caseData.provider_fee_cents ? `$${(caseData.provider_fee_cents / 100).toFixed(2)}` : null} />
@@ -575,6 +799,27 @@ function AdmissionTab({ caseData, placedFacility }: { caseData: ConciergeInquiry
           <InfoRow label="Fee Type" value={caseData.provider_fee_type} />
         </div>
       </DetailSection>
+    </div>
+  );
+}
+
+function EventRow({ event }: { event: any }) {
+  const note = (event.event_data as any)?.note;
+  const source = (event.event_data as any)?.source;
+  return (
+    <div className="flex items-start gap-2 rounded-lg border bg-muted/20 px-3 py-2">
+      <div className="flex-1 min-w-0">
+        {note ? (
+          <p className="text-sm">{note}</p>
+        ) : (
+          <p className="text-sm capitalize">{event.event_type.replace(/_/g, " ")}</p>
+        )}
+        <p className="text-[10px] text-muted-foreground mt-0.5">
+          {source && <span className="capitalize font-medium">{source}</span>}
+          {source && " · "}
+          {event.created_at ? format(new Date(event.created_at), "MMM d, h:mm a") : ""}
+        </p>
+      </div>
     </div>
   );
 }
