@@ -140,17 +140,16 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap }: In
     }
   };
 
-  if (!lead) return null;
-
-  const assignedFacility = lead.facility_id ? facilityMap.get(lead.facility_id) : providerInfo?.facility;
-  const originalFacility = lead.original_facility_id ? facilityMap.get(lead.original_facility_id) : null;
+  const assignedFacility = lead?.facility_id ? facilityMap.get(lead.facility_id) : providerInfo?.facility;
+  const originalFacility = lead?.original_facility_id ? facilityMap.get(lead.original_facility_id) : null;
   const isUnlocked = (unlockData?.length || 0) > 0;
-  const isRedistributed = lead.redistribution_status === "extended";
+  const isRedistributed = lead?.redistribution_status === "extended";
 
-  const getInitials = () => lead.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
+  const getInitials = () => lead?.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
 
   // Build activity timeline
   const timeline = useMemo(() => {
+    if (!lead) return [];
     const events: Array<{ date: string; label: string; detail?: string; icon: any; color: string }> = [];
 
     events.push({
