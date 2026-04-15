@@ -717,6 +717,7 @@ export type Database = {
           admin_notes: string | null
           admission_notes: string | null
           admission_status: string
+          admission_substatus: string
           age_range: string | null
           alternative_contact_name: string | null
           alternative_contact_phone: string | null
@@ -813,6 +814,7 @@ export type Database = {
           admin_notes?: string | null
           admission_notes?: string | null
           admission_status?: string
+          admission_substatus?: string
           age_range?: string | null
           alternative_contact_name?: string | null
           alternative_contact_phone?: string | null
@@ -909,6 +911,7 @@ export type Database = {
           admin_notes?: string | null
           admission_notes?: string | null
           admission_status?: string
+          admission_substatus?: string
           age_range?: string | null
           alternative_contact_name?: string | null
           alternative_contact_phone?: string | null
