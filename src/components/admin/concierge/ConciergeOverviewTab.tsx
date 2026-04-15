@@ -16,14 +16,28 @@ interface ConciergeOverviewTabProps {
 }
 
 const STATUS_LABELS: Record<string, string> = {
+  pending_intake: "Pending Intake",
+  intake_submitted: "Submitted",
+  intake_reviewed: "Reviewed",
+  advisor_assigned: "Advisor Assigned",
+  matching_providers: "Matching",
+  provider_prequalification: "Pre-Qualifying",
+  providers_accepted: "Providers Ready",
+  presented_to_seeker: "Presented",
+  seeker_selected: "Seeker Selected",
+  admission_in_progress: "Admitting",
+  admitted: "Admitted",
+  billed: "Billed",
+  completed: "Completed",
+  closed: "Closed",
+  // Legacy compat
   new: "New",
   reviewing: "Reviewing",
-  matching: "Placing",
-  matched: "Facilities Found",
+  matching: "Matching",
+  matched: "Matched",
   introductions_sent: "Intros Sent",
   in_contact: "In Contact",
   placed: "Placed",
-  closed: "Closed",
 };
 
 function InfoRow({ label, value, icon: Icon }: { label: string; value: React.ReactNode; icon?: React.ElementType }) {
@@ -71,7 +85,7 @@ export function ConciergeOverviewTab({ caseData }: ConciergeOverviewTabProps) {
   });
 
   const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded";
-  const isPlaced = caseData.status === "placed";
+  const isPlaced = ["admitted", "billed", "completed"].includes(caseData.status);
   const isClosed = caseData.status === "closed";
   const hoursSinceUpdate = (Date.now() - new Date(caseData.updated_at).getTime()) / (1000 * 60 * 60);
 

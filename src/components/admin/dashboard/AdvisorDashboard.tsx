@@ -153,24 +153,24 @@ export function AdvisorDashboard() {
         return q;
       };
 
-      const [total, newCases, reviewing, matching, introsSent, inContact, placed, closed] = await Promise.all([
+      const [total, intake, reviewing, matching, presented, selected, admitted, closed] = await Promise.all([
         buildQuery(),
-        buildQuery("new"),
-        buildQuery("reviewing"),
-        buildQuery("matching"),
-        buildQuery("introductions_sent"),
-        buildQuery("in_contact"),
-        buildQuery("placed"),
+        buildQuery("intake_submitted"),
+        buildQuery("intake_reviewed"),
+        buildQuery("matching_providers"),
+        buildQuery("presented_to_seeker"),
+        buildQuery("seeker_selected"),
+        buildQuery("admitted"),
         buildQuery("closed"),
       ]);
       return {
         total: total.count || 0,
-        newCases: newCases.count || 0,
+        newCases: intake.count || 0,
         reviewing: reviewing.count || 0,
         matching: matching.count || 0,
-        introsSent: introsSent.count || 0,
-        inContact: inContact.count || 0,
-        placed: placed.count || 0,
+        introsSent: presented.count || 0,
+        inContact: selected.count || 0,
+        placed: admitted.count || 0,
         closed: closed.count || 0,
       };
     },
@@ -191,14 +191,14 @@ export function AdvisorDashboard() {
       if (caseView === "mine") {
         query = query
           .eq("assigned_advisor_id", advisorId!)
-          .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
+          .in("status", ["intake_submitted", "intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
       } else if (caseView === "unassigned") {
         query = query
           .is("assigned_advisor_id", null)
-          .not("status", "in", '("placed","closed")');
+          .not("status", "in", '("completed","closed")');
       } else {
         query = query
-          .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
+          .in("status", ["intake_submitted", "intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
       }
 
       const { data } = await query;

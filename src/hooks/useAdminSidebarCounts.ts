@@ -43,7 +43,7 @@ export function useAdminSidebarCounts() {
         supabase
           .from("concierge_inquiries")
           .select("id", { count: "exact", head: true })
-          .in("status", ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]),
+          .in("status", ["intake_submitted", "intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]),
         supabase
           .from("marketing_leads")
           .select("id", { count: "exact", head: true })
