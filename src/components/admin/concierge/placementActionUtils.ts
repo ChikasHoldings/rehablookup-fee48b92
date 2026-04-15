@@ -85,7 +85,7 @@ export function getCaseNextSteps(
   if (!isPaid && caseData.status !== "intake_submitted" && caseData.status !== "pending_intake") {
     steps.push({
       label: "Payment not received",
-      tab: "manage",
+      tab: "actions",
       icon: AlertTriangle,
       priority: "blocker",
       description: "Intake fee not yet paid. Avoid sending introductions until confirmed.",
@@ -97,7 +97,7 @@ export function getCaseNextSteps(
   if (!caseData.assigned_advisor_id && getStageIndex(caseData.status) >= 2) {
     steps.push({
       label: "Assign an advisor",
-      tab: "manage",
+      tab: "actions",
       icon: UserCheck,
       priority: "blocker",
       description: "This case needs an advisor before placement can proceed.",
@@ -135,7 +135,7 @@ export function getCaseNextSteps(
     case "intake_reviewed":
       steps.push({
         label: "Assign a placement advisor",
-        tab: "manage",
+      tab: "actions",
         icon: UserCheck,
         priority: "high",
         description: "Assign an advisor to begin the matching process.",
@@ -147,7 +147,7 @@ export function getCaseNextSteps(
     case "advisor_assigned":
       steps.push({
         label: "Run placement engine",
-        tab: "providers",
+      tab: "matching",
         icon: Play,
         priority: "high",
         description: "Find matching treatment centers based on seeker criteria.",
@@ -159,7 +159,7 @@ export function getCaseNextSteps(
     case "matching_providers":
       steps.push({
         label: "Review and pre-qualify providers",
-        tab: "providers",
+      tab: "matching",
         icon: Shield,
         priority: "high",
         description: "Verify facility availability and fit before contacting them.",
@@ -171,7 +171,7 @@ export function getCaseNextSteps(
     case "provider_prequalification":
       steps.push({
         label: "Send introductions to providers",
-        tab: "providers",
+      tab: "intros",
         icon: Send,
         priority: "high",
         description: "Contact qualified facilities and await their acceptance.",
