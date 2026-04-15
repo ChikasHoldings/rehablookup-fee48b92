@@ -23,28 +23,10 @@ import { ToursTab } from "./concierge/ToursTab";
 import { ConciergeTimelineTab } from "./concierge/ConciergeTimelineTab";
 import { AdmissionCoordinationCard } from "./concierge/AdmissionCoordinationCard";
 import { StageActionBar } from "./concierge/StageActionBar";
+import { STATUS_CONFIG as PIPELINE_STATUS_CONFIG } from "./concierge/placementPipelineConfig";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
-
-interface ConciergeDetailSheetProps {
-  caseData: ConciergeInquiry | undefined;
-  open: boolean;
-  onClose: () => void;
-  onRefresh: () => void;
-  initialTab?: string;
-}
-
-const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  new: { label: "New", variant: "default" },
-  reviewing: { label: "Reviewing", variant: "secondary" },
-  matching: { label: "Placing", variant: "secondary" },
-  matched: { label: "Facilities Found", variant: "outline" },
-  introductions_sent: { label: "Intros Sent", variant: "outline" },
-  in_contact: { label: "In Contact", variant: "secondary" },
-  placed: { label: "Placed", variant: "default" },
-  closed: { label: "Closed", variant: "destructive" },
-};
 
 export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSheetProps>(
   function ConciergeDetailSheet({ caseData, open, onClose, onRefresh, initialTab }, ref) {
