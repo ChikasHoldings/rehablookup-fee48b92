@@ -277,7 +277,7 @@ export function AdvisorDashboard() {
         .from("concierge_inquiries")
         .select("id", { count: "exact", head: true })
         .is("assigned_advisor_id", null)
-        .not("status", "in", '("placed","closed")');
+        .not("status", "in", '("completed","closed")');
       return count || 0;
     },
     staleTime: 30 * 1000,
