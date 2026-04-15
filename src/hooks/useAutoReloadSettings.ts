@@ -25,7 +25,7 @@ export function useAutoReloadSettings(facilityId?: string) {
 
       const { data, error } = await supabase
         .from("provider_auto_reload_settings")
-        .select("*")
+        .select("id, provider_id, facility_id, enabled, threshold_cents, reload_amount_cents")
         .eq("provider_id", session.user.id)
         .maybeSingle();
 
