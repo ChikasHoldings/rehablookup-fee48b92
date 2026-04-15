@@ -174,7 +174,8 @@ export default function AdvisorProviderDirectory() {
           {providers.map((provider) => (
             <div
               key={provider.id}
-              className="rounded-xl border p-4 hover:shadow-sm transition-all"
+              className="rounded-xl border p-4 hover:shadow-sm transition-all cursor-pointer"
+              onClick={() => setSelectedProvider(provider)}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
