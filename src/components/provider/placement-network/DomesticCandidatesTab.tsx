@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 
 interface ConciergeInquiry {
   id: string;
-  // user_name intentionally excluded — PII not shown to providers
+  user_name?: string;
   level_of_care?: string | null;
   payment_type?: string | null;
   timeline_urgency?: string | null;
