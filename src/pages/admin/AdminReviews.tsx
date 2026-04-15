@@ -37,6 +37,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { ReviewDetailModal } from '@/components/admin/ReviewDetailModal';
 
 interface ReviewWithDetails {
   id: string;
@@ -129,6 +130,7 @@ export default function AdminReviews() {
   const [disputeNotes, setDisputeNotes] = useState<Record<string, string>>({});
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; isOpen: boolean } | null>(null);
+  const [selectedReview, setSelectedReview] = useState<ReviewWithDetails | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -834,6 +836,14 @@ export default function AdminReviews() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Review Detail Modal */}
+      <ReviewDetailModal
+        review={selectedReview}
+        open={!!selectedReview}
+        onOpenChange={(open) => !open && setSelectedReview(null)}
+        onRefresh={fetchReviews}
+      />
     </div>
   );
 }
