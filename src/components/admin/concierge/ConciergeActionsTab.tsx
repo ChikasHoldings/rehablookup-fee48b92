@@ -32,10 +32,7 @@ import { toast } from "sonner";
 import { Save, XCircle, Loader2, History, AlertTriangle, HandMetal, CheckCircle2, Bell } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
-import { AdminConfirmPlacement } from "./AdminConfirmPlacement";
 import { AdvisorAssignmentCard } from "./AdvisorAssignmentCard";
-import { AdmissionCoordinationCard } from "./AdmissionCoordinationCard";
-import { BillingStatusCard } from "./BillingStatusCard";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
 
@@ -257,21 +254,10 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         <AdvisorAssignmentCard caseData={caseData} onRefresh={onRefresh} />
       )}
 
-      {/* Admin Confirm Placement */}
-      {caseData.status !== "closed" && caseData.status !== "new" && (
-        <AdminConfirmPlacement caseData={caseData} onRefresh={onRefresh} />
-      )}
-
       {/* Notify Seeker — Send provider options for review */}
       {(caseData.status === "presented_to_seeker" || caseData.status === "providers_accepted") && !caseData.seeker_confirmed && (
         <NotifySeekerCard caseData={caseData} onRefresh={onRefresh} />
       )}
-
-      {/* Admission Coordination */}
-      <AdmissionCoordinationCard caseData={caseData} onRefresh={onRefresh} />
-
-      {/* Billing Status — only visible on placed cases */}
-      <BillingStatusCard caseData={caseData} onRefresh={onRefresh} />
 
       {/* Seeker confirmed indicator for admin */}
       {caseData.seeker_confirmed && !["admitted", "completed", "billed", "closed"].includes(caseData.status) && (

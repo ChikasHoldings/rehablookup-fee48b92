@@ -48,18 +48,18 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
     mutationFn: async (advisorId: string) => {
       const actualId = advisorId === "unassigned" ? null : advisorId;
       
-      // Use conditional update to prevent stale overwrites
-      const updateQuery = supabase
+      // Build query — supabase query builder is immutable, so chain properly
+      let query = supabase
         .from("concierge_inquiries")
         .update({ assigned_advisor_id: actualId })
         .eq("id", caseData.id);
       
-      // If unassigning, require current advisor matches what we see
+      // If unassigning, require current advisor matches what we see (optimistic lock)
       if (caseData.assigned_advisor_id) {
-        updateQuery.eq("assigned_advisor_id", caseData.assigned_advisor_id);
+        query = query.eq("assigned_advisor_id", caseData.assigned_advisor_id);
       }
 
-      const { error } = await updateQuery;
+      const { error } = await query;
       if (error) throw error;
 
       // Log event with actor_id
