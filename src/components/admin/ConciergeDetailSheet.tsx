@@ -22,7 +22,9 @@ import { InvoiceManagementTab } from "./concierge/InvoiceManagementTab";
 import { ToursTab } from "./concierge/ToursTab";
 import { ConciergeTimelineTab } from "./concierge/ConciergeTimelineTab";
 import { AdmissionCoordinationCard } from "./concierge/AdmissionCoordinationCard";
+import { AdminConfirmPlacement } from "./concierge/AdminConfirmPlacement";
 import { StageActionBar } from "./concierge/StageActionBar";
+import { STATUS_CONFIG as PIPELINE_STATUS_CONFIG } from "./concierge/placementPipelineConfig";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
@@ -34,17 +36,6 @@ interface ConciergeDetailSheetProps {
   onRefresh: () => void;
   initialTab?: string;
 }
-
-const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  new: { label: "New", variant: "default" },
-  reviewing: { label: "Reviewing", variant: "secondary" },
-  matching: { label: "Placing", variant: "secondary" },
-  matched: { label: "Facilities Found", variant: "outline" },
-  introductions_sent: { label: "Intros Sent", variant: "outline" },
-  in_contact: { label: "In Contact", variant: "secondary" },
-  placed: { label: "Placed", variant: "default" },
-  closed: { label: "Closed", variant: "destructive" },
-};
 
 export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSheetProps>(
   function ConciergeDetailSheet({ caseData, open, onClose, onRefresh, initialTab }, ref) {
@@ -154,8 +145,8 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
               >
                 {(caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded') ? '✓ Paid' : '⚠ Unpaid'}
               </Badge>
-              <Badge variant={STATUS_CONFIG[caseData.status]?.variant || "secondary"}>
-                {STATUS_CONFIG[caseData.status]?.label || caseData.status}
+              <Badge variant="outline" className={PIPELINE_STATUS_CONFIG[caseData.status]?.color || "bg-muted text-muted-foreground"}>
+                {PIPELINE_STATUS_CONFIG[caseData.status]?.label || caseData.status}
               </Badge>
             </div>
           </div>
@@ -235,7 +226,8 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
             <TabsContent value="tours" className="m-0">
               <ToursTab caseData={caseData} />
             </TabsContent>
-            <TabsContent value="admission" className="m-0">
+            <TabsContent value="admission" className="m-0 space-y-4">
+              <AdminConfirmPlacement caseData={caseData} onRefresh={onRefresh} />
               <AdmissionCoordinationCard caseData={caseData} onRefresh={onRefresh} />
             </TabsContent>
             {canManageBilling && (
