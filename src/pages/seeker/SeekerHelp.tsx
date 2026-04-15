@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 import { HelpCircle, MessageSquare, BookOpen, Mail, Phone, ExternalLink, ChevronRight, Send } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -85,23 +85,51 @@ export default function SeekerHelp() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Sanitize text: strip HTML tags and dangerous protocols
+  const sanitizeInput = (str: string, maxLen: number): string => {
+    return str
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .replace(/data:/gi, '')
+      .trim()
+      .slice(0, maxLen);
+  };
+
+  const lastSubmitRef = useRef<number>(0);
+
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    
-    if (!subject.trim() || !category || !message.trim()) {
+
+    // Rate limit: 10s cooldown
+    const now = Date.now();
+    if (now - lastSubmitRef.current < 10000) {
+      toast.error("Please wait before sending another message.");
+      return;
+    }
+
+    const cleanSubject = sanitizeInput(subject, 200);
+    const cleanMessage = sanitizeInput(message, 2000);
+
+    if (!cleanSubject || !category || !cleanMessage) {
       toast.error("Please fill in all fields");
       return;
     }
 
+    if (cleanMessage.length < 10) {
+      toast.error("Please provide more detail in your message.");
+      return;
+    }
+
+    lastSubmitRef.current = now;
     setIsSubmitting(true);
 
     try {
       const { error } = await supabase.functions.invoke("send-support-request", {
         body: {
-          subject,
+          subject: cleanSubject,
           category,
-          message,
+          message: cleanMessage,
           source: "seeker"
         }
       });
