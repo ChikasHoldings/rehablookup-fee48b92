@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import type { Facility } from "../ProviderListItem";
 
@@ -50,6 +51,17 @@ export function ProviderReviewsTab({ provider, providerFacilities }: ProviderRev
   const disputedCount = reviews?.filter((r) => r.disputed).length || 0;
 
   const facilityName = (id: string) => providerFacilities?.find((f) => f.id === id)?.name || "—";
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
+        </div>
+        {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-4">
