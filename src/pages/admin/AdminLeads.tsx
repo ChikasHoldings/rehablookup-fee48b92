@@ -1,13 +1,12 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Users, Search, Mail, Phone, MapPin, Calendar, Clock, Zap,
-  MoreHorizontal, Eye, CalendarIcon, Building2, Share2, Timer,
-  Download, X, Trash2, ArrowRightLeft, CheckSquare, Square,
-  Loader2, Lock, Unlock, Handshake, MessageSquare,
+  Users, Search, Mail, Phone, Zap, Download, X, Trash2,
+  CheckSquare, Square, Loader2, Lock, Unlock, Share2,
+  MessageSquare, Building2, CalendarIcon, Clock, Timer,
 } from "lucide-react";
-import { format, subDays, startOfMonth, endOfMonth, subMonths, formatDistanceToNow } from "date-fns";
+import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,11 +16,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub,
-  DropdownMenuSubContent, DropdownMenuSubTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
@@ -30,9 +24,6 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -40,10 +31,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { exportLeadsToCSV } from "@/lib/csvExport";
-import { formatSourceLabel } from "@/lib/sourceLabels";
 import { InquiryDetailModal } from "@/components/admin/inquiries/InquiryDetailModal";
 
-type Lead = {
+export type Lead = {
   id: string;
   facility_id: string | null;
   original_facility_id: string | null;
@@ -88,7 +78,6 @@ const DATE_PRESETS = [
   { label: "All Time", value: "all", getRange: () => ({ from: undefined, to: undefined }) },
   { label: "Today", value: "today", getRange: () => ({ from: new Date(), to: new Date() }) },
   { label: "Last 7 Days", value: "7days", getRange: () => ({ from: subDays(new Date(), 7), to: new Date() }) },
-  { label: "Last 14 Days", value: "14days", getRange: () => ({ from: subDays(new Date(), 14), to: new Date() }) },
   { label: "Last 30 Days", value: "30days", getRange: () => ({ from: subDays(new Date(), 30), to: new Date() }) },
   { label: "This Month", value: "thisMonth", getRange: () => ({ from: startOfMonth(new Date()), to: new Date() }) },
   { label: "Last Month", value: "lastMonth", getRange: () => ({ from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) }) },
@@ -109,6 +98,35 @@ function StatusBadge({ status }: { status: string }) {
   };
   const { label, className } = config[status] || { label: status, className: "bg-muted text-muted-foreground border-border" };
   return <Badge variant="outline" className={cn(className, "text-xs")}>{label}</Badge>;
+}
+
+function LeadStatusBadge({ lead, unlocked }: { lead: Lead; unlocked: boolean }) {
+  if (lead.redistribution_status === "extended") {
+    return (
+      <Badge variant="outline" className="bg-info/10 text-info border-info/30 gap-1 text-xs">
+        <Share2 className="h-3 w-3" />Shared
+      </Badge>
+    );
+  }
+  if (unlocked) {
+    return (
+      <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 text-xs">
+        <Unlock className="h-3 w-3" />Unlocked
+      </Badge>
+    );
+  }
+  if (lead.status === "expired" || lead.lead_expired_at) {
+    return (
+      <Badge variant="outline" className="bg-muted text-muted-foreground border-border gap-1 text-xs">
+        <Clock className="h-3 w-3" />Expired
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="text-xs text-muted-foreground gap-1">
+      <Lock className="h-3 w-3" />Locked
+    </Badge>
+  );
 }
 
 function useDebounce(value: string, delay: number) {
@@ -139,7 +157,6 @@ export default function AdminLeads() {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const searchQuery = useDebounce(searchInput, 350);
-
   const hasActiveFilters = statusFilter !== "all" || inquiryTypeFilter !== "all" || redistributionFilter !== "all" || searchInput !== "" || dateRange.from !== undefined;
 
   const clearAllFilters = () => {
@@ -167,7 +184,6 @@ export default function AdminLeads() {
     queryClient.invalidateQueries({ queryKey: ["admin-leads-kpi"] });
   }, [queryClient]);
 
-  // Poll every 30s
   useEffect(() => {
     const interval = setInterval(invalidateAll, 30000);
     return () => clearInterval(interval);
@@ -188,14 +204,10 @@ export default function AdminLeads() {
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("inquiry_type", "request_callback"),
       ]);
       return {
-        total: totalRes.count || 0,
-        newCount: newRes.count || 0,
-        contacted: contactedRes.count || 0,
-        converted: convertedRes.count || 0,
-        unlocked: unlockedRes.count || 0,
-        redistributed: redistRes.count || 0,
-        requestInfo: requestInfoRes.count || 0,
-        requestCallback: requestCallbackRes.count || 0,
+        total: totalRes.count || 0, newCount: newRes.count || 0,
+        contacted: contactedRes.count || 0, converted: convertedRes.count || 0,
+        unlocked: unlockedRes.count || 0, redistributed: redistRes.count || 0,
+        requestInfo: requestInfoRes.count || 0, requestCallback: requestCallbackRes.count || 0,
       };
     },
     staleTime: 1000 * 60 * 2,
@@ -262,7 +274,7 @@ export default function AdminLeads() {
     return new Map(facilities.map(f => [f.id, f]));
   }, [facilities]);
 
-  // Batch fetch unlock status for current page leads
+  // Batch unlock status
   const leadIds = useMemo(() => (leads || []).map(l => l.id), [leads]);
   const { data: unlockMap } = useQuery({
     queryKey: ["admin-leads-unlock-map", leadIds],
@@ -279,16 +291,6 @@ export default function AdminLeads() {
   const filteredLeads = useMemo(() => leads || [], [leads]);
   const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
 
-  // Assign lead
-  const assignLead = useMutation({
-    mutationFn: async ({ leadId, facilityId }: { leadId: string; facilityId: string }) => {
-      const { error } = await supabase.from("leads").update({ facility_id: facilityId }).eq("id", leadId);
-      if (error) throw error;
-    },
-    onSuccess: () => { invalidateAll(); toast.success("Lead assigned"); },
-    onError: (error) => { logError("assign_lead", error); toast.error("Failed to assign"); },
-  });
-
   // Delete
   const handleDeleteLead = async () => {
     if (!deleteTarget) return;
@@ -302,15 +304,9 @@ export default function AdminLeads() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      invalidateAll();
-      toast.success("Lead deleted");
-      setDeleteTarget(null);
-    } catch (err) {
-      logError("delete_lead", err);
-      toast.error("Failed to delete");
-    } finally {
-      setIsDeleting(false);
-    }
+      invalidateAll(); toast.success("Lead deleted"); setDeleteTarget(null);
+    } catch (err) { logError("delete_lead", err); toast.error("Failed to delete"); }
+    finally { setIsDeleting(false); }
   };
 
   const handleBulkDelete = async () => {
@@ -325,24 +321,14 @@ export default function AdminLeads() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      invalidateAll();
-      toast.success(`${selectedIds.size} lead(s) deleted`);
-      setSelectedIds(new Set());
-      setBulkDeleteOpen(false);
-    } catch (err) {
-      logError("bulk_delete", err);
-      toast.error("Failed to delete");
-    } finally {
-      setIsBulkDeleting(false);
-    }
+      invalidateAll(); toast.success(`${selectedIds.size} lead(s) deleted`);
+      setSelectedIds(new Set()); setBulkDeleteOpen(false);
+    } catch (err) { logError("bulk_delete", err); toast.error("Failed to delete"); }
+    finally { setIsBulkDeleting(false); }
   };
 
   const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+    setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   };
   const toggleSelectAll = () => {
     if (!filteredLeads) return;
@@ -371,13 +357,18 @@ export default function AdminLeads() {
     toast.success(`Exported ${leads.length} leads`);
   }, [leads, facilitiesMap]);
 
+  const openDetail = (lead: Lead) => {
+    setSelectedLead(lead);
+    setShowDetailModal(true);
+  };
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
         icon={Users}
         iconGradient="bg-gradient-to-br from-chart-3 to-chart-5"
         title="Inquiries"
-        subtitle="Direct facility inquiries from seekers — full lifecycle tracking"
+        subtitle="Direct facility inquiries — click any row for full details and actions"
         actions={
           <div className="flex items-center gap-2">
             {selectedIds.size > 0 && (
@@ -386,13 +377,13 @@ export default function AdminLeads() {
               </Button>
             )}
             <Button variant="outline" size="sm" className="gap-2" onClick={handleExportCSV} disabled={!leads || leads.length === 0}>
-              <Download className="h-4 w-4" />Export CSV
+              <Download className="h-4 w-4" />Export
             </Button>
           </div>
         }
       />
 
-      {/* KPI Summary — 8 clickable stat cards */}
+      {/* KPI Summary */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 divide-x divide-y sm:divide-y-0 divide-border">
@@ -406,11 +397,7 @@ export default function AdminLeads() {
               { label: "Request Info", value: kpiStats?.requestInfo, icon: MessageSquare, color: "text-primary", filter: () => handleFilterChange(setInquiryTypeFilter)("request_info") },
               { label: "Callbacks", value: kpiStats?.requestCallback, icon: Phone, color: "text-warning", filter: () => handleFilterChange(setInquiryTypeFilter)("request_callback") },
             ].map((kpi) => (
-              <button
-                key={kpi.label}
-                onClick={kpi.filter}
-                className="flex flex-col items-center justify-center p-3 sm:p-4 transition-colors hover:bg-muted/50"
-              >
+              <button key={kpi.label} onClick={kpi.filter} className="flex flex-col items-center justify-center p-3 sm:p-4 transition-colors hover:bg-muted/50">
                 <kpi.icon className={cn("h-4 w-4 mb-1", kpi.color)} />
                 <span className="text-lg sm:text-xl font-bold tabular-nums">{kpi.value ?? "—"}</span>
                 <span className="text-[9px] sm:text-[10px] uppercase tracking-wide text-muted-foreground">{kpi.label}</span>
@@ -423,16 +410,11 @@ export default function AdminLeads() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <div className="flex flex-col lg:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, email, phone, or facility..."
-                  value={searchInput}
-                  onChange={(e) => { setSearchInput(e.target.value); setCurrentPage(1); }}
-                  className="pl-9"
-                />
+                <Input placeholder="Search by name, email, or phone..." value={searchInput} onChange={(e) => { setSearchInput(e.target.value); setCurrentPage(1); }} className="pl-9" />
               </div>
               <div className="flex flex-wrap gap-2">
                 <Select value={statusFilter} onValueChange={handleFilterChange(setStatusFilter)}>
@@ -449,83 +431,64 @@ export default function AdminLeads() {
                   </SelectContent>
                 </Select>
                 <Select value={inquiryTypeFilter} onValueChange={handleFilterChange(setInquiryTypeFilter)}>
-                  <SelectTrigger className="w-[150px]"><SelectValue placeholder="Inquiry Type" /></SelectTrigger>
+                  <SelectTrigger className="w-[140px]"><SelectValue placeholder="Type" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="request_info">Request Info</SelectItem>
-                    <SelectItem value="request_callback">Request Callback</SelectItem>
-                    <SelectItem value="tour_request">Tour Request</SelectItem>
+                    <SelectItem value="request_callback">Callback</SelectItem>
+                    <SelectItem value="tour_request">Tour</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={redistributionFilter} onValueChange={handleFilterChange(setRedistributionFilter)}>
-                  <SelectTrigger className="w-[160px]"><SelectValue placeholder="Distribution" /></SelectTrigger>
+                  <SelectTrigger className="w-[150px]"><SelectValue placeholder="Distribution" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Distribution</SelectItem>
                     <SelectItem value="exclusive">Exclusive</SelectItem>
                     <SelectItem value="redistributed">Redistributed</SelectItem>
                     <SelectItem value="not_redistributed">Not Redistributed</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={datePreset} onValueChange={handleDatePresetChange}>
+                  <SelectTrigger className="w-[130px]"><CalendarIcon className="h-4 w-4 mr-1.5" /><SelectValue placeholder="Date" /></SelectTrigger>
+                  <SelectContent>
+                    {DATE_PRESETS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {datePreset === "custom" && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn("w-[220px] justify-start text-left font-normal text-xs", !dateRange.from && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                        {dateRange.from ? (dateRange.to ? <>{format(dateRange.from, "MMM d")} – {format(dateRange.to, "MMM d, yyyy")}</> : format(dateRange.from, "MMM d, yyyy")) : "Pick range"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent initialFocus mode="range" defaultMonth={dateRange.from} selected={{ from: dateRange.from, to: dateRange.to }} onSelect={(range) => { setDateRange({ from: range?.from, to: range?.to }); setCurrentPage(1); }} numberOfMonths={2} className="pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                )}
                 {hasActiveFilters && (
-                  <Button variant="ghost" size="sm" onClick={clearAllFilters} className="gap-1.5 text-muted-foreground hover:text-foreground h-10">
+                  <Button variant="ghost" size="sm" onClick={clearAllFilters} className="gap-1 text-muted-foreground hover:text-foreground h-9">
                     <X className="h-3.5 w-3.5" />Clear
                   </Button>
                 )}
               </div>
             </div>
-            {/* Date Range */}
-            <div className="flex flex-wrap items-center gap-2">
-              <Select value={datePreset} onValueChange={handleDatePresetChange}>
-                <SelectTrigger className="w-[140px]">
-                  <CalendarIcon className="h-4 w-4 mr-2" /><SelectValue placeholder="Date Range" />
-                </SelectTrigger>
-                <SelectContent>
-                  {DATE_PRESETS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {datePreset === "custom" && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-[240px] justify-start text-left font-normal", !dateRange.from && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateRange.from ? (dateRange.to ? <>{format(dateRange.from, "MMM d, yyyy")} - {format(dateRange.to, "MMM d, yyyy")}</> : format(dateRange.from, "MMM d, yyyy")) : "Pick a date range"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarComponent
-                      initialFocus mode="range"
-                      defaultMonth={dateRange.from}
-                      selected={{ from: dateRange.from, to: dateRange.to }}
-                      onSelect={(range) => { setDateRange({ from: range?.from, to: range?.to }); setCurrentPage(1); }}
-                      numberOfMonths={2} className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              )}
-              {(dateRange.from || dateRange.to) && datePreset !== "custom" && (
-                <Badge variant="secondary" className="text-xs">
-                  {dateRange.from && dateRange.to
-                    ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}`
-                    : dateRange.from ? `From ${format(dateRange.from, "MMM d, yyyy")}` : ""}
-                </Badge>
-              )}
-            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Inquiries Table */}
+      {/* Simplified Table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Users className="h-5 w-5" />Inquiries
+          <CardTitle className="flex items-center gap-2 text-base">
+            Inquiries
             <Badge variant="secondary" className="ml-1 tabular-nums">{totalCount ?? 0}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-6 space-y-3">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
+            <div className="p-6 space-y-3">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
           ) : filteredLeads.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
@@ -538,23 +501,24 @@ export default function AdminLeads() {
                           : <Square className="h-4 w-4 text-muted-foreground" />}
                       </button>
                     </TableHead>
-                    <TableHead className="min-w-[200px]">Seeker</TableHead>
-                    <TableHead className="min-w-[80px]">Type</TableHead>
+                    <TableHead className="min-w-[160px]">Seeker</TableHead>
+                    <TableHead className="min-w-[120px]">Facility</TableHead>
+                    <TableHead className="min-w-[70px]">Type</TableHead>
+                    <TableHead className="min-w-[80px]">Lead Status</TableHead>
                     <TableHead className="min-w-[80px]">Status</TableHead>
-                    <TableHead className="min-w-[80px]">Unlock</TableHead>
-                    <TableHead className="min-w-[100px]">Distribution</TableHead>
-                    <TableHead className="min-w-[140px]">Facility</TableHead>
-                    <TableHead className="min-w-[100px]">Location</TableHead>
-                    <TableHead className="min-w-[120px]">Submitted</TableHead>
-                    <TableHead className="text-right w-[60px]">Actions</TableHead>
+                    <TableHead className="min-w-[100px]">Date</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredLeads.map((lead) => {
                     const facility = lead.facility_id ? facilitiesMap.get(lead.facility_id) : null;
-                    const unlock = unlockMap?.[lead.id];
+                    const isUnlocked = !!unlockMap?.[lead.id];
                     return (
-                      <TableRow key={lead.id} className="group">
+                      <TableRow
+                        key={lead.id}
+                        className="cursor-pointer group hover:bg-muted/40 transition-colors"
+                        onClick={() => openDetail(lead)}
+                      >
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <button onClick={() => toggleSelect(lead.id)} className="p-1">
                             {selectedIds.has(lead.id) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
@@ -562,108 +526,36 @@ export default function AdminLeads() {
                         </TableCell>
                         <TableCell>
                           <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => { setSelectedLead(lead); setShowDetailModal(true); }}
-                                className="font-medium text-primary hover:underline focus:outline-none truncate max-w-[180px] text-left"
-                              >
-                                {lead.name}
-                              </button>
-                              {lead.urgency === "immediate" && (
-                                <TooltipProvider><Tooltip><TooltipTrigger><Zap className="h-3 w-3 text-destructive" /></TooltipTrigger><TooltipContent>Immediate urgency</TooltipContent></Tooltip></TooltipProvider>
-                              )}
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-sm truncate max-w-[160px]">{lead.name}</span>
+                              {lead.urgency === "immediate" && <Zap className="h-3 w-3 text-destructive flex-shrink-0" />}
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                              <span className="flex items-center gap-1 truncate max-w-[160px]"><Mail className="h-3 w-3 shrink-0" />{lead.email}</span>
-                              {lead.phone && <span className="flex items-center gap-1 hidden sm:flex"><Phone className="h-3 w-3" />{lead.phone}</span>}
-                            </div>
+                            <p className="text-xs text-muted-foreground truncate max-w-[180px]">{lead.email}</p>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {facility ? (
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="text-sm truncate max-w-[120px]">{facility.name}</span>
+                            </div>
+                          ) : <span className="text-muted-foreground text-xs">—</span>}
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="text-xs whitespace-nowrap">
                             {lead.inquiry_type === "request_callback" ? "Callback" : lead.inquiry_type === "tour_request" ? "Tour" : "Info"}
                           </Badge>
                         </TableCell>
-                        <TableCell><StatusBadge status={lead.status} /></TableCell>
                         <TableCell>
-                          {unlock ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 text-xs">
-                                    <Unlock className="h-3 w-3" />Yes
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>{format(new Date(unlock.unlocked_at), "MMM d, h:mm a")}</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : (
-                            <Badge variant="outline" className="text-xs text-muted-foreground"><Lock className="h-3 w-3 mr-1" />No</Badge>
-                          )}
+                          <LeadStatusBadge lead={lead} unlocked={isUnlocked} />
                         </TableCell>
                         <TableCell>
-                          {lead.redistribution_status ? (
-                            <Badge variant="outline" className={cn("gap-1 text-xs",
-                              lead.redistribution_status === "exclusive" && "bg-warning/10 text-warning border-warning/30",
-                              lead.redistribution_status === "extended" && "bg-info/10 text-info border-info/30",
-                              lead.redistribution_status === "expired" && "bg-muted text-muted-foreground border-border"
-                            )}>
-                              {lead.redistribution_status === "extended" ? <Share2 className="h-3 w-3" /> : lead.redistribution_status === "exclusive" ? <Timer className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                              {lead.redistribution_status === "extended" ? "Redistributed" : lead.redistribution_status}
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {facility ? (
-                            <div className="flex items-center gap-1.5">
-                              <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span className="text-sm truncate max-w-[130px]">{facility.name}</span>
-                            </div>
-                          ) : <span className="text-muted-foreground text-xs">—</span>}
-                        </TableCell>
-                        <TableCell>
-                          {lead.location_city_state || lead.location_zip ? (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <MapPin className="h-3 w-3 shrink-0" />
-                              <span className="truncate max-w-[100px]">{lead.location_city_state || lead.location_zip}</span>
-                            </div>
-                          ) : <span className="text-muted-foreground text-xs">—</span>}
+                          <StatusBadge status={lead.status} />
                         </TableCell>
                         <TableCell>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
                             {format(new Date(lead.created_at), "MMM d, h:mm a")}
                           </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => { setSelectedLead(lead); setShowDetailModal(true); }}>
-                                <Eye className="h-4 w-4 mr-2" />View Details
-                              </DropdownMenuItem>
-                              {facilities && facilities.length > 0 && (
-                                <DropdownMenuSub>
-                                  <DropdownMenuSubTrigger><ArrowRightLeft className="h-4 w-4 mr-2" />Route to Provider</DropdownMenuSubTrigger>
-                                  <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
-                                    {facilities.slice(0, 50).map((f) => (
-                                      <DropdownMenuItem key={f.id} onClick={() => assignLead.mutate({ leadId: lead.id, facilityId: f.id })} disabled={lead.facility_id === f.id}>
-                                        <Building2 className="h-3.5 w-3.5 mr-2 shrink-0" /><span className="truncate">{f.name}</span>
-                                        {lead.facility_id === f.id && <Badge variant="secondary" className="ml-auto text-[10px]">Current</Badge>}
-                                      </DropdownMenuItem>
-                                    ))}
-                                  </DropdownMenuSubContent>
-                                </DropdownMenuSub>
-                              )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => setDeleteTarget(lead)} className="text-destructive focus:text-destructive">
-                                <Trash2 className="h-4 w-4 mr-2" />Delete Lead
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );
@@ -675,9 +567,7 @@ export default function AdminLeads() {
             <div className="text-center py-16">
               <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
               <p className="text-muted-foreground font-medium">No inquiries found</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {hasActiveFilters ? "Try adjusting your filters" : "Inquiries will appear when seekers contact providers"}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">{hasActiveFilters ? "Try adjusting your filters" : "Inquiries will appear when seekers contact providers"}</p>
               {hasActiveFilters && <Button variant="link" size="sm" onClick={clearAllFilters} className="mt-3 text-primary">Clear all filters</Button>}
             </div>
           )}
@@ -686,7 +576,7 @@ export default function AdminLeads() {
           {totalPages > 1 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t">
               <p className="text-sm text-muted-foreground tabular-nums">
-                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount}
+                {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount}
               </p>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</Button>
@@ -717,6 +607,8 @@ export default function AdminLeads() {
         open={showDetailModal}
         onOpenChange={setShowDetailModal}
         facilityMap={facilitiesMap}
+        facilities={facilities || []}
+        onLeadUpdated={invalidateAll}
       />
 
       {/* Delete Confirmation */}
@@ -724,9 +616,7 @@ export default function AdminLeads() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Lead Permanently?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete <strong>{deleteTarget?.name}</strong> ({deleteTarget?.email}) and all associated data. This action cannot be undone.
-            </AlertDialogDescription>
+            <AlertDialogDescription>This will permanently delete <strong>{deleteTarget?.name}</strong> and all associated data.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
@@ -742,12 +632,12 @@ export default function AdminLeads() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {selectedIds.size} lead(s)?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently remove the selected leads and all associated data.</AlertDialogDescription>
+            <AlertDialogDescription>This will permanently remove the selected leads.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleBulkDelete} disabled={isBulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isBulkDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}Delete {selectedIds.size} Lead(s)
+              {isBulkDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}Delete {selectedIds.size}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
