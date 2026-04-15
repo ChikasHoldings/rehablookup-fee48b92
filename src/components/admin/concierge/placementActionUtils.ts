@@ -82,7 +82,7 @@ export function getCaseNextSteps(
   const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded";
 
   // Blockers always first
-  if (!isPaid && caseData.status !== "intake_submitted") {
+  if (!isPaid && caseData.status !== "intake_submitted" && caseData.status !== "pending_intake") {
     steps.push({
       label: "Payment not received",
       tab: "actions",
