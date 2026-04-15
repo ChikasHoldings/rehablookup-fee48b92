@@ -47,25 +47,17 @@ interface ConciergeActionsTabProps {
   onSwitchTab?: (tab: string) => void;
 }
 
+import { VALID_TRANSITIONS, PIPELINE_STAGES, CLOSED_STAGE, type PlacementStage } from "./placementPipelineConfig";
+
+// Build status options from pipeline config
 const STATUS_OPTIONS = [
-  { value: "new", label: "New" },
-  { value: "reviewing", label: "Reviewing" },
-  { value: "matching", label: "Placing" },
-  { value: "matched", label: "Facilities Found" },
-  { value: "introductions_sent", label: "Introductions Sent" },
-  { value: "in_contact", label: "In Contact" },
-  // "placed" is intentionally excluded — use the Confirm Placement action instead
+  ...PIPELINE_STAGES.filter(s => s.key !== "admitted" && s.key !== "completed").map(s => ({ value: s.key, label: s.label })),
   { value: "closed", label: "Closed" },
 ];
 
-// Advisors can only move cases through these workflow statuses
-const ADVISOR_STATUS_OPTIONS = [
-  { value: "reviewing", label: "Reviewing" },
-  { value: "matching", label: "Placing" },
-  { value: "matched", label: "Facilities Found" },
-  { value: "introductions_sent", label: "Introductions Sent" },
-  { value: "in_contact", label: "In Contact" },
-];
+const ADVISOR_STATUS_OPTIONS = PIPELINE_STAGES
+  .filter(s => ["intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress"].includes(s.key))
+  .map(s => ({ value: s.key, label: s.label }));
 
 export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = false, onSwitchTab }: ConciergeActionsTabProps) {
   const { user } = useAdminAuth();
@@ -208,7 +200,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       toast.success("Case assigned to you — starting placement workflow");
       queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
       onRefresh();
-      onSwitchTab?.("placement");
+      onSwitchTab?.("matching");
     },
     onError: (error) => {
       toast.error(error.message || "Failed to self-assign");

@@ -42,16 +42,7 @@ interface PlacementDetailModalProps {
   facilityMap: Record<string, any>;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  new: { label: "New", color: "bg-blue-500/10 text-blue-600 border-blue-500/30" },
-  reviewing: { label: "Reviewing", color: "bg-amber-500/10 text-amber-600 border-amber-500/30" },
-  matching: { label: "Placing", color: "bg-purple-500/10 text-purple-600 border-purple-500/30" },
-  matched: { label: "Matched", color: "bg-chart-3/10 text-chart-3 border-chart-3/30" },
-  introductions_sent: { label: "Intros Sent", color: "bg-indigo-500/10 text-indigo-600 border-indigo-500/30" },
-  in_contact: { label: "In Contact", color: "bg-cyan-500/10 text-cyan-600 border-cyan-500/30" },
-  placed: { label: "Placed", color: "bg-success/10 text-success border-success/30" },
-  closed: { label: "Closed", color: "bg-muted text-muted-foreground border-border" },
-};
+import { STATUS_CONFIG } from "./placementPipelineConfig";
 
 export function PlacementDetailModal({
   caseData,
@@ -71,9 +62,9 @@ export function PlacementDetailModal({
     if (open) setActiveTab("overview");
   }, [open, caseData?.id]);
 
-  // Auto-transition: new → reviewing
+  // Auto-transition: intake_submitted → intake_reviewed
   useEffect(() => {
-    if (open && caseData?.status === "new") {
+    if (open && caseData?.status === "intake_submitted") {
       supabase.functions.invoke("auto-status-transition", {
         body: { inquiryId: caseData.id, trigger: "admin_viewed", actorType: "admin" },
       }).then(() => onRefresh()).catch(console.error);
