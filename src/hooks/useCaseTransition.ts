@@ -2,39 +2,28 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
+import { VALID_TRANSITIONS, type PlacementStage } from "@/components/admin/concierge/placementPipelineConfig";
 
 /**
  * Centralized placement case status transition hook.
  *
  * Guarantees:
  * - Optimistic locking: status is only updated if current DB status matches expected
- * - Automatic timestamp fields (matched_at, introductions_sent_at, etc.)
+ * - Automatic timestamp fields per stage
  * - Timeline event always logged with actor, via, and from/to
  * - Query cache invalidated consistently
  * - Stale-state conflicts surfaced to the user
  */
 
-// Valid status transitions enforced client-side (also enforced by DB trigger)
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  new: ["reviewing", "closed"],
-  reviewing: ["matching", "matched", "closed"],
-  matching: ["matched", "closed"],
-  matched: ["introductions_sent", "in_contact", "placed", "closed"],
-  introductions_sent: ["in_contact", "placed", "closed"],
-  in_contact: ["placed", "closed"],
-  placed: ["closed"],
-  closed: [],
-};
-
-function getTimestampFields(toStatus: string): Record<string, string> {
+function getTimestampFields(toStatus: string): Record<string, unknown> {
   const now = new Date().toISOString();
   switch (toStatus) {
-    case "matched":
+    case "providers_accepted":
       return { matched_at: now };
-    case "introductions_sent":
+    case "presented_to_seeker":
       return { introductions_sent_at: now };
-    case "placed":
-      return { placement_confirmed: "true", placement_confirmed_at: now, admission_status: "admitted" };
+    case "admitted":
+      return { placement_confirmed: true, placement_confirmed_at: now, admission_status: "admitted" };
     case "closed":
       return { closed_at: now };
     default:
@@ -67,9 +56,9 @@ export function useCaseTransition() {
     mutationFn: async (opts: TransitionOptions) => {
       const { caseId, fromStatus, toStatus, extraFields, eventType, via, label } = opts;
 
-      // Client-side validation
-      const allowed = VALID_TRANSITIONS[fromStatus];
-      if (allowed && !allowed.includes(toStatus)) {
+      // Client-side validation using shared config
+      const allowed = VALID_TRANSITIONS[fromStatus as PlacementStage];
+      if (allowed && !allowed.includes(toStatus as PlacementStage)) {
         throw new Error(`Cannot move from "${fromStatus}" to "${toStatus}". Allowed: ${allowed.join(", ") || "none"}`);
       }
 
@@ -115,13 +104,13 @@ export function useCaseTransition() {
     },
     onSuccess: (_data, opts) => {
       toast.success("Case updated");
-      // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ["admin-concierge-cases-full"] });
       queryClient.invalidateQueries({ queryKey: ["case-events", opts.caseId] });
       queryClient.invalidateQueries({ queryKey: ["intros-count", opts.caseId] });
       queryClient.invalidateQueries({ queryKey: ["tours-count", opts.caseId] });
       queryClient.invalidateQueries({ queryKey: ["placement-intros-count", opts.caseId] });
       queryClient.invalidateQueries({ queryKey: ["admin-concierge-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-concierge-case-detail", opts.caseId] });
       opts.onSuccess?.();
     },
     onError: (err: Error) => {
