@@ -56,6 +56,8 @@ export default function AdvisorProviderDirectory() {
   const searchQuery = useDebounce(searchInput, 350);
   const [tab, setTab] = useState("all");
 
+  const [selectedProvider, setSelectedProvider] = useState<ProviderRow | null>(null);
+
   const { data: providers, isLoading } = useQuery({
     queryKey: ["advisor-providers", tab, searchQuery],
     queryFn: async () => {
