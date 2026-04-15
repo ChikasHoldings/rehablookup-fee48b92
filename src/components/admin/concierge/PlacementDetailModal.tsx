@@ -144,6 +144,9 @@ export function PlacementDetailModal({
               compact
             />
           </div>
+
+          {/* ─── Next Action Bar ─── */}
+          <ModalNextActionBar caseData={caseData} onRefresh={onRefresh} onSwitchTab={setActiveTab} />
         </div>
 
         {/* ─── Tabs ─── */}
