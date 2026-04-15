@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useCaseTransition } from "@/hooks/useCaseTransition";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { PlacementProgressStepper } from "./PlacementProgressStepper";
@@ -78,30 +79,19 @@ export function PlacementDetailModal({
     }
   }, [open, caseData?.id, caseData?.status]);
 
-  // Advance status
-  const advanceStatus = useMutation({
-    mutationFn: async (nextStatus: string) => {
-      if (!caseData) throw new Error("No case data");
-      const { error } = await supabase
-        .from("concierge_inquiries")
-        .update({ status: nextStatus })
-        .eq("id", caseData.id);
-      if (error) throw error;
-      await supabase.from("concierge_case_events").insert({
-        inquiry_id: caseData.id,
-        event_type: "status_changed",
-        event_data: { from: caseData.status, to: nextStatus, via: "stepper" },
-        actor_id: user?.id,
-        actor_type: isAdvisor ? "advisor" : "admin",
-      });
-    },
-    onSuccess: () => {
-      toast.success("Status advanced");
-      queryClient.invalidateQueries({ queryKey: ["case-events", caseData?.id] });
-      onRefresh();
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
+  // Advance status (uses centralized transition hook)
+  const advanceStatus = useCaseTransition();
+
+  const handleAdvanceStatus = (nextStatus: string) => {
+    if (!caseData) return;
+    advanceStatus.mutate({
+      caseId: caseData.id,
+      fromStatus: caseData.status,
+      toStatus: nextStatus,
+      via: "stepper",
+      onSuccess: onRefresh,
+    });
+  };
 
   // Fetch introductions count
   const { data: introsCount } = useQuery({

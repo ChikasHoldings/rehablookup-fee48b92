@@ -1,0 +1,133 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { toast } from "sonner";
+
+/**
+ * Centralized placement case status transition hook.
+ *
+ * Guarantees:
+ * - Optimistic locking: status is only updated if current DB status matches expected
+ * - Automatic timestamp fields (matched_at, introductions_sent_at, etc.)
+ * - Timeline event always logged with actor, via, and from/to
+ * - Query cache invalidated consistently
+ * - Stale-state conflicts surfaced to the user
+ */
+
+// Valid status transitions enforced client-side (also enforced by DB trigger)
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  new: ["reviewing", "closed"],
+  reviewing: ["matching", "matched", "closed"],
+  matching: ["matched", "closed"],
+  matched: ["introductions_sent", "in_contact", "placed", "closed"],
+  introductions_sent: ["in_contact", "placed", "closed"],
+  in_contact: ["placed", "closed"],
+  placed: ["closed"],
+  closed: [],
+};
+
+function getTimestampFields(toStatus: string): Record<string, string> {
+  const now = new Date().toISOString();
+  switch (toStatus) {
+    case "matched":
+      return { matched_at: now };
+    case "introductions_sent":
+      return { introductions_sent_at: now };
+    case "placed":
+      return { placement_confirmed: "true", placement_confirmed_at: now, admission_status: "admitted" };
+    case "closed":
+      return { closed_at: now };
+    default:
+      return {};
+  }
+}
+
+export interface TransitionOptions {
+  caseId: string;
+  fromStatus: string;
+  toStatus: string;
+  /** Additional columns to update */
+  extraFields?: Record<string, unknown>;
+  /** Event type override (defaults to "status_changed") */
+  eventType?: string;
+  /** How the transition was triggered (stepper, stage_action, pipeline, actions_tab) */
+  via?: string;
+  /** Human-readable label for timeline */
+  label?: string;
+  /** Callback on success */
+  onSuccess?: () => void;
+}
+
+export function useCaseTransition() {
+  const { user, adminRole } = useAdminAuth();
+  const queryClient = useQueryClient();
+  const isAdvisor = adminRole === "advisor";
+
+  const mutation = useMutation({
+    mutationFn: async (opts: TransitionOptions) => {
+      const { caseId, fromStatus, toStatus, extraFields, eventType, via, label } = opts;
+
+      // Client-side validation
+      const allowed = VALID_TRANSITIONS[fromStatus];
+      if (allowed && !allowed.includes(toStatus)) {
+        throw new Error(`Cannot move from "${fromStatus}" to "${toStatus}". Allowed: ${allowed.join(", ") || "none"}`);
+      }
+
+      // Build update payload with automatic timestamps
+      const timestampFields = getTimestampFields(toStatus);
+      const updatePayload: Record<string, unknown> = {
+        status: toStatus,
+        ...timestampFields,
+        ...(extraFields || {}),
+      };
+
+      // Optimistic locking: only update if status still matches
+      const { data: updated, error } = await supabase
+        .from("concierge_inquiries")
+        .update(updatePayload)
+        .eq("id", caseId)
+        .eq("status", fromStatus)
+        .select("id")
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!updated) {
+        throw new Error(
+          "Status conflict — another user changed this case. Please close and reopen to see the latest state."
+        );
+      }
+
+      // Log timeline event
+      await supabase.from("concierge_case_events").insert({
+        inquiry_id: caseId,
+        event_type: eventType || "status_changed",
+        event_data: {
+          from: fromStatus,
+          to: toStatus,
+          via: via || "unknown",
+          ...(label ? { label } : {}),
+        },
+        actor_id: user?.id || null,
+        actor_type: isAdvisor ? "advisor" : "admin",
+      });
+
+      return { from: fromStatus, to: toStatus };
+    },
+    onSuccess: (_data, opts) => {
+      toast.success("Case updated");
+      // Invalidate all related queries
+      queryClient.invalidateQueries({ queryKey: ["admin-concierge-cases-full"] });
+      queryClient.invalidateQueries({ queryKey: ["case-events", opts.caseId] });
+      queryClient.invalidateQueries({ queryKey: ["intros-count", opts.caseId] });
+      queryClient.invalidateQueries({ queryKey: ["tours-count", opts.caseId] });
+      queryClient.invalidateQueries({ queryKey: ["placement-intros-count", opts.caseId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-concierge-stats"] });
+      opts.onSuccess?.();
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+
+  return mutation;
+}

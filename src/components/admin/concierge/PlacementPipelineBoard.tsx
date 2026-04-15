@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useCaseTransition } from "@/hooks/useCaseTransition";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CaseSlaCompactBadge } from "./CaseSlaAlerts";
@@ -87,31 +88,26 @@ export function PlacementPipelineBoard({
   const queryClient = useQueryClient();
   const [movingCaseId, setMovingCaseId] = useState<string | null>(null);
 
+  const transition = useCaseTransition();
+
   const moveCase = useMutation({
     mutationFn: async ({ caseId, fromStatus, toStatus }: { caseId: string; fromStatus: string; toStatus: string }) => {
       setMovingCaseId(caseId);
 
-      // Don't allow moving to "placed" via simple status change - needs confirm-placement
+      // Don't allow moving to "placed" via simple drag — needs confirm-placement
       if (toStatus === "placed") {
         throw new Error("Use 'Confirm Placement' action to mark as placed");
       }
 
-      const { error } = await supabase
-        .from("concierge_inquiries")
-        .update({ status: toStatus })
-        .eq("id", caseId);
-      if (error) throw error;
-
-      await supabase.from("concierge_case_events").insert({
-        inquiry_id: caseId,
-        event_type: "status_changed",
-        event_data: { from: fromStatus, to: toStatus, via: "pipeline" },
-        actor_id: user?.id,
-        actor_type: isAdvisor ? "advisor" : "admin",
+      await transition.mutateAsync({
+        caseId,
+        fromStatus,
+        toStatus,
+        via: "pipeline",
+        onSuccess: onRefresh,
       });
     },
     onSuccess: () => {
-      toast.success("Case moved successfully");
       onRefresh();
       queryClient.invalidateQueries({ queryKey: ["admin-concierge-stats"] });
     },
