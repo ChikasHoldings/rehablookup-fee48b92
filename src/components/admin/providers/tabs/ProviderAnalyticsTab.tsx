@@ -43,7 +43,7 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
     queryFn: async () => {
       const { data } = await supabase
         .from("leads")
-        .select("id, created_at")
+        .select("id, facility_id, created_at")
         .in("facility_id", facilityIds)
         .gte("created_at", startDate.toISOString());
       return data || [];
@@ -98,7 +98,7 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
   // Per-facility breakdown
   const facilityBreakdown = facilityIds.map((fid) => {
     const fEvents = events?.filter((e) => e.facility_id === fid) || [];
-    const fLeads = leadData?.filter(() => false) || []; // leads don't have facility_id in this query scope; skip
+    const fLeads = leadData?.filter((l) => l.facility_id === fid) || [];
     const name = providerFacilities?.find((f) => f.id === fid)?.name || "—";
     return {
       name,
@@ -106,6 +106,7 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
       views: fEvents.filter((e) => e.event_type === "profile_view").length,
       calls: fEvents.filter((e) => e.event_type === "click_to_call").length,
       webClicks: fEvents.filter((e) => e.event_type === "website_click").length,
+      leads: fLeads.length,
     };
   });
 
@@ -176,6 +177,7 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
                     <span>{fb.views} views</span>
                     <span>{fb.calls} calls</span>
                     <span>{fb.webClicks} clicks</span>
+                    <span>{fb.leads} leads</span>
                   </div>
                 </div>
               ))}

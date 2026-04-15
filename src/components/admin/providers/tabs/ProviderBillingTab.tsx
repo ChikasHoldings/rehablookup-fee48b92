@@ -31,14 +31,20 @@ export function ProviderBillingTab({ provider, proSubscription, creditBalance, p
     },
   });
 
-  // Fetch all pro subscriptions (including expired)
+  // Fetch all pro subscriptions (including expired) across all provider facilities
   const { data: allSubs } = useQuery({
-    queryKey: ["admin-provider-all-subs", provider.user_id],
+    queryKey: ["admin-provider-all-subs", provider.id, provider.user_id],
     queryFn: async () => {
+      // First get all facility IDs for this provider
+      const { data: facilities } = await supabase
+        .from("facilities")
+        .select("id")
+        .eq("user_id", provider.user_id);
+      const facilityIds = facilities?.map((f) => f.id) || [provider.id];
       const { data } = await supabase
         .from("pro_subscriptions")
         .select("id, facility_id, status, price_cents, created_at, current_period_end, unlock_discount_percent, stripe_subscription_id")
-        .eq("provider_id", provider.user_id)
+        .in("facility_id", facilityIds)
         .order("created_at", { ascending: false });
       return data || [];
     },
