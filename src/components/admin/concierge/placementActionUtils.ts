@@ -171,7 +171,7 @@ export function getCaseNextSteps(
     case "provider_prequalification":
       steps.push({
         label: "Send introductions to providers",
-        tab: "introductions",
+        tab: "providers",
         icon: Send,
         priority: "high",
         description: "Contact qualified facilities and await their acceptance.",
@@ -183,7 +183,7 @@ export function getCaseNextSteps(
     case "providers_accepted":
       steps.push({
         label: "Present options to seeker",
-        tab: "introductions",
+        tab: "providers",
         icon: Send,
         priority: "high",
         description: "Share accepted facilities with the seeker for review.",
@@ -195,7 +195,7 @@ export function getCaseNextSteps(
     case "presented_to_seeker":
       steps.push({
         label: "Await seeker decision",
-        tab: "messages",
+        tab: "providers",
         icon: Eye,
         priority: "medium",
         description: "The seeker is reviewing their options. Follow up if needed.",
@@ -207,7 +207,7 @@ export function getCaseNextSteps(
     case "seeker_selected":
       steps.push({
         label: "Schedule tour or begin admission",
-        tab: "tours",
+        tab: "admission",
         icon: CalendarCheck,
         priority: "high",
         description: "Coordinate a facility visit or start admission paperwork.",
@@ -219,7 +219,7 @@ export function getCaseNextSteps(
     case "admission_in_progress":
       steps.push({
         label: "Confirm admission",
-        tab: "actions",
+        tab: "admission",
         icon: Building2,
         priority: "high",
         description: "Verify that the seeker has been admitted to the facility.",
@@ -231,7 +231,7 @@ export function getCaseNextSteps(
     case "admitted":
       steps.push({
         label: "Send placement invoice",
-        tab: "billing",
+        tab: "admission",
         icon: DollarSign,
         priority: "high",
         description: "Generate and send the provider invoice for this placement.",
@@ -243,7 +243,7 @@ export function getCaseNextSteps(
     case "billed":
       steps.push({
         label: "Confirm payment received",
-        tab: "billing",
+        tab: "admission",
         icon: DollarSign,
         priority: "high",
         description: "Verify payment has been received, then complete the case.",
@@ -267,7 +267,7 @@ export function getCaseNextSteps(
     case "closed":
       steps.push({
         label: "Case closed",
-        tab: "timeline",
+        tab: "manage",
         icon: XCircle,
         priority: "done",
         description: "This case has been closed. Review the timeline for details.",
