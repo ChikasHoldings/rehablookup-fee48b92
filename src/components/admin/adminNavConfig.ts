@@ -65,6 +65,7 @@ const superAdminNav: NavSection[] = [
     entries: [
       { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
+      { to: "/admin/seekers", icon: UserSearch, label: "Seekers", permission: "seekers" },
       {
         icon: UserPlus,
         label: "Placements",
@@ -91,12 +92,6 @@ const superAdminNav: NavSection[] = [
     entries: [
       { to: "/admin/marketing", icon: Megaphone, label: "Marketing Leads", permission: "leads", countKey: "marketingLeads" },
       { to: "/admin/blog", icon: FileText, label: "Blog Articles", permission: "providers" },
-    ],
-  },
-  {
-    sectionLabel: "Users",
-    entries: [
-      { to: "/admin/seekers", icon: UserSearch, label: "Platform Users", permission: "seekers" },
     ],
   },
   {
@@ -166,7 +161,7 @@ const managerNav: NavSection[] = [
     sectionLabel: "Insights",
     entries: [
       { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
-      { to: "/admin/seekers", icon: UserSearch, label: "Platform Users", permission: "seekers" },
+      { to: "/admin/seekers", icon: UserSearch, label: "Seekers", permission: "seekers" },
     ],
   },
 ];
@@ -219,7 +214,7 @@ const customerRepNav: NavSection[] = [
     sectionLabel: "Tools",
     entries: [
       { to: "/admin/escalations", icon: AlertTriangle, label: "Escalations", permission: "escalations", countKey: "openEscalations" },
-      { to: "/admin/seekers", icon: UserSearch, label: "Platform Users", permission: "seekers" },
+      { to: "/admin/seekers", icon: UserSearch, label: "Seekers", permission: "seekers" },
     ],
   },
 ];
