@@ -559,6 +559,21 @@ export default function AdminStaff() {
         </div>
       )}
 
+      {/* Staff Detail Modal */}
+      <AdminStaffDetailModal
+        user={detailUser}
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        onAction={(action, u) => {
+          setDetailModalOpen(false);
+          if (action === "edit_permissions") {
+            openPermissions(u);
+          } else {
+            setConfirmAction({ action: action as any, user: u });
+          }
+        }}
+      />
+
       {/* Create Dialog */}
       <CreateAdminUserDialog 
         open={createDialogOpen} 
