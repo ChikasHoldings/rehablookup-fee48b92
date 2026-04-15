@@ -183,7 +183,7 @@ export default function AdminConcierge() {
 
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
       <AdminPageHeader
         icon={HeartHandshake}
