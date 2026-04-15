@@ -81,6 +81,31 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
     if (user?.user_id) checkBanStatus(user.user_id).then(setIsBanned);
   }, [user?.user_id]);
 
+  // Placement journey status for header
+  const { data: placementJourney } = useQuery({
+    queryKey: ["admin-seeker-journey-header", user?.user_id],
+    queryFn: async () => {
+      if (!user?.user_id) return null;
+      const { data: inqs } = await supabase
+        .from("concierge_inquiries")
+        .select("id, status, placed_facility_id, placement_confirmed, admission_status")
+        .eq("user_id", user.user_id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (!inqs?.length) return { status: "not_started", admitted: false };
+      const admitted = inqs.some((i: any) => i.placement_confirmed || i.admission_status === "admitted");
+      const placed = inqs.some((i: any) => i.placed_facility_id);
+      const matched = inqs.some((i: any) => ["matched", "introductions_sent", "in_contact"].includes(i.status));
+      const active = inqs.some((i: any) => ["reviewing", "matching"].includes(i.status));
+      if (admitted) return { status: "admitted", admitted: true };
+      if (placed) return { status: "accepted", admitted: false };
+      if (matched) return { status: "matched", admitted: false };
+      if (active) return { status: "in_progress", admitted: false };
+      return { status: "intake_submitted", admitted: false };
+    },
+    enabled: !!user?.user_id && open,
+  });
+
   // Aggregated data
   const { data: aggregatedData } = useQuery({
     queryKey: ["admin-user-aggregated", user?.user_id],
@@ -252,6 +277,18 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                   <Badge variant="outline" className={cn("h-5 text-xs",
                     isBanned ? "bg-destructive/10 text-destructive border-destructive/30" : "bg-success/10 text-success border-success/30"
                   )}>{isBanned ? "Banned" : "Active"}</Badge>
+                  {placementJourney?.admitted && (
+                    <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 h-5 text-xs"><CheckCircle className="h-3 w-3" />Admitted</Badge>
+                  )}
+                  {placementJourney && !placementJourney.admitted && placementJourney.status !== "not_started" && (
+                    <Badge variant="outline" className={cn("gap-1 h-5 text-xs",
+                      placementJourney.status === "matched" ? "bg-purple-500/10 text-purple-600 border-purple-500/30" :
+                      placementJourney.status === "accepted" ? "bg-chart-3/10 text-chart-3 border-chart-3/30" :
+                      "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                    )}>
+                      <Handshake className="h-3 w-3" />{placementJourney.status.replace(/_/g, " ")}
+                    </Badge>
+                  )}
                   {hasConcierge && (
                     <Badge variant="outline" className="text-chart-3 border-chart-3/30 gap-1 h-5 text-xs"><Shield className="h-3 w-3" />Concierge</Badge>
                   )}
