@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCaseTransition } from "@/hooks/useCaseTransition";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { EscalationDialog } from "@/components/admin/escalations/EscalationDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,31 +81,41 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
     setCloseReason("");
   }, [caseData.id, caseData.status, caseData.admin_notes]);
 
+  const caseTransition = useCaseTransition();
+
   const updateCaseMutation = useMutation({
     mutationFn: async (updates: Partial<ConciergeInquiry>) => {
-      if (updates.status && caseData.status === 'placed' && updates.status !== 'placed' && updates.status !== 'closed') {
-        throw new Error("Cannot change status of a confirmed placement. Close the case instead.");
+      // For status changes, delegate to the centralized transition hook
+      if (updates.status && updates.status !== caseData.status) {
+        if (caseData.status === 'placed' && updates.status !== 'closed') {
+          throw new Error("Cannot change status of a confirmed placement. Close the case instead.");
+        }
+        // Use transition hook via mutateAsync so we get optimistic locking
+        await caseTransition.mutateAsync({
+          caseId: caseData.id,
+          fromStatus: caseData.status,
+          toStatus: updates.status,
+          extraFields: (() => {
+            const extra: Record<string, unknown> = {};
+            if (updates.admin_notes !== undefined) extra.admin_notes = updates.admin_notes;
+            if (updates.closed_at) extra.closed_at = updates.closed_at;
+            return Object.keys(extra).length ? extra : undefined;
+          })(),
+          via: "actions_tab",
+          onSuccess: onRefresh,
+        });
+        return;
       }
 
+      // Non-status updates (notes only)
       const { error } = await supabase
         .from("concierge_inquiries")
         .update(updates)
         .eq("id", caseData.id);
-
       if (error) throw error;
 
-      if (updates.status && updates.status !== caseData.status) {
-        await supabase.from("concierge_case_events").insert({
-          inquiry_id: caseData.id,
-          event_type: "status_changed",
-          event_data: { from: caseData.status, to: updates.status },
-          actor_id: user?.id || null,
-          actor_type: isAdvisor ? "advisor" : "admin",
-        });
-      }
-
       // Log notes changes
-      if (updates.admin_notes !== undefined && updates.admin_notes !== caseData.admin_notes && !updates.status) {
+      if (updates.admin_notes !== undefined && updates.admin_notes !== caseData.admin_notes) {
         await supabase.from("concierge_case_events").insert({
           inquiry_id: caseData.id,
           event_type: "notes_updated",
