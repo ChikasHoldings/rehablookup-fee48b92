@@ -24,6 +24,7 @@ import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvide
 import { AllInvoicesTab } from "@/components/admin/concierge/AllInvoicesTab";
 import { InternationalCasesTab } from "@/components/admin/concierge/InternationalCasesTab";
 import { PlacementDetailModal } from "@/components/admin/concierge/PlacementDetailModal";
+import { getCaseNextAction } from "@/components/admin/concierge/placementActionUtils";
 import { cn } from "@/lib/utils";
 
 type CaseStatus = string;
@@ -361,22 +362,27 @@ export default function AdminConcierge() {
                     <thead>
                       <tr className="border-b bg-muted/30">
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Seeker</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Contact</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Status</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Next Action</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Owner</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Care Type</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Location</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Status</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Advisor</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Admission</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Tour</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Payment</th>
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Billing</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Matches</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Date</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredCases.map((c) => {
-                        const facility = c.placed_facility_id && facilityMap ? facilityMap[c.placed_facility_id] : null;
+                        const nextAction = getCaseNextAction(c);
+                        const ownerColors: Record<string, string> = {
+                          admin: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                          advisor: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+                          seeker: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                          facility: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
+                          system: "bg-muted text-muted-foreground",
+                        };
                         return (
                           <tr key={c.id}
                             className="border-b last:border-0 hover:bg-muted/20 cursor-pointer transition-colors"
@@ -386,42 +392,41 @@ export default function AdminConcierge() {
                               <p className="text-[10px] font-mono text-muted-foreground/60">{c.id.slice(0, 8)}</p>
                             </td>
                             <td className="px-4 py-3">
-                              <p className="text-xs truncate max-w-[160px]">{c.user_email}</p>
-                              <p className="text-[10px] text-muted-foreground">{c.user_phone}</p>
+                              <Badge variant="outline" className={cn("text-[10px]", STATUS_CONFIG[c.status]?.color || "")}>
+                                {STATUS_CONFIG[c.status]?.label || c.status}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1.5">
+                                {nextAction.priority === "blocker" && (
+                                  <span className="h-2 w-2 rounded-full bg-destructive shrink-0" />
+                                )}
+                                {nextAction.priority === "high" && (
+                                  <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
+                                )}
+                                {nextAction.priority === "done" && (
+                                  <CheckCircle className="h-3.5 w-3.5 text-success shrink-0" />
+                                )}
+                                <span className={cn("text-xs whitespace-nowrap",
+                                  nextAction.priority === "blocker" && "text-destructive font-medium",
+                                  nextAction.priority === "high" && "font-medium",
+                                  nextAction.priority === "done" && "text-muted-foreground"
+                                )}>
+                                  {nextAction.label}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant="outline" className={cn("text-[9px] capitalize", ownerColors[nextAction.owner] || "")}>
+                                {nextAction.owner}
+                              </Badge>
                             </td>
                             <td className="px-4 py-3 text-xs">{c.level_of_care || "—"}</td>
                             <td className="px-4 py-3 text-xs whitespace-nowrap">
                               {c.preferred_city ? `${c.preferred_city}, ` : ""}{c.desired_location_state || c.preferred_state || "Any"}
                             </td>
-                            <td className="px-4 py-3">
-                              <Badge variant="outline" className={cn("text-[10px]", STATUS_CONFIG[c.status]?.color || "")}>
-                                {STATUS_CONFIG[c.status]?.label || c.status}
-                              </Badge>
-                            </td>
                             <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                               {getAdvisorName(c.assigned_advisor_id)}
-                            </td>
-                            <td className="px-4 py-3">
-                              {c.admission_status === "admitted" || c.placement_confirmed ? (
-                                <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-[10px] gap-1">
-                                  <CheckCircle className="h-3 w-3" />Admitted
-                                </Badge>
-                              ) : c.placed_facility_id ? (
-                                <span className="text-xs text-muted-foreground">In Progress</span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 text-xs whitespace-nowrap">
-                              {c.tour_coordination_status === "scheduled" ? (
-                                <Badge variant="outline" className="bg-cyan-500/10 text-cyan-600 border-cyan-500/30 text-[10px]">Scheduled</Badge>
-                              ) : c.tour_coordination_status === "completed" ? (
-                                <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-[10px]">Done</Badge>
-                              ) : c.tour_coordination_status && c.tour_coordination_status !== "not_needed" ? (
-                                <span className="text-xs text-muted-foreground capitalize">{c.tour_coordination_status.replace(/_/g, " ")}</span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
                             </td>
                             <td className="px-4 py-3">
                               <Badge variant="outline" className={cn("text-[10px]",
@@ -429,20 +434,6 @@ export default function AdminConcierge() {
                               )}>
                                 {isPaid(c.payment_status) ? "✓ Paid" : "⚠ Unpaid"}
                               </Badge>
-                            </td>
-                            <td className="px-4 py-3">
-                              {c.status === "placed" ? (
-                                <Badge variant="outline" className={cn("text-[10px]",
-                                  c.provider_fee_status === "paid" ? "bg-success/10 text-success border-success/30" :
-                                  c.provider_fee_status === "waived" ? "bg-muted text-muted-foreground border-border" :
-                                  "bg-warning/10 text-warning border-warning/30"
-                                )}>
-                                  {c.provider_fee_status === "paid" ? "Billed" :
-                                   c.provider_fee_status === "waived" ? "Waived" : "Pending"}
-                                </Badge>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-1 tabular-nums text-xs">
