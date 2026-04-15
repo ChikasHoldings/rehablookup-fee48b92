@@ -698,7 +698,7 @@ export default function AdminReviews() {
             ) : (
               <div className="space-y-4">
                 {filteredReviews.map((review) => (
-                  <Card key={review.id}>
+                  <Card key={review.id} className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => setSelectedReview(review)}>
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="space-y-2">
@@ -741,7 +741,7 @@ export default function AdminReviews() {
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4" onClick={(e) => e.stopPropagation()}>
                       {review.review_text ? (
                         <p className="text-sm bg-muted/50 p-3 rounded-lg">{review.review_text}</p>
                       ) : (

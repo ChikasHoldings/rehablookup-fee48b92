@@ -21,6 +21,7 @@ import {
   Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProviderDirectoryDetailModal } from "@/components/admin/ProviderDirectoryDetailModal";
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -54,6 +55,8 @@ export default function AdvisorProviderDirectory() {
   const [searchInput, setSearchInput] = useState("");
   const searchQuery = useDebounce(searchInput, 350);
   const [tab, setTab] = useState("all");
+
+  const [selectedProvider, setSelectedProvider] = useState<ProviderRow | null>(null);
 
   const { data: providers, isLoading } = useQuery({
     queryKey: ["advisor-providers", tab, searchQuery],
@@ -171,7 +174,8 @@ export default function AdvisorProviderDirectory() {
           {providers.map((provider) => (
             <div
               key={provider.id}
-              className="rounded-xl border p-4 hover:shadow-sm transition-all"
+              className="rounded-xl border p-4 hover:shadow-sm transition-all cursor-pointer"
+              onClick={() => setSelectedProvider(provider)}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -219,7 +223,7 @@ export default function AdvisorProviderDirectory() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-1.5 flex-shrink-0">
+                <div className="flex gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                   {provider.concierge_admissions_email && (
                     <Button
                       variant="outline"
@@ -269,6 +273,12 @@ export default function AdvisorProviderDirectory() {
           ))}
         </div>
       )}
+
+      <ProviderDirectoryDetailModal
+        provider={selectedProvider}
+        open={!!selectedProvider}
+        onOpenChange={(open) => !open && setSelectedProvider(null)}
+      />
     </div>
   );
 }
