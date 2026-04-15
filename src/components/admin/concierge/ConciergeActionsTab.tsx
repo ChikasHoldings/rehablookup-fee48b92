@@ -263,7 +263,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       )}
 
       {/* Notify Seeker — Send provider options for review */}
-      {caseData.status === "in_contact" && !caseData.seeker_confirmed && (
+      {(caseData.status === "presented_to_seeker" || caseData.status === "providers_accepted") && !caseData.seeker_confirmed && (
         <NotifySeekerCard caseData={caseData} onRefresh={onRefresh} />
       )}
 
