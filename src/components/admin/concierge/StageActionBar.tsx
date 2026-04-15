@@ -21,6 +21,8 @@ export function StageActionBar({ caseData, onRefresh, onSwitchTab }: StageAction
   if (status === "closed" || status === "completed" || !next) return null;
 
   const nextConfig = getStageConfig(next);
+
+  // For 'admitted' stage, direct admin to the Admission tab's confirm flow instead
   const isAdmissionAdvance = next === "admitted";
 
   return (
@@ -37,29 +39,35 @@ export function StageActionBar({ caseData, onRefresh, onSwitchTab }: StageAction
       >
         {config.nextAction}
       </Button>
-      <Button
-        size="sm"
-        className="h-8 text-xs gap-1.5 shrink-0"
-        disabled={transition.isPending}
-        onClick={() => {
-          transition.mutate({
-            caseId: caseData.id,
-            fromStatus: caseData.status,
-            toStatus: next,
-            extraFields: isAdmissionAdvance ? {
-              placement_confirmed: true,
-              placement_confirmed_at: new Date().toISOString(),
-              admission_status: "admitted",
-            } : undefined,
-            via: "stage_action",
-            label: `Advance to ${nextConfig.label}`,
-            onSuccess: onRefresh,
-          });
-        }}
-      >
-        {transition.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="h-3.5 w-3.5" />}
-        Advance
-      </Button>
+      {isAdmissionAdvance ? (
+        <Button
+          size="sm"
+          className="h-8 text-xs gap-1.5 shrink-0"
+          onClick={() => onSwitchTab("admission")}
+        >
+          <ChevronRight className="h-3.5 w-3.5" />
+          Confirm Admission
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          className="h-8 text-xs gap-1.5 shrink-0"
+          disabled={transition.isPending}
+          onClick={() => {
+            transition.mutate({
+              caseId: caseData.id,
+              fromStatus: caseData.status,
+              toStatus: next,
+              via: "stage_action",
+              label: `Advance to ${nextConfig.label}`,
+              onSuccess: onRefresh,
+            });
+          }}
+        >
+          {transition.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          Advance
+        </Button>
+      )}
     </div>
   );
 }
