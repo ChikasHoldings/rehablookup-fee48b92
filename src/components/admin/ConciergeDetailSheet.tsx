@@ -51,6 +51,33 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
 
   const [activeTab, setActiveTab] = useState(initialTab || "intake");
 
+  // Fetch intro and tour counts for next-steps panel
+  const { data: introsCount = 0 } = useQuery({
+    queryKey: ["intros-count", caseData?.id],
+    queryFn: async () => {
+      if (!caseData) return 0;
+      const { count } = await supabase
+        .from("concierge_introductions")
+        .select("id", { count: "exact", head: true })
+        .eq("inquiry_id", caseData.id);
+      return count || 0;
+    },
+    enabled: open && !!caseData,
+  });
+
+  const { data: toursCount = 0 } = useQuery({
+    queryKey: ["tours-count", caseData?.id],
+    queryFn: async () => {
+      if (!caseData) return 0;
+      const { count } = await supabase
+        .from("concierge_tour_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("inquiry_id", caseData.id);
+      return count || 0;
+    },
+    enabled: open && !!caseData,
+  });
+
   // Reset tab when sheet opens
   useEffect(() => {
     if (open) {
