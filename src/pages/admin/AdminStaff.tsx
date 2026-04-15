@@ -206,10 +206,12 @@ export default function AdminStaff() {
     const RoleIcon = ROLE_ICONS[user.admin_role];
 
     return (
-      <Card className={cn(
-        "group relative overflow-hidden transition-all duration-200 hover:shadow-md border-l-4",
-        user.status === "suspended" && "opacity-70",
-        ROLE_BORDER_COLORS[user.admin_role]
+      <Card
+        onClick={() => { setDetailUser(user); setDetailModalOpen(true); }}
+        className={cn(
+          "group relative overflow-hidden transition-all duration-200 hover:shadow-md border-l-4 cursor-pointer",
+          user.status === "suspended" && "opacity-70",
+          ROLE_BORDER_COLORS[user.admin_role]
       )}>
         <CardContent className="p-5">
           <div className="flex items-start justify-between gap-4">
