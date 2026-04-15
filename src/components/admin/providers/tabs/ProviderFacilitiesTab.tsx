@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { BadgeCheck, Crown, ExternalLink, Handshake, LayoutList, Users, Eye, Phone, MousePointerClick } from "lucide-react";
+import { BadgeCheck, Crown, ExternalLink, Handshake, LayoutList, Users, Eye, Phone, MousePointerClick, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,22 +44,24 @@ export function ProviderFacilitiesTab({ provider, providerFacilities, proSubscri
 }
 
 function FacilityCard({ facility, isCurrent, isPro }: { facility: Facility; isCurrent: boolean; isPro: boolean }) {
-  // Fetch per-facility metrics
+  // Use count queries instead of fetching all event rows
   const { data: metrics } = useQuery({
     queryKey: ["admin-facility-metrics", facility.id],
     queryFn: async () => {
-      const [eventsRes, leadsRes, reviewsRes] = await Promise.all([
-        supabase.from("provider_events").select("event_type").eq("facility_id", facility.id),
+      const [impressions, views, calls, webClicks, leadsRes, reviewsRes] = await Promise.all([
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "listing_impression"),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "profile_view"),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "click_to_call"),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "website_click"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("facility_id", facility.id),
         supabase.from("facility_reviews").select("id", { count: "exact", head: true }).eq("facility_id", facility.id),
       ]);
 
-      const events = eventsRes.data || [];
       return {
-        impressions: events.filter((e) => e.event_type === "listing_impression").length,
-        views: events.filter((e) => e.event_type === "profile_view").length,
-        calls: events.filter((e) => e.event_type === "click_to_call").length,
-        webClicks: events.filter((e) => e.event_type === "website_click").length,
+        impressions: impressions.count || 0,
+        views: views.count || 0,
+        calls: calls.count || 0,
+        webClicks: webClicks.count || 0,
         leads: leadsRes.count || 0,
         reviews: reviewsRes.count || 0,
       };
@@ -108,12 +110,12 @@ function FacilityCard({ facility, isCurrent, isPro }: { facility: Facility; isCu
         {/* Facility-level metrics */}
         {metrics && (
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-2 border-t">
-            <MetricChip icon={Eye} label="Views" value={metrics.impressions} />
+            <MetricChip icon={Eye} label="Impressions" value={metrics.impressions} />
             <MetricChip icon={Users} label="Leads" value={metrics.leads} />
             <MetricChip icon={Phone} label="Calls" value={metrics.calls} />
             <MetricChip icon={MousePointerClick} label="Web" value={metrics.webClicks} />
             <MetricChip icon={Eye} label="Profile" value={metrics.views} />
-            <MetricChip icon={Users} label="Reviews" value={metrics.reviews} />
+            <MetricChip icon={Star} label="Reviews" value={metrics.reviews} />
           </div>
         )}
       </CardContent>

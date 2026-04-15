@@ -16,6 +16,9 @@ interface ProviderContactTabProps {
   providerProfile: any;
 }
 
+const MAX_SUBJECT_LENGTH = 200;
+const MAX_MESSAGE_LENGTH = 5000;
+
 export function ProviderContactTab({ provider, providerProfile }: ProviderContactTabProps) {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -24,13 +27,18 @@ export function ProviderContactTab({ provider, providerProfile }: ProviderContac
 
   const sendNotification = useMutation({
     mutationFn: async () => {
-      if (!subject || !message) throw new Error("Missing fields");
+      const trimmedSubject = subject.trim();
+      const trimmedMessage = message.trim();
+      if (!trimmedSubject || !trimmedMessage) throw new Error("Subject and message are required");
+      if (trimmedSubject.length > MAX_SUBJECT_LENGTH) throw new Error("Subject is too long");
+      if (trimmedMessage.length > MAX_MESSAGE_LENGTH) throw new Error("Message is too long");
+      
       const { error } = await supabase.functions.invoke("send-admin-notification", {
         body: {
           providerUserId: provider.user_id,
           facilityId: provider.id,
-          subject,
-          message,
+          subject: trimmedSubject,
+          message: trimmedMessage,
           sendEmail,
           sendInApp,
           providerEmail: providerProfile?.email || provider.email,
@@ -56,11 +64,25 @@ export function ProviderContactTab({ provider, providerProfile }: ProviderContac
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Subject</Label>
-            <Input placeholder="Enter subject..." value={subject} onChange={(e) => setSubject(e.target.value)} />
+            <Input
+              placeholder="Enter subject..."
+              value={subject}
+              onChange={(e) => setSubject(e.target.value.slice(0, MAX_SUBJECT_LENGTH))}
+              maxLength={MAX_SUBJECT_LENGTH}
+            />
+            <p className="text-xs text-muted-foreground text-right">{subject.length}/{MAX_SUBJECT_LENGTH}</p>
           </div>
           <div className="space-y-2">
             <Label>Message</Label>
-            <Textarea placeholder="Write your message..." value={message} onChange={(e) => setMessage(e.target.value)} rows={5} className="resize-none" />
+            <Textarea
+              placeholder="Write your message..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+              rows={5}
+              maxLength={MAX_MESSAGE_LENGTH}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground text-right">{message.length}/{MAX_MESSAGE_LENGTH}</p>
           </div>
           <div className="flex flex-col gap-3">
             <Label>Delivery Method</Label>
@@ -76,7 +98,10 @@ export function ProviderContactTab({ provider, providerProfile }: ProviderContac
             </div>
           </div>
           <div className="flex justify-end pt-2">
-            <Button onClick={() => sendNotification.mutate()} disabled={!subject || !message || (!sendEmail && !sendInApp) || sendNotification.isPending}>
+            <Button
+              onClick={() => sendNotification.mutate()}
+              disabled={!subject.trim() || !message.trim() || (!sendEmail && !sendInApp) || sendNotification.isPending}
+            >
               {sendNotification.isPending ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Sending...</> : <><Send className="h-4 w-4 mr-2" />Send Message</>}
             </Button>
           </div>

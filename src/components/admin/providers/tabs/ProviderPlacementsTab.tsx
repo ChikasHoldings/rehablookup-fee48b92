@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { Handshake, CheckCircle, Clock, XCircle, DollarSign, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -11,43 +11,46 @@ import type { Facility } from "../ProviderListItem";
 
 interface ProviderPlacementsTabProps {
   provider: Facility;
+  providerFacilities?: Facility[];
 }
 
-export function ProviderPlacementsTab({ provider }: ProviderPlacementsTabProps) {
-  // Fetch introductions
+export function ProviderPlacementsTab({ provider, providerFacilities }: ProviderPlacementsTabProps) {
+  const facilityIds = providerFacilities?.map((f) => f.id) || [provider.id];
+
+  // Fetch introductions across ALL provider facilities
   const { data: introductions } = useQuery({
-    queryKey: ["admin-provider-introductions", provider.id],
+    queryKey: ["admin-provider-introductions", provider.user_id, facilityIds],
     queryFn: async () => {
       const { data } = await supabase
         .from("concierge_introductions")
-        .select("id, inquiry_id, sent_at, provider_response, provider_responded_at, provider_notes, seeker_contacted, seeker_contacted_at")
-        .eq("facility_id", provider.id)
+        .select("id, facility_id, inquiry_id, sent_at, provider_response, provider_responded_at, provider_notes, seeker_contacted, seeker_contacted_at")
+        .in("facility_id", facilityIds)
         .order("created_at", { ascending: false });
       return data || [];
     },
   });
 
-  // Fetch engagements (placements)
+  // Fetch engagements across ALL provider facilities
   const { data: engagements } = useQuery({
-    queryKey: ["admin-provider-engagements", provider.id],
+    queryKey: ["admin-provider-engagements", provider.user_id, facilityIds],
     queryFn: async () => {
       const { data } = await supabase
         .from("concierge_engagements")
-        .select("id, concierge_inquiry_id, status, engaged_at, outcome_at, outcome_notes, unlock_price_cents, payment_method, contacted_at")
-        .eq("facility_id", provider.id)
+        .select("id, facility_id, concierge_inquiry_id, status, engaged_at, outcome_at, outcome_notes, unlock_price_cents, payment_method, contacted_at")
+        .in("facility_id", facilityIds)
         .order("engaged_at", { ascending: false });
       return data || [];
     },
   });
 
-  // Fetch placement invoices
+  // Fetch placement invoices across ALL provider facilities
   const { data: invoices } = useQuery({
-    queryKey: ["admin-provider-placement-invoices", provider.id],
+    queryKey: ["admin-provider-placement-invoices", provider.user_id, facilityIds],
     queryFn: async () => {
       const { data } = await supabase
         .from("placement_invoices")
-        .select("id, case_id, amount_cents, status, created_at, paid_at, fee_type")
-        .eq("facility_id", provider.id)
+        .select("id, facility_id, case_id, amount_cents, status, created_at, paid_at, fee_type")
+        .in("facility_id", facilityIds)
         .order("created_at", { ascending: false });
       return data || [];
     },
@@ -55,6 +58,9 @@ export function ProviderPlacementsTab({ provider }: ProviderPlacementsTabProps) 
 
   const totalPlacementRevenue = invoices?.filter((i) => i.status === "paid").reduce((sum, i) => sum + i.amount_cents, 0) || 0;
   const activePlacements = engagements?.filter((e) => e.status === "placed").length || 0;
+
+  const facilityName = (id: string) => providerFacilities?.find((f) => f.id === id)?.name || "—";
+  const showFacilityCol = facilityIds.length > 1;
 
   const getResponseBadge = (response: string | null) => {
     if (!response) return <Badge variant="outline" className="text-xs">Pending</Badge>;
@@ -114,6 +120,7 @@ export function ProviderPlacementsTab({ provider }: ProviderPlacementsTabProps) 
                     <TableHead>Sent</TableHead>
                     <TableHead>Response</TableHead>
                     <TableHead>Seeker Contacted</TableHead>
+                    {showFacilityCol && <TableHead>Facility</TableHead>}
                     <TableHead>Notes</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -133,6 +140,9 @@ export function ProviderPlacementsTab({ provider }: ProviderPlacementsTabProps) 
                           <span className="text-xs text-muted-foreground">No</span>
                         )}
                       </TableCell>
+                      {showFacilityCol && (
+                        <TableCell><span className="text-xs text-muted-foreground">{facilityName(intro.facility_id)}</span></TableCell>
+                      )}
                       <TableCell>
                         <span className="text-xs text-muted-foreground truncate max-w-[200px] block">{intro.provider_notes || "—"}</span>
                       </TableCell>
@@ -168,6 +178,7 @@ export function ProviderPlacementsTab({ provider }: ProviderPlacementsTabProps) 
                     <TableHead>Type</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
+                    {showFacilityCol && <TableHead>Facility</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -183,6 +194,9 @@ export function ProviderPlacementsTab({ provider }: ProviderPlacementsTabProps) 
                           <Badge variant="outline" className="text-xs">{inv.status}</Badge>
                         )}
                       </TableCell>
+                      {showFacilityCol && (
+                        <TableCell><span className="text-xs text-muted-foreground">{facilityName(inv.facility_id)}</span></TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

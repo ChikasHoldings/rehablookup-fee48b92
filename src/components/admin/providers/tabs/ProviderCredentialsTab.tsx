@@ -13,30 +13,32 @@ import type { Facility } from "../ProviderListItem";
 
 interface ProviderCredentialsTabProps {
   provider: Facility;
+  providerFacilities?: Facility[];
 }
 
-export function ProviderCredentialsTab({ provider }: ProviderCredentialsTabProps) {
+export function ProviderCredentialsTab({ provider, providerFacilities }: ProviderCredentialsTabProps) {
   const queryClient = useQueryClient();
+  const facilityIds = providerFacilities?.map((f) => f.id) || [provider.id];
 
   const { data: accreditations, refetch: refetchAccreditations } = useQuery({
-    queryKey: ["admin-provider-accreditations", provider.id],
+    queryKey: ["admin-provider-accreditations", provider.user_id, facilityIds],
     queryFn: async () => {
       const { data } = await supabase
         .from("facility_accreditations")
         .select("id, facility_id, accreditation_type, issuing_authority, verification_number, verified, verified_at, expiry_date, document_url, document_name, notes, created_at")
-        .eq("facility_id", provider.id)
+        .in("facility_id", facilityIds)
         .order("created_at", { ascending: true });
       return data || [];
     },
   });
 
   const { data: documents, refetch: refetchDocuments } = useQuery({
-    queryKey: ["admin-provider-credentials", provider.id],
+    queryKey: ["admin-provider-credentials", provider.user_id, facilityIds],
     queryFn: async () => {
       const { data } = await supabase
         .from("facility_credential_documents")
         .select("id, facility_id, document_type, document_name, document_url, status, uploaded_at, verified_at, verified_by, rejection_reason")
-        .eq("facility_id", provider.id)
+        .in("facility_id", facilityIds)
         .order("uploaded_at", { ascending: false });
       return data || [];
     },
@@ -58,6 +60,9 @@ export function ProviderCredentialsTab({ provider }: ProviderCredentialsTabProps
     onSuccess: () => { refetchAccreditations(); toast.success("Accreditation updated"); },
     onError: () => toast.error("Failed to update"),
   });
+
+  const facilityName = (id: string) => providerFacilities?.find((f) => f.id === id)?.name || provider.name;
+  const showFacilityCol = facilityIds.length > 1;
 
   const lookupUrls: Record<string, string> = {
     "JCAHO": "https://www.qualitycheck.org",
@@ -98,7 +103,10 @@ export function ProviderCredentialsTab({ provider }: ProviderCredentialsTabProps
                         />
                         <div>
                           <p className="font-medium">{acc.accreditation_type}</p>
-                          {acc.expiry_date && <p className="text-xs text-muted-foreground">Expires: {format(new Date(acc.expiry_date), "PPP")}</p>}
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {acc.expiry_date && <span>Expires: {format(new Date(acc.expiry_date), "PPP")}</span>}
+                            {showFacilityCol && <span>• {facilityName(acc.facility_id)}</span>}
+                          </div>
                         </div>
                       </div>
                       {acc.verified ? (
@@ -165,7 +173,10 @@ export function ProviderCredentialsTab({ provider }: ProviderCredentialsTabProps
                     <FileText className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium text-sm">{doc.document_name}</p>
-                      <p className="text-xs text-muted-foreground">{doc.document_type} • {format(new Date(doc.uploaded_at), "PPP")}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {doc.document_type} • {format(new Date(doc.uploaded_at), "PPP")}
+                        {showFacilityCol && ` • ${facilityName(doc.facility_id)}`}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
