@@ -248,8 +248,11 @@ export function PlacementDetailModal({
                 compact
               />
             </div>
+            {/* Stage Action Bar — always visible */}
+            <div className="mt-3">
+              <StageActionBar caseData={caseData} onRefresh={onRefresh} onSwitchTab={setActiveTab} />
+            </div>
           </div>
-        </div>
 
         {/* Tabs — workflow-ordered with attention badges */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
