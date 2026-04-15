@@ -299,12 +299,19 @@ export default function AdminConcierge() {
                 {filteredCases.length} cases
               </span>
               <div className="flex items-center border rounded-md overflow-hidden">
+                <Button variant={viewMode === "dashboard" ? "default" : "ghost"} size="sm"
+                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("dashboard")}
+                  title="Ops Dashboard">
+                  <CalendarCheck className="h-3.5 w-3.5" />
+                </Button>
                 <Button variant={viewMode === "pipeline" ? "default" : "ghost"} size="sm"
-                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("pipeline")}>
+                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("pipeline")}
+                  title="Pipeline Board">
                   <LayoutGrid className="h-3.5 w-3.5" />
                 </Button>
                 <Button variant={viewMode === "table" ? "default" : "ghost"} size="sm"
-                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("table")}>
+                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("table")}
+                  title="Table View">
                   <List className="h-3.5 w-3.5" />
                 </Button>
               </div>
