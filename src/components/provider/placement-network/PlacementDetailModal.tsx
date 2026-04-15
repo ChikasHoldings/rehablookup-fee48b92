@@ -187,7 +187,7 @@ export function PlacementDetailModal({
   isResponding = false,
   hasPro = false,
 }: PlacementDetailModalProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "messages" | "timeline">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "seeker" | "messages" | "timeline">("details");
   const [providerNote, setProviderNote] = useState("");
   const inquiry = introduction?.concierge_inquiries;
   const { selectedFacility } = useSelectedFacilityOptional();
