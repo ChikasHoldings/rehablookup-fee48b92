@@ -152,10 +152,10 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
               <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
               <YAxis tick={{ fontSize: 11 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Area type="monotone" dataKey="impressions" stackId="1" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground) / 0.1)" />
-              <Area type="monotone" dataKey="views" stackId="1" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.1)" />
-              <Area type="monotone" dataKey="calls" stackId="1" stroke="hsl(var(--chart-3))" fill="hsl(var(--chart-3) / 0.1)" />
-              <Area type="monotone" dataKey="leads" stackId="1" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1) / 0.1)" />
+              <Area type="monotone" dataKey="impressions" stroke="hsl(var(--muted-foreground))" fill="hsl(var(--muted-foreground) / 0.1)" />
+              <Area type="monotone" dataKey="views" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.1)" />
+              <Area type="monotone" dataKey="calls" stroke="hsl(var(--chart-3))" fill="hsl(var(--chart-3) / 0.1)" />
+              <Area type="monotone" dataKey="leads" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1) / 0.1)" />
             </AreaChart>
           </ChartContainer>
         </CardContent>
