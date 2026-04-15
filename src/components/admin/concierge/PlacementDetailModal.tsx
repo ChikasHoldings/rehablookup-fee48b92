@@ -293,16 +293,22 @@ function InlineAdvisorAssign({ caseData, onRefresh }: { caseData: ConciergeInqui
     if (!selectedId) return;
     setSaving(true);
     try {
+      // Auto-advance to advisor_assigned if at intake_reviewed
+      const updates: Record<string, unknown> = { assigned_advisor_id: selectedId };
+      if (caseData.status === "intake_reviewed") {
+        updates.status = "advisor_assigned";
+      }
+
       const { error } = await supabase
         .from("concierge_inquiries")
-        .update({ assigned_advisor_id: selectedId })
+        .update(updates)
         .eq("id", caseData.id);
       if (error) throw error;
 
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from("concierge_case_events").insert({
         inquiry_id: caseData.id, event_type: "advisor_assigned",
-        event_data: { advisor_id: selectedId, previous_advisor_id: null },
+        event_data: { advisor_id: selectedId, previous_advisor_id: null, auto_advanced: caseData.status === "intake_reviewed" },
         actor_id: user?.id || null, actor_type: "admin",
       });
 
