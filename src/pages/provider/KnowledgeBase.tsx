@@ -6,7 +6,6 @@ import {
   FileText, 
   Users, 
   CreditCard, 
-  Settings, 
   TrendingUp,
   Shield,
   Clock,
@@ -14,7 +13,6 @@ import {
   ArrowLeft,
   X,
   Handshake,
-  Globe,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ArticleRenderer } from "@/components/provider/knowledge-base/ArticleRenderer";
 
 interface Article {
   id: string;
@@ -945,18 +944,18 @@ export default function ProviderKnowledgeBasePage() {
 
         {/* Article Detail Dialog */}
         <Dialog open={!!selectedArticle} onOpenChange={() => setSelectedArticle(null)}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0">
             {selectedArticle && (
               <>
-                <DialogHeader className="shrink-0">
+                <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b border-border/50">
                   <div className="flex items-center gap-2 mb-2">
                     {(() => {
                       const cat = getCategoryInfo(selectedArticle.category);
                       if (!cat) return null;
                       const CatIcon = cat.icon;
                       return (
-                        <Badge variant="secondary" className="text-xs">
-                          <CatIcon className="h-3 w-3 mr-1" />
+                        <Badge variant="secondary" className="text-xs gap-1">
+                          <CatIcon className="h-3 w-3" />
                           {cat.name}
                         </Badge>
                       );
@@ -965,110 +964,82 @@ export default function ProviderKnowledgeBasePage() {
                       <Clock className="h-3 w-3" />
                       {selectedArticle.readTime} min read
                     </span>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      Updated {new Date(selectedArticle.updatedAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', month: 'short', day: 'numeric' 
+                      })}
+                    </span>
                   </div>
-                  <DialogTitle className="text-xl">{selectedArticle.title}</DialogTitle>
+                  <DialogTitle className="text-lg leading-tight">{selectedArticle.title}</DialogTitle>
+                  <p className="text-sm text-muted-foreground mt-1">{selectedArticle.excerpt}</p>
                 </DialogHeader>
-                <ScrollArea className="flex-1 pr-4">
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    {selectedArticle.content.split('\n').map((line, i) => {
-                      if (line.startsWith('# ')) {
-                        return <h1 key={i} className="text-xl font-bold mt-6 mb-4">{line.slice(2)}</h1>;
-                      }
-                      if (line.startsWith('## ')) {
-                        return <h2 key={i} className="text-lg font-semibold mt-5 mb-3">{line.slice(3)}</h2>;
-                      }
-                      if (line.startsWith('### ')) {
-                        return <h3 key={i} className="text-base font-semibold mt-4 mb-2">{line.slice(4)}</h3>;
-                      }
-                      if (line.startsWith('- ')) {
-                        return <li key={i} className="ml-4 text-sm text-muted-foreground">{line.slice(2)}</li>;
-                      }
-                      if (line.startsWith('| ')) {
-                        return <p key={i} className="text-sm text-muted-foreground font-mono mb-0.5">{line}</p>;
-                      }
-                      if (line.match(/^\d+\./)) {
-                        return <li key={i} className="ml-4 text-sm text-muted-foreground list-decimal">{line.slice(line.indexOf(' ') + 1)}</li>;
-                      }
-                      if (line.trim() === '') {
-                        return <br key={i} />;
-                      }
-                      const parts = line.split(/\*\*(.*?)\*\*/);
-                      return (
-                        <p key={i} className="text-sm text-muted-foreground mb-2">
-                          {parts.map((part, partIndex) => 
-                            partIndex % 2 === 1 ? <strong key={partIndex} className="text-foreground">{part}</strong> : part
-                          )}
-                        </p>
-                      );
-                    })}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t">
-                    {selectedArticle.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-4">
-                    Last updated: {new Date(selectedArticle.updatedAt).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
 
-                  {/* Related Articles */}
-                  {(() => {
-                    const relatedArticles = articles
-                      .filter(a => 
-                        a.id !== selectedArticle.id && 
-                        (a.category === selectedArticle.category || 
-                         a.tags.some(tag => selectedArticle.tags.includes(tag)))
-                      )
-                      .slice(0, 3);
-                    
-                    if (relatedArticles.length === 0) return null;
-                    
-                    return (
-                      <div className="mt-6 pt-4 border-t">
-                        <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                          <BookOpen className="h-4 w-4 text-primary" />
-                          Related Articles
-                        </h4>
-                        <div className="space-y-2">
-                          {relatedArticles.map((article) => (
-                            <button
-                              key={article.id}
-                              onClick={() => setSelectedArticle(article)}
-                              className="w-full text-left p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
-                            >
-                              <p className="text-sm font-medium group-hover:text-primary transition-colors line-clamp-1">
-                                {article.title}
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                                {article.excerpt}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1.5">
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <Clock className="h-2.5 w-2.5" />
-                                  {article.readTime} min
-                                </span>
-                                {(() => {
-                                  const cat = getCategoryInfo(article.category);
-                                  if (!cat) return null;
-                                  return (
-                                    <Badge variant="secondary" className="text-xs px-1.5 py-0 h-4">
-                                      {cat.name}
-                                    </Badge>
-                                  );
-                                })()}
-                              </div>
-                            </button>
-                          ))}
+                <ScrollArea className="flex-1">
+                  <div className="px-6 py-5">
+                    <ArticleRenderer content={selectedArticle.content} />
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-1.5 mt-8 pt-4 border-t border-border/50">
+                      {selectedArticle.tags.map((tag) => (
+                        <Badge key={tag} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    {/* Related Articles */}
+                    {(() => {
+                      const relatedArticles = articles
+                        .filter(a => 
+                          a.id !== selectedArticle.id && 
+                          (a.category === selectedArticle.category || 
+                           a.tags.some(tag => selectedArticle.tags.includes(tag)))
+                        )
+                        .slice(0, 3);
+                      
+                      if (relatedArticles.length === 0) return null;
+                      
+                      return (
+                        <div className="mt-5 pt-4 border-t border-border/50">
+                          <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                            <BookOpen className="h-4 w-4 text-primary" />
+                            Related Articles
+                          </h4>
+                          <div className="space-y-2">
+                            {relatedArticles.map((article) => (
+                              <button
+                                key={article.id}
+                                onClick={() => setSelectedArticle(article)}
+                                className="w-full text-left p-3 rounded-lg border border-border/50 hover:border-primary/30 hover:bg-muted/30 transition-colors group"
+                              >
+                                <p className="text-sm font-medium group-hover:text-primary transition-colors line-clamp-1">
+                                  {article.title}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                                  {article.excerpt}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Clock className="h-2.5 w-2.5" />
+                                    {article.readTime} min
+                                  </span>
+                                  {(() => {
+                                    const cat = getCategoryInfo(article.category);
+                                    if (!cat) return null;
+                                    return (
+                                      <Badge variant="secondary" className="text-xs px-1.5 py-0 h-4">
+                                        {cat.name}
+                                      </Badge>
+                                    );
+                                  })()}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })()}
+                      );
+                    })()}
+                  </div>
                 </ScrollArea>
               </>
             )}
