@@ -279,6 +279,11 @@ export default function ProviderInquiriesPage() {
 
       </div>
 
+      {/* Stats */}
+      {(!isMobile || mobileView === 'list') && !isLoading && inquiries.length > 0 && (
+        <InquiriesStatsHeader stats={stats} />
+      )}
+
 
       {/* Filters */}
       {(!isMobile || mobileView === 'list') && (
