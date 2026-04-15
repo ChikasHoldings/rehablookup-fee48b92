@@ -200,23 +200,21 @@ export default function PlacementRevenueDashboard() {
 
   if (invoicesLoading) {
     return (
-      <div className="min-h-full bg-background p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <Skeleton className="h-20 w-full" />
-          <div className="grid gap-4 md:grid-cols-4">
-            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28" />)}
-          </div>
-          <Skeleton className="h-80 w-full" />
+      <div className="space-y-4 sm:space-y-6">
+        <Skeleton className="h-20 w-full" />
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28" />)}
         </div>
+        <Skeleton className="h-80 w-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-full bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div className="space-y-4 sm:space-y-6">
+      <div>
         {/* Header */}
-        <div className="mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Placement Revenue</h1>
           <p className="text-muted-foreground mt-1">
             Track placement fees, Pro discounts, and revenue trends

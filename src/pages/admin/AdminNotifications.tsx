@@ -355,7 +355,7 @@ export default function AdminNotifications() {
   const securityAlertsCount = useMemo(() => allNotifications.filter((n) => SECURITY_TYPES.includes(n.type)).length, [allNotifications]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-xl font-semibold text-foreground">Notifications</h1>
