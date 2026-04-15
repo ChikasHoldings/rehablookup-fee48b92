@@ -45,43 +45,52 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
     },
   });
 
+  const caseTransition = useCaseTransition();
+
   const assignAdvisorMutation = useMutation({
     mutationFn: async (advisorId: string) => {
       const actualId = advisorId === "unassigned" ? null : advisorId;
-      
-      // Build update — auto-advance to advisor_assigned if at intake_reviewed
-      const updates: Record<string, unknown> = { assigned_advisor_id: actualId };
-      if (actualId && caseData.status === "intake_reviewed") {
-        updates.status = "advisor_assigned";
+      const shouldAdvance = actualId && caseData.status === "intake_reviewed";
+
+      if (shouldAdvance) {
+        // Use centralized transition hook for status change + advisor assignment
+        await caseTransition.mutateAsync({
+          caseId: caseData.id,
+          fromStatus: caseData.status,
+          toStatus: "advisor_assigned",
+          extraFields: { assigned_advisor_id: actualId },
+          via: "advisor_assignment",
+          label: "Advisor assigned & advanced to Advisor Assigned",
+          onSuccess: onRefresh,
+        });
+      } else {
+        // Non-status update: just assign/unassign advisor
+        let query = supabase
+          .from("concierge_inquiries")
+          .update({ assigned_advisor_id: actualId })
+          .eq("id", caseData.id);
+
+        // Optimistic lock on current advisor
+        if (caseData.assigned_advisor_id) {
+          query = query.eq("assigned_advisor_id", caseData.assigned_advisor_id);
+        }
+
+        const { error } = await query;
+        if (error) throw error;
+
+        // Log event
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: caseData.id,
+          event_type: "advisor_assigned",
+          event_data: {
+            advisor_id: actualId,
+            previous_advisor_id: caseData.assigned_advisor_id,
+          },
+          actor_id: user?.id || null,
+          actor_type: "admin",
+        });
       }
-
-      // Build query — supabase query builder is immutable, so chain properly
-      let query = supabase
-        .from("concierge_inquiries")
-        .update(updates)
-        .eq("id", caseData.id);
-      
-      // If unassigning, require current advisor matches what we see (optimistic lock)
-      if (caseData.assigned_advisor_id) {
-        query = query.eq("assigned_advisor_id", caseData.assigned_advisor_id);
-      }
-
-      const { error } = await query;
-      if (error) throw error;
-
-      // Log event with actor_id
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("concierge_case_events").insert({
-        inquiry_id: caseData.id,
-        event_type: "advisor_assigned",
-        event_data: { 
-          advisor_id: advisorId === "unassigned" ? null : advisorId,
-          previous_advisor_id: caseData.assigned_advisor_id,
-          auto_advanced: actualId && caseData.status === "intake_reviewed",
-        },
-        actor_id: user?.id || null,
-        actor_type: "admin",
-      });
 
       // Notify team of advisor assignment
       if (advisorId !== "unassigned") {
@@ -101,11 +110,13 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
     onSuccess: () => {
       toast.success("Advisor assigned successfully");
       queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
+      queryClient.invalidateQueries({ queryKey: ["admin-concierge-cases-full"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-concierge-stats"] });
       onRefresh();
     },
     onError: (error) => {
       toast.error("Failed to assign advisor: " + error.message);
-      onRefresh(); // Refresh to show current state
+      onRefresh();
     },
   });
 
