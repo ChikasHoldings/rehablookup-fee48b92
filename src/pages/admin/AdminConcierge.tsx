@@ -319,8 +319,15 @@ export default function AdminConcierge() {
           </div>
 
           {/* Content */}
-          {viewMode === "pipeline" ? (
-            <PlacementPipelineBoard
+          {viewMode === "dashboard" ? (
+            <PlacementOpsDashboard
+              cases={filteredCases}
+              onCaseClick={(id) => setSelectedCaseId(id)}
+              advisorNames={advisorNames}
+              isAdvisor={isAdvisor}
+              currentAdvisorId={user?.id}
+            />
+          ) : viewMode === "pipeline" ? (
               cases={filteredCases}
               isLoading={isLoading}
               onCaseClick={(id) => setSelectedCaseId(id)}
