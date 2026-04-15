@@ -72,12 +72,11 @@ const formatUrgency = (urgency: string | null | undefined) => {
 };
 
 const TIMELINE_STEPS = [
-  { key: "new", label: "Submitted", icon: Send },
-  { key: "reviewing", label: "Review", icon: Search },
-  { key: "matching", label: "Matching", icon: Users },
-  { key: "introductions_sent", label: "Intros", icon: Send },
-  { key: "in_contact", label: "Contact", icon: MessageSquare },
-  { key: "placed", label: "Placed", icon: CheckCircle2 },
+  { key: "submitted", label: "Submitted", icon: Send, statuses: ["intake_submitted", "new", "pending"] },
+  { key: "review", label: "Review", icon: Search, statuses: ["intake_reviewed", "advisor_assigned", "reviewing"] },
+  { key: "matching", label: "Matching", icon: Users, statuses: ["matching_providers", "provider_prequalification", "providers_accepted", "matching", "matched"] },
+  { key: "options", label: "Options", icon: Send, statuses: ["presented_to_seeker", "seeker_selected", "introductions_sent", "in_contact"] },
+  { key: "admitted", label: "Admitted", icon: CheckCircle2, statuses: ["admission_in_progress", "admitted", "billed", "completed", "placed"] },
 ];
 
 function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null | undefined }) {
@@ -165,15 +164,15 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
   if (!inq) return null;
 
   const locationText = [inq.preferred_city, inq.preferred_state].filter(Boolean).join(", ") || "Flexible";
-  const isPlaced = inq.status === "placed";
+  const isPlaced = ["admitted", "billed", "completed"].includes(inq.status);
   const isClosed = inq.status === "closed";
 
-  const currentStepIndex = TIMELINE_STEPS.findIndex(s => s.key === inq.status);
-  const effectiveIndex = ["matched", "introductions_sent"].includes(inq.status)
-    ? TIMELINE_STEPS.findIndex(s => s.key === "introductions_sent")
-    : inq.status === "in_contact"
-      ? TIMELINE_STEPS.findIndex(s => s.key === "in_contact")
-      : currentStepIndex;
+  const effectiveIndex = (() => {
+    for (let i = 0; i < TIMELINE_STEPS.length; i++) {
+      if (TIMELINE_STEPS[i].statuses.includes(inq.status)) return i;
+    }
+    return 0;
+  })();
 
   const formatCoOccurring = (concerns: unknown) => {
     if (!concerns) return null;
@@ -189,13 +188,16 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
 
   const getNextStepMessage = () => {
     switch (inq.status) {
-      case "new": return "Your case has been submitted. An advisor will review it shortly.";
-      case "reviewing": return "An advisor is reviewing your case and identifying the best options.";
-      case "matching": return "We're matching you with treatment centers that fit your needs.";
-      case "matched": return "Facilities have been identified. We're sending introductions on your behalf.";
-      case "introductions_sent": return "Introductions have been sent. We're waiting for responses.";
-      case "in_contact": return "Your advisor is coordinating with interested facilities.";
-      case "placed": return "Congratulations! Your placement has been confirmed.";
+      case "intake_submitted": case "new": case "pending": return "Your case has been submitted. An advisor will review it shortly.";
+      case "intake_reviewed": case "reviewing": return "Your case is under review.";
+      case "advisor_assigned": return "A placement advisor has been assigned to your case.";
+      case "matching_providers": case "matching": return "We're matching you with treatment centers that fit your needs.";
+      case "provider_prequalification": case "matched": return "Facilities are being verified for fit and availability.";
+      case "providers_accepted": return "Treatment centers have confirmed interest. Your options are being prepared.";
+      case "presented_to_seeker": case "introductions_sent": return "Your matched options are ready for review.";
+      case "seeker_selected": case "in_contact": return "Your advisor is coordinating next steps with your chosen facility.";
+      case "admission_in_progress": return "Admission is in progress. Your advisor is finalizing the details.";
+      case "admitted": case "billed": case "completed": case "placed": return "Congratulations! Your placement has been confirmed.";
       case "closed": return "This case has been closed.";
       default: return "Your case is being processed.";
     }

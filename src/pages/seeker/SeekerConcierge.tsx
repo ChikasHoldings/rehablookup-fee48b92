@@ -387,8 +387,9 @@ export default function SeekerConcierge() {
       if (!selectedCase) throw new Error("No case selected");
       if (!userId) throw new Error("Not authenticated");
 
-      // Guard: don't cancel already-closed or placed cases
-      if (selectedCase.status === "closed" || selectedCase.status === "placed") {
+      // Guard: don't cancel already-closed or terminal cases
+      const terminalStatuses = ["closed", "admitted", "billed", "completed"];
+      if (terminalStatuses.includes(selectedCase.status)) {
         throw new Error("This case cannot be cancelled");
       }
 
@@ -399,7 +400,8 @@ export default function SeekerConcierge() {
         .eq("id", selectedCase.id)
         .eq("user_id", userId)
         .neq("status", "closed")
-        .neq("status", "placed")
+        .neq("status", "admitted")
+        .neq("status", "completed")
         .select("id")
         .maybeSingle();
       
@@ -551,12 +553,13 @@ export default function SeekerConcierge() {
   }
 
   // ========== STATE B & C: Case exists ==========
-  const showMatchedFacilities = selectedCase && 
-    ["matching", "matched", "introductions_sent", "in_contact", "confirming", "placed"].includes(selectedCase.status);
+   const showMatchedFacilities = selectedCase && 
+    ["matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress"].includes(selectedCase.status);
   // Brokerage model: admin confirms placement on behalf of both parties
-  // Show "in contact" info card when case is in_contact (advisor coordinating)
-  const showInContactInfo = selectedCase?.status === "in_contact";
-  const showFeedback = selectedCase?.status === "placed" && !selectedCase.seeker_feedback && !feedbackSubmitted;
+  // Show provider review when seeker can select from interested facilities
+  const showProviderReview = selectedCase?.status === "presented_to_seeker" || selectedCase?.status === "seeker_selected";
+  const isTerminalSuccess = ["admitted", "billed", "completed"].includes(selectedCase?.status || "");
+  const showFeedback = isTerminalSuccess && !selectedCase?.seeker_feedback && !feedbackSubmitted;
   const hasMatches = matchedFacilities && matchedFacilities.length > 0;
 
   return (
@@ -580,7 +583,7 @@ export default function SeekerConcierge() {
               <span className="hidden sm:inline">Refresh</span>
             </Button>
             
-            {selectedCase && selectedCase.status !== "closed" && selectedCase.status !== "placed" && (
+            {selectedCase && selectedCase.status !== "closed" && !["admitted", "billed", "completed"].includes(selectedCase.status) && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
@@ -652,8 +655,8 @@ export default function SeekerConcierge() {
           />
         )}
 
-        {/* Placed Facility */}
-        {selectedCase?.status === "placed" && placedFacility && (
+        {/* Placed / Admitted Facility */}
+        {isTerminalSuccess && placedFacility && (
           <div className="space-y-4">
             <PlacementConfirmationCard type="confirmed" facilityName={placedFacility.name} />
             <Card className="overflow-hidden">
@@ -675,16 +678,16 @@ export default function SeekerConcierge() {
         )}
 
         {/* Tabs for active cases */}
-        {showMatchedFacilities && selectedCase?.status !== "placed" && selectedCase?.status !== "in_contact" && (
+        {showMatchedFacilities && !showProviderReview && (
           <PlacementTabs 
-            inquiryId={selectedCase.id}
-            matchedFacilityIds={selectedCase.matched_facility_ids}
+            inquiryId={selectedCase!.id}
+            matchedFacilityIds={selectedCase!.matched_facility_ids}
             matchedFacilities={matchedFacilities}
           />
         )}
 
-        {/* In Contact — Seeker reviews and selects from interested facilities */}
-        {selectedCase?.status === "in_contact" && (
+        {/* Seeker reviews and selects from interested facilities */}
+        {showProviderReview && selectedCase && (
           <>
             <SeekerProviderReviewCard
               inquiryId={selectedCase.id}
@@ -701,7 +704,7 @@ export default function SeekerConcierge() {
         )}
 
         {/* Seeker confirmed, awaiting admin final confirmation */}
-        {selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed && selectedCase.status !== "placed" && (
+        {selectedCase?.seeker_confirmed && !selectedCase.placement_confirmed && !isTerminalSuccess && (
           <>
             <PlacementConfirmationCard type="awaiting_admin" />
             <AdmissionStatusCard

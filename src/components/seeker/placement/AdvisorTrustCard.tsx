@@ -29,7 +29,7 @@ export function AdvisorTrustCard({ advisorId, caseStatus }: AdvisorTrustCardProp
   });
 
   // Don't show if no advisor assigned yet or case is closed
-  if (caseStatus === "closed" || caseStatus === "placed") return null;
+  if (caseStatus === "closed" || ["admitted", "billed", "completed"].includes(caseStatus)) return null;
 
   const advisorName = advisor
     ? advisor.display_name || `${advisor.first_name || ""} ${advisor.last_name || ""}`.trim()
