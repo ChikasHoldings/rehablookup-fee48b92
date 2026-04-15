@@ -115,25 +115,61 @@ Deno.serve(async (req) => {
 
     // For admin-initiated charges, update placement status
     if (adminInitiated) {
-      logStep(requestId, "Admin-initiated charge, updating placement status");
-      await supabase
-        .from('concierge_inquiries')
-        .update({
-          status: 'billed',
-          placed_facility_id: facilityId,
-          placement_confirmed: true,
-          placement_confirmed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', inquiryId);
+      logStep(requestId, "Admin-initiated charge, ensuring placement is confirmed");
 
-      await supabase.from('concierge_case_events').insert({
-        inquiry_id: inquiryId,
-        event_type: 'admin_confirmed_placement',
-        event_data: { facility_id: facilityId },
-        actor_id: actorId,
-        actor_type: 'admin',
-      });
+      // Only confirm placement if not already confirmed
+      if (!inquiry.placement_confirmed) {
+        // Walk through intermediate statuses to reach 'admitted' first
+        const walkToAdmitted = async () => {
+          const PATH_TO_ADMITTED: Record<string, string[]> = {
+            providers_accepted:     ["presented_to_seeker", "seeker_selected", "admission_in_progress", "admitted"],
+            presented_to_seeker:    ["seeker_selected", "admission_in_progress", "admitted"],
+            seeker_selected:        ["admission_in_progress", "admitted"],
+            admission_in_progress:  ["admitted"],
+          };
+
+          const transitionPath = PATH_TO_ADMITTED[inquiry.status];
+          if (!transitionPath && inquiry.status !== "admitted" && inquiry.status !== "billed") {
+            throw new Error(`Cannot charge fee: case is in '${inquiry.status}' status. Must be at least 'providers_accepted'.`);
+          }
+
+          if (transitionPath) {
+            let currentStatus = inquiry.status;
+            for (const nextStatus of transitionPath) {
+              const stepUpdate: Record<string, unknown> = { status: nextStatus };
+              if (nextStatus === "admitted") {
+                stepUpdate.placed_facility_id = facilityId;
+                stepUpdate.placement_confirmed = true;
+                stepUpdate.placement_confirmed_at = new Date().toISOString();
+                stepUpdate.admission_status = "admitted";
+                stepUpdate.admission_substatus = "admitted";
+              }
+              const { data: updated, error: stepError } = await supabase
+                .from("concierge_inquiries")
+                .update(stepUpdate)
+                .eq("id", inquiryId)
+                .eq("status", currentStatus)
+                .select("id")
+                .maybeSingle();
+
+              if (stepError) throw new Error(`Failed to transition ${currentStatus} → ${nextStatus}: ${stepError.message}`);
+              if (!updated) throw new Error(`Status conflict during ${currentStatus} → ${nextStatus}. Please refresh and try again.`);
+              logStep(requestId, "Admin-initiated status step", { from: currentStatus, to: nextStatus });
+              currentStatus = nextStatus;
+            }
+          }
+        };
+
+        await walkToAdmitted();
+
+        await supabase.from('concierge_case_events').insert({
+          inquiry_id: inquiryId,
+          event_type: 'admin_confirmed_placement',
+          event_data: { facility_id: facilityId },
+          actor_id: actorId,
+          actor_type: 'admin',
+        });
+      }
     } else if (!inquiry.placement_confirmed) {
       throw new Error("Placement not confirmed yet");
     }
