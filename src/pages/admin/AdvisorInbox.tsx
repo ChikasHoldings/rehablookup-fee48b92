@@ -359,8 +359,8 @@ export default function AdvisorInbox() {
           </div>
           <p className="text-xs text-muted-foreground">
             {isSeeker
-              ? "Direct conversation with seeker"
-              : "Private facility coordination — seeker cannot see this"}
+              ? "Direct conversation with client"
+              : "Private facility coordination — client cannot see this"}
           </p>
         </div>
       </div>
@@ -369,7 +369,7 @@ export default function AdvisorInbox() {
       {!isSeeker && (
         <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-700">
           <ShieldCheck className="h-4 w-4 shrink-0" />
-          <span>This is a private thread. The seeker cannot see these messages.</span>
+          <span>This is a private thread. The client cannot see these messages.</span>
         </div>
       )}
 

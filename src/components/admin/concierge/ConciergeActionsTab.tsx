@@ -265,7 +265,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         <AdvisorAssignmentCard caseData={caseData} onRefresh={onRefresh} />
       )}
 
-      {/* Notify Seeker — Send provider options for review */}
+      {/* Notify Client — Send provider options for review */}
       {(caseData.status === "presented_to_seeker" || caseData.status === "providers_accepted") && !caseData.seeker_confirmed && (
         <NotifyClientCard caseData={caseData} onRefresh={onRefresh} />
       )}

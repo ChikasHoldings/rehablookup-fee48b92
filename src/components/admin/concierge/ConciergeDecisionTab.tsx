@@ -59,7 +59,7 @@ export function ConciergeDecisionTab({ caseData }: ConciergeDecisionTabProps) {
 
   return (
     <div className="space-y-4">
-      {/* Seeker Confirmation Status */}
+      {/* Client Confirmation Status */}
       <Card>
         <CardHeader className="py-3">
           <CardTitle className="text-sm font-medium">Client Decision Status</CardTitle>
@@ -156,11 +156,11 @@ export function ConciergeDecisionTab({ caseData }: ConciergeDecisionTabProps) {
         </CardContent>
       </Card>
 
-      {/* Seeker Rejections */}
+      {/* Client Rejections */}
       {rejections && rejections.length > 0 && (
         <Card>
           <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium text-destructive">Seeker Rejected Facilities</CardTitle>
+            <CardTitle className="text-sm font-medium text-destructive">Client Rejected Facilities</CardTitle>
           </CardHeader>
           <CardContent className="py-2">
             <div className="divide-y divide-border/50">

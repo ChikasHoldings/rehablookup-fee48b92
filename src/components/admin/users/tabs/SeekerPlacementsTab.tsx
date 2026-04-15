@@ -124,7 +124,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
       <div className="p-5 text-center py-16">
         <Handshake className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
         <p className="text-muted-foreground font-medium">No placement cases</p>
-        <p className="text-xs text-muted-foreground mt-1">This seeker has not submitted any placement requests.</p>
+        <p className="text-xs text-muted-foreground mt-1">This client has not submitted any placement requests.</p>
       </div>
     );
   }

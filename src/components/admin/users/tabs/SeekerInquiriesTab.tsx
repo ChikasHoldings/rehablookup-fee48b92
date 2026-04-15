@@ -189,7 +189,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
         <div className="text-center py-16">
           <MessageSquare className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
           <p className="text-muted-foreground font-medium">No inquiries found</p>
-          <p className="text-xs text-muted-foreground mt-1">This seeker has not submitted any inquiries yet.</p>
+          <p className="text-xs text-muted-foreground mt-1">This client has not submitted any inquiries yet.</p>
         </div>
       ) : (
         <div className="space-y-6">

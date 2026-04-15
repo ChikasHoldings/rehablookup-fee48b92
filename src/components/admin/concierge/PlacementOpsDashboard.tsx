@@ -119,12 +119,12 @@ export function PlacementOpsDashboard({
       },
       {
         key: "seeker",
-        label: "Awaiting Seeker Decision",
+        label: "Awaiting Client Decision",
         icon: Eye,
         color: "text-indigo-600",
         badgeColor: "bg-indigo-500/10 text-indigo-600 border-indigo-500/30",
         cases: awaitingSeeker,
-        emptyMessage: "No cases awaiting seeker decision",
+        emptyMessage: "No cases awaiting client decision",
       },
       {
         key: "admission",
