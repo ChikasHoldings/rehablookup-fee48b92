@@ -23,7 +23,7 @@ function getTimestampFields(toStatus: string): Record<string, unknown> {
     case "presented_to_seeker":
       return { introductions_sent_at: now };
     case "admitted":
-      return { placement_confirmed: true, placement_confirmed_at: now, admission_status: "admitted" };
+      return { placement_confirmed: true, placement_confirmed_at: now, admission_status: "admitted", admission_substatus: "admitted" };
     case "closed":
       return { closed_at: now };
     default:
