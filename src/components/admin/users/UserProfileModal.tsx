@@ -321,7 +321,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              <TabsContent value="overview" className="m-0 data-[state=inactive]:hidden">
+              <TabsContent value="overview" forceMount className={cn("m-0", activeTab !== "overview" && "hidden")}>
                 <SeekerOverviewTab
                   user={user}
                   email={email}
@@ -345,31 +345,31 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                 />
               </TabsContent>
 
-              <TabsContent value="inquiries" className="m-0 data-[state=inactive]:hidden">
+              <TabsContent value="inquiries" forceMount className={cn("m-0", activeTab !== "inquiries" && "hidden")}>
                 <SeekerInquiriesTab userId={user.user_id} />
               </TabsContent>
 
-              <TabsContent value="placements" className="m-0 data-[state=inactive]:hidden">
+              <TabsContent value="placements" forceMount className={cn("m-0", activeTab !== "placements" && "hidden")}>
                 <SeekerPlacementsTab userId={user.user_id} />
               </TabsContent>
 
-              <TabsContent value="reviews" className="m-0 data-[state=inactive]:hidden">
+              <TabsContent value="reviews" forceMount className={cn("m-0", activeTab !== "reviews" && "hidden")}>
                 <SeekerReviewsTab userId={user.user_id} />
               </TabsContent>
 
-              <TabsContent value="activity" className="m-0 data-[state=inactive]:hidden">
+              <TabsContent value="activity" forceMount className={cn("m-0", activeTab !== "activity" && "hidden")}>
                 <SeekerActivityTab userId={user.user_id} />
               </TabsContent>
 
-              <TabsContent value="communications" className="m-0 data-[state=inactive]:hidden">
+              <TabsContent value="communications" forceMount className={cn("m-0", activeTab !== "communications" && "hidden")}>
                 <SeekerCommunicationsTab userId={user.user_id} />
               </TabsContent>
 
-              <TabsContent value="saved" className="m-0 data-[state=inactive]:hidden">
+              <TabsContent value="saved" forceMount className={cn("m-0", activeTab !== "saved" && "hidden")}>
                 <SeekerSavedTab userId={user.user_id} />
               </TabsContent>
 
-              <TabsContent value="audit" className="m-0 data-[state=inactive]:hidden">
+              <TabsContent value="audit" forceMount className={cn("m-0", activeTab !== "audit" && "hidden")}>
                 <SeekerAuditLogTab userId={user.user_id} />
               </TabsContent>
             </div>
