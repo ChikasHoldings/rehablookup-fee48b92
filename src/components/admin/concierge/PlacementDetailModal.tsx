@@ -1,33 +1,32 @@
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import {
-  ClipboardList, Users, Send, Settings, DollarSign, MessageSquare,
+  ClipboardList, Users, Settings, DollarSign, MessageSquare,
   CalendarCheck, X, Mail, Phone, MapPin, Clock, CheckCircle,
-  HeartHandshake, Building2, UserCheck, History, Eye, User,
-  FileText, Home, Activity,
+  HeartHandshake, Building2, UserCheck, History, User,
+  Activity, Send, Home, Loader2, Play, RefreshCw, Shield,
+  Eye, ArrowRight, FileText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { useCaseTransition } from "@/hooks/useCaseTransition";
 import { format, formatDistanceToNow } from "date-fns";
 import { PlacementProgressStepper } from "./PlacementProgressStepper";
 import { CaseSlaDetailBanner } from "./CaseSlaAlerts";
-import { ConciergePlacementTab } from "./ConciergePlacementTab";
-import { ConciergeIntroductionsTab } from "./ConciergeIntroductionsTab";
 import { ConciergeActionsTab } from "./ConciergeActionsTab";
 import { InvoiceManagementTab } from "./InvoiceManagementTab";
 import { MessagesTab } from "./MessagesTab";
 import { ToursTab } from "./ToursTab";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
-import { PlacementNextSteps } from "./PlacementNextSteps";
-import { StageActionBar } from "./StageActionBar";
 import { STATUS_CONFIG, getVisualStage } from "./placementPipelineConfig";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
@@ -62,25 +61,6 @@ export function PlacementDetailModal({
     }
   }, [open, caseData?.id, caseData?.status]);
 
-  // Counts for badges
-  const { data: introsCount } = useQuery({
-    queryKey: ["placement-intros-count", caseData?.id],
-    queryFn: async () => {
-      const { count } = await supabase.from("concierge_introductions").select("id", { count: "exact", head: true }).eq("inquiry_id", caseData!.id);
-      return count || 0;
-    },
-    enabled: !!caseData?.id,
-  });
-
-  const { data: toursCount } = useQuery({
-    queryKey: ["placement-tours-count", caseData?.id],
-    queryFn: async () => {
-      const { count } = await supabase.from("concierge_tour_requests").select("id", { count: "exact", head: true }).eq("inquiry_id", caseData!.id);
-      return count || 0;
-    },
-    enabled: !!caseData?.id,
-  });
-
   if (!caseData) return null;
 
   const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded";
@@ -90,69 +70,61 @@ export function PlacementDetailModal({
   const visualStage = getVisualStage(caseData.status);
   const VisualIcon = visualStage.icon;
 
-  // Simplified 5-tab layout
   const tabs = [
     { value: "overview", icon: ClipboardList, label: "Overview" },
-    { value: "seeker", icon: User, label: "Seeker" },
-    { value: "matching", icon: Users, label: "Matching", badge: (caseData.match_count || 0) + (introsCount || 0) },
-    { value: "admission", icon: Building2, label: "Admission" },
+    { value: "providers", icon: Building2, label: "Providers" },
+    { value: "admission", icon: Home, label: "Admission" },
     { value: "manage", icon: Settings, label: "Manage" },
   ];
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-5xl h-[92vh] flex flex-col p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <VisuallyHidden>
+          <DialogTitle>Placement Details — {caseData.user_name}</DialogTitle>
+        </VisuallyHidden>
+
         {/* ─── Header ─── */}
-        <div className="flex-shrink-0 border-b bg-card">
-          <div className="px-5 pt-4 pb-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0">
-                  <HeartHandshake className="h-5 w-5 text-primary-foreground" />
+        <div className="flex-shrink-0 border-b bg-card px-5 pt-4 pb-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0">
+                <HeartHandshake className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg font-bold truncate">{caseData.user_name}</h2>
+                  <Badge variant="outline" className={cn("text-[10px] font-semibold", visualStage.badgeColor)}>
+                    <VisualIcon className="h-3 w-3 mr-1" />
+                    {visualStage.label}
+                  </Badge>
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-lg font-bold truncate">{caseData.user_name}</h2>
-                    <Badge variant="outline" className={cn("text-[10px] font-semibold", visualStage.badgeColor)}>
-                      <VisualIcon className="h-3 w-3 mr-1" />
-                      {visualStage.label}
-                    </Badge>
-                    {isAdmitted && (
-                      <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-[10px] gap-1">
-                        <CheckCircle className="h-3 w-3" />Admitted
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
-                    <span className="flex items-center gap-1 font-mono text-[10px] bg-muted/50 px-1.5 py-0.5 rounded">
-                      {caseData.id.slice(0, 8).toUpperCase()}
-                    </span>
-                    <Separator orientation="vertical" className="h-3" />
-                    <span className="flex items-center gap-1">
-                      <UserCheck className="h-3 w-3" />
-                      <span className={cn(!caseData.assigned_advisor_id && "text-destructive font-medium")}>{advisorName}</span>
-                    </span>
-                    <Separator orientation="vertical" className="h-3" />
-                    <span className={cn("flex items-center gap-1", isPaid ? "text-success" : "text-destructive font-medium")}>
-                      <DollarSign className="h-3 w-3" />{isPaid ? "Paid" : "Unpaid"}
-                    </span>
-                    <Separator orientation="vertical" className="h-3" />
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {formatDistanceToNow(new Date(caseData.created_at), { addSuffix: true })}
-                    </span>
-                  </div>
+                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                  <span className="font-mono text-[10px] bg-muted/50 px-1.5 py-0.5 rounded">{caseData.id.slice(0, 8).toUpperCase()}</span>
+                  <Separator orientation="vertical" className="h-3" />
+                  <span className="flex items-center gap-1">
+                    <UserCheck className="h-3 w-3" />
+                    <span className={cn(!caseData.assigned_advisor_id && "text-destructive font-medium")}>{advisorName}</span>
+                  </span>
+                  <Separator orientation="vertical" className="h-3" />
+                  <span className={cn("flex items-center gap-1", isPaid ? "text-success" : "text-destructive font-medium")}>
+                    <DollarSign className="h-3 w-3" />{isPaid ? "Paid" : "Unpaid"}
+                  </span>
+                  <Separator orientation="vertical" className="h-3" />
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {formatDistanceToNow(new Date(caseData.created_at), { addSuffix: true })}
+                  </span>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onClose}>
-                <X className="h-4 w-4" />
-              </Button>
             </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
 
-          {/* Progress + Action */}
-          <div className="px-5 pb-3 space-y-2">
-            <CaseSlaDetailBanner caseData={caseData} />
+          {/* Progress stepper */}
+          <div className="mt-3">
             <PlacementProgressStepper
               caseData={{
                 status: caseData.status,
@@ -169,7 +141,6 @@ export function PlacementDetailModal({
               }}
               compact
             />
-            <StageActionBar caseData={caseData} onRefresh={onRefresh} onSwitchTab={setActiveTab} />
           </div>
         </div>
 
@@ -182,48 +153,27 @@ export function PlacementDetailModal({
                   className="gap-1.5 px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
                   <tab.icon className="h-3.5 w-3.5" />
                   {tab.label}
-                  {tab.badge && tab.badge > 0 ? (
-                    <Badge variant="secondary" className="h-4 min-w-[16px] px-1 text-[9px] ml-0.5">{tab.badge}</Badge>
-                  ) : null}
                 </TabsTrigger>
               ))}
             </TabsList>
           </div>
 
           <ScrollArea className="flex-1">
-            <div className="p-1">
-              {/* OVERVIEW */}
+            <div className="p-5">
               <TabsContent value="overview" className="m-0">
-                <OverviewTab caseData={caseData} advisorName={advisorName} placedFacility={placedFacility}
-                  introsCount={introsCount || 0} toursCount={toursCount || 0} onSwitchTab={setActiveTab} />
+                <OverviewContent caseData={caseData} advisorName={advisorName} placedFacility={placedFacility} onSwitchTab={setActiveTab} />
               </TabsContent>
 
-              {/* SEEKER */}
-              <TabsContent value="seeker" className="m-0">
-                <SeekerDetailsTab caseData={caseData} />
+              <TabsContent value="providers" className="m-0">
+                <ProvidersContent caseData={caseData} onRefresh={onRefresh} />
               </TabsContent>
 
-              {/* MATCHING (includes matching + introductions + messages) */}
-              <TabsContent value="matching" className="m-0">
-                <MatchingTab caseData={caseData} onRefresh={onRefresh} />
-              </TabsContent>
-
-              {/* ADMISSION (includes admission tracking + billing + tours) */}
               <TabsContent value="admission" className="m-0">
-                <AdmissionTab caseData={caseData} placedFacility={placedFacility} canManageBilling={canManageBilling} />
+                <AdmissionContent caseData={caseData} placedFacility={placedFacility} canManageBilling={canManageBilling} onRefresh={onRefresh} />
               </TabsContent>
 
-              {/* MANAGE (actions + timeline) */}
               <TabsContent value="manage" className="m-0">
-                <div className="space-y-0">
-                  <ConciergeActionsTab caseData={caseData} onRefresh={onRefresh} onClose={onClose} isAdvisor={isAdvisor} onSwitchTab={setActiveTab} />
-                  <div className="p-4 border-t">
-                    <h4 className="text-sm font-semibold flex items-center gap-2 mb-3">
-                      <History className="h-4 w-4 text-primary" />Case Timeline
-                    </h4>
-                    <CaseTimelineEvents caseData={caseData} />
-                  </div>
-                </div>
+                <ConciergeActionsTab caseData={caseData} onRefresh={onRefresh} onClose={onClose} isAdvisor={isAdvisor} onSwitchTab={setActiveTab} />
               </TabsContent>
             </div>
           </ScrollArea>
@@ -234,192 +184,465 @@ export function PlacementDetailModal({
 }
 
 /* ═══════════════════════════════════════════
-   Overview Tab — simplified
+   OVERVIEW TAB
    ═══════════════════════════════════════════ */
-function OverviewTab({ caseData, advisorName, placedFacility, introsCount, toursCount, onSwitchTab }: {
-  caseData: ConciergeInquiry; advisorName: string; placedFacility: any; introsCount: number; toursCount: number; onSwitchTab: (tab: string) => void;
+function OverviewContent({ caseData, advisorName, placedFacility, onSwitchTab }: {
+  caseData: ConciergeInquiry; advisorName: string; placedFacility: any; onSwitchTab: (t: string) => void;
 }) {
   const isAdmitted = caseData.admission_status === "admitted" || caseData.placement_confirmed;
 
   return (
-    <div className="p-5 space-y-5">
+    <div className="space-y-4">
       {/* Admission Banner */}
-      {isAdmitted && (
-        <div className="p-4 rounded-xl border-2 border-success/30 bg-success/5">
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="h-5 w-5 text-success" />
-            <h3 className="font-semibold text-success">Admitted</h3>
-          </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p className="text-xs text-muted-foreground">Facility</p>
-              <p className="font-medium">{placedFacility?.name || "—"}</p>
+      {isAdmitted && placedFacility && (
+        <Card className="border-success/30 bg-success/5">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle className="h-5 w-5 text-success" />
+              <h3 className="font-semibold text-success">Admitted to {placedFacility.name}</h3>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Date</p>
-              <p className="font-medium">{caseData.placement_confirmed_at ? format(new Date(caseData.placement_confirmed_at), "MMM d, yyyy") : "—"}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {caseData.status === "closed" && !isAdmitted && (
-        <div className="p-4 rounded-xl border bg-muted/50 flex items-center gap-3">
-          <Clock className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Case Closed</p>
-            <p className="text-xs text-muted-foreground/70">
-              {caseData.closed_at ? `Closed ${format(new Date(caseData.closed_at), "MMM d, yyyy")}` : "This case has been closed"}
+            <p className="text-sm text-muted-foreground">
+              {caseData.placement_confirmed_at ? format(new Date(caseData.placement_confirmed_at), "MMMM d, yyyy") : "Date not recorded"}
             </p>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Next Action */}
-      <PlacementNextSteps caseData={caseData} introsCount={introsCount} toursCount={toursCount} onSwitchTab={onSwitchTab} />
+      {caseData.status === "closed" && (
+        <Card className="bg-muted/50">
+          <CardContent className="py-4 flex items-center gap-3">
+            <Clock className="h-5 w-5 text-muted-foreground" />
+            <p className="text-sm font-medium text-muted-foreground">Case Closed {caseData.closed_at && `— ${format(new Date(caseData.closed_at), "MMM d, yyyy")}`}</p>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-        <KpiCard label="Matches" value={caseData.match_count || 0} onClick={() => onSwitchTab("matching")} />
-        <KpiCard label="Intros" value={introsCount} onClick={() => onSwitchTab("matching")} />
-        <KpiCard label="Tours" value={toursCount} onClick={() => onSwitchTab("admission")} />
-        <KpiCard label="Admission" value={caseData.admission_status || "—"} onClick={() => onSwitchTab("admission")} />
-        <KpiCard label="Fee" value={caseData.provider_fee_cents ? `$${(caseData.provider_fee_cents / 100).toFixed(0)}` : "—"} />
-        <KpiCard label="Urgency" value={caseData.timeline_urgency || "—"} />
+      {/* Seeker Info */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><Mail className="h-4 w-4 text-primary" />Contact</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <InfoGrid rows={[
+              ["Name", caseData.user_name],
+              ["Email", caseData.user_email],
+              ["Phone", caseData.user_phone],
+              ["Best Time", caseData.best_time_to_call],
+              ["Relationship", caseData.relationship_to_seeker],
+            ]} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />Treatment</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <InfoGrid rows={[
+              ["Primary Concern", caseData.primary_concern],
+              ["Level of Care", caseData.level_of_care],
+              ["Urgency", caseData.timeline_urgency],
+              ["Detox Needed", caseData.detox_needed],
+              ["Prior Treatment", caseData.prior_treatment_history === true ? "Yes" : caseData.prior_treatment_history === false ? "No" : null],
+            ]} />
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <SummaryCard icon={User} title="Seeker" onClick={() => onSwitchTab("seeker")}>
-          <p className="text-sm font-medium">{caseData.user_name}</p>
-          <p className="text-xs text-muted-foreground">{caseData.primary_concern || "No primary concern"}</p>
-          <p className="text-xs text-muted-foreground">{caseData.level_of_care || "Level of care not set"}</p>
-        </SummaryCard>
-        <SummaryCard icon={MapPin} title="Location" onClick={() => onSwitchTab("seeker")}>
-          <p className="text-sm font-medium">
-            {[caseData.preferred_city, caseData.preferred_state || caseData.desired_location_state].filter(Boolean).join(", ") || "Not specified"}
-          </p>
-        </SummaryCard>
-        <SummaryCard icon={DollarSign} title="Insurance" onClick={() => onSwitchTab("seeker")}>
-          <p className="text-sm font-medium">{caseData.insurance_carrier || "Not provided"}</p>
-          <p className="text-xs text-muted-foreground">{caseData.budget_range || "No budget"}</p>
-        </SummaryCard>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" />Preferences</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <InfoGrid rows={[
+              ["State", caseData.preferred_state || caseData.desired_location_state],
+              ["City", caseData.preferred_city],
+              ["Gender", caseData.gender],
+              ["Age Range", caseData.age_range],
+              ["Environment", caseData.preferred_environment],
+              ["Travel OK", caseData.willing_to_travel === true ? "Yes" : caseData.willing_to_travel === false ? "No" : null],
+            ]} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" />Insurance & Financial</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <InfoGrid rows={[
+              ["Payment Type", formatPaymentType(caseData.payment_type)],
+              ["Insurance", caseData.insurance_carrier],
+              ["Member ID", caseData.insurance_member_id],
+              ["Budget", caseData.budget_range],
+              ["Benefits Verified", caseData.benefits_verified === true ? "Yes" : caseData.benefits_verified === false ? "No" : null],
+            ]} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick nav buttons */}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => onSwitchTab("providers")}>
+          <Building2 className="h-3.5 w-3.5" />View Matched Providers
+        </Button>
+        <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => onSwitchTab("admission")}>
+          <Home className="h-3.5 w-3.5" />Admission & Billing
+        </Button>
+        <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => onSwitchTab("manage")}>
+          <Settings className="h-3.5 w-3.5" />Actions & Timeline
+        </Button>
       </div>
 
       {/* Admin Notes */}
       {caseData.admin_notes && (
-        <div className="rounded-xl border bg-card p-4">
-          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Admin Notes</h4>
-          <p className="text-sm whitespace-pre-wrap">{caseData.admin_notes}</p>
-        </div>
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin Notes</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <p className="text-sm whitespace-pre-wrap">{caseData.admin_notes}</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════
-   Seeker Details Tab
+   PROVIDERS TAB — Matched + Introductions + Messages
    ═══════════════════════════════════════════ */
-function SeekerDetailsTab({ caseData }: { caseData: ConciergeInquiry }) {
+function ProvidersContent({ caseData, onRefresh }: { caseData: ConciergeInquiry; onRefresh: () => void }) {
+  const [isRunning, setIsRunning] = useState(false);
+  const [sendingTo, setSendingTo] = useState<string | null>(null);
+
+  // All matched facility IDs
+  const allMatchedIds = [...new Set([
+    ...(caseData.matched_facility_ids || []),
+    ...(caseData.admin_matched_facility_ids || []),
+  ])];
+
+  // Fetch facility details
+  const { data: matchedFacilities, isLoading: loadingFacilities } = useQuery({
+    queryKey: ["placement-matched-facilities", allMatchedIds],
+    queryFn: async () => {
+      if (!allMatchedIds.length) return [];
+      const { data, error } = await supabase.from("facilities")
+        .select("id, name, city, state, facility_type, concierge_availability_status")
+        .in("id", allMatchedIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: allMatchedIds.length > 0,
+  });
+
+  // Fetch introductions
+  const { data: introductions, refetch: refetchIntros } = useQuery({
+    queryKey: ["concierge-introductions", caseData.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("concierge_introductions")
+        .select("*, facility:facilities(id, name, city, state)")
+        .eq("inquiry_id", caseData.id)
+        .order("sent_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const introFacilityIds = new Set(introductions?.map(i => i.facility_id) || []);
+
+  // Run placement engine
+  const runPlacement = async () => {
+    setIsRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("match-concierge-intake", {
+        body: { inquiryId: caseData.id },
+      });
+      if (error) throw error;
+      toast.success(`Found ${data?.matchCount || 0} matches`);
+      onRefresh();
+    } catch (err: any) {
+      toast.error("Matching failed: " + err.message);
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  // Send introduction
+  const sendIntro = async (facilityId: string) => {
+    setSendingTo(facilityId);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Duplicate guard
+      const { data: existing } = await supabase.from("concierge_introductions")
+        .select("id").eq("inquiry_id", caseData.id).eq("facility_id", facilityId).maybeSingle();
+      if (existing) { toast.info("Already introduced"); setSendingTo(null); return; }
+
+      const { data: introData, error } = await supabase.from("concierge_introductions")
+        .insert({ inquiry_id: caseData.id, facility_id: facilityId, sent_by: user?.id, sent_at: new Date().toISOString() })
+        .select().single();
+      if (error) throw error;
+
+      // Trigger status transition
+      await supabase.functions.invoke("auto-status-transition", {
+        body: { inquiryId: caseData.id, trigger: "introduction_sent", actorId: user?.id, actorType: "admin" },
+      });
+
+      // Update count
+      await supabase.from("concierge_inquiries")
+        .update({ introductions_sent_count: (caseData.introductions_sent_count || 0) + 1 })
+        .eq("id", caseData.id);
+
+      // Send email (best effort)
+      try {
+        await supabase.functions.invoke("send-concierge-introduction", {
+          body: { inquiryId: caseData.id, facilityId, introductionId: introData.id },
+        });
+      } catch (e) { console.error("Intro email error:", e); }
+
+      toast.success("Introduction sent");
+      refetchIntros();
+      onRefresh();
+    } catch (err: any) {
+      toast.error("Failed: " + err.message);
+    } finally {
+      setSendingTo(null);
+    }
+  };
+
+  // Update provider response
+  const updateResponse = async (introId: string, response: string) => {
+    const { error } = await supabase.from("concierge_introductions")
+      .update({ provider_response: response, provider_responded_at: new Date().toISOString() })
+      .eq("id", introId);
+    if (error) { toast.error("Update failed"); return; }
+
+    if (response === "interested") {
+      await supabase.functions.invoke("auto-status-transition", {
+        body: { inquiryId: caseData.id, trigger: "provider_interested", actorType: "admin" },
+      });
+    }
+    toast.success("Response updated");
+    refetchIntros();
+    onRefresh();
+  };
+
+  // Disclose PII
+  const disclosePII = async (introId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("concierge_introductions")
+      .update({ admin_disclosed_pii_at: new Date().toISOString(), disclosed_by_admin_id: user.id })
+      .eq("id", introId);
+    if (error) { toast.error("Failed"); return; }
+
+    await supabase.from("concierge_case_events").insert({
+      inquiry_id: caseData.id, event_type: "pii_disclosed",
+      event_data: { introduction_id: introId }, actor_id: user.id, actor_type: "admin",
+    });
+    toast.success("PII disclosed");
+    refetchIntros();
+  };
+
+  const matchScores = (caseData.match_scores as unknown as Array<{ facilityId: string; score?: number; totalScore?: number }> | null) || [];
+
   return (
-    <div className="p-5 space-y-5">
-      <DetailSection icon={Mail} title="Contact">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
-          <InfoRow label="Full Name" value={caseData.user_name} />
-          <InfoRow label="Email" value={caseData.user_email} />
-          <InfoRow label="Phone" value={caseData.user_phone} />
-          <InfoRow label="Best Time to Call" value={caseData.best_time_to_call} />
-          <InfoRow label="Relationship" value={caseData.relationship_to_seeker} />
-          <InfoRow label="Decision Maker" value={caseData.decision_maker_name} />
-          <InfoRow label="Emergency Contact" value={caseData.emergency_contact_name} />
-          <InfoRow label="Referral Source" value={caseData.referral_source} />
-        </div>
-      </DetailSection>
+    <div className="space-y-5">
+      {/* Run Placement Engine */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium text-sm">Placement Engine</h3>
+              <p className="text-xs text-muted-foreground">
+                {caseData.matched_at ? `Last run ${formatDistanceToNow(new Date(caseData.matched_at), { addSuffix: true })}` : "Not run yet"}
+              </p>
+            </div>
+            <Button size="sm" onClick={runPlacement} disabled={isRunning}>
+              {isRunning ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : caseData.matched_at ? <RefreshCw className="h-4 w-4 mr-1.5" /> : <Play className="h-4 w-4 mr-1.5" />}
+              {isRunning ? "Running..." : caseData.matched_at ? "Re-run" : "Run Matching"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      <DetailSection icon={Activity} title="Treatment Needs">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
-          <InfoRow label="Primary Concern" value={caseData.primary_concern} />
-          <InfoRow label="Level of Care" value={caseData.level_of_care} />
-          <InfoRow label="Detox Needed" value={caseData.detox_needed} />
-          <InfoRow label="Substance Duration" value={caseData.substance_use_duration} />
-          <InfoRow label="Prior Treatment" value={caseData.prior_treatment_history ? "Yes" : caseData.prior_treatment_history === false ? "No" : null} />
-          <InfoRow label="Co-Occurring" value={Array.isArray(caseData.co_occurring_concerns) ? (caseData.co_occurring_concerns as string[]).join(", ") : null} />
-          <InfoRow label="Current Medications" value={caseData.current_medications} />
-          <InfoRow label="Mobility Needs" value={caseData.mobility_needs} />
-        </div>
-      </DetailSection>
+      {/* Matched Facilities List */}
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" />
+            Matched Providers ({matchedFacilities?.length || 0})
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="py-2">
+          {loadingFacilities ? (
+            <p className="text-center py-4 text-sm text-muted-foreground">Loading...</p>
+          ) : !matchedFacilities?.length ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm font-medium">No matches yet</p>
+              <p className="text-xs mt-1">Run the placement engine to find facilities</p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {matchedFacilities.map((facility, idx) => {
+                const intro = introductions?.find(i => i.facility_id === facility.id);
+                const scoreEntry = matchScores.find(s => s.facilityId === facility.id);
+                const score = scoreEntry?.score || scoreEntry?.totalScore || 0;
+                const hasIntro = !!intro;
+                const response = intro?.provider_response;
 
-      <DetailSection icon={MapPin} title="Preferences">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
-          <InfoRow label="City" value={caseData.preferred_city} />
-          <InfoRow label="State" value={caseData.preferred_state || caseData.desired_location_state} />
-          <InfoRow label="Environment" value={caseData.preferred_environment} />
-          <InfoRow label="Gender" value={caseData.gender} />
-          <InfoRow label="Age Range" value={caseData.age_range} />
-          <InfoRow label="Faith-Based" value={caseData.faith_based_preference} />
-          <InfoRow label="Language" value={caseData.preferred_language} />
-          <InfoRow label="Move-In Date" value={caseData.move_in_date} />
-        </div>
-      </DetailSection>
+                return (
+                  <div key={facility.id} className="py-3 first:pt-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-xs font-bold text-primary">#{idx + 1}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{facility.name}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />{facility.city}, {facility.state}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <Badge variant="outline" className="text-[10px] h-5">{facility.facility_type}</Badge>
+                            <Badge variant={
+                              facility.concierge_availability_status === "open" ? "default" :
+                              facility.concierge_availability_status === "limited" ? "secondary" : "destructive"
+                            } className="text-[10px] h-5">
+                              {facility.concierge_availability_status || "Unknown"}
+                            </Badge>
+                            {score > 0 && (
+                              <Badge variant="outline" className="text-[10px] h-5 bg-primary/5 text-primary border-primary/20">
+                                Score: {score}/100
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
-      <DetailSection icon={DollarSign} title="Insurance & Financial">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
-          <InfoRow label="Carrier" value={caseData.insurance_carrier} />
-          <InfoRow label="Member ID" value={caseData.insurance_member_id} />
-          <InfoRow label="Benefits Verified" value={caseData.benefits_verified ? "Yes" : caseData.benefits_verified === false ? "No" : null} />
-          <InfoRow label="Budget Range" value={caseData.budget_range} />
-          <InfoRow label="Payment Status" value={caseData.payment_status} />
-          <InfoRow label="Amount" value={caseData.payment_amount_cents ? `$${(caseData.payment_amount_cents / 100).toFixed(2)}` : null} />
-        </div>
-      </DetailSection>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        {!hasIntro ? (
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1"
+                            onClick={() => sendIntro(facility.id)} disabled={sendingTo === facility.id}>
+                            {sendingTo === facility.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                            Introduce
+                          </Button>
+                        ) : (
+                          <IntroStatusBadge response={response} />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Introduction details when sent */}
+                    {hasIntro && intro && (
+                      <div className="mt-2 ml-11 space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Send className="h-3 w-3" />
+                          Introduced {intro.sent_at ? format(new Date(intro.sent_at), "MMM d, h:mm a") : "—"}
+                        </div>
+
+                        {/* Response dropdown */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Response:</span>
+                          <select
+                            value={response || "pending"}
+                            onChange={(e) => updateResponse(intro.id, e.target.value)}
+                            className="h-7 text-xs rounded-md border bg-background px-2"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="interested">Accepted</option>
+                            <option value="not_available">Declined</option>
+                            <option value="no_response">No Response</option>
+                          </select>
+                        </div>
+
+                        {/* PII disclosure */}
+                        {response === "interested" && (
+                          <div className="flex items-center gap-2 p-2 rounded-md border bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+                            {intro.admin_disclosed_pii_at ? (
+                              <div className="flex items-center gap-1.5 text-xs text-success">
+                                <Eye className="h-3.5 w-3.5" />
+                                PII disclosed {format(new Date(intro.admin_disclosed_pii_at), "MMM d")}
+                              </div>
+                            ) : (
+                              <>
+                                <Shield className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                                <span className="text-xs text-amber-800 dark:text-amber-200 flex-1">Patient info hidden</span>
+                                <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => disclosePII(intro.id)}>
+                                  <Eye className="h-3 w-3" />Disclose
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {intro.provider_notes && (
+                          <p className="text-xs p-2 bg-muted rounded-md">{intro.provider_notes}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Placement Criteria */}
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-medium">Matching Criteria</CardTitle>
+        </CardHeader>
+        <CardContent className="py-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+            <CriteriaChip label="Location" value={caseData.desired_location_state || caseData.preferred_state} />
+            <CriteriaChip label="Care" value={caseData.level_of_care} />
+            <CriteriaChip label="Payment" value={formatPaymentType(caseData.payment_type)} />
+            <CriteriaChip label="Insurance" value={caseData.insurance_carrier} />
+            <CriteriaChip label="Gender" value={caseData.gender} />
+            <CriteriaChip label="Age" value={caseData.age_range} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Messages */}
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <MessageSquare className="h-4 w-4 text-primary" />Messages
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="py-0">
+          <MessagesTab caseData={caseData} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════
-   Matching Tab (matching + introductions + messages combined)
-   ═══════════════════════════════════════════ */
-function MatchingTab({ caseData, onRefresh }: { caseData: ConciergeInquiry; onRefresh: () => void }) {
-  const [subView, setSubView] = useState<"matching" | "introductions" | "messages">("matching");
-
-  return (
-    <div className="space-y-0">
-      <div className="flex items-center gap-1 px-4 pt-3 pb-2 border-b">
-        {(["matching", "introductions", "messages"] as const).map(v => (
-          <Button key={v} variant={subView === v ? "default" : "ghost"} size="sm" className="h-7 text-xs capitalize"
-            onClick={() => setSubView(v)}>
-            {v === "matching" ? <Users className="h-3 w-3 mr-1" /> : v === "introductions" ? <Send className="h-3 w-3 mr-1" /> : <MessageSquare className="h-3 w-3 mr-1" />}
-            {v}
-          </Button>
-        ))}
-      </div>
-      {subView === "matching" && <ConciergePlacementTab caseData={caseData} onRefresh={onRefresh} />}
-      {subView === "introductions" && <ConciergeIntroductionsTab caseData={caseData} onRefresh={onRefresh} />}
-      {subView === "messages" && <MessagesTab caseData={caseData} />}
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════
-   Admission Tab (admission + billing + tours combined)
+   ADMISSION TAB
    ═══════════════════════════════════════════ */
 const ADMISSION_SUBSTAGES = [
-  { key: "contact_initiated", label: "Contact Initiated", icon: Phone },
+  { key: "contact_initiated", label: "Contact", icon: Phone },
   { key: "screening", label: "Screening", icon: ClipboardList },
   { key: "accepted", label: "Accepted", icon: CheckCircle },
   { key: "admission_scheduled", label: "Scheduled", icon: CalendarCheck },
   { key: "admitted", label: "Admitted", icon: Home },
 ] as const;
 
-function AdmissionTab({ caseData, placedFacility, canManageBilling }: {
-  caseData: ConciergeInquiry; placedFacility: any; canManageBilling: boolean;
+function AdmissionContent({ caseData, placedFacility, canManageBilling, onRefresh }: {
+  caseData: ConciergeInquiry; placedFacility: any; canManageBilling: boolean; onRefresh: () => void;
 }) {
   const queryClient = useQueryClient();
   const isAdmitted = caseData.admission_status === "admitted" || caseData.placement_confirmed;
   const currentSubstatus = caseData.admission_substatus || "pending";
   const currentSubIdx = ADMISSION_SUBSTAGES.findIndex(s => s.key === currentSubstatus);
-
-  const [subView, setSubView] = useState<"progress" | "tours" | "billing">("progress");
   const [noteText, setNoteText] = useState("");
 
   const advanceSubstatus = async (newSubstatus: string) => {
@@ -427,19 +650,15 @@ function AdmissionTab({ caseData, placedFacility, canManageBilling }: {
       .update({
         admission_substatus: newSubstatus,
         ...(newSubstatus === "admitted" ? { admission_status: "admitted", placement_confirmed: true, placement_confirmed_at: new Date().toISOString() } : {}),
-      })
-      .eq("id", caseData.id);
+      }).eq("id", caseData.id);
     if (error) { toast.error("Failed to update"); return; }
 
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("concierge_case_events").insert({
-      inquiry_id: caseData.id,
-      event_type: "admission_substatus_changed",
+      inquiry_id: caseData.id, event_type: "admission_substatus_changed",
       event_data: { from: currentSubstatus, to: newSubstatus },
-      actor_id: user?.id || null,
-      actor_type: "admin",
+      actor_id: user?.id || null, actor_type: "admin",
     });
-
     toast.success(`Updated to: ${newSubstatus.replace(/_/g, " ")}`);
     queryClient.invalidateQueries({ queryKey: ["admin-concierge-case-detail", caseData.id] });
     queryClient.invalidateQueries({ queryKey: ["admin-concierge-cases-full"] });
@@ -449,11 +668,9 @@ function AdmissionTab({ caseData, placedFacility, canManageBilling }: {
     if (!noteText.trim()) return;
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("concierge_case_events").insert({
-      inquiry_id: caseData.id,
-      event_type: "admission_note_added",
+      inquiry_id: caseData.id, event_type: "admission_note_added",
       event_data: { note: noteText.trim() },
-      actor_id: user?.id || null,
-      actor_type: "admin",
+      actor_id: user?.id || null, actor_type: "admin",
     });
     setNoteText("");
     toast.success("Note added");
@@ -462,140 +679,164 @@ function AdmissionTab({ caseData, placedFacility, canManageBilling }: {
   const nextSubstage = currentSubIdx < ADMISSION_SUBSTAGES.length - 1 ? ADMISSION_SUBSTAGES[currentSubIdx + 1] : null;
 
   return (
-    <div className="space-y-0">
-      <div className="flex items-center gap-1 px-4 pt-3 pb-2 border-b">
-        <Button variant={subView === "progress" ? "default" : "ghost"} size="sm" className="h-7 text-xs" onClick={() => setSubView("progress")}>
-          <Building2 className="h-3 w-3 mr-1" />Progress
-        </Button>
-        <Button variant={subView === "tours" ? "default" : "ghost"} size="sm" className="h-7 text-xs" onClick={() => setSubView("tours")}>
-          <CalendarCheck className="h-3 w-3 mr-1" />Tours
-        </Button>
-        {canManageBilling && (
-          <Button variant={subView === "billing" ? "default" : "ghost"} size="sm" className="h-7 text-xs" onClick={() => setSubView("billing")}>
-            <DollarSign className="h-3 w-3 mr-1" />Billing
-          </Button>
-        )}
-      </div>
-
-      {subView === "progress" && (
-        <div className="p-5 space-y-5">
-          {/* Progress Tracker */}
-          <div className="rounded-xl border bg-card p-4">
-            <h4 className="text-sm font-semibold flex items-center gap-2 mb-4">
-              <Building2 className="h-4 w-4 text-primary" />Admission Progress
-            </h4>
-            <div className="flex gap-1">
-              {ADMISSION_SUBSTAGES.map((stage, i) => {
-                const isDone = i <= currentSubIdx;
-                const StageIcon = stage.icon;
-                return (
-                  <div key={stage.key} className="flex-1 text-center">
-                    <div className={cn("h-2 rounded-full mb-2", isDone ? "bg-primary" : "bg-muted")} />
-                    <div className={cn("mx-auto h-8 w-8 rounded-lg flex items-center justify-center mb-1", isDone ? "bg-primary/10" : "bg-muted/50")}>
-                      <StageIcon className={cn("h-4 w-4", isDone ? "text-primary" : "text-muted-foreground")} />
-                    </div>
-                    <p className={cn("text-[10px] leading-tight", isDone ? "font-semibold" : "text-muted-foreground")}>{stage.label}</p>
+    <div className="space-y-5">
+      {/* Admission Progress */}
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" />Admission Progress
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="py-3">
+          <div className="flex gap-1">
+            {ADMISSION_SUBSTAGES.map((stage, i) => {
+              const isDone = i <= currentSubIdx;
+              const StageIcon = stage.icon;
+              return (
+                <div key={stage.key} className="flex-1 text-center">
+                  <div className={cn("h-1.5 rounded-full mb-2", isDone ? "bg-primary" : "bg-muted")} />
+                  <div className={cn("mx-auto h-8 w-8 rounded-lg flex items-center justify-center mb-1", isDone ? "bg-primary/10" : "bg-muted/50")}>
+                    <StageIcon className={cn("h-4 w-4", isDone ? "text-primary" : "text-muted-foreground")} />
                   </div>
-                );
-              })}
-            </div>
-
-            {nextSubstage && !isAdmitted && (
-              <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border bg-primary/5 px-4 py-3">
-                <p className="text-sm font-medium">Next: {nextSubstage.label}</p>
-                <Button size="sm" onClick={() => advanceSubstatus(nextSubstage.key)} className="gap-1.5">
-                  <CheckCircle className="h-3.5 w-3.5" /> Advance
-                </Button>
-              </div>
-            )}
-            {isAdmitted && (
-              <div className="mt-4 rounded-lg border-2 border-success/30 bg-success/5 px-4 py-3 flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-success" />
-                <p className="text-sm font-semibold text-success">Admission Complete</p>
-              </div>
-            )}
+                  <p className={cn("text-[10px] leading-tight", isDone ? "font-semibold" : "text-muted-foreground")}>{stage.label}</p>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Placed Facility */}
-          {placedFacility && (
-            <DetailSection icon={Home} title="Placed Facility">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
-                <InfoRow label="Facility" value={placedFacility.name} />
-                <InfoRow label="Location" value={`${placedFacility.city}, ${placedFacility.state}`} />
-              </div>
-            </DetailSection>
+          {nextSubstage && !isAdmitted && (
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border bg-primary/5 px-4 py-3">
+              <p className="text-sm font-medium">Next: {nextSubstage.label}</p>
+              <Button size="sm" onClick={() => advanceSubstatus(nextSubstage.key)} className="gap-1.5">
+                <CheckCircle className="h-3.5 w-3.5" />Advance
+              </Button>
+            </div>
           )}
 
-          {/* Quick Note */}
-          <div className="rounded-xl border bg-card p-4">
-            <h4 className="text-sm font-semibold mb-2">Add Note</h4>
-            <div className="flex gap-2">
-              <input type="text" placeholder="Log update..." value={noteText}
-                onChange={e => setNoteText(e.target.value)} onKeyDown={e => e.key === "Enter" && addNote()}
-                className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm" />
-              <Button size="sm" onClick={addNote} disabled={!noteText.trim()}>Add</Button>
+          {isAdmitted && (
+            <div className="mt-4 rounded-lg border-2 border-success/30 bg-success/5 px-4 py-3 flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-success" />
+              <p className="text-sm font-semibold text-success">Admission Complete</p>
             </div>
-          </div>
+          )}
+        </CardContent>
+      </Card>
 
-          {/* Fee Summary */}
-          <DetailSection icon={DollarSign} title="Provider Fee">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-1">
-              <InfoRow label="Amount" value={caseData.provider_fee_cents ? `$${(caseData.provider_fee_cents / 100).toFixed(2)}` : null} />
-              <InfoRow label="Status" value={caseData.provider_fee_status} />
-              <InfoRow label="Type" value={caseData.provider_fee_type} />
-            </div>
-          </DetailSection>
-        </div>
+      {/* Placed Facility */}
+      {placedFacility && (
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><Home className="h-4 w-4 text-primary" />Placed Facility</CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <InfoGrid rows={[
+              ["Facility", placedFacility.name],
+              ["Location", `${placedFacility.city}, ${placedFacility.state}`],
+            ]} />
+          </CardContent>
+        </Card>
       )}
 
-      {subView === "tours" && <ToursTab caseData={caseData} />}
-      {subView === "billing" && canManageBilling && <InvoiceManagementTab caseData={caseData} />}
+      {/* Quick Note */}
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-medium">Add Admission Note</CardTitle>
+        </CardHeader>
+        <CardContent className="py-2">
+          <div className="flex gap-2">
+            <input type="text" placeholder="Log update..." value={noteText}
+              onChange={e => setNoteText(e.target.value)} onKeyDown={e => e.key === "Enter" && addNote()}
+              className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm" />
+            <Button size="sm" onClick={addNote} disabled={!noteText.trim()}>Add</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Provider Fee Summary */}
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" />Provider Fee</CardTitle>
+        </CardHeader>
+        <CardContent className="py-2">
+          <InfoGrid rows={[
+            ["Amount", caseData.provider_fee_cents ? `$${(caseData.provider_fee_cents / 100).toFixed(2)}` : null],
+            ["Status", caseData.provider_fee_status],
+            ["Type", caseData.provider_fee_type],
+          ]} />
+        </CardContent>
+      </Card>
+
+      {/* Tours */}
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2"><CalendarCheck className="h-4 w-4 text-primary" />Tours</CardTitle>
+        </CardHeader>
+        <CardContent className="py-0">
+          <ToursTab caseData={caseData} />
+        </CardContent>
+      </Card>
+
+      {/* Billing */}
+      {canManageBilling && (
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" />Billing & Invoices</CardTitle>
+          </CardHeader>
+          <CardContent className="py-0">
+            <InvoiceManagementTab caseData={caseData} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════
-   Shared Components
+   Shared Utilities
    ═══════════════════════════════════════════ */
 
-function DetailSection({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
+function IntroStatusBadge({ response }: { response?: string | null }) {
+  if (!response || response === "pending") {
+    return <Badge variant="secondary" className="text-[10px] h-5"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+  }
+  if (response === "interested") {
+    return <Badge variant="default" className="text-[10px] h-5 bg-success text-success-foreground"><CheckCircle className="h-3 w-3 mr-1" />Accepted</Badge>;
+  }
+  return <Badge variant="destructive" className="text-[10px] h-5">Declined</Badge>;
+}
+
+function CriteriaChip({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div className="rounded-xl border bg-card p-4">
-      <h4 className="text-sm font-semibold flex items-center gap-2 mb-3">
-        <Icon className="h-4 w-4 text-primary" />{title}
-      </h4>
-      {children}
+    <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-md border bg-muted/30">
+      {value ? <CheckCircle className="h-3 w-3 text-primary shrink-0" /> : <span className="h-3 w-3 rounded-full bg-muted-foreground/20 shrink-0" />}
+      <span className="text-muted-foreground">{label}:</span>
+      <span className="font-medium truncate">{value || "—"}</span>
     </div>
   );
 }
 
-function SummaryCard({ icon: Icon, title, onClick, children }: { icon: React.ElementType; title: string; onClick?: () => void; children: React.ReactNode }) {
+function InfoGrid({ rows }: { rows: [string, string | null | undefined][] }) {
+  const filtered = rows.filter(([, v]) => v != null && v !== "");
+  if (filtered.length === 0) return <p className="text-xs text-muted-foreground py-2">No data</p>;
   return (
-    <div className={cn("rounded-xl border bg-card p-4 space-y-1.5", onClick && "cursor-pointer hover:border-primary/30 hover:bg-primary/5 transition-colors")} onClick={onClick}>
-      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-        <Icon className="h-3.5 w-3.5" />{title}
-      </h4>
-      {children}
+    <div className="space-y-0.5">
+      {filtered.map(([label, value]) => (
+        <div key={label} className="flex justify-between py-1 gap-3">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">{label}</span>
+          <span className="text-xs font-medium text-right break-words">{value}</span>
+        </div>
+      ))}
     </div>
   );
 }
 
-function KpiCard({ label, value, onClick }: { label: string; value: string | number; onClick?: () => void }) {
-  const isZero = value === 0 || value === "0" || value === "—" || value === "none";
-  return (
-    <div className={cn("text-center p-2.5 rounded-lg border transition-colors", isZero ? "bg-muted/20" : "bg-card", onClick && "cursor-pointer hover:bg-primary/5")} onClick={onClick}>
-      <p className={cn("text-sm font-bold tabular-nums capitalize", isZero && "text-muted-foreground/50")}>{value}</p>
-      <p className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5">{label}</p>
-    </div>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
-  if (!value) return null;
-  return (
-    <div className="flex justify-between py-1 gap-3">
-      <span className="text-xs text-muted-foreground whitespace-nowrap">{label}</span>
-      <span className="text-xs font-medium text-right break-words">{value}</span>
-    </div>
-  );
+function formatPaymentType(type?: string | null): string | null {
+  if (!type) return null;
+  const map: Record<string, string> = {
+    both: "Insurance + Self-Pay",
+    insurance: "Insurance",
+    "self-pay": "Self-Pay / Private Pay",
+    unsure: "Not sure yet",
+  };
+  return map[type] || type;
 }
