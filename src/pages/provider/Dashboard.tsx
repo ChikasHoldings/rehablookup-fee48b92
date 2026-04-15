@@ -215,7 +215,7 @@ export default function ProviderDashboardPage() {
       if (!facilityId) return 0;
       const { count, error } = await supabase
         .from("facility_services")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("facility_id", facilityId);
       if (error) throw error;
       return count || 0;
@@ -232,7 +232,7 @@ export default function ProviderDashboardPage() {
       if (!facilityId) return 0;
       const { count, error } = await supabase
         .from("facility_insurance")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("facility_id", facilityId);
       if (error) throw error;
       return count || 0;
