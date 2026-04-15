@@ -48,7 +48,7 @@ import { VALID_TRANSITIONS, PIPELINE_STAGES, CLOSED_STAGE, type PlacementStage }
 
 // Build status options from pipeline config
 const STATUS_OPTIONS = [
-  ...PIPELINE_STAGES.filter(s => s.key !== "admitted" && s.key !== "completed").map(s => ({ value: s.key, label: s.label })),
+  ...PIPELINE_STAGES.map(s => ({ value: s.key, label: s.label })),
   { value: "closed", label: "Closed" },
 ];
 
