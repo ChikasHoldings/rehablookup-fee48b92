@@ -200,7 +200,7 @@ export function PlacementDetailModal({
   const isDeclined = introduction?.provider_response === "not_available";
   const isPlaced = inquiry?.placement_confirmed === true && inquiry?.placed_facility_id === facilityId;
 
-  // PII disclosure gate: provider accepted AND (seeker selected this facility OR admin disclosed PII)
+   // PII disclosure gate: provider accepted AND (client selected this facility OR admin disclosed PII)
   const seekerSelectedThisFacility = inquiry?.seeker_confirmed === true && inquiry?.placed_facility_id === facilityId;
   const adminDisclosed = !!introduction?.admin_disclosed_pii_at;
   const piiUnlocked = isAccepted && (seekerSelectedThisFacility || adminDisclosed);
@@ -235,7 +235,7 @@ export function PlacementDetailModal({
     staleTime: 60000,
   });
 
-  // ── PII Query: only fetch seeker contact details when PII is unlocked ──
+  // ── PII Query: only fetch client contact details when PII is unlocked ──
   const piiDisclosureLogged = useRef(false);
   const { data: seekerPii } = useQuery({
     queryKey: ["placement-pii", introduction?.inquiry_id, facilityId],
@@ -648,10 +648,10 @@ export function PlacementDetailModal({
             </div>
           </TabPanel>
 
-          {/* === SEEKER DETAILS (only after provider accepted + seeker selected) === */}
+          {/* === CLIENT DETAILS (only after provider accepted + client selected) === */}
           <TabPanel active={activeTab === "seeker"}>
             {!piiUnlocked ? (
-              <LockedSection message="Full seeker details are released after you accept the case and the placement advisor authorizes disclosure." />
+              <LockedSection message="Full client details are released after you accept the case and the placement advisor authorizes disclosure." />
             ) : !seekerPii ? (
               <div className="space-y-4">
                 <Skeleton className="h-14 w-full rounded-xl" />
