@@ -125,6 +125,7 @@ interface Introduction {
   provider_response?: string | null;
   provider_responded_at?: string | null;
   provider_notes?: string | null;
+  admin_disclosed_pii_at?: string | null;
   concierge_inquiries?: ConciergeInquiry | null;
 }
 
@@ -199,9 +200,10 @@ export function PlacementDetailModal({
   const isDeclined = introduction?.provider_response === "not_available";
   const isPlaced = inquiry?.placement_confirmed === true && inquiry?.placed_facility_id === facilityId;
 
-  // PII disclosure gate: provider accepted AND seeker selected this facility
+  // PII disclosure gate: provider accepted AND (seeker selected this facility OR admin disclosed PII)
   const seekerSelectedThisFacility = inquiry?.seeker_confirmed === true && inquiry?.placed_facility_id === facilityId;
-  const piiUnlocked = isAccepted && seekerSelectedThisFacility;
+  const adminDisclosed = !!introduction?.admin_disclosed_pii_at;
+  const piiUnlocked = isAccepted && (seekerSelectedThisFacility || adminDisclosed);
 
   // ── PII gate: show full name only when PII is unlocked ──
   const hasAccepted = isAccepted || isPlaced;
@@ -649,7 +651,7 @@ export function PlacementDetailModal({
           {/* === SEEKER DETAILS (only after provider accepted + seeker selected) === */}
           <TabPanel active={activeTab === "seeker"}>
             {!piiUnlocked ? (
-              <LockedSection message="Full seeker details are released only after both you accept the case and the seeker selects your facility." />
+              <LockedSection message="Full seeker details are released after you accept the case and the placement advisor authorizes disclosure." />
             ) : !seekerPii ? (
               <div className="space-y-4">
                 <Skeleton className="h-14 w-full rounded-xl" />
@@ -661,7 +663,9 @@ export function PlacementDetailModal({
                 <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 flex items-start gap-3">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-400">Seeker Selected Your Facility</p>
+                    <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-400">
+                      {seekerSelectedThisFacility ? "Seeker Selected Your Facility" : "PII Authorized by Advisor"}
+                    </p>
                     <p className="text-xs text-emerald-700 dark:text-emerald-500 mt-0.5">
                       Full contact and intake details are now available. This disclosure has been logged for compliance.
                     </p>
