@@ -183,6 +183,10 @@ Deno.serve(async (req) => {
         );
     }
 
+    const idempotencyKey = seekerId
+      ? `seeker-${type}-${seekerId}`
+      : `seeker-${type}-${seekerEmail}`;
+
     const { data: emailResult, error: emailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [seekerEmail],
@@ -192,6 +196,9 @@ Deno.serve(async (req) => {
         "List-Unsubscribe": `<mailto:no-reply@rehablookup.com?subject=unsubscribe>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
       },
+    }, {
+      emailType: `seeker_${type}`,
+      idempotencyKey,
     });
 
     if (emailError) {
