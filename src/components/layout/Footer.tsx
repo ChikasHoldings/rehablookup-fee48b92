@@ -180,7 +180,7 @@ const FooterLinkItem = memo(function FooterLinkItem({ link }: { link: FooterLink
       </Link>
     </li>
   );
-}));
+});
 
 const FooterColumn = memo(function FooterColumn({ title, links }: FooterSection) {
   return (
