@@ -24,6 +24,7 @@ import { AllInvoicesTab } from "@/components/admin/concierge/AllInvoicesTab";
 import { InternationalCasesTab } from "@/components/admin/concierge/InternationalCasesTab";
 import { PlacementDetailModal } from "@/components/admin/concierge/PlacementDetailModal";
 import { getCaseNextAction } from "@/components/admin/concierge/placementActionUtils";
+import { CaseAlertIcons } from "@/components/admin/concierge/CaseSlaAlerts";
 import { cn } from "@/lib/utils";
 
 type CaseStatus = string;
@@ -70,7 +71,7 @@ export default function AdminConcierge() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("concierge_inquiries")
-        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, preferred_city, match_count, assigned_advisor_id, created_at, updated_at, admission_status, tour_coordination_status, placement_confirmed, placement_confirmed_at, placed_facility_id, introductions_sent_at, introductions_sent_count, provider_fee_status, provider_fee_cents, timeline_urgency, primary_concern, closed_at")
+        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, preferred_city, match_count, assigned_advisor_id, created_at, updated_at, admission_status, tour_coordination_status, placement_confirmed, placement_confirmed_at, placed_facility_id, introductions_sent_at, introductions_sent_count, provider_fee_status, provider_fee_cents, timeline_urgency, primary_concern, closed_at, seeker_confirmed, matched_at")
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -351,6 +352,7 @@ export default function AdminConcierge() {
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Status</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Next Action</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Activity</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Alerts</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Admission</th>
                       </tr>
                     </thead>
@@ -416,6 +418,9 @@ export default function AdminConcierge() {
                               <p className="text-xs text-muted-foreground">
                                 {formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}
                               </p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <CaseAlertIcons caseData={c} />
                             </td>
                             <td className="px-4 py-3">
                               <span className={cn("text-xs font-medium", admissionColor)}>
