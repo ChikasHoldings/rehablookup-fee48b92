@@ -370,6 +370,9 @@ export function PlacementDetailModal({
 
   const tabs = [
     { key: "details" as const, label: "Case Summary", icon: FileText },
+    ...(piiUnlocked ? [
+      { key: "seeker" as const, label: "Seeker Details", icon: Eye },
+    ] : []),
     ...(hasAccepted ? [
       { key: "messages" as const, label: "Messages", icon: MessageSquare, count: messages?.length },
       { key: "timeline" as const, label: "Timeline", icon: Clock },
