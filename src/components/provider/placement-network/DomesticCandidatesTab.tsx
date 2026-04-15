@@ -61,6 +61,7 @@ interface Introduction {
   provider_response?: string | null;
   provider_responded_at?: string | null;
   provider_notes?: string | null;
+  admin_disclosed_pii_at?: string | null;
   concierge_inquiries?: ConciergeInquiry | null;
 }
 

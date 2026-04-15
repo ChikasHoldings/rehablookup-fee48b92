@@ -160,7 +160,33 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
     enabled: open && !!caseData?.placed_facility_id,
   });
 
+  // Determine if seeker should see matched providers
+  const showMatchedStatuses = ["presented_to_seeker", "seeker_selected", "admission_in_progress", "admitted", "billed", "completed"];
   const inq = fullCase || caseData;
+  const shouldShowMatches = inq && showMatchedStatuses.includes(inq.status);
+
+  // Fetch matched facility details for seeker view
+  const allMatchedIds = [...new Set([
+    ...((fullCase?.matched_facility_ids as string[]) || []),
+    ...((fullCase?.admin_matched_facility_ids as string[]) || []),
+  ])];
+
+  const { data: matchedFacilities } = useQuery({
+    queryKey: ["seeker-matched-facilities", allMatchedIds],
+    queryFn: async () => {
+      if (!allMatchedIds.length) return [];
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("id, name, city, state, facility_type, logo_url")
+        .in("id", allMatchedIds)
+        .eq("status", "approved");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: open && shouldShowMatches === true && allMatchedIds.length > 0,
+  });
+
+  // inq already declared above
   if (!inq) return null;
 
   const locationText = [inq.preferred_city, inq.preferred_state].filter(Boolean).join(", ") || "Flexible";
@@ -293,6 +319,40 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
                       Confirmed {format(new Date(caseData.placement_confirmed_at), "MMM d, yyyy")}
                     </p>
                   )}
+                </div>
+              )}
+
+              {/* Matched Treatment Centers */}
+              {shouldShowMatches && matchedFacilities && matchedFacilities.length > 0 && (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-muted/50 px-4 py-2.5 border-b">
+                    <h3 className="font-semibold text-sm flex items-center gap-2">
+                      <Users className="h-4 w-4" /> Your Matched Options ({matchedFacilities.length})
+                    </h3>
+                  </div>
+                  <div className="divide-y">
+                    {matchedFacilities.map((facility) => (
+                      <div key={facility.id} className="flex items-center gap-3 px-4 py-3">
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          {facility.logo_url ? (
+                            <img src={facility.logo_url} alt="" className="h-8 w-8 rounded-md object-cover" />
+                          ) : (
+                            <Heart className="h-5 w-5 text-primary" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{facility.name}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />{facility.city}, {facility.state}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] shrink-0">{facility.facility_type}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-4 py-2.5 bg-muted/30 border-t">
+                    <p className="text-xs text-muted-foreground">Your advisor is coordinating with these centers on your behalf.</p>
+                  </div>
                 </div>
               )}
 
