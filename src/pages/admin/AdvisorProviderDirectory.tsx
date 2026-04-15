@@ -223,7 +223,7 @@ export default function AdvisorProviderDirectory() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-1.5 flex-shrink-0">
+                <div className="flex gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                   {provider.concierge_admissions_email && (
                     <Button
                       variant="outline"
@@ -273,6 +273,12 @@ export default function AdvisorProviderDirectory() {
           ))}
         </div>
       )}
+
+      <ProviderDirectoryDetailModal
+        provider={selectedProvider}
+        open={!!selectedProvider}
+        onOpenChange={(open) => !open && setSelectedProvider(null)}
+      />
     </div>
   );
 }
