@@ -276,7 +276,10 @@ export function ProviderDetailModal({
             </TabsContent>
 
             <TabsContent value="placements" className="m-0 data-[state=inactive]:hidden">
-              <ProviderPlacementsTab provider={provider} />
+              <ProviderPlacementsTab
+                provider={provider}
+                providerFacilities={providerFacilities || []}
+              />
             </TabsContent>
 
             <TabsContent value="reviews" className="m-0 data-[state=inactive]:hidden">
@@ -294,7 +297,10 @@ export function ProviderDetailModal({
             </TabsContent>
 
             <TabsContent value="credentials" className="m-0 data-[state=inactive]:hidden">
-              <ProviderCredentialsTab provider={provider} />
+              <ProviderCredentialsTab
+                provider={provider}
+                providerFacilities={providerFacilities || []}
+              />
             </TabsContent>
 
             <TabsContent value="billing" className="m-0 data-[state=inactive]:hidden">

@@ -57,46 +57,49 @@ export function ProviderOverviewTab({
 }: ProviderOverviewTabProps) {
   const [adminNotes, setAdminNotes] = useState(provider.admin_notes || "");
 
-  // Fetch engagement metrics from provider_events
-  const { data: engagementMetrics } = useQuery({
-    queryKey: ["admin-provider-engagement", provider.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("provider_events")
-        .select("event_type")
-        .eq("facility_id", provider.id);
+  // Scope to ALL provider facilities
+  const facilityIds = providerFacilities?.map((f) => f.id) || [provider.id];
 
+  // Fetch engagement metrics across ALL facilities
+  const { data: engagementMetrics } = useQuery({
+    queryKey: ["admin-provider-engagement", provider.user_id, facilityIds],
+    queryFn: async () => {
       const counts = { impressions: 0, profile_views: 0, click_to_call: 0, website_clicks: 0 };
-      data?.forEach((e) => {
-        if (e.event_type === "listing_impression") counts.impressions++;
-        else if (e.event_type === "profile_view") counts.profile_views++;
-        else if (e.event_type === "click_to_call") counts.click_to_call++;
-        else if (e.event_type === "website_click") counts.website_clicks++;
-      });
+      // Use count queries instead of fetching all rows
+      const [impressions, views, calls, clicks] = await Promise.all([
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "listing_impression"),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "profile_view"),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "click_to_call"),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "website_click"),
+      ]);
+      counts.impressions = impressions.count || 0;
+      counts.profile_views = views.count || 0;
+      counts.click_to_call = calls.count || 0;
+      counts.website_clicks = clicks.count || 0;
       return counts;
     },
   });
 
-  // Fetch review count
+  // Fetch review count across ALL facilities
   const { data: reviewCount } = useQuery({
-    queryKey: ["admin-provider-review-count", provider.id],
+    queryKey: ["admin-provider-review-count", provider.user_id, facilityIds],
     queryFn: async () => {
       const { count } = await supabase
         .from("facility_reviews")
         .select("id", { count: "exact", head: true })
-        .eq("facility_id", provider.id);
+        .in("facility_id", facilityIds);
       return count || 0;
     },
   });
 
-  // Fetch unlock count
+  // Fetch unlock count across ALL facilities
   const { data: unlockCount } = useQuery({
-    queryKey: ["admin-provider-unlock-count", provider.id],
+    queryKey: ["admin-provider-unlock-count", provider.user_id, facilityIds],
     queryFn: async () => {
       const { count } = await supabase
         .from("lead_unlocks")
         .select("id", { count: "exact", head: true })
-        .eq("facility_id", provider.id);
+        .in("facility_id", facilityIds);
       return count || 0;
     },
   });
@@ -214,7 +217,7 @@ export function ProviderOverviewTab({
         <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide text-muted-foreground">Contact Information</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <InfoRow icon={Mail} text={providerProfile?.email || provider.email || "No email"} />
-          <InfoRow icon={Phone} text={provider.phone} />
+          <InfoRow icon={Phone} text={provider.phone || "No phone"} />
           {provider.website && (
             <InfoRow icon={Globe} text={provider.website} href={provider.website} />
           )}
@@ -333,10 +336,12 @@ export function ProviderOverviewTab({
           onChange={(e) => setAdminNotes(e.target.value)}
           placeholder="Add internal notes about this provider..."
           rows={3}
+          maxLength={2000}
           className="resize-none"
         />
-        <div className="flex justify-end mt-2">
-          <Button onClick={() => onSaveNotes(adminNotes)} size="sm">
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-xs text-muted-foreground">{adminNotes.length}/2000</span>
+          <Button onClick={() => onSaveNotes(adminNotes)} size="sm" disabled={adminNotes === (provider.admin_notes || "")}>
             Save Notes
           </Button>
         </div>
