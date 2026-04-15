@@ -24,7 +24,7 @@ const STATUS_LABELS: Record<string, string> = {
   provider_prequalification: "Pre-Qualifying",
   providers_accepted: "Providers Ready",
   presented_to_seeker: "Presented",
-  seeker_selected: "Seeker Selected",
+  seeker_selected: "Client Selected",
   admission_in_progress: "Admitting",
   admitted: "Admitted",
   billed: "Billed",
@@ -110,7 +110,7 @@ export function ConciergeOverviewTab({ caseData }: ConciergeOverviewTabProps) {
             icon={Shield}
             value={<code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{caseData.id.slice(0, 8)}</code>}
           />
-          <InfoRow label="Seeker Name" icon={User} value={caseData.user_name} />
+          <InfoRow label="Client Name" icon={User} value={caseData.user_name} />
           <InfoRow
             label="Assigned Advisor"
             icon={User}

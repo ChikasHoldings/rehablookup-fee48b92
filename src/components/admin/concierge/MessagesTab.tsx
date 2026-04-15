@@ -305,7 +305,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
             <div>
               <p className="font-medium text-blue-800 dark:text-blue-400">Advisor Coordination Hub</p>
               <p className="text-blue-700 dark:text-blue-500 text-xs mt-1">
-                You are the sole communication bridge between seekers and facilities. Seekers cannot message facilities directly — all coordination flows through you.
+                You are the sole communication bridge between clients and facilities. Clients cannot message facilities directly — all coordination flows through you.
               </p>
             </div>
           </div>
@@ -397,7 +397,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
                       <div className="flex items-center gap-2">
                         <p className="font-medium truncate">
                           {isAdvisorThread 
-                            ? `Seeker: ${caseData.user_name}` 
+                            ? `Client: ${caseData.user_name}` 
                             : thread.facilities?.name || "Facility"}
                         </p>
                         <Badge 
@@ -408,7 +408,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
                               : "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
                           }`}
                         >
-                          {isAdvisorThread ? "Seeker" : "Facility"}
+                          {isAdvisorThread ? "Client" : "Facility"}
                         </Badge>
                         {hasUnread && (
                           <Badge variant="destructive" className="text-[10px] h-4 px-1.5">
@@ -453,7 +453,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
           <div className="flex items-center gap-2">
             <p className="font-medium truncate">
               {isAdvisorThread 
-                ? `Seeker: ${caseData.user_name}` 
+                ? `Client: ${caseData.user_name}` 
                 : selectedThread.facilities?.name}
             </p>
             <Badge 
@@ -464,12 +464,12 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
                   : "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
               }`}
             >
-              {isAdvisorThread ? "Seeker" : "Facility"}
+              {isAdvisorThread ? "Client" : "Facility"}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
             {isAdvisorThread 
-              ? "Direct conversation with seeker" 
+              ? "Direct conversation with client" 
               : "Private facility coordination — seeker cannot see this"}
           </p>
         </div>
@@ -508,7 +508,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
                       {msg.sender_type === "advisor" && <HeadphonesIcon className="h-3 w-3" />}
                       {msg.sender_type === "seeker" && <User className="h-3 w-3" />}
                       {msg.sender_type === "facility" && <Building2 className="h-3 w-3" />}
-                      {msg.sender_type === "advisor" ? "You (Advisor)" : msg.sender_type === "seeker" ? "Seeker" : "Facility"}
+                      {msg.sender_type === "advisor" ? "You (Advisor)" : msg.sender_type === "seeker" ? "Client" : "Facility"}
                     </p>
                     <p className="text-sm">{msg.content}</p>
                     {msg.attachment_url && msg.attachment_name && (
@@ -528,7 +528,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
               <p>No messages in this thread</p>
               <p className="text-xs mt-1">
                 {isAdvisorThread 
-                  ? "Send a message to the seeker" 
+                  ? "Send a message to the client" 
                   : "Start coordinating with this facility"}
               </p>
             </div>

@@ -160,12 +160,12 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
     enabled: open && !!caseData?.placed_facility_id,
   });
 
-  // Determine if seeker should see matched providers
+  // Determine if client should see matched providers
   const showMatchedStatuses = ["presented_to_seeker", "seeker_selected", "admission_in_progress", "admitted", "billed", "completed"];
   const inq = fullCase || caseData;
   const shouldShowMatches = inq && showMatchedStatuses.includes(inq.status);
 
-  // Fetch matched facility details for seeker view
+  // Fetch matched facility details for client view
   const allMatchedIds = [...new Set([
     ...((fullCase?.matched_facility_ids as string[]) || []),
     ...((fullCase?.admin_matched_facility_ids as string[]) || []),

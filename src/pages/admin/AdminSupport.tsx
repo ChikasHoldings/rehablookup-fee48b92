@@ -32,7 +32,7 @@ function useDebounce(value: string, delay: number) {
 const sourceLabels: Record<string, { label: string; icon: React.ElementType }> = {
   public_contact: { label: "Public", icon: Mail },
   provider_support: { label: "Provider", icon: Building2 },
-  seeker_support: { label: "Seeker", icon: User },
+  seeker_support: { label: "Client", icon: User },
 };
 
 const statusConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {

@@ -134,7 +134,7 @@ export function SeekerAuditLogTab({ userId }: SeekerAuditLogTabProps) {
                     </td>
                     <td className="px-4 py-2.5">
                       <Badge variant={entry.actor === "admin" ? "default" : "secondary"} className="text-xs">
-                        {entry.actor === "admin" ? "Admin" : "Seeker"}
+                        {entry.actor === "admin" ? "Admin" : "Client"}
                       </Badge>
                     </td>
                     <td className="px-4 py-2.5">

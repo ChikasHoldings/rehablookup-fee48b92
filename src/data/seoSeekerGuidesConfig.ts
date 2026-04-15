@@ -1,5 +1,5 @@
 // ============================================================
-// Seeker Intent / "How to Help" Guide Configurations
+// Client Intent / "How to Help" Guide Configurations
 // Priority 7: 5 new pages targeting family member search intent
 // ============================================================
 

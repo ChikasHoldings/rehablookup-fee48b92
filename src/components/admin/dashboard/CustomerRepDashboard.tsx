@@ -401,7 +401,7 @@ export function CustomerRepDashboard() {
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {ticket.sender_name} · {ticket.source === "seeker_support" ? "Seeker" : ticket.source === "provider_support" ? "Provider" : "Contact"} · {formatTimeAgo(ticket.created_at)}
+                          {ticket.sender_name} · {ticket.source === "seeker_support" ? "Client" : ticket.source === "provider_support" ? "Provider" : "Contact"} · {formatTimeAgo(ticket.created_at)}
                         </p>
                       </div>
                       <div className="flex items-center gap-1 ml-2 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -475,7 +475,7 @@ export function CustomerRepDashboard() {
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          {ticket.sender_name} · {ticket.source === "seeker_support" ? "Seeker" : ticket.source === "provider_support" ? "Provider" : "Contact"} · {formatTimeAgo(ticket.created_at)}
+                          {ticket.sender_name} · {ticket.source === "seeker_support" ? "Client" : ticket.source === "provider_support" ? "Provider" : "Contact"} · {formatTimeAgo(ticket.created_at)}
                         </p>
                       </div>
                       <Button
@@ -689,7 +689,7 @@ export function CustomerRepDashboard() {
                 <Users className="h-4 w-4 text-primary mr-2 shrink-0" />
                 <div className="flex flex-col items-start min-w-0">
                   <span className="text-sm font-medium">User Accounts</span>
-                  <span className="text-xs text-muted-foreground">View seekers</span>
+                  <span className="text-xs text-muted-foreground">View clients</span>
                 </div>
               </Link>
             </Button>

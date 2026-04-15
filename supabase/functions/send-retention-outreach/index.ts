@@ -100,7 +100,7 @@ function generateRetentionEmail(provider: AtRiskProvider): { subject: string; ht
       <p><strong>This month's summary:</strong></p>
       <ul style="color: #4b5563; padding-left: 20px;">
         <li>Leads unlocked: <strong>${provider.leadsUnlocked}</strong></li>
-        <li>Your facility remains visible to treatment seekers</li>
+        <li>Your facility remains visible to treatment clients</li>
       </ul>
       <p>If you have any questions about your subscription or need assistance, our team is here to help.</p>
     `;

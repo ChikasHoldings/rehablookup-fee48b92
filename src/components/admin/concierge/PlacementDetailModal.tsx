@@ -257,7 +257,7 @@ function ModalNextActionBar({ caseData, onRefresh, onSwitchTab }: {
           {primaryStep && (
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5"
               onClick={() => onSwitchTab(primaryStep.tab)}>
-              Go to {({matching:"Match",intros:"Intros",decision:"Decision",admission:"Admission",billing:"Billing",actions:"Actions",timeline:"Notes",overview:"Overview",seeker:"Seeker",tours:"Tours"} as Record<string,string>)[primaryStep.tab] || "Overview"}
+              Go to {({matching:"Match",intros:"Intros",decision:"Decision",admission:"Admission",billing:"Billing",actions:"Actions",timeline:"Notes",overview:"Overview",seeker:"Client",tours:"Tours"} as Record<string,string>)[primaryStep.tab] || "Overview"}
             </Button>
           )}
           {next && nextConfig && (
@@ -398,7 +398,7 @@ function OverviewContent({ caseData, advisorName, placedFacility, onSwitchTab }:
         </Card>
       )}
 
-      {/* Seeker Info */}
+      {/* Client Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="py-3">

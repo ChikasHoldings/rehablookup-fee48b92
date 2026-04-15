@@ -267,7 +267,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
 
       {/* Notify Seeker — Send provider options for review */}
       {(caseData.status === "presented_to_seeker" || caseData.status === "providers_accepted") && !caseData.seeker_confirmed && (
-        <NotifySeekerCard caseData={caseData} onRefresh={onRefresh} />
+        <NotifyClientCard caseData={caseData} onRefresh={onRefresh} />
       )}
 
       {/* Seeker confirmed indicator for admin */}
@@ -442,11 +442,11 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
   );
 }
 
-function NotifySeekerCard({ caseData, onRefresh }: { caseData: ConciergeInquiry; onRefresh: () => void }) {
+function NotifyClientCard({ caseData, onRefresh }: { caseData: ConciergeInquiry; onRefresh: () => void }) {
   const [sending, setSending] = useState(false);
   const sendGuard = useRef(false);
 
-  const handleNotifySeeker = async () => {
+  const handleNotifyClient = async () => {
     if (sendGuard.current) return;
     sendGuard.current = true;
     setSending(true);
@@ -468,7 +468,7 @@ function NotifySeekerCard({ caseData, onRefresh }: { caseData: ConciergeInquiry;
         actor_type: "admin",
       });
 
-      toast.success("Seeker has been notified to review provider options.");
+      toast.success("Client has been notified to review provider options.");
       onRefresh();
     } catch {
       toast.error("Failed to notify seeker.");
@@ -484,7 +484,7 @@ function NotifySeekerCard({ caseData, onRefresh }: { caseData: ConciergeInquiry;
       <CardContent className="py-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium">Notify Seeker of Options</p>
+            <p className="text-sm font-medium">Notify Client of Options</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Send email + in-app notification asking the seeker to review and choose from interested facilities.
             </p>
@@ -492,7 +492,7 @@ function NotifySeekerCard({ caseData, onRefresh }: { caseData: ConciergeInquiry;
           <Button
             variant="outline"
             size="sm"
-            onClick={handleNotifySeeker}
+            onClick={handleNotifyClient}
             disabled={sending}
           >
             {sending ? (

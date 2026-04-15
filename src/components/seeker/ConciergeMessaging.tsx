@@ -43,12 +43,12 @@ interface ConciergeMessagingProps {
 }
 
 /**
- * Seeker-facing messaging component for concierge placement cases.
+ * Client-facing messaging component for concierge placement cases.
  * 
  * BROKERAGE MODEL ENFORCEMENT:
- * Seekers can ONLY message their placement advisor.
+ * Clients can ONLY message their placement advisor.
  * All facility communication is coordinated through the advisor.
- * Direct seeker-to-facility messaging is prohibited.
+ * Direct client-to-facility messaging is prohibited.
  */
 export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
   const { userId: currentUserId } = useSeekerSession();
@@ -106,7 +106,7 @@ export function ConciergeMessaging({ inquiryId }: ConciergeMessagingProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Mark thread as read when seeker views messages
+  // Mark thread as read when client views messages
   useEffect(() => {
     if (!thread?.id || !messages || messages.length === 0) return;
     

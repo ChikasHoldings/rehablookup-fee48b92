@@ -4,7 +4,7 @@ import type { FAQItem } from "@/components/seo/PageFAQ";
 export const homeFaqs: FAQItem[] = [
   { question: "How does RehabLookup help me find a treatment center?", answer: "RehabLookup connects you with verified, accredited addiction treatment centers across the United States. You can search by location, treatment type, insurance, and specialty — or use our placement service to be matched by a specialist." },
   { question: "Is RehabLookup a treatment center?", answer: "No. RehabLookup is a directory and placement platform. We help individuals and families find and compare legitimate treatment facilities, but we do not provide medical care directly." },
-  { question: "Does it cost anything to search for treatment?", answer: "Searching and browsing treatment centers on RehabLookup is completely free. Our placement service is also offered at no cost to seekers." },
+  { question: "Does it cost anything to search for treatment?", answer: "Searching and browsing treatment centers on RehabLookup is completely free. Our placement service is also offered at no cost to clients." },
   { question: "Are the facilities on RehabLookup verified?", answer: "Yes. All listed facilities go through a verification process that checks licensing, accreditation, and operational status before they appear on the platform." },
   { question: "Can I search for rehab centers by insurance?", answer: "Absolutely. You can filter results by insurance provider to find facilities that accept your specific plan, including Aetna, BCBS, Cigna, UnitedHealthcare, Medicare, and Medicaid." },
   { question: "How quickly can I get placed in a treatment center?", answer: "Many facilities offer same-day or next-day admission. Through our placement service, we can often connect you with an available facility within 24–48 hours." },
@@ -41,7 +41,7 @@ export const conciergeFaqs: FAQItem[] = [
   { question: "What is the placement service?", answer: "Our placement service matches you with a verified treatment facility based on your specific needs, insurance, location preferences, and treatment goals. A specialist handles the research and coordination so you can focus on recovery." },
   { question: "How does the matching process work?", answer: "You share details about your situation through a brief intake form. Our specialists review your needs, verify insurance benefits, and identify the best-fit facilities from our network. You then receive personalized recommendations." },
   { question: "Is the placement service confidential?", answer: "Absolutely. All information you share is protected under strict privacy standards. We never share your personal details without your explicit consent." },
-  { question: "How quickly will I hear back after submitting a request?", answer: "Most seekers receive their first facility recommendations within 24–48 hours. For urgent situations, we prioritize fast responses and can often connect you with a facility the same day." },
+  { question: "How quickly will I hear back after submitting a request?", answer: "Most clients receive their first facility recommendations within 24–48 hours. For urgent situations, we prioritize fast responses and can often connect you with a facility the same day." },
   { question: "Can you help with international patients?", answer: "Yes. We have a dedicated international placement program that assists patients from the UK, Canada, Europe, the Middle East, and Australia with finding U.S.-based treatment, including guidance on travel, visas, and payment." },
 ];
 
@@ -58,7 +58,7 @@ export const internationalFaqs: FAQItem[] = [
 export const forProvidersFaqs: FAQItem[] = [
   { question: "How do I list my facility on RehabLookup?", answer: "You can create a free listing by signing up on our provider portal. Complete your facility profile with details about your programs, insurance accepted, and specialties. Our team will review and verify your listing." },
   { question: "What are the benefits of listing on RehabLookup?", answer: "Listed facilities gain visibility to thousands of individuals actively searching for treatment, receive qualified patient inquiries, and can showcase their accreditations, reviews, and specialties to a targeted audience." },
-  { question: "How does RehabLookup verify facilities?", answer: "We verify state licensing, accreditation status (JCAHO, CARF, etc.), operational status, and legitimacy through a multi-step review process. This ensures seekers only find trustworthy, operating facilities." },
+  { question: "How does RehabLookup verify facilities?", answer: "We verify state licensing, accreditation status (JCAHO, CARF, etc.), operational status, and legitimacy through a multi-step review process. This ensures clients only find trustworthy, operating facilities." },
   { question: "Can I manage my listing after it's published?", answer: "Yes. The provider dashboard gives you full control to update your facility information, respond to inquiries, manage photos, and track your listing's performance — all in real time." },
 ];
 
@@ -72,7 +72,7 @@ export const howItWorksFaqs: FAQItem[] = [
 
 // ─── About ────────────────────────────────────────────────────────────────────
 export const aboutFaqs: FAQItem[] = [
-  { question: "Who created RehabLookup?", answer: "RehabLookup was created to address the difficulty people face in finding legitimate, verified addiction treatment. Our team combines technology with healthcare expertise to connect seekers with quality facilities." },
+  { question: "Who created RehabLookup?", answer: "RehabLookup was created to address the difficulty people face in finding legitimate, verified addiction treatment. Our team combines technology with healthcare expertise to connect clients with quality facilities." },
   { question: "Is RehabLookup affiliated with any treatment centers?", answer: "No. RehabLookup is an independent platform. We are not owned by or affiliated with any specific treatment center, ensuring unbiased results for every user." },
   { question: "How does RehabLookup make money?", answer: "RehabLookup offers premium listing features and placement services for treatment providers. Searchers always have free, unbiased access to the full directory." },
   { question: "How can I provide feedback or report an issue?", answer: "You can reach us through our contact page or email Support@rehablookup.com. We take all feedback seriously and investigate any reports about listed facilities." },
