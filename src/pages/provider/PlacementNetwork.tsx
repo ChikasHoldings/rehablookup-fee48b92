@@ -130,7 +130,7 @@ export default function ProviderPlacementNetworkPage() {
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
         .from("concierge_introductions")
-        .select(`*, concierge_inquiries (id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state, status, seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at, placed_facility_id)`)
+        .select(`*, concierge_inquiries (id, level_of_care, payment_type, timeline_urgency, preferred_state, status, seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at, placed_facility_id)`)
         .eq("facility_id", selectedFacility.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
