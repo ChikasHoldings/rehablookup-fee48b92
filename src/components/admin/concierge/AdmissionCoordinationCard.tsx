@@ -159,7 +159,7 @@ export function AdmissionCoordinationCard({ caseData, onRefresh }: AdmissionCoor
   });
 
   // Only show for cases that have a placed facility or are in late stages
-  const showCard = ["in_contact", "placed"].includes(caseData.status) || caseData.seeker_confirmed;
+  const showCard = ["seeker_selected", "admission_in_progress", "admitted", "billed", "completed"].includes(caseData.status) || caseData.seeker_confirmed;
   if (!showCard) return null;
 
   const hasChanges =
