@@ -52,6 +52,16 @@ export function PlacementDetailModal({
   const isAdvisor = adminRole === "advisor";
   const canManageBilling = !isAdvisor;
   const [activeTab, setActiveTab] = useState("overview");
+  // Map standard tab names (from getCaseNextSteps) to this modal's 4-tab system
+  const mapTab = (tab: string): string => {
+    const TAB_MAP: Record<string, string> = {
+      matching: "providers", intros: "providers", decision: "providers",
+      seeker: "overview", tours: "admission", billing: "admission",
+      actions: "manage", timeline: "manage",
+    };
+    return TAB_MAP[tab] || tab;
+  };
+  const handleSwitchTab = (tab: string) => setActiveTab(mapTab(tab));
 
   useEffect(() => { if (open) setActiveTab("overview"); }, [open, caseData?.id]);
 
@@ -150,7 +160,7 @@ export function PlacementDetailModal({
           </div>
 
           {/* ─── Next Action Bar ─── */}
-          <ModalNextActionBar caseData={caseData} onRefresh={onRefresh} onSwitchTab={setActiveTab} />
+          <ModalNextActionBar caseData={caseData} onRefresh={onRefresh} onSwitchTab={handleSwitchTab} />
         </div>
 
         {/* ─── Tabs ─── */}
@@ -170,7 +180,7 @@ export function PlacementDetailModal({
           <ScrollArea className="flex-1">
             <div className="p-5">
               <TabsContent value="overview" className="m-0">
-                <OverviewContent caseData={caseData} advisorName={advisorName} placedFacility={placedFacility} onSwitchTab={setActiveTab} />
+                <OverviewContent caseData={caseData} advisorName={advisorName} placedFacility={placedFacility} onSwitchTab={handleSwitchTab} />
               </TabsContent>
 
               <TabsContent value="providers" className="m-0">
@@ -182,7 +192,7 @@ export function PlacementDetailModal({
               </TabsContent>
 
               <TabsContent value="manage" className="m-0">
-                <ConciergeActionsTab caseData={caseData} onRefresh={onRefresh} onClose={onClose} isAdvisor={isAdvisor} onSwitchTab={setActiveTab} />
+                <ConciergeActionsTab caseData={caseData} onRefresh={onRefresh} onClose={onClose} isAdvisor={isAdvisor} onSwitchTab={handleSwitchTab} />
               </TabsContent>
             </div>
           </ScrollArea>
