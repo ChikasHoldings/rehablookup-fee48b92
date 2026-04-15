@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { 
   Search, 
   BookOpen, 
@@ -739,9 +739,18 @@ The **facility dropdown** in the top header lets you switch between your listing
 ];
 
 export default function ProviderKnowledgeBasePage() {
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+
+  // Read category from URL on mount (e.g. ?category=placements)
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    if (cat && categories.some(c => c.id === cat)) {
+      setSelectedCategory(cat);
+    }
+  }, [searchParams]);
 
   const filteredArticles = useMemo(() => {
     return articles.filter((article) => {
