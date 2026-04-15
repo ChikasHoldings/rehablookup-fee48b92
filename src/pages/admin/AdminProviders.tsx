@@ -326,25 +326,24 @@ export default function AdminProviders() {
 
   const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
 
-  // Fetch lead counts for providers
+  // Fetch lead counts for providers using count queries (no row fetching)
   const { data: leadCounts } = useQuery({
     queryKey: ["admin-provider-lead-counts", providers?.map((p) => p.id)],
     queryFn: async () => {
       if (!providers?.length) return {};
       const facilityIds = providers.map((p) => p.id);
       const counts: Record<string, number> = {};
-      // Batch in chunks of 50 to avoid query size limits
-      for (let i = 0; i < facilityIds.length; i += 50) {
-        const chunk = facilityIds.slice(i, i + 50);
-        const { data } = await supabase
+      // Use individual count queries per facility to avoid fetching all lead rows
+      const promises = facilityIds.map(async (fid) => {
+        const { count } = await supabase
           .from("leads")
-          .select("facility_id")
-          .in("facility_id", chunk);
-        data?.forEach((lead) => {
-          if (lead.facility_id) {
-            counts[lead.facility_id] = (counts[lead.facility_id] || 0) + 1;
-          }
-        });
+          .select("id", { count: "exact", head: true })
+          .eq("facility_id", fid);
+        counts[fid] = count || 0;
+      });
+      // Batch in groups of 10 to limit concurrency
+      for (let i = 0; i < promises.length; i += 10) {
+        await Promise.all(promises.slice(i, i + 10));
       }
       return counts;
     },

@@ -80,7 +80,7 @@ export function ProviderDetailModal({
       if (!provider?.user_id) return [];
       const { data } = await supabase
         .from("facilities")
-        .select("id, name, slug, city, state, facility_type, status, verified, featured, suspended, created_at, updated_at, logo_url, phone, email, concierge_network_opted_in, address, zip_code, bed_count, gender_served, description, website, gallery_urls, admin_notes, user_id, concierge_terms_accepted_at")
+        .select("id, name, slug, city, state, facility_type, status, verified, featured, suspended, created_at, updated_at, logo_url, phone, email, concierge_network_opted_in, address, zip_code, bed_count, gender_served, description, website, gallery_urls, admin_notes, user_id, concierge_terms_accepted_at, reply_email, reply_email_verified, year_established, concierge_availability_status, concierge_admissions_contact, concierge_admissions_email, concierge_admissions_phone")
         .eq("user_id", provider.user_id)
         .order("created_at", { ascending: false });
       return (data || []) as Facility[];

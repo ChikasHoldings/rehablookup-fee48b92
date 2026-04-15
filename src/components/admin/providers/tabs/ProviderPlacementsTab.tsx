@@ -4,6 +4,7 @@ import { Handshake, CheckCircle, Clock, XCircle, DollarSign, ArrowRight } from "
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -17,8 +18,7 @@ interface ProviderPlacementsTabProps {
 export function ProviderPlacementsTab({ provider, providerFacilities }: ProviderPlacementsTabProps) {
   const facilityIds = providerFacilities?.map((f) => f.id) || [provider.id];
 
-  // Fetch introductions across ALL provider facilities
-  const { data: introductions } = useQuery({
+  const { data: introductions, isLoading: loadingIntros } = useQuery({
     queryKey: ["admin-provider-introductions", provider.user_id, facilityIds],
     queryFn: async () => {
       const { data } = await supabase
@@ -30,8 +30,7 @@ export function ProviderPlacementsTab({ provider, providerFacilities }: Provider
     },
   });
 
-  // Fetch engagements across ALL provider facilities
-  const { data: engagements } = useQuery({
+  const { data: engagements, isLoading: loadingEngagements } = useQuery({
     queryKey: ["admin-provider-engagements", provider.user_id, facilityIds],
     queryFn: async () => {
       const { data } = await supabase
@@ -43,8 +42,7 @@ export function ProviderPlacementsTab({ provider, providerFacilities }: Provider
     },
   });
 
-  // Fetch placement invoices across ALL provider facilities
-  const { data: invoices } = useQuery({
+  const { data: invoices, isLoading: loadingInvoices } = useQuery({
     queryKey: ["admin-provider-placement-invoices", provider.user_id, facilityIds],
     queryFn: async () => {
       const { data } = await supabase
@@ -56,6 +54,7 @@ export function ProviderPlacementsTab({ provider, providerFacilities }: Provider
     },
   });
 
+  const isLoading = loadingIntros || loadingEngagements || loadingInvoices;
   const totalPlacementRevenue = invoices?.filter((i) => i.status === "paid").reduce((sum, i) => sum + i.amount_cents, 0) || 0;
   const activePlacements = engagements?.filter((e) => e.status === "placed").length || 0;
 
@@ -80,6 +79,17 @@ export function ProviderPlacementsTab({ provider, providerFacilities }: Provider
     const Icon = s.icon;
     return <Badge variant="outline" className={`${s.cls} text-xs gap-1`}><Icon className="h-3 w-3" />{status}</Badge>;
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
+        </div>
+        <Skeleton className="h-48 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
