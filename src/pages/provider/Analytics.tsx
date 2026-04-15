@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { BarChart3, CalendarIcon, X, ChevronDown, Building2 } from "lucide-react";
 import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
 import { CentralizedEngagementAnalytics } from "@/components/provider/CentralizedEngagementAnalytics";
@@ -6,6 +6,7 @@ import { ProviderPerformanceAnalytics } from "@/components/provider/ProviderPerf
 import { ROICalculatorWidget } from "@/components/provider/ROICalculatorWidget";
 import { DATE_RANGE_PRESETS, type DateRange } from "@/hooks/useLeadAnalytics";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
@@ -43,6 +44,10 @@ export default function ProviderAnalyticsPage() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [selectedFacilityId, setSelectedFacilityId] = useState<string>("all");
+  const isMobile = useIsMobile();
+
+  // Temporary range state for calendar selection (only committed on Apply)
+  const [tempRange, setTempRange] = useState<{ from?: Date; to?: Date }>({});
 
   const { facilities } = useProviderFacilities();
   const approvedFacilities = useMemo(
@@ -54,13 +59,6 @@ export default function ProviderAnalyticsPage() {
     const range = preset.getRange();
     setDateRange(range);
     setSelectedPreset(preset.value);
-  };
-
-  const handleCustomDateSelect = (range: { from?: Date; to?: Date } | undefined) => {
-    if (range) {
-      setDateRange({ from: range.from, to: range.to });
-      setSelectedPreset("custom");
-    }
   };
 
   const clearDateFilter = () => {
@@ -87,6 +85,25 @@ export default function ProviderAnalyticsPage() {
     { key: "performance", label: "Performance" },
     { key: "roi", label: "ROI Calculator" },
   ];
+
+  const handleOpenCalendar = () => {
+    setTempRange({ from: dateRange.from, to: dateRange.to });
+    setIsCalendarOpen(true);
+  };
+
+  const handleApplyRange = () => {
+    if (tempRange.from) {
+      setDateRange({ from: tempRange.from, to: tempRange.to });
+      setSelectedPreset("custom");
+    }
+    setIsCalendarOpen(false);
+  };
+
+  const handleClearRange = () => {
+    setTempRange({});
+    clearDateFilter();
+    setIsCalendarOpen(false);
+  };
 
   return (
     <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
@@ -126,7 +143,7 @@ export default function ProviderAnalyticsPage() {
               </Select>
             )}
 
-            {/* Date Range Filter */}
+            {/* Date Range Selector — Presets Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-1.5 h-9 text-sm">
@@ -153,7 +170,7 @@ export default function ProviderAnalyticsPage() {
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => setIsCalendarOpen(true)}
+                  onClick={handleOpenCalendar}
                   className={cn(
                     "cursor-pointer text-sm",
                     selectedPreset === "custom" && "bg-primary/5 font-medium"
@@ -164,34 +181,61 @@ export default function ProviderAnalyticsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Standalone Calendar Popover (outside dropdown to prevent disappearing) */}
+            {/* Custom Date Range Popover — anchored to its own visible button */}
             <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
               <PopoverTrigger asChild>
-                <span className="sr-only">Open calendar</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "gap-1.5 h-9 text-sm",
+                    !isCalendarOpen && selectedPreset !== "custom" && "hidden"
+                  )}
+                  onClick={handleOpenCalendar}
+                >
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  {selectedPreset === "custom" && dateRange.from
+                    ? dateRange.to
+                      ? `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d")}`
+                      : format(dateRange.from, "MMM d, yyyy")
+                    : "Pick dates"}
+                </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 z-50" align="end" sideOffset={8}>
+              <PopoverContent
+                className="w-auto p-0 z-[60]"
+                align="end"
+                sideOffset={8}
+                onOpenAutoFocus={(e) => e.preventDefault()}
+              >
                 <Calendar
                   mode="range"
-                  selected={{ from: dateRange.from, to: dateRange.to }}
+                  selected={{ from: tempRange.from, to: tempRange.to }}
                   onSelect={(range) => {
-                    handleCustomDateSelect(range);
-                    if (range?.from && range?.to) setIsCalendarOpen(false);
+                    if (range) {
+                      setTempRange({ from: range.from, to: range.to });
+                    }
                   }}
-                  numberOfMonths={typeof window !== "undefined" && window.innerWidth < 640 ? 1 : 2}
-                  className="p-3 pointer-events-auto"
+                  numberOfMonths={isMobile ? 1 : 2}
+                  className={cn("p-3 pointer-events-auto")}
                   disabled={(date) => date > new Date()}
                 />
-                <div className="border-t p-2 flex justify-between items-center">
-                  {dateRange.from && (
-                    <span className="text-xs text-muted-foreground">
-                      {dateRange.from ? format(dateRange.from, "MMM d") : ""}{dateRange.to ? ` – ${format(dateRange.to, "MMM d, yyyy")}` : " – select end date"}
-                    </span>
-                  )}
-                  <div className="flex gap-1.5 ml-auto">
-                    <Button variant="ghost" size="sm" onClick={() => { clearDateFilter(); setIsCalendarOpen(false); }}>
+                <div className="border-t px-3 py-2 flex justify-between items-center gap-3">
+                  <span className="text-xs text-muted-foreground truncate">
+                    {tempRange.from
+                      ? tempRange.to
+                        ? `${format(tempRange.from, "MMM d")} – ${format(tempRange.to, "MMM d, yyyy")}`
+                        : `${format(tempRange.from, "MMM d, yyyy")} – select end`
+                      : "Select start date"}
+                  </span>
+                  <div className="flex gap-1.5 shrink-0">
+                    <Button variant="ghost" size="sm" onClick={handleClearRange}>
                       Clear
                     </Button>
-                    <Button size="sm" onClick={() => setIsCalendarOpen(false)} disabled={!dateRange.from || !dateRange.to}>
+                    <Button
+                      size="sm"
+                      onClick={handleApplyRange}
+                      disabled={!tempRange.from || !tempRange.to}
+                    >
                       Apply
                     </Button>
                   </div>
