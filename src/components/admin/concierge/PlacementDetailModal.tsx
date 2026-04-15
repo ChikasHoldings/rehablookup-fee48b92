@@ -81,9 +81,12 @@ export function PlacementDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden" aria-describedby="placement-detail-desc">
         <VisuallyHidden>
           <DialogTitle>Placement Details — {caseData.user_name}</DialogTitle>
+        </VisuallyHidden>
+        <VisuallyHidden>
+          <p id="placement-detail-desc">View and manage placement case for {caseData.user_name}</p>
         </VisuallyHidden>
 
         {/* ─── Header ─── */}

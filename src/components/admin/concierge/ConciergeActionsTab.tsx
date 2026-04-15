@@ -79,7 +79,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
     mutationFn: async (updates: Partial<ConciergeInquiry>) => {
       // For status changes, delegate to the centralized transition hook
       if (updates.status && updates.status !== caseData.status) {
-        if (caseData.status === 'placed' && updates.status !== 'closed') {
+      if ((caseData.status === 'admitted' || caseData.status === 'completed') && updates.status !== 'closed') {
           throw new Error("Cannot change status of a confirmed placement. Close the case instead.");
         }
         // Use transition hook via mutateAsync so we get optimistic locking
@@ -200,7 +200,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       toast.success("Case assigned to you — starting placement workflow");
       queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
       onRefresh();
-      onSwitchTab?.("matching");
+      onSwitchTab?.("providers");
     },
     onError: (error) => {
       toast.error(error.message || "Failed to self-assign");
@@ -263,7 +263,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       )}
 
       {/* Notify Seeker — Send provider options for review */}
-      {caseData.status === "in_contact" && !caseData.seeker_confirmed && (
+      {(caseData.status === "presented_to_seeker" || caseData.status === "providers_accepted") && !caseData.seeker_confirmed && (
         <NotifySeekerCard caseData={caseData} onRefresh={onRefresh} />
       )}
 
@@ -274,7 +274,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       <BillingStatusCard caseData={caseData} onRefresh={onRefresh} />
 
       {/* Seeker confirmed indicator for admin */}
-      {caseData.seeker_confirmed && caseData.status !== "placed" && (
+      {caseData.seeker_confirmed && !["admitted", "completed", "billed", "closed"].includes(caseData.status) && (
         <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
