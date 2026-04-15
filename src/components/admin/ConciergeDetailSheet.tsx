@@ -144,8 +144,8 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
               >
                 {(caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded') ? '✓ Paid' : '⚠ Unpaid'}
               </Badge>
-              <Badge variant={STATUS_CONFIG[caseData.status]?.variant || "secondary"}>
-                {STATUS_CONFIG[caseData.status]?.label || caseData.status}
+              <Badge variant="outline" className={PIPELINE_STATUS_CONFIG[caseData.status]?.color || "bg-muted text-muted-foreground"}>
+                {PIPELINE_STATUS_CONFIG[caseData.status]?.label || caseData.status}
               </Badge>
             </div>
           </div>
