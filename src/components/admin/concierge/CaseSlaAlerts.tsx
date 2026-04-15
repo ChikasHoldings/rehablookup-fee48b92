@@ -121,7 +121,7 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
       alerts.push({
         key: "seeker-pending",
         icon: HelpCircle,
-        label: "Seeker decision pending 48h+",
+        label: "Client decision pending 48h+",
         severity: hoursSinceUpdate >= 72 ? "critical" : "warning",
       });
     }

@@ -33,7 +33,7 @@ const PRIORITY_STYLES: Record<ActionPriority, { border: string; bg: string; icon
 
 const TAB_LABELS: Record<string, string> = {
   overview: "Overview",
-  seeker: "Seeker",
+  seeker: "Client",
   matching: "Match",
   intros: "Intros",
   decision: "Decision",

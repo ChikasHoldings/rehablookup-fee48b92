@@ -67,7 +67,7 @@ interface SupportTicketModalProps {
 const sourceLabels: Record<string, { label: string; icon: React.ElementType }> = {
   public_contact: { label: "Public Contact Form", icon: Mail },
   provider_support: { label: "Provider Support", icon: Building2 },
-  seeker_support: { label: "Seeker Support", icon: User },
+  seeker_support: { label: "Client Support", icon: User },
 };
 
 const statusOptions = [

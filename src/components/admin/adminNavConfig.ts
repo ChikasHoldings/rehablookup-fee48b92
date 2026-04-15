@@ -65,7 +65,7 @@ const superAdminNav: NavSection[] = [
     entries: [
       { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
-      { to: "/admin/seekers", icon: UserSearch, label: "Seekers", permission: "seekers" },
+      { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
       {
         icon: UserPlus,
         label: "Placements",
@@ -136,7 +136,7 @@ const managerNav: NavSection[] = [
       { to: "/admin/users", icon: ShieldCheck, label: "Staff Management", permission: "users" },
       { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
-      { to: "/admin/seekers", icon: UserSearch, label: "Seekers", permission: "seekers" },
+      { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
       {
         icon: UserPlus,
         label: "Placements",
@@ -214,7 +214,7 @@ const customerRepNav: NavSection[] = [
     sectionLabel: "Tools",
     entries: [
       { to: "/admin/escalations", icon: AlertTriangle, label: "Escalations", permission: "escalations", countKey: "openEscalations" },
-      { to: "/admin/seekers", icon: UserSearch, label: "Seekers", permission: "seekers" },
+      { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
     ],
   },
 ];

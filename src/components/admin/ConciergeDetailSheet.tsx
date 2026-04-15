@@ -117,7 +117,7 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
   // Build tabs dynamically based on role
   const tabs = [
     { value: "overview", icon: LayoutDashboard, label: "Overview", always: true },
-    { value: "seeker", icon: User, label: "Seeker", always: true },
+    { value: "seeker", icon: User, label: "Client", always: true },
     { value: "matching", icon: Users, label: "Match", always: true },
     { value: "intros", icon: Send, label: "Intros", always: true },
     { value: "decision", icon: UserCheck, label: "Decision", always: true },

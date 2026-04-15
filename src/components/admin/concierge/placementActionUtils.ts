@@ -90,7 +90,7 @@ export function getCaseNextSteps(
       priority: "blocker",
       description: "Intake fee not yet paid. Avoid sending introductions until confirmed.",
       owner: "seeker",
-      ownerLabel: "Waiting on seeker",
+      ownerLabel: "Waiting on client",
     });
   }
 
@@ -182,7 +182,7 @@ export function getCaseNextSteps(
 
     case "providers_accepted":
       steps.push({
-        label: "Present options to seeker",
+        label: "Present options to client",
         tab: "intros",
         icon: Send,
         priority: "high",
@@ -200,7 +200,7 @@ export function getCaseNextSteps(
         priority: "medium",
         description: "The seeker is reviewing their options. Follow up if needed.",
         owner: "seeker",
-        ownerLabel: "Waiting on seeker",
+        ownerLabel: "Waiting on client",
       });
       break;
 
