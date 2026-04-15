@@ -176,15 +176,10 @@ export default function AdminConcierge() {
   const allCases = cases || [];
   const totalCases = allCases.length;
   const activeCases = allCases.filter(c => !["placed", "closed"].includes(c.status)).length;
-  const newCases = allCases.filter(c => c.status === "new").length;
   const awaitingAdvisor = allCases.filter(c => !c.assigned_advisor_id && c.status !== "closed").length;
-  const matchedCases = allCases.filter(c => c.status === "matched" || c.status === "introductions_sent").length;
-  const toursScheduled = allCases.filter(c => c.tour_coordination_status === "scheduled").length;
-  const admittedCases = allCases.filter(c => c.admission_status === "admitted" || c.placement_confirmed).length;
   const placedCases = allCases.filter(c => c.status === "placed").length;
   const pendingBilling = allCases.filter(c => c.status === "placed" && c.provider_fee_status !== "paid" && c.provider_fee_status !== "waived").length;
 
-  const isPaid = (status: string) => status === "paid" || status === "succeeded";
 
   return (
     <div className="space-y-5">
