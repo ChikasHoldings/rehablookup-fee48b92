@@ -953,7 +953,7 @@ export default function ProviderKnowledgeBasePage() {
 
         {/* Article Detail Dialog */}
         <Dialog open={!!selectedArticle} onOpenChange={() => setSelectedArticle(null)}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0">
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
             {selectedArticle && (
               <>
                 <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b border-border/50">
