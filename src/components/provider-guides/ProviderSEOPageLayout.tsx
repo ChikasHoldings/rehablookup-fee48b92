@@ -203,7 +203,7 @@ export function ProviderSEOPageLayout({
           <div className="container max-w-5xl mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {[
-                { icon: Users, stat: "50,000+", label: "Monthly Seekers" },
+                { icon: Users, stat: "50,000+", label: "Monthly Clients" },
                 { icon: Star, stat: "Free", label: "Basic Listing" },
                 { icon: Shield, stat: "Verified", label: "Quality Leads" },
                 { icon: Clock, stat: "< 24hr", label: "Lead Delivery" },
