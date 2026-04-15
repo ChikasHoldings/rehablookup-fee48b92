@@ -24,6 +24,10 @@ function getTimestampFields(toStatus: string): Record<string, unknown> {
       return { introductions_sent_at: now };
     case "admitted":
       return { placement_confirmed: true, placement_confirmed_at: now, admission_status: "admitted", admission_substatus: "admitted" };
+    case "billed":
+      return { provider_fee_status: "invoiced" };
+    case "completed":
+      return { closed_at: now };
     case "closed":
       return { closed_at: now };
     default:
