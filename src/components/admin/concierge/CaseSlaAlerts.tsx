@@ -116,7 +116,7 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
       }
     }
 
-    // 7. Seeker decision pending too long — seeker_selected/presented for 48h+
+    // 7. Client decision pending too long — seeker_selected/presented for 48h+
     if (["seeker_selected", "presented_to_seeker", "in_contact"].includes(caseData.status) && !caseData.seeker_confirmed && hoursSinceUpdate >= 48) {
       alerts.push({
         key: "seeker-pending",

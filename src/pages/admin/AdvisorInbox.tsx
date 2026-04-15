@@ -359,8 +359,8 @@ export default function AdvisorInbox() {
           </div>
           <p className="text-xs text-muted-foreground">
             {isSeeker
-              ? "Direct conversation with seeker"
-              : "Private facility coordination — seeker cannot see this"}
+              ? "Direct conversation with client"
+              : "Private facility coordination — client cannot see this"}
           </p>
         </div>
       </div>
