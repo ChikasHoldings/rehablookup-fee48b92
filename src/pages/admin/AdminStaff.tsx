@@ -66,6 +66,7 @@ import {
 } from "@/hooks/useAdminUserManagement";
 import { CreateAdminUserDialog } from "@/components/admin/CreateAdminUserDialog";
 import { AdminUserPermissionsDialog } from "@/components/admin/AdminUserPermissionsDialog";
+import { AdminStaffDetailModal } from "@/components/admin/AdminStaffDetailModal";
 import { cn } from "@/lib/utils";
 
 const ROLE_ICONS: Record<AdminRoleType, React.ElementType> = {
@@ -129,6 +130,8 @@ export default function AdminStaff() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [detailUser, setDetailUser] = useState<AdminUser | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     action: "suspend" | "unsuspend" | "delete" | "reset_password" | "resend_invitation";
     user: AdminUser;
@@ -203,10 +206,12 @@ export default function AdminStaff() {
     const RoleIcon = ROLE_ICONS[user.admin_role];
 
     return (
-      <Card className={cn(
-        "group relative overflow-hidden transition-all duration-200 hover:shadow-md border-l-4",
-        user.status === "suspended" && "opacity-70",
-        ROLE_BORDER_COLORS[user.admin_role]
+      <Card
+        onClick={() => { setDetailUser(user); setDetailModalOpen(true); }}
+        className={cn(
+          "group relative overflow-hidden transition-all duration-200 hover:shadow-md border-l-4 cursor-pointer",
+          user.status === "suspended" && "opacity-70",
+          ROLE_BORDER_COLORS[user.admin_role]
       )}>
         <CardContent className="p-5">
           <div className="flex items-start justify-between gap-4">
@@ -553,6 +558,21 @@ export default function AdminStaff() {
           ))}
         </div>
       )}
+
+      {/* Staff Detail Modal */}
+      <AdminStaffDetailModal
+        user={detailUser}
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        onAction={(action, u) => {
+          setDetailModalOpen(false);
+          if (action === "edit_permissions") {
+            openPermissions(u);
+          } else {
+            setConfirmAction({ action: action as any, user: u });
+          }
+        }}
+      />
 
       {/* Create Dialog */}
       <CreateAdminUserDialog 
