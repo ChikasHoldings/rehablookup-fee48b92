@@ -106,6 +106,7 @@ export function AdminShell() {
           "/admin/blog": "providers", "/admin/international": "placements",
           "/admin/inbox": "placements", "/admin/escalations": "escalations",
           "/admin/back-office": "back_office",
+          "/admin/email-logs": "security_logs",
         };
         let permKey = routeMap[pathname];
         if (!permKey) {
