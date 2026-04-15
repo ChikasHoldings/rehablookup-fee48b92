@@ -85,7 +85,7 @@ export function getCaseNextSteps(
   if (!isPaid && caseData.status !== "intake_submitted" && caseData.status !== "pending_intake") {
     steps.push({
       label: "Payment not received",
-      tab: "actions",
+      tab: "manage",
       icon: AlertTriangle,
       priority: "blocker",
       description: "Intake fee not yet paid. Avoid sending introductions until confirmed.",
@@ -97,7 +97,7 @@ export function getCaseNextSteps(
   if (!caseData.assigned_advisor_id && getStageIndex(caseData.status) >= 2) {
     steps.push({
       label: "Assign an advisor",
-      tab: "actions",
+      tab: "manage",
       icon: UserCheck,
       priority: "blocker",
       description: "This case needs an advisor before placement can proceed.",
