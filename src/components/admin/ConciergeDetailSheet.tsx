@@ -21,6 +21,7 @@ import { InvoiceManagementTab } from "./concierge/InvoiceManagementTab";
 import { ToursTab } from "./concierge/ToursTab";
 import { ConciergeTimelineTab } from "./concierge/ConciergeTimelineTab";
 import { AdmissionCoordinationCard } from "./concierge/AdmissionCoordinationCard";
+import { StageActionBar } from "./concierge/StageActionBar";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
@@ -207,6 +208,11 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
             toursCount={toursCount}
             onSwitchTab={setActiveTab}
           />
+        </div>
+
+        {/* Stage-Aware Action Buttons */}
+        <div className="flex-shrink-0 mt-3">
+          <StageActionBar caseData={caseData} onRefresh={onRefresh} onSwitchTab={setActiveTab} />
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden mt-3">
