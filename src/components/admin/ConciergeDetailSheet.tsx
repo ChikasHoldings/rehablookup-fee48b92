@@ -52,7 +52,7 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
   const canManageBilling = !isAdvisor;
   const canManageActions = true;
 
-  const [activeTab, setActiveTab] = useState(initialTab || "intake");
+  const [activeTab, setActiveTab] = useState(initialTab || "overview");
 
   // Fetch intro and tour counts for next-steps panel
   const { data: introsCount = 0 } = useQuery({
@@ -84,7 +84,7 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
   // Reset tab when sheet opens
   useEffect(() => {
     if (open) {
-      setActiveTab(initialTab || "intake");
+      setActiveTab(initialTab || "overview");
     }
   }, [open, caseData?.id, initialTab]);
 
