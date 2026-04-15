@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const VERSION = "1.0.2";
+const VERSION = "2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,31 +14,27 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
   console.log(`[CONFIRM-PLACEMENT] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
-// UUID validation
 const isValidUUID = (str: string): boolean => {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(str);
 };
 
-// ISO date validation
 const isValidISODate = (str: string): boolean => {
-  if (!str) return true; // Optional field
+  if (!str) return true;
   const date = new Date(str);
-  return !isNaN(date.getTime()) && str === date.toISOString().slice(0, -1) + 'Z' || /^\d{4}-\d{2}-\d{2}/.test(str);
+  return !isNaN(date.getTime());
 };
 
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
-  
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // POST only
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -63,7 +59,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    
+
     if (userError || !userData.user) {
       return new Response(JSON.stringify({ error: "Authentication failed", requestId, _version: VERSION }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -78,30 +74,21 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
     const { inquiryId, facilityId, confirmationType, admittedAt, isInternational } = body as {
       inquiryId: string; facilityId: string; confirmationType: string; admittedAt?: string; isInternational?: boolean;
     };
-    
-    // Validate required fields
+
     if (!inquiryId || !facilityId || !confirmationType) {
       throw new Error("Inquiry ID, Facility ID, and confirmation type are required");
     }
+    if (!isValidUUID(inquiryId)) throw new Error("Invalid inquiry ID format");
+    if (!isValidUUID(facilityId)) throw new Error("Invalid facility ID format");
 
-    // Strict UUID validation
-    if (!isValidUUID(inquiryId)) {
-      throw new Error("Invalid inquiry ID format");
-    }
-    if (!isValidUUID(facilityId)) {
-      throw new Error("Invalid facility ID format");
-    }
-
-    // Validate confirmation type
     const validConfirmationTypes = ['admin', 'admin_confirm', 'placement_confirm'];
     if (!validConfirmationTypes.includes(confirmationType)) {
       throw new Error("Invalid confirmation type");
     }
-
-    // Validate admitted date if provided
     if (admittedAt && !isValidISODate(admittedAt)) {
       throw new Error("Invalid admitted date format");
     }
@@ -110,40 +97,35 @@ Deno.serve(async (req) => {
 
     const supabaseService = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get the inquiry — explicit column list per project guidelines
+    // Get the inquiry
     const { data: inquiry, error: inquiryError } = await supabaseService
       .from('concierge_inquiries')
-      .select('id, status, matched_facility_ids, admin_matched_facility_ids, payment_amount_cents, assigned_advisor_id, provider_fee_cents')
+      .select('id, status, matched_facility_ids, admin_matched_facility_ids, payment_amount_cents, assigned_advisor_id, provider_fee_cents, admission_substatus')
       .eq('id', inquiryId)
       .single();
 
-    if (inquiryError || !inquiry) {
-      throw new Error("Inquiry not found");
+    if (inquiryError || !inquiry) throw new Error("Inquiry not found");
+
+    // Idempotent: already admitted/billed/completed
+    const TERMINAL_STATUSES = ['admitted', 'billed', 'completed', 'placed'];
+    if (TERMINAL_STATUSES.includes(inquiry.status)) {
+      logStep(requestId, "Case already in terminal status — idempotent return", { inquiryId, status: inquiry.status });
+      return new Response(JSON.stringify({
+        success: true, alreadyPlaced: true, status: inquiry.status, requestId, _version: VERSION,
+      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Guard: strict status transition validation
-    const CONFIRMABLE_STATUSES = ['matched', 'introductions_sent', 'in_contact'];
-    
-    if (inquiry.status === 'placed') {
-      logStep(requestId, "Case already placed - idempotent return", { inquiryId });
-      return new Response(JSON.stringify({ 
-        success: true, 
-        alreadyPlaced: true,
-        requestId,
-        _version: VERSION,
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
     if (inquiry.status === 'closed') {
       throw new Error("Cannot confirm placement for a closed case");
     }
+
+    // Allowed source statuses for admission confirmation
+    const CONFIRMABLE_STATUSES = ['admission_in_progress', 'seeker_selected', 'matched', 'introductions_sent', 'in_contact', 'presented_to_seeker', 'providers_accepted'];
     if (!CONFIRMABLE_STATUSES.includes(inquiry.status)) {
       throw new Error(`Cannot confirm placement: case is in '${inquiry.status}' status. Must be in: ${CONFIRMABLE_STATUSES.join(', ')}`);
     }
 
-    // Verify the facility is in the matched list
+    // Verify facility is in matched list
     const matchedFacilityIds = [
       ...(inquiry.matched_facility_ids || []),
       ...(inquiry.admin_matched_facility_ids || []),
@@ -152,8 +134,7 @@ Deno.serve(async (req) => {
       throw new Error("Facility not in matched list for this inquiry");
     }
 
-    // Check user authorization - ADMIN ONLY for brokerage model
-    // Verify user is an admin
+    // Admin-only authorization
     const { data: userRole } = await supabaseService
       .from('user_roles')
       .select('role')
@@ -161,87 +142,69 @@ Deno.serve(async (req) => {
       .eq('role', 'admin')
       .maybeSingle();
 
-    const isAdmin = !!userRole;
-
-    if (!isAdmin) {
+    if (!userRole) {
       throw new Error("Only administrators can confirm placements. This ensures RehabLookup coordinates all admissions.");
     }
 
     logStep(requestId, "Admin authorization verified", { adminUserId: userData.user.id });
 
-    // Admin confirms placement directly - no dual confirmation needed in brokerage model
+    // ── Update inquiry to 'admitted' stage ──
+    const now = new Date().toISOString();
     const updates: Record<string, unknown> = {
       placed_facility_id: facilityId,
       placement_confirmed: true,
-      placement_confirmed_at: admittedAt || new Date().toISOString(),
-      seeker_confirmed: true, // Admin acts on behalf of both parties
-      seeker_confirmed_at: new Date().toISOString(),
-      status: 'placed',
+      placement_confirmed_at: admittedAt || now,
+      seeker_confirmed: true,
+      seeker_confirmed_at: now,
+      status: 'admitted',
+      admission_status: 'admitted',
+      admission_substatus: 'admitted',
+      updated_at: now,
     };
 
-    logStep(requestId, "Admin confirmed placement", { facilityId, admittedAt });
-
-    updates.updated_at = new Date().toISOString();
-
-    // Update the inquiry
     const { error: updateError } = await supabaseService
       .from('concierge_inquiries')
       .update(updates)
       .eq('id', inquiryId);
 
-    if (updateError) {
-      throw new Error(`Failed to update inquiry: ${updateError.message}`);
-    }
+    if (updateError) throw new Error(`Failed to update inquiry: ${updateError.message}`);
 
-    // Log the case event
-    try {
-      await supabaseService.from("concierge_case_events").insert({
-        inquiry_id: inquiryId,
-        event_type: "placement_confirmed",
-        event_data: { 
-          facility_id: facilityId,
-          admitted_at: admittedAt || new Date().toISOString(),
-          confirmed_by: "admin",
-        },
-        actor_id: userData.user.id,
-        actor_type: "admin",
-      });
-      logStep(requestId, "Case event logged");
-    } catch (eventError) {
-      logStep(requestId, "Warning: Failed to log case event", { error: String(eventError) });
-    }
+    logStep(requestId, "Case moved to 'admitted'", { facilityId, admittedAt });
 
-    // Send placement complete notification (admin-controlled)
-    logStep(requestId, "Sending placement complete notifications");
-    
+    // Log placement_confirmed event
+    await supabaseService.from("concierge_case_events").insert({
+      inquiry_id: inquiryId,
+      event_type: "placement_confirmed",
+      event_data: {
+        facility_id: facilityId,
+        admitted_at: admittedAt || now,
+        confirmed_by: "admin",
+        from_status: inquiry.status,
+        to_status: "admitted",
+      },
+      actor_id: userData.user.id,
+      actor_type: "admin",
+    });
+
+    // Send notification
     try {
       await fetch(`${supabaseUrl}/functions/v1/send-concierge-notifications`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-        },
-        body: JSON.stringify({
-          type: 'placement_complete',
-          inquiryId,
-          facilityId,
-        }),
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseServiceKey}` },
+        body: JSON.stringify({ type: 'placement_complete', inquiryId, facilityId }),
       });
     } catch (notifError) {
-      logStep(requestId, "Warning: Failed to send placement complete notification", { error: String(notifError) });
+      logStep(requestId, "Warning: Failed to send notification", { error: String(notifError) });
     }
 
+    // ── Trigger billing (admitted → billed) ──
     logStep(requestId, "Triggering placement fee charge");
-    
-    // Call the charge function
     let chargeSuccess = false;
+
     try {
       const chargeResponse = await fetch(`${supabaseUrl}/functions/v1/charge-placement-fee`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseServiceKey}` },
         body: JSON.stringify({
           inquiryId,
           facilityId,
@@ -252,24 +215,19 @@ Deno.serve(async (req) => {
 
       const chargeResult = await chargeResponse.json();
       chargeSuccess = chargeResponse.ok && chargeResult?.success;
-      logStep(requestId, "Charge result", { ok: chargeResponse.ok, ...chargeResult });
+      logStep(requestId, "Charge result", { ok: chargeResponse.ok, charged: chargeResult?.charged, amountCents: chargeResult?.amountCents });
 
       if (!chargeSuccess) {
-        // Log billing failure event for admin visibility
         await supabaseService.from("concierge_case_events").insert({
           inquiry_id: inquiryId,
           event_type: "charge_failed",
-          event_data: { 
-            error: chargeResult?.error || "Unknown charge error",
-            facility_id: facilityId,
-          },
+          event_data: { error: chargeResult?.error || "Unknown charge error", facility_id: facilityId },
           actor_type: "system",
         });
-        logStep(requestId, "Charge failed event logged — admin can retry from billing card");
+        logStep(requestId, "Charge failed — admin can retry from billing tab");
       }
     } catch (chargeError) {
       logStep(requestId, "Warning: Charge failed", { error: String(chargeError) });
-      // Log the failure so admins see it
       try {
         await supabaseService.from("concierge_case_events").insert({
           inquiry_id: inquiryId,
@@ -277,36 +235,30 @@ Deno.serve(async (req) => {
           event_data: { error: String(chargeError), facility_id: facilityId },
           actor_type: "system",
         });
-      } catch (_) { /* best-effort */ }
+      } catch { /* best-effort */ }
     }
 
     return new Response(
       JSON.stringify({
         success: true,
         adminConfirmed: true,
-        status: 'placed',
+        status: 'admitted',
+        billingTriggered: chargeSuccess,
         requestId,
         _version: VERSION,
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep(requestId, "ERROR", { message: errorMessage });
-    // Return 400 for business logic errors, 500 for unexpected failures
-    const isClientError = errorMessage.includes("not found") || 
+    const isClientError = errorMessage.includes("not found") ||
       errorMessage.includes("required") || errorMessage.includes("Invalid") ||
       errorMessage.includes("Cannot") || errorMessage.includes("Only administrators") ||
       errorMessage.includes("not in matched");
     return new Response(
       JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: isClientError ? 400 : 500,
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: isClientError ? 400 : 500 }
     );
   }
 });
