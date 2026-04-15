@@ -908,6 +908,11 @@ function AdmissionContent({ caseData, placedFacility, canManageBilling, onRefres
         </CardContent>
       </Card>
 
+      {/* Confirm Admission & Bill — main conversion action */}
+      {canManageBilling && !isAdmitted && (
+        <AdminConfirmPlacement caseData={caseData} onRefresh={onRefresh} />
+      )}
+
       {/* Provider Fee Summary */}
       <Card>
         <CardHeader className="py-3">
