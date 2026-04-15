@@ -199,9 +199,13 @@ export function PlacementDetailModal({
   const isDeclined = introduction?.provider_response === "not_available";
   const isPlaced = inquiry?.placement_confirmed === true && inquiry?.placed_facility_id === facilityId;
 
-  // ── PII gate: only show first name AFTER acceptance ──
+  // PII disclosure gate: provider accepted AND seeker selected this facility
+  const seekerSelectedThisFacility = inquiry?.seeker_confirmed === true && inquiry?.placed_facility_id === facilityId;
+  const piiUnlocked = isAccepted && seekerSelectedThisFacility;
+
+  // ── PII gate: show full name only when PII is unlocked ──
   const hasAccepted = isAccepted || isPlaced;
-  const displayName = hasAccepted ? (inquiry?.user_name?.split(" ")[0] || "Client") : "Anonymized Client";
+  const displayName = piiUnlocked ? (inquiry?.user_name || "Client") : hasAccepted ? (inquiry?.user_name?.split(" ")[0] || "Client") : "Anonymized Client";
 
   // Fetch full inquiry details (only clinical/preference data)
   const { data: fullInquiry } = useQuery({
