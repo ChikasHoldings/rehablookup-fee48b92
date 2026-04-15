@@ -277,6 +277,18 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
                   <Badge variant="outline" className={cn("h-5 text-xs",
                     isBanned ? "bg-destructive/10 text-destructive border-destructive/30" : "bg-success/10 text-success border-success/30"
                   )}>{isBanned ? "Banned" : "Active"}</Badge>
+                  {placementJourney?.admitted && (
+                    <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 h-5 text-xs"><CheckCircle className="h-3 w-3" />Admitted</Badge>
+                  )}
+                  {placementJourney && !placementJourney.admitted && placementJourney.status !== "not_started" && (
+                    <Badge variant="outline" className={cn("gap-1 h-5 text-xs",
+                      placementJourney.status === "matched" ? "bg-purple-500/10 text-purple-600 border-purple-500/30" :
+                      placementJourney.status === "accepted" ? "bg-chart-3/10 text-chart-3 border-chart-3/30" :
+                      "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                    )}>
+                      <Handshake className="h-3 w-3" />{placementJourney.status.replace(/_/g, " ")}
+                    </Badge>
+                  )}
                   {hasConcierge && (
                     <Badge variant="outline" className="text-chart-3 border-chart-3/30 gap-1 h-5 text-xs"><Shield className="h-3 w-3" />Concierge</Badge>
                   )}
