@@ -44,17 +44,28 @@ interface ConciergeActionsTabProps {
   onSwitchTab?: (tab: string) => void;
 }
 
-import { VALID_TRANSITIONS, PIPELINE_STAGES, CLOSED_STAGE, type PlacementStage } from "./placementPipelineConfig";
+import { VALID_TRANSITIONS, PIPELINE_STAGES, CLOSED_STAGE, type PlacementStage, getStageConfig } from "./placementPipelineConfig";
 
-// Build status options from pipeline config
-const STATUS_OPTIONS = [
-  ...PIPELINE_STAGES.map(s => ({ value: s.key, label: s.label })),
-  { value: "closed", label: "Closed" },
-];
+// Build valid status options dynamically based on current status
+function getStatusOptions(currentStatus: string, isAdvisor: boolean) {
+  const allowed = VALID_TRANSITIONS[currentStatus as PlacementStage] || [];
+  // Always include current status so Select has a valid value
+  const allKeys = [currentStatus, ...allowed];
+  const uniqueKeys = [...new Set(allKeys)];
 
-const ADVISOR_STATUS_OPTIONS = PIPELINE_STAGES
-  .filter(s => ["intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress"].includes(s.key))
-  .map(s => ({ value: s.key, label: s.label }));
+  const advisorAllowed = new Set([
+    "intake_reviewed", "advisor_assigned", "matching_providers",
+    "provider_prequalification", "providers_accepted",
+    "presented_to_seeker", "seeker_selected", "admission_in_progress",
+  ]);
+
+  return uniqueKeys
+    .filter(key => !isAdvisor || advisorAllowed.has(key) || key === currentStatus)
+    .map(key => {
+      const config = getStageConfig(key);
+      return { value: key, label: config.label };
+    });
+}
 
 export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = false, onSwitchTab }: ConciergeActionsTabProps) {
   const { user } = useAdminAuth();
