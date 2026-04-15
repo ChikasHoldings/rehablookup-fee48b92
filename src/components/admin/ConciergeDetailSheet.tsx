@@ -92,7 +92,7 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
 
   // Auto-transition: new → reviewing when admin opens case
   useEffect(() => {
-    if (open && caseData?.status === "new") {
+    if (open && (caseData?.status === "intake_submitted" || caseData?.status === "new")) {
       supabase.functions.invoke("auto-status-transition", {
         body: {
           inquiryId: caseData.id,

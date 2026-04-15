@@ -93,7 +93,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         .from("concierge_introductions")
         .select(`
           id, facility_id, inquiry_id, created_at,
-          provider_response, provider_responded_at, provider_notes,
+          provider_response, provider_responded_at, provider_notes, admin_disclosed_pii_at,
           concierge_inquiries (
             id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state,
             preferred_city, status, age_range, gender, primary_concern, insurance_carrier,

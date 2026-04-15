@@ -136,7 +136,7 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
   });
 
   // Already admitted/billed/completed/placed
-  const TERMINAL = ["admitted", "billed", "completed", "placed"];
+  const TERMINAL = ["admitted", "billed", "completed"];
   if (TERMINAL.includes(caseData.status) || caseData.placement_confirmed) {
     return (
       <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
