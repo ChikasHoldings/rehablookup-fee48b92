@@ -148,7 +148,7 @@ const helpTopics = [
     icon: Handshake,
     title: "Placement Network",
     description: "Learn how placements work",
-    link: "/provider/placements"
+    link: "/provider/placement-network"
   },
   {
     icon: Crown,
