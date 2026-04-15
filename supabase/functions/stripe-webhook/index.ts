@@ -218,29 +218,51 @@ Deno.serve(async (req) => {
           userId 
         });
 
-        // Check if inquiry already exists for this checkout session
-        const { data: existingInquiry } = await supabaseAdmin
+        // Check if inquiry already exists — search by checkout_session_id first, then draft_id fallback
+        let existingInquiry: { id: string; payment_status: string } | null = null;
+        
+        const { data: bySession } = await supabaseAdmin
           .from("concierge_inquiries")
           .select("id, payment_status")
           .eq("checkout_session_id", checkoutSessionId)
           .maybeSingle();
+        
+        existingInquiry = bySession;
+
+        // Fallback: look up by draft_id from Stripe metadata
+        if (!existingInquiry && session.metadata?.draft_id) {
+          const { data: byDraft } = await supabaseAdmin
+            .from("concierge_inquiries")
+            .select("id, payment_status")
+            .eq("draft_id", session.metadata.draft_id)
+            .maybeSingle();
+          
+          if (byDraft) {
+            existingInquiry = byDraft;
+            logStep("Found existing inquiry by draft_id fallback", { draftId: session.metadata.draft_id, inquiryId: byDraft.id });
+          }
+        }
 
         if (existingInquiry) {
-          // Update payment status if not already paid
+          // Update payment status and link checkout session if not already paid
+          const updatePayload: Record<string, unknown> = {
+            checkout_session_id: checkoutSessionId,
+            stripe_payment_intent_id: paymentIntentId,
+            stripe_customer_id: session.customer as string,
+            updated_at: new Date().toISOString(),
+          };
+
           if (existingInquiry.payment_status !== "paid" && existingInquiry.payment_status !== "succeeded") {
-            await supabaseAdmin
-              .from("concierge_inquiries")
-              .update({
-                payment_status: "paid",
-                stripe_payment_intent_id: paymentIntentId,
-                stripe_customer_id: session.customer as string,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", existingInquiry.id);
-            logStep("Updated existing inquiry payment status", { inquiryId: existingInquiry.id });
+            updatePayload.payment_status = "paid";
           }
+
+          await supabaseAdmin
+            .from("concierge_inquiries")
+            .update(updatePayload)
+            .eq("id", existingInquiry.id);
+          logStep("Updated existing inquiry payment status", { inquiryId: existingInquiry.id });
         } else {
-          // Create pending inquiry record (safety net)
+          // Create pending inquiry record (safety net — only if no draft exists at all)
           const { error: inquiryError } = await supabaseAdmin
             .from("concierge_inquiries")
             .insert({
@@ -254,7 +276,7 @@ Deno.serve(async (req) => {
               checkout_session_id: checkoutSessionId,
               stripe_payment_intent_id: paymentIntentId,
               stripe_customer_id: session.customer as string,
-              idempotency_key: session.metadata?.idempotency_key || null,
+              idempotency_key: `intake_${checkoutSessionId}`,
               intake_data: {},
             });
 
