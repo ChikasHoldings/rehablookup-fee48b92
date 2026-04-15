@@ -63,7 +63,7 @@ export default function AdminEmailLogs() {
     queryFn: async () => {
       let query = supabase
         .from("email_tracking_events")
-        .select("*")
+        .select("id, email_id, email_type, event_type, recipient_email, event_data, created_at")
         .order("created_at", { ascending: false });
 
       const start = getTimeRangeStart(timeRange);
