@@ -5,10 +5,11 @@
 
 import {
   ClipboardCheck, Search, UserCheck, Users, Shield, CheckCircle,
-  Send, Eye, Building2, Home, DollarSign, Flag, XCircle,
+  Send, Eye, Building2, Home, DollarSign, Flag, XCircle, FileEdit,
 } from "lucide-react";
 
 export type PlacementStage =
+  | "pending_intake"
   | "intake_submitted"
   | "intake_reviewed"
   | "advisor_assigned"
