@@ -244,6 +244,7 @@ export function PlacementDetailModal({
                 onAdvance={(nextStatus) => advanceStatus.mutate(nextStatus)}
                 disabled={advanceStatus.isPending}
                 compact
+                blocker={getCaseBlocker(caseData)}
               />
             </div>
           </div>
