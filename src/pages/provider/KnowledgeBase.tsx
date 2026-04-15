@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { 
   Search, 
   BookOpen, 
@@ -18,7 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import {
   Dialog,
   DialogContent,
@@ -739,9 +739,18 @@ The **facility dropdown** in the top header lets you switch between your listing
 ];
 
 export default function ProviderKnowledgeBasePage() {
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+
+  // Read category from URL on mount (e.g. ?category=placements)
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    if (cat && categories.some(c => c.id === cat)) {
+      setSelectedCategory(cat);
+    }
+  }, [searchParams]);
 
   const filteredArticles = useMemo(() => {
     return articles.filter((article) => {
@@ -944,7 +953,7 @@ export default function ProviderKnowledgeBasePage() {
 
         {/* Article Detail Dialog */}
         <Dialog open={!!selectedArticle} onOpenChange={() => setSelectedArticle(null)}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0">
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
             {selectedArticle && (
               <>
                 <DialogHeader className="shrink-0 px-6 pt-6 pb-4 border-b border-border/50">
@@ -974,7 +983,7 @@ export default function ProviderKnowledgeBasePage() {
                   <p className="text-sm text-muted-foreground mt-1">{selectedArticle.excerpt}</p>
                 </DialogHeader>
 
-                <ScrollArea className="flex-1">
+                <div className="flex-1 overflow-y-auto">
                   <div className="px-6 py-5">
                     <ArticleRenderer content={selectedArticle.content} />
 
@@ -1040,7 +1049,7 @@ export default function ProviderKnowledgeBasePage() {
                       );
                     })()}
                   </div>
-                </ScrollArea>
+                </div>
               </>
             )}
           </DialogContent>
