@@ -490,16 +490,18 @@ function PlacementOverviewPanel({
 }
 
 function KpiCard({ label, value, onClick }: { label: string; value: string | number; onClick?: () => void }) {
+  const isZero = value === 0 || value === "0" || value === "—" || value === "none";
   return (
     <div
       className={cn(
-        "text-center p-1.5 rounded-lg border bg-muted/30",
-        onClick && "cursor-pointer hover:bg-muted/60 transition-colors"
+        "text-center p-2.5 rounded-lg border transition-colors",
+        isZero ? "bg-muted/20 border-border/50" : "bg-card border-border",
+        onClick && "cursor-pointer hover:bg-primary/5 hover:border-primary/30"
       )}
       onClick={onClick}
     >
-      <p className="text-sm font-bold tabular-nums capitalize">{typeof value === "string" ? value : value}</p>
-      <p className="text-[9px] text-muted-foreground uppercase">{label}</p>
+      <p className={cn("text-sm font-bold tabular-nums capitalize", isZero && "text-muted-foreground/50")}>{value}</p>
+      <p className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5">{label}</p>
     </div>
   );
 }
