@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "2.0.0";
+const VERSION = "3.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,63 +15,60 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
 };
 
 /**
- * Automatic Status Transition Rules (v2 — aligned with pipeline config):
+ * Auto Status Transition v3 — walks through intermediate statuses
+ * to satisfy the validate_concierge_status_transition DB trigger.
  *
- * admin_viewed:         intake_submitted → intake_reviewed
- * matches_completed:    advisor_assigned | matching_providers → provider_prequalification
- * introduction_sent:    provider_prequalification | providers_accepted → presented_to_seeker
- *                       (also advances matching_providers → provider_prequalification if still there)
- * provider_interested:  presented_to_seeker → seeker_selected
- *                       (also advances provider_prequalification → providers_accepted if still there)
+ * The DB trigger enforces single-step-only transitions, so this function
+ * chains multiple updates when a trigger implies skipping stages.
  *
- * Note: seeker_selected → admitted is handled by confirm-placement or manual advance.
+ * Triggers:
+ *   admin_viewed:        intake_submitted → intake_reviewed
+ *   matches_completed:   advisor_assigned → matching_providers → provider_prequalification
+ *   introduction_sent:   → providers_accepted → presented_to_seeker
+ *   provider_interested: → providers_accepted → presented_to_seeker → seeker_selected
  */
 
 interface TransitionRequest {
   inquiryId: string;
-  trigger:
-    | "admin_viewed"
-    | "matches_completed"
-    | "introduction_sent"
-    | "provider_interested";
+  trigger: "admin_viewed" | "matches_completed" | "introduction_sent" | "provider_interested";
   actorId?: string;
   actorType?: "admin" | "provider" | "seeker" | "system";
 }
 
-const TRANSITION_RULES: Record<string, { from: string[]; to: string }> = {
-  admin_viewed: {
-    from: ["intake_submitted", "new"],
-    to: "intake_reviewed",
-  },
-  matches_completed: {
-    from: ["advisor_assigned", "matching_providers", "reviewing", "matching"],
-    to: "provider_prequalification",
-  },
-  introduction_sent: {
-    from: [
-      "matching_providers",
-      "provider_prequalification",
-      "providers_accepted",
-      // Legacy compat
-      "matched",
-    ],
-    to: "presented_to_seeker",
-  },
-  provider_interested: {
-    from: [
-      "provider_prequalification",
-      "providers_accepted",
-      "presented_to_seeker",
-      // Legacy compat
-      "matched",
-      "introductions_sent",
-      "in_contact",
-    ],
-    to: "seeker_selected",
-  },
+// The canonical forward path (must match the DB trigger exactly)
+const FORWARD_PATH = [
+  "pending_intake",
+  "intake_submitted",
+  "intake_reviewed",
+  "advisor_assigned",
+  "matching_providers",
+  "provider_prequalification",
+  "providers_accepted",
+  "presented_to_seeker",
+  "seeker_selected",
+  "admission_in_progress",
+  "admitted",
+  "billed",
+  "completed",
+];
+
+// Each trigger maps to a target status. We walk from current → target one step at a time.
+const TRIGGER_TARGET: Record<string, string> = {
+  admin_viewed: "intake_reviewed",
+  matches_completed: "provider_prequalification",
+  introduction_sent: "presented_to_seeker",
+  provider_interested: "seeker_selected",
 };
 
-// Extra fields to set based on the target status
+// Only attempt the transition if current status is in one of these
+const TRIGGER_VALID_FROM: Record<string, string[]> = {
+  admin_viewed: ["intake_submitted", "new"],
+  matches_completed: ["advisor_assigned", "matching_providers"],
+  introduction_sent: ["matching_providers", "provider_prequalification", "providers_accepted"],
+  provider_interested: ["provider_prequalification", "providers_accepted", "presented_to_seeker"],
+};
+
+// Extra fields to set based on the final target status
 function getTimestampFields(toStatus: string): Record<string, unknown> {
   const now = new Date().toISOString();
   switch (toStatus) {
@@ -82,6 +79,56 @@ function getTimestampFields(toStatus: string): Record<string, unknown> {
     default:
       return {};
   }
+}
+
+/**
+ * Walk from `currentStatus` to `targetStatus` one step at a time.
+ * Returns the final status reached and whether any transition was made.
+ */
+async function walkTransitions(
+  supabase: ReturnType<typeof createClient>,
+  inquiryId: string,
+  currentStatus: string,
+  targetStatus: string,
+  requestId: string,
+): Promise<{ finalStatus: string; steps: number }> {
+  const currentIdx = FORWARD_PATH.indexOf(currentStatus);
+  const targetIdx = FORWARD_PATH.indexOf(targetStatus);
+
+  if (currentIdx < 0 || targetIdx < 0 || currentIdx >= targetIdx) {
+    return { finalStatus: currentStatus, steps: 0 };
+  }
+
+  let status = currentStatus;
+  let steps = 0;
+
+  for (let i = currentIdx + 1; i <= targetIdx; i++) {
+    const nextStatus = FORWARD_PATH[i];
+    const timestampFields = i === targetIdx ? getTimestampFields(targetStatus) : {};
+
+    const { data: updated, error } = await supabase
+      .from("concierge_inquiries")
+      .update({ status: nextStatus, ...timestampFields })
+      .eq("id", inquiryId)
+      .eq("status", status) // Optimistic lock
+      .select("id")
+      .maybeSingle();
+
+    if (error) {
+      logStep(requestId, "Step failed", { from: status, to: nextStatus, error: error.message });
+      break;
+    }
+    if (!updated) {
+      logStep(requestId, "Optimistic lock failed", { from: status, to: nextStatus });
+      break;
+    }
+
+    logStep(requestId, "Step succeeded", { from: status, to: nextStatus });
+    status = nextStatus;
+    steps++;
+  }
+
+  return { finalStatus: status, steps };
 }
 
 Deno.serve(async (req) => {
@@ -101,19 +148,18 @@ Deno.serve(async (req) => {
     const { inquiryId, trigger, actorId, actorType = "system" }: TransitionRequest = await req.json();
 
     if (!inquiryId || !trigger) {
-      logStep(requestId, "ERROR", { message: "inquiryId and trigger are required" });
       return new Response(
         JSON.stringify({ error: "inquiryId and trigger are required", requestId, _version: VERSION }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    logStep(requestId, "Processing transition", { inquiryId, trigger });
+    logStep(requestId, "Processing", { inquiryId, trigger });
 
-    // Fetch current inquiry state
+    // Fetch current status
     const { data: inquiry, error: inquiryError } = await supabase
       .from("concierge_inquiries")
-      .select("id, status, seeker_confirmed, placement_confirmed")
+      .select("id, status")
       .eq("id", inquiryId)
       .single();
 
@@ -121,63 +167,62 @@ Deno.serve(async (req) => {
       throw new Error("Inquiry not found: " + inquiryError?.message);
     }
 
-    const rule = TRANSITION_RULES[trigger];
-    let newStatus: string | null = null;
-    let transitionMade = false;
+    const validFrom = TRIGGER_VALID_FROM[trigger];
+    const targetStatus = TRIGGER_TARGET[trigger];
 
-    if (rule && rule.from.includes(inquiry.status)) {
-      newStatus = rule.to;
+    if (!validFrom || !targetStatus) {
+      return new Response(
+        JSON.stringify({ success: true, transitionMade: false, reason: "unknown trigger", requestId, _version: VERSION }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Apply the status transition if valid
-    if (newStatus && newStatus !== inquiry.status) {
-      const timestampFields = getTimestampFields(newStatus);
-      const updateData: Record<string, unknown> = {
-        status: newStatus,
-        ...timestampFields,
-      };
-
-      // Optimistic lock: only update if status hasn't changed
-      const { data: updated, error: updateError } = await supabase
-        .from("concierge_inquiries")
-        .update(updateData)
-        .eq("id", inquiryId)
-        .eq("status", inquiry.status)
-        .select("id")
-        .maybeSingle();
-
-      if (updateError) {
-        throw new Error("Failed to update status: " + updateError.message);
-      }
-
-      if (updated) {
-        // Log the status change event
-        await supabase.from("concierge_case_events").insert({
-          inquiry_id: inquiryId,
-          event_type: "status_changed",
-          event_data: {
-            from_status: inquiry.status,
-            to_status: newStatus,
-            trigger,
-            auto: true,
-          },
-          actor_id: actorId || null,
-          actor_type: actorType,
-        });
-
-        transitionMade = true;
-        logStep(requestId, "Status transitioned", { from: inquiry.status, to: newStatus, trigger });
-      } else {
-        logStep(requestId, "Optimistic lock failed — status changed concurrently", {
-          currentStatus: inquiry.status,
-          targetStatus: newStatus,
-        });
-      }
-    } else {
-      logStep(requestId, "No transition made", {
+    // Check if current status is valid for this trigger
+    if (!validFrom.includes(inquiry.status)) {
+      logStep(requestId, "No transition — status not in valid_from", {
         currentStatus: inquiry.status,
         trigger,
-        reason: newStatus ? "already in target status" : "transition not valid for current status",
+        validFrom,
+      });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          transitionMade: false,
+          previousStatus: inquiry.status,
+          newStatus: inquiry.status,
+          trigger,
+          requestId,
+          _version: VERSION,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Walk through intermediate statuses
+    const { finalStatus, steps } = await walkTransitions(
+      supabase,
+      inquiryId,
+      inquiry.status,
+      targetStatus,
+      requestId,
+    );
+
+    const transitionMade = steps > 0;
+
+    // Log a single summary event for the overall transition
+    if (transitionMade) {
+      await supabase.from("concierge_case_events").insert({
+        inquiry_id: inquiryId,
+        event_type: "status_changed",
+        event_data: {
+          from_status: inquiry.status,
+          to_status: finalStatus,
+          trigger,
+          auto: true,
+          steps,
+        },
+        actor_id: actorId || null,
+        actor_type: actorType,
       });
     }
 
@@ -186,8 +231,9 @@ Deno.serve(async (req) => {
         success: true,
         transitionMade,
         previousStatus: inquiry.status,
-        newStatus: newStatus || inquiry.status,
+        newStatus: finalStatus,
         trigger,
+        steps,
         requestId,
         _version: VERSION,
       }),
