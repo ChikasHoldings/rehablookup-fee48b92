@@ -72,6 +72,8 @@ const SAFE_PREFERENCE_FIELDS = new Set([
 interface ConciergeInquiry {
   id: string;
   user_name?: string;
+  user_email?: string;
+  user_phone?: string;
   level_of_care?: string | null;
   payment_type?: string | null;
   timeline_urgency?: string | null;
@@ -82,6 +84,8 @@ interface ConciergeInquiry {
   gender?: string | null;
   primary_concern?: string | null;
   insurance_carrier?: string | null;
+  insurance_member_id?: string | null;
+  insurance_group_number?: string | null;
   detox_needed?: string | null;
   co_occurring_concerns?: unknown | null;
   substance_use_duration?: string | null;
@@ -105,6 +109,11 @@ interface ConciergeInquiry {
   assessment_preference?: string | null;
   amenity_preferences?: unknown | null;
   notes?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  decision_maker_name?: string | null;
+  decision_maker_phone?: string | null;
+  relationship_to_seeker?: string | null;
   created_at?: string;
 }
 
