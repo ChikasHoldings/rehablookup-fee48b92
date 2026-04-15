@@ -236,7 +236,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap }: In
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [lead, unlockData, distributions, relatedPlacement, assignedFacility, facilityMap]);
 
-  const tabs = [
+  if (!lead) return null;
     { value: "overview", label: "Overview", icon: Eye },
     { value: "timeline", label: "Timeline", icon: Activity, badge: timeline.length },
     { value: "notes", label: "Notes", icon: StickyNote, badge: leadNotes?.length || 0 },
