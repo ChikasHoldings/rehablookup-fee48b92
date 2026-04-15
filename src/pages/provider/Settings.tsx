@@ -324,6 +324,7 @@ export default function ProviderSettingsPage() {
       setShowUnsavedDialog(true);
     } else {
       setActiveTab(newTab);
+      setSearchParams({ tab: newTab }, { replace: true });
     }
   }, [hasUnsavedChanges, activeTab]);
 
@@ -347,6 +348,7 @@ export default function ProviderSettingsPage() {
     }
     if (pendingTab) {
       setActiveTab(pendingTab);
+      setSearchParams({ tab: pendingTab }, { replace: true });
     }
     setShowUnsavedDialog(false);
     setPendingTab(null);
