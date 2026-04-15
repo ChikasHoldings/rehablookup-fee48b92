@@ -437,13 +437,6 @@ Deno.serve(async (req) => {
       logStep(requestId, "Inquiry created successfully", { inquiryId, userId: effectiveUserId });
     }
 
-    if (insertError) {
-      logStep(requestId, "Insert error", { error: insertError.message });
-      throw new Error(`Failed to create inquiry: ${insertError.message}`);
-    }
-
-    logStep(requestId, "Inquiry created successfully", { inquiryId: inquiry.id, userId: effectiveUserId });
-
     // Create admin notification so admins see new placements in the dashboard
     try {
       await supabase.from('admin_notifications').insert({
@@ -451,7 +444,7 @@ Deno.serve(async (req) => {
         title: 'New Placement Request',
         message: `New concierge placement from ${sanitizedName} — ${sanitizeString(intakeData.primaryConcern, 100) || 'General'} | ${sanitizeString(intakeData.desiredState, 50) || 'No state pref'} | ${sanitizeString(intakeData.timeline, 50) || 'Flexible'}`,
         metadata: {
-          inquiry_id: inquiry.id,
+          inquiry_id: inquiryId,
           seeker_name: sanitizedName,
           primary_concern: sanitizeString(intakeData.primaryConcern, 100),
           level_of_care: sanitizeString(intakeData.levelOfCare, 50),
@@ -468,7 +461,7 @@ Deno.serve(async (req) => {
     // Log case creation event for timeline
     try {
       await supabase.from('concierge_case_events').insert({
-        inquiry_id: inquiry.id,
+        inquiry_id: inquiryId,
         event_type: 'case_created',
         event_data: { 
           source: effectiveUserId ? 'account_concierge' : 'public_concierge',
@@ -491,7 +484,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           type: 'intake_received',
-          inquiryId: inquiry.id,
+          inquiryId: inquiryId,
         }),
       });
       logStep(requestId, "Intake received notification sent");
@@ -502,7 +495,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        inquiryId: inquiry.id,
+        inquiryId: inquiryId,
         alreadySubmitted: false,
         requestId,
         _version: VERSION,
