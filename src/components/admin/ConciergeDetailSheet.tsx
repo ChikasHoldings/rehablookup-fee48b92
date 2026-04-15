@@ -28,6 +28,14 @@ import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
 
+interface ConciergeDetailSheetProps {
+  caseData: ConciergeInquiry | undefined;
+  open: boolean;
+  onClose: () => void;
+  onRefresh: () => void;
+  initialTab?: string;
+}
+
 export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSheetProps>(
   function ConciergeDetailSheet({ caseData, open, onClose, onRefresh, initialTab }, ref) {
   const { adminRole, isSuperAdmin, user } = useAdminAuth();
