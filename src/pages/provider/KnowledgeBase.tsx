@@ -983,7 +983,7 @@ export default function ProviderKnowledgeBasePage() {
                   <p className="text-sm text-muted-foreground mt-1">{selectedArticle.excerpt}</p>
                 </DialogHeader>
 
-                <ScrollArea className="flex-1">
+                <div className="flex-1 overflow-y-auto">
                   <div className="px-6 py-5">
                     <ArticleRenderer content={selectedArticle.content} />
 
@@ -1049,7 +1049,7 @@ export default function ProviderKnowledgeBasePage() {
                       );
                     })()}
                   </div>
-                </ScrollArea>
+                </div>
               </>
             )}
           </DialogContent>
