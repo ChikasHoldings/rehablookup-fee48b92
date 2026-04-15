@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   CheckCircle, Ban, Star, Shield, RefreshCw, ExternalLink,
   MapPin, Phone, Globe, Mail, Image, Flag, ZoomIn, AlertTriangle,
   MessageSquare, Wallet, Users, Handshake, LayoutList,
   BadgeCheck, Crown, Eye, MousePointerClick, Monitor,
+  Calendar, Clock, Building2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,18 @@ export function ProviderOverviewTab({
     },
   });
 
+  // Fetch unlock count
+  const { data: unlockCount } = useQuery({
+    queryKey: ["admin-provider-unlock-count", provider.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("lead_unlocks")
+        .select("id", { count: "exact", head: true })
+        .eq("facility_id", provider.id);
+      return count || 0;
+    },
+  });
+
   const isImageFlagged = (url: string) => flaggedImages?.some((f) => f.image_url === url) || false;
 
   return (
@@ -134,6 +147,49 @@ export function ProviderOverviewTab({
 
       <Separator />
 
+      {/* Account Summary */}
+      <div>
+        <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide text-muted-foreground">Account Summary</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="h-3 w-3" />Organization</p>
+            <p className="font-medium text-sm truncate">{provider.name}</p>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" />Account Owner</p>
+            <p className="font-medium text-sm truncate">
+              {providerProfile?.first_name && providerProfile?.last_name
+                ? `${providerProfile.first_name} ${providerProfile.last_name}`
+                : "—"}
+            </p>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground flex items-center gap-1"><Crown className="h-3 w-3" />Membership</p>
+            <p className="font-medium text-sm">
+              {proSubscription ? (
+                <span className="text-amber-600">Pro — ${proSubscription.price_cents ? (proSubscription.price_cents / 100).toFixed(0) : "—"}/mo</span>
+              ) : (
+                <span className="text-muted-foreground">Free Tier</span>
+              )}
+            </p>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" />Signup Date</p>
+            <p className="font-medium text-sm">{format(new Date(provider.created_at), "PPP")}</p>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />Last Updated</p>
+            <p className="font-medium text-sm">{formatDistanceToNow(new Date(provider.updated_at), { addSuffix: true })}</p>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground flex items-center gap-1"><LayoutList className="h-3 w-3" />Facility Type</p>
+            <p className="font-medium text-sm truncate">{provider.facility_type}</p>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KPICard icon={Wallet} label="Credit Balance" value={`$${((creditBalance || 0) / 100).toFixed(2)}`} color="text-emerald-500" />
@@ -142,12 +198,13 @@ export function ProviderOverviewTab({
         <KPICard icon={LayoutList} label="Facilities" value={String(providerFacilities?.length || 0)} color="text-primary" />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
         <KPICard icon={Eye} label="Impressions" value={String(engagementMetrics?.impressions || 0)} color="text-muted-foreground" small />
         <KPICard icon={Monitor} label="Profile Views" value={String(engagementMetrics?.profile_views || 0)} color="text-blue-400" small />
         <KPICard icon={Phone} label="Click-to-Call" value={String(engagementMetrics?.click_to_call || 0)} color="text-emerald-400" small />
-        <KPICard icon={MousePointerClick} label="Website Clicks" value={String(engagementMetrics?.website_clicks || 0)} color="text-amber-400" small />
+        <KPICard icon={MousePointerClick} label="Web Clicks" value={String(engagementMetrics?.website_clicks || 0)} color="text-amber-400" small />
         <KPICard icon={Star} label="Reviews" value={String(reviewCount || 0)} color="text-orange-400" small />
+        <KPICard icon={BadgeCheck} label="Unlocked" value={String(unlockCount || 0)} color="text-chart-3" small />
       </div>
 
       <Separator />
@@ -261,20 +318,6 @@ export function ProviderOverviewTab({
             </div>
           </div>
         )}
-      </div>
-
-      <Separator />
-
-      {/* Timestamps */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="p-3 bg-muted/30 rounded-lg">
-          <p className="text-xs text-muted-foreground">Created</p>
-          <p className="font-medium text-sm">{format(new Date(provider.created_at), "PPP")}</p>
-        </div>
-        <div className="p-3 bg-muted/30 rounded-lg">
-          <p className="text-xs text-muted-foreground">Last Updated</p>
-          <p className="font-medium text-sm">{format(new Date(provider.updated_at), "PPP")}</p>
-        </div>
       </div>
 
       <Separator />
