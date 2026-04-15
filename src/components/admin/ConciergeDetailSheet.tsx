@@ -225,7 +225,8 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
             <TabsContent value="tours" className="m-0">
               <ToursTab caseData={caseData} />
             </TabsContent>
-            <TabsContent value="admission" className="m-0">
+            <TabsContent value="admission" className="m-0 space-y-4">
+              <AdminConfirmPlacement caseData={caseData} onRefresh={onRefresh} />
               <AdmissionCoordinationCard caseData={caseData} onRefresh={onRefresh} />
             </TabsContent>
             {canManageBilling && (
