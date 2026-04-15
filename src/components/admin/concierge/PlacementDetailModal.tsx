@@ -26,6 +26,7 @@ import { MessagesTab } from "./MessagesTab";
 import { ToursTab } from "./ToursTab";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
 import { PlacementNextSteps } from "./PlacementNextSteps";
+import { StageActionBar } from "./StageActionBar";
 import { getCaseBlocker } from "./placementActionUtils";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
@@ -178,6 +179,7 @@ export function PlacementDetailModal({
     { value: "messages", icon: MessageSquare, label: "Coord", badge: unreadMsgCount || 0 },
     { value: "tours", icon: CalendarCheck, label: "Tours", badge: activeToursCount || 0 },
     ...(canManageBilling ? [{ value: "billing", icon: DollarSign, label: "Billing", badge: 0 }] : []),
+    { value: "timeline", icon: History, label: "Timeline", badge: 0 },
     { value: "actions", icon: Settings, label: "Manage", badge: 0 },
   ];
 
