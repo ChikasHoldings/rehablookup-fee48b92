@@ -76,7 +76,7 @@ export function SeekerAuditLogTab({ userId }: SeekerAuditLogTabProps) {
       <div className="p-5 text-center py-16">
         <FileText className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
         <p className="text-muted-foreground font-medium">No audit entries</p>
-        <p className="text-xs text-muted-foreground mt-1">Audit events will appear as activities occur for this seeker.</p>
+        <p className="text-xs text-muted-foreground mt-1">Audit events will appear as activities occur for this client.</p>
       </div>
     );
   }

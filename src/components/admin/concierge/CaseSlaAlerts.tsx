@@ -126,7 +126,7 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
       });
     }
 
-    // 8. Tour not scheduled — seeker selected but no tour
+    // 8. Tour not scheduled — client selected but no tour
     if (
       ["seeker_selected", "admission_in_progress", "in_contact"].includes(caseData.status) &&
       (!caseData.tour_coordination_status || caseData.tour_coordination_status === "none" || caseData.tour_coordination_status === "not_started") &&

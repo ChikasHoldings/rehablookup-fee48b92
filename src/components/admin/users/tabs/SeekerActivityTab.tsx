@@ -88,7 +88,7 @@ export function SeekerActivityTab({ userId }: SeekerActivityTabProps) {
       <div className="p-5 text-center py-16">
         <Clock className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
         <p className="text-muted-foreground font-medium">No activity recorded</p>
-        <p className="text-xs text-muted-foreground mt-1">Activity events will appear here as the seeker interacts with the platform.</p>
+        <p className="text-xs text-muted-foreground mt-1">Activity events will appear here as the client interacts with the platform.</p>
       </div>
     );
   }
