@@ -52,6 +52,16 @@ export function PlacementDetailModal({
   const isAdvisor = adminRole === "advisor";
   const canManageBilling = !isAdvisor;
   const [activeTab, setActiveTab] = useState("overview");
+  // Map standard tab names (from getCaseNextSteps) to this modal's 4-tab system
+  const mapTab = (tab: string): string => {
+    const TAB_MAP: Record<string, string> = {
+      matching: "providers", intros: "providers", decision: "providers",
+      seeker: "overview", tours: "admission", billing: "admission",
+      actions: "manage", timeline: "manage",
+    };
+    return TAB_MAP[tab] || tab;
+  };
+  const handleSwitchTab = (tab: string) => setActiveTab(mapTab(tab));
 
   useEffect(() => { if (open) setActiveTab("overview"); }, [open, caseData?.id]);
 
