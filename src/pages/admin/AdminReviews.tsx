@@ -741,7 +741,7 @@ export default function AdminReviews() {
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-4" onClick={(e) => e.stopPropagation()}>
                       {review.review_text ? (
                         <p className="text-sm bg-muted/50 p-3 rounded-lg">{review.review_text}</p>
                       ) : (
