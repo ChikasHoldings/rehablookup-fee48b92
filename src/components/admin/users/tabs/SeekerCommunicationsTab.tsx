@@ -140,7 +140,7 @@ export function SeekerCommunicationsTab({ userId }: SeekerCommunicationsTabProps
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{comm.content}</p>
-            {comm.attachment && <p className="text-xs text-primary mt-0.5">📎 {comm.attachment}</p>}
+            {comm.type === "message" && (comm as any).attachment && <p className="text-xs text-primary mt-0.5">📎 {(comm as any).attachment}</p>}
           </div>
           <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
             {formatDistanceToNow(new Date(comm.date), { addSuffix: true })}
