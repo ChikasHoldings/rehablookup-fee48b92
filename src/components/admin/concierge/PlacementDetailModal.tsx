@@ -25,6 +25,7 @@ import { MessagesTab } from "./MessagesTab";
 import { ToursTab } from "./ToursTab";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
 import { PlacementNextSteps } from "./PlacementNextSteps";
+import { getCaseBlocker } from "./placementActionUtils";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 
