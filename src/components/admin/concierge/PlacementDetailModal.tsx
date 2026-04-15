@@ -338,6 +338,8 @@ function InlineAdvisorAssign({ caseData, onRefresh }: { caseData: ConciergeInqui
     </div>
   );
 }
+/* ═══════════════════════════════════════════
+   OVERVIEW TAB
    ═══════════════════════════════════════════ */
 function OverviewContent({ caseData, advisorName, placedFacility, onSwitchTab }: {
   caseData: ConciergeInquiry; advisorName: string; placedFacility: any; onSwitchTab: (t: string) => void;
