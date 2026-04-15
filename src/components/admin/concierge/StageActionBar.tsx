@@ -1,13 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useCaseTransition } from "@/hooks/useCaseTransition";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import {
-  ClipboardCheck, Play, Send, MessageSquare, Bell, CalendarCheck,
-  CheckCircle, DollarSign, Loader2,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { getStageConfig, getNextStage, PIPELINE_STAGES, type PlacementStage } from "./placementPipelineConfig";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
@@ -29,80 +23,81 @@ interface StageAction {
 }
 
 function getStageActions(c: ConciergeInquiry): StageAction[] {
+  const status = c.status as PlacementStage;
+  const config = getStageConfig(status);
+  const next = getNextStage(status);
+
+  if (status === "closed" || status === "completed") return [];
+
   const hasAdvisor = !!c.assigned_advisor_id;
-  const hasMatches = (c.match_count || 0) > 0;
-  const hasIntros = (c.introductions_sent_count || 0) > 0;
-  const feeSettled = c.provider_fee_status === "paid" || c.provider_fee_status === "waived";
 
-  switch (c.status) {
-    case "new":
+  switch (status) {
+    case "intake_submitted":
       return [
-        { label: "Review Intake", icon: ClipboardCheck, variant: "default", navigateTo: "seeker" },
+        { label: "Review Intake", icon: config.icon, variant: "default", navigateTo: "overview" },
+        { label: "Mark Reviewed", icon: config.icon, variant: "outline", advanceTo: "intake_reviewed", eventType: "intake_reviewed" },
       ];
 
-    case "reviewing":
-      if (!hasAdvisor) {
-        return [
-          { label: "Assign Advisor", icon: Play, variant: "default", navigateTo: "actions" },
-        ];
-      }
+    case "intake_reviewed":
       return [
-        { label: "Begin Matching", icon: Play, variant: "default", advanceTo: "matching", eventType: "matching_started" },
+        { label: "Assign Advisor", icon: config.icon, variant: "default", navigateTo: "actions" },
+        ...(hasAdvisor ? [{ label: "Advance to Assigned", icon: config.icon, variant: "outline" as const, advanceTo: "advisor_assigned" as string, eventType: "advisor_assigned" }] : []),
       ];
 
-    case "matching":
-      if (!hasMatches) {
-        return [
-          { label: "Run Matching", icon: Play, variant: "default", navigateTo: "matching" },
-        ];
-      }
+    case "advisor_assigned":
       return [
-        { label: "Send to Providers", icon: Send, variant: "default", navigateTo: "intros" },
+        { label: "Run Matching", icon: config.icon, variant: "default", navigateTo: "matching" },
+        { label: "Begin Matching", icon: config.icon, variant: "outline", advanceTo: "matching_providers", eventType: "matching_started" },
       ];
 
-    case "matched":
-      if (!hasIntros) {
-        return [
-          { label: "Send Introductions", icon: Send, variant: "default", navigateTo: "intros" },
-        ];
-      }
+    case "matching_providers":
       return [
-        { label: "Review Responses", icon: MessageSquare, variant: "default", navigateTo: "intros" },
-        { label: "Advance to Intros Sent", icon: Send, variant: "outline", advanceTo: "introductions_sent", eventType: "introductions_advanced" },
+        { label: "Review Matches", icon: config.icon, variant: "default", navigateTo: "matching" },
+        { label: "Start Pre-Qual", icon: config.icon, variant: "outline", advanceTo: "provider_prequalification", eventType: "prequalification_started" },
       ];
 
-    case "introductions_sent":
+    case "provider_prequalification":
       return [
-        { label: "Review Responses", icon: MessageSquare, variant: "default", navigateTo: "decision" },
-        { label: "Advance to In Contact", icon: CheckCircle, variant: "outline", advanceTo: "in_contact", eventType: "contact_started" },
+        { label: "Send to Providers", icon: config.icon, variant: "default", navigateTo: "introductions" },
+        { label: "Providers Accepted", icon: config.icon, variant: "outline", advanceTo: "providers_accepted", eventType: "providers_accepted" },
       ];
 
-    case "in_contact":
-      if (!c.seeker_confirmed) {
-        return [
-          { label: "Follow Up Seeker", icon: Bell, variant: "default", navigateTo: "decision" },
-          { label: "Schedule Tour", icon: CalendarCheck, variant: "outline", navigateTo: "tours" },
-        ];
-      }
+    case "providers_accepted":
       return [
-        { label: "Mark Admitted", icon: CheckCircle, variant: "default", advanceTo: "placed",
+        { label: "Present to Seeker", icon: config.icon, variant: "default", navigateTo: "introductions" },
+        { label: "Mark Presented", icon: config.icon, variant: "outline", advanceTo: "presented_to_seeker", eventType: "presented_to_seeker" },
+      ];
+
+    case "presented_to_seeker":
+      return [
+        { label: "Check Messages", icon: config.icon, variant: "default", navigateTo: "messages" },
+        { label: "Seeker Selected", icon: config.icon, variant: "outline", advanceTo: "seeker_selected", eventType: "seeker_selected" },
+      ];
+
+    case "seeker_selected":
+      return [
+        { label: "Schedule Tour", icon: config.icon, variant: "default", navigateTo: "tours" },
+        { label: "Begin Admission", icon: config.icon, variant: "outline", advanceTo: "admission_in_progress", eventType: "admission_started" },
+      ];
+
+    case "admission_in_progress":
+      return [
+        { label: "Confirm Admitted", icon: config.icon, variant: "default", advanceTo: "admitted",
           extraFields: { placement_confirmed: true, placement_confirmed_at: new Date().toISOString(), admission_status: "admitted" },
           eventType: "placement_confirmed" },
-        { label: "Schedule Tour", icon: CalendarCheck, variant: "outline", navigateTo: "tours" },
       ];
 
-    case "placed":
-      if (!feeSettled) {
-        return [
-          { label: "Complete Billing", icon: DollarSign, variant: "default", navigateTo: "billing" },
-        ];
-      }
+    case "admitted":
       return [
-        { label: "View Billing", icon: DollarSign, variant: "outline", navigateTo: "billing" },
+        { label: "Go to Billing", icon: config.icon, variant: "default", navigateTo: "billing" },
+        { label: "Mark Billed", icon: config.icon, variant: "outline", advanceTo: "billed", eventType: "invoice_sent" },
       ];
 
-    case "closed":
-      return [];
+    case "billed":
+      return [
+        { label: "View Billing", icon: config.icon, variant: "default", navigateTo: "billing" },
+        { label: "Mark Completed", icon: config.icon, variant: "outline", advanceTo: "completed", eventType: "case_completed" },
+      ];
 
     default:
       return [];

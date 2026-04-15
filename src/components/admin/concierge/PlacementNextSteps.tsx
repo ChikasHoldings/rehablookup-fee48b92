@@ -1,10 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowRight, Clock, AlertTriangle,
-} from "lucide-react";
+import { ArrowRight, Clock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getCaseNextSteps, type CaseAction, type ActionPriority, type ActionOwner } from "./placementActionUtils";
+import { getCaseNextSteps, type CaseAction, type ActionPriority } from "./placementActionUtils";
+import { getStageIndex } from "./placementPipelineConfig";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
@@ -32,7 +31,17 @@ const PRIORITY_STYLES: Record<ActionPriority, { border: string; bg: string; icon
   done: { border: "border-success/30", bg: "bg-success/5", icon: "bg-success/10 text-success" },
 };
 
-/** Compute how many hours since last update */
+const TAB_LABELS: Record<string, string> = {
+  overview: "Overview",
+  matching: "Matching",
+  introductions: "Intros",
+  messages: "Messages",
+  tours: "Tours",
+  billing: "Billing",
+  timeline: "Timeline",
+  actions: "Actions",
+};
+
 function getHoursSinceUpdate(caseData: ConciergeInquiry): number {
   const lastUpdate = caseData.updated_at || caseData.created_at;
   if (!lastUpdate) return 0;
@@ -42,31 +51,26 @@ function getHoursSinceUpdate(caseData: ConciergeInquiry): number {
 function getUrgencyInfo(caseData: ConciergeInquiry): { label: string; level: "overdue" | "urgent" | "normal" } | null {
   const hours = getHoursSinceUpdate(caseData);
   const status = caseData.status;
+  if (status === "closed" || status === "completed") return null;
 
-  // Closed / placed+paid = no urgency
-  if (status === "closed") return null;
-  if (status === "placed" && (caseData.provider_fee_status === "paid" || caseData.provider_fee_status === "waived")) return null;
-
-  // SLA thresholds by status
   const SLA_HOURS: Record<string, number> = {
-    new: 4,
-    reviewing: 24,
-    matching: 48,
-    matched: 24,
-    introductions_sent: 48,
-    in_contact: 72,
-    placed: 168, // 7 days for billing
+    intake_submitted: 4,
+    intake_reviewed: 24,
+    advisor_assigned: 24,
+    matching_providers: 48,
+    provider_prequalification: 24,
+    providers_accepted: 24,
+    presented_to_seeker: 48,
+    seeker_selected: 72,
+    admission_in_progress: 72,
+    admitted: 168,
+    billed: 168,
   };
 
   const sla = SLA_HOURS[status];
   if (!sla) return null;
-
-  if (hours > sla) {
-    return { label: `Overdue — ${Math.round(hours - sla)}h past SLA`, level: "overdue" };
-  }
-  if (hours > sla * 0.75) {
-    return { label: `Due soon — ${Math.round(sla - hours)}h remaining`, level: "urgent" };
-  }
+  if (hours > sla) return { label: `Overdue — ${Math.round(hours - sla)}h past SLA`, level: "overdue" };
+  if (hours > sla * 0.75) return { label: `Due soon — ${Math.round(sla - hours)}h remaining`, level: "urgent" };
   return null;
 }
 
@@ -87,24 +91,15 @@ export function PlacementNextSteps({ caseData, introsCount, toursCount, onSwitch
         : isOverdue ? "border-orange-400/40 bg-orange-50/50 dark:bg-orange-950/20"
         : "border-primary/20 bg-primary/5"
     )}>
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {hasBlocker ? (
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-          ) : isOverdue ? (
-            <Clock className="h-4 w-4 text-orange-500" />
-          ) : (
-            <ArrowRight className="h-4 w-4 text-primary" />
-          )}
+          {hasBlocker ? <AlertTriangle className="h-4 w-4 text-destructive" />
+            : isOverdue ? <Clock className="h-4 w-4 text-orange-500" />
+            : <ArrowRight className="h-4 w-4 text-primary" />}
           <h4 className={cn("text-sm font-semibold",
-            hasBlocker ? "text-destructive"
-              : isOverdue ? "text-orange-600 dark:text-orange-400"
-              : "text-primary"
+            hasBlocker ? "text-destructive" : isOverdue ? "text-orange-600 dark:text-orange-400" : "text-primary"
           )}>
-            {hasBlocker ? "Blocked — Action Required"
-              : isOverdue ? "Follow-Up Overdue"
-              : "Next Action"}
+            {hasBlocker ? "Blocked — Action Required" : isOverdue ? "Follow-Up Overdue" : "Next Action"}
           </h4>
         </div>
         {urgency && (
@@ -119,10 +114,8 @@ export function PlacementNextSteps({ caseData, introsCount, toursCount, onSwitch
         )}
       </div>
 
-      {/* Primary action — large, prominent */}
       <PrimaryActionCard step={primaryStep} onSwitchTab={onSwitchTab} isOverdue={isOverdue} />
 
-      {/* Secondary actions — compact list */}
       {remainingSteps.length > 0 && (
         <div className="space-y-1.5 pt-1 border-t border-border/50">
           <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider pt-1">Also pending</p>
@@ -145,9 +138,7 @@ function PrimaryActionCard({ step, onSwitchTab, isOverdue }: { step: CaseAction;
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-semibold">{step.label}</span>
-          {step.priority === "blocker" && (
-            <Badge variant="destructive" className="text-[9px] px-1.5 h-4">Blocker</Badge>
-          )}
+          {step.priority === "blocker" && <Badge variant="destructive" className="text-[9px] px-1.5 h-4">Blocker</Badge>}
           <Badge variant="outline" className={cn("text-[9px] px-1.5 h-4", OWNER_COLORS[step.owner])}>
             {step.ownerLabel}
           </Badge>
@@ -159,7 +150,7 @@ function PrimaryActionCard({ step, onSwitchTab, isOverdue }: { step: CaseAction;
           className="mt-2 h-7 text-xs gap-1"
           onClick={() => onSwitchTab(step.tab)}
         >
-          Go to {step.tab === "matching" ? "Placement" : step.tab === "introductions" ? "Intros" : step.tab === "billing" ? "Billing" : step.tab === "actions" ? "Actions" : step.tab === "tours" ? "Tours" : step.tab === "messages" ? "Messages" : step.tab}
+          Go to {TAB_LABELS[step.tab] || step.tab}
           <ArrowRight className="h-3 w-3" />
         </Button>
       </div>
