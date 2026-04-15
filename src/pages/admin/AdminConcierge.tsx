@@ -13,12 +13,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Search, RefreshCw, UserCheck, HeartHandshake, Building2, Receipt,
-  Globe, Flag, Filter, DollarSign, FileText, LayoutGrid, List,
-  CalendarCheck, Clock, Users, Send, CheckCircle, XCircle, Loader2,
+  Search, RefreshCw, HeartHandshake, Building2, Receipt,
+  Globe, Flag, DollarSign, LayoutGrid, List,
+  Clock, Users, CheckCircle,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { PlacementPipelineBoard } from "@/components/admin/concierge/PlacementPipelineBoard";
 import { PlacementOpsDashboard } from "@/components/admin/concierge/PlacementOpsDashboard";
 import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvidersTab";
 import { AllInvoicesTab } from "@/components/admin/concierge/AllInvoicesTab";
@@ -26,10 +25,8 @@ import { InternationalCasesTab } from "@/components/admin/concierge/Internationa
 import { PlacementDetailModal } from "@/components/admin/concierge/PlacementDetailModal";
 import { getCaseNextAction } from "@/components/admin/concierge/placementActionUtils";
 import { CaseAlertIcons } from "@/components/admin/concierge/CaseSlaAlerts";
-import { STATUS_CONFIG } from "@/components/admin/concierge/placementPipelineConfig";
+import { VISUAL_STAGES, getVisualStage, STATUS_CONFIG } from "@/components/admin/concierge/placementPipelineConfig";
 import { cn } from "@/lib/utils";
-
-type CaseStatus = string;
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -47,12 +44,11 @@ export default function AdminConcierge() {
   const [activeTab, setActiveTab] = useState("domestic");
   const [searchInput, setSearchInput] = useState("");
   const searchQuery = useDebounce(searchInput, 350);
-  const [statusFilter, setStatusFilter] = useState<CaseStatus>("all");
+  const [stageFilter, setStageFilter] = useState<string>("all");
   const [advisorFilter, setAdvisorFilter] = useState<string>("all");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"dashboard" | "pipeline" | "table">("dashboard");
+  const [viewMode, setViewMode] = useState<"table" | "dashboard">("table");
 
-  // Set advisor filter for advisor role
   useEffect(() => {
     if (isAdvisor && user?.id) setAdvisorFilter(user.id);
   }, [isAdvisor, user?.id]);
@@ -81,16 +77,12 @@ export default function AdminConcierge() {
     },
   });
 
-  // Fetch facility names for placed cases
   const placedFacilityIds = [...new Set((cases || []).map(c => c.placed_facility_id).filter(Boolean))];
   const { data: facilityMap } = useQuery({
     queryKey: ["admin-placement-facilities", placedFacilityIds],
     queryFn: async () => {
       if (!placedFacilityIds.length) return {};
-      const { data } = await supabase
-        .from("facilities")
-        .select("id, name, city, state")
-        .in("id", placedFacilityIds as string[]);
+      const { data } = await supabase.from("facilities").select("id, name, city, state").in("id", placedFacilityIds as string[]);
       const map: Record<string, any> = {};
       data?.forEach(f => { map[f.id] = f; });
       return map;
@@ -101,10 +93,7 @@ export default function AdminConcierge() {
   const { data: networkCount } = useQuery({
     queryKey: ["admin-network-provider-count"],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("facilities")
-        .select("id", { count: "exact", head: true })
-        .eq("concierge_network_opted_in", true);
+      const { count } = await supabase.from("facilities").select("id", { count: "exact", head: true }).eq("concierge_network_opted_in", true);
       return count || 0;
     },
   });
@@ -112,15 +101,11 @@ export default function AdminConcierge() {
   const { data: internationalCount } = useQuery({
     queryKey: ["admin-international-count"],
     queryFn: async () => {
-      const { count } = await supabase
-        .from("international_placement_cases")
-        .select("id", { count: "exact", head: true })
-        .not("status", "eq", "closed");
+      const { count } = await supabase.from("international_placement_cases").select("id", { count: "exact", head: true }).not("status", "eq", "closed");
       return count || 0;
     },
   });
 
-  // Selected case full data
   const { data: selectedCase } = useQuery({
     queryKey: ["admin-concierge-case-detail", selectedCaseId],
     queryFn: async () => {
@@ -136,7 +121,6 @@ export default function AdminConcierge() {
     enabled: !!selectedCaseId,
   });
 
-  // Advisor name helper
   const getAdvisorName = (advisorId: string | null) => {
     if (!advisorId) return "—";
     const a = adminStaff?.find(s => s.user_id === advisorId);
@@ -148,9 +132,13 @@ export default function AdminConcierge() {
     advisorNames[a.user_id] = a.display_name || `${a.first_name} ${a.last_name}`;
   });
 
-  // Filtering
+  // Filtering by visual stage group
   const filteredCases = (cases || []).filter(c => {
-    if (statusFilter !== "all" && c.status !== statusFilter) return false;
+    if (stageFilter !== "all" && stageFilter !== "closed") {
+      const vs = getVisualStage(c.status);
+      if (vs.key !== stageFilter) return false;
+    }
+    if (stageFilter === "closed" && c.status !== "closed") return false;
     if (advisorFilter === "unassigned" && c.assigned_advisor_id !== null) return false;
     if (advisorFilter !== "all" && advisorFilter !== "unassigned" && c.assigned_advisor_id !== advisorFilter) return false;
     if (searchQuery) {
@@ -169,40 +157,32 @@ export default function AdminConcierge() {
   const allCases = cases || [];
   const totalCases = allCases.length;
   const activeCases = allCases.filter(c => !["completed", "closed"].includes(c.status)).length;
-  const awaitingAdvisor = allCases.filter(c => !c.assigned_advisor_id && !["closed", "completed"].includes(c.status)).length;
-  const placedCases = allCases.filter(c => c.status === "admitted" || c.status === "completed").length;
-  const pendingBilling = allCases.filter(c => c.status === "admitted" && c.provider_fee_status !== "paid" && c.provider_fee_status !== "waived").length;
-
+  const awaitingAction = allCases.filter(c => {
+    const action = getCaseNextAction(c);
+    return action.priority === "blocker" || action.priority === "high";
+  }).length;
+  const completedCases = allCases.filter(c => c.status === "completed" || c.status === "admitted").length;
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Page Header */}
       <AdminPageHeader
         icon={HeartHandshake}
         iconGradient="bg-gradient-to-br from-primary to-primary/70"
-        title="Placement Operations"
-        subtitle="End-to-end placement lifecycle management — intake, matching, admission & billing"
+        title="Placement Command Center"
+        subtitle="Manage all placements from intake to completion"
         badges={[
           { label: "Active", value: activeCases, className: "bg-primary/10 text-primary" },
-          { label: "Placed", value: placedCases, className: "bg-success/10 text-success" },
+          { label: "Completed", value: completedCases, className: "bg-success/10 text-success" },
         ]}
         actions={
           <div className="flex items-center gap-2">
             {!isAdvisor && (
-              <>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/admin/placement-revenue">
-                    <DollarSign className="h-3.5 w-3.5 mr-1.5" />
-                    <span className="text-xs sm:text-sm">Revenue</span>
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/admin/international/agreement">
-                    <FileText className="h-3.5 w-3.5 mr-1.5" />
-                    <span className="text-xs sm:text-sm hidden sm:inline">Agreement</span>
-                  </Link>
-                </Button>
-              </>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin/placement-revenue">
+                  <DollarSign className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="text-xs sm:text-sm">Revenue</span>
+                </Link>
+              </Button>
             )}
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
@@ -212,7 +192,6 @@ export default function AdminConcierge() {
         }
       />
 
-      {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
           <TabsList className={`inline-flex w-auto sm:grid sm:w-full ${isAdvisor ? "sm:grid-cols-2 sm:max-w-xs" : "sm:grid-cols-4 sm:max-w-lg"}`}>
@@ -223,18 +202,14 @@ export default function AdminConcierge() {
             <TabsTrigger value="international" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
               <Globe className="h-3.5 w-3.5" />
               <span className="text-xs sm:text-sm">International</span>
-              {!!internationalCount && (
-                <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{internationalCount}</Badge>
-              )}
+              {!!internationalCount && <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{internationalCount}</Badge>}
             </TabsTrigger>
             {!isAdvisor && (
               <>
                 <TabsTrigger value="providers" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
                   <Building2 className="h-3.5 w-3.5" />
                   <span className="text-xs sm:text-sm">Network</span>
-                  {!!networkCount && (
-                    <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{networkCount}</Badge>
-                  )}
+                  {!!networkCount && <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{networkCount}</Badge>}
                 </TabsTrigger>
                 <TabsTrigger value="invoices" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
                   <Receipt className="h-3.5 w-3.5" />
@@ -246,42 +221,35 @@ export default function AdminConcierge() {
         </div>
 
         <TabsContent value="domestic" className="space-y-4">
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {/* KPI Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <AdminStatCard label="Total" value={isLoading ? "—" : totalCases} icon={HeartHandshake}
-              onClick={() => setStatusFilter("all")} active={statusFilter === "all"} />
-            <AdminStatCard label="Active" value={isLoading ? "—" : activeCases} icon={Clock} valueClassName="text-primary"
-              onClick={() => { setStatusFilter("all"); }} />
-            <AdminStatCard label="No Advisor" value={isLoading ? "—" : awaitingAdvisor} icon={Users} valueClassName="text-warning" />
-            <AdminStatCard label="Placed" value={isLoading ? "—" : placedCases} icon={CheckCircle} valueClassName="text-success"
-              onClick={() => setStatusFilter("placed")} active={statusFilter === "placed"} />
-            <AdminStatCard label="Pending Bill" value={isLoading ? "—" : pendingBilling} icon={DollarSign} valueClassName="text-warning" />
+              onClick={() => setStageFilter("all")} active={stageFilter === "all"} />
+            <AdminStatCard label="Active" value={isLoading ? "—" : activeCases} icon={Clock} valueClassName="text-primary" />
+            <AdminStatCard label="Needs Action" value={isLoading ? "—" : awaitingAction} icon={Users} valueClassName="text-warning" />
+            <AdminStatCard label="Placed" value={isLoading ? "—" : completedCases} icon={CheckCircle} valueClassName="text-success" />
           </div>
 
           {/* Filters */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border bg-card">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, email, phone, or ID..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-9"
-              />
+              <Input placeholder="Search by name, email, phone..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="pl-9" />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Status" />
+            <Select value={stageFilter} onValueChange={setStageFilter}>
+              <SelectTrigger className="w-full sm:w-[150px]">
+                <SelectValue placeholder="Stage" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                  <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                <SelectItem value="all">All Stages</SelectItem>
+                {VISUAL_STAGES.map(vs => (
+                  <SelectItem key={vs.key} value={vs.key}>{vs.label}</SelectItem>
                 ))}
+                <SelectItem value="closed">Closed</SelectItem>
               </SelectContent>
             </Select>
             <Select value={advisorFilter} onValueChange={setAdvisorFilter}>
-              <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectTrigger className="w-full sm:w-[150px]">
                 <SelectValue placeholder="Advisor" />
               </SelectTrigger>
               <SelectContent>
@@ -295,24 +263,15 @@ export default function AdminConcierge() {
               </SelectContent>
             </Select>
             <div className="flex items-center gap-2 self-start sm:self-auto">
-              <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-                {filteredCases.length} cases
-              </span>
+              <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">{filteredCases.length} cases</span>
               <div className="flex items-center border rounded-md overflow-hidden">
-                <Button variant={viewMode === "dashboard" ? "default" : "ghost"} size="sm"
-                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("dashboard")}
-                  title="Ops Dashboard">
-                  <CalendarCheck className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant={viewMode === "pipeline" ? "default" : "ghost"} size="sm"
-                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("pipeline")}
-                  title="Pipeline Board">
-                  <LayoutGrid className="h-3.5 w-3.5" />
-                </Button>
                 <Button variant={viewMode === "table" ? "default" : "ghost"} size="sm"
-                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("table")}
-                  title="Table View">
+                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("table")} title="Table View">
                   <List className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant={viewMode === "dashboard" ? "default" : "ghost"} size="sm"
+                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("dashboard")} title="Ops Dashboard">
+                  <LayoutGrid className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
@@ -327,15 +286,6 @@ export default function AdminConcierge() {
               isAdvisor={isAdvisor}
               currentAdvisorId={user?.id}
             />
-          ) : viewMode === "pipeline" ? (
-            <PlacementPipelineBoard
-              cases={filteredCases}
-              isLoading={isLoading}
-              onCaseClick={(id) => setSelectedCaseId(id)}
-              onRefresh={() => refetch()}
-              advisorNames={advisorNames}
-              isAdvisor={isAdvisor}
-            />
           ) : (
             <div className="rounded-xl border bg-card overflow-hidden">
               {isLoading ? (
@@ -346,7 +296,7 @@ export default function AdminConcierge() {
                 <div className="text-center py-16">
                   <HeartHandshake className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
                   <p className="text-muted-foreground font-medium">No cases found</p>
-                  <p className="text-xs text-muted-foreground mt-1">Try adjusting your filters or search.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Try adjusting your filters.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -364,14 +314,15 @@ export default function AdminConcierge() {
                     <tbody>
                       {filteredCases.map((c) => {
                         const nextAction = getCaseNextAction(c);
+                        const visualStage = getVisualStage(c.status);
                         return (
                           <tr key={c.id}
-                            className="border-b last:border-0 hover:bg-primary/5 cursor-pointer transition-colors group"
+                            className="border-b last:border-0 hover:bg-primary/5 cursor-pointer transition-colors"
                             onClick={() => setSelectedCaseId(c.id)}>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5 min-w-0">
                                 <div className={cn("h-2 w-2 rounded-full shrink-0",
-                                  c.status === "placed" ? "bg-success" :
+                                  c.status === "completed" ? "bg-success" :
                                   c.status === "closed" ? "bg-muted-foreground/30" :
                                   nextAction.priority === "blocker" ? "bg-destructive animate-pulse" :
                                   "bg-primary"
@@ -384,33 +335,25 @@ export default function AdminConcierge() {
                             </td>
                             <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                               {getAdvisorName(c.assigned_advisor_id) === "—" ? (
-                                <Badge variant="outline" className="text-[9px] bg-destructive/10 text-destructive border-destructive/30">
-                                  Unassigned
-                                </Badge>
+                                <Badge variant="outline" className="text-[9px] bg-destructive/10 text-destructive border-destructive/30">Unassigned</Badge>
                               ) : (
                                 <span>{getAdvisorName(c.assigned_advisor_id)}</span>
                               )}
                             </td>
                             <td className="px-4 py-3">
-                              <Badge variant="outline" className={cn("text-[10px]", STATUS_CONFIG[c.status]?.color || "")}>
-                                {STATUS_CONFIG[c.status]?.label || c.status}
+                              <Badge variant="outline" className={cn("text-[10px]", visualStage.badgeColor)}>
+                                {visualStage.label}
                               </Badge>
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-1.5">
-                                {nextAction.priority === "blocker" && (
-                                  <span className="h-2 w-2 rounded-full bg-destructive shrink-0" />
-                                )}
-                                {nextAction.priority === "done" && (
-                                  <CheckCircle className="h-3.5 w-3.5 text-success shrink-0" />
-                                )}
+                                {nextAction.priority === "blocker" && <span className="h-2 w-2 rounded-full bg-destructive shrink-0" />}
+                                {nextAction.priority === "done" && <CheckCircle className="h-3.5 w-3.5 text-success shrink-0" />}
                                 <span className={cn("text-xs whitespace-nowrap",
                                   nextAction.priority === "blocker" && "text-destructive font-medium",
                                   nextAction.priority === "high" && "font-medium",
                                   nextAction.priority === "done" && "text-muted-foreground"
-                                )}>
-                                  {nextAction.label}
-                                </span>
+                                )}>{nextAction.label}</span>
                               </div>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -445,7 +388,6 @@ export default function AdminConcierge() {
         </TabsContent>
       </Tabs>
 
-      {/* Detail Modal */}
       <PlacementDetailModal
         caseData={selectedCase}
         open={!!selectedCaseId}
