@@ -85,7 +85,7 @@ export function getCaseNextSteps(
   if (!isPaid && caseData.status !== "intake_submitted" && caseData.status !== "pending_intake") {
     steps.push({
       label: "Payment not received",
-      tab: "actions",
+      tab: "manage",
       icon: AlertTriangle,
       priority: "blocker",
       description: "Intake fee not yet paid. Avoid sending introductions until confirmed.",
@@ -97,7 +97,7 @@ export function getCaseNextSteps(
   if (!caseData.assigned_advisor_id && getStageIndex(caseData.status) >= 2) {
     steps.push({
       label: "Assign an advisor",
-      tab: "actions",
+      tab: "manage",
       icon: UserCheck,
       priority: "blocker",
       description: "This case needs an advisor before placement can proceed.",
@@ -135,7 +135,7 @@ export function getCaseNextSteps(
     case "intake_reviewed":
       steps.push({
         label: "Assign a placement advisor",
-        tab: "actions",
+        tab: "manage",
         icon: UserCheck,
         priority: "high",
         description: "Assign an advisor to begin the matching process.",
@@ -147,7 +147,7 @@ export function getCaseNextSteps(
     case "advisor_assigned":
       steps.push({
         label: "Run placement engine",
-        tab: "matching",
+        tab: "providers",
         icon: Play,
         priority: "high",
         description: "Find matching treatment centers based on seeker criteria.",
@@ -159,7 +159,7 @@ export function getCaseNextSteps(
     case "matching_providers":
       steps.push({
         label: "Review and pre-qualify providers",
-        tab: "matching",
+        tab: "providers",
         icon: Shield,
         priority: "high",
         description: "Verify facility availability and fit before contacting them.",
@@ -171,7 +171,7 @@ export function getCaseNextSteps(
     case "provider_prequalification":
       steps.push({
         label: "Send introductions to providers",
-        tab: "intros",
+        tab: "providers",
         icon: Send,
         priority: "high",
         description: "Contact qualified facilities and await their acceptance.",
@@ -183,7 +183,7 @@ export function getCaseNextSteps(
     case "providers_accepted":
       steps.push({
         label: "Present options to seeker",
-        tab: "intros",
+        tab: "providers",
         icon: Send,
         priority: "high",
         description: "Share accepted facilities with the seeker for review.",
@@ -195,7 +195,7 @@ export function getCaseNextSteps(
     case "presented_to_seeker":
       steps.push({
         label: "Await seeker decision",
-        tab: "decision",
+        tab: "providers",
         icon: Eye,
         priority: "medium",
         description: "The seeker is reviewing their options. Follow up if needed.",
@@ -231,7 +231,7 @@ export function getCaseNextSteps(
     case "admitted":
       steps.push({
         label: "Send placement invoice",
-        tab: "billing",
+        tab: "admission",
         icon: DollarSign,
         priority: "high",
         description: "Generate and send the provider invoice for this placement.",
@@ -243,7 +243,7 @@ export function getCaseNextSteps(
     case "billed":
       steps.push({
         label: "Confirm payment received",
-        tab: "billing",
+        tab: "admission",
         icon: DollarSign,
         priority: "high",
         description: "Verify payment has been received, then complete the case.",
@@ -267,7 +267,7 @@ export function getCaseNextSteps(
     case "closed":
       steps.push({
         label: "Case closed",
-        tab: "actions",
+        tab: "manage",
         icon: XCircle,
         priority: "done",
         description: "This case has been closed. Review the timeline for details.",
