@@ -15,7 +15,7 @@ import {
   CalendarCheck, X, Mail, Phone, MapPin, Clock, CheckCircle,
   HeartHandshake, Building2, UserCheck, History, User,
   Activity, Send, Home, Loader2, Play, RefreshCw, Shield,
-  Eye, ArrowRight, FileText,
+  Eye, ArrowRight, FileText, ChevronRight, AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -27,7 +27,9 @@ import { InvoiceManagementTab } from "./InvoiceManagementTab";
 import { MessagesTab } from "./MessagesTab";
 import { ToursTab } from "./ToursTab";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
-import { STATUS_CONFIG, getVisualStage } from "./placementPipelineConfig";
+import { STATUS_CONFIG, getVisualStage, getStageConfig, getNextStage, type PlacementStage } from "./placementPipelineConfig";
+import { getCaseNextSteps } from "./placementActionUtils";
+import { useCaseTransition } from "@/hooks/useCaseTransition";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -142,6 +144,9 @@ export function PlacementDetailModal({
               compact
             />
           </div>
+
+          {/* ─── Next Action Bar ─── */}
+          <ModalNextActionBar caseData={caseData} onRefresh={onRefresh} onSwitchTab={setActiveTab} />
         </div>
 
         {/* ─── Tabs ─── */}
@@ -180,6 +185,74 @@ export function PlacementDetailModal({
         </Tabs>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   NEXT ACTION BAR — always visible in header
+   ═══════════════════════════════════════════ */
+function ModalNextActionBar({ caseData, onRefresh, onSwitchTab }: {
+  caseData: ConciergeInquiry; onRefresh: () => void; onSwitchTab: (t: string) => void;
+}) {
+  const transition = useCaseTransition();
+  const status = caseData.status as PlacementStage;
+  const config = getStageConfig(status);
+  const next = getNextStage(status);
+  const nextConfig = next ? getStageConfig(next) : null;
+  const steps = getCaseNextSteps(caseData, 0, 0);
+  const primaryStep = steps[0];
+
+  if (status === "closed" || status === "completed") return null;
+
+  const hasBlocker = primaryStep?.priority === "blocker";
+
+  return (
+    <div className={cn(
+      "mt-3 rounded-lg border p-3 flex items-center gap-3",
+      hasBlocker ? "border-destructive/30 bg-destructive/5" : "border-primary/20 bg-primary/5"
+    )}>
+      <div className="flex-1 min-w-0">
+        {primaryStep ? (
+          <div className="flex items-center gap-2">
+            {hasBlocker ? (
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+            ) : (
+              <ArrowRight className="h-4 w-4 text-primary shrink-0" />
+            )}
+            <div className="min-w-0">
+              <p className={cn("text-sm font-semibold truncate", hasBlocker ? "text-destructive" : "text-foreground")}>
+                {primaryStep.label}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">{primaryStep.description}</p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Current: {config.label}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {primaryStep && (
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5"
+            onClick={() => onSwitchTab(primaryStep.tab)}>
+            Go to {primaryStep.tab === "providers" ? "Providers" : primaryStep.tab === "admission" ? "Admission" : primaryStep.tab === "manage" ? "Manage" : "Overview"}
+          </Button>
+        )}
+        {next && nextConfig && (
+          <Button size="sm" className="h-8 text-xs gap-1.5" disabled={transition.isPending}
+            onClick={() => {
+              const isAdmit = next === "admitted";
+              transition.mutate({
+                caseId: caseData.id, fromStatus: caseData.status, toStatus: next,
+                extraFields: isAdmit ? { placement_confirmed: true, placement_confirmed_at: new Date().toISOString(), admission_status: "admitted" } : undefined,
+                via: "stage_action", label: `Advance to ${nextConfig.label}`, onSuccess: onRefresh,
+              });
+            }}>
+            {transition.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            Advance to {nextConfig.shortLabel}
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 
