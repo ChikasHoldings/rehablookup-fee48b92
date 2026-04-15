@@ -41,9 +41,9 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
     const hoursSinceUpdate = differenceInHours(now, updatedAt);
     const hoursSinceCreation = differenceInHours(now, createdAt);
 
-    // Skip closed/placed-complete cases
-    if (caseData.status === "closed") return [];
-    const isPlacedComplete = caseData.status === "placed" &&
+    // Skip closed/completed cases
+    if (caseData.status === "closed" || caseData.status === "completed") return [];
+    const isPlacedComplete = ["admitted", "billed"].includes(caseData.status) &&
       (caseData.provider_fee_status === "paid" || caseData.provider_fee_status === "waived");
     if (isPlacedComplete) return [];
 
@@ -68,7 +68,7 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
     }
 
     // 3. SLA: No first response on new cases (2h+)
-    if (caseData.status === "new" && hoursSinceCreation >= 2) {
+    if ((caseData.status === "intake_submitted" || caseData.status === "new") && hoursSinceCreation >= 2) {
       alerts.push({
         key: "first-response",
         icon: Clock,
@@ -78,7 +78,7 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
     }
 
     // 4. No advisor assigned (non-new, 4h+)
-    if (!caseData.assigned_advisor_id && caseData.status !== "new" && hoursSinceCreation >= 4) {
+    if (!caseData.assigned_advisor_id && caseData.status !== "intake_submitted" && caseData.status !== "new" && hoursSinceCreation >= 4) {
       alerts.push({
         key: "no-advisor",
         icon: UserX,
@@ -89,7 +89,7 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
 
     // 5. Matched but no introductions sent (6h+)
     if (
-      (caseData.status === "matched" || caseData.status === "matching") &&
+      ["matching_providers", "provider_prequalification", "providers_accepted", "matched", "matching"].includes(caseData.status) &&
       caseData.matched_at
     ) {
       const hoursSinceMatch = differenceInHours(now, new Date(caseData.matched_at));
@@ -104,7 +104,7 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
     }
 
     // 6. No provider response — intros sent 24h+ ago with no status change
-    if (caseData.status === "introductions_sent" && caseData.introductions_sent_at) {
+    if (["presented_to_seeker", "introductions_sent"].includes(caseData.status) && caseData.introductions_sent_at) {
       const hoursSinceIntros = differenceInHours(now, new Date(caseData.introductions_sent_at));
       if (hoursSinceIntros >= 24) {
         alerts.push({
@@ -116,8 +116,8 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
       }
     }
 
-    // 7. Seeker decision pending too long — in_contact for 48h+
-    if (caseData.status === "in_contact" && !caseData.seeker_confirmed && hoursSinceUpdate >= 48) {
+    // 7. Seeker decision pending too long — seeker_selected/presented for 48h+
+    if (["seeker_selected", "presented_to_seeker", "in_contact"].includes(caseData.status) && !caseData.seeker_confirmed && hoursSinceUpdate >= 48) {
       alerts.push({
         key: "seeker-pending",
         icon: HelpCircle,
@@ -126,9 +126,9 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
       });
     }
 
-    // 8. Tour not scheduled — in_contact but no tour
+    // 8. Tour not scheduled — seeker selected but no tour
     if (
-      caseData.status === "in_contact" &&
+      ["seeker_selected", "admission_in_progress", "in_contact"].includes(caseData.status) &&
       (!caseData.tour_coordination_status || caseData.tour_coordination_status === "none" || caseData.tour_coordination_status === "not_started") &&
       hoursSinceUpdate >= 24
     ) {
@@ -140,9 +140,9 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
       });
     }
 
-    // 9. Billing pending after placement
+    // 9. Billing pending after admission
     if (
-      caseData.status === "placed" &&
+      ["admitted", "billed"].includes(caseData.status) &&
       caseData.provider_fee_status !== "paid" &&
       caseData.provider_fee_status !== "waived"
     ) {
