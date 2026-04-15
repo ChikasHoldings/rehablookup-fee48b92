@@ -95,7 +95,7 @@ export default function AdminEscalations() {
           <button
             key={stat.label}
             onClick={() => setFilter(stat.label.toLowerCase().replace(" ", "_"))}
-            className={`p-3 rounded-xl border text-left transition-all hover:shadow-sm ${
+            className={`p-3 rounded-xl border bg-card text-left transition-all hover:shadow-sm ${
               filter === stat.label.toLowerCase().replace(" ", "_")
                 ? "ring-2 ring-primary/30 border-primary/50"
                 : ""
@@ -108,7 +108,7 @@ export default function AdminEscalations() {
       </div>
 
       {/* Filters Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 rounded-xl border bg-card">
         <div className="relative flex-1 w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
