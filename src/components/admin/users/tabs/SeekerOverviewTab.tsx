@@ -183,12 +183,12 @@ export function SeekerOverviewTab({
           <div className="flex-1 min-w-0">
             <p className="font-semibold">{journeyConfig?.label}</p>
             <p className="text-xs text-muted-foreground">
-              {journeyStatus === "not_started" && "Seeker has not submitted any placement intake"}
+              {journeyStatus === "not_started" && "Client has not submitted any placement intake"}
               {journeyStatus === "intake_submitted" && `${placementData?.cases?.length || 0} placement intake(s) submitted`}
               {journeyStatus === "in_progress" && "Case is being reviewed and prepared for matching"}
-              {journeyStatus === "matched" && "Seeker has been matched with provider(s)"}
-              {journeyStatus === "accepted" && "Seeker has accepted a provider"}
-              {journeyStatus === "admitted" && "Seeker has been admitted to a facility"}
+              {journeyStatus === "matched" && "Client has been matched with provider(s)"}
+              {journeyStatus === "accepted" && "Client has accepted a provider"}
+              {journeyStatus === "admitted" && "Client has been admitted to a facility"}
               {journeyStatus === "closed" && "All placement cases are closed"}
             </p>
           </div>
