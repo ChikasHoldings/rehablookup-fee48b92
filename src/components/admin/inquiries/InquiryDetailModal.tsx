@@ -237,6 +237,8 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap }: In
   }, [lead, unlockData, distributions, relatedPlacement, assignedFacility, facilityMap]);
 
   if (!lead) return null;
+
+  const tabs = [
     { value: "overview", label: "Overview", icon: Eye },
     { value: "timeline", label: "Timeline", icon: Activity, badge: timeline.length },
     { value: "notes", label: "Notes", icon: StickyNote, badge: leadNotes?.length || 0 },
