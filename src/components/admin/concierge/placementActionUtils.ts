@@ -108,6 +108,18 @@ export function getCaseNextSteps(
 
   // Stage-specific guidance
   switch (caseData.status) {
+    case "pending_intake":
+      steps.push({
+        label: "Follow up on incomplete intake",
+        tab: "overview",
+        icon: Play,
+        priority: "medium",
+        description: "The seeker started but hasn't submitted their intake form yet.",
+        owner: "admin",
+        ownerLabel: "Admin action",
+      });
+      break;
+
     case "intake_submitted":
       steps.push({
         label: "Review intake details",
