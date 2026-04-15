@@ -98,7 +98,7 @@ export default function AdminBackOffice() {
     queryFn: async () => {
       const { data } = await supabase
         .from("admin_impersonation_log")
-        .select("*")
+        .select("id, admin_user_id, target_user_id, target_role, started_at, ended_at")
         .order("started_at", { ascending: false })
         .limit(10);
       return data || [];

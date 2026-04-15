@@ -135,7 +135,7 @@ export default function AdminConcierge() {
       if (!selectedCaseId) return undefined;
       const { data, error } = await supabase
         .from("concierge_inquiries")
-        .select("*")
+        .select("id, user_name, user_email, user_phone, status, payment_status, payment_amount_cents, intake_data, created_at, updated_at, admin_notes, assigned_advisor_id, matched_facility_ids, admin_matched_facility_ids, placed_facility_id, placement_confirmed, placement_confirmed_at, level_of_care, primary_concern, insurance_carrier, budget_range, timeline_urgency, preferred_state, preferred_city, gender, age_range, referral_source, tour_coordination_status, admission_status, admission_notes, introductions_sent_at, introductions_sent_count, matched_at, closed_at, seeker_rating, seeker_feedback, provider_fee_cents, provider_fee_status, provider_fee_type, provider_invoice_id, draft_id, checkout_session_id, stripe_payment_intent_id, payment_type, idempotency_key, user_id, match_scores, notes")
         .eq("id", selectedCaseId)
         .single();
       if (error) throw error;

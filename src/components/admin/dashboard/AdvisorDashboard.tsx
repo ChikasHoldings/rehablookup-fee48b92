@@ -290,7 +290,7 @@ export function AdvisorDashboard() {
       if (!selectedCaseId) return undefined;
       const { data, error } = await supabase
         .from("concierge_inquiries")
-        .select("*")
+        .select("id, user_name, user_email, user_phone, status, payment_status, payment_amount_cents, intake_data, created_at, updated_at, admin_notes, assigned_advisor_id, matched_facility_ids, placed_facility_id, level_of_care, primary_concern, insurance_carrier, budget_range, timeline_urgency, preferred_state, preferred_city, gender, age_range, tour_coordination_status, admission_status, notes")
         .eq("id", selectedCaseId)
         .single();
       if (error) throw error;
