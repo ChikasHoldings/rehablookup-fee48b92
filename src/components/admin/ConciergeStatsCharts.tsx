@@ -27,7 +27,7 @@ export const ConciergeStatsCharts = forwardRef<HTMLDivElement, ConciergeStatsCha
            (stats.matched || 0) + (stats.introductions_sent || 0) + (stats.in_contact || 0);
   }, [stats]);
 
-  const placedCount = stats?.placed || 0;
+  const placedCount = (stats?.admitted || 0) + (stats?.billed || 0) + (stats?.completed || 0);
   const closedCount = stats?.closed || 0;
 
   const placementRate = useMemo(() => {
