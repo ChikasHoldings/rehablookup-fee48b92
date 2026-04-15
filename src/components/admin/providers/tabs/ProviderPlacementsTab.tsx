@@ -46,7 +46,7 @@ export function ProviderPlacementsTab({ provider }: ProviderPlacementsTabProps) 
     queryFn: async () => {
       const { data } = await supabase
         .from("placement_invoices")
-        .select("id, inquiry_id, amount_cents, status, created_at, paid_at, invoice_type")
+        .select("id, case_id, amount_cents, status, created_at, paid_at, fee_type")
         .eq("facility_id", provider.id)
         .order("created_at", { ascending: false });
       return data || [];
@@ -174,7 +174,7 @@ export function ProviderPlacementsTab({ provider }: ProviderPlacementsTabProps) 
                   {invoices.map((inv) => (
                     <TableRow key={inv.id}>
                       <TableCell className="text-sm">{format(new Date(inv.created_at), "MMM d, yyyy")}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-xs">{inv.invoice_type || "placement"}</Badge></TableCell>
+                      <TableCell><Badge variant="outline" className="text-xs">{inv.fee_type || "placement"}</Badge></TableCell>
                       <TableCell className="font-mono text-sm">${(inv.amount_cents / 100).toFixed(2)}</TableCell>
                       <TableCell>
                         {inv.status === "paid" ? (
