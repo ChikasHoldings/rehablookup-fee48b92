@@ -4,20 +4,23 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ClipboardList, Users, Send, Settings, DollarSign, MessageSquare, CalendarCheck } from "lucide-react";
+import { LayoutDashboard, User, Users, Send, UserCheck, CalendarCheck, Home, DollarSign, Clock, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
 import { PlacementProgressStepper } from "./concierge/PlacementProgressStepper";
 import { CaseSlaDetailBanner } from "./concierge/CaseSlaAlerts";
 import { PlacementNextSteps } from "./concierge/PlacementNextSteps";
+import { ConciergeOverviewTab } from "./concierge/ConciergeOverviewTab";
 import { ConciergeIntakeTab } from "./concierge/ConciergeIntakeTab";
 import { ConciergePlacementTab } from "./concierge/ConciergePlacementTab";
 import { ConciergeIntroductionsTab } from "./concierge/ConciergeIntroductionsTab";
+import { ConciergeDecisionTab } from "./concierge/ConciergeDecisionTab";
 import { ConciergeActionsTab } from "./concierge/ConciergeActionsTab";
 import { InvoiceManagementTab } from "./concierge/InvoiceManagementTab";
-import { MessagesTab } from "./concierge/MessagesTab";
 import { ToursTab } from "./concierge/ToursTab";
+import { ConciergeTimelineTab } from "./concierge/ConciergeTimelineTab";
+import { AdmissionCoordinationCard } from "./concierge/AdmissionCoordinationCard";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
