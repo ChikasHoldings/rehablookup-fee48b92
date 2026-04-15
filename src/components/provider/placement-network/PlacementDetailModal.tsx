@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -72,6 +72,8 @@ const SAFE_PREFERENCE_FIELDS = new Set([
 interface ConciergeInquiry {
   id: string;
   user_name?: string;
+  user_email?: string;
+  user_phone?: string;
   level_of_care?: string | null;
   payment_type?: string | null;
   timeline_urgency?: string | null;
@@ -82,6 +84,8 @@ interface ConciergeInquiry {
   gender?: string | null;
   primary_concern?: string | null;
   insurance_carrier?: string | null;
+  insurance_member_id?: string | null;
+  insurance_group_number?: string | null;
   detox_needed?: string | null;
   co_occurring_concerns?: unknown | null;
   substance_use_duration?: string | null;
@@ -105,6 +109,11 @@ interface ConciergeInquiry {
   assessment_preference?: string | null;
   amenity_preferences?: unknown | null;
   notes?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  decision_maker_name?: string | null;
+  decision_maker_phone?: string | null;
+  relationship_to_seeker?: string | null;
   created_at?: string;
 }
 
@@ -178,7 +187,7 @@ export function PlacementDetailModal({
   isResponding = false,
   hasPro = false,
 }: PlacementDetailModalProps) {
-  const [activeTab, setActiveTab] = useState<"details" | "messages" | "timeline">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "seeker" | "messages" | "timeline">("details");
   const [providerNote, setProviderNote] = useState("");
   const inquiry = introduction?.concierge_inquiries;
   const { selectedFacility } = useSelectedFacilityOptional();
@@ -190,9 +199,13 @@ export function PlacementDetailModal({
   const isDeclined = introduction?.provider_response === "not_available";
   const isPlaced = inquiry?.placement_confirmed === true && inquiry?.placed_facility_id === facilityId;
 
-  // ── PII gate: only show first name AFTER acceptance ──
+  // PII disclosure gate: provider accepted AND seeker selected this facility
+  const seekerSelectedThisFacility = inquiry?.seeker_confirmed === true && inquiry?.placed_facility_id === facilityId;
+  const piiUnlocked = isAccepted && seekerSelectedThisFacility;
+
+  // ── PII gate: show full name only when PII is unlocked ──
   const hasAccepted = isAccepted || isPlaced;
-  const displayName = hasAccepted ? (inquiry?.user_name?.split(" ")[0] || "Client") : "Anonymized Client";
+  const displayName = piiUnlocked ? (inquiry?.user_name || "Client") : hasAccepted ? (inquiry?.user_name?.split(" ")[0] || "Client") : "Anonymized Client";
 
   // Fetch full inquiry details (only clinical/preference data)
   const { data: fullInquiry } = useQuery({
@@ -219,6 +232,73 @@ export function PlacementDetailModal({
     enabled: open && !!introduction?.inquiry_id,
     staleTime: 60000,
   });
+
+  // ── PII Query: only fetch seeker contact details when PII is unlocked ──
+  const piiDisclosureLogged = useRef(false);
+  const { data: seekerPii } = useQuery({
+    queryKey: ["placement-pii", introduction?.inquiry_id, facilityId],
+    queryFn: async () => {
+      if (!introduction?.inquiry_id) return null;
+      const { data, error } = await supabase
+        .from("concierge_inquiries")
+        .select(`
+          user_name, user_email, user_phone, insurance_carrier,
+          insurance_member_id, insurance_group_number,
+          emergency_contact_name, emergency_contact_phone,
+          decision_maker_name, decision_maker_phone,
+          relationship_to_seeker, level_of_care, primary_concern,
+          detox_needed, co_occurring_concerns, substance_use_duration,
+          substance_use_frequency, prior_treatment_history, prior_treatment_notes,
+          current_medications, current_living_situation, budget_range,
+          timeline_urgency, notes
+        `)
+        .eq("id", introduction.inquiry_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && !!introduction?.inquiry_id && piiUnlocked,
+    staleTime: 60000,
+  });
+
+  // Log PII disclosure event once per modal open
+  useEffect(() => {
+    if (!piiUnlocked || !seekerPii || piiDisclosureLogged.current || !introduction?.inquiry_id) return;
+    piiDisclosureLogged.current = true;
+
+    const logDisclosure = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        // Update introduction disclosure timestamp
+        await supabase
+          .from("concierge_introductions")
+          .update({ admin_disclosed_pii_at: new Date().toISOString() })
+          .eq("id", introduction.id)
+          .is("admin_disclosed_pii_at", null); // Only set once
+
+        // Log case event
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: introduction.inquiry_id,
+          event_type: "pii_disclosed_to_provider",
+          event_data: {
+            facility_id: facilityId,
+            introduction_id: introduction.id,
+            disclosed_fields: ["name", "email", "phone", "insurance_details", "emergency_contacts"],
+          },
+          actor_id: user?.id || null,
+          actor_type: "provider",
+        });
+      } catch (e) {
+        console.error("Failed to log PII disclosure:", e);
+      }
+    };
+    logDisclosure();
+  }, [piiUnlocked, seekerPii, introduction?.inquiry_id, introduction?.id, facilityId]);
+
+  // Reset disclosure flag when modal closes
+  useEffect(() => {
+    if (!open) piiDisclosureLogged.current = false;
+  }, [open]);
 
   const { data: messages, isLoading: messagesLoading } = useQuery({
     queryKey: ["placement-messages", introduction?.inquiry_id, facilityId],
@@ -290,6 +370,9 @@ export function PlacementDetailModal({
 
   const tabs = [
     { key: "details" as const, label: "Case Summary", icon: FileText },
+    ...(piiUnlocked ? [
+      { key: "seeker" as const, label: "Seeker Details", icon: Eye },
+    ] : []),
     ...(hasAccepted ? [
       { key: "messages" as const, label: "Messages", icon: MessageSquare, count: messages?.length },
       { key: "timeline" as const, label: "Timeline", icon: Clock },
@@ -561,6 +644,90 @@ export function PlacementDetailModal({
                 </div>
               )}
             </div>
+          </TabPanel>
+
+          {/* === SEEKER DETAILS (only after provider accepted + seeker selected) === */}
+          <TabPanel active={activeTab === "seeker"}>
+            {!piiUnlocked ? (
+              <LockedSection message="Full seeker details are released only after both you accept the case and the seeker selects your facility." />
+            ) : !seekerPii ? (
+              <div className="space-y-4">
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {/* Disclosure notice */}
+                <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 flex items-start gap-3">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-400">Seeker Selected Your Facility</p>
+                    <p className="text-xs text-emerald-700 dark:text-emerald-500 mt-0.5">
+                      Full contact and intake details are now available. This disclosure has been logged for compliance.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <SectionCard title="Contact Information" icon={User}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+                    <InfoItem icon={User} label="Full Name" value={seekerPii.user_name} />
+                    <InfoItem icon={MessageSquare} label="Email" value={seekerPii.user_email} />
+                    <InfoItem icon={Clock} label="Phone" value={seekerPii.user_phone} />
+                    <InfoItem icon={User} label="Relationship" value={fmt(seekerPii.relationship_to_seeker)} />
+                  </div>
+                </SectionCard>
+
+                {/* Emergency & Decision Maker */}
+                {(seekerPii.emergency_contact_name || seekerPii.decision_maker_name) && (
+                  <SectionCard title="Emergency & Decision Maker" icon={Shield}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+                      <InfoItem icon={User} label="Emergency Contact" value={seekerPii.emergency_contact_name} />
+                      <InfoItem icon={Clock} label="Emergency Phone" value={seekerPii.emergency_contact_phone} />
+                      <InfoItem icon={User} label="Decision Maker" value={seekerPii.decision_maker_name} />
+                      <InfoItem icon={Clock} label="Decision Maker Phone" value={seekerPii.decision_maker_phone} />
+                    </div>
+                  </SectionCard>
+                )}
+
+                {/* Insurance Details */}
+                <SectionCard title="Insurance Details" icon={Shield}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+                    <InfoItem icon={Shield} label="Carrier" value={seekerPii.insurance_carrier} />
+                    <InfoItem icon={FileText} label="Member ID" value={seekerPii.insurance_member_id} />
+                    <InfoItem icon={FileText} label="Group Number" value={seekerPii.insurance_group_number} />
+                    <InfoItem icon={DollarSign} label="Budget" value={fmt(seekerPii.budget_range)} />
+                  </div>
+                </SectionCard>
+
+                {/* Intake Summary */}
+                <SectionCard title="Intake Summary" icon={Activity}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+                    <InfoItem icon={Activity} label="Level of Care" value={fmt(seekerPii.level_of_care)} />
+                    <InfoItem icon={Heart} label="Primary Concern" value={fmt(seekerPii.primary_concern)} />
+                    <InfoItem icon={Pill} label="Detox Needed" value={fmt(seekerPii.detox_needed)} />
+                    <InfoItem icon={Clock} label="Use Duration" value={fmt(seekerPii.substance_use_duration)} />
+                    <InfoItem icon={Clock} label="Frequency" value={fmt(seekerPii.substance_use_frequency)} />
+                    <InfoItem icon={Activity} label="Living Situation" value={fmt(seekerPii.current_living_situation)} />
+                    <InfoItem icon={Pill} label="Medications" value={seekerPii.current_medications} />
+                    {seekerPii.prior_treatment_history && <InfoItem icon={FileText} label="Prior Treatment" value="Yes" />}
+                    <InfoItem icon={FileText} label="Prior Treatment Notes" value={seekerPii.prior_treatment_notes} />
+                  </div>
+                  {seekerPii.co_occurring_concerns && (
+                    <div className="mt-2 pt-2 border-t">
+                      <InfoItem icon={Heart} label="Co-Occurring" value={fmtCoOccurring(seekerPii.co_occurring_concerns)} />
+                    </div>
+                  )}
+                </SectionCard>
+
+                {/* Admin / Advisor Notes */}
+                {seekerPii.notes && (
+                  <SectionCard title="Advisor Notes" icon={FileText}>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{seekerPii.notes}</p>
+                  </SectionCard>
+                )}
+              </div>
+            )}
           </TabPanel>
 
           {/* === MESSAGES (only after acceptance) === */}
