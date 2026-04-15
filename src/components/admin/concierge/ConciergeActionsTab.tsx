@@ -257,21 +257,10 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         <AdvisorAssignmentCard caseData={caseData} onRefresh={onRefresh} />
       )}
 
-      {/* Admin Confirm Placement */}
-      {caseData.status !== "closed" && caseData.status !== "new" && (
-        <AdminConfirmPlacement caseData={caseData} onRefresh={onRefresh} />
-      )}
-
       {/* Notify Seeker — Send provider options for review */}
       {(caseData.status === "presented_to_seeker" || caseData.status === "providers_accepted") && !caseData.seeker_confirmed && (
         <NotifySeekerCard caseData={caseData} onRefresh={onRefresh} />
       )}
-
-      {/* Admission Coordination */}
-      <AdmissionCoordinationCard caseData={caseData} onRefresh={onRefresh} />
-
-      {/* Billing Status — only visible on placed cases */}
-      <BillingStatusCard caseData={caseData} onRefresh={onRefresh} />
 
       {/* Seeker confirmed indicator for admin */}
       {caseData.seeker_confirmed && !["admitted", "completed", "billed", "closed"].includes(caseData.status) && (
