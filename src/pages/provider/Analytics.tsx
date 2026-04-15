@@ -36,6 +36,7 @@ import { format } from "date-fns";
 type TabKey = "overview" | "engagement" | "leads" | "performance" | "roi";
 
 export default function ProviderAnalyticsPage() {
+  const shouldOpenCalendarFromMenuRef = useRef(false);
   const [dateRange, setDateRange] = useState<DateRange>(() => ({
     from: undefined,
     to: undefined,
@@ -89,6 +90,14 @@ export default function ProviderAnalyticsPage() {
   const handleOpenCalendar = () => {
     setTempRange({ from: dateRange.from, to: dateRange.to });
     setIsCalendarOpen(true);
+  };
+
+  const handleCalendarOpenChange = (open: boolean) => {
+    if (open) {
+      setTempRange({ from: dateRange.from, to: dateRange.to });
+    }
+
+    setIsCalendarOpen(open);
   };
 
   const handleApplyRange = () => {
@@ -155,7 +164,20 @@ export default function ProviderAnalyticsPage() {
                   <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuContent
+                align="end"
+                className="w-52"
+                onCloseAutoFocus={(event) => {
+                  if (!shouldOpenCalendarFromMenuRef.current) return;
+
+                  event.preventDefault();
+                  shouldOpenCalendarFromMenuRef.current = false;
+
+                  requestAnimationFrame(() => {
+                    handleOpenCalendar();
+                  });
+                }}
+              >
                 {DATE_RANGE_PRESETS.map((preset) => (
                   <DropdownMenuItem
                     key={preset.value}
@@ -170,7 +192,9 @@ export default function ProviderAnalyticsPage() {
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={handleOpenCalendar}
+                  onSelect={() => {
+                    shouldOpenCalendarFromMenuRef.current = true;
+                  }}
                   className={cn(
                     "cursor-pointer text-sm",
                     selectedPreset === "custom" && "bg-primary/5 font-medium"
@@ -182,7 +206,7 @@ export default function ProviderAnalyticsPage() {
             </DropdownMenu>
 
             {/* Custom Date Range Popover — anchored to its own visible button */}
-            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+            <Popover open={isCalendarOpen} onOpenChange={handleCalendarOpenChange}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -191,7 +215,6 @@ export default function ProviderAnalyticsPage() {
                     "gap-1.5 h-9 text-sm",
                     !isCalendarOpen && selectedPreset !== "custom" && "hidden"
                   )}
-                  onClick={handleOpenCalendar}
                 >
                   <CalendarIcon className="h-3.5 w-3.5" />
                   {selectedPreset === "custom" && dateRange.from
