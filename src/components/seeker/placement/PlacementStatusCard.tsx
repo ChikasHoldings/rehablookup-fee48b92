@@ -75,7 +75,7 @@ const GUIDED_STEPS = [
     statuses: ["presented_to_seeker", "seeker_selected", "in_contact", "confirming"],
     description: "Review and choose your treatment center" },
   { key: "admission", label: "Admission", shortLabel: "Admission", icon: Home,
-    statuses: ["admission_in_progress", "admitted", "billed", "completed", "placed"],
+    statuses: ["admission_in_progress", "admitted", "billed", "completed"],
     description: "✅ Admission successful — your placement is confirmed" },
 ];
 

@@ -63,7 +63,7 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
           .from("concierge_inquiries")
           .select("id")
           .eq("user_id", user.id)
-          .not("status", "in", '("closed","placed")')
+          .not("status", "in", '("closed","completed")')
           .maybeSingle();
 
         if (inquiry) {

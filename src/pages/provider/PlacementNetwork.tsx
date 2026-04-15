@@ -147,7 +147,7 @@ export default function ProviderPlacementNetworkPage() {
         .from("concierge_inquiries")
         .select("id, user_name, status, placed_facility_id, placement_confirmed, placement_confirmed_at, provider_fee_cents, provider_fee_status, provider_fee_type, level_of_care, created_at, updated_at")
         .eq("placed_facility_id", selectedFacility.id)
-        .eq("status", "placed")
+        .in("status", ["admitted", "billed", "completed"])
         .order("placement_confirmed_at", { ascending: false });
       if (error) throw error;
       return data || [];

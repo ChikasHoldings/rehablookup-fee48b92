@@ -46,7 +46,7 @@ export function ManagerTeamPerformance() {
         cases?.forEach(c => {
           if (!c.assigned_advisor_id) return;
           if (!advisorStats[c.assigned_advisor_id]) advisorStats[c.assigned_advisor_id] = { active: 0, placed: 0 };
-          if (c.status === "placed") advisorStats[c.assigned_advisor_id].placed++;
+          if (["admitted", "billed", "completed"].includes(c.status)) advisorStats[c.assigned_advisor_id].placed++;
           else if (!["closed"].includes(c.status)) advisorStats[c.assigned_advisor_id].active++;
         });
       }

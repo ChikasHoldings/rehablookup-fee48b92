@@ -52,7 +52,7 @@ const statusConfig: Record<string, { label: string; color: string; bgColor: stri
   matched: { label: "Matched", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 4 },
   introductions_sent: { label: "Intros Sent", color: "text-accent-foreground", bgColor: "bg-accent/10 border-accent/30", order: 5 },
   in_contact: { label: "In Contact", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 6 },
-  placed: { label: "Placed", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 7 },
+  admitted: { label: "Admitted", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 7 },
   closed: { label: "Closed", color: "text-muted-foreground", bgColor: "bg-muted/50 border-border", order: 8 },
 };
 
@@ -277,7 +277,7 @@ export function AdvisorDashboard() {
         .from("concierge_inquiries")
         .select("id", { count: "exact", head: true })
         .is("assigned_advisor_id", null)
-        .not("status", "in", '("placed","closed")');
+        .not("status", "in", '("completed","closed")');
       return count || 0;
     },
     staleTime: 30 * 1000,
@@ -579,7 +579,7 @@ export function AdvisorDashboard() {
                   { key: "matching", label: "Matching / Outreach", color: "bg-warning", count: inquiryStats?.matching || 0 },
                   { key: "introsSent", label: "Intros Sent", color: "bg-accent", count: inquiryStats?.introsSent || 0 },
                   { key: "inContact", label: "In Contact / Tours", color: "bg-info", count: inquiryStats?.inContact || 0 },
-                  { key: "placed", label: "Placed ✓", color: "bg-success", count: inquiryStats?.placed || 0 },
+                  { key: "placed", label: "Admitted ✓", color: "bg-success", count: inquiryStats?.placed || 0 },
                   { key: "closed", label: "Closed", color: "bg-muted-foreground", count: inquiryStats?.closed || 0 },
                 ].map(({ key, label, color, count }) => {
                   const pct = inquiryStats?.total ? (count / inquiryStats.total) * 100 : 0;

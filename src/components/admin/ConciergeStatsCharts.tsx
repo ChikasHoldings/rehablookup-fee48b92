@@ -10,7 +10,7 @@ interface ConciergeStatsChartsProps {
 const PIPELINE_STAGES = [
   { key: "new", label: "New", color: "bg-primary" },
   { key: "in_progress", label: "In Progress", color: "bg-warning", keys: ["reviewing", "matching", "matched", "introductions_sent", "in_contact"] },
-  { key: "placed", label: "Placed", color: "bg-success" },
+  { key: "placed", label: "Admitted", color: "bg-success", keys: ["admitted", "billed", "completed"] },
   { key: "closed", label: "Closed", color: "bg-muted-foreground" },
 ];
 
@@ -27,7 +27,7 @@ export const ConciergeStatsCharts = forwardRef<HTMLDivElement, ConciergeStatsCha
            (stats.matched || 0) + (stats.introductions_sent || 0) + (stats.in_contact || 0);
   }, [stats]);
 
-  const placedCount = stats?.placed || 0;
+  const placedCount = (stats?.admitted || 0) + (stats?.billed || 0) + (stats?.completed || 0);
   const closedCount = stats?.closed || 0;
 
   const placementRate = useMemo(() => {

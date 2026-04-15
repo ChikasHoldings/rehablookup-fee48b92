@@ -780,7 +780,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                     </p>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    c.status === "placed" ? "bg-success/10 text-success" :
+                    ["admitted", "billed", "completed"].includes(c.status) ? "bg-success/10 text-success" :
                     c.status === "new" ? "bg-info/10 text-info" :
                     "bg-muted text-muted-foreground"
                   }`}>

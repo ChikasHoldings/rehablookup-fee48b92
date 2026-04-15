@@ -178,7 +178,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
             <SelectItem value="reviewing">Reviewing</SelectItem>
             <SelectItem value="matching">Matching</SelectItem>
             <SelectItem value="matched">Matched</SelectItem>
-            <SelectItem value="placed">Placed</SelectItem>
+            <SelectItem value="admitted">Admitted</SelectItem>
             <SelectItem value="closed">Closed</SelectItem>
             <SelectItem value="expired">Expired</SelectItem>
           </SelectContent>
