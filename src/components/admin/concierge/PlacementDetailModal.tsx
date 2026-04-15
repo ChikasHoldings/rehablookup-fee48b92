@@ -85,6 +85,9 @@ export function PlacementDetailModal({
         <VisuallyHidden>
           <DialogTitle>Placement Details — {caseData.user_name}</DialogTitle>
         </VisuallyHidden>
+        <VisuallyHidden>
+          <p id="placement-detail-desc">View and manage placement case for {caseData.user_name}</p>
+        </VisuallyHidden>
 
         {/* ─── Header ─── */}
         <div className="flex-shrink-0 border-b bg-card px-5 pt-4 pb-3">
