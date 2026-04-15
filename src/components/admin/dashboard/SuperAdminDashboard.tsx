@@ -267,13 +267,14 @@ export function SuperAdminDashboard() {
   const { data: placementStats } = useQuery<Record<string, number>>({
     queryKey: ["admin-placement-pipeline"],
     queryFn: async () => {
-      const stages = ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact", "placed", "closed"];
+      const stages = ["intake_submitted", "intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "admitted", "billed", "completed", "closed"];
       const results = await Promise.all(
         stages.map(s => supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).eq("status", s))
       );
       const counts: Record<string, number> = {};
       stages.forEach((s, i) => { counts[s] = results[i].count || 0; });
-      counts.active = counts.new + counts.reviewing + counts.matching + counts.matched + counts.introductions_sent + counts.in_contact;
+      counts.active = counts.intake_submitted + counts.intake_reviewed + counts.advisor_assigned + counts.matching_providers + counts.provider_prequalification + counts.providers_accepted + counts.presented_to_seeker + counts.seeker_selected + counts.admission_in_progress;
+      counts.placed = counts.admitted + counts.billed + counts.completed;
       return counts;
     },
     staleTime: 5 * 60 * 1000,
@@ -368,15 +369,14 @@ export function SuperAdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+            <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
               {[
-                { key: "new", label: "New", color: "bg-info/10 text-info border-info/20" },
-                { key: "reviewing", label: "Review", color: "bg-warning/10 text-warning border-warning/20" },
-                { key: "matching", label: "Placing", color: "bg-warning/10 text-warning border-warning/20" },
-                { key: "matched", label: "Matched", color: "bg-success/10 text-success border-success/20" },
-                { key: "introductions_sent", label: "Intros", color: "bg-accent/10 text-accent-foreground border-accent/20" },
-                { key: "in_contact", label: "Contact", color: "bg-info/10 text-info border-info/20" },
-                { key: "placed", label: "Placed", color: "bg-success/10 text-success border-success/20" },
+                { key: "intake_submitted", label: "New", color: "bg-info/10 text-info border-info/20" },
+                { key: "intake_reviewed", label: "Review", color: "bg-warning/10 text-warning border-warning/20" },
+                { key: "matching_providers", label: "Matching", color: "bg-warning/10 text-warning border-warning/20" },
+                { key: "presented_to_seeker", label: "Presented", color: "bg-accent/10 text-accent-foreground border-accent/20" },
+                { key: "admitted", label: "Admitted", color: "bg-success/10 text-success border-success/20" },
+                { key: "completed", label: "Done", color: "bg-success/10 text-success border-success/20" },
                 { key: "closed", label: "Closed", color: "bg-muted text-muted-foreground border-border" },
               ].map(stage => (
                 <div key={stage.key} className={`text-center p-2 rounded-lg border ${stage.color}`}>
