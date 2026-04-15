@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { PlacementPipelineBoard } from "@/components/admin/concierge/PlacementPipelineBoard";
+import { PlacementOpsDashboard } from "@/components/admin/concierge/PlacementOpsDashboard";
 import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvidersTab";
 import { AllInvoicesTab } from "@/components/admin/concierge/AllInvoicesTab";
 import { InternationalCasesTab } from "@/components/admin/concierge/InternationalCasesTab";
@@ -49,7 +50,7 @@ export default function AdminConcierge() {
   const [statusFilter, setStatusFilter] = useState<CaseStatus>("all");
   const [advisorFilter, setAdvisorFilter] = useState<string>("all");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"pipeline" | "table">("table");
+  const [viewMode, setViewMode] = useState<"dashboard" | "pipeline" | "table">("dashboard");
 
   // Set advisor filter for advisor role
   useEffect(() => {
@@ -298,12 +299,19 @@ export default function AdminConcierge() {
                 {filteredCases.length} cases
               </span>
               <div className="flex items-center border rounded-md overflow-hidden">
+                <Button variant={viewMode === "dashboard" ? "default" : "ghost"} size="sm"
+                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("dashboard")}
+                  title="Ops Dashboard">
+                  <CalendarCheck className="h-3.5 w-3.5" />
+                </Button>
                 <Button variant={viewMode === "pipeline" ? "default" : "ghost"} size="sm"
-                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("pipeline")}>
+                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("pipeline")}
+                  title="Pipeline Board">
                   <LayoutGrid className="h-3.5 w-3.5" />
                 </Button>
                 <Button variant={viewMode === "table" ? "default" : "ghost"} size="sm"
-                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("table")}>
+                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("table")}
+                  title="Table View">
                   <List className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -311,7 +319,15 @@ export default function AdminConcierge() {
           </div>
 
           {/* Content */}
-          {viewMode === "pipeline" ? (
+          {viewMode === "dashboard" ? (
+            <PlacementOpsDashboard
+              cases={filteredCases}
+              onCaseClick={(id) => setSelectedCaseId(id)}
+              advisorNames={advisorNames}
+              isAdvisor={isAdvisor}
+              currentAdvisorId={user?.id}
+            />
+          ) : viewMode === "pipeline" ? (
             <PlacementPipelineBoard
               cases={filteredCases}
               isLoading={isLoading}
