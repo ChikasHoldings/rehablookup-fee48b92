@@ -839,7 +839,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                 {canViewSeekers && (
                   <CommandItem onSelect={() => { navigate("/admin/seekers"); setSearchOpen(false); }}>
                     <UserSearch className="h-4 w-4 mr-2" />
-                    Users (Seekers)
+                    Seekers
                   </CommandItem>
                 )}
                 {canViewPlacements && (
