@@ -409,6 +409,9 @@ export default function ConciergeIntake() {
   };
 
   const handleProceedToPayment = async () => {
+    // Prevent double-click
+    if (isProcessingPayment) return;
+
     // Validate all previous steps before payment
     for (let step = 1; step <= 6; step++) {
       if (!validateStep(step)) {

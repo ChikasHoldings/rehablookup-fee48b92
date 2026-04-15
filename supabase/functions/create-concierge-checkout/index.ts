@@ -17,7 +17,7 @@ const errorResponse = (msg: string, status: number, headers: Record<string, stri
 const successResponse = (data: Record<string, unknown>, headers: Record<string, string>) =>
   new Response(JSON.stringify(data), { headers: { ...headers, "Content-Type": "application/json" }, status: 200 });
 
-const VERSION = "2.0.0";
+const VERSION = "3.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -94,27 +94,31 @@ Deno.serve(async (req) => {
 
     const sanitizedDraftId = draftId ? sanitizeString(draftId as string, 100).replace(/[^a-zA-Z0-9_-]/g, "") : null;
 
-    // Rate limiting: Check recent checkout attempts for this email
-    if (supabaseUrl && supabaseServiceKey) {
-      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      
-      const { count: recentAttempts } = await supabaseAdmin
-        .from("concierge_inquiries")
-        .select("*", { count: "exact", head: true })
-        .eq("user_email", sanitizedEmail)
-        .gte("created_at", fiveMinutesAgo);
+    if (!supabaseUrl || !supabaseServiceKey) {
+      logStep("ERROR: Missing Supabase config");
+      return errorResponse("Server configuration error", 500, corsHeaders);
+    }
 
-      if (recentAttempts && recentAttempts >= 10) {
-        logStep("Rate limit exceeded for checkout attempts", { email: sanitizedEmail, count: recentAttempts });
-        return errorResponse("Too many checkout attempts. Please wait a few minutes.", 429, corsHeaders);
-      }
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limiting: Check recent checkout attempts for this email
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    
+    const { count: recentAttempts } = await supabaseAdmin
+      .from("concierge_inquiries")
+      .select("*", { count: "exact", head: true })
+      .eq("user_email", sanitizedEmail)
+      .gte("created_at", fiveMinutesAgo);
+
+    if (recentAttempts && recentAttempts >= 10) {
+      logStep("Rate limit exceeded for checkout attempts", { email: sanitizedEmail, count: recentAttempts });
+      return errorResponse("Too many checkout attempts. Please wait a few minutes.", 429, corsHeaders);
     }
 
     // Try to get authenticated user from request
     let authenticatedUserId: string | null = null;
     const authHeader = req.headers.get("Authorization");
-    if (authHeader && supabaseUrl && supabaseAnonKey) {
+    if (authHeader && supabaseAnonKey) {
       try {
         const supabase = createClient(supabaseUrl, supabaseAnonKey);
         const token = authHeader.replace("Bearer ", "");
@@ -136,7 +140,8 @@ Deno.serve(async (req) => {
     logStep("Processing checkout", { 
       email: sanitizedEmail, 
       isAuthenticated: !!isAuthenticated,
-      userId: effectiveUserId
+      userId: effectiveUserId,
+      draftId: sanitizedDraftId
     });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -228,6 +233,37 @@ Deno.serve(async (req) => {
     if (!session.url) {
       logStep("ERROR: No checkout URL returned");
       return errorResponse("Checkout session created but no URL returned", 500, corsHeaders);
+    }
+
+    // ============================================================
+    // CRITICAL FIX: Link the checkout_session_id back to the draft
+    // so the webhook and submit-intake can find it later.
+    // ============================================================
+    if (sanitizedDraftId) {
+      const { data: draftRecord } = await supabaseAdmin
+        .from("concierge_inquiries")
+        .select("id, payment_status")
+        .eq("draft_id", sanitizedDraftId)
+        .maybeSingle();
+
+      if (draftRecord && draftRecord.payment_status !== "paid" && draftRecord.payment_status !== "succeeded") {
+        const { error: linkError } = await supabaseAdmin
+          .from("concierge_inquiries")
+          .update({
+            checkout_session_id: session.id,
+            idempotency_key: `intake_${session.id}`,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", draftRecord.id);
+
+        if (linkError) {
+          logStep("WARNING: Failed to link checkout session to draft", { error: linkError.message, draftId: sanitizedDraftId });
+        } else {
+          logStep("Linked checkout session to draft", { draftId: sanitizedDraftId, inquiryId: draftRecord.id, sessionId: session.id });
+        }
+      } else {
+        logStep("No unpaid draft found to link", { draftId: sanitizedDraftId, found: !!draftRecord });
+      }
     }
 
     logStep("Checkout session created", { 
