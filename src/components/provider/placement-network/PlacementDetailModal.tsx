@@ -31,11 +31,41 @@ import {
   Loader2,
   FileText,
   AlertCircle,
+  Lock,
+  Eye,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useSelectedFacilityOptional } from "@/contexts/SelectedFacilityContext";
 import { useMatchScore, MatchScoreBadge } from "./MatchScoreUtils";
+
+// ── PII-safe field lists ───────────────────────────────
+
+/** Fields that are NEVER shown to providers before acceptance */
+const PII_FIELDS = new Set([
+  "user_name", "user_email", "user_phone", "email", "phone",
+  "emergency_contact_name", "emergency_contact_phone",
+  "decision_maker_name", "decision_maker_phone",
+  "alternative_contact_name", "alternative_contact_phone",
+  "employer_name", "insurance_member_id", "insurance_group_number",
+]);
+
+/** Fields safe to show in anonymized pre-qual view */
+const SAFE_CLINICAL_FIELDS = new Set([
+  "level_of_care", "primary_concern", "detox_needed",
+  "co_occurring_concerns", "substance_use_duration",
+  "substance_use_frequency", "prior_treatment_history",
+  "assessment_preference", "current_medications",
+  "current_living_situation", "mobility_needs",
+]);
+
+const SAFE_PREFERENCE_FIELDS = new Set([
+  "payment_type", "insurance_carrier", "budget_range",
+  "timeline_urgency", "preferred_state", "preferred_city",
+  "preferred_environment", "preferred_language",
+  "faith_based_preference", "holistic_interest",
+  "amenity_preferences", "age_range", "gender",
+]);
 
 // ── Types ──────────────────────────────────────────────
 
@@ -137,17 +167,6 @@ const URGENCY_MAP: Record<string, { label: string; className: string }> = {
   flexible: { label: "Flexible", className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20" },
 };
 
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  new: { label: "New", className: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20" },
-  reviewing: { label: "Under Review", className: "bg-primary/10 text-primary border-primary/20" },
-  matching: { label: "Finding Matches", className: "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/20" },
-  matched: { label: "Matched", className: "bg-primary/10 text-primary border-primary/20" },
-  introductions_sent: { label: "Introductions Sent", className: "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/20" },
-  in_contact: { label: "In Contact", className: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20" },
-  placed: { label: "Placed", className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20" },
-  closed: { label: "Closed", className: "bg-muted text-muted-foreground border-muted" },
-};
-
 // ── Main Component ─────────────────────────────────────
 
 export function PlacementDetailModal({
@@ -164,13 +183,18 @@ export function PlacementDetailModal({
   const inquiry = introduction?.concierge_inquiries;
   const { selectedFacility } = useSelectedFacilityOptional();
   const matchScore = useMatchScore(selectedFacility, inquiry);
+
   const caseId = inquiry?.id?.slice(0, 8).toUpperCase() || introduction?.id.slice(0, 8).toUpperCase() || "";
-  const firstName = inquiry?.user_name?.split(" ")[0] || "Client";
   const isPending = !introduction?.provider_response || introduction.provider_response === "pending";
   const isAccepted = introduction?.provider_response === "interested";
   const isDeclined = introduction?.provider_response === "not_available";
   const isPlaced = inquiry?.placement_confirmed === true && inquiry?.placed_facility_id === facilityId;
 
+  // ── PII gate: only show first name AFTER acceptance ──
+  const hasAccepted = isAccepted || isPlaced;
+  const displayName = hasAccepted ? (inquiry?.user_name?.split(" ")[0] || "Client") : "Anonymized Client";
+
+  // Fetch full inquiry details (only clinical/preference data)
   const { data: fullInquiry } = useQuery({
     queryKey: ["placement-detail", introduction?.inquiry_id],
     queryFn: async () => {
@@ -178,14 +202,14 @@ export function PlacementDetailModal({
       const { data, error } = await supabase
         .from("concierge_inquiries")
         .select(`
-          id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state,
+          id, level_of_care, payment_type, timeline_urgency, preferred_state,
           preferred_city, status, age_range, gender, primary_concern, insurance_carrier,
           detox_needed, co_occurring_concerns, substance_use_duration, budget_range,
           seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at,
-          placed_facility_id, intake_data, preferred_language, preferred_environment,
+          placed_facility_id, preferred_language, preferred_environment,
           faith_based_preference, holistic_interest, mobility_needs, substance_use_frequency,
           prior_treatment_history, prior_treatment_notes, current_medications,
-          current_living_situation, assessment_preference, amenity_preferences, notes, created_at
+          current_living_situation, assessment_preference, amenity_preferences, created_at
         `)
         .eq("id", introduction.inquiry_id)
         .maybeSingle();
@@ -215,7 +239,7 @@ export function PlacementDetailModal({
       if (error) throw error;
       return msgs || [];
     },
-    enabled: open && !!introduction?.inquiry_id,
+    enabled: open && !!introduction?.inquiry_id && hasAccepted,
     staleTime: 30000,
   });
 
@@ -232,7 +256,7 @@ export function PlacementDetailModal({
       if (error) throw error;
       return data || [];
     },
-    enabled: open && !!introduction?.inquiry_id,
+    enabled: open && !!introduction?.inquiry_id && hasAccepted,
     staleTime: 60000,
   });
 
@@ -240,31 +264,36 @@ export function PlacementDetailModal({
   const locationText = [inq?.preferred_city, inq?.preferred_state].filter(Boolean).join(", ") || "Flexible";
   const coOccurringText = fmtCoOccurring(inq?.co_occurring_concerns);
   const amenitiesText = fmtAmenities(inq?.amenity_preferences);
-  const intakeData = inq?.intake_data && typeof inq.intake_data === "object" ? (inq.intake_data as Record<string, unknown>) : null;
-
-  const statusConf = STATUS_CONFIG[inq?.status || ""] || { label: fmt(inq?.status), className: "bg-muted text-muted-foreground" };
   const urgencyConf = URGENCY_MAP[inq?.timeline_urgency || ""] || URGENCY_MAP.flexible;
 
-  const steps = [
-    { label: "Created", done: true },
-    { label: "Sent", done: true },
-    { label: "Review", done: !isPending },
-    { label: "Coordinating", done: isAccepted || isPlaced },
-    { label: "Confirmed", done: isPlaced },
-  ];
+  const steps = isPending
+    ? [
+        { label: "Sent", done: true },
+        { label: "Your Review", done: false, current: true },
+        { label: "Coordinating", done: false },
+        { label: "Confirmed", done: false },
+      ]
+    : [
+        { label: "Sent", done: true },
+        { label: isAccepted ? "Accepted" : "Declined", done: true },
+        { label: "Coordinating", done: isAccepted || isPlaced },
+        { label: "Confirmed", done: isPlaced },
+      ];
 
   const nextStepText = isPlaced
     ? "Admission confirmed — thank you!"
     : isDeclined
     ? "You declined this candidate."
     : isAccepted
-    ? "Advisor is coordinating with the client."
-    : "Review and respond to this candidate.";
+    ? "Our advisor is coordinating with the client."
+    : "Review this anonymized case and decide if it's a fit.";
 
   const tabs = [
-    { key: "details" as const, label: "Details", icon: FileText },
-    { key: "messages" as const, label: "Messages", icon: MessageSquare, count: messages?.length },
-    { key: "timeline" as const, label: "Timeline", icon: Clock },
+    { key: "details" as const, label: "Case Summary", icon: FileText },
+    ...(hasAccepted ? [
+      { key: "messages" as const, label: "Messages", icon: MessageSquare, count: messages?.length },
+      { key: "timeline" as const, label: "Timeline", icon: Clock },
+    ] : []),
   ];
 
   return (
@@ -276,15 +305,13 @@ export function PlacementDetailModal({
           <div className="flex items-start justify-between gap-4 pr-8">
             <div className="min-w-0">
               <DialogTitle className="text-lg font-bold tracking-tight flex items-center gap-2.5">
+                <Lock className="h-4 w-4 text-muted-foreground" />
                 Case #{caseId}
-                <Badge variant="outline" className={cn("text-xs font-semibold", statusConf.className)}>
-                  {statusConf.label}
-                </Badge>
               </DialogTitle>
               <div className="flex items-center gap-3 mt-1.5 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <User className="h-3.5 w-3.5" />
-                  {firstName}
+                  {displayName}
                 </span>
                 <span className="text-muted-foreground/30">·</span>
                 <span className="flex items-center gap-1.5">
@@ -317,6 +344,11 @@ export function PlacementDetailModal({
                   <CheckCircle2 className="h-3 w-3" /> Placed
                 </Badge>
               )}
+              {isDeclined && (
+                <Badge variant="secondary" className="text-xs h-6 gap-1">
+                  <XCircle className="h-3 w-3" /> Declined
+                </Badge>
+              )}
             </div>
           </div>
         </DialogHeader>
@@ -325,6 +357,19 @@ export function PlacementDetailModal({
         <div className="px-6 pb-2 flex-shrink-0">
           <MatchScoreBadge score={matchScore} size="large" />
         </div>
+
+        {/* ─── Privacy Notice (pre-acceptance) ─── */}
+        {isPending && (
+          <div className="mx-6 mb-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 flex items-start gap-3 flex-shrink-0">
+            <Shield className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Anonymized Case Preview</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Personal details are hidden until you accept. Review clinical needs and preferences below.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ─── Tab Bar ─── */}
         <div className="flex border-b flex-shrink-0 px-6 bg-background">
@@ -341,9 +386,9 @@ export function PlacementDetailModal({
             >
               <tab.icon className="h-4 w-4" />
               {tab.label}
-              {tab.count !== undefined && tab.count > 0 && (
+              {"count" in tab && (tab as any).count !== undefined && (tab as any).count > 0 && (
                 <span className="bg-primary/10 text-primary rounded-full text-xs font-bold h-5 min-w-[20px] px-1.5 flex items-center justify-center">
-                  {tab.count}
+                  {(tab as any).count}
                 </span>
               )}
             </button>
@@ -353,7 +398,7 @@ export function PlacementDetailModal({
         {/* ─── Tab Content ─── */}
         <div className="flex-1 min-h-0 relative">
 
-          {/* === DETAILS === */}
+          {/* === CASE SUMMARY (Details) === */}
           <TabPanel active={activeTab === "details"}>
             <div className="space-y-5">
               {/* Progress stepper */}
@@ -361,7 +406,10 @@ export function PlacementDetailModal({
                 <div className="flex gap-1.5 mb-3">
                   {steps.map((s, i) => (
                     <div key={i} className="flex-1">
-                      <div className={cn("h-2 rounded-full transition-colors", s.done ? "bg-primary" : "bg-muted")} />
+                      <div className={cn(
+                        "h-2 rounded-full transition-colors",
+                        s.done ? "bg-primary" : ("current" in s && s.current) ? "bg-primary/40 animate-pulse" : "bg-muted"
+                      )} />
                       <p className={cn("text-xs text-center mt-1.5", s.done ? "text-foreground font-semibold" : "text-muted-foreground")}>
                         {s.label}
                       </p>
@@ -374,10 +422,10 @@ export function PlacementDetailModal({
                 </div>
               </div>
 
-              {/* Client Profile */}
+              {/* Client Profile (anonymized before acceptance) */}
               <SectionCard title="Client Profile" icon={User}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
-                  <InfoItem icon={User} label="Name" value={firstName} />
+                  <InfoItem icon={User} label="Name" value={displayName} />
                   <InfoItem icon={Calendar} label="Age Range" value={fmt(inq?.age_range)} />
                   <InfoItem icon={User} label="Gender" value={fmt(inq?.gender)} />
                   <InfoItem icon={MapPin} label="Preferred Location" value={locationText} />
@@ -398,7 +446,6 @@ export function PlacementDetailModal({
                   <InfoItem icon={Clock} label="Frequency" value={fmt(inq?.substance_use_frequency)} />
                   <InfoItem icon={Activity} label="Assessment" value={fmt(inq?.assessment_preference)} />
                   {inq?.prior_treatment_history && <InfoItem icon={FileText} label="Prior Treatment" value="Yes" />}
-                  <InfoItem icon={FileText} label="Treatment Notes" value={inq?.prior_treatment_notes} />
                   <InfoItem icon={Pill} label="Medications" value={inq?.current_medications} />
                 </div>
                 {coOccurringText && (
@@ -425,33 +472,6 @@ export function PlacementDetailModal({
                 )}
               </SectionCard>
 
-              {/* Additional intake data */}
-              {intakeData && Object.keys(intakeData).length > 0 && (
-                <SectionCard title="Additional Details" icon={FileText}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
-                    {Object.entries(intakeData)
-                      .filter(([key]) => !["email", "phone", "user_email", "user_phone"].includes(key))
-                      .filter(([, val]) => val !== null && val !== undefined && val !== "")
-                      .slice(0, 20)
-                      .map(([key, val]) => (
-                        <InfoItem
-                          key={key}
-                          icon={FileText}
-                          label={fmt(key)}
-                          value={typeof val === "object" ? JSON.stringify(val) : String(val)}
-                        />
-                      ))}
-                  </div>
-                </SectionCard>
-              )}
-
-              {/* Client Notes */}
-              {inq?.notes && (
-                <SectionCard title="Client Notes" icon={FileText}>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{inq.notes}</p>
-                </SectionCard>
-              )}
-
               {/* Fee notice */}
               <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 flex items-start gap-3">
                 <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
@@ -465,39 +485,48 @@ export function PlacementDetailModal({
                 </div>
               </div>
 
-              {/* Actions (pending) */}
+              {/* ─── Accept / Decline Actions (pre-acceptance) ─── */}
               {isPending && onRespond && (
-                <div className="space-y-3 pt-1">
+                <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-5 space-y-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Shield className="h-4.5 w-4.5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Is this a fit for your facility?</p>
+                      <p className="text-xs text-muted-foreground">Accepting does not commit you — it allows our advisor to begin coordination.</p>
+                    </div>
+                  </div>
                   <Textarea
-                    placeholder="Optional note to advisor..."
+                    placeholder="Optional note to our placement advisor..."
                     value={providerNote}
                     onChange={(e) => setProviderNote(e.target.value)}
-                    className="text-sm resize-none rounded-xl"
+                    className="text-sm resize-none rounded-xl bg-background"
                     rows={2}
                   />
                   <div className="flex gap-3">
                     <Button
-                      className="flex-1 gap-2 h-11"
+                      className="flex-1 gap-2 h-12 text-sm font-bold"
                       onClick={() => onRespond("interested", providerNote.trim() || undefined)}
                       disabled={isResponding}
                     >
                       {isResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                      I'm Interested
+                      Accept Case
                     </Button>
                     <Button
                       variant="outline"
-                      className="flex-1 gap-2 h-11"
+                      className="flex-1 gap-2 h-12 text-sm font-bold"
                       onClick={() => onRespond("not_available", providerNote.trim() || undefined)}
                       disabled={isResponding}
                     >
                       {isResponding ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
-                      Not a Fit
+                      Decline
                     </Button>
                   </div>
                 </div>
               )}
 
-              {/* Response summary */}
+              {/* Response summary (post-response) */}
               {!isPending && (
                 <div className={cn(
                   "rounded-xl p-4 border",
@@ -516,7 +545,7 @@ export function PlacementDetailModal({
                       <XCircle className="h-5 w-5 text-muted-foreground" />
                     )}
                     <span className="font-semibold text-sm">
-                      {isPlaced ? "Admission Confirmed" : isAccepted ? "Accepted — Awaiting Confirmation" : "Declined"}
+                      {isPlaced ? "Admission Confirmed" : isAccepted ? "Accepted — Advisor Coordinating" : "Declined"}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground pl-[30px]">
@@ -534,13 +563,14 @@ export function PlacementDetailModal({
             </div>
           </TabPanel>
 
-          {/* === MESSAGES === */}
+          {/* === MESSAGES (only after acceptance) === */}
           <TabPanel active={activeTab === "messages"}>
-            {messagesLoading ? (
+            {!hasAccepted ? (
+              <LockedSection message="Accept this case to access messaging with your placement advisor." />
+            ) : messagesLoading ? (
               <div className="space-y-4">
                 <Skeleton className="h-14 w-3/4 rounded-xl" />
                 <Skeleton className="h-14 w-2/3 ml-auto rounded-xl" />
-                <Skeleton className="h-14 w-3/4 rounded-xl" />
               </div>
             ) : messages && messages.length > 0 ? (
               <div className="space-y-3">
@@ -551,9 +581,7 @@ export function PlacementDetailModal({
                     <div key={msg.id} className={cn("flex", isYou ? "justify-end" : "justify-start")}>
                       <div className={cn(
                         "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
-                        isYou
-                          ? "bg-primary text-primary-foreground rounded-br-md"
-                          : "bg-muted rounded-bl-md"
+                        isYou ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"
                       )}>
                         <p className="text-xs font-semibold opacity-70 mb-1">{isYou ? "You" : "Advisor"}</p>
                         <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
@@ -576,55 +604,48 @@ export function PlacementDetailModal({
             )}
           </TabPanel>
 
-          {/* === TIMELINE === */}
+          {/* === TIMELINE (only after acceptance) === */}
           <TabPanel active={activeTab === "timeline"}>
-            <div className="space-y-0">
-              <TimelineEntry
-                label="Case Sent to You"
-                date={introduction?.created_at}
-                icon={<Send className="h-4 w-4 text-primary" />}
-              />
-              {introduction?.provider_responded_at && (
+            {!hasAccepted ? (
+              <LockedSection message="Accept this case to view the full timeline." />
+            ) : (
+              <div className="space-y-0">
                 <TimelineEntry
-                  label={isAccepted ? "You Accepted" : "You Declined"}
-                  date={introduction.provider_responded_at}
-                  icon={isAccepted ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
+                  label="Case Sent to You"
+                  date={introduction?.created_at}
+                  icon={<Send className="h-4 w-4 text-primary" />}
                 />
-              )}
-              {inquiry?.placement_confirmed_at && isPlaced && (
-                <TimelineEntry
-                  label="Admission Confirmed"
-                  date={inquiry.placement_confirmed_at}
-                  icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-                />
-              )}
-
-              {caseEvents && caseEvents.length > 0 && (
-                <>
-                  <Separator className="my-5" />
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Activity Log</p>
-                  {caseEvents.map((ev) => (
-                    <TimelineEntry
-                      key={ev.id}
-                      label={fmt(ev.event_type)}
-                      date={ev.created_at}
-                      icon={<Activity className="h-4 w-4 text-muted-foreground" />}
-                      subtitle={ev.actor_type ? `by ${fmt(ev.actor_type)}` : undefined}
-                    />
-                  ))}
-                </>
-              )}
-
-              {(!caseEvents || caseEvents.length === 0) && !introduction?.provider_responded_at && (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-4">
-                    <Clock className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <p className="text-sm font-semibold text-foreground">No activity yet</p>
-                  <p className="text-sm text-muted-foreground mt-1">Timeline updates as the case progresses.</p>
-                </div>
-              )}
-            </div>
+                {introduction?.provider_responded_at && (
+                  <TimelineEntry
+                    label={isAccepted ? "You Accepted" : "You Declined"}
+                    date={introduction.provider_responded_at}
+                    icon={isAccepted ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
+                  />
+                )}
+                {inquiry?.placement_confirmed_at && isPlaced && (
+                  <TimelineEntry
+                    label="Admission Confirmed"
+                    date={inquiry.placement_confirmed_at}
+                    icon={<CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                  />
+                )}
+                {caseEvents && caseEvents.length > 0 && (
+                  <>
+                    <Separator className="my-5" />
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Activity Log</p>
+                    {caseEvents.map((ev) => (
+                      <TimelineEntry
+                        key={ev.id}
+                        label={fmt(ev.event_type)}
+                        date={ev.created_at}
+                        icon={<Activity className="h-4 w-4 text-muted-foreground" />}
+                        subtitle={ev.actor_type ? `by ${fmt(ev.actor_type)}` : undefined}
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
           </TabPanel>
         </div>
       </DialogContent>
@@ -683,6 +704,18 @@ function TimelineEntry({ label, date, icon, subtitle }: { label: string; date?: 
           {format(new Date(date), "MMM d, h:mm a")}
         </span>
       )}
+    </div>
+  );
+}
+
+function LockedSection({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-4">
+        <Lock className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <p className="text-sm font-semibold text-foreground">Locked</p>
+      <p className="text-sm text-muted-foreground mt-1 max-w-xs">{message}</p>
     </div>
   );
 }
