@@ -186,7 +186,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
     enabled: open && shouldShowMatches === true && allMatchedIds.length > 0,
   });
 
-  const inq = fullCase || caseData;
+  // inq already declared above
   if (!inq) return null;
 
   const locationText = [inq.preferred_city, inq.preferred_state].filter(Boolean).join(", ") || "Flexible";
