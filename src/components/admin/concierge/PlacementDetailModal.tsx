@@ -27,7 +27,9 @@ import { InvoiceManagementTab } from "./InvoiceManagementTab";
 import { MessagesTab } from "./MessagesTab";
 import { ToursTab } from "./ToursTab";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
-import { STATUS_CONFIG, getVisualStage } from "./placementPipelineConfig";
+import { STATUS_CONFIG, getVisualStage, getStageConfig, getNextStage, type PlacementStage } from "./placementPipelineConfig";
+import { getCaseNextSteps } from "./placementActionUtils";
+import { useCaseTransition } from "@/hooks/useCaseTransition";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 
