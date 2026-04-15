@@ -15,7 +15,7 @@ import {
   CalendarCheck, X, Mail, Phone, MapPin, Clock, CheckCircle,
   HeartHandshake, Building2, UserCheck, History, User,
   Activity, Send, Home, Loader2, Play, RefreshCw, Shield,
-  Eye, ArrowRight, FileText,
+  Eye, ArrowRight, FileText, ChevronRight, AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
