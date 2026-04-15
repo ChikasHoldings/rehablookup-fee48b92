@@ -23,6 +23,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { PlacementProgressStepper } from "./PlacementProgressStepper";
 import { CaseSlaDetailBanner } from "./CaseSlaAlerts";
 import { ConciergeActionsTab } from "./ConciergeActionsTab";
+import { AdminConfirmPlacement } from "./AdminConfirmPlacement";
 import { InvoiceManagementTab } from "./InvoiceManagementTab";
 import { MessagesTab } from "./MessagesTab";
 import { ToursTab } from "./ToursTab";
