@@ -249,7 +249,7 @@ export default function AdminSupport() {
                   <SelectItem value="all">All Sources</SelectItem>
                   <SelectItem value="public_contact">Public</SelectItem>
                   <SelectItem value="provider_support">Provider</SelectItem>
-                  <SelectItem value="seeker_support">Seeker</SelectItem>
+                  <SelectItem value="seeker_support">Client</SelectItem>
                 </SelectContent>
               </Select>
               <Select

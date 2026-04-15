@@ -759,7 +759,7 @@ export default function AdminSeekers() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Trash2 className="h-5 w-5 text-destructive" />
-              Delete {selectedIds.size} Seeker Account(s)
+              Delete {selectedIds.size} Client Account(s)
             </AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. All selected client accounts and their associated data

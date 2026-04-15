@@ -277,11 +277,11 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               <div>
-                <p className="font-medium text-emerald-800 dark:text-emerald-400">Seeker Confirmed</p>
+                <p className="font-medium text-emerald-800 dark:text-emerald-400">Client Confirmed</p>
                 <p className="text-sm text-muted-foreground">
                   {caseData.seeker_confirmed_at
                     ? `Confirmed on ${new Date(caseData.seeker_confirmed_at).toLocaleDateString()}`
-                    : "The seeker has confirmed their preferred facility. You can now finalize the placement."}
+                    : "The client has confirmed their preferred facility. You can now finalize the placement."}
                 </p>
               </div>
             </div>
@@ -420,7 +420,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       {(caseData.seeker_confirmed || caseData.seeker_feedback) && (
         <Card>
           <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Seeker Feedback</CardTitle>
+            <CardTitle className="text-sm font-medium">Client Feedback</CardTitle>
           </CardHeader>
           <CardContent className="py-2 text-sm">
             {caseData.seeker_rating && (

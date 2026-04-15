@@ -129,7 +129,7 @@ export function ProviderPlacementsTab({ provider, providerFacilities }: Provider
                   <TableRow className="bg-muted/50">
                     <TableHead>Sent</TableHead>
                     <TableHead>Response</TableHead>
-                    <TableHead>Seeker Contacted</TableHead>
+                    <TableHead>Client Contacted</TableHead>
                     {showFacilityCol && <TableHead>Facility</TableHead>}
                     <TableHead>Notes</TableHead>
                   </TableRow>
