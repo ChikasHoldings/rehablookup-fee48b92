@@ -160,6 +160,32 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
     enabled: open && !!caseData?.placed_facility_id,
   });
 
+  // Determine if seeker should see matched providers
+  const showMatchedStatuses = ["presented_to_seeker", "seeker_selected", "admission_in_progress", "admitted", "billed", "completed"];
+  const inq = fullCase || caseData;
+  const shouldShowMatches = inq && showMatchedStatuses.includes(inq.status);
+
+  // Fetch matched facility details for seeker view
+  const allMatchedIds = [...new Set([
+    ...((fullCase?.matched_facility_ids as string[]) || []),
+    ...((fullCase?.admin_matched_facility_ids as string[]) || []),
+  ])];
+
+  const { data: matchedFacilities } = useQuery({
+    queryKey: ["seeker-matched-facilities", allMatchedIds],
+    queryFn: async () => {
+      if (!allMatchedIds.length) return [];
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("id, name, city, state, facility_type, logo_url")
+        .in("id", allMatchedIds)
+        .eq("status", "approved");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: open && shouldShowMatches === true && allMatchedIds.length > 0,
+  });
+
   const inq = fullCase || caseData;
   if (!inq) return null;
 
