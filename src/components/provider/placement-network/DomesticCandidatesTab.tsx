@@ -86,15 +86,15 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
     queryKey: ["placement-introductions", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
-      // PII-safe query: do NOT select user_name, user_email, user_phone
-      // Provider sees only clinical/preference data before acceptance
+      // PII-safe query: user_name included for first-name display after acceptance
+      // Full PII (email/phone) fetched separately in PlacementDetailModal only when unlocked
       const { data, error } = await supabase
         .from("concierge_introductions")
         .select(`
           id, facility_id, inquiry_id, created_at,
           provider_response, provider_responded_at, provider_notes,
           concierge_inquiries (
-            id, level_of_care, payment_type, timeline_urgency, preferred_state,
+            id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state,
             preferred_city, status, age_range, gender, primary_concern, insurance_carrier,
             detox_needed, co_occurring_concerns, substance_use_duration, budget_range,
             seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at, placed_facility_id
