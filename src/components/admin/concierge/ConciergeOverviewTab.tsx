@@ -37,7 +37,6 @@ const STATUS_LABELS: Record<string, string> = {
   matched: "Matched",
   introductions_sent: "Intros Sent",
   in_contact: "In Contact",
-  admitted: "Admitted",
 };
 
 function InfoRow({ label, value, icon: Icon }: { label: string; value: React.ReactNode; icon?: React.ElementType }) {
