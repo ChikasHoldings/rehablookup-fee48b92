@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { PlacementPipelineBoard } from "@/components/admin/concierge/PlacementPipelineBoard";
+import { PlacementOpsDashboard } from "@/components/admin/concierge/PlacementOpsDashboard";
 import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvidersTab";
 import { AllInvoicesTab } from "@/components/admin/concierge/AllInvoicesTab";
 import { InternationalCasesTab } from "@/components/admin/concierge/InternationalCasesTab";
@@ -49,7 +50,7 @@ export default function AdminConcierge() {
   const [statusFilter, setStatusFilter] = useState<CaseStatus>("all");
   const [advisorFilter, setAdvisorFilter] = useState<string>("all");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"pipeline" | "table">("table");
+  const [viewMode, setViewMode] = useState<"dashboard" | "pipeline" | "table">("dashboard");
 
   // Set advisor filter for advisor role
   useEffect(() => {
