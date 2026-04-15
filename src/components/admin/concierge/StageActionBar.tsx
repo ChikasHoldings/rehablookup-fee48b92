@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useCaseTransition } from "@/hooks/useCaseTransition";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -21,18 +22,13 @@ interface StageAction {
   label: string;
   icon: React.ElementType;
   variant: "default" | "outline" | "destructive" | "secondary";
-  /** If set, clicking navigates to this tab instead of performing a mutation */
   navigateTo?: string;
-  /** If set, clicking advances status to this value */
   advanceTo?: string;
-  /** Extra fields to update alongside status */
-  updateFields?: Record<string, unknown>;
-  /** Event type for timeline logging */
+  extraFields?: Record<string, unknown>;
   eventType?: string;
 }
 
 function getStageActions(c: ConciergeInquiry): StageAction[] {
-  const isPaid = c.payment_status === "paid" || c.payment_status === "succeeded";
   const hasAdvisor = !!c.assigned_advisor_id;
   const hasMatches = (c.match_count || 0) > 0;
   const hasIntros = (c.introductions_sent_count || 0) > 0;
@@ -90,7 +86,7 @@ function getStageActions(c: ConciergeInquiry): StageAction[] {
       }
       return [
         { label: "Mark Admitted", icon: CheckCircle, variant: "default", advanceTo: "placed",
-          updateFields: { placement_confirmed: true, placement_confirmed_at: new Date().toISOString(), admission_status: "admitted" },
+          extraFields: { placement_confirmed: true, placement_confirmed_at: new Date().toISOString(), admission_status: "admitted" },
           eventType: "placement_confirmed" },
         { label: "Schedule Tour", icon: CalendarCheck, variant: "outline", navigateTo: "tours" },
       ];
@@ -114,38 +110,8 @@ function getStageActions(c: ConciergeInquiry): StageAction[] {
 }
 
 export function StageActionBar({ caseData, onRefresh, onSwitchTab }: StageActionBarProps) {
-  const { user } = useAdminAuth();
-  const queryClient = useQueryClient();
+  const transition = useCaseTransition();
   const actions = getStageActions(caseData);
-
-  const advanceMutation = useMutation({
-    mutationFn: async (action: StageAction) => {
-      if (!action.advanceTo) return;
-      const updatePayload: Record<string, unknown> = {
-        status: action.advanceTo,
-        ...(action.updateFields || {}),
-      };
-      const { error } = await supabase
-        .from("concierge_inquiries")
-        .update(updatePayload)
-        .eq("id", caseData.id);
-      if (error) throw error;
-
-      await supabase.from("concierge_case_events").insert({
-        inquiry_id: caseData.id,
-        event_type: action.eventType || "status_changed",
-        event_data: { from: caseData.status, to: action.advanceTo, via: "stage_action", label: action.label },
-        actor_id: user?.id,
-        actor_type: "admin",
-      });
-    },
-    onSuccess: () => {
-      toast.success("Case updated");
-      queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
-      onRefresh();
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
 
   if (actions.length === 0) return null;
 
@@ -160,16 +126,25 @@ export function StageActionBar({ caseData, onRefresh, onSwitchTab }: StageAction
             size="sm"
             variant={action.variant}
             className="h-8 text-xs gap-1.5"
-            disabled={advanceMutation.isPending}
+            disabled={transition.isPending}
             onClick={() => {
               if (isNav) {
                 onSwitchTab(action.navigateTo!);
-              } else {
-                advanceMutation.mutate(action);
+              } else if (action.advanceTo) {
+                transition.mutate({
+                  caseId: caseData.id,
+                  fromStatus: caseData.status,
+                  toStatus: action.advanceTo,
+                  extraFields: action.extraFields,
+                  eventType: action.eventType,
+                  via: "stage_action",
+                  label: action.label,
+                  onSuccess: onRefresh,
+                });
               }
             }}
           >
-            {advanceMutation.isPending && !isNav ? (
+            {transition.isPending && !isNav ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <Icon className="h-3.5 w-3.5" />
