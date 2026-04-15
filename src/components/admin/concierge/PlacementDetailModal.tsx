@@ -289,33 +289,42 @@ function InlineAdvisorAssign({ caseData, onRefresh }: { caseData: ConciergeInqui
     },
   });
 
+  const caseTransition = useCaseTransition();
+
   const assign = async () => {
     if (!selectedId) return;
     setSaving(true);
     try {
-      // Auto-advance to advisor_assigned if at intake_reviewed
-      const updates: Record<string, unknown> = { assigned_advisor_id: selectedId };
-      if (caseData.status === "intake_reviewed") {
-        updates.status = "advisor_assigned";
-      }
-
+      // First assign the advisor
       const { error } = await supabase
         .from("concierge_inquiries")
-        .update(updates)
+        .update({ assigned_advisor_id: selectedId })
         .eq("id", caseData.id);
       if (error) throw error;
 
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("concierge_case_events").insert({
-        inquiry_id: caseData.id, event_type: "advisor_assigned",
-        event_data: { advisor_id: selectedId, previous_advisor_id: null, auto_advanced: caseData.status === "intake_reviewed" },
-        actor_id: user?.id || null, actor_type: "admin",
-      });
-
-      toast.success("Advisor assigned");
-      queryClient.invalidateQueries({ queryKey: ["admin-concierge-cases-full"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-concierge-case-detail", caseData.id] });
-      onRefresh();
+      // Auto-advance to advisor_assigned if at intake_reviewed (using transition hook)
+      if (caseData.status === "intake_reviewed") {
+        await caseTransition.mutateAsync({
+          caseId: caseData.id,
+          fromStatus: "intake_reviewed",
+          toStatus: "advisor_assigned",
+          extraFields: { assigned_advisor_id: selectedId },
+          via: "inline_advisor_assign",
+          label: "Advisor assigned",
+        });
+      } else {
+        // Just log the assignment event
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: caseData.id, event_type: "advisor_assigned",
+          event_data: { advisor_id: selectedId, previous_advisor_id: null },
+          actor_id: user?.id || null, actor_type: "admin",
+        });
+        toast.success("Advisor assigned");
+        queryClient.invalidateQueries({ queryKey: ["admin-concierge-cases-full"] });
+        queryClient.invalidateQueries({ queryKey: ["admin-concierge-case-detail", caseData.id] });
+        onRefresh();
+      }
     } catch (err: any) {
       toast.error("Failed: " + err.message);
     } finally {
@@ -807,11 +816,66 @@ function AdmissionContent({ caseData, placedFacility, canManageBilling, onRefres
   const currentSubIdx = ADMISSION_SUBSTAGES.findIndex(s => s.key === currentSubstatus);
   const [noteText, setNoteText] = useState("");
 
+  const transition = useCaseTransition();
+
   const advanceSubstatus = async (newSubstatus: string) => {
+    const isAdmitStep = newSubstatus === "admitted";
+    const extraFields: Record<string, unknown> = {
+      admission_substatus: newSubstatus,
+    };
+
+    if (isAdmitStep) {
+      // When substatus reaches "admitted", also advance the pipeline status
+      // Use the transition hook to walk through intermediate statuses properly
+      extraFields.admission_status = "admitted";
+      extraFields.placement_confirmed = true;
+      extraFields.placement_confirmed_at = new Date().toISOString();
+
+      // Determine the correct pipeline status to advance to
+      const pipelineNeedsAdvance = ["seeker_selected", "admission_in_progress"].includes(caseData.status);
+      if (pipelineNeedsAdvance) {
+        // Walk to "admitted" via the transition hook
+        const targetStatus = "admitted";
+        // If we're at seeker_selected, need to go through admission_in_progress first
+        if (caseData.status === "seeker_selected") {
+          // Step 1: seeker_selected → admission_in_progress
+          await transition.mutateAsync({
+            caseId: caseData.id,
+            fromStatus: caseData.status,
+            toStatus: "admission_in_progress",
+            via: "admission_substatus",
+            label: "Admission started",
+          });
+          // Step 2: admission_in_progress → admitted
+          transition.mutate({
+            caseId: caseData.id,
+            fromStatus: "admission_in_progress",
+            toStatus: "admitted",
+            extraFields,
+            via: "admission_substatus",
+            label: "Admitted",
+            onSuccess: () => onRefresh(),
+          });
+          return;
+        } else if (caseData.status === "admission_in_progress") {
+          transition.mutate({
+            caseId: caseData.id,
+            fromStatus: "admission_in_progress",
+            toStatus: "admitted",
+            extraFields,
+            via: "admission_substatus",
+            label: "Admitted",
+            onSuccess: () => onRefresh(),
+          });
+          return;
+        }
+      }
+    }
+
+    // For non-pipeline-advancing substatus changes, just update directly
     const { error } = await supabase.from("concierge_inquiries")
       .update({
         admission_substatus: newSubstatus,
-        ...(newSubstatus === "admitted" ? { admission_status: "admitted", placement_confirmed: true, placement_confirmed_at: new Date().toISOString() } : {}),
       }).eq("id", caseData.id);
     if (error) { toast.error("Failed to update"); return; }
 
