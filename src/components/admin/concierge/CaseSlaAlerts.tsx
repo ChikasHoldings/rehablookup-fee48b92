@@ -1,10 +1,11 @@
 import { useMemo } from "react";
-import { differenceInHours, differenceInMinutes, format } from "date-fns";
-import { AlertTriangle, Flame, Clock, Zap } from "lucide-react";
+import { differenceInHours } from "date-fns";
+import { AlertTriangle, Flame, Clock, Zap, UserX, MessageSquareOff, HelpCircle, CalendarOff, Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-interface CaseSlaData {
+export interface CaseSlaData {
   id: string;
   status: string;
   created_at: string;
@@ -13,11 +14,18 @@ interface CaseSlaData {
   introductions_sent_at?: string | null;
   timeline_urgency?: string | null;
   assigned_advisor_id?: string | null;
+  payment_status?: string;
+  tour_coordination_status?: string;
+  admission_status?: string;
+  provider_fee_status?: string | null;
+  placement_confirmed?: boolean | null;
+  seeker_confirmed?: boolean | null;
+  introductions_sent_count?: number | null;
 }
 
-interface SlaAlert {
+export interface SlaAlert {
   key: string;
-  icon: typeof AlertTriangle;
+  icon: React.ElementType;
   label: string;
   severity: "critical" | "warning" | "info";
 }
@@ -33,8 +41,11 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
     const hoursSinceUpdate = differenceInHours(now, updatedAt);
     const hoursSinceCreation = differenceInHours(now, createdAt);
 
-    // Skip closed/placed cases
-    if (caseData.status === "closed" || caseData.status === "placed") return [];
+    // Skip closed/placed-complete cases
+    if (caseData.status === "closed") return [];
+    const isPlacedComplete = caseData.status === "placed" &&
+      (caseData.provider_fee_status === "paid" || caseData.provider_fee_status === "waived");
+    if (isPlacedComplete) return [];
 
     // 1. High urgency case flag
     if (caseData.timeline_urgency === "immediate") {
@@ -46,17 +57,17 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
       });
     }
 
-    // 2. Case inactive for 12+ hours
+    // 2. Overdue follow-up — inactive 12+ hours
     if (hoursSinceUpdate >= 12) {
       alerts.push({
         key: "inactive",
         icon: AlertTriangle,
-        label: `Inactive ${hoursSinceUpdate}h`,
+        label: `Stalled ${hoursSinceUpdate}h — follow up`,
         severity: hoursSinceUpdate >= 24 ? "critical" : "warning",
       });
     }
 
-    // 3. SLA: Time to first response (new cases older than 2 hours)
+    // 3. SLA: No first response on new cases (2h+)
     if (caseData.status === "new" && hoursSinceCreation >= 2) {
       alerts.push({
         key: "first-response",
@@ -66,17 +77,17 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
       });
     }
 
-    // 4. SLA: No advisor assigned after 4 hours
-    if (!caseData.assigned_advisor_id && hoursSinceCreation >= 4 && caseData.status !== "new") {
+    // 4. No advisor assigned (non-new, 4h+)
+    if (!caseData.assigned_advisor_id && caseData.status !== "new" && hoursSinceCreation >= 4) {
       alerts.push({
         key: "no-advisor",
-        icon: AlertTriangle,
+        icon: UserX,
         label: "No advisor assigned",
         severity: "warning",
       });
     }
 
-    // 5. SLA: Matched but no introductions sent after 6 hours
+    // 5. Matched but no introductions sent (6h+)
     if (
       (caseData.status === "matched" || caseData.status === "matching") &&
       caseData.matched_at
@@ -90,6 +101,58 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
           severity: hoursSinceMatch >= 12 ? "critical" : "warning",
         });
       }
+    }
+
+    // 6. No provider response — intros sent 24h+ ago with no status change
+    if (caseData.status === "introductions_sent" && caseData.introductions_sent_at) {
+      const hoursSinceIntros = differenceInHours(now, new Date(caseData.introductions_sent_at));
+      if (hoursSinceIntros >= 24) {
+        alerts.push({
+          key: "no-provider-response",
+          icon: MessageSquareOff,
+          label: `No provider response in ${hoursSinceIntros}h`,
+          severity: hoursSinceIntros >= 48 ? "critical" : "warning",
+        });
+      }
+    }
+
+    // 7. Seeker decision pending too long — in_contact for 48h+
+    if (caseData.status === "in_contact" && !caseData.seeker_confirmed && hoursSinceUpdate >= 48) {
+      alerts.push({
+        key: "seeker-pending",
+        icon: HelpCircle,
+        label: "Seeker decision pending 48h+",
+        severity: hoursSinceUpdate >= 72 ? "critical" : "warning",
+      });
+    }
+
+    // 8. Tour not scheduled — in_contact but no tour
+    if (
+      caseData.status === "in_contact" &&
+      (!caseData.tour_coordination_status || caseData.tour_coordination_status === "none" || caseData.tour_coordination_status === "not_started") &&
+      hoursSinceUpdate >= 24
+    ) {
+      alerts.push({
+        key: "tour-not-scheduled",
+        icon: CalendarOff,
+        label: "Tour not scheduled",
+        severity: "info",
+      });
+    }
+
+    // 9. Billing pending after placement
+    if (
+      caseData.status === "placed" &&
+      caseData.provider_fee_status !== "paid" &&
+      caseData.provider_fee_status !== "waived"
+    ) {
+      const placedHours = hoursSinceUpdate;
+      alerts.push({
+        key: "billing-pending",
+        icon: Receipt,
+        label: placedHours >= 72 ? "Invoice overdue" : "Invoice pending",
+        severity: placedHours >= 72 ? "critical" : "warning",
+      });
     }
 
     return alerts;
@@ -107,7 +170,6 @@ export function CaseSlaCompactBadge({ caseData }: { caseData: CaseSlaData }) {
   const alerts = useCaseSlaAlerts(caseData);
   if (alerts.length === 0) return null;
 
-  // Show the most severe alert
   const top = alerts[0];
   const Icon = top.icon;
 
@@ -122,6 +184,42 @@ export function CaseSlaCompactBadge({ caseData }: { caseData: CaseSlaData }) {
       <Icon className="h-2.5 w-2.5" />
       <span className="truncate max-w-[80px]">{top.label}</span>
     </Badge>
+  );
+}
+
+/** Inline alert dots for table rows — shows up to 3 icons with tooltips */
+export function CaseAlertIcons({ caseData }: { caseData: CaseSlaData }) {
+  const alerts = useCaseSlaAlerts(caseData);
+  if (alerts.length === 0) return null;
+
+  return (
+    <TooltipProvider delayDuration={200}>
+      <div className="flex items-center gap-0.5">
+        {alerts.slice(0, 3).map((alert) => {
+          const Icon = alert.icon;
+          return (
+            <Tooltip key={alert.key}>
+              <TooltipTrigger asChild>
+                <span className={cn(
+                  "inline-flex items-center justify-center h-5 w-5 rounded-full",
+                  alert.severity === "critical" && "bg-destructive/10 text-destructive",
+                  alert.severity === "warning" && "bg-warning/10 text-warning",
+                  alert.severity === "info" && "bg-primary/10 text-primary",
+                )}>
+                  <Icon className="h-3 w-3" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs max-w-[200px]">
+                {alert.label}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+        {alerts.length > 3 && (
+          <span className="text-[9px] text-muted-foreground font-medium ml-0.5">+{alerts.length - 3}</span>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }
 
@@ -143,7 +241,7 @@ export function CaseSlaDetailBanner({ caseData }: { caseData: CaseSlaData }) {
             )}
           >
             <Icon className="h-4 w-4 shrink-0" />
-            <span>{alert.severity === "critical" ? "🔥" : "⚠️"} {alert.label}</span>
+            <span>{alert.severity === "critical" ? "🔥" : alert.severity === "warning" ? "⚠️" : "ℹ️"} {alert.label}</span>
           </div>
         );
       })}
