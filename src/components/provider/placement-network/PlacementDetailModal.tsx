@@ -646,6 +646,90 @@ export function PlacementDetailModal({
             </div>
           </TabPanel>
 
+          {/* === SEEKER DETAILS (only after provider accepted + seeker selected) === */}
+          <TabPanel active={activeTab === "seeker"}>
+            {!piiUnlocked ? (
+              <LockedSection message="Full seeker details are released only after both you accept the case and the seeker selects your facility." />
+            ) : !seekerPii ? (
+              <div className="space-y-4">
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {/* Disclosure notice */}
+                <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 flex items-start gap-3">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-400">Seeker Selected Your Facility</p>
+                    <p className="text-xs text-emerald-700 dark:text-emerald-500 mt-0.5">
+                      Full contact and intake details are now available. This disclosure has been logged for compliance.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <SectionCard title="Contact Information" icon={User}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+                    <InfoItem icon={User} label="Full Name" value={seekerPii.user_name} />
+                    <InfoItem icon={MessageSquare} label="Email" value={seekerPii.user_email} />
+                    <InfoItem icon={Clock} label="Phone" value={seekerPii.user_phone} />
+                    <InfoItem icon={User} label="Relationship" value={fmt(seekerPii.relationship_to_seeker)} />
+                  </div>
+                </SectionCard>
+
+                {/* Emergency & Decision Maker */}
+                {(seekerPii.emergency_contact_name || seekerPii.decision_maker_name) && (
+                  <SectionCard title="Emergency & Decision Maker" icon={Shield}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+                      <InfoItem icon={User} label="Emergency Contact" value={seekerPii.emergency_contact_name} />
+                      <InfoItem icon={Clock} label="Emergency Phone" value={seekerPii.emergency_contact_phone} />
+                      <InfoItem icon={User} label="Decision Maker" value={seekerPii.decision_maker_name} />
+                      <InfoItem icon={Clock} label="Decision Maker Phone" value={seekerPii.decision_maker_phone} />
+                    </div>
+                  </SectionCard>
+                )}
+
+                {/* Insurance Details */}
+                <SectionCard title="Insurance Details" icon={Shield}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+                    <InfoItem icon={Shield} label="Carrier" value={seekerPii.insurance_carrier} />
+                    <InfoItem icon={FileText} label="Member ID" value={seekerPii.insurance_member_id} />
+                    <InfoItem icon={FileText} label="Group Number" value={seekerPii.insurance_group_number} />
+                    <InfoItem icon={DollarSign} label="Budget" value={fmt(seekerPii.budget_range)} />
+                  </div>
+                </SectionCard>
+
+                {/* Intake Summary */}
+                <SectionCard title="Intake Summary" icon={Activity}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+                    <InfoItem icon={Activity} label="Level of Care" value={fmt(seekerPii.level_of_care)} />
+                    <InfoItem icon={Heart} label="Primary Concern" value={fmt(seekerPii.primary_concern)} />
+                    <InfoItem icon={Pill} label="Detox Needed" value={fmt(seekerPii.detox_needed)} />
+                    <InfoItem icon={Clock} label="Use Duration" value={fmt(seekerPii.substance_use_duration)} />
+                    <InfoItem icon={Clock} label="Frequency" value={fmt(seekerPii.substance_use_frequency)} />
+                    <InfoItem icon={Activity} label="Living Situation" value={fmt(seekerPii.current_living_situation)} />
+                    <InfoItem icon={Pill} label="Medications" value={seekerPii.current_medications} />
+                    {seekerPii.prior_treatment_history && <InfoItem icon={FileText} label="Prior Treatment" value="Yes" />}
+                    <InfoItem icon={FileText} label="Prior Treatment Notes" value={seekerPii.prior_treatment_notes} />
+                  </div>
+                  {seekerPii.co_occurring_concerns && (
+                    <div className="mt-2 pt-2 border-t">
+                      <InfoItem icon={Heart} label="Co-Occurring" value={fmtCoOccurring(seekerPii.co_occurring_concerns)} />
+                    </div>
+                  )}
+                </SectionCard>
+
+                {/* Admin / Advisor Notes */}
+                {seekerPii.notes && (
+                  <SectionCard title="Advisor Notes" icon={FileText}>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{seekerPii.notes}</p>
+                  </SectionCard>
+                )}
+              </div>
+            )}
+          </TabPanel>
+
           {/* === MESSAGES (only after acceptance) === */}
           <TabPanel active={activeTab === "messages"}>
             {!hasAccepted ? (
