@@ -159,9 +159,9 @@ const socialLinks = [
 
 // ─── SUB-COMPONENTS ────────────────────────────────────────────────────────────
 
-const FooterLinkItem = memo(forwardRef<HTMLLIElement, { link: FooterLink }>(function FooterLinkItem({ link }, ref) {
+const FooterLinkItem = memo(function FooterLinkItem({ link }: { link: FooterLink }) {
   return (
-    <li ref={ref}>
+    <li>
       <Link
         to={link.path}
         className={`inline-flex items-center gap-1.5 text-sm leading-relaxed transition-colors duration-150 ${
@@ -180,7 +180,7 @@ const FooterLinkItem = memo(forwardRef<HTMLLIElement, { link: FooterLink }>(func
       </Link>
     </li>
   );
-}));
+});
 
 const FooterColumn = memo(function FooterColumn({ title, links }: FooterSection) {
   return (
