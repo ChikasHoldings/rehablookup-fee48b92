@@ -132,7 +132,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       html: emailHtml,
     }, {
       emailType: "lead_confirmation",
-      idempotencyKey: `lead-confirm-${leadEmail}-${Date.now().toString(36)}`,
+      idempotencyKey: `lead-confirm-${leadEmail}`,
       metadata: { leadFirstName },
     });
 
