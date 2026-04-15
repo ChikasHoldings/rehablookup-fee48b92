@@ -62,11 +62,11 @@ export function ConciergeDecisionTab({ caseData }: ConciergeDecisionTabProps) {
       {/* Seeker Confirmation Status */}
       <Card>
         <CardHeader className="py-3">
-          <CardTitle className="text-sm font-medium">Seeker Decision Status</CardTitle>
+          <CardTitle className="text-sm font-medium">Client Decision Status</CardTitle>
         </CardHeader>
         <CardContent className="py-2 space-y-3">
           <div className="flex items-center justify-between py-2">
-            <span className="text-sm text-muted-foreground">Seeker Confirmed</span>
+            <span className="text-sm text-muted-foreground">Client Confirmed</span>
             <div>
               {caseData.seeker_confirmed ? (
                 <Badge className="bg-success/10 text-success border-success/30 gap-1">
@@ -87,13 +87,13 @@ export function ConciergeDecisionTab({ caseData }: ConciergeDecisionTabProps) {
           )}
           {caseData.seeker_feedback && (
             <div className="border-t border-border/50 pt-2">
-              <span className="text-xs text-muted-foreground block mb-1">Seeker Feedback</span>
+              <span className="text-xs text-muted-foreground block mb-1">Client Feedback</span>
               <p className="text-sm bg-muted/50 rounded-lg p-2">{caseData.seeker_feedback}</p>
             </div>
           )}
           {caseData.seeker_rating && (
             <div className="flex items-center justify-between py-2 border-t border-border/50">
-              <span className="text-sm text-muted-foreground">Seeker Rating</span>
+              <span className="text-sm text-muted-foreground">Client Rating</span>
               <span className="text-sm font-medium">{"★".repeat(caseData.seeker_rating)}{"☆".repeat(5 - caseData.seeker_rating)}</span>
             </div>
           )}

@@ -341,7 +341,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground">Seeker Rating</p>
+              <p className="text-muted-foreground">Client Rating</p>
               <p className="font-medium mt-0.5 flex items-center gap-1">
                 {placement.seeker_rating ? (
                   <><Star className="h-3 w-3 fill-warning text-warning" />{placement.seeker_rating}/5</>
@@ -354,7 +354,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
           {(placement.seeker_feedback || placement.notes || placement.admission_notes) && (
             <div className="p-4 border-t bg-muted/20 space-y-2 text-xs">
               {placement.seeker_feedback && (
-                <div><span className="font-medium">Seeker Feedback:</span> <span className="text-muted-foreground">{placement.seeker_feedback}</span></div>
+                <div><span className="font-medium">Client Feedback:</span> <span className="text-muted-foreground">{placement.seeker_feedback}</span></div>
               )}
               {placement.admission_notes && (
                 <div><span className="font-medium">Admission Notes:</span> <span className="text-muted-foreground">{placement.admission_notes}</span></div>

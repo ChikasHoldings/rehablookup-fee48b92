@@ -232,7 +232,7 @@ export default function AdvisorInbox() {
           <Tabs value={threadFilter} onValueChange={(v) => setThreadFilter(v as ThreadFilter)}>
             <TabsList className="h-9">
               <TabsTrigger value="all" className="text-xs px-2.5">All</TabsTrigger>
-              <TabsTrigger value="seeker" className="text-xs px-2.5">Seekers</TabsTrigger>
+              <TabsTrigger value="seeker" className="text-xs px-2.5">Clients</TabsTrigger>
               <TabsTrigger value="facility" className="text-xs px-2.5">Facilities</TabsTrigger>
               <TabsTrigger value="unread" className="text-xs px-2.5">
                 Unread
