@@ -3,34 +3,40 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Card } from "@/components/ui/card";
+import { AdminPageHeader, AdminStatCard } from "@/components/admin/AdminPageHeader";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, RefreshCw, UserCheck, HeartHandshake, Building2, Receipt, Globe, Flag, Filter, DollarSign, FileText, LayoutGrid, List } from "lucide-react";
-import { format } from "date-fns";
-import { ConciergeDetailSheet } from "@/components/admin/ConciergeDetailSheet";
-import { ConciergeStatsCharts } from "@/components/admin/ConciergeStatsCharts";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Search, RefreshCw, UserCheck, HeartHandshake, Building2, Receipt,
+  Globe, Flag, Filter, DollarSign, FileText, LayoutGrid, List,
+  CalendarCheck, Clock, Users, Send, CheckCircle, XCircle, Loader2,
+  Download,
+} from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 import { PlacementPipelineBoard } from "@/components/admin/concierge/PlacementPipelineBoard";
 import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvidersTab";
 import { AllInvoicesTab } from "@/components/admin/concierge/AllInvoicesTab";
 import { InternationalCasesTab } from "@/components/admin/concierge/InternationalCasesTab";
+import { PlacementDetailModal } from "@/components/admin/concierge/PlacementDetailModal";
+import { cn } from "@/lib/utils";
 
-type CaseStatus = 'new' | 'in_progress' | 'placed' | 'closed' | 'all';
+type CaseStatus = string;
 
-const IN_PROGRESS_STATUSES = ['reviewing', 'matching', 'matched', 'introductions_sent', 'in_contact'];
-
-const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  new: { label: "New", variant: "default" },
-  reviewing: { label: "Reviewing", variant: "secondary" },
-  matching: { label: "Placing", variant: "secondary" },
-  matched: { label: "Facilities Found", variant: "outline" },
-  introductions_sent: { label: "Intros Sent", variant: "outline" },
-  in_contact: { label: "In Contact", variant: "secondary" },
-  placed: { label: "Placed", variant: "default" },
-  closed: { label: "Closed", variant: "destructive" },
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  new: { label: "New", color: "bg-blue-500/10 text-blue-600 border-blue-500/30" },
+  reviewing: { label: "Reviewing", color: "bg-amber-500/10 text-amber-600 border-amber-500/30" },
+  matching: { label: "Placing", color: "bg-purple-500/10 text-purple-600 border-purple-500/30" },
+  matched: { label: "Matched", color: "bg-chart-3/10 text-chart-3 border-chart-3/30" },
+  introductions_sent: { label: "Intros Sent", color: "bg-indigo-500/10 text-indigo-600 border-indigo-500/30" },
+  in_contact: { label: "In Contact", color: "bg-cyan-500/10 text-cyan-600 border-cyan-500/30" },
+  placed: { label: "Placed", color: "bg-success/10 text-success border-success/30" },
+  closed: { label: "Closed", color: "bg-muted text-muted-foreground border-border" },
 };
 
 function useDebounce(value: string, delay: number) {
@@ -45,77 +51,68 @@ function useDebounce(value: string, delay: number) {
 export default function AdminConcierge() {
   const { user, adminRole } = useAdminAuth();
   const isAdvisor = adminRole === "advisor";
-  
+
   const [activeTab, setActiveTab] = useState("domestic");
   const [searchInput, setSearchInput] = useState("");
   const searchQuery = useDebounce(searchInput, 350);
   const [statusFilter, setStatusFilter] = useState<CaseStatus>("all");
+  const [advisorFilter, setAdvisorFilter] = useState<string>("all");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [advisorFilter, setAdvisorFilter] = useState<"mine" | "all">(isAdvisor ? "mine" : "all");
-  const [viewMode, setViewMode] = useState<"pipeline" | "table">("pipeline");
+  const [viewMode, setViewMode] = useState<"pipeline" | "table">("table");
+
+  // Set advisor filter for advisor role
+  useEffect(() => {
+    if (isAdvisor && user?.id) setAdvisorFilter(user.id);
+  }, [isAdvisor, user?.id]);
 
   const { data: cases, isLoading, refetch } = useQuery({
-    queryKey: ["admin-concierge-cases", statusFilter, advisorFilter, user?.id],
+    queryKey: ["admin-concierge-cases-full"],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("concierge_inquiries")
-        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, match_count, assigned_advisor_id, created_at, updated_at")
+        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, preferred_city, match_count, assigned_advisor_id, created_at, updated_at, admission_status, tour_coordination_status, placement_confirmed, placement_confirmed_at, placed_facility_id, introductions_sent_at, introductions_sent_count, provider_fee_status, provider_fee_cents, timeline_urgency, primary_concern, closed_at")
         .order("created_at", { ascending: false })
         .limit(500);
-
-      if (statusFilter === "in_progress") {
-        query = query.in("status", IN_PROGRESS_STATUSES);
-      } else if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
-
-      if (advisorFilter === "mine" && user?.id) {
-        query = query.eq("assigned_advisor_id", user.id);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
   const { data: adminStaff } = useQuery({
     queryKey: ["admin-staff-list"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("admin_user_profiles")
         .select("user_id, first_name, last_name, display_name")
         .eq("status", "active");
-      if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
-  const { data: stats } = useQuery({
-    queryKey: ["admin-concierge-stats"],
+  // Fetch facility names for placed cases
+  const placedFacilityIds = [...new Set((cases || []).map(c => c.placed_facility_id).filter(Boolean))];
+  const { data: facilityMap } = useQuery({
+    queryKey: ["admin-placement-facilities", placedFacilityIds],
     queryFn: async () => {
-      const statusKeys = ["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact", "placed", "closed"];
-      const results = await Promise.all(
-        statusKeys.map(s =>
-          supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).eq("status", s)
-        )
-      );
-      const counts: Record<string, number> = {};
-      statusKeys.forEach((key, i) => {
-        counts[key] = results[i].count || 0;
-      });
-      return counts;
+      if (!placedFacilityIds.length) return {};
+      const { data } = await supabase
+        .from("facilities")
+        .select("id, name, city, state")
+        .in("id", placedFacilityIds as string[]);
+      const map: Record<string, any> = {};
+      data?.forEach(f => { map[f.id] = f; });
+      return map;
     },
+    enabled: placedFacilityIds.length > 0,
   });
 
   const { data: networkCount } = useQuery({
     queryKey: ["admin-network-provider-count"],
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { count } = await supabase
         .from("facilities")
         .select("id", { count: "exact", head: true })
         .eq("concierge_network_opted_in", true);
-      if (error) throw error;
       return count || 0;
     },
   });
@@ -123,16 +120,15 @@ export default function AdminConcierge() {
   const { data: internationalCount } = useQuery({
     queryKey: ["admin-international-count"],
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { count } = await supabase
         .from("international_placement_cases")
         .select("id", { count: "exact", head: true })
         .not("status", "eq", "closed");
-      if (error) throw error;
       return count || 0;
     },
   });
 
-  // Fetch full case data when a case is selected
+  // Selected case full data
   const { data: selectedCase } = useQuery({
     queryKey: ["admin-concierge-case-detail", selectedCaseId],
     queryFn: async () => {
@@ -148,101 +144,112 @@ export default function AdminConcierge() {
     enabled: !!selectedCaseId,
   });
 
-  const filteredCases = cases?.filter((c) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      c.user_name?.toLowerCase().includes(q) ||
-      c.user_email?.toLowerCase().includes(q) ||
-      c.user_phone?.includes(q)
-    );
-  });
-
-  const handleStatusClick = (status: string) => {
-    setStatusFilter(status as CaseStatus);
-  };
-
+  // Advisor name helper
   const getAdvisorName = (advisorId: string | null) => {
     if (!advisorId) return "—";
-    const advisor = adminStaff?.find(a => a.user_id === advisorId);
-    return advisor ? (advisor.display_name || `${advisor.first_name} ${advisor.last_name}`) : "—";
+    const a = adminStaff?.find(s => s.user_id === advisorId);
+    return a ? (a.display_name || `${a.first_name} ${a.last_name}`) : "—";
   };
 
-  // Build advisor name map for pipeline board
   const advisorNames: Record<string, string> = {};
   adminStaff?.forEach(a => {
     advisorNames[a.user_id] = a.display_name || `${a.first_name} ${a.last_name}`;
   });
 
-  const isPaid = (status: string) => status === 'paid' || status === 'succeeded';
+  // Filtering
+  const filteredCases = (cases || []).filter(c => {
+    if (statusFilter !== "all" && c.status !== statusFilter) return false;
+    if (advisorFilter !== "all" && c.assigned_advisor_id !== advisorFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return (
+        c.user_name?.toLowerCase().includes(q) ||
+        c.user_email?.toLowerCase().includes(q) ||
+        c.user_phone?.includes(q) ||
+        c.id.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
+  // Stats
+  const allCases = cases || [];
+  const totalCases = allCases.length;
+  const activeCases = allCases.filter(c => !["placed", "closed"].includes(c.status)).length;
+  const newCases = allCases.filter(c => c.status === "new").length;
+  const awaitingAdvisor = allCases.filter(c => !c.assigned_advisor_id && c.status !== "closed").length;
+  const matchedCases = allCases.filter(c => c.status === "matched" || c.status === "introductions_sent").length;
+  const toursScheduled = allCases.filter(c => c.tour_coordination_status === "scheduled").length;
+  const admittedCases = allCases.filter(c => c.admission_status === "admitted" || c.placement_confirmed).length;
+  const placedCases = allCases.filter(c => c.status === "placed").length;
+  const pendingBilling = allCases.filter(c => c.status === "placed" && c.provider_fee_status !== "paid" && c.provider_fee_status !== "waived").length;
+
+  const isPaid = (status: string) => status === "paid" || status === "succeeded";
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="space-y-5">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <HeartHandshake className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+      <AdminPageHeader
+        icon={HeartHandshake}
+        iconGradient="bg-gradient-to-br from-primary to-primary/70"
+        title="Placement Operations"
+        subtitle="End-to-end placement lifecycle management — intake, matching, admission & billing"
+        badges={[
+          { label: "Active", value: activeCases, className: "bg-primary/10 text-primary" },
+          { label: "Placed", value: placedCases, className: "bg-success/10 text-success" },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            {!isAdvisor && (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/admin/placement-revenue">
+                    <DollarSign className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="text-xs sm:text-sm">Revenue</span>
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/admin/international/agreement">
+                    <FileText className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="text-xs sm:text-sm hidden sm:inline">Agreement</span>
+                  </Link>
+                </Button>
+              </>
+            )}
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+              <span className="text-xs sm:text-sm">Refresh</span>
+            </Button>
           </div>
-          <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate">Placement Command Center</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Manage domestic & international placements, network providers, and billing</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {!isAdvisor && (
-            <>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/admin/placement-revenue">
-                  <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
-                  <span className="text-xs sm:text-sm">Revenue</span>
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/admin/international/agreement">
-                  <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
-                  <span className="text-xs sm:text-sm hidden sm:inline">Agreement</span>
-                </Link>
-              </Button>
-            </>
-          )}
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-            <span className="text-xs sm:text-sm">Refresh</span>
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Main Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
           <TabsList className={`inline-flex w-auto sm:grid sm:w-full ${isAdvisor ? "sm:grid-cols-2 sm:max-w-xs" : "sm:grid-cols-4 sm:max-w-lg"}`}>
-            <TabsTrigger value="domestic" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
-              <Flag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <TabsTrigger value="domestic" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
+              <Flag className="h-3.5 w-3.5" />
               <span className="text-xs sm:text-sm">Domestic</span>
             </TabsTrigger>
-            <TabsTrigger value="international" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
-              <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="text-xs sm:text-sm">Intl</span>
-              {internationalCount ? (
-                <Badge variant="secondary" className="ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
-                  {internationalCount}
-                </Badge>
-              ) : null}
+            <TabsTrigger value="international" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
+              <Globe className="h-3.5 w-3.5" />
+              <span className="text-xs sm:text-sm">International</span>
+              {!!internationalCount && (
+                <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{internationalCount}</Badge>
+              )}
             </TabsTrigger>
             {!isAdvisor && (
               <>
-                <TabsTrigger value="providers" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
-                  <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <TabsTrigger value="providers" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
+                  <Building2 className="h-3.5 w-3.5" />
                   <span className="text-xs sm:text-sm">Network</span>
-                  {networkCount ? (
-                    <Badge variant="secondary" className="ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
-                      {networkCount}
-                    </Badge>
-                  ) : null}
+                  {!!networkCount && (
+                    <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{networkCount}</Badge>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger value="invoices" className="flex items-center gap-1.5 px-3 sm:gap-2 whitespace-nowrap">
-                  <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <TabsTrigger value="invoices" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
+                  <Receipt className="h-3.5 w-3.5" />
                   <span className="text-xs sm:text-sm">Invoices</span>
                 </TabsTrigger>
               </>
@@ -250,64 +257,83 @@ export default function AdminConcierge() {
           </TabsList>
         </div>
 
-        {/* Domestic Cases Tab */}
-        <TabsContent value="domestic" className="space-y-3 sm:space-y-4">
-          <ConciergeStatsCharts 
-            stats={stats} 
-            onStatusClick={handleStatusClick}
-            activeStatus={statusFilter}
-          />
+        {/* Domestic Tab */}
+        <TabsContent value="domestic" className="space-y-4">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <AdminStatCard label="Total Cases" value={isLoading ? "—" : totalCases} icon={HeartHandshake}
+              onClick={() => setStatusFilter("all")} active={statusFilter === "all"} />
+            <AdminStatCard label="New" value={isLoading ? "—" : newCases} icon={Clock} valueClassName="text-blue-600"
+              onClick={() => setStatusFilter("new")} active={statusFilter === "new"} />
+            <AdminStatCard label="Awaiting Advisor" value={isLoading ? "—" : awaitingAdvisor} icon={Users} valueClassName="text-warning"
+              onClick={() => setStatusFilter("all")} />
+            <AdminStatCard label="Matched / Intros" value={isLoading ? "—" : matchedCases} icon={Send} valueClassName="text-indigo-600"
+              onClick={() => setStatusFilter("matched")} active={statusFilter === "matched"} />
+            <AdminStatCard label="Tours Scheduled" value={isLoading ? "—" : toursScheduled} icon={CalendarCheck} valueClassName="text-cyan-600" />
+            <AdminStatCard label="Admitted" value={isLoading ? "—" : admittedCases} icon={CheckCircle} valueClassName="text-success"
+              onClick={() => setStatusFilter("placed")} active={statusFilter === "placed"} />
+            <AdminStatCard label="Placed" value={isLoading ? "—" : placedCases} icon={UserCheck} valueClassName="text-success" />
+            <AdminStatCard label="Pending Billing" value={isLoading ? "—" : pendingBilling} icon={DollarSign} valueClassName="text-warning" />
+            <AdminStatCard label="Active" value={isLoading ? "—" : activeCases} icon={Loader2} valueClassName="text-primary" />
+            <AdminStatCard label="Closed" value={isLoading ? "—" : allCases.filter(c => c.status === "closed").length}
+              icon={XCircle} valueClassName="text-muted-foreground"
+              onClick={() => setStatusFilter("closed")} active={statusFilter === "closed"} />
+          </div>
 
-          {/* View Toggle + Search Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:flex-none">
-                <Search className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, email, or phone..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  className="pl-8 sm:pl-10 w-full sm:w-[300px] h-9 text-sm"
-                />
-              </div>
-              {isAdvisor && (
-                <Button
-                  variant={advisorFilter === "mine" ? "default" : "outline"}
-                  size="sm"
-                  className="h-9 text-xs whitespace-nowrap"
-                  onClick={() => setAdvisorFilter(advisorFilter === "mine" ? "all" : "mine")}
-                >
-                  <Filter className="h-3.5 w-3.5 mr-1.5" />
-                  {advisorFilter === "mine" ? "My Cases" : "All Cases"}
-                </Button>
-              )}
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, email, phone, or case ID..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="pl-9"
+              />
             </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+                  <SelectItem key={key} value={key}>{cfg.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={advisorFilter} onValueChange={setAdvisorFilter}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="Advisor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Advisors</SelectItem>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+                {adminStaff?.map(a => (
+                  <SelectItem key={a.user_id} value={a.user_id}>
+                    {a.display_name || `${a.first_name} ${a.last_name}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <div className="flex items-center gap-2 self-start sm:self-auto">
-              <span className="text-xs sm:text-sm text-muted-foreground tabular-nums">
-                {filteredCases?.length || 0} cases
+              <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                {filteredCases.length} cases
               </span>
               <div className="flex items-center border rounded-md overflow-hidden">
-                <Button
-                  variant={viewMode === "pipeline" ? "default" : "ghost"}
-                  size="sm"
-                  className="h-8 px-2.5 rounded-none"
-                  onClick={() => setViewMode("pipeline")}
-                >
+                <Button variant={viewMode === "pipeline" ? "default" : "ghost"} size="sm"
+                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("pipeline")}>
                   <LayoutGrid className="h-3.5 w-3.5" />
                 </Button>
-                <Button
-                  variant={viewMode === "table" ? "default" : "ghost"}
-                  size="sm"
-                  className="h-8 px-2.5 rounded-none"
-                  onClick={() => setViewMode("table")}
-                >
+                <Button variant={viewMode === "table" ? "default" : "ghost"} size="sm"
+                  className="h-8 px-2.5 rounded-none" onClick={() => setViewMode("table")}>
                   <List className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
           </div>
 
-          {/* Pipeline View */}
+          {/* Content */}
           {viewMode === "pipeline" ? (
             <PlacementPipelineBoard
               cases={filteredCases}
@@ -318,98 +344,124 @@ export default function AdminConcierge() {
               isAdvisor={isAdvisor}
             />
           ) : (
-            /* Table View */
-            <Card>
-              <div className="p-3 sm:p-4">
-                {isLoading ? (
-                  <div className="space-y-3">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="flex items-center gap-4">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-4 w-48" />
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-4 w-20" />
-                        <Skeleton className="h-6 w-16" />
-                      </div>
-                    ))}
-                  </div>
-                ) : filteredCases?.length === 0 ? (
-                  <div className="text-center py-12">
-                    <HeartHandshake className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-muted-foreground font-medium">No cases found</p>
-                    <p className="text-sm text-muted-foreground/70 mt-1">Try adjusting your filters or search</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b text-left text-sm text-muted-foreground">
-                          <th className="pb-3 font-medium min-w-[120px]">Name</th>
-                          <th className="pb-3 font-medium min-w-[180px]">Contact</th>
-                          <th className="pb-3 font-medium min-w-[100px]">Care Type</th>
-                          <th className="pb-3 font-medium min-w-[80px]">Location</th>
-                          <th className="pb-3 font-medium min-w-[100px]">Status</th>
-                          <th className="pb-3 font-medium min-w-[80px]">Payment</th>
-                          <th className="pb-3 font-medium min-w-[100px]">Advisor</th>
-                          <th className="pb-3 font-medium min-w-[60px]">Matches</th>
-                          <th className="pb-3 font-medium min-w-[90px]">Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredCases?.map((c) => (
-                          <tr
-                            key={c.id}
-                            className="border-b last:border-0 hover:bg-muted/50 cursor-pointer transition-colors"
-                            onClick={() => setSelectedCaseId(c.id)}
-                          >
-                            <td className="py-3 font-medium">{c.user_name}</td>
-                            <td className="py-3">
-                              <div className="text-sm">{c.user_email}</div>
-                              <div className="text-xs text-muted-foreground">{c.user_phone}</div>
+            <div className="rounded-xl border bg-card overflow-hidden">
+              {isLoading ? (
+                <div className="p-4 space-y-3">
+                  {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+                </div>
+              ) : filteredCases.length === 0 ? (
+                <div className="text-center py-16">
+                  <HeartHandshake className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground font-medium">No cases found</p>
+                  <p className="text-xs text-muted-foreground mt-1">Try adjusting your filters or search.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/30">
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Seeker</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Contact</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Care Type</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Location</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Status</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Advisor</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Admission</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Tour</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Payment</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Billing</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Matches</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredCases.map((c) => {
+                        const facility = c.placed_facility_id && facilityMap ? facilityMap[c.placed_facility_id] : null;
+                        return (
+                          <tr key={c.id}
+                            className="border-b last:border-0 hover:bg-muted/20 cursor-pointer transition-colors"
+                            onClick={() => setSelectedCaseId(c.id)}>
+                            <td className="px-4 py-3">
+                              <p className="font-medium truncate max-w-[140px]">{c.user_name}</p>
+                              <p className="text-[10px] font-mono text-muted-foreground/60">{c.id.slice(0, 8)}</p>
                             </td>
-                            <td className="py-3">{c.level_of_care || "—"}</td>
-                            <td className="py-3">
-                              {c.desired_location_state || c.preferred_state || "Any"}
+                            <td className="px-4 py-3">
+                              <p className="text-xs truncate max-w-[160px]">{c.user_email}</p>
+                              <p className="text-[10px] text-muted-foreground">{c.user_phone}</p>
                             </td>
-                            <td className="py-3">
-                              <Badge variant={STATUS_CONFIG[c.status]?.variant || "secondary"}>
+                            <td className="px-4 py-3 text-xs">{c.level_of_care || "—"}</td>
+                            <td className="px-4 py-3 text-xs whitespace-nowrap">
+                              {c.preferred_city ? `${c.preferred_city}, ` : ""}{c.desired_location_state || c.preferred_state || "Any"}
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant="outline" className={cn("text-[10px]", STATUS_CONFIG[c.status]?.color || "")}>
                                 {STATUS_CONFIG[c.status]?.label || c.status}
                               </Badge>
                             </td>
-                            <td className="py-3">
-                              <Badge 
-                                variant="outline" 
-                                className={
-                                  isPaid(c.payment_status)
-                                    ? "bg-success/10 text-success border-success/30" 
-                                    : "bg-destructive/10 text-destructive border-destructive/30"
-                                }
-                              >
-                                {isPaid(c.payment_status) ? '✓ Paid' : '⚠ Unpaid'}
-                              </Badge>
-                            </td>
-                            <td className="py-3 text-sm text-muted-foreground">
+                            <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                               {getAdvisorName(c.assigned_advisor_id)}
                             </td>
-                            <td className="py-3">
-                              <div className="flex items-center gap-1 tabular-nums">
+                            <td className="px-4 py-3">
+                              {c.admission_status === "admitted" || c.placement_confirmed ? (
+                                <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-[10px] gap-1">
+                                  <CheckCircle className="h-3 w-3" />Admitted
+                                </Badge>
+                              ) : c.placed_facility_id ? (
+                                <span className="text-xs text-muted-foreground">In Progress</span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-xs whitespace-nowrap">
+                              {c.tour_coordination_status === "scheduled" ? (
+                                <Badge variant="outline" className="bg-cyan-500/10 text-cyan-600 border-cyan-500/30 text-[10px]">Scheduled</Badge>
+                              ) : c.tour_coordination_status === "completed" ? (
+                                <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-[10px]">Done</Badge>
+                              ) : c.tour_coordination_status && c.tour_coordination_status !== "not_needed" ? (
+                                <span className="text-xs text-muted-foreground capitalize">{c.tour_coordination_status.replace(/_/g, " ")}</span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant="outline" className={cn("text-[10px]",
+                                isPaid(c.payment_status) ? "bg-success/10 text-success border-success/30" : "bg-destructive/10 text-destructive border-destructive/30"
+                              )}>
+                                {isPaid(c.payment_status) ? "✓ Paid" : "⚠ Unpaid"}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              {c.status === "placed" ? (
+                                <Badge variant="outline" className={cn("text-[10px]",
+                                  c.provider_fee_status === "paid" ? "bg-success/10 text-success border-success/30" :
+                                  c.provider_fee_status === "waived" ? "bg-muted text-muted-foreground border-border" :
+                                  "bg-warning/10 text-warning border-warning/30"
+                                )}>
+                                  {c.provider_fee_status === "paid" ? "Billed" :
+                                   c.provider_fee_status === "waived" ? "Waived" : "Pending"}
+                                </Badge>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1 tabular-nums text-xs">
                                 {c.match_count || 0}
-                                {c.match_count && c.match_count > 0 && (
-                                  <UserCheck className="h-4 w-4 text-success" />
-                                )}
+                                {(c.match_count || 0) > 0 && <UserCheck className="h-3.5 w-3.5 text-success" />}
                               </div>
                             </td>
-                            <td className="py-3 text-sm text-muted-foreground">
-                              {format(new Date(c.created_at), "MMM d, yyyy")}
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <p className="text-xs tabular-nums">{format(new Date(c.created_at), "MMM d, yyyy")}</p>
+                              <p className="text-[10px] text-muted-foreground">{formatDistanceToNow(new Date(c.updated_at), { addSuffix: true })}</p>
                             </td>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </Card>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           )}
         </TabsContent>
 
@@ -426,11 +478,14 @@ export default function AdminConcierge() {
         </TabsContent>
       </Tabs>
 
-      <ConciergeDetailSheet
+      {/* Detail Modal */}
+      <PlacementDetailModal
         caseData={selectedCase}
         open={!!selectedCaseId}
         onClose={() => setSelectedCaseId(null)}
         onRefresh={() => refetch()}
+        advisorNames={advisorNames}
+        facilityMap={facilityMap || {}}
       />
     </div>
   );
