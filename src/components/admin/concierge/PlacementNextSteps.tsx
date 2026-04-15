@@ -33,9 +33,15 @@ const PRIORITY_STYLES: Record<ActionPriority, { border: string; bg: string; icon
 
 const TAB_LABELS: Record<string, string> = {
   overview: "Overview",
-  providers: "Providers",
+  seeker: "Seeker",
+  matching: "Match",
+  intros: "Intros",
+  decision: "Decision",
+  tours: "Tours",
   admission: "Admission",
-  manage: "Manage",
+  billing: "Billing",
+  timeline: "Notes",
+  actions: "Actions",
 };
 
 function getHoursSinceUpdate(caseData: ConciergeInquiry): number {
