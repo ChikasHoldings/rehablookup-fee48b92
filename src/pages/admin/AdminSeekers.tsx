@@ -156,7 +156,7 @@ export default function AdminSeekers() {
         if (!error) successCount++;
       }
 
-      toast.success(`Deleted ${successCount} seeker account(s)`);
+      toast.success(`Deleted ${successCount} client account(s)`);
       setSelectedIds(new Set());
       setBulkDeleteOpen(false);
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -411,8 +411,8 @@ export default function AdminSeekers() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Seekers</h1>
-        <p className="text-sm text-muted-foreground">View and manage seeker accounts</p>
+        <h1 className="text-2xl font-bold text-foreground">Clients</h1>
+        <p className="text-sm text-muted-foreground">View and manage client accounts</p>
       </div>
 
       {/* KPI Summary Bar */}
@@ -542,7 +542,7 @@ export default function AdminSeekers() {
           ) : safeUsers.length === 0 ? (
             <div className="text-center py-16">
               <UsersIcon className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground font-medium">No seekers found</p>
+              <p className="text-muted-foreground font-medium">No clients found</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {hasActiveFilters
                   ? "Try adjusting your filters to see more results"
@@ -762,7 +762,7 @@ export default function AdminSeekers() {
               Delete {selectedIds.size} Seeker Account(s)
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. All selected seeker accounts and their associated data
+              This action cannot be undone. All selected client accounts and their associated data
               (favorites, reviews, inquiries, activity logs) will be permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>

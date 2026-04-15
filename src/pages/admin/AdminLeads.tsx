@@ -501,7 +501,7 @@ export default function AdminLeads() {
                           : <Square className="h-4 w-4 text-muted-foreground" />}
                       </button>
                     </TableHead>
-                    <TableHead className="min-w-[160px]">Seeker</TableHead>
+                    <TableHead className="min-w-[160px]">Client</TableHead>
                     <TableHead className="min-w-[120px]">Facility</TableHead>
                     <TableHead className="min-w-[70px]">Type</TableHead>
                     <TableHead className="min-w-[80px]">Lead Status</TableHead>
@@ -567,7 +567,7 @@ export default function AdminLeads() {
             <div className="text-center py-16">
               <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
               <p className="text-muted-foreground font-medium">No inquiries found</p>
-              <p className="text-xs text-muted-foreground mt-1">{hasActiveFilters ? "Try adjusting your filters" : "Inquiries will appear when seekers contact providers"}</p>
+              <p className="text-xs text-muted-foreground mt-1">{hasActiveFilters ? "Try adjusting your filters" : "Inquiries will appear when clients contact providers"}</p>
               {hasActiveFilters && <Button variant="link" size="sm" onClick={clearAllFilters} className="mt-3 text-primary">Clear all filters</Button>}
             </div>
           )}

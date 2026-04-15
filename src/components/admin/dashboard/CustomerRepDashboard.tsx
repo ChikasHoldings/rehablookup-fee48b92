@@ -689,7 +689,7 @@ export function CustomerRepDashboard() {
                 <Users className="h-4 w-4 text-primary mr-2 shrink-0" />
                 <div className="flex flex-col items-start min-w-0">
                   <span className="text-sm font-medium">User Accounts</span>
-                  <span className="text-xs text-muted-foreground">View seekers</span>
+                  <span className="text-xs text-muted-foreground">View clients</span>
                 </div>
               </Link>
             </Button>

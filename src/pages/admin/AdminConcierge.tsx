@@ -303,7 +303,7 @@ export default function AdminConcierge() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-muted/30">
-                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Seeker</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Client</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Advisor</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Stage</th>
                         <th className="px-4 py-2.5 text-left font-medium text-muted-foreground text-xs">Next Action</th>
