@@ -4,20 +4,23 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ClipboardList, Users, Send, Settings, DollarSign, MessageSquare, CalendarCheck } from "lucide-react";
+import { LayoutDashboard, User, Users, Send, UserCheck, CalendarCheck, Home, DollarSign, Clock, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
 import { PlacementProgressStepper } from "./concierge/PlacementProgressStepper";
 import { CaseSlaDetailBanner } from "./concierge/CaseSlaAlerts";
 import { PlacementNextSteps } from "./concierge/PlacementNextSteps";
+import { ConciergeOverviewTab } from "./concierge/ConciergeOverviewTab";
 import { ConciergeIntakeTab } from "./concierge/ConciergeIntakeTab";
 import { ConciergePlacementTab } from "./concierge/ConciergePlacementTab";
 import { ConciergeIntroductionsTab } from "./concierge/ConciergeIntroductionsTab";
+import { ConciergeDecisionTab } from "./concierge/ConciergeDecisionTab";
 import { ConciergeActionsTab } from "./concierge/ConciergeActionsTab";
 import { InvoiceManagementTab } from "./concierge/InvoiceManagementTab";
-import { MessagesTab } from "./concierge/MessagesTab";
 import { ToursTab } from "./concierge/ToursTab";
+import { ConciergeTimelineTab } from "./concierge/ConciergeTimelineTab";
+import { AdmissionCoordinationCard } from "./concierge/AdmissionCoordinationCard";
 import type { Database } from "@/integrations/supabase/types";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
@@ -49,7 +52,7 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
   const canManageBilling = !isAdvisor;
   const canManageActions = true;
 
-  const [activeTab, setActiveTab] = useState(initialTab || "intake");
+  const [activeTab, setActiveTab] = useState(initialTab || "overview");
 
   // Fetch intro and tour counts for next-steps panel
   const { data: introsCount = 0 } = useQuery({
@@ -81,7 +84,7 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
   // Reset tab when sheet opens
   useEffect(() => {
     if (open) {
-      setActiveTab(initialTab || "intake");
+      setActiveTab(initialTab || "overview");
     }
   }, [open, caseData?.id, initialTab]);
 
@@ -132,12 +135,15 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
 
   // Build tabs dynamically based on role
   const tabs = [
-    { value: "intake", icon: ClipboardList, label: "Intake", always: true },
-    { value: "placement", icon: Users, label: "Place", always: true },
-    { value: "introductions", icon: Send, label: "Intros", always: true },
-    { value: "messages", icon: MessageSquare, label: "Coord", always: true },
+    { value: "overview", icon: LayoutDashboard, label: "Overview", always: true },
+    { value: "seeker", icon: User, label: "Seeker", always: true },
+    { value: "matching", icon: Users, label: "Match", always: true },
+    { value: "intros", icon: Send, label: "Intros", always: true },
+    { value: "decision", icon: UserCheck, label: "Decision", always: true },
     { value: "tours", icon: CalendarCheck, label: "Tours", always: true },
+    { value: "admission", icon: Home, label: "Admit", always: true },
     { value: "billing", icon: DollarSign, label: "Bill", always: !isAdvisor },
+    { value: "timeline", icon: Clock, label: "Notes", always: true },
     { value: "actions", icon: Settings, label: "Act", always: true },
   ].filter(t => t.always);
 
@@ -204,36 +210,47 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden mt-3">
-          <TabsList className={`grid flex-shrink-0`} style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
-            {tabs.map(tab => (
-              <TabsTrigger key={tab.value} value={tab.value} className="gap-1 px-2">
-                <tab.icon className="h-4 w-4" />
-                <span className="hidden sm:inline text-xs">{tab.label}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="flex-shrink-0 overflow-x-auto scrollbar-hide">
+            <TabsList className="h-9 bg-muted/50 p-0.5 gap-0 w-auto inline-flex">
+              {tabs.map(tab => (
+                <TabsTrigger key={tab.value} value={tab.value} className="gap-1 px-2 py-1.5 text-xs">
+                  <tab.icon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           <ScrollArea className="flex-1 mt-4">
-            <TabsContent value="intake" className="m-0">
+            <TabsContent value="overview" className="m-0">
+              <ConciergeOverviewTab caseData={caseData} />
+            </TabsContent>
+            <TabsContent value="seeker" className="m-0">
               <ConciergeIntakeTab caseData={caseData} />
             </TabsContent>
-            <TabsContent value="placement" className="m-0">
+            <TabsContent value="matching" className="m-0">
               <ConciergePlacementTab caseData={caseData} onRefresh={onRefresh} />
             </TabsContent>
-            <TabsContent value="introductions" className="m-0">
+            <TabsContent value="intros" className="m-0">
               <ConciergeIntroductionsTab caseData={caseData} onRefresh={onRefresh} />
             </TabsContent>
-            <TabsContent value="messages" className="m-0">
-              <MessagesTab caseData={caseData} />
+            <TabsContent value="decision" className="m-0">
+              <ConciergeDecisionTab caseData={caseData} />
             </TabsContent>
             <TabsContent value="tours" className="m-0">
               <ToursTab caseData={caseData} />
+            </TabsContent>
+            <TabsContent value="admission" className="m-0">
+              <AdmissionCoordinationCard caseData={caseData} onRefresh={onRefresh} />
             </TabsContent>
             {canManageBilling && (
               <TabsContent value="billing" className="m-0">
                 <InvoiceManagementTab caseData={caseData} />
               </TabsContent>
             )}
+            <TabsContent value="timeline" className="m-0">
+              <ConciergeTimelineTab caseData={caseData} onRefresh={onRefresh} />
+            </TabsContent>
             <TabsContent value="actions" className="m-0">
               <ConciergeActionsTab caseData={caseData} onRefresh={onRefresh} onClose={onClose} isAdvisor={isAdvisor} onSwitchTab={setActiveTab} />
             </TabsContent>
