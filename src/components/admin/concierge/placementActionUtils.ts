@@ -135,7 +135,7 @@ export function getCaseNextSteps(
     case "intake_reviewed":
       steps.push({
         label: "Assign a placement advisor",
-        tab: "actions",
+        tab: "manage",
         icon: UserCheck,
         priority: "high",
         description: "Assign an advisor to begin the matching process.",
@@ -147,7 +147,7 @@ export function getCaseNextSteps(
     case "advisor_assigned":
       steps.push({
         label: "Run placement engine",
-        tab: "matching",
+        tab: "providers",
         icon: Play,
         priority: "high",
         description: "Find matching treatment centers based on seeker criteria.",
@@ -159,7 +159,7 @@ export function getCaseNextSteps(
     case "matching_providers":
       steps.push({
         label: "Review and pre-qualify providers",
-        tab: "matching",
+        tab: "providers",
         icon: Shield,
         priority: "high",
         description: "Verify facility availability and fit before contacting them.",
