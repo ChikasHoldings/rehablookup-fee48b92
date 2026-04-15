@@ -526,7 +526,7 @@ export default function AdminSeekers() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <UsersIcon className="h-5 w-5" />
-            Seekers
+            Clients
             <Badge variant="secondary" className="ml-1 tabular-nums">
               {totalCount ?? 0}
             </Badge>
