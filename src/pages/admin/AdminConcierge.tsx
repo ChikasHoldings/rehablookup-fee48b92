@@ -328,6 +328,7 @@ export default function AdminConcierge() {
               currentAdvisorId={user?.id}
             />
           ) : viewMode === "pipeline" ? (
+            <PlacementPipelineBoard
               cases={filteredCases}
               isLoading={isLoading}
               onCaseClick={(id) => setSelectedCaseId(id)}
