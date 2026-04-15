@@ -6,7 +6,7 @@ import {
   MapPin, Phone, Globe, Mail, Image, Flag, ZoomIn, AlertTriangle,
   MessageSquare, Wallet, Users, Handshake, LayoutList,
   BadgeCheck, Crown, Eye, MousePointerClick, Monitor,
-  Calendar, Clock, Building2,
+  Calendar, Clock, Building2, DollarSign, UserCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Facility, ProSubscription } from "../ProviderListItem";
 
 interface ProviderOverviewTabProps {
@@ -57,7 +58,6 @@ export function ProviderOverviewTab({
 }: ProviderOverviewTabProps) {
   const [adminNotes, setAdminNotes] = useState(provider.admin_notes || "");
 
-  // Scope to ALL provider facilities
   const facilityIds = providerFacilities?.map((f) => f.id) || [provider.id];
 
   // Fetch engagement metrics across ALL facilities
@@ -65,7 +65,6 @@ export function ProviderOverviewTab({
     queryKey: ["admin-provider-engagement", provider.user_id, facilityIds],
     queryFn: async () => {
       const counts = { impressions: 0, profile_views: 0, click_to_call: 0, website_clicks: 0 };
-      // Use count queries instead of fetching all rows
       const [impressions, views, calls, clicks] = await Promise.all([
         supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "listing_impression"),
         supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "profile_view"),
@@ -80,7 +79,7 @@ export function ProviderOverviewTab({
     },
   });
 
-  // Fetch review count across ALL facilities
+  // Fetch review count
   const { data: reviewCount } = useQuery({
     queryKey: ["admin-provider-review-count", provider.user_id, facilityIds],
     queryFn: async () => {
@@ -92,7 +91,7 @@ export function ProviderOverviewTab({
     },
   });
 
-  // Fetch unlock count across ALL facilities
+  // Fetch unlock count
   const { data: unlockCount } = useQuery({
     queryKey: ["admin-provider-unlock-count", provider.user_id, facilityIds],
     queryFn: async () => {
@@ -101,6 +100,55 @@ export function ProviderOverviewTab({
         .select("id", { count: "exact", head: true })
         .in("facility_id", facilityIds);
       return count || 0;
+    },
+  });
+
+  // Fetch total amount spent (all debit transactions)
+  const { data: totalSpent } = useQuery({
+    queryKey: ["admin-provider-total-spent", provider.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("credit_transactions")
+        .select("amount_cents, transaction_type")
+        .eq("provider_id", provider.user_id);
+      let spent = 0;
+      data?.forEach((tx) => {
+        if (["unlock", "placement_fee"].includes(tx.transaction_type)) {
+          spent += tx.amount_cents;
+        }
+      });
+      return spent;
+    },
+  });
+
+  // Fetch total purchased (all credit transactions)
+  const { data: totalPurchased } = useQuery({
+    queryKey: ["admin-provider-total-purchased", provider.user_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("credit_transactions")
+        .select("amount_cents, transaction_type")
+        .eq("provider_id", provider.user_id);
+      let purchased = 0;
+      data?.forEach((tx) => {
+        if (["purchase", "admin_credit"].includes(tx.transaction_type)) {
+          purchased += tx.amount_cents;
+        }
+      });
+      return purchased;
+    },
+  });
+
+  // Fetch staff across ALL facilities
+  const { data: staffMembers, isLoading: loadingStaff } = useQuery({
+    queryKey: ["admin-provider-staff", facilityIds],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("facility_staff")
+        .select("id, name, job_title, photo_url, email, phone, facility_id, is_visible")
+        .in("facility_id", facilityIds)
+        .order("display_order", { ascending: true });
+      return data || [];
     },
   });
 
@@ -193,14 +241,16 @@ export function ProviderOverviewTab({
 
       <Separator />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* KPI Cards - Row 1: Financial + Core */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <KPICard icon={Wallet} label="Credit Balance" value={`$${((creditBalance || 0) / 100).toFixed(2)}`} color="text-emerald-500" />
+        <KPICard icon={DollarSign} label="Total Spent" value={`$${((totalSpent || 0) / 100).toFixed(2)}`} color="text-destructive" />
+        <KPICard icon={DollarSign} label="Total Purchased" value={`$${((totalPurchased || 0) / 100).toFixed(2)}`} color="text-blue-500" />
         <KPICard icon={Users} label="Total Leads" value={String(providerLeads?.length || 0)} color="text-blue-500" />
         <KPICard icon={Handshake} label="Placements" value={String(placementStats?.placements || 0)} color="text-purple-500" />
-        <KPICard icon={LayoutList} label="Facilities" value={String(providerFacilities?.length || 0)} color="text-primary" />
       </div>
 
+      {/* KPI Cards - Row 2: Engagement */}
       <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
         <KPICard icon={Eye} label="Impressions" value={String(engagementMetrics?.impressions || 0)} color="text-muted-foreground" small />
         <KPICard icon={Monitor} label="Profile Views" value={String(engagementMetrics?.profile_views || 0)} color="text-blue-400" small />
@@ -223,6 +273,57 @@ export function ProviderOverviewTab({
           )}
           <InfoRow icon={MapPin} text={`${provider.address}, ${provider.city}, ${provider.state} ${provider.zip_code}`} />
         </div>
+      </div>
+
+      <Separator />
+
+      {/* Staff Section */}
+      <div>
+        <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+          <UserCircle className="h-4 w-4" />
+          Listed Staff ({staffMembers?.length || 0})
+        </h3>
+        {loadingStaff ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}
+          </div>
+        ) : staffMembers && staffMembers.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {staffMembers.map((staff) => {
+              const facilityName = providerFacilities.length > 1
+                ? providerFacilities.find((f) => f.id === staff.facility_id)?.name
+                : undefined;
+              return (
+                <div key={staff.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border">
+                  <img
+                    src={staff.photo_url}
+                    alt={staff.name}
+                    className="w-10 h-10 rounded-full object-cover border flex-shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).src = ""; (e.target as HTMLImageElement).className = "hidden"; }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm truncate">{staff.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{staff.job_title}</p>
+                    {facilityName && <p className="text-[10px] text-muted-foreground/70 truncate">{facilityName}</p>}
+                  </div>
+                  <div className="flex flex-col items-end gap-0.5">
+                    {!staff.is_visible && (
+                      <Badge variant="outline" className="text-[10px] px-1 h-4">Hidden</Badge>
+                    )}
+                    {staff.email && (
+                      <a href={`mailto:${staff.email}`} className="text-[10px] text-primary hover:underline truncate max-w-[100px]">{staff.email}</a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-4 bg-muted/30 rounded-lg">
+            <UserCircle className="h-8 w-8 text-muted-foreground/30 mx-auto mb-1" />
+            <p className="text-xs text-muted-foreground">No staff members listed</p>
+          </div>
+        )}
       </div>
 
       <Separator />
@@ -265,40 +366,50 @@ export function ProviderOverviewTab({
           )}
         </div>
 
-        {/* Gallery */}
+        {/* Gallery - show ALL facility galleries */}
         <div>
-          <p className="text-xs text-muted-foreground mb-2">Gallery ({provider.gallery_urls?.length || 0})</p>
-          {provider.gallery_urls && provider.gallery_urls.length > 0 ? (
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-              {provider.gallery_urls.map((url, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={url}
-                    alt={`Gallery ${index + 1}`}
-                    className={`w-full aspect-square object-cover rounded-lg border-2 cursor-pointer transition-all hover:opacity-90 ${
-                      isImageFlagged(url) ? "border-destructive ring-2 ring-destructive/20" : "border-border"
-                    }`}
-                    onClick={() => onPreviewImage(url)}
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-1">
-                    <Button size="icon" variant="secondary" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onPreviewImage(url); }}>
-                      <ZoomIn className="h-3 w-3" />
-                    </Button>
-                    {!isImageFlagged(url) && (
-                      <Button size="icon" variant="destructive" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onFlagImage(url, "gallery"); }}>
-                        <Flag className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
+          <p className="text-xs text-muted-foreground mb-2">
+            Gallery ({providerFacilities.reduce((sum, f) => sum + (f.gallery_urls?.length || 0), 0)})
+          </p>
+          {(() => {
+            const allGalleryImages = providerFacilities.flatMap((f) =>
+              (f.gallery_urls || []).map((url) => ({ url, facilityName: f.name, facilityId: f.id }))
+            );
+            if (allGalleryImages.length > 0) {
+              return (
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {allGalleryImages.map((img, index) => (
+                    <div key={index} className="relative group" title={providerFacilities.length > 1 ? img.facilityName : undefined}>
+                      <img
+                        src={img.url}
+                        alt={`Gallery ${index + 1}`}
+                        className={`w-full aspect-square object-cover rounded-lg border-2 cursor-pointer transition-all hover:opacity-90 ${
+                          isImageFlagged(img.url) ? "border-destructive ring-2 ring-destructive/20" : "border-border"
+                        }`}
+                        onClick={() => onPreviewImage(img.url)}
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-1">
+                        <Button size="icon" variant="secondary" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onPreviewImage(img.url); }}>
+                          <ZoomIn className="h-3 w-3" />
+                        </Button>
+                        {!isImageFlagged(img.url) && (
+                          <Button size="icon" variant="destructive" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onFlagImage(img.url, "gallery"); }}>
+                            <Flag className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4 bg-muted/30 rounded-lg">
-              <Image className="h-8 w-8 text-muted-foreground/30 mx-auto mb-1" />
-              <p className="text-xs text-muted-foreground">No gallery images</p>
-            </div>
-          )}
+              );
+            }
+            return (
+              <div className="text-center py-4 bg-muted/30 rounded-lg">
+                <Image className="h-8 w-8 text-muted-foreground/30 mx-auto mb-1" />
+                <p className="text-xs text-muted-foreground">No gallery images</p>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Flagged images alert */}
