@@ -136,7 +136,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         .maybeSingle();
       if (current?.provider_response && current.provider_response !== "pending") throw new Error("You've already responded to this candidate");
       const caseStatus = (current?.concierge_inquiries as any)?.status;
-      if (caseStatus === "closed" || caseStatus === "placed") throw new Error("This case is no longer active");
+      if (caseStatus === "closed" || caseStatus === "completed") throw new Error("This case is no longer active");
       const { error } = await supabase
         .from("concierge_introductions")
         .update({ provider_response: response, provider_responded_at: new Date().toISOString(), provider_notes: notes?.trim() || null })
@@ -183,7 +183,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
   ) || [];
   const confirmedIds = new Set(confirmedPlacements.map((i) => i.id));
   const activePlacements = introductions?.filter(
-    (i) => i.provider_response === "interested" && !confirmedIds.has(i.id) && i.concierge_inquiries?.status !== "closed" && i.concierge_inquiries?.status !== "placed"
+    (i) => i.provider_response === "interested" && !confirmedIds.has(i.id) && i.concierge_inquiries?.status !== "closed" && i.concierge_inquiries?.status !== "completed"
   ) || [];
   const activeIds = new Set(activePlacements.map((i) => i.id));
   const respondedIntroductions = introductions?.filter(

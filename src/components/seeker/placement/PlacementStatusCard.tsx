@@ -122,7 +122,7 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
               </div>
             </div>
             
-            {caseData.status === "placed" && (
+            {["admitted", "billed", "completed"].includes(caseData.status) && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
