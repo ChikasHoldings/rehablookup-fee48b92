@@ -136,6 +136,7 @@ const managerNav: NavSection[] = [
       { to: "/admin/users", icon: ShieldCheck, label: "Staff Management", permission: "users" },
       { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
+      { to: "/admin/seekers", icon: UserSearch, label: "Seekers", permission: "seekers" },
       {
         icon: UserPlus,
         label: "Placements",
@@ -161,7 +162,6 @@ const managerNav: NavSection[] = [
     sectionLabel: "Insights",
     entries: [
       { to: "/admin/analytics", icon: BarChart3, label: "Analytics", permission: "analytics" },
-      { to: "/admin/seekers", icon: UserSearch, label: "Seekers", permission: "seekers" },
     ],
   },
 ];
