@@ -114,7 +114,7 @@ export function getCaseNextSteps(
         tab: "overview",
         icon: Play,
         priority: "medium",
-        description: "The seeker started but hasn't submitted their intake form yet.",
+        description: "The client started but hasn't submitted their intake form yet.",
         owner: "admin",
         ownerLabel: "Admin action",
       });
@@ -126,7 +126,7 @@ export function getCaseNextSteps(
         tab: "overview",
         icon: Play,
         priority: "high",
-        description: "Review the seeker's intake form and advance to reviewed.",
+        description: "Review the client's intake form and advance to reviewed.",
         owner: "admin",
         ownerLabel: "Admin action",
       });
@@ -150,7 +150,7 @@ export function getCaseNextSteps(
       tab: "matching",
         icon: Play,
         priority: "high",
-        description: "Find matching treatment centers based on seeker criteria.",
+        description: "Find matching treatment centers based on client criteria.",
         owner: "advisor",
         ownerLabel: "Advisor action",
       });
@@ -186,7 +186,7 @@ export function getCaseNextSteps(
         tab: "intros",
         icon: Send,
         priority: "high",
-        description: "Share accepted facilities with the seeker for review.",
+        description: "Share accepted facilities with the client for review.",
         owner: "advisor",
         ownerLabel: "Advisor action",
       });
@@ -194,11 +194,11 @@ export function getCaseNextSteps(
 
     case "presented_to_seeker":
       steps.push({
-        label: "Await seeker decision",
+        label: "Await client decision",
         tab: "decision",
         icon: Eye,
         priority: "medium",
-        description: "The seeker is reviewing their options. Follow up if needed.",
+        description: "The client is reviewing their options. Follow up if needed.",
         owner: "seeker",
         ownerLabel: "Waiting on client",
       });
@@ -222,7 +222,7 @@ export function getCaseNextSteps(
         tab: "admission",
         icon: Building2,
         priority: "high",
-        description: "Verify that the seeker has been admitted to the facility.",
+        description: "Verify that the client has been admitted to the facility.",
         owner: "advisor",
         ownerLabel: "Advisor action",
       });
