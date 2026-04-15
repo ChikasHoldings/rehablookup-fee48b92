@@ -103,7 +103,13 @@ export function ConciergeIntakeTab({ caseData }: ConciergeIntakeTabProps) {
           <CardTitle className="text-sm font-medium">Payment & Insurance</CardTitle>
         </CardHeader>
         <CardContent className="py-2 text-sm">
-          <InfoRow label="Payment Type" value={caseData.payment_type} />
+          <InfoRow label="Payment Type" value={
+            caseData.payment_type === "both" ? "Insurance + Self-Pay" :
+            caseData.payment_type === "insurance" ? "Insurance" :
+            caseData.payment_type === "self-pay" ? "Self-Pay / Private Pay" :
+            caseData.payment_type === "unsure" ? "Not sure yet" :
+            caseData.payment_type
+          } />
           <InfoRow label="Insurance Carrier" value={caseData.insurance_carrier} />
           <InfoRow label="Member ID" value={caseData.insurance_member_id} />
           <InfoRow label="Group Number" value={caseData.insurance_group_number} />

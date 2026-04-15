@@ -222,7 +222,13 @@ export function ConciergePlacementTab({ caseData, onRefresh }: ConciergePlacemen
             />
             <CriteriaItem
               label="Payment Type"
-              value={caseData.payment_type}
+              value={
+                caseData.payment_type === "both" ? "Insurance + Self-Pay" :
+                caseData.payment_type === "insurance" ? "Insurance" :
+                caseData.payment_type === "self-pay" ? "Self-Pay / Private Pay" :
+                caseData.payment_type === "unsure" ? "Not sure yet" :
+                caseData.payment_type
+              }
               matched={!!caseData.payment_type}
             />
             <CriteriaItem
