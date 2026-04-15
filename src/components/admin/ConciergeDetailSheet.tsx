@@ -193,6 +193,16 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
           />
         </div>
 
+        {/* Next Action Panel */}
+        <div className="flex-shrink-0 mt-3">
+          <PlacementNextSteps
+            caseData={caseData}
+            introsCount={introsCount}
+            toursCount={toursCount}
+            onSwitchTab={setActiveTab}
+          />
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden mt-3">
           <TabsList className={`grid flex-shrink-0`} style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
             {tabs.map(tab => (
