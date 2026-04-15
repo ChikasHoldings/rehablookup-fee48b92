@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "1.0.2";
+const VERSION = "2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,37 +15,78 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
 };
 
 /**
- * Automatic Status Transition Rules:
- * 
- * new → reviewing: Automatic when admin views case
- * matching → matched: Automatic when match algorithm completes with results
- * matched → introductions_sent: Automatic when first introduction is sent
- * introductions_sent → in_contact: Automatic when any provider marks "interested"
- * 
- * Note: in_contact → placed is handled by confirm-placement edge function (admin-only)
+ * Automatic Status Transition Rules (v2 — aligned with pipeline config):
+ *
+ * admin_viewed:         intake_submitted → intake_reviewed
+ * matches_completed:    advisor_assigned | matching_providers → provider_prequalification
+ * introduction_sent:    provider_prequalification | providers_accepted → presented_to_seeker
+ *                       (also advances matching_providers → provider_prequalification if still there)
+ * provider_interested:  presented_to_seeker → seeker_selected
+ *                       (also advances provider_prequalification → providers_accepted if still there)
+ *
+ * Note: seeker_selected → admitted is handled by confirm-placement or manual advance.
  */
 
 interface TransitionRequest {
   inquiryId: string;
-  trigger: 
-    | 'admin_viewed'         // new → reviewing
-    | 'matches_completed'    // matching → matched
-    | 'introduction_sent'    // matched → introductions_sent
-    | 'provider_interested'; // introductions_sent → in_contact
+  trigger:
+    | "admin_viewed"
+    | "matches_completed"
+    | "introduction_sent"
+    | "provider_interested";
   actorId?: string;
-  actorType?: 'admin' | 'provider' | 'seeker' | 'system';
+  actorType?: "admin" | "provider" | "seeker" | "system";
 }
 
-const VALID_TRANSITIONS: Record<string, { from: string[]; to: string }> = {
-  admin_viewed: { from: ['new'], to: 'reviewing' },
-  matches_completed: { from: ['reviewing', 'matching'], to: 'matched' },
-  introduction_sent: { from: ['matched'], to: 'introductions_sent' },
-  provider_interested: { from: ['matched', 'introductions_sent'], to: 'in_contact' },
+const TRANSITION_RULES: Record<string, { from: string[]; to: string }> = {
+  admin_viewed: {
+    from: ["intake_submitted", "new"],
+    to: "intake_reviewed",
+  },
+  matches_completed: {
+    from: ["advisor_assigned", "matching_providers", "reviewing", "matching"],
+    to: "provider_prequalification",
+  },
+  introduction_sent: {
+    from: [
+      "matching_providers",
+      "provider_prequalification",
+      "providers_accepted",
+      // Legacy compat
+      "matched",
+    ],
+    to: "presented_to_seeker",
+  },
+  provider_interested: {
+    from: [
+      "provider_prequalification",
+      "providers_accepted",
+      "presented_to_seeker",
+      // Legacy compat
+      "matched",
+      "introductions_sent",
+      "in_contact",
+    ],
+    to: "seeker_selected",
+  },
 };
+
+// Extra fields to set based on the target status
+function getTimestampFields(toStatus: string): Record<string, unknown> {
+  const now = new Date().toISOString();
+  switch (toStatus) {
+    case "provider_prequalification":
+      return { matched_at: now };
+    case "presented_to_seeker":
+      return { introductions_sent_at: now };
+    default:
+      return {};
+  }
+}
 
 Deno.serve(async (req) => {
   const requestId = generateRequestId();
-  
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -57,10 +98,14 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { inquiryId, trigger, actorId, actorType = 'system' }: TransitionRequest = await req.json();
+    const { inquiryId, trigger, actorId, actorType = "system" }: TransitionRequest = await req.json();
 
     if (!inquiryId || !trigger) {
-      throw new Error("inquiryId and trigger are required");
+      logStep(requestId, "ERROR", { message: "inquiryId and trigger are required" });
+      return new Response(
+        JSON.stringify({ error: "inquiryId and trigger are required", requestId, _version: VERSION }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     logStep(requestId, "Processing transition", { inquiryId, trigger });
@@ -76,98 +121,84 @@ Deno.serve(async (req) => {
       throw new Error("Inquiry not found: " + inquiryError?.message);
     }
 
+    const rule = TRANSITION_RULES[trigger];
     let newStatus: string | null = null;
     let transitionMade = false;
 
-    // Determine the new status based on trigger and current state
-    switch (trigger) {
-      case 'admin_viewed':
-        if (VALID_TRANSITIONS.admin_viewed.from.includes(inquiry.status)) {
-          newStatus = VALID_TRANSITIONS.admin_viewed.to;
-        }
-        break;
-
-      case 'matches_completed':
-        if (VALID_TRANSITIONS.matches_completed.from.includes(inquiry.status)) {
-          newStatus = VALID_TRANSITIONS.matches_completed.to;
-        }
-        break;
-
-      case 'introduction_sent':
-        if (VALID_TRANSITIONS.introduction_sent.from.includes(inquiry.status)) {
-          newStatus = VALID_TRANSITIONS.introduction_sent.to;
-        }
-        break;
-
-      case 'provider_interested':
-        if (VALID_TRANSITIONS.provider_interested.from.includes(inquiry.status)) {
-          newStatus = VALID_TRANSITIONS.provider_interested.to;
-        }
-        break;
+    if (rule && rule.from.includes(inquiry.status)) {
+      newStatus = rule.to;
     }
 
     // Apply the status transition if valid
     if (newStatus && newStatus !== inquiry.status) {
-      const updateData: Record<string, unknown> = { status: newStatus };
-      
-      // Add timestamp fields for specific statuses
-      if (newStatus === 'matched') {
-        updateData.matched_at = new Date().toISOString();
-      } else if (newStatus === 'introductions_sent' && !inquiry.status?.includes('introductions')) {
-        updateData.introductions_sent_at = new Date().toISOString();
-      }
-      // Note: 'placed' status is handled by confirm-placement edge function
+      const timestampFields = getTimestampFields(newStatus);
+      const updateData: Record<string, unknown> = {
+        status: newStatus,
+        ...timestampFields,
+      };
 
-      const { error: updateError } = await supabase
+      // Optimistic lock: only update if status hasn't changed
+      const { data: updated, error: updateError } = await supabase
         .from("concierge_inquiries")
         .update(updateData)
-        .eq("id", inquiryId);
+        .eq("id", inquiryId)
+        .eq("status", inquiry.status)
+        .select("id")
+        .maybeSingle();
 
       if (updateError) {
         throw new Error("Failed to update status: " + updateError.message);
       }
 
-      // Log the status change event
-      await supabase.from("concierge_case_events").insert({
-        inquiry_id: inquiryId,
-        event_type: "status_changed",
-        event_data: { 
-          from_status: inquiry.status, 
-          to_status: newStatus,
-          trigger,
-        },
-        actor_id: actorId || null,
-        actor_type: actorType,
-      });
+      if (updated) {
+        // Log the status change event
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: inquiryId,
+          event_type: "status_changed",
+          event_data: {
+            from_status: inquiry.status,
+            to_status: newStatus,
+            trigger,
+            auto: true,
+          },
+          actor_id: actorId || null,
+          actor_type: actorType,
+        });
 
-      transitionMade = true;
-      logStep(requestId, "Status transitioned", { from: inquiry.status, to: newStatus, trigger });
+        transitionMade = true;
+        logStep(requestId, "Status transitioned", { from: inquiry.status, to: newStatus, trigger });
+      } else {
+        logStep(requestId, "Optimistic lock failed — status changed concurrently", {
+          currentStatus: inquiry.status,
+          targetStatus: newStatus,
+        });
+      }
     } else {
-      logStep(requestId, "No transition made", { 
-        currentStatus: inquiry.status, 
+      logStep(requestId, "No transition made", {
+        currentStatus: inquiry.status,
         trigger,
-        reason: newStatus ? "already in target status" : "transition not valid for current status"
+        reason: newStatus ? "already in target status" : "transition not valid for current status",
       });
     }
 
-    return new Response(JSON.stringify({
-      success: true,
-      transitionMade,
-      previousStatus: inquiry.status,
-      newStatus: newStatus || inquiry.status,
-      trigger,
-      requestId,
-      _version: VERSION,
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        transitionMade,
+        previousStatus: inquiry.status,
+        newStatus: newStatus || inquiry.status,
+        trigger,
+        requestId,
+        _version: VERSION,
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep(requestId, "ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage, requestId, _version: VERSION }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
