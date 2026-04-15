@@ -233,6 +233,73 @@ export function PlacementDetailModal({
     staleTime: 60000,
   });
 
+  // ── PII Query: only fetch seeker contact details when PII is unlocked ──
+  const piiDisclosureLogged = useRef(false);
+  const { data: seekerPii } = useQuery({
+    queryKey: ["placement-pii", introduction?.inquiry_id, facilityId],
+    queryFn: async () => {
+      if (!introduction?.inquiry_id) return null;
+      const { data, error } = await supabase
+        .from("concierge_inquiries")
+        .select(`
+          user_name, user_email, user_phone, insurance_carrier,
+          insurance_member_id, insurance_group_number,
+          emergency_contact_name, emergency_contact_phone,
+          decision_maker_name, decision_maker_phone,
+          relationship_to_seeker, level_of_care, primary_concern,
+          detox_needed, co_occurring_concerns, substance_use_duration,
+          substance_use_frequency, prior_treatment_history, prior_treatment_notes,
+          current_medications, current_living_situation, budget_range,
+          timeline_urgency, notes
+        `)
+        .eq("id", introduction.inquiry_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && !!introduction?.inquiry_id && piiUnlocked,
+    staleTime: 60000,
+  });
+
+  // Log PII disclosure event once per modal open
+  useEffect(() => {
+    if (!piiUnlocked || !seekerPii || piiDisclosureLogged.current || !introduction?.inquiry_id) return;
+    piiDisclosureLogged.current = true;
+
+    const logDisclosure = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        // Update introduction disclosure timestamp
+        await supabase
+          .from("concierge_introductions")
+          .update({ admin_disclosed_pii_at: new Date().toISOString() })
+          .eq("id", introduction.id)
+          .is("admin_disclosed_pii_at", null); // Only set once
+
+        // Log case event
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: introduction.inquiry_id,
+          event_type: "pii_disclosed_to_provider",
+          event_data: {
+            facility_id: facilityId,
+            introduction_id: introduction.id,
+            disclosed_fields: ["name", "email", "phone", "insurance_details", "emergency_contacts"],
+          },
+          actor_id: user?.id || null,
+          actor_type: "provider",
+        });
+      } catch (e) {
+        console.error("Failed to log PII disclosure:", e);
+      }
+    };
+    logDisclosure();
+  }, [piiUnlocked, seekerPii, introduction?.inquiry_id, introduction?.id, facilityId]);
+
+  // Reset disclosure flag when modal closes
+  useEffect(() => {
+    if (!open) piiDisclosureLogged.current = false;
+  }, [open]);
+
   const { data: messages, isLoading: messagesLoading } = useQuery({
     queryKey: ["placement-messages", introduction?.inquiry_id, facilityId],
     queryFn: async () => {
