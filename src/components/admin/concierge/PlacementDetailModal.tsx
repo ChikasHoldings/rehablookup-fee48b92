@@ -371,7 +371,22 @@ function PlacementOverviewPanel({
         </div>
       )}
 
-      {/* 🔑 Next Steps — the key addition */}
+      {/* Closed case banner */}
+      {caseData.status === "closed" && !isAdmitted && (
+        <div className="p-4 rounded-xl border bg-muted/50 flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Case Closed</p>
+            <p className="text-xs text-muted-foreground/70">
+              {caseData.closed_at ? `Closed ${format(new Date(caseData.closed_at), "MMM d, yyyy")}` : "This case has been closed"} — review the timeline for details.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Next Steps — the key guidance engine */}
       <PlacementNextSteps
         caseData={caseData}
         introsCount={introsCount}
