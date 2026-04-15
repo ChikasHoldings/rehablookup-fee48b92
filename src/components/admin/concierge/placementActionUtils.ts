@@ -43,7 +43,7 @@ export function getCaseNextAction(c: CaseSnapshot): { label: string; priority: A
   const isPaid = c.payment_status === "paid" || c.payment_status === "succeeded";
 
   // Blockers
-  if (!isPaid && c.status !== "intake_submitted") {
+  if (!isPaid && c.status !== "intake_submitted" && c.status !== "pending_intake") {
     return { label: "Awaiting payment", priority: "blocker", owner: "seeker" };
   }
   if (!c.assigned_advisor_id && getStageIndex(c.status) >= 2) {
@@ -67,7 +67,7 @@ export function getCaseNextAction(c: CaseSnapshot): { label: string; priority: A
 export function getCaseBlocker(c: CaseSnapshot): string | null {
   if (c.status === "closed" || c.status === "completed") return null;
   const isPaid = c.payment_status === "paid" || c.payment_status === "succeeded";
-  if (!isPaid && c.status !== "intake_submitted") return "Payment pending";
+  if (!isPaid && c.status !== "intake_submitted" && c.status !== "pending_intake") return "Payment pending";
   if (!c.assigned_advisor_id && getStageIndex(c.status) >= 2) return "No advisor";
   return null;
 }
@@ -82,7 +82,7 @@ export function getCaseNextSteps(
   const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded";
 
   // Blockers always first
-  if (!isPaid && caseData.status !== "intake_submitted") {
+  if (!isPaid && caseData.status !== "intake_submitted" && caseData.status !== "pending_intake") {
     steps.push({
       label: "Payment not received",
       tab: "actions",
@@ -108,6 +108,18 @@ export function getCaseNextSteps(
 
   // Stage-specific guidance
   switch (caseData.status) {
+    case "pending_intake":
+      steps.push({
+        label: "Follow up on incomplete intake",
+        tab: "overview",
+        icon: Play,
+        priority: "medium",
+        description: "The seeker started but hasn't submitted their intake form yet.",
+        owner: "admin",
+        ownerLabel: "Admin action",
+      });
+      break;
+
     case "intake_submitted":
       steps.push({
         label: "Review intake details",

@@ -5,10 +5,11 @@
 
 import {
   ClipboardCheck, Search, UserCheck, Users, Shield, CheckCircle,
-  Send, Eye, Building2, Home, DollarSign, Flag, XCircle,
+  Send, Eye, Building2, Home, DollarSign, Flag, XCircle, FileEdit,
 } from "lucide-react";
 
 export type PlacementStage =
+  | "pending_intake"
   | "intake_submitted"
   | "intake_reviewed"
   | "advisor_assigned"
@@ -37,6 +38,18 @@ export interface StageConfig {
 }
 
 export const PIPELINE_STAGES: StageConfig[] = [
+  {
+    key: "pending_intake",
+    label: "Pending Intake",
+    shortLabel: "Pending",
+    description: "Intake started but not yet submitted",
+    icon: FileEdit,
+    color: "border-t-muted-foreground",
+    badgeColor: "bg-slate-500/10 text-slate-600 border-slate-500/30",
+    nextAction: "Follow up on incomplete intake",
+    actionOwner: "admin",
+    tabTarget: "overview",
+  },
   {
     key: "intake_submitted",
     label: "Intake Submitted",
@@ -198,6 +211,7 @@ export const CLOSED_STAGE: StageConfig = {
 
 /** Valid forward transitions — mirrors DB trigger exactly */
 export const VALID_TRANSITIONS: Record<PlacementStage, PlacementStage[]> = {
+  pending_intake: ["intake_submitted", "closed"],
   intake_submitted: ["intake_reviewed", "closed"],
   intake_reviewed: ["advisor_assigned", "closed"],
   advisor_assigned: ["matching_providers", "closed"],
