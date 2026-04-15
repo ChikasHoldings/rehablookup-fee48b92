@@ -306,6 +306,11 @@ export function PlacementDetailModal({
                   <InvoiceManagementTab caseData={caseData} />
                 </TabsContent>
               )}
+              <TabsContent value="timeline" className="m-0">
+                <div className="p-4">
+                  <CaseTimelineEvents caseData={caseData} />
+                </div>
+              </TabsContent>
               <TabsContent value="actions" className="m-0">
                 <ConciergeActionsTab
                   caseData={caseData}
