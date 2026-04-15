@@ -142,7 +142,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return { introductions: 0, placements: 0 };
       const [introResult, placementResult] = await Promise.all([
         supabase.from("concierge_introductions").select("id", { count: "exact", head: true }).eq("facility_id", provider.id),
-        supabase.from("concierge_engagements").select("id", { count: "exact", head: true }).eq("facility_id", provider.id).eq("status", "placed"),
+        supabase.from("concierge_engagements").select("id", { count: "exact", head: true }).eq("facility_id", provider.id).in("status", ["admitted", "completed"]),
       ]);
       return { introductions: introResult.count || 0, placements: placementResult.count || 0 };
     },

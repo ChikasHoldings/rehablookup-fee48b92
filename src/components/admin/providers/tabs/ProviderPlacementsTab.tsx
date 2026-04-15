@@ -56,7 +56,7 @@ export function ProviderPlacementsTab({ provider, providerFacilities }: Provider
 
   const isLoading = loadingIntros || loadingEngagements || loadingInvoices;
   const totalPlacementRevenue = invoices?.filter((i) => i.status === "paid").reduce((sum, i) => sum + i.amount_cents, 0) || 0;
-  const activePlacements = engagements?.filter((e) => e.status === "placed").length || 0;
+  const activePlacements = engagements?.filter((e) => ["admitted", "completed"].includes(e.status)).length || 0;
 
   const facilityName = (id: string) => providerFacilities?.find((f) => f.id === id)?.name || "—";
   const showFacilityCol = facilityIds.length > 1;
