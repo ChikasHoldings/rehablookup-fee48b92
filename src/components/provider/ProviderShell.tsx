@@ -54,7 +54,7 @@ function ProviderShellContent() {
       return;
     }
     
-    // If user is seeker, redirect to seeker home
+    // If user is client, redirect to seeker home
     if (role === "seeker") {
       hasRedirected.current = true;
       navigate("/account", { replace: true });

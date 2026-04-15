@@ -11,9 +11,9 @@ const LOG = "[NEW-FACILITIES-ALERT]";
 const DASHBOARD_URL = "https://rehablookup.com";
 
 /**
- * "New Facilities Near You" alerts for seekers
+ * "New Facilities Near You" alerts for clients
  * Checks for facilities approved in the last 7 days,
- * matches them to seekers by state, and sends personalized alerts.
+ * matches them to clients by state, and sends personalized alerts.
  * Deduplicates via seeker_facility_alerts table.
  */
 
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       .limit(200);
 
     if (!seekers?.length) {
-      console.log(`${LOG} No seekers in matching states`);
+      console.log(`${LOG} No clients in matching states`);
       return new Response(JSON.stringify({ success: true, sent: 0 }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

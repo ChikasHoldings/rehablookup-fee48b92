@@ -110,7 +110,7 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Mark thread as read when seeker views messages
+  // Mark thread as read when client views messages
   useEffect(() => {
     if (!thread?.id || !messages || messages.length === 0) return;
     

@@ -73,7 +73,7 @@ export function SeekerCommunicationsTab({ userId }: SeekerCommunicationsTabProps
       <div className="p-5 text-center py-16">
         <Mail className="h-10 w-10 mx-auto mb-2 text-muted-foreground/30" />
         <p className="text-muted-foreground font-medium">No communications</p>
-        <p className="text-xs text-muted-foreground mt-1">No messages or emails found for this seeker.</p>
+        <p className="text-xs text-muted-foreground mt-1">No messages or emails found for this client.</p>
       </div>
     );
   }
