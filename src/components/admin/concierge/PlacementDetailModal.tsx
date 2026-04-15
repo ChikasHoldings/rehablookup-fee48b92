@@ -240,11 +240,20 @@ export function PlacementDetailModal({
             <CaseSlaDetailBanner caseData={caseData} />
             <div className="overflow-x-auto">
               <PlacementProgressStepper
-                currentStatus={caseData.status}
-                onAdvance={(nextStatus) => advanceStatus.mutate(nextStatus)}
-                disabled={advanceStatus.isPending}
+                caseData={{
+                  status: caseData.status,
+                  payment_status: caseData.payment_status,
+                  assigned_advisor_id: caseData.assigned_advisor_id,
+                  match_count: caseData.match_count,
+                  introductions_sent_count: caseData.introductions_sent_count,
+                  seeker_confirmed: caseData.seeker_confirmed,
+                  tour_coordination_status: caseData.tour_coordination_status,
+                  admission_status: caseData.admission_status,
+                  placement_confirmed: caseData.placement_confirmed,
+                  provider_fee_status: caseData.provider_fee_status,
+                  closed_at: caseData.closed_at,
+                }}
                 compact
-                blocker={getCaseBlocker(caseData)}
               />
             </div>
           </div>
