@@ -10,6 +10,7 @@ import {
   Sparkles,
   Star,
   Network,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,7 @@ const navItems = [
   { href: "/provider/reviews", label: "Reviews", icon: Star },
   { href: "/provider/billing", label: "Billing", icon: Wallet },
   { href: "/provider/settings", label: "Settings", icon: Settings },
+  { href: "/provider/help", label: "Help & Support", icon: HelpCircle },
 ];
 
 export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
