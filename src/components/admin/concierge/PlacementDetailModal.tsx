@@ -24,6 +24,7 @@ import { InvoiceManagementTab } from "./InvoiceManagementTab";
 import { MessagesTab } from "./MessagesTab";
 import { ToursTab } from "./ToursTab";
 import { CaseTimelineEvents } from "./CaseTimelineEvents";
+import { PlacementNextSteps } from "./PlacementNextSteps";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -114,6 +115,20 @@ export function PlacementDetailModal({
     enabled: !!caseData?.id,
   });
 
+  // Fetch pending intro responses
+  const { data: pendingIntrosCount } = useQuery({
+    queryKey: ["placement-pending-intros", caseData?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("concierge_introductions")
+        .select("id", { count: "exact", head: true })
+        .eq("inquiry_id", caseData!.id)
+        .is("provider_response", null);
+      return count || 0;
+    },
+    enabled: !!caseData?.id,
+  });
+
   // Fetch tours count
   const { data: toursCount } = useQuery({
     queryKey: ["placement-tours-count", caseData?.id],
@@ -127,6 +142,36 @@ export function PlacementDetailModal({
     enabled: !!caseData?.id,
   });
 
+  // Fetch active tours
+  const { data: activeToursCount } = useQuery({
+    queryKey: ["placement-active-tours", caseData?.id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("concierge_tour_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("inquiry_id", caseData!.id)
+        .not("status", "in", '("cancelled","completed")');
+      return count || 0;
+    },
+    enabled: !!caseData?.id,
+  });
+
+  // Unread messages count
+  const { data: unreadMsgCount } = useQuery({
+    queryKey: ["placement-unread-msgs", caseData?.id],
+    queryFn: async () => {
+      const { data: threads } = await supabase
+        .from("concierge_threads")
+        .select("id, last_message_at, admin_last_read_at")
+        .eq("inquiry_id", caseData!.id);
+      if (!threads) return 0;
+      return threads.filter(t =>
+        t.last_message_at && (!t.admin_last_read_at || new Date(t.last_message_at) > new Date(t.admin_last_read_at))
+      ).length;
+    },
+    enabled: !!caseData?.id,
+  });
+
   if (!caseData) return null;
 
   const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded";
@@ -134,15 +179,15 @@ export function PlacementDetailModal({
   const placedFacility = caseData.placed_facility_id ? facilityMap[caseData.placed_facility_id] : null;
   const isAdmitted = caseData.admission_status === "admitted" || caseData.placement_confirmed;
 
+  // Tabs follow the placement workflow chronology
   const tabs = [
-    { value: "overview", icon: ClipboardList, label: "Overview" },
-    { value: "matching", icon: Users, label: "Matching" },
-    { value: "introductions", icon: Send, label: "Intros" },
-    { value: "messages", icon: MessageSquare, label: "Messages" },
-    { value: "tours", icon: CalendarCheck, label: "Tours" },
-    ...(canManageBilling ? [{ value: "billing", icon: DollarSign, label: "Billing" }] : []),
-    { value: "timeline", icon: History, label: "Timeline" },
-    { value: "actions", icon: Settings, label: "Actions" },
+    { value: "overview", icon: ClipboardList, label: "Overview", badge: 0 },
+    { value: "matching", icon: Users, label: "Match", badge: caseData.match_count || 0 },
+    { value: "introductions", icon: Send, label: "Intros", badge: pendingIntrosCount || 0 },
+    { value: "messages", icon: MessageSquare, label: "Coord", badge: unreadMsgCount || 0 },
+    { value: "tours", icon: CalendarCheck, label: "Tours", badge: activeToursCount || 0 },
+    ...(canManageBilling ? [{ value: "billing", icon: DollarSign, label: "Billing", badge: 0 }] : []),
+    { value: "actions", icon: Settings, label: "Manage", badge: 0 },
   ];
 
   return (
@@ -189,36 +234,6 @@ export function PlacementDetailModal({
             </Button>
           </div>
 
-          {/* KPI Strip */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-3">
-            <div className="text-center p-1.5 rounded-lg border bg-muted/30">
-              <p className="text-sm font-bold tabular-nums">{caseData.match_count || 0}</p>
-              <p className="text-[9px] text-muted-foreground uppercase">Matches</p>
-            </div>
-            <div className="text-center p-1.5 rounded-lg border bg-muted/30">
-              <p className="text-sm font-bold tabular-nums">{introsCount || 0}</p>
-              <p className="text-[9px] text-muted-foreground uppercase">Intros</p>
-            </div>
-            <div className="text-center p-1.5 rounded-lg border bg-muted/30">
-              <p className="text-sm font-bold tabular-nums">{toursCount || 0}</p>
-              <p className="text-[9px] text-muted-foreground uppercase">Tours</p>
-            </div>
-            <div className="text-center p-1.5 rounded-lg border bg-muted/30">
-              <p className="text-sm font-bold tabular-nums capitalize">{caseData.tour_coordination_status?.replace(/_/g, " ") || "—"}</p>
-              <p className="text-[9px] text-muted-foreground uppercase">Tour Status</p>
-            </div>
-            <div className="text-center p-1.5 rounded-lg border bg-muted/30">
-              <p className="text-sm font-bold tabular-nums capitalize">{caseData.admission_status || "—"}</p>
-              <p className="text-[9px] text-muted-foreground uppercase">Admission</p>
-            </div>
-            <div className="text-center p-1.5 rounded-lg border bg-muted/30">
-              <p className="text-sm font-bold tabular-nums">
-                {caseData.provider_fee_cents ? `$${(caseData.provider_fee_cents / 100).toFixed(0)}` : "—"}
-              </p>
-              <p className="text-[9px] text-muted-foreground uppercase">Fee</p>
-            </div>
-          </div>
-
           {/* SLA + Stepper */}
           <div className="mt-3 space-y-2">
             <CaseSlaDetailBanner caseData={caseData} />
@@ -233,15 +248,23 @@ export function PlacementDetailModal({
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs — workflow-ordered with attention badges */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-shrink-0 px-5 pt-3 border-b bg-card overflow-x-auto scrollbar-hide">
             <TabsList className="h-9 bg-transparent p-0 gap-0 w-auto inline-flex">
               {tabs.map(tab => (
                 <TabsTrigger key={tab.value} value={tab.value}
-                  className="gap-1.5 px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
+                  className="gap-1.5 px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none relative">
                   <tab.icon className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">{tab.label}</span>
+                  {tab.badge > 0 && (
+                    <Badge
+                      variant={tab.value === "messages" ? "destructive" : "secondary"}
+                      className="h-4 min-w-[16px] px-1 text-[9px] ml-0.5"
+                    >
+                      {tab.badge}
+                    </Badge>
+                  )}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -250,7 +273,14 @@ export function PlacementDetailModal({
           <ScrollArea className="flex-1">
             <div className="p-1">
               <TabsContent value="overview" className="m-0">
-                <PlacementOverviewPanel caseData={caseData} advisorName={advisorName} placedFacility={placedFacility} />
+                <PlacementOverviewPanel
+                  caseData={caseData}
+                  advisorName={advisorName}
+                  placedFacility={placedFacility}
+                  introsCount={introsCount || 0}
+                  toursCount={toursCount || 0}
+                  onSwitchTab={setActiveTab}
+                />
               </TabsContent>
               <TabsContent value="matching" className="m-0">
                 <ConciergePlacementTab caseData={caseData} onRefresh={onRefresh} />
@@ -269,11 +299,6 @@ export function PlacementDetailModal({
                   <InvoiceManagementTab caseData={caseData} />
                 </TabsContent>
               )}
-              <TabsContent value="timeline" className="m-0">
-                <div className="p-4">
-                  <CaseTimelineEvents caseData={caseData} />
-                </div>
-              </TabsContent>
               <TabsContent value="actions" className="m-0">
                 <ConciergeActionsTab
                   caseData={caseData}
@@ -291,15 +316,21 @@ export function PlacementDetailModal({
   );
 }
 
-/** Overview tab showing intake + seeker + placement summary */
+/** Overview tab with Next Steps guidance + intake summary */
 function PlacementOverviewPanel({
   caseData,
   advisorName,
   placedFacility,
+  introsCount,
+  toursCount,
+  onSwitchTab,
 }: {
   caseData: ConciergeInquiry;
   advisorName: string;
   placedFacility: any;
+  introsCount: number;
+  toursCount: number;
+  onSwitchTab: (tab: string) => void;
 }) {
   const isAdmitted = caseData.admission_status === "admitted" || caseData.placement_confirmed;
 
@@ -324,17 +355,27 @@ function PlacementOverviewPanel({
                 {caseData.placement_confirmed_at ? format(new Date(caseData.placement_confirmed_at), "MMM d, yyyy") : "—"}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Case ID</p>
-              <p className="font-mono text-xs">{caseData.id.slice(0, 12)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Advisor</p>
-              <p className="font-medium">{advisorName}</p>
-            </div>
           </div>
         </div>
       )}
+
+      {/* 🔑 Next Steps — the key addition */}
+      <PlacementNextSteps
+        caseData={caseData}
+        introsCount={introsCount}
+        toursCount={toursCount}
+        onSwitchTab={onSwitchTab}
+      />
+
+      {/* KPI Strip */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        <KpiCard label="Matches" value={caseData.match_count || 0} onClick={() => onSwitchTab("matching")} />
+        <KpiCard label="Intros" value={introsCount} onClick={() => onSwitchTab("introductions")} />
+        <KpiCard label="Tours" value={toursCount} onClick={() => onSwitchTab("tours")} />
+        <KpiCard label="Tour Status" value={caseData.tour_coordination_status?.replace(/_/g, " ") || "—"} />
+        <KpiCard label="Admission" value={caseData.admission_status || "—"} />
+        <KpiCard label="Fee" value={caseData.provider_fee_cents ? `$${(caseData.provider_fee_cents / 100).toFixed(0)}` : "—"} />
+      </div>
 
       {/* Contact & Seeker Details */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -432,6 +473,21 @@ function PlacementOverviewPanel({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function KpiCard({ label, value, onClick }: { label: string; value: string | number; onClick?: () => void }) {
+  return (
+    <div
+      className={cn(
+        "text-center p-1.5 rounded-lg border bg-muted/30",
+        onClick && "cursor-pointer hover:bg-muted/60 transition-colors"
+      )}
+      onClick={onClick}
+    >
+      <p className="text-sm font-bold tabular-nums capitalize">{typeof value === "string" ? value : value}</p>
+      <p className="text-[9px] text-muted-foreground uppercase">{label}</p>
     </div>
   );
 }
