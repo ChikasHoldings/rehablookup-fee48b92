@@ -161,7 +161,7 @@ export function getCaseNextSteps(
       } else {
         steps.push({
           label: "Send introductions to facilities",
-          tab: "introductions",
+          tab: "intros",
           icon: Send,
           priority: "high",
           description: `${caseData.match_count} match(es) found. Send introductions to start the conversation.`,
@@ -175,7 +175,7 @@ export function getCaseNextSteps(
       if (introsCount === 0) {
         steps.push({
           label: "Send introductions",
-          tab: "introductions",
+          tab: "intros",
           icon: Send,
           priority: "high",
           description: "Facilities are matched. Introduce them to begin coordination.",
@@ -185,7 +185,7 @@ export function getCaseNextSteps(
       } else {
         steps.push({
           label: "Follow up on introductions",
-          tab: "introductions",
+          tab: "intros",
           icon: Send,
           priority: "medium",
           description: `${introsCount} introduction(s) sent. Check for provider responses.`,
@@ -198,7 +198,7 @@ export function getCaseNextSteps(
     case "introductions_sent":
       steps.push({
         label: "Check provider responses",
-        tab: "introductions",
+        tab: "intros",
         icon: MessageSquare,
         priority: "high",
         description: "Review which providers accepted or declined. Disclose PII for accepted.",
@@ -221,7 +221,7 @@ export function getCaseNextSteps(
     case "in_contact":
       steps.push({
         label: "Coordinate with facilities",
-        tab: "messages",
+        tab: "timeline",
         icon: MessageSquare,
         priority: "high",
         description: "Manage communication between seeker and facilities.",
