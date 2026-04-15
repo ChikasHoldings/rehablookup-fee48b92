@@ -227,7 +227,7 @@ export default function AdminConcierge() {
               onClick={() => setStageFilter("all")} active={stageFilter === "all"} />
             <AdminStatCard label="Active" value={isLoading ? "—" : activeCases} icon={Clock} valueClassName="text-primary" />
             <AdminStatCard label="Needs Action" value={isLoading ? "—" : awaitingAction} icon={Users} valueClassName="text-warning" />
-            <AdminStatCard label="Placed" value={isLoading ? "—" : completedCases} icon={CheckCircle} valueClassName="text-success" />
+            <AdminStatCard label="Admitted" value={isLoading ? "—" : completedCases} icon={CheckCircle} valueClassName="text-success" />
           </div>
 
           {/* Filters */}

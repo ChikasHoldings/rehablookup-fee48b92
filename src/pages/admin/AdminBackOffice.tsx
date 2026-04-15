@@ -65,7 +65,7 @@ export default function AdminBackOffice() {
       const [openEscalations, pendingProviders, activeCases, recentAudit, totalStaff] = await Promise.all([
         supabase.from("admin_escalations").select("id", { count: "exact", head: true }).eq("status", "open"),
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).not("status", "in", '("placed","closed")'),
+        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).not("status", "in", '("completed","closed")'),
         supabase.from("admin_audit_log").select("id", { count: "exact", head: true }),
         supabase.from("admin_user_profiles").select("id", { count: "exact", head: true }),
       ]);
@@ -512,7 +512,7 @@ export default function AdminBackOffice() {
                   <SelectValue placeholder="Select status..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {["new", "reviewing", "matching", "matched", "introductions_sent", "in_contact", "placed", "closed"].map((s) => (
+                  {["intake_submitted", "intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "admitted", "billed", "completed", "closed"].map((s) => (
                     <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>
                   ))}
                 </SelectContent>

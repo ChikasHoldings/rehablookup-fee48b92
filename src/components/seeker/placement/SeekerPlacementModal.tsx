@@ -76,7 +76,7 @@ const TIMELINE_STEPS = [
   { key: "review", label: "Review", icon: Search, statuses: ["intake_reviewed", "advisor_assigned", "reviewing"] },
   { key: "matching", label: "Matching", icon: Users, statuses: ["matching_providers", "provider_prequalification", "providers_accepted", "matching", "matched"] },
   { key: "options", label: "Options", icon: Send, statuses: ["presented_to_seeker", "seeker_selected", "introductions_sent", "in_contact"] },
-  { key: "admitted", label: "Admitted", icon: CheckCircle2, statuses: ["admission_in_progress", "admitted", "billed", "completed", "placed"] },
+  { key: "admitted", label: "Admitted", icon: CheckCircle2, statuses: ["admission_in_progress", "admitted", "billed", "completed"] },
 ];
 
 function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null | undefined }) {
@@ -223,7 +223,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
       case "presented_to_seeker": case "introductions_sent": return "Your matched options are ready for review.";
       case "seeker_selected": case "in_contact": return "Your advisor is coordinating next steps with your chosen facility.";
       case "admission_in_progress": return "Admission is in progress. Your advisor is finalizing the details.";
-      case "admitted": case "billed": case "completed": case "placed": return "Congratulations! Your placement has been confirmed.";
+      case "admitted": case "billed": case "completed": return "Congratulations! Your placement has been confirmed.";
       case "closed": return "This case has been closed.";
       default: return "Your case is being processed.";
     }
