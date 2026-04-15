@@ -22,6 +22,7 @@ import { InvoiceManagementTab } from "./concierge/InvoiceManagementTab";
 import { ToursTab } from "./concierge/ToursTab";
 import { ConciergeTimelineTab } from "./concierge/ConciergeTimelineTab";
 import { AdmissionCoordinationCard } from "./concierge/AdmissionCoordinationCard";
+import { AdminConfirmPlacement } from "./concierge/AdminConfirmPlacement";
 import { StageActionBar } from "./concierge/StageActionBar";
 import { STATUS_CONFIG as PIPELINE_STATUS_CONFIG } from "./concierge/placementPipelineConfig";
 import type { Database } from "@/integrations/supabase/types";
