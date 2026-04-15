@@ -456,13 +456,13 @@ function OverviewContent({ caseData, advisorName, placedFacility, onSwitchTab }:
 
       {/* Quick nav buttons */}
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => onSwitchTab("providers")}>
+        <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => onSwitchTab("matching")}>
           <Building2 className="h-3.5 w-3.5" />View Matched Providers
         </Button>
         <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => onSwitchTab("admission")}>
           <Home className="h-3.5 w-3.5" />Admission & Billing
         </Button>
-        <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => onSwitchTab("manage")}>
+        <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => onSwitchTab("actions")}>
           <Settings className="h-3.5 w-3.5" />Actions & Timeline
         </Button>
       </div>
