@@ -1,5 +1,5 @@
 import { forwardRef, useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
 import { PlacementProgressStepper } from "./concierge/PlacementProgressStepper";
 import { CaseSlaDetailBanner } from "./concierge/CaseSlaAlerts";
+import { PlacementNextSteps } from "./concierge/PlacementNextSteps";
 import { ConciergeIntakeTab } from "./concierge/ConciergeIntakeTab";
 import { ConciergePlacementTab } from "./concierge/ConciergePlacementTab";
 import { ConciergeIntroductionsTab } from "./concierge/ConciergeIntroductionsTab";
@@ -49,6 +50,33 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
   const canManageActions = true;
 
   const [activeTab, setActiveTab] = useState(initialTab || "intake");
+
+  // Fetch intro and tour counts for next-steps panel
+  const { data: introsCount = 0 } = useQuery({
+    queryKey: ["intros-count", caseData?.id],
+    queryFn: async () => {
+      if (!caseData) return 0;
+      const { count } = await supabase
+        .from("concierge_introductions")
+        .select("id", { count: "exact", head: true })
+        .eq("inquiry_id", caseData.id);
+      return count || 0;
+    },
+    enabled: open && !!caseData,
+  });
+
+  const { data: toursCount = 0 } = useQuery({
+    queryKey: ["tours-count", caseData?.id],
+    queryFn: async () => {
+      if (!caseData) return 0;
+      const { count } = await supabase
+        .from("concierge_tour_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("inquiry_id", caseData.id);
+      return count || 0;
+    },
+    enabled: open && !!caseData,
+  });
 
   // Reset tab when sheet opens
   useEffect(() => {
@@ -162,6 +190,16 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
               closed_at: caseData.closed_at,
             }}
             compact
+          />
+        </div>
+
+        {/* Next Action Panel */}
+        <div className="flex-shrink-0 mt-3">
+          <PlacementNextSteps
+            caseData={caseData}
+            introsCount={introsCount}
+            toursCount={toursCount}
+            onSwitchTab={setActiveTab}
           />
         </div>
 
