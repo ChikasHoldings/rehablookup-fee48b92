@@ -38,7 +38,7 @@ const FEE_STATUS_BADGE: Record<string, { label: string; variant: "default" | "se
 
 export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProps) {
   const queryClient = useQueryClient();
-  const isPlaced = caseData.status === "placed";
+  const isPlaced = ["admitted", "billed", "completed"].includes(caseData.status) || caseData.placement_confirmed;
 
   const { data: invoice, isLoading } = useQuery({
     queryKey: ["case-invoice", caseData.id],
@@ -52,7 +52,7 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
       if (error) throw error;
       return data;
     },
-    enabled: isPlaced,
+    enabled: !!isPlaced,
   });
 
   const { data: advisorEarning } = useQuery({
@@ -67,7 +67,7 @@ export function BillingStatusCard({ caseData, onRefresh }: BillingStatusCardProp
       if (error) return null;
       return data;
     },
-    enabled: isPlaced,
+    enabled: !!isPlaced,
   });
 
   const retryBillingMutation = useMutation({

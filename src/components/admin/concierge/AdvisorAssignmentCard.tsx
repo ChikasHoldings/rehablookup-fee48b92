@@ -48,10 +48,16 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
     mutationFn: async (advisorId: string) => {
       const actualId = advisorId === "unassigned" ? null : advisorId;
       
+      // Build update — auto-advance to advisor_assigned if at intake_reviewed
+      const updates: Record<string, unknown> = { assigned_advisor_id: actualId };
+      if (actualId && caseData.status === "intake_reviewed") {
+        updates.status = "advisor_assigned";
+      }
+
       // Build query — supabase query builder is immutable, so chain properly
       let query = supabase
         .from("concierge_inquiries")
-        .update({ assigned_advisor_id: actualId })
+        .update(updates)
         .eq("id", caseData.id);
       
       // If unassigning, require current advisor matches what we see (optimistic lock)
@@ -69,7 +75,8 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
         event_type: "advisor_assigned",
         event_data: { 
           advisor_id: advisorId === "unassigned" ? null : advisorId,
-          previous_advisor_id: caseData.assigned_advisor_id 
+          previous_advisor_id: caseData.assigned_advisor_id,
+          auto_advanced: actualId && caseData.status === "intake_reviewed",
         },
         actor_id: user?.id || null,
         actor_type: "admin",
