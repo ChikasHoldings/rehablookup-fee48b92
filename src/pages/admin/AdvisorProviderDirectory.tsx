@@ -21,6 +21,7 @@ import {
   Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProviderDirectoryDetailModal } from "@/components/admin/ProviderDirectoryDetailModal";
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
