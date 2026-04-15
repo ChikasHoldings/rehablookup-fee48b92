@@ -81,6 +81,31 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
     if (user?.user_id) checkBanStatus(user.user_id).then(setIsBanned);
   }, [user?.user_id]);
 
+  // Placement journey status for header
+  const { data: placementJourney } = useQuery({
+    queryKey: ["admin-seeker-journey-header", user?.user_id],
+    queryFn: async () => {
+      if (!user?.user_id) return null;
+      const { data: inqs } = await supabase
+        .from("concierge_inquiries")
+        .select("id, status, placed_facility_id, placement_confirmed, admission_status")
+        .eq("user_id", user.user_id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (!inqs?.length) return { status: "not_started", admitted: false };
+      const admitted = inqs.some((i: any) => i.placement_confirmed || i.admission_status === "admitted");
+      const placed = inqs.some((i: any) => i.placed_facility_id);
+      const matched = inqs.some((i: any) => ["matched", "introductions_sent", "in_contact"].includes(i.status));
+      const active = inqs.some((i: any) => ["reviewing", "matching"].includes(i.status));
+      if (admitted) return { status: "admitted", admitted: true };
+      if (placed) return { status: "accepted", admitted: false };
+      if (matched) return { status: "matched", admitted: false };
+      if (active) return { status: "in_progress", admitted: false };
+      return { status: "intake_submitted", admitted: false };
+    },
+    enabled: !!user?.user_id && open,
+  });
+
   // Aggregated data
   const { data: aggregatedData } = useQuery({
     queryKey: ["admin-user-aggregated", user?.user_id],
