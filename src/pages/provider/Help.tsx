@@ -11,7 +11,12 @@ import {
   CheckCircle,
   Send,
   Loader2,
-  Shield
+  Shield,
+  Handshake,
+  CreditCard,
+  Crown,
+  Users,
+  BarChart3
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,40 +42,98 @@ import { cn } from "@/lib/utils";
 
 const SUBJECT_MAX = 200;
 const MESSAGE_MAX = 5000;
-const COOLDOWN_MS = 60_000; // 1 minute between submissions
+const COOLDOWN_MS = 60_000;
 
-const faqs = [
+const faqSections = [
   {
-    question: "How do I update my facility listing?",
-    answer: "Navigate to 'My Listing' in the sidebar to update your facility information, including services, insurance accepted, and facility images. Changes are saved automatically and will be reflected on your public profile after review."
+    title: "Listing & Profile",
+    icon: FileText,
+    items: [
+      {
+        question: "How do I update my facility listing?",
+        answer: "Navigate to 'My Listing' in the sidebar. You can edit services, insurance accepted, images, description, and contact info. Changes save automatically and go live after a brief review."
+      },
+      {
+        question: "How can I improve my listing visibility?",
+        answer: "Complete all profile fields, add high-quality images (WebP recommended), ensure services and insurance are accurate, and respond quickly to leads. Pro members get featured placement in search results and a higher ranking score."
+      },
+      {
+        question: "Can I have multiple facilities?",
+        answer: "Yes. Pro members can manage up to 5 facility listings from a single account. Use the facility selector in the header to switch between locations."
+      },
+    ],
   },
   {
-    question: "How do leads work?",
-    answer: "When someone interested in treatment views your facility profile and submits a contact request, it appears in your Leads tab. You'll receive an email notification (if enabled) and can manage lead status, add notes, and contact prospects directly."
+    title: "Leads & Credits",
+    icon: Users,
+    items: [
+      {
+        question: "How do leads work?",
+        answer: "When someone views your profile and submits a contact or tour request, it becomes a lead. You'll see a preview with basic details. Each lead is exclusive to your facility for a 24-hour window before being redistributed."
+      },
+      {
+        question: "How do credits work?",
+        answer: "Purchase credits to unlock lead contact details. Each inquiry type has a set unlock price. Pro subscribers save 20% on every unlock. Credits can be purchased in tiers: $200, $500 (+10% bonus), or $1,000 (+20% bonus). You can also enable auto-reload to top up automatically when your balance runs low."
+      },
+      {
+        question: "How do I export my lead data?",
+        answer: "In the Leads section, use the export button to download your lead data as a CSV file for use with your CRM or for record-keeping."
+      },
+    ],
   },
   {
-    question: "How does billing work?",
-    answer: "Your listing is free. When families submit inquiries, you see a preview with basic details. To view contact info and respond, unlock the inquiry using credits. Pro subscribers get 20% off all unlocks."
+    title: "Placement Network",
+    icon: Handshake,
+    items: [
+      {
+        question: "What is the Placement Network?",
+        answer: "Our Placement Network connects your facility with pre-screened families actively seeking treatment. Our concierge team matches cases to your facility criteria, and you only pay a placement fee when a patient is actually admitted—no upfront costs."
+      },
+      {
+        question: "How do I join the Placement Network?",
+        answer: "Go to 'Placements' in the sidebar and opt in. You'll set your admissions contact, accepted care types, and insurance. Once opted in, you'll start receiving matched introductions from our team."
+      },
+      {
+        question: "How does Placement billing work?",
+        answer: "There is no cost to join or receive introductions. A placement fee is charged only after a patient is admitted to your facility. Pro subscribers receive a $200 discount on each placement fee."
+      },
+      {
+        question: "What happens when I receive an introduction?",
+        answer: "You'll see the case details (anonymized) in your Placements tab. Review the case, then respond with 'Interested' or 'Not Interested.' If interested, our team coordinates the next steps including tours and admission."
+      },
+    ],
   },
   {
-    question: "How can I improve my listing visibility?",
-    answer: "Complete all profile fields, add high-quality images, ensure your services and insurance information is accurate, and consider upgrading to Pro for featured placement in search results."
+    title: "Billing & Pro Membership",
+    icon: CreditCard,
+    items: [
+      {
+        question: "What does Pro membership include?",
+        answer: "Pro ($399/mo) includes: featured listing placement, 20% off all lead unlocks, $200 off placement fees, up to 5 facility listings, priority support, analytics dashboard, and an embeddable trust badge."
+      },
+      {
+        question: "How does billing work?",
+        answer: "Your base listing is free. You pay per lead unlock using credits. Pro membership is billed monthly via Stripe. Placement fees are invoiced separately only upon successful admission."
+      },
+      {
+        question: "How do I manage my subscription?",
+        answer: "Go to Settings > Billing to view your current plan, update payment methods, view invoices, or manage your Pro subscription."
+      },
+    ],
   },
   {
-    question: "How do I change my notification preferences?",
-    answer: "Go to Settings > Notifications to customize which alerts you receive via email, SMS, or browser notifications. You can set up instant alerts or daily/weekly digests."
-  },
-  {
-    question: "How do credits work?",
-    answer: "Purchase credits to unlock inquiry contact details. Each inquiry type has a set unlock price. Pro subscribers save 20% on every unlock. View your balance and purchase more in the Billing section."
-  },
-  {
-    question: "How do I download my lead data?",
-    answer: "In the Leads section, use the export feature to download your lead data as a CSV file for use with your CRM or for record-keeping purposes."
-  },
-  {
-    question: "Can I have multiple facilities?",
-    answer: "Yes! Pro members can manage up to 5 facility listings from a single account. Use the facility selector in the header to switch between locations."
+    title: "Analytics & Settings",
+    icon: BarChart3,
+    items: [
+      {
+        question: "What analytics are available?",
+        answer: "The Analytics page shows profile views, lead volume, unlock rates, response times, and placement activity. You can filter by date range including weekly, monthly, quarterly, or custom periods."
+      },
+      {
+        question: "How do I change my notification preferences?",
+        answer: "Go to Settings > Notifications to customize email alerts for new leads, placement introductions, billing events, and system updates."
+      },
+    ],
   },
 ];
 
@@ -78,20 +141,20 @@ const helpTopics = [
   {
     icon: FileText,
     title: "Knowledge Base",
-    description: "Search articles and guides for answers",
+    description: "Search articles and guides",
     link: "/provider/knowledge-base"
   },
   {
-    icon: BookOpen,
-    title: "Getting Started",
-    description: "Learn the basics of managing your listing",
-    link: "/provider/knowledge-base"
+    icon: Handshake,
+    title: "Placement Network",
+    description: "Learn how placements work",
+    link: "/provider/placements"
   },
   {
-    icon: AlertCircle,
-    title: "Troubleshooting",
-    description: "Common issues and how to resolve them",
-    link: "/provider/knowledge-base"
+    icon: Crown,
+    title: "Pro Membership",
+    description: "See Pro benefits and pricing",
+    link: "/provider/pro-upgrade"
   },
 ];
 
@@ -99,7 +162,8 @@ const CATEGORIES = [
   { value: "account", label: "Account Issues" },
   { value: "billing", label: "Billing & Payments" },
   { value: "listing", label: "Listing Help" },
-  { value: "leads", label: "Leads & Contacts" },
+  { value: "leads", label: "Leads & Credits" },
+  { value: "placements", label: "Placement Network" },
   { value: "technical", label: "Technical Support" },
   { value: "other", label: "Other" },
 ] as const;
@@ -134,7 +198,6 @@ export default function ProviderHelpPage() {
       return;
     }
 
-    // Client-side cooldown
     const now = Date.now();
     if (now - lastSubmitRef.current < COOLDOWN_MS) {
       const secondsLeft = Math.ceil((COOLDOWN_MS - (now - lastSubmitRef.current)) / 1000);
@@ -182,7 +245,7 @@ export default function ProviderHelpPage() {
             Help & Support
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Get help with your account, find answers, or contact our support team
+            Find answers, learn about features, or contact our support team
           </p>
         </div>
 
@@ -208,7 +271,7 @@ export default function ProviderHelpPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* FAQs */}
+          {/* FAQs — grouped by section */}
           <Card className="lg:row-span-2">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -216,22 +279,32 @@ export default function ProviderHelpPage() {
                 Frequently Asked Questions
               </CardTitle>
               <CardDescription className="text-sm">
-                Quick answers to common questions
+                Quick answers organized by topic
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-0">
-              <Accordion type="single" collapsible className="w-full">
-                {faqs.map((faq, index) => (
-                  <AccordionItem key={index} value={`item-${index}`}>
-                    <AccordionTrigger className="text-left text-sm font-medium hover:no-underline py-3">
-                      {faq.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground pb-3">
-                      {faq.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+            <CardContent className="pt-0 space-y-5">
+              {faqSections.map((section) => (
+                <div key={section.title}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <section.icon className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      {section.title}
+                    </h3>
+                  </div>
+                  <Accordion type="single" collapsible className="w-full">
+                    {section.items.map((faq, index) => (
+                      <AccordionItem key={index} value={`${section.title}-${index}`}>
+                        <AccordionTrigger className="text-left text-sm font-medium hover:no-underline py-3">
+                          {faq.question}
+                        </AccordionTrigger>
+                        <AccordionContent className="text-sm text-muted-foreground pb-3">
+                          {faq.answer}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </div>
+              ))}
             </CardContent>
           </Card>
 
@@ -373,7 +446,7 @@ export default function ProviderHelpPage() {
               <div className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-background">
                 <Shield className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  For urgent matters regarding patient leads or system outages, 
+                  For urgent matters regarding patient leads, placements, or system outages, 
                   use the contact form with <strong>"Urgent"</strong> in the subject line.
                 </p>
               </div>
