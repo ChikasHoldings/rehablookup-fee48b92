@@ -261,7 +261,10 @@ export default function AdminProviders() {
         }
 
         if (searchQuery) {
-          query = query.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+          const sanitized = searchQuery.replace(/[%_\\]/g, "");
+          if (sanitized) {
+            query = query.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
+          }
         }
 
         const { data, error } = await query;
@@ -297,7 +300,10 @@ export default function AdminProviders() {
         if (proIds.length === 0) return 0;
         let proQuery = supabase.from("facilities").select("id", { count: "exact", head: true }).in("id", proIds);
         if (searchQuery) {
-          proQuery = proQuery.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+          const sanitized = searchQuery.replace(/[%_\\]/g, "");
+          if (sanitized) {
+            proQuery = proQuery.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
+          }
         }
         const { count: proCount } = await proQuery;
         return proCount || 0;
@@ -306,7 +312,10 @@ export default function AdminProviders() {
       }
 
       if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+        const sanitized = searchQuery.replace(/[%_\\]/g, "");
+        if (sanitized) {
+          query = query.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
+        }
       }
 
       const { count, error } = await query;
@@ -319,17 +328,27 @@ export default function AdminProviders() {
 
   // Fetch lead counts for providers
   const { data: leadCounts } = useQuery({
-    queryKey: ["admin-provider-lead-counts"],
+    queryKey: ["admin-provider-lead-counts", providers?.map((p) => p.id)],
     queryFn: async () => {
-      const { data } = await supabase.from("leads").select("facility_id").limit(5000);
+      if (!providers?.length) return {};
+      const facilityIds = providers.map((p) => p.id);
       const counts: Record<string, number> = {};
-      data?.forEach((lead) => {
-        if (lead.facility_id) {
-          counts[lead.facility_id] = (counts[lead.facility_id] || 0) + 1;
-        }
-      });
+      // Batch in chunks of 50 to avoid query size limits
+      for (let i = 0; i < facilityIds.length; i += 50) {
+        const chunk = facilityIds.slice(i, i + 50);
+        const { data } = await supabase
+          .from("leads")
+          .select("facility_id")
+          .in("facility_id", chunk);
+        data?.forEach((lead) => {
+          if (lead.facility_id) {
+            counts[lead.facility_id] = (counts[lead.facility_id] || 0) + 1;
+          }
+        });
+      }
       return counts;
     },
+    enabled: !!providers?.length,
   });
 
   // Update provider mutation
