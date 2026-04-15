@@ -200,7 +200,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       toast.success("Case assigned to you — starting placement workflow");
       queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
       onRefresh();
-      onSwitchTab?.("matching");
+      onSwitchTab?.("providers");
     },
     onError: (error) => {
       toast.error(error.message || "Failed to self-assign");
