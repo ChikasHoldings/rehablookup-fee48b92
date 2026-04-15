@@ -1,5 +1,5 @@
 import { forwardRef, useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
 import { PlacementProgressStepper } from "./concierge/PlacementProgressStepper";
 import { CaseSlaDetailBanner } from "./concierge/CaseSlaAlerts";
+import { PlacementNextSteps } from "./concierge/PlacementNextSteps";
 import { ConciergeIntakeTab } from "./concierge/ConciergeIntakeTab";
 import { ConciergePlacementTab } from "./concierge/ConciergePlacementTab";
 import { ConciergeIntroductionsTab } from "./concierge/ConciergeIntroductionsTab";
