@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -743,34 +743,43 @@ export function PlacementDetailModal({
                 <Skeleton className="h-14 w-3/4 rounded-xl" />
                 <Skeleton className="h-14 w-2/3 ml-auto rounded-xl" />
               </div>
-            ) : messages && messages.length > 0 ? (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground mb-4">Messages between you and the placement advisor.</p>
-                {messages.map((msg) => {
-                  const isYou = msg.sender_type === "provider" || msg.sender_type === "facility";
-                  return (
-                    <div key={msg.id} className={cn("flex", isYou ? "justify-end" : "justify-start")}>
-                      <div className={cn(
-                        "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
-                        isYou ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"
-                      )}>
-                        <p className="text-xs font-semibold opacity-70 mb-1">{isYou ? "You" : "Advisor"}</p>
-                        <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
-                        <p className="text-xs opacity-50 mt-2 text-right">{format(new Date(msg.created_at), "MMM d, h:mm a")}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-4">
-                  <MessageSquare className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <p className="text-sm font-semibold text-foreground">No messages yet</p>
-                <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                  Messages from the placement advisor will appear here once coordination begins.
-                </p>
+              <div className="flex flex-col h-full">
+                {messages && messages.length > 0 ? (
+                  <div className="space-y-3 mb-4">
+                    <p className="text-sm text-muted-foreground mb-4">Messages between you and the placement advisor.</p>
+                    {messages.map((msg) => {
+                      const isYou = msg.sender_type === "provider" || msg.sender_type === "facility";
+                      return (
+                        <div key={msg.id} className={cn("flex", isYou ? "justify-end" : "justify-start")}>
+                          <div className={cn(
+                            "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
+                            isYou ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"
+                          )}>
+                            <p className="text-xs font-semibold opacity-70 mb-1">{isYou ? "You" : "Advisor"}</p>
+                            <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
+                            <p className="text-xs opacity-50 mt-2 text-right">{format(new Date(msg.created_at), "MMM d, h:mm a")}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center mb-4">
+                    <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-4">
+                      <MessageSquare className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">No messages yet</p>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                      Send a message to your placement advisor below.
+                    </p>
+                  </div>
+                )}
+                {/* Message send input */}
+                <ProviderMessageInput
+                  inquiryId={introduction?.inquiry_id || ""}
+                  facilityId={facilityId}
+                />
               </div>
             )}
           </TabPanel>
@@ -887,6 +896,86 @@ function LockedSection({ message }: { message: string }) {
       </div>
       <p className="text-sm font-semibold text-foreground">Locked</p>
       <p className="text-sm text-muted-foreground mt-1 max-w-xs">{message}</p>
+    </div>
+  );
+}
+
+function ProviderMessageInput({ inquiryId, facilityId }: { inquiryId: string; facilityId: string }) {
+  const [msg, setMsg] = useState("");
+  const [sending, setSending] = useState(false);
+  const queryClient = useQueryClient();
+
+  const sendMessage = async () => {
+    const text = msg.trim();
+    if (!text || sending) return;
+    setSending(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Find or create thread
+      let threadId: string;
+      const { data: existingThread } = await supabase
+        .from("concierge_threads")
+        .select("id")
+        .eq("inquiry_id", inquiryId)
+        .eq("facility_id", facilityId)
+        .maybeSingle();
+
+      if (existingThread) {
+        threadId = existingThread.id;
+      } else {
+        const { data: newThread, error: threadErr } = await supabase
+          .from("concierge_threads")
+          .insert({
+            inquiry_id: inquiryId,
+            facility_id: facilityId,
+            user_id: user.id,
+            thread_type: "provider_advisor",
+          })
+          .select("id")
+          .single();
+        if (threadErr) throw threadErr;
+        threadId = newThread.id;
+      }
+
+      const { error: msgErr } = await supabase.from("concierge_messages").insert({
+        thread_id: threadId,
+        sender_id: user.id,
+        sender_type: "provider",
+        content: text,
+      });
+      if (msgErr) throw msgErr;
+
+      // Update thread last_message_at
+      await supabase.from("concierge_threads")
+        .update({ last_message_at: new Date().toISOString() })
+        .eq("id", threadId);
+
+      setMsg("");
+      queryClient.invalidateQueries({ queryKey: ["placement-messages", inquiryId, facilityId] });
+    } catch (e: any) {
+      console.error("Send message error:", e);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 border-t pt-3 mt-auto">
+      <input
+        type="text"
+        value={msg}
+        onChange={(e) => setMsg(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+        placeholder="Message your advisor..."
+        className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+        disabled={sending}
+      />
+      <Button size="sm" onClick={sendMessage} disabled={!msg.trim() || sending} className="h-9 gap-1.5">
+        {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+        Send
+      </Button>
     </div>
   );
 }

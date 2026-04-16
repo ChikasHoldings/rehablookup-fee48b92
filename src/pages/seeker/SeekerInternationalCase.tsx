@@ -1,9 +1,10 @@
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { 
@@ -34,6 +35,7 @@ interface PlacementCase {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+  "pending_verification": { label: "Verifying Email", color: "bg-amber-100 text-amber-800", icon: <Clock className="h-4 w-4" /> },
   "new": { label: "New", color: "bg-blue-100 text-blue-800", icon: <Clock className="h-4 w-4" /> },
   "in_review": { label: "In Review", color: "bg-yellow-100 text-yellow-800", icon: <Search className="h-4 w-4" /> },
   "matching": { label: "Placing", color: "bg-purple-100 text-purple-800", icon: <Search className="h-4 w-4" /> },
@@ -42,10 +44,12 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   "admitted": { label: "Admitted", color: "bg-green-100 text-green-800", icon: <CheckCircle className="h-4 w-4" /> },
   "closed_no_fit": { label: "Closed - No Fit", color: "bg-gray-100 text-gray-800", icon: <Clock className="h-4 w-4" /> },
   "closed_withdrew": { label: "Closed - Withdrew", color: "bg-gray-100 text-gray-800", icon: <Clock className="h-4 w-4" /> },
+  "closed": { label: "Closed", color: "bg-gray-100 text-gray-800", icon: <Clock className="h-4 w-4" /> },
 };
 
 export default function SeekerInternationalCase() {
   const { userId: currentUserId, isReady, isAuthenticated } = useSeekerSession();
+  const queryClient = useQueryClient();
 
   const user = isReady && currentUserId ? { id: currentUserId } : null;
 
@@ -67,6 +71,21 @@ export default function SeekerInternationalCase() {
     },
     enabled: !!user?.id,
   });
+
+  // Realtime: auto-refresh when case status changes
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`intl-case-${user.id}`)
+      .on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "international_placement_cases",
+        filter: `user_id=eq.${user.id}`,
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ["seeker-international-case", user.id] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, queryClient]);
 
   if (isReady && !isAuthenticated) {
     return (
@@ -250,6 +269,9 @@ export default function SeekerInternationalCase() {
           <div className="border-t pt-4">
             <h3 className="font-medium mb-2">What Happens Next</h3>
             <p className="text-sm text-muted-foreground">
+              {placementCase.status === "pending_verification" && (
+                "Please verify your email address to proceed. Check your inbox for a verification link."
+              )}
               {placementCase.status === "in_review" && (
                 "Your dedicated placement advisor is reviewing your intake and will reach out within 24 hours to discuss options."
               )}
@@ -264,6 +286,9 @@ export default function SeekerInternationalCase() {
               )}
               {placementCase.status === "admitted" && (
                 "Congratulations! Your admission is confirmed. Your advisor will help coordinate travel and arrival details."
+              )}
+              {(placementCase.status === "closed" || placementCase.status === "closed_no_fit" || placementCase.status === "closed_withdrew") && (
+                "This case has been closed. If you'd like to start a new placement request, please contact our team."
               )}
               {(placementCase.status === "new" || !placementCase.status) && (
                 "Your case has been received. Our team will begin reviewing your information shortly."
