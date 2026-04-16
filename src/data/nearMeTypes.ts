@@ -1,6 +1,9 @@
 /**
  * All near-me type slugs used across the platform.
  * Single source of truth for routing, sitemap, and components.
+ * 
+ * AUDIT: Duplicates removed (outpatient-rehab = outpatient, dual-diagnosis-rehab = dual-diagnosis).
+ * Thin-distinction slugs consolidated (sliding-scale → affordable, crisis-detox → emergency).
  */
 export const NEAR_ME_TYPES = [
   // Core treatment types
@@ -9,16 +12,13 @@ export const NEAR_ME_TYPES = [
   { slug: "alcohol-rehab-near-me", label: "Alcohol Rehab", treatmentType: "Alcohol Addiction Treatment" },
   { slug: "detox-near-me", label: "Detox", treatmentType: "Detox Programs" },
   { slug: "inpatient-rehab-near-me", label: "Inpatient Rehab", treatmentType: "Residential Treatment" },
-  { slug: "outpatient-near-me", label: "Outpatient Treatment", treatmentType: "Outpatient Programs" },
-  { slug: "outpatient-rehab-near-me", label: "Outpatient Rehab", treatmentType: "Outpatient Rehabilitation" },
+  { slug: "outpatient-rehab-near-me", label: "Outpatient Rehab", treatmentType: "Outpatient Programs" },
   { slug: "dual-diagnosis-near-me", label: "Dual Diagnosis", treatmentType: "Dual Diagnosis Treatment" },
-  { slug: "dual-diagnosis-rehab-near-me", label: "Dual Diagnosis Rehab", treatmentType: "Dual Diagnosis Rehabilitation" },
 
-  // Affordability & cost
+  // Affordability & cost (consolidated: removed sliding-scale as too thin vs affordable)
   { slug: "free-rehab-near-me", label: "Free Rehab", treatmentType: "Free Treatment Programs" },
-  { slug: "affordable-rehab-near-me", label: "Affordable Rehab", treatmentType: "Affordable Treatment" },
+  { slug: "affordable-rehab-near-me", label: "Affordable Rehab", treatmentType: "Affordable & Low-Cost Treatment" },
   { slug: "low-cost-rehab-near-me", label: "Low-Cost Rehab", treatmentType: "Low-Cost Treatment Programs" },
-  { slug: "sliding-scale-rehab-near-me", label: "Sliding Scale Rehab", treatmentType: "Sliding Scale Treatment" },
 
   // Facility types
   { slug: "luxury-rehab-near-me", label: "Luxury Rehab", treatmentType: "Luxury Rehabilitation" },
@@ -68,12 +68,10 @@ export const NEAR_ME_TYPES = [
   { slug: "90-day-rehab-near-me", label: "90-Day Rehab", treatmentType: "90-Day Treatment Programs" },
   { slug: "short-term-rehab-near-me", label: "Short-Term Rehab", treatmentType: "Short-Term Treatment Programs" },
 
-  // Urgency-based (HIGH CONVERSION)
+  // Urgency-based (consolidated: removed walk-in + crisis-detox as too thin vs emergency/same-day)
   { slug: "emergency-rehab-near-me", label: "Emergency Rehab", treatmentType: "Emergency Addiction Treatment" },
   { slug: "same-day-rehab-near-me", label: "Same-Day Rehab", treatmentType: "Same-Day Admission Treatment" },
   { slug: "24-7-detox-near-me", label: "24/7 Detox", treatmentType: "24/7 Detox Centers" },
-  { slug: "crisis-detox-near-me", label: "Crisis Detox", treatmentType: "Crisis Detox Programs" },
-  { slug: "walk-in-rehab-near-me", label: "Walk-In Rehab", treatmentType: "Walk-In Treatment Centers" },
   { slug: "immediate-rehab-near-me", label: "Immediate Rehab", treatmentType: "Immediate Admission Treatment" },
 
   // Specialty
@@ -88,7 +86,40 @@ export const NEAR_ME_TYPES = [
 export type NearMeType = typeof NEAR_ME_TYPES[number];
 
 export function getNearMeTypeBySlug(slug: string): NearMeType | undefined {
-  return NEAR_ME_TYPES.find((t) => t.slug === slug);
+  // Support legacy slugs by redirecting to canonical versions
+  const LEGACY_REDIRECTS: Record<string, string> = {
+    "outpatient-near-me": "outpatient-rehab-near-me",
+    "dual-diagnosis-rehab-near-me": "dual-diagnosis-near-me",
+    "sliding-scale-rehab-near-me": "affordable-rehab-near-me",
+    "crisis-detox-near-me": "emergency-rehab-near-me",
+    "walk-in-rehab-near-me": "same-day-rehab-near-me",
+  };
+  const resolved = LEGACY_REDIRECTS[slug] || slug;
+  return NEAR_ME_TYPES.find((t) => t.slug === resolved);
+}
+
+/** Returns the canonical slug (handles legacy redirects) */
+export function getCanonicalNearMeSlug(slug: string): string {
+  const LEGACY_REDIRECTS: Record<string, string> = {
+    "outpatient-near-me": "outpatient-rehab-near-me",
+    "dual-diagnosis-rehab-near-me": "dual-diagnosis-near-me",
+    "sliding-scale-rehab-near-me": "affordable-rehab-near-me",
+    "crisis-detox-near-me": "emergency-rehab-near-me",
+    "walk-in-rehab-near-me": "same-day-rehab-near-me",
+  };
+  return LEGACY_REDIRECTS[slug] || slug;
 }
 
 export const NEAR_ME_SLUGS = NEAR_ME_TYPES.map((t) => t.slug);
+
+/** Legacy slugs that should still be routable but canonical to their replacement */
+export const LEGACY_NEAR_ME_SLUGS = [
+  "outpatient-near-me",
+  "dual-diagnosis-rehab-near-me",
+  "sliding-scale-rehab-near-me",
+  "crisis-detox-near-me",
+  "walk-in-rehab-near-me",
+];
+
+/** All routable slugs (current + legacy) */
+export const ALL_ROUTABLE_NEAR_ME_SLUGS = [...NEAR_ME_SLUGS, ...LEGACY_NEAR_ME_SLUGS];

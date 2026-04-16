@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
-import { NEAR_ME_SLUGS } from "@/data/nearMeTypes";
+import { ALL_ROUTABLE_NEAR_ME_SLUGS } from "@/data/nearMeTypes";
 
 const BestInStatePage = lazy(() => import("@/pages/seo/BestInStatePage"));
 const ListYourFacilityState = lazy(() => import("@/pages/provider-guides/ListYourFacilityState"));
@@ -81,7 +81,7 @@ function parseNearMePath(pathname: string): {
   if (parts.length < 3) return null;
 
   const nearMeSlug = parts[0];
-  if (!(NEAR_ME_SLUGS as readonly string[]).includes(nearMeSlug)) return null;
+  if (!(ALL_ROUTABLE_NEAR_ME_SLUGS as readonly string[]).includes(nearMeSlug)) return null;
 
   // /{near-me-slug}/{stateSlug}/county/{countySlug}
   if (parts.length === 4 && parts[2] === "county") {
