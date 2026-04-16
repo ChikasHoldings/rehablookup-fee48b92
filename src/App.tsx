@@ -965,6 +965,8 @@ const AppInner = () => {
             <Route path="/treatment/detox/:stateSlug" element={<DetoxStateRedirect />} />
             <Route path="/treatment/inpatient-rehab" element={<Navigate to="/treatment-types/residential-inpatient" replace />} />
             <Route path="/treatment/inpatient-rehab/:stateSlug" element={<InpatientStateRedirect />} />
+            <Route path="/treatment/alcohol-rehab" element={<Navigate to="/treatment-types/alcohol-rehabilitation" replace />} />
+            <Route path="/treatment/alcohol-rehab/:stateSlug" element={<Navigate to="/treatment-types/alcohol-rehabilitation" replace />} />
 
             {/* International Placement Routes */}
             <Route path="/international" element={<PublicRouteGuard><InternationalLanding /></PublicRouteGuard>} />
