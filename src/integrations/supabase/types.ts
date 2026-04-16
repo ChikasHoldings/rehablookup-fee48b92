@@ -2720,6 +2720,62 @@ export type Database = {
           },
         ]
       }
+      lead_contact_events: {
+        Row: {
+          contact_type: string
+          created_at: string
+          facility_id: string
+          id: string
+          lead_id: string
+          provider_id: string
+        }
+        Insert: {
+          contact_type: string
+          created_at?: string
+          facility_id: string
+          id?: string
+          lead_id: string
+          provider_id: string
+        }
+        Update: {
+          contact_type?: string
+          created_at?: string
+          facility_id?: string
+          id?: string
+          lead_id?: string
+          provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_contact_events_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_contact_events_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_contact_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_contact_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_distributions: {
         Row: {
           created_at: string
