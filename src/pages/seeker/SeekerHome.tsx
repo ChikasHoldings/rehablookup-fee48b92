@@ -296,7 +296,7 @@ export default function SeekerHome() {
               <CardContent className="space-y-1">
                 {[
                   { to: "/rehab-centers", icon: Building2, label: "Find Rehab Centers" },
-                  { to: "/account/concierge", icon: HelpCircle, label: "Concierge Service" },
+                  { to: "/account/concierge", icon: HelpCircle, label: "Placement Service" },
                   { to: "/how-it-works", icon: Star, label: "How It Works" },
                   { to: "/insurance", icon: Shield, label: "Insurance Coverage" },
                 ].map((link) => (
@@ -559,7 +559,7 @@ export default function SeekerHome() {
                       variant="outline"
                       size="sm"
                       disabled={currentPage === 1}
-                      onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      onClick={() => { setCurrentPage(p => p - 1); document.querySelector('[data-shell] main')?.scrollTo({ top: 0, behavior: 'smooth' }); }}
                       className="h-8 gap-1"
                     >
                       <ChevronLeft className="h-3.5 w-3.5" />
@@ -584,7 +584,7 @@ export default function SeekerHome() {
                             variant={currentPage === page ? "default" : "ghost"}
                             size="sm"
                             className="h-8 w-8 p-0 text-xs"
-                            onClick={() => { setCurrentPage(page); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            onClick={() => { setCurrentPage(page); document.querySelector('[data-shell] main')?.scrollTo({ top: 0, behavior: 'smooth' }); }}
                           >
                             {page}
                           </Button>
@@ -596,7 +596,7 @@ export default function SeekerHome() {
                       variant="outline"
                       size="sm"
                       disabled={currentPage === totalPages}
-                      onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      onClick={() => { setCurrentPage(p => p + 1); document.querySelector('[data-shell] main')?.scrollTo({ top: 0, behavior: 'smooth' }); }}
                       className="h-8 gap-1"
                     >
                       <span className="hidden sm:inline">Next</span>
@@ -731,7 +731,7 @@ export default function SeekerHome() {
                   Get placed in treatment
                 </p>
                 <Button asChild size="sm" className="w-full">
-                  <Link to="/account/concierge">Start Concierge</Link>
+                  <Link to="/account/concierge">Start Placement</Link>
                 </Button>
               </CardContent>
             </Card>
