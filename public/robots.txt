@@ -37,6 +37,8 @@ Disallow: /concierge/intake
 Disallow: /concierge/thank-you
 Disallow: /concierge/create-password
 Disallow: /concierge/dashboard
+Disallow: /international/intake
+Disallow: /international/thank-you
 Disallow: /lp/
 Disallow: /api/
 Disallow: /functions/
