@@ -59,6 +59,46 @@ export default function ProviderAnalyticsPage() {
     [facilities]
   );
 
+  const effectiveFacilityId = selectedFacilityId !== "all" ? selectedFacilityId : undefined;
+  const { data: engagementData } = useCentralizedEngagementAnalytics(dateRange, effectiveFacilityId);
+  const { data: leadData } = useCentralizedLeadAnalytics(dateRange, effectiveFacilityId);
+
+  const handleExportCSV = useCallback(() => {
+    const rows: string[][] = [["Metric", "Period Value", "All-Time Value"]];
+
+    if (engagementData) {
+      rows.push(["Search Appearances", String(engagementData.periodImpressions), String(engagementData.totalImpressions)]);
+      rows.push(["Profile Views", String(engagementData.periodProfileViews), String(engagementData.totalProfileViews)]);
+      rows.push(["Click to Call", String(engagementData.periodClickToCalls), String(engagementData.totalClickToCalls)]);
+      rows.push(["Website Clicks", String(engagementData.periodWebsiteClicks), String(engagementData.totalWebsiteClicks)]);
+    }
+    if (leadData) {
+      rows.push(["Total Inquiries", String(leadData.thisMonthLeads), String(leadData.allTimeLeads)]);
+      rows.push(["Unlocked", String(leadData.conversionFunnel.contacted + leadData.conversionFunnel.qualified + leadData.conversionFunnel.converted), ""]);
+      rows.push(["Converted", String(leadData.conversionFunnel.converted), ""]);
+      rows.push(["Growth Rate", `${leadData.growthRate}%`, ""]);
+    }
+
+    if (engagementData?.facilityBreakdown && engagementData.facilityBreakdown.length > 0) {
+      rows.push([]);
+      rows.push(["Facility", "Impressions", "Views", "Calls", "Website", "Inquiries"]);
+      engagementData.facilityBreakdown.forEach(f => {
+        const facilityLeads = leadData?.facilityBreakdown.find(lf => lf.facilityId === f.facilityId)?.totalLeads || 0;
+        rows.push([f.facilityName, String(f.impressions), String(f.profileViews), String(f.clickToCalls), String(f.websiteClicks), String(facilityLeads)]);
+      });
+    }
+
+    const csvContent = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `analytics-export-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Analytics exported successfully");
+  }, [engagementData, leadData]);
+
   const handlePresetSelect = (preset: typeof DATE_RANGE_PRESETS[number]) => {
     const range = preset.getRange();
     setDateRange(range);
