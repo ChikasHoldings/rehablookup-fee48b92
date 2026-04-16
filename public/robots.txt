@@ -305,6 +305,7 @@ Disallow: /provider-forgot-password
 Disallow: /provider-reset-password
 Disallow: /admin-login
 Disallow: /seeker/signup
+Disallow: /blog
 Disallow: /request-help
 Disallow: /placement-help
 Disallow: /my-account
