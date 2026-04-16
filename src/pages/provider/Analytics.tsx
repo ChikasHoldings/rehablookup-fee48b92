@@ -1,10 +1,12 @@
-import { useState, useMemo, useRef } from "react";
-import { BarChart3, CalendarIcon, X, ChevronDown, Building2 } from "lucide-react";
+import { useState, useMemo, useRef, useCallback } from "react";
+import { BarChart3, CalendarIcon, X, ChevronDown, Building2, Download } from "lucide-react";
 import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
 import { CentralizedEngagementAnalytics } from "@/components/provider/CentralizedEngagementAnalytics";
 import { ProviderPerformanceAnalytics } from "@/components/provider/ProviderPerformanceAnalytics";
 import { ROICalculatorWidget } from "@/components/provider/ROICalculatorWidget";
 import { DATE_RANGE_PRESETS, type DateRange } from "@/hooks/useLeadAnalytics";
+import { useCentralizedEngagementAnalytics } from "@/hooks/useCentralizedEngagementAnalytics";
+import { useCentralizedLeadAnalytics } from "@/hooks/useCentralizedLeadAnalytics";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -32,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 type TabKey = "overview" | "engagement" | "leads" | "performance" | "roi";
 
