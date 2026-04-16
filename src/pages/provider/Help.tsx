@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { 
   HelpCircle, 
   MessageSquare, 
@@ -16,13 +17,18 @@ import {
   CreditCard,
   Crown,
   Users,
-  BarChart3
+  BarChart3,
+  Ticket,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -38,7 +44,9 @@ import {
 } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 
 const SUBJECT_MAX = 200;
 const MESSAGE_MAX = 5000;
