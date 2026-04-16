@@ -138,7 +138,7 @@ export function ProviderDirectoryDetailModal({
           <div className="flex items-start gap-4">
             <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
               {provider.logo_url ? (
-                <img src={provider.logo_url} alt="" className="h-full w-full object-cover" />
+                <img src={provider.logo_url} alt={`${provider.name} logo`} className="h-full w-full object-cover" />
               ) : (
                 <Building2 className="h-6 w-6 text-muted-foreground" />
               )}
