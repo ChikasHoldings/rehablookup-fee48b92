@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
@@ -153,7 +154,7 @@ export default function AddLocationPage() {
     setIsSubmitting(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       
       if (!session) {
         toast({

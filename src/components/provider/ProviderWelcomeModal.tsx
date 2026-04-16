@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { cn } from "@/lib/utils";
 
 interface ProviderWelcomeModalProps {
@@ -30,7 +31,7 @@ interface ProviderWelcomeModalProps {
 
 async function trackWelcomeEvent(eventType: string, metadata?: Record<string, unknown>) {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getCachedSession();
     if (!session) return;
     supabase.functions.invoke("log-activity", {
       body: {

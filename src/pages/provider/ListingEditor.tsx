@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { sanitizeText, sanitizeFacilityName, validateFacilityType, validateState, validateZipCode, validatePhone, validateEmail, sanitizeDescription, sanitizeWebsite, validateYearEstablished } from "@/lib/facilitySanitization";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -265,7 +266,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     queryKey: ["facility-listing", currentFacilityId],
     queryFn: async () => {
       if (!currentFacilityId) return null;
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) return null;
 
       const { data } = await supabase
@@ -326,7 +327,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   const { data: profileData } = useQuery({
     queryKey: ["provider-profile"],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) return null;
       const { data } = await supabase
         .from("profiles")

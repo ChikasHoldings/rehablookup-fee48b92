@@ -41,6 +41,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useSelectedFacilityOptional } from "@/contexts/SelectedFacilityContext";
 import { useTemplateTags } from "@/hooks/useTemplateTags";
@@ -438,7 +439,7 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
     mutationFn: async () => {
       if (!lead || !selectedTemplate) throw new Error("Missing required data");
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) throw new Error("Not authenticated");
 
       const response = await supabase.functions.invoke("send-lead-email", {

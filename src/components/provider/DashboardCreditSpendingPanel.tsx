@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { startOfMonth } from "date-fns";
@@ -25,7 +26,7 @@ export function DashboardCreditSpendingPanel({
   const { data: spending, isLoading: spendingLoading } = useQuery({
     queryKey: ["credit-spending-monthly", facilityId],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) return { totalSpent: 0, leadCount: 0, avgCost: 0 };
 
       const monthStart = startOfMonth(new Date()).toISOString();
