@@ -7,8 +7,10 @@ const VERSION = "2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Cache-Control": "public, max-age=300, s-maxage=600",
+  // Browser 5 min, CDN 10 min, stale-while-revalidate 1 hour for spike absorption.
+  "Cache-Control": "public, max-age=300, s-maxage=600, stale-while-revalidate=3600",
 };
 
 const FEATURED_PRODUCT_IDS = ["prod_TbalOeJZA2ZoJl", "prod_TbyzJVNOQL71NN"];

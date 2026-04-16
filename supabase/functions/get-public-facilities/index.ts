@@ -2,8 +2,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Cache-Control": "public, max-age=300, s-maxage=600",
+  // Browser cache 5 min, CDN cache 10 min, serve stale up to 1 hour while revalidating in background.
+  // stale-while-revalidate absorbs traffic spikes by letting the CDN serve cached responses
+  // even after they expire, while it refreshes in the background — zero user-facing latency.
+  "Cache-Control": "public, max-age=300, s-maxage=600, stale-while-revalidate=3600",
 };
 
 const logStep = (step: string, details?: unknown) => {
