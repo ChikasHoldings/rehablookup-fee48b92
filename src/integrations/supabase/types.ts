@@ -6124,6 +6124,46 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_seeker_lead_detail: {
+        Args: { p_lead_id: string }
+        Returns: {
+          age_range: string
+          created_at: string
+          email: string
+          facility_id: string
+          gender: string
+          id: string
+          insurance_type: string
+          level_of_care: string
+          location_city_state: string
+          location_zip: string
+          message: string
+          name: string
+          phone: string
+          preferred_contact: string
+          primary_substance: string[]
+          provider_responded_at: string
+          provider_response_status: string
+          source: string
+          status: string
+          urgency: string
+          who_seeking_help: string
+        }[]
+      }
+      get_seeker_lead_notes: {
+        Args: { p_lead_id: string }
+        Returns: {
+          created_at: string
+          note: string
+        }[]
+      }
+      get_seeker_lead_unlock_info: {
+        Args: { p_lead_id: string }
+        Returns: {
+          facility_id: string
+          unlocked_at: string
+        }[]
+      }
       get_seeker_phones_for_admin: {
         Args: never
         Returns: {
