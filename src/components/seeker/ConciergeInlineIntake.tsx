@@ -439,7 +439,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           <SelectTrigger className={errors.primaryConcern ? "border-destructive" : ""}>
             <SelectValue placeholder="Select primary concern" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-popover">
             {PRIMARY_CONCERNS.map(opt => (
               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
@@ -453,7 +453,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           <SelectTrigger className={errors.levelOfCare ? "border-destructive" : ""}>
             <SelectValue placeholder="Select level of care" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-popover">
             {LEVELS_OF_CARE.map(opt => (
               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
@@ -523,7 +523,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
             <SelectTrigger className={errors.desiredState ? "border-destructive" : ""}>
               <SelectValue placeholder="Select state" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover">
               <SelectItem value="anywhere">Open to Anywhere</SelectItem>
               {US_STATES.map(state => (
                 <SelectItem key={state} value={state}>{state}</SelectItem>
@@ -549,7 +549,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           <SelectTrigger className={errors.timeline ? "border-destructive" : ""}>
             <SelectValue placeholder="When do you need treatment?" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-popover">
             {TIMELINE_OPTIONS.map(opt => (
               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
