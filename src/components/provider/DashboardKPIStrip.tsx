@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Inbox,
-  Users,
   Eye,
   Star,
   AlertTriangle,
@@ -156,12 +155,17 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
                   {isLoading ? (
                     <Skeleton className="h-6 w-10 mt-0.5" />
                   ) : (
-                    <p className={cn(
-                      "text-lg sm:text-xl font-bold leading-tight tabular-nums",
-                      (m as any).highlight ? "text-destructive" : "text-foreground"
-                    )}>
-                      {typeof m.value === "number" ? m.value : m.value}
-                    </p>
+                    <>
+                      <p className={cn(
+                        "text-lg sm:text-xl font-bold leading-tight tabular-nums",
+                        (m as any).highlight ? "text-destructive" : "text-foreground"
+                      )}>
+                        {m.value}
+                      </p>
+                      {m.subtitle && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{m.subtitle}</p>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
