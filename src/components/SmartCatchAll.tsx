@@ -4,6 +4,7 @@ import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 
 const BestInStatePage = lazy(() => import("@/pages/seo/BestInStatePage"));
 const ListYourFacilityState = lazy(() => import("@/pages/provider-guides/ListYourFacilityState"));
+const ListYourFacilityCity = lazy(() => import("@/pages/provider-guides/ListYourFacilityCity"));
 const ForProvidersState = lazy(() => import("@/pages/provider-guides/ForProvidersState"));
 const CityTreatmentPage = lazy(() => import("@/pages/seo/CityTreatmentPage"));
 const CityProviderPage = lazy(() => import("@/pages/provider-guides/CityProviderPage"));
@@ -76,8 +77,21 @@ export function SmartCatchAll() {
     );
   }
 
-  // List Your Facility in [State]
+  // List Your Facility in [City-State] or [State]
   if (pathname.startsWith("/list-your-facility-in-")) {
+    const slug = pathname.replace("/list-your-facility-in-", "");
+    // City slugs contain the state slug (e.g., "los-angeles-california"), state slugs are standalone (e.g., "california")
+    // If slug has more segments than a typical state, try city first
+    const isLikelyCity = slug.includes("-") && slug.split("-").length > 2;
+    if (isLikelyCity) {
+      return (
+        <PublicRouteGuard>
+          <Suspense fallback={null}>
+            <ListYourFacilityCity />
+          </Suspense>
+        </PublicRouteGuard>
+      );
+    }
     return (
       <PublicRouteGuard>
         <Suspense fallback={null}>
