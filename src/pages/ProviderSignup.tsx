@@ -611,10 +611,10 @@ export default function ProviderSignup() {
         supabase.functions.invoke("log-activity", {
           body: {
             user_id: userId,
-            event_type: "signup",
+            event_type: "account_action",
             event_description: `Created new provider account from ${browser} on ${os}`,
           },
-        });
+        }).catch(() => {});
       } catch (sessionError) {
         console.error("Session tracking error:", sessionError);
         // Non-blocking - continue even if session tracking fails

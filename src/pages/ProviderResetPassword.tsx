@@ -108,10 +108,10 @@ export default function ProviderResetPassword() {
           supabase.functions.invoke("log-activity", {
             body: {
               user_id: session.user.id,
-              event_type: "password_reset",
+              event_type: "password_change",
               event_description: "Password was reset successfully",
             },
-          });
+          }).catch(() => {});
         }
 
         toast({
