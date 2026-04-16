@@ -389,7 +389,18 @@ export default function Login() {
         }
       });
 
+      // supabase.functions.invoke returns error on non-2xx — parse response body from error context
       if (preCheckError) {
+        try {
+          const errBody = typeof preCheckError === 'object' && 'context' in preCheckError
+            ? await (preCheckError as any).context?.json?.()
+            : null;
+          if (errBody?.blocked) {
+            setError(errBody.message || "Your IP address has been blocked. Please contact support.");
+            setIsSubmitting(false);
+            return;
+          }
+        } catch { /* non-JSON error, continue */ }
         console.error('Pre-check error:', preCheckError);
       } else if (preCheckResult?.blocked) {
         setError(preCheckResult.message || "Your IP address has been blocked. Please contact support.");
@@ -481,7 +492,7 @@ export default function Login() {
             event_type: "login",
             event_description: `Signed in to account${rememberMe ? " (remembered)" : ""} from ${browser} on ${os}`,
           },
-        });
+        }).catch(() => {});
         
         // Redirect based on account type
         if (accountResult.type === "provider") {

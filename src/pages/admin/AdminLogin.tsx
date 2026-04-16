@@ -148,8 +148,19 @@ export default function AdminLogin() {
         body: { identifier: normalizedEmail, success: false, actionType: "admin_login_precheck" },
       });
 
-      if (preCheckError) console.error("Pre-check error:", preCheckError);
-      else if (preCheckResult?.blocked) {
+      if (preCheckError) {
+        try {
+          const errBody = typeof preCheckError === 'object' && 'context' in preCheckError
+            ? await (preCheckError as any).context?.json?.()
+            : null;
+          if (errBody?.blocked) {
+            toast.error(errBody.message || "Your IP address has been blocked.");
+            setIsLoading(false);
+            return;
+          }
+        } catch { /* continue */ }
+        console.error("Pre-check error:", preCheckError);
+      } else if (preCheckResult?.blocked) {
         toast.error(preCheckResult.message || "Your IP address has been blocked.");
         setIsLoading(false);
         return;
