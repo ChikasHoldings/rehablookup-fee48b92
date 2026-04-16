@@ -374,7 +374,7 @@ export default function ProviderSettingsPage() {
   const handleSaveNotifications = async () => {
     setIsSavingNotifications(true);
     
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getCachedSession();
     if (!session) {
       setIsSavingNotifications(false);
       toast({
@@ -467,7 +467,7 @@ export default function ProviderSettingsPage() {
     lastProfileSaveRef.current = now;
 
     setIsSaving(true);
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getCachedSession();
     if (!session) {
       setIsSaving(false);
       toast({
