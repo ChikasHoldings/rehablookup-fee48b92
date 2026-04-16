@@ -107,7 +107,7 @@ export default function SeekerHome() {
   const { data: featuredData } = useFeaturedFacilityIds();
   const seekerLocation = useSeekerLocation();
 
-  const { data: staticFacilities = [], isLoading, isError, refetch } = useStaticFacilities();
+  const { data: staticFacilities = [], isLoading, error: facilitiesError, refetch } = useStaticFacilities();
 
   // Map to FacilityCardData
   const allFacilities: (FacilityCardData & { zipCode?: string })[] = useMemo(() => {
