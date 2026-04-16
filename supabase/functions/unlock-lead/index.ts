@@ -438,20 +438,14 @@ Deno.serve(async (req) => {
 
       // ROLLBACK: refund the deducted credits if payment was via credits
       if (paymentMethod === 'credits') {
-        const { data: currentCredits } = await supabaseAdmin
-          .from("provider_credits")
-          .select("balance_cents")
-          .eq("provider_id", user.id)
-          .maybeSingle();
+        // ATOMIC rollback via increment RPC — eliminates read-then-write race condition
+        const { error: rollbackError } = await supabaseAdmin.rpc("increment_provider_credits", {
+          p_provider_id: user.id,
+          p_facility_id: facilityId,
+          p_amount_cents: unlockPrice,
+        });
 
-        if (currentCredits) {
-          await supabaseAdmin
-            .from("provider_credits")
-            .update({
-              balance_cents: currentCredits.balance_cents + unlockPrice,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("provider_id", user.id);
+        if (!rollbackError) {
 
           // Log the rollback transaction
           await supabaseAdmin.from("credit_transactions").insert({
@@ -465,7 +459,7 @@ Deno.serve(async (req) => {
 
           logStep(requestId, "Credits rolled back successfully", { refunded: unlockPrice });
         } else {
-          logStep(requestId, "CRITICAL - Could not rollback credits, no record found");
+          logStep(requestId, "CRITICAL - Could not rollback credits", { error: rollbackError.message });
         }
       }
 
