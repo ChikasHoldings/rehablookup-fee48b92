@@ -486,7 +486,7 @@ Deno.serve(async (req) => {
                   "List-Unsubscribe": `<mailto:no-reply@rehablookup.com?subject=unsubscribe>`,
                   "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
                 },
-              }, { emailType: "unlock_reminder" });
+              }, { emailType: "unlock_reminder", idempotencyKey: `unlock-rem-${lead.id}-${facility.id}-${stage.name}` });
 
               await supabase.from("notification_events").insert({
                 lead_id: lead.id,

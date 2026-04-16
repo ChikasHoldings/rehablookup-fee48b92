@@ -245,7 +245,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           to: [profile.email],
           subject,
           html: emailHtml,
-        }, { emailType: "payment_reminder" });
+        }, { emailType: "payment_reminder", idempotencyKey: `pay-reminder-${invoice.id}-${invoice.reminder_count || 0}` });
 
         console.log(`Payment reminder sent to ${profile.email}:`, emailResponse);
 
