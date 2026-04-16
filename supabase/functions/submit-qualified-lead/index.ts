@@ -98,20 +98,6 @@ function maskLeadName(fullName: string): string {
   return `${firstName} ${lastInitial}.`;
 }
 
-function maskEmail(email: string): string {
-  if (!email) return "●●●@●●●.com";
-  const [local, domain] = email.split("@");
-  if (!domain) return "●●●@●●●.com";
-  const maskedLocal = local[0] + "●●●";
-  const domainParts = domain.split(".");
-  const tld = domainParts[domainParts.length - 1];
-  return `${maskedLocal}@●●●.${tld}`;
-}
-
-function maskPhone(): string {
-  return "(●●●) ●●●-●●●●";
-}
-
 // ============ DUPLICATE & RATE LIMIT CHECKS ============
 // deno-lint-ignore no-explicit-any
 async function checkForDuplicate(
