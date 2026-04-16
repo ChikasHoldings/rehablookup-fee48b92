@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { useEffect } from "react";
 
 interface Profile {
@@ -96,7 +97,7 @@ export function useProviderData(facilityId?: string) {
   return useQuery({
     queryKey: ["provider-data", facilityId],
     queryFn: async (): Promise<ProviderData> => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       
       if (!session) {
         throw new Error("Not authenticated");

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 
 /**
  * Hook to track pending (new/uncontacted) inquiries count across all provider facilities.
@@ -12,7 +13,7 @@ export function usePendingInquiriesCount() {
   const query = useQuery({
     queryKey: ["pending-inquiries-count"],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) return { count: 0 };
 
       // Use security definer function for accurate count (bypasses RLS unlock restriction)

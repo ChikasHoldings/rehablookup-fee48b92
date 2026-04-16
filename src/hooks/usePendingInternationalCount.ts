@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { useEffect, useCallback } from "react";
 
 export function usePendingInternationalCount(facilityId?: string) {
@@ -10,7 +11,7 @@ export function usePendingInternationalCount(facilityId?: string) {
     queryFn: async () => {
       if (!facilityId) return 0;
       
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) return 0;
 
       // Count international matches that are pending (invited but not responded)

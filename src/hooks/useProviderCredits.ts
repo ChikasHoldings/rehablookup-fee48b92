@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 
@@ -41,13 +42,7 @@ export function useProviderCredits(facilityId?: string) {
     queryKey: ["provider-credits", facilityId],
     queryFn: async (): Promise<ProviderCreditsData> => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error("[useProviderCredits] Session error:", sessionError);
-          return DEFAULT_CREDITS;
-        }
-        
+        const session = await getCachedSession();
         if (!session) return DEFAULT_CREDITS;
 
         // Get credit balance

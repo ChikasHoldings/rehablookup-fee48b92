@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { useCallback } from "react";
 
 export interface ProStatusData {
@@ -27,7 +28,7 @@ export function useProStatus(facilityId?: string) {
     queryKey: ["pro-status", facilityId],
     queryFn: async (): Promise<ProStatusData> => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const session = await getCachedSession();
         if (!session) return DEFAULT_PRO_STATUS;
 
         // Query pro_subscriptions table with existing columns only
