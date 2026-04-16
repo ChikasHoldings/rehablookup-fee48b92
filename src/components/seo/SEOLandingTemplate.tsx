@@ -34,6 +34,7 @@ interface SEOLandingTemplateProps {
   metaTitle: string;
   metaDescription: string;
   canonical?: string;
+  noindex?: boolean;
   structuredData?: object;
   breadcrumbs?: { name: string; url: string }[];
 
