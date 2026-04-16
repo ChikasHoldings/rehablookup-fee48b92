@@ -80,6 +80,10 @@ const CoOccurringPage = lazy(() => import("./pages/seo/CoOccurringPage"));
 const DurationSettingPage = lazy(() => import("./pages/seo/DurationSettingPage"));
 const PaymentStatePage = lazy(() => import("./pages/seo/PaymentStatePage"));
 const StateArticlePage = lazy(() => import("./pages/seo/StateArticlePage"));
+const SubstanceCityPage = lazy(() => import("./pages/seo/SubstanceCityPage"));
+const DemographicCityPage = lazy(() => import("./pages/seo/DemographicCityPage"));
+const CoOccurringCityPage = lazy(() => import("./pages/seo/CoOccurringCityPage"));
+const DurationCityPage = lazy(() => import("./pages/seo/DurationCityPage"));
 
 // Provider Conversion Pages
 const CityProviderPage = lazy(() => import("./pages/provider-guides/CityProviderPage"));
