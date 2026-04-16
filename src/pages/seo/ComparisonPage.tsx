@@ -77,7 +77,7 @@ export default function ComparisonPage() {
               </li>
               <li className="flex items-center gap-1.5">
                 <span className="text-white/40">/</span>
-                <Link to="/guides" className="text-white/70 hover:text-white transition-colors">Guides</Link>
+                <Link to="/resources" className="text-white/70 hover:text-white transition-colors">Guides</Link>
               </li>
               <li className="flex items-center gap-1.5">
                 <span className="text-white/40">/</span>
