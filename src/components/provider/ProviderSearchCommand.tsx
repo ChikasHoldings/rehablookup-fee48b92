@@ -10,6 +10,8 @@ import {
   BarChart3,
   CreditCard,
   Settings,
+  Handshake,
+  Star,
   Bell,
   Loader2,
   X,
