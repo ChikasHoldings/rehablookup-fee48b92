@@ -40,6 +40,7 @@ export function FacilityImageUpload({
   currentImages,
   userId,
   facilityId,
+  facilityName,
   onImagesChange,
   maxImages = type === "logo" ? 1 : 10,
   className,
@@ -298,7 +299,7 @@ export function FacilityImageUpload({
             >
               <img
                 src={imageUrl}
-                alt={type === "logo" ? "Facility logo" : `Gallery image ${index + 1}`}
+                alt={type === "logo" ? `${facilityName || "Facility"} logo` : `${facilityName || "Facility"} gallery photo ${index + 1}`}
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
