@@ -930,27 +930,123 @@ const PROVIDER_CITIES = [
   "scottsdale-arizona","honolulu-hawaii","boise-idaho","richmond-virginia","memphis-tennessee",
   "louisville-kentucky","oklahoma-city-oklahoma","albuquerque-new-mexico","omaha-nebraska","malibu-california",
 ];
+
+// Provider treatment types for city+treatment and county+treatment combos
+const PROVIDER_TREATMENT_SLUGS = ["detox","residential","iop","php","sober-living","mat","luxury","dual-diagnosis"];
+// Provider insurance slugs for city+insurance and county+insurance combos
+const PROVIDER_INSURANCE_SLUGS = ["medicaid","medicare","blue-cross","aetna","cigna","united-healthcare"];
+
 const PROVIDER_STATE_TREATMENT_COMBOS: {state:string,treatments:string[]}[] = [
-  {state:"california",treatments:["detox","residential","iop","luxury","sober-living"]},
-  {state:"florida",treatments:["detox","residential","iop","luxury","sober-living"]},
-  {state:"texas",treatments:["detox","residential","iop","mat","dual-diagnosis"]},
-  {state:"new-york",treatments:["detox","residential","iop","php","dual-diagnosis"]},
-  {state:"pennsylvania",treatments:["detox","residential","iop","mat","dual-diagnosis"]},
-  {state:"ohio",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
-  {state:"illinois",treatments:["detox","residential","iop","php","mat"]},
-  {state:"georgia",treatments:["detox","residential","iop","sober-living","dual-diagnosis"]},
+  {state:"alabama",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
+  {state:"alaska",treatments:["detox","residential","iop","mat"]},
+  {state:"arizona",treatments:["detox","residential","iop","luxury","sober-living"]},
+  {state:"arkansas",treatments:["detox","residential","mat","iop"]},
+  {state:"california",treatments:["detox","residential","iop","luxury","sober-living","php","mat","dual-diagnosis"]},
+  {state:"colorado",treatments:["detox","residential","iop","sober-living","mat","dual-diagnosis"]},
+  {state:"connecticut",treatments:["detox","residential","iop","php","mat"]},
+  {state:"delaware",treatments:["detox","residential","iop","mat"]},
+  {state:"florida",treatments:["detox","residential","iop","luxury","sober-living","php","mat","dual-diagnosis"]},
+  {state:"georgia",treatments:["detox","residential","iop","sober-living","dual-diagnosis","mat"]},
+  {state:"hawaii",treatments:["detox","residential","iop","mat"]},
+  {state:"idaho",treatments:["detox","residential","mat","iop"]},
+  {state:"illinois",treatments:["detox","residential","iop","php","mat","dual-diagnosis"]},
+  {state:"indiana",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
+  {state:"iowa",treatments:["detox","residential","mat","iop"]},
+  {state:"kansas",treatments:["detox","residential","mat","iop"]},
+  {state:"kentucky",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
+  {state:"louisiana",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
+  {state:"maine",treatments:["detox","residential","mat","iop"]},
+  {state:"maryland",treatments:["detox","residential","iop","php","mat","dual-diagnosis"]},
+  {state:"massachusetts",treatments:["detox","residential","iop","php","mat","dual-diagnosis"]},
+  {state:"michigan",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
+  {state:"minnesota",treatments:["detox","residential","iop","mat","dual-diagnosis"]},
+  {state:"mississippi",treatments:["detox","residential","mat","iop"]},
+  {state:"missouri",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
+  {state:"montana",treatments:["detox","residential","mat","iop"]},
+  {state:"nebraska",treatments:["detox","residential","mat","iop"]},
+  {state:"nevada",treatments:["detox","residential","iop","luxury","sober-living"]},
+  {state:"new-hampshire",treatments:["detox","residential","mat","iop"]},
+  {state:"new-jersey",treatments:["detox","residential","iop","php","mat","dual-diagnosis"]},
+  {state:"new-mexico",treatments:["detox","residential","mat","iop"]},
+  {state:"new-york",treatments:["detox","residential","iop","php","mat","dual-diagnosis","luxury"]},
+  {state:"north-carolina",treatments:["detox","residential","iop","mat","dual-diagnosis","sober-living"]},
+  {state:"north-dakota",treatments:["detox","residential","mat","iop"]},
+  {state:"ohio",treatments:["detox","residential","mat","iop","dual-diagnosis","php"]},
+  {state:"oklahoma",treatments:["detox","residential","mat","iop"]},
+  {state:"oregon",treatments:["detox","residential","iop","mat","sober-living","dual-diagnosis"]},
+  {state:"pennsylvania",treatments:["detox","residential","iop","mat","dual-diagnosis","php"]},
+  {state:"rhode-island",treatments:["detox","residential","mat","iop"]},
+  {state:"south-carolina",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
+  {state:"south-dakota",treatments:["detox","residential","mat","iop"]},
+  {state:"tennessee",treatments:["detox","residential","mat","iop","dual-diagnosis","sober-living"]},
+  {state:"texas",treatments:["detox","residential","iop","mat","dual-diagnosis","php","luxury"]},
+  {state:"utah",treatments:["detox","residential","iop","mat","sober-living"]},
+  {state:"vermont",treatments:["detox","residential","mat","iop"]},
+  {state:"virginia",treatments:["detox","residential","iop","mat","dual-diagnosis","php"]},
+  {state:"washington",treatments:["detox","residential","iop","mat","sober-living","dual-diagnosis"]},
+  {state:"west-virginia",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
+  {state:"wisconsin",treatments:["detox","residential","mat","iop","dual-diagnosis"]},
+  {state:"wyoming",treatments:["detox","residential","mat","iop"]},
 ];
+
 const PROVIDER_STATE_INSURANCE_COMBOS: {state:string,insurers:string[]}[] = [
-  {state:"california",insurers:["medicaid","blue-cross","aetna"]},
-  {state:"florida",insurers:["medicaid","blue-cross","united-healthcare"]},
-  {state:"texas",insurers:["medicaid","blue-cross","cigna"]},
-  {state:"new-york",insurers:["medicaid","blue-cross","aetna"]},
+  {state:"alabama",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"arizona",insurers:["medicaid","blue-cross","aetna","united-healthcare"]},
+  {state:"california",insurers:["medicaid","blue-cross","aetna","cigna","united-healthcare","medicare"]},
+  {state:"colorado",insurers:["medicaid","blue-cross","united-healthcare","cigna"]},
+  {state:"connecticut",insurers:["medicaid","aetna","cigna","united-healthcare"]},
+  {state:"florida",insurers:["medicaid","blue-cross","united-healthcare","aetna","cigna","medicare"]},
+  {state:"georgia",insurers:["medicaid","blue-cross","united-healthcare","aetna"]},
+  {state:"illinois",insurers:["medicaid","blue-cross","united-healthcare","aetna"]},
+  {state:"indiana",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"kentucky",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"louisiana",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"maryland",insurers:["medicaid","blue-cross","cigna","united-healthcare"]},
+  {state:"massachusetts",insurers:["medicaid","blue-cross","aetna","united-healthcare"]},
+  {state:"michigan",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"minnesota",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"missouri",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"nevada",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"new-jersey",insurers:["medicaid","blue-cross","aetna","cigna","united-healthcare"]},
+  {state:"new-york",insurers:["medicaid","blue-cross","aetna","cigna","united-healthcare","medicare"]},
+  {state:"north-carolina",insurers:["medicaid","blue-cross","united-healthcare","aetna"]},
+  {state:"ohio",insurers:["medicaid","blue-cross","united-healthcare","aetna"]},
+  {state:"oregon",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"pennsylvania",insurers:["medicaid","blue-cross","aetna","cigna","united-healthcare"]},
+  {state:"south-carolina",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"tennessee",insurers:["medicaid","blue-cross","united-healthcare","cigna"]},
+  {state:"texas",insurers:["medicaid","blue-cross","cigna","united-healthcare","aetna","medicare"]},
+  {state:"virginia",insurers:["medicaid","blue-cross","aetna","united-healthcare"]},
+  {state:"washington",insurers:["medicaid","blue-cross","united-healthcare"]},
+  {state:"wisconsin",insurers:["medicaid","blue-cross","united-healthcare"]},
 ];
+
 function generateProviderConversionRoutes(): RouteEntry[] {
   const routes: RouteEntry[] = [];
+  // City-level provider pages
   for (const cs of PROVIDER_CITIES) { routes.push({ path: `/get-more-patients-in-${cs}`, priority: 0.70, changefreq: "monthly" }); }
+  // City+Treatment provider pages
+  for (const cs of PROVIDER_CITIES) { for (const t of PROVIDER_TREATMENT_SLUGS) { routes.push({ path: `/get-more-${t}-patients-in-${cs}`, priority: 0.65, changefreq: "monthly" }); } }
+  // City+Insurance provider pages
+  for (const cs of PROVIDER_CITIES) { for (const i of PROVIDER_INSURANCE_SLUGS) { routes.push({ path: `/get-more-${i}-patients-in-${cs}`, priority: 0.65, changefreq: "monthly" }); } }
+  // List your facility in city
+  for (const cs of PROVIDER_CITIES) { routes.push({ path: `/list-your-facility-in-${cs}`, priority: 0.65, changefreq: "monthly" }); }
+  // State+Treatment provider combos
   for (const c of PROVIDER_STATE_TREATMENT_COMBOS) { for (const t of c.treatments) { routes.push({ path: `/rehab-marketing/${c.state}/${t}`, priority: 0.70, changefreq: "monthly" }); } }
+  // State+Insurance provider combos
   for (const c of PROVIDER_STATE_INSURANCE_COMBOS) { for (const i of c.insurers) { routes.push({ path: `/rehab-marketing/${c.state}/insurance/${i}`, priority: 0.70, changefreq: "monthly" }); } }
+  // County provider pages + county+treatment + county+insurance
+  for (const [stateSlug, counties] of Object.entries(STATE_COUNTIES)) {
+    for (const countySlug of counties) {
+      routes.push({ path: `/rehab-marketing/${stateSlug}/county/${countySlug}`, priority: 0.60, changefreq: "monthly" });
+      for (const t of PROVIDER_TREATMENT_SLUGS) {
+        routes.push({ path: `/rehab-marketing/${stateSlug}/county/${countySlug}/${t}`, priority: 0.55, changefreq: "monthly" });
+      }
+      for (const i of PROVIDER_INSURANCE_SLUGS) {
+        routes.push({ path: `/rehab-marketing/${stateSlug}/county/${countySlug}/insurance/${i}`, priority: 0.55, changefreq: "monthly" });
+      }
+    }
+  }
   return routes;
 }
 
