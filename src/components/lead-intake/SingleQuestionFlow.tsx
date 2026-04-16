@@ -326,6 +326,9 @@ export function SingleQuestionFlow({
     if (success) {
       goNext();
     }
+    } finally {
+      isContactSubmitting.current = false;
+    }
   };
   
   // Handle verification
