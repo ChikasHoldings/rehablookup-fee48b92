@@ -497,7 +497,6 @@ export default function ProviderDashboardPage() {
                 impressionCount={impressionCount}
                 reviewCount={reviewCount}
                 totalLeadsCount={totalLeadsCount}
-                conciergeCount={conciergeCount}
               />
             )}
 
