@@ -1,5 +1,5 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Crown, Lock, Handshake, Clock, CheckCircle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-
 interface DashboardPlacementPanelProps {
   facilityIds: string[];
   isPro: boolean;
@@ -32,6 +31,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 export function DashboardPlacementPanel({ facilityIds, isPro }: DashboardPlacementPanelProps) {
+  const queryClient = useQueryClient();
+
   const { data: placements = [], isLoading } = useQuery({
     queryKey: ["dashboard-placements", facilityIds],
     queryFn: async (): Promise<PlacementItem[]> => {
@@ -56,6 +57,23 @@ export function DashboardPlacementPanel({ facilityIds, isPro }: DashboardPlaceme
     enabled: facilityIds.length > 0,
     staleTime: 1000 * 60 * 5,
   });
+
+  // Realtime: auto-refresh when introductions change for any owned facility
+  useEffect(() => {
+    if (!facilityIds.length) return;
+    const channels = facilityIds.map(fid =>
+      supabase
+        .channel(`dash-placements-${fid}`)
+        .on("postgres_changes", {
+          event: "*", schema: "public", table: "concierge_introductions",
+          filter: `facility_id=eq.${fid}`,
+        }, () => {
+          queryClient.invalidateQueries({ queryKey: ["dashboard-placements", facilityIds] });
+        })
+        .subscribe()
+    );
+    return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
+  }, [facilityIds, queryClient]);
 
   // Locked preview for free users
   if (!isPro) {
