@@ -72,6 +72,7 @@ export default function CityInsurancePage() {
     return <Navigate to="/insurance" replace />;
   }
 
+  const validation = validatePage("city-insurance", facilities.length);
   const pageTitle = `${insurer.name} Rehab Coverage in ${cityName}, ${stateData?.abbreviation || stateConfig.state}`;
 
   const faqs = [
@@ -121,6 +122,7 @@ export default function CityInsurancePage() {
       metaTitle={`${insurer.name} Rehab in ${cityName}, ${stateData?.abbreviation || ""} — Find Coverage | RehabLookup`}
       metaDescription={`Find rehab centers accepting ${insurer.name} in ${cityName}, ${stateConfig.state}. Compare ${facilities.length}+ facilities, verify coverage, get help today.`}
       canonical={`https://rehablookup.com/insurance/${insurerSlug}/${stateSlug}/${citySlug}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },
