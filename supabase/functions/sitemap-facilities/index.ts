@@ -1517,6 +1517,8 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
     ...generateCityRoutes(),
     ...generateCountyRoutes(),
     ...generateStateNearMeRoutes(),
+    ...generateNearMeCityRoutes(),
+    ...generateNearMeCountyRoutes(),
     ...generateTreatmentGeoRoutes(),
     ...generateCityTreatmentComboRoutes(),
     ...generateStateArticleRoutes(),
