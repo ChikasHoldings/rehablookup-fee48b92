@@ -607,7 +607,22 @@ const AppInner = () => {
              <Route path="/kratom-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
              <Route path="/gabapentin-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
              <Route path="/tramadol-addiction-treatment/:stateSlug" element={<PublicRouteGuard><SubstanceStatePage /></PublicRouteGuard>} />
-             
+
+             {/* Substance + City Pages */}
+             <Route path="/cocaine-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/opioid-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/heroin-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/meth-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/prescription-drug-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/benzodiazepine-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/alcohol-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/marijuana-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/fentanyl-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/xanax-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/adderall-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/kratom-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/gabapentin-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
+             <Route path="/tramadol-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><SubstanceCityPage /></PublicRouteGuard>} />
              {/* Demographic/Population-Specific Pages */}
              <Route path="/young-adult-rehab" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
              <Route path="/teen-rehab-programs" element={<PublicRouteGuard><DemographicTreatmentPage /></PublicRouteGuard>} />
