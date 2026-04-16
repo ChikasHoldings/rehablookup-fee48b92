@@ -549,7 +549,7 @@ const AppInner = () => {
             <Route path="/treatment-types/veterans-rehab" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="veterans-rehab" /></PublicRouteGuard>} />
             <Route path="/treatment-types/womens-rehab" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="womens-rehab" /></PublicRouteGuard>} />
             <Route path="/treatment-types/mens-rehab" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="mens-rehab" /></PublicRouteGuard>} />
-            <Route path="/treatment-types/luxury-rehab" element={<PublicRouteGuard><ExpandedTreatmentNationalHub treatmentKey="luxury-rehab" /></PublicRouteGuard>} />
+            {/* luxury-rehab national hub defined at line 524 */}
             <Route path="/treatment-types/detox-programs" element={<PublicRouteGuard><DetoxPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/detox-programs/:stateSlug" element={<PublicRouteGuard><StateDetoxPrograms /></PublicRouteGuard>} />
             <Route path="/treatment-types/detox-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><CityDetoxPrograms /></PublicRouteGuard>} />
