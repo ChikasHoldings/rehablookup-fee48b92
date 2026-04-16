@@ -128,7 +128,7 @@ const generateSessionToken = (): string => {
 
 export default function Login() {
   const [searchParams] = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+  const returnTo = searchParams.get("redirect") || searchParams.get("returnTo");
   const typeHint = searchParams.get("type") as "seeker" | "provider" | null;
   
   const [email, setEmail] = useState("");
