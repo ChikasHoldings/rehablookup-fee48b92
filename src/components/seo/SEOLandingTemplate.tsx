@@ -127,6 +127,7 @@ export function SEOLandingTemplate({
         title={metaTitle}
         description={metaDescription}
         canonical={canonical}
+        noindex={noindex}
         structuredData={structuredData}
         breadcrumbs={breadcrumbs}
       />
