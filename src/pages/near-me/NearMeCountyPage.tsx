@@ -44,7 +44,7 @@ export default function NearMeCountyPage() {
     const stateLower = stateInfo.name.toLowerCase();
     const stateAbbr = stateInfo.abbreviation.toLowerCase();
     // Match facilities in the county's cities
-    const countyCities = countyData.cities.map((c) => c.toLowerCase());
+    const countyCities = countyData.majorCities.map((c) => c.toLowerCase());
     return allFacilities.filter((f) => {
       const fCity = (f.city || "").toLowerCase();
       const fState = (f.state || "").toLowerCase();
@@ -64,12 +64,12 @@ export default function NearMeCountyPage() {
 
   const countyName = `${countyData.name} County`;
   const title = `${nearMeType.label} Near Me in ${countyName}, ${stateInfo.abbreviation}`;
-  const description = `Find ${nearMeType.label.toLowerCase()} centers in ${countyName}, ${stateInfo.abbreviation}. Compare verified ${nearMeType.treatmentType.toLowerCase()} programs serving ${countyData.cities.join(", ")}.`;
+  const description = `Find ${nearMeType.label.toLowerCase()} centers in ${countyName}, ${stateInfo.abbreviation}. Compare verified ${nearMeType.treatmentType.toLowerCase()} programs serving ${countyData.majorCities.join(", ")}.`;
 
   const faqs = [
     {
       question: `How many ${nearMeType.label.toLowerCase()} centers serve ${countyName}?`,
-      answer: `${countyName}, ${stateInfo.abbreviation} has ${facilities.length || "several"} verified ${nearMeType.treatmentType.toLowerCase()} centers serving residents across ${countyData.cities.slice(0, 5).join(", ")} and surrounding communities.`,
+      answer: `${countyName}, ${stateInfo.abbreviation} has ${facilities.length || "several"} verified ${nearMeType.treatmentType.toLowerCase()} centers serving residents across ${countyData.majorCities.slice(0, 5).join(", ")} and surrounding communities.`,
     },
     {
       question: `Does insurance cover ${nearMeType.label.toLowerCase()} in ${countyName}?`,
@@ -77,7 +77,7 @@ export default function NearMeCountyPage() {
     },
     {
       question: `What cities in ${countyName} have ${nearMeType.label.toLowerCase()} centers?`,
-      answer: `${nearMeType.treatmentType} centers in ${countyName} serve communities including ${countyData.cities.join(", ")}. The county seat is ${countyData.seat}.`,
+      answer: `${nearMeType.treatmentType} centers in ${countyName} serve communities including ${countyData.majorCities.join(", ")}. The county seat is ${countyData.seat}.`,
     },
   ];
 
