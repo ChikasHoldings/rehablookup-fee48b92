@@ -336,7 +336,7 @@ Deno.serve(async (req) => {
           to: [inquiry.user_email],
           subject: emailData.subject,
           html: emailData.html,
-        }, { emailType: "abandoned_placement" });
+        }, { emailType: "abandoned_placement", idempotencyKey: `abandoned-domestic-${inquiry.id}-${newCount}` });
 
         if (sendError) {
           throw new Error(sendError.message);
@@ -390,7 +390,7 @@ Deno.serve(async (req) => {
           to: [inquiry.user_email],
           subject: emailData.subject,
           html: emailData.html,
-        }, { emailType: "abandoned_placement" });
+        }, { emailType: "abandoned_placement", idempotencyKey: `abandoned-early-${inquiry.id}` });
 
         if (sendError) throw new Error(sendError.message);
 
@@ -435,7 +435,7 @@ Deno.serve(async (req) => {
           to: [caseData.client_email],
           subject: emailData.subject,
           html: emailData.html,
-        }, { emailType: "abandoned_placement" });
+        }, { emailType: "abandoned_placement", idempotencyKey: `abandoned-intl-${caseData.id}` });
 
         if (sendError) {
           throw new Error(sendError.message);
