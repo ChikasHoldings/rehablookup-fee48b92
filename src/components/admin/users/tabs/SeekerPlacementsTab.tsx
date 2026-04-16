@@ -272,7 +272,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
           {placement.rejectedFacilities?.length > 0 && (
             <div className="p-4 border-b">
               <h5 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                Seeker Rejected ({placement.rejectedFacilities.length})
+                Client Rejected ({placement.rejectedFacilities.length})
               </h5>
               <div className="flex flex-wrap gap-2">
                 {placement.rejectedFacilities.map((rej: any) => (
