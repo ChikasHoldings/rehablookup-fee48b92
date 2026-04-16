@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Heart, X } from "lucide-react";
@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const HIDDEN_ROUTES = ["/concierge", "/provider", "/admin", "/lp/", "/account"];
 
-export function StickyConversionBar() {
+export const StickyConversionBar = forwardRef<HTMLDivElement>(function StickyConversionBar(_props, ref) {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const location = useLocation();
@@ -23,6 +23,7 @@ export function StickyConversionBar() {
 
   return (
     <div
+      ref={ref}
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50 border-t bg-card/95 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.08)] transition-transform duration-300",
         visible ? "translate-y-0" : "translate-y-full"
@@ -54,4 +55,4 @@ export function StickyConversionBar() {
       </div>
     </div>
   );
-}
+});
