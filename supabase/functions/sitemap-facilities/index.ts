@@ -1399,7 +1399,7 @@ function generateNearMeCityRoutes(): RouteEntry[] {
   const topNearMeForCities = [
     // Core
     "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
-    "inpatient-rehab-near-me", "outpatient-near-me", "rehab-near-me",
+    "inpatient-rehab-near-me", "outpatient-rehab-near-me", "rehab-near-me",
     "free-rehab-near-me", "luxury-rehab-near-me", "sober-living-near-me",
     "dual-diagnosis-near-me", "fentanyl-rehab-near-me", "iop-near-me",
     "php-near-me", "mat-clinic-near-me", "affordable-rehab-near-me",
@@ -1432,7 +1432,7 @@ function generateNearMeCountyRoutes(): RouteEntry[] {
   // Top near-me types for county pages
   const topNearMeForCounties = [
     "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
-    "rehab-near-me", "inpatient-rehab-near-me", "outpatient-near-me",
+    "rehab-near-me", "inpatient-rehab-near-me", "outpatient-rehab-near-me",
     "free-rehab-near-me", "sober-living-near-me", "dual-diagnosis-near-me",
     "mat-clinic-near-me", "medicaid-rehab-near-me", "emergency-rehab-near-me",
     "womens-rehab-near-me", "mens-rehab-near-me", "veterans-rehab-near-me",
