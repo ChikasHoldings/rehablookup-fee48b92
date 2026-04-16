@@ -748,7 +748,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     const toRemove = services.filter(s => !selectedServices.includes(s.service_name));
     
     // Batch operations in parallel
-    const ops: Promise<unknown>[] = [];
+    const ops: PromiseLike<unknown>[] = [];
     if (toAdd.length > 0) {
       ops.push(supabase.from("facility_services").insert(toAdd.map(s => ({ facility_id: facility.id, service_name: s }))).then());
     }
@@ -773,7 +773,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     const toAdd = selectedInsurance.filter(i => !currentInsuranceNames.includes(i));
     const toRemove = insurance.filter(i => !selectedInsurance.includes(i.insurance_name));
     
-    const ops: Promise<unknown>[] = [];
+    const ops: PromiseLike<unknown>[] = [];
     if (toAdd.length > 0) {
       ops.push(supabase.from("facility_insurance").insert(toAdd.map(i => ({ facility_id: facility.id, insurance_name: i }))).then());
     }
@@ -798,7 +798,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     const toAdd = selectedAgeGroups.filter(ag => !currentAgeGroupNames.includes(ag));
     const toRemove = ageGroups.filter(ag => !selectedAgeGroups.includes(ag.age_group));
     
-    const ops: Promise<unknown>[] = [];
+    const ops: PromiseLike<unknown>[] = [];
     if (toAdd.length > 0) {
       ops.push(supabase.from("facility_age_groups").insert(toAdd.map(ag => ({ facility_id: facility.id, age_group: ag }))).then());
     }
