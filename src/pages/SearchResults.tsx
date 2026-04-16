@@ -264,8 +264,9 @@ const SearchResults = () => {
     setSearchParams(newParams);
   }, [searchParams, setSearchParams]);
 
-  const filteredCenters = useMemo(() => {
+  const { filteredCenters, isExpandedSearch } = useMemo(() => {
     let results = [...allCenters];
+    let expanded = false;
 
     // Build location match from explicit location or effective fallback
     let locationMatch: LocationMatch | null = null;
@@ -280,7 +281,15 @@ const SearchResults = () => {
       }
       
       // Filter to include relevant results by location
-      results = results.filter((c) => facilityMatchesLocation(c, locationMatch!));
+      const locationFiltered = results.filter((c) => facilityMatchesLocation(c, locationMatch!));
+      
+      // Auto-expand: if strict location filtering yields 0 results, show all results sorted by proximity
+      if (locationFiltered.length === 0) {
+        expanded = true;
+        // Don't filter — let proximity sort handle ranking
+      } else {
+        results = locationFiltered;
+      }
     }
 
     // Free-text search with fuzzy/partial matching
@@ -493,7 +502,7 @@ const SearchResults = () => {
       });
     }
 
-    return results;
+    return { filteredCenters: results, isExpandedSearch: expanded };
   }, [allCenters, location, effectiveLocation, treatment, insurance, type, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData]);
 
   const hasFilters = location || treatment || insurance || type || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
@@ -906,6 +915,20 @@ const SearchResults = () => {
                 <SearchResultsLoading count={6} />
               ) : paginatedCenters.length > 0 ? (
                 <>
+                  {/* Expanded search notice */}
+                  {isExpandedSearch && location && (
+                    <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-4 py-3 flex items-start gap-3">
+                      <Navigation className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          No exact matches near "{location}"
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Showing the closest facilities nationwide, sorted by proximity. Results nearest to your search appear first.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {/* Results Summary */}
                   <div className="flex items-center justify-between mb-5">
                     <div className="flex flex-col gap-0.5">
