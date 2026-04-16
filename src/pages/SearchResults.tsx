@@ -286,6 +286,15 @@ const SearchResults = () => {
     let results = [...allCenters];
     let expanded = false;
 
+    // Direct state filter from URL param (e.g. from near-me pages: ?state=FL)
+    if (stateParam) {
+      const stateUpper = stateParam.toUpperCase();
+      results = results.filter(c => {
+        const cState = getStateAbbr(c.state)?.toUpperCase() || c.state.toUpperCase();
+        return cState === stateUpper || c.state.toLowerCase() === stateParam.toLowerCase();
+      });
+    }
+
     // Build location match from explicit location or effective fallback
     let locationMatch: LocationMatch | null = null;
     const locationForFilter = location; // Only filter by explicit location
