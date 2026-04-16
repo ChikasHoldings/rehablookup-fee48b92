@@ -899,6 +899,10 @@ const AppInner = () => {
              <Route path="/signs-of-drug-addiction" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
              <Route path="/signs-of-opioid-addiction" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
              <Route path="/signs-of-meth-addiction" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/fentanyl-withdrawal-symptoms" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/cocaine-withdrawal-symptoms" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/signs-of-benzo-addiction" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/signs-of-fentanyl-addiction" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
 
              {/* New Comparison Pages (Batch 4) */}
              <Route path="/rehab-vs-self-detox" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
