@@ -1,10 +1,9 @@
 import { useRef, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Search, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { Heart } from "lucide-react";
 
 interface ResponsiveListingGridProps {
   facilities: any[];
@@ -18,6 +17,32 @@ export function ResponsiveListingGrid({ facilities, maxItems = 12 }: ResponsiveL
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const items = facilities.slice(0, maxItems);
+
+  const checkScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [items.length]);
+
+  const scroll = (dir: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const amount = dir === "left" ? -320 : 320;
+    el.scrollBy({ left: amount, behavior: "smooth" });
+  };
 
   // Empty state fallback
   if (items.length === 0) {
@@ -48,32 +73,6 @@ export function ResponsiveListingGrid({ facilities, maxItems = 12 }: ResponsiveL
     );
   }
 
-  const checkScroll = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-  };
-
-  useEffect(() => {
-    checkScroll();
-    const el = scrollRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", checkScroll, { passive: true });
-    window.addEventListener("resize", checkScroll);
-    return () => {
-      el.removeEventListener("scroll", checkScroll);
-      window.removeEventListener("resize", checkScroll);
-    };
-  }, [items.length]);
-
-  const scroll = (dir: "left" | "right") => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const amount = dir === "left" ? -320 : 320;
-    el.scrollBy({ left: amount, behavior: "smooth" });
-  };
-
   if (!isMobile) {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -86,7 +85,6 @@ export function ResponsiveListingGrid({ facilities, maxItems = 12 }: ResponsiveL
 
   return (
     <div className="relative">
-      {/* Scroll track */}
       <div
         ref={scrollRef}
         className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-4 -mx-4 px-4"
@@ -102,7 +100,6 @@ export function ResponsiveListingGrid({ facilities, maxItems = 12 }: ResponsiveL
         ))}
       </div>
 
-      {/* Scroll dots indicator */}
       <div className="flex justify-center gap-1.5 mt-2">
         {items.slice(0, Math.min(items.length, 6)).map((_, i) => (
           <div key={i} className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
