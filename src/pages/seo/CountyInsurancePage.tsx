@@ -33,7 +33,7 @@ export default function CountyInsurancePage() {
     let filtered = allFacilities.filter((f) => {
       const stateMatch = f.state.toLowerCase() === stateNameLower || f.state.toLowerCase() === stateAbbrLower;
       const cityMatch = countyCities.some((city) => f.city.toLowerCase() === city);
-      const insuranceMatch = f.insurance?.some((ins) => ins.toLowerCase().includes(insurerLower)) || f.description?.toLowerCase().includes(insurerLower);
+      const insuranceMatch = f.insuranceAccepted?.some((ins) => ins.toLowerCase().includes(insurerLower)) || f.description?.toLowerCase().includes(insurerLower);
       return stateMatch && cityMatch && insuranceMatch;
     });
 
