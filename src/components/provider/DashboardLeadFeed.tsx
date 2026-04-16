@@ -164,6 +164,7 @@ function UnlockedLeadRow({
   facilityName?: string;
   onClick: () => void;
 }) {
+  const { trackContact } = useLeadContactTracking();
   const location = lead.location_city_state || (lead.location_zip ? `ZIP: ${lead.location_zip}` : null);
   const scoreInfo = getLeadScoreInfo(lead);
 
