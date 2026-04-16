@@ -807,9 +807,71 @@ const AppInner = () => {
             <Route path="/mat-clinic-near-me/:stateSlug" element={<PublicRouteGuard><MATClinicNearMe /></PublicRouteGuard>} />
             <Route path="/affordable-rehab-near-me" element={<PublicRouteGuard><AffordableRehabNearMe /></PublicRouteGuard>} />
             <Route path="/affordable-rehab-near-me/:stateSlug" element={<PublicRouteGuard><AffordableRehabNearMe /></PublicRouteGuard>} />
-            
-            {/* Additional City+Treatment Combo Routes - handled by SmartCatchAll */}
-            
+
+             {/* Substance-Specific Near Me Pages (Batch 1) */}
+             <Route path="/cocaine-rehab-near-me" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="cocaine-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/cocaine-rehab-near-me/:stateSlug" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="cocaine-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/heroin-rehab-near-me" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="heroin-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/heroin-rehab-near-me/:stateSlug" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="heroin-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/opioid-rehab-near-me" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="opioid-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/opioid-rehab-near-me/:stateSlug" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="opioid-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/meth-rehab-near-me" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="meth-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/meth-rehab-near-me/:stateSlug" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="meth-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/prescription-drug-rehab-near-me" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="prescription-drug-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/prescription-drug-rehab-near-me/:stateSlug" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="prescription-drug-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/benzo-rehab-near-me" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="benzo-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/benzo-rehab-near-me/:stateSlug" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="benzo-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/xanax-rehab-near-me" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="xanax-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/xanax-rehab-near-me/:stateSlug" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="xanax-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/kratom-rehab-near-me" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="kratom-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/kratom-rehab-near-me/:stateSlug" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="kratom-rehab-near-me" /></PublicRouteGuard>} />
+
+             {/* Educational "What Is" Pages (Batch 2) */}
+             <Route path="/what-is-detox" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/what-is-mat" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/what-is-php" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/what-is-iop" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/what-is-dual-diagnosis" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/what-is-sober-living" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/what-is-residential-treatment" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/what-is-intensive-outpatient" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+
+             {/* Withdrawal & Signs Pages (Batch 3) */}
+             <Route path="/alcohol-withdrawal-symptoms" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/opioid-withdrawal-timeline" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/benzo-withdrawal-symptoms" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/meth-withdrawal-symptoms" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/signs-of-alcohol-addiction" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/signs-of-drug-addiction" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/signs-of-opioid-addiction" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/signs-of-meth-addiction" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+
+             {/* New Comparison Pages (Batch 4) */}
+             <Route path="/rehab-vs-self-detox" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+             <Route path="/faith-based-vs-secular-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+             <Route path="/luxury-vs-standard-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+             <Route path="/short-term-vs-long-term-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+
+             {/* New Therapy Modality Pages (Batch 5) */}
+             <Route path="/equine-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/yoga-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/meditation-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/family-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/group-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+             <Route path="/12-step-facilitation-therapy" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
+
+             {/* New Co-Occurring Pages (Batch 6) */}
+             <Route path="/ocd-and-addiction-treatment" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/ocd-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/bpd-and-addiction-treatment" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/bpd-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/schizophrenia-and-addiction-treatment" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/schizophrenia-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/chronic-pain-and-addiction-treatment" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+             <Route path="/chronic-pain-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+
+             {/* Additional City+Treatment Combo Routes - handled by SmartCatchAll */}
+
             {/* Concierge Placement Routes - /concierge is canonical */}
             <Route path="/concierge" element={<PublicRouteGuard><ConciergeLanding /></PublicRouteGuard>} />
             <Route path="/concierge/intake" element={<PublicRouteGuard><ConciergeIntake /></PublicRouteGuard>} />
