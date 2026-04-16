@@ -110,7 +110,7 @@ export default function AlcoholRehabNearMe() {
             Alcohol Treatment Centers {stateData ? `in ${stateData.state}` : "Near You"}
           </h2>
           <p className="text-muted-foreground mb-8">
-            Browse {facilities.length}+ verified facilities offering alcohol addiction treatment.
+            Browse {facilities.length > 0 ? `${facilities.length}+` : ""} verified facilities offering alcohol addiction treatment.
           </p>
 
           {isLoading ? (

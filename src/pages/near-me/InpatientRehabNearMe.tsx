@@ -116,7 +116,7 @@ export default function InpatientRehabNearMe() {
             Inpatient Treatment Centers {stateData ? `in ${stateData.state}` : "Near You"}
           </h2>
           <p className="text-muted-foreground mb-8">
-            Browse {facilities.length}+ residential facilities offering intensive 24/7 addiction treatment.
+            Browse {facilities.length > 0 ? `${facilities.length}+` : ""} residential facilities offering intensive 24/7 addiction treatment.
           </p>
 
           {isLoading ? (

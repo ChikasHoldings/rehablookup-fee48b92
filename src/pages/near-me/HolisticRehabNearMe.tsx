@@ -100,7 +100,7 @@ export default function HolisticRehabNearMe() {
               Holistic Rehab Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Browse {facilities.length}+ verified treatment facilities offering evidence-based care.
+              Browse {facilities.length > 0 ? `${facilities.length}+` : ""} verified treatment facilities offering evidence-based care.
             </p>
           </div>
 

@@ -117,7 +117,7 @@ export default function OutpatientNearMe() {
             Outpatient Programs {stateData ? `in ${stateData.state}` : "Near You"}
           </h2>
           <p className="text-muted-foreground mb-8">
-            Browse {facilities.length}+ facilities offering flexible IOP, PHP, and outpatient addiction treatment.
+            Browse {facilities.length > 0 ? `${facilities.length}+` : ""} facilities offering flexible IOP, PHP, and outpatient addiction treatment.
           </p>
 
           {isLoading ? (

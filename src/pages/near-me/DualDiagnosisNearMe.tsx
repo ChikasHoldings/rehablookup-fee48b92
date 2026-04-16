@@ -93,7 +93,7 @@ export default function DualDiagnosisNearMe() {
             Dual Diagnosis Centers {stateData ? `in ${stateData.state}` : "Near You"}
           </h2>
           <p className="text-muted-foreground mb-8">
-            Browse {facilities.length}+ facilities offering integrated mental health and addiction treatment.
+            Browse {facilities.length > 0 ? `${facilities.length}+` : ""} facilities offering integrated mental health and addiction treatment.
           </p>
 
           {isLoading ? (
