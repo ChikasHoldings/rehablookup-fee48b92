@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Bell, Mail, MessageSquare, Heart, FileText, Loader2, ArrowLeft } from "lucide-react";
+import { Bell, Mail, MessageSquare, ArrowLeft, Loader2, Star } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -18,11 +18,8 @@ interface NotificationPreferences {
   email_weekly_digest: boolean;
   email_product_updates: boolean;
   browser_notifications: boolean;
-  sms_lead_alerts: boolean;
-  notify_new_leads: boolean;
   notify_lead_status_changes: boolean;
   notify_facility_views: boolean;
-  notify_lead_limit_warnings: boolean;
   followup_reminders_enabled: boolean;
 }
 
@@ -31,11 +28,8 @@ const defaultPreferences: NotificationPreferences = {
   email_weekly_digest: true,
   email_product_updates: false,
   browser_notifications: true,
-  sms_lead_alerts: false,
-  notify_new_leads: true,
   notify_lead_status_changes: true,
   notify_facility_views: true,
-  notify_lead_limit_warnings: true,
   followup_reminders_enabled: true,
 };
 
@@ -43,7 +37,7 @@ export default function SeekerNotificationPreferences() {
   const { userId: sessionUserId, isAuthenticated, isReady } = useSeekerSession();
   const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [savingKey, setSavingKey] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -58,9 +52,9 @@ export default function SeekerNotificationPreferences() {
 
       setUserId(sessionUserId);
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('notification_preferences')
-        .select('user_id, email_lead_alerts, email_weekly_digest, email_product_updates, browser_notifications, sms_lead_alerts, notify_new_leads, notify_lead_status_changes, notify_facility_views, notify_lead_limit_warnings, followup_reminders_enabled')
+        .select('user_id, email_lead_alerts, email_weekly_digest, email_product_updates, browser_notifications, notify_lead_status_changes, notify_facility_views, followup_reminders_enabled')
         .eq('user_id', sessionUserId)
         .maybeSingle();
 
@@ -70,11 +64,8 @@ export default function SeekerNotificationPreferences() {
           email_weekly_digest: data.email_weekly_digest ?? true,
           email_product_updates: data.email_product_updates ?? false,
           browser_notifications: data.browser_notifications ?? true,
-          sms_lead_alerts: data.sms_lead_alerts ?? false,
-          notify_new_leads: data.notify_new_leads ?? true,
           notify_lead_status_changes: data.notify_lead_status_changes ?? true,
           notify_facility_views: data.notify_facility_views ?? true,
-          notify_lead_limit_warnings: data.notify_lead_limit_warnings ?? true,
           followup_reminders_enabled: data.followup_reminders_enabled ?? true,
         });
       }
@@ -88,9 +79,9 @@ export default function SeekerNotificationPreferences() {
   const updatePreference = async (key: keyof NotificationPreferences, value: boolean) => {
     if (!userId) return;
 
-    const newPreferences = { ...preferences, [key]: value };
-    setPreferences(newPreferences);
-    setIsSaving(true);
+    const prev = { ...preferences };
+    setPreferences({ ...preferences, [key]: value });
+    setSavingKey(key);
 
     const { error } = await supabase
       .from('notification_preferences')
@@ -101,26 +92,22 @@ export default function SeekerNotificationPreferences() {
       }, { onConflict: 'user_id' });
 
     if (error) {
-      // Revert on error
-      setPreferences(preferences);
+      setPreferences(prev);
       toast({
         title: "Error saving",
-        description: "Could not update your preferences.",
+        description: "Could not update your preferences. Please try again.",
         variant: "destructive"
       });
     } else {
-      toast({
-        title: "Saved",
-        description: "Your notification preference has been updated."
-      });
+      toast({ title: "Preference saved" });
     }
 
-    setIsSaving(false);
+    setSavingKey(null);
   };
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <Skeleton className="h-8 w-64 mb-6" />
         <Card>
           <CardContent className="p-6 space-y-6">
@@ -138,7 +125,7 @@ export default function SeekerNotificationPreferences() {
 
   if (isReady && !isAuthenticated) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <AuthPrompt 
           title="Sign in to manage notifications"
           description="Create an account or sign in to customize your notification preferences."
@@ -151,164 +138,157 @@ export default function SeekerNotificationPreferences() {
     <>
       <Helmet>
         <title>Notification Preferences | RehabLookup</title>
-        <meta name="description" content="Customize your email, in-app, and review notification settings to control how we communicate with you." />
+        <meta name="description" content="Customize your email, in-app, and review notification settings." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" asChild className="shrink-0">
-          <Link to="/account/settings">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-display font-bold">Notification Preferences</h1>
-          <p className="text-sm text-muted-foreground">Control how and when we notify you</p>
-        </div>
-      </div>
-
-      {/* Email Notifications */}
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Mail className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Email Notifications</CardTitle>
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <Button variant="ghost" size="icon" asChild className="shrink-0 h-8 w-8 sm:h-9 sm:w-9">
+            <Link to="/account/settings">
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-lg sm:text-2xl font-display font-bold">Notification Preferences</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Control how and when we notify you</p>
           </div>
-          <CardDescription>Choose which emails you want to receive</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="email_lead_alerts" className="font-medium">Request Updates</Label>
-              <p className="text-sm text-muted-foreground">Get notified when facilities respond to your help requests</p>
+        </div>
+
+        {/* Email Notifications */}
+        <Card className="mb-4 sm:mb-6">
+          <CardHeader className="pb-3 px-4 sm:px-6">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <CardTitle className="text-base sm:text-lg">Email Notifications</CardTitle>
             </div>
-            <Switch
+            <CardDescription className="text-xs sm:text-sm">Choose which emails you want to receive</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 px-4 sm:px-6">
+            <PreferenceToggle
               id="email_lead_alerts"
+              label="Inquiry Responses"
+              description="Get notified when facilities respond to your help requests"
               checked={preferences.email_lead_alerts}
-              onCheckedChange={(checked) => updatePreference('email_lead_alerts', checked)}
-              disabled={isSaving}
+              saving={savingKey === 'email_lead_alerts'}
+              onCheckedChange={(v) => updatePreference('email_lead_alerts', v)}
             />
-          </div>
-          
-          <Separator />
-          
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="email_weekly_digest" className="font-medium">Weekly Digest</Label>
-              <p className="text-sm text-muted-foreground">Receive a weekly summary of activity on your saved facilities</p>
-            </div>
-            <Switch
+            <Separator />
+            <PreferenceToggle
               id="email_weekly_digest"
+              label="Weekly Summary"
+              description="Receive a weekly summary of your saved facilities and requests"
               checked={preferences.email_weekly_digest}
-              onCheckedChange={(checked) => updatePreference('email_weekly_digest', checked)}
-              disabled={isSaving}
+              saving={savingKey === 'email_weekly_digest'}
+              onCheckedChange={(v) => updatePreference('email_weekly_digest', v)}
             />
-          </div>
-          
-          <Separator />
-          
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="email_product_updates" className="font-medium">Product Updates</Label>
-              <p className="text-sm text-muted-foreground">Stay informed about new features and improvements</p>
-            </div>
-            <Switch
+            <Separator />
+            <PreferenceToggle
               id="email_product_updates"
+              label="Product Updates"
+              description="Stay informed about new features and improvements"
               checked={preferences.email_product_updates}
-              onCheckedChange={(checked) => updatePreference('email_product_updates', checked)}
-              disabled={isSaving}
+              saving={savingKey === 'email_product_updates'}
+              onCheckedChange={(v) => updatePreference('email_product_updates', v)}
             />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* In-App Notifications */}
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">In-App Notifications</CardTitle>
-          </div>
-          <CardDescription>Control notifications within the app</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="notify_lead_status_changes" className="font-medium">Request Status Updates</Label>
-              <p className="text-sm text-muted-foreground">When a facility views or responds to your request</p>
+        {/* In-App Notifications */}
+        <Card className="mb-4 sm:mb-6">
+          <CardHeader className="pb-3 px-4 sm:px-6">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <CardTitle className="text-base sm:text-lg">In-App Notifications</CardTitle>
             </div>
-            <Switch
+            <CardDescription className="text-xs sm:text-sm">Control notifications within the app</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 px-4 sm:px-6">
+            <PreferenceToggle
               id="notify_lead_status_changes"
+              label="Request Status Updates"
+              description="When a facility views or responds to your request"
               checked={preferences.notify_lead_status_changes}
-              onCheckedChange={(checked) => updatePreference('notify_lead_status_changes', checked)}
-              disabled={isSaving}
+              saving={savingKey === 'notify_lead_status_changes'}
+              onCheckedChange={(v) => updatePreference('notify_lead_status_changes', v)}
             />
-          </div>
-          
-          <Separator />
-          
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="notify_facility_views" className="font-medium">Saved Facility Updates</Label>
-              <p className="text-sm text-muted-foreground">When a saved facility updates their profile</p>
-            </div>
-            <Switch
+            <Separator />
+            <PreferenceToggle
               id="notify_facility_views"
+              label="Saved Facility Updates"
+              description="When a facility you saved updates their listing"
               checked={preferences.notify_facility_views}
-              onCheckedChange={(checked) => updatePreference('notify_facility_views', checked)}
-              disabled={isSaving}
+              saving={savingKey === 'notify_facility_views'}
+              onCheckedChange={(v) => updatePreference('notify_facility_views', v)}
             />
-          </div>
-          
-          <Separator />
-          
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="followup_reminders_enabled" className="font-medium">Follow-up Reminders</Label>
-              <p className="text-sm text-muted-foreground">Reminders to follow up on your help requests</p>
-            </div>
-            <Switch
+            <Separator />
+            <PreferenceToggle
               id="followup_reminders_enabled"
+              label="Follow-up Reminders"
+              description="Reminders to follow up on your help requests"
               checked={preferences.followup_reminders_enabled}
-              onCheckedChange={(checked) => updatePreference('followup_reminders_enabled', checked)}
-              disabled={isSaving}
+              saving={savingKey === 'followup_reminders_enabled'}
+              onCheckedChange={(v) => updatePreference('followup_reminders_enabled', v)}
             />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Review Notifications */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Review Notifications</CardTitle>
-          </div>
-          <CardDescription>Get notified about your reviews</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="browser_notifications" className="font-medium">Review Status Updates</Label>
-              <p className="text-sm text-muted-foreground">When your review is approved, rejected, or receives a response</p>
+        {/* Review Notifications */}
+        <Card>
+          <CardHeader className="pb-3 px-4 sm:px-6">
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <CardTitle className="text-base sm:text-lg">Review Notifications</CardTitle>
             </div>
-            <Switch
+            <CardDescription className="text-xs sm:text-sm">Get notified about your reviews</CardDescription>
+          </CardHeader>
+          <CardContent className="px-4 sm:px-6">
+            <PreferenceToggle
               id="browser_notifications"
+              label="Review Status Updates"
+              description="When your review is approved, rejected, or receives a response"
               checked={preferences.browser_notifications}
-              onCheckedChange={(checked) => updatePreference('browser_notifications', checked)}
-              disabled={isSaving}
+              saving={savingKey === 'browser_notifications'}
+              onCheckedChange={(v) => updatePreference('browser_notifications', v)}
             />
-          </div>
-        </CardContent>
-      </Card>
-
-      {isSaving && (
-        <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-sm">Saving...</span>
-        </div>
-      )}
-    </div>
+          </CardContent>
+        </Card>
+      </div>
     </>
+  );
+}
+
+function PreferenceToggle({
+  id,
+  label,
+  description,
+  checked,
+  saving,
+  onCheckedChange,
+}: {
+  id: string;
+  label: string;
+  description: string;
+  checked: boolean;
+  saving: boolean;
+  onCheckedChange: (value: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="space-y-0.5 min-w-0">
+        <Label htmlFor={id} className="text-sm font-medium cursor-pointer">{label}</Label>
+        <p className="text-xs sm:text-sm text-muted-foreground">{description}</p>
+      </div>
+      <div className="shrink-0 relative">
+        <Switch
+          id={id}
+          checked={checked}
+          onCheckedChange={onCheckedChange}
+          disabled={saving}
+        />
+        {saving && (
+          <Loader2 className="absolute -right-5 top-1/2 -translate-y-1/2 h-3 w-3 animate-spin text-muted-foreground" />
+        )}
+      </div>
+    </div>
   );
 }
