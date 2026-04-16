@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { getCachedSession } from "@/lib/sessionCache";
 import {
   Inbox,
   Eye,
@@ -73,7 +74,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
   const { data: monthlySavings = 0 } = useQuery({
     queryKey: ["pro-monthly-savings", facilityId, monthStart],
     queryFn: async (): Promise<number> => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) return 0;
 
       const { data, error } = await supabase

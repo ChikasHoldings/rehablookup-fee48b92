@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -61,7 +62,7 @@ export function UnlockHistoryTab() {
     queryFn: async (): Promise<UnlockedLead[]> => {
       if (facilityIds.length === 0) return [];
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) return [];
 
       const { data, error } = await supabase
@@ -98,7 +99,7 @@ export function UnlockHistoryTab() {
   const { data: transactions = [] } = useQuery({
     queryKey: ["credit-transactions-history", facilityIds],
     queryFn: async (): Promise<CreditTransaction[]> => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) return [];
 
       const { data, error } = await supabase

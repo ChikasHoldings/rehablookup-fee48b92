@@ -30,7 +30,7 @@ interface ProviderWelcomeModalProps {
 
 async function trackWelcomeEvent(eventType: string, metadata?: Record<string, unknown>) {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getCachedSession();
     if (!session) return;
     supabase.functions.invoke("log-activity", {
       body: {
