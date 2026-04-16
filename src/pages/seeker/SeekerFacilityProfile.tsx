@@ -199,7 +199,7 @@ export default function SeekerFacilityProfile() {
     phone: seekerProfile?.phone || "",
   };
 
-  const { data: facility, isLoading } = useQuery({
+  const { data: facility, isLoading, isError: facilityError, refetch: refetchFacility } = useQuery({
     queryKey: ["seeker-facility", slug],
     queryFn: async (): Promise<FacilityData | null> => {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
