@@ -96,7 +96,7 @@ export function useProviderData(facilityId?: string) {
   return useQuery({
     queryKey: ["provider-data", facilityId],
     queryFn: async (): Promise<ProviderData> => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       
       if (!session) {
         throw new Error("Not authenticated");

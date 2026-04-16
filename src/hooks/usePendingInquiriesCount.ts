@@ -12,7 +12,7 @@ export function usePendingInquiriesCount() {
   const query = useQuery({
     queryKey: ["pending-inquiries-count"],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) return { count: 0 };
 
       // Use security definer function for accurate count (bypasses RLS unlock restriction)

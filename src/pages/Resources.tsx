@@ -214,9 +214,8 @@ export default function Resources() {
       if (error) throw error;
       return data as DBArticle[];
     },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: "always",
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
   });
 
   // Filter articles based on search and category
