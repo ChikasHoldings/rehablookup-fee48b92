@@ -74,8 +74,8 @@ export function NearMeHero({
           <div className="mt-5 flex flex-wrap items-center gap-4 md:gap-6">
             <div className="flex items-center gap-2 text-white text-sm md:text-base">
               <Building2 className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
-              <span className="font-semibold">{facilityCount}+</span>
-              <span className="text-white/80">Verified Centers</span>
+              <span className="font-semibold">{facilityCount > 0 ? `${facilityCount}+` : ""}</span>
+              <span className="text-white/80">{facilityCount > 0 ? "Verified Centers" : "Growing Network"}</span>
             </div>
             <div className="flex items-center gap-2 text-white text-sm md:text-base">
               <MapPin className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
