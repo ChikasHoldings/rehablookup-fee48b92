@@ -5314,6 +5314,36 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_webhook_events: {
+        Row: {
+          error_message: string | null
+          event_id: string
+          event_type: string
+          payload_summary: Json | null
+          processed_at: string | null
+          received_at: string
+          status: string
+        }
+        Insert: {
+          error_message?: string | null
+          event_id: string
+          event_type: string
+          payload_summary?: Json | null
+          processed_at?: string | null
+          received_at?: string
+          status?: string
+        }
+        Update: {
+          error_message?: string | null
+          event_id?: string
+          event_type?: string
+          payload_summary?: Json | null
+          processed_at?: string | null
+          received_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       subscription_alerts: {
         Row: {
           alert_key: string
@@ -6014,6 +6044,10 @@ export type Database = {
         }
         Returns: Json
       }
+      claim_stripe_webhook_event: {
+        Args: { p_event_id: string; p_event_type: string }
+        Returns: boolean
+      }
       complete_admin_mfa_setup: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -6301,6 +6335,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_stripe_webhook_event_processed: {
+        Args: { p_error?: string; p_event_id: string; p_status?: string }
+        Returns: undefined
+      }
       provider_has_introduction: {
         Args: { _inquiry_id: string; _user_id: string }
         Returns: boolean
@@ -6319,6 +6357,10 @@ export type Database = {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       touch_admin_activity: { Args: { p_user_id: string }; Returns: undefined }
+      try_acquire_auto_reload_lock: {
+        Args: { p_provider_id: string }
+        Returns: boolean
+      }
       user_has_provider_profile: {
         Args: { p_user_id: string }
         Returns: boolean
