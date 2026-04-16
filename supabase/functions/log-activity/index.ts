@@ -99,8 +99,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Whitelist allowed event types
-    if (!allowedEventTypes.includes(event_type)) {
+    // Whitelist allowed event types (exact match or prefix match)
+    const isAllowed = allowedEventTypes.includes(event_type) ||
+      allowedEventPrefixes.some(prefix => event_type.startsWith(prefix));
+    if (!isAllowed) {
       return new Response(JSON.stringify({ error: "Invalid event type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
