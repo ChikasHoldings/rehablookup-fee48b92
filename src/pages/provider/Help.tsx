@@ -252,7 +252,8 @@ export default function ProviderHelpPage() {
       setContactSubject("");
       setContactCategory("");
       setContactMessage("");
-      
+      refetchTickets();
+
       setTimeout(() => setSubmitted(false), 8000);
     } catch (error) {
       console.error("Error submitting support request:", error);
