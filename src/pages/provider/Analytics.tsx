@@ -314,6 +314,17 @@ export default function ProviderAnalyticsPage() {
                 <X className="h-4 w-4" />
               </Button>
             )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-9 text-sm"
+              onClick={handleExportCSV}
+              disabled={!engagementData && !leadData}
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
           </div>
         </div>
 
