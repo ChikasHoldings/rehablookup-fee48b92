@@ -54,6 +54,7 @@ const ExpandedTreatmentHubPage = lazy(() => import("./pages/seo/ExpandedTreatmen
 const CityTreatmentExpandedPage = lazy(() => import("./pages/treatment-types/CityTreatmentExpandedPage"));
 const ExpandedTreatmentNationalHub = lazy(() => import("./pages/treatment-types/ExpandedTreatmentNationalHub"));
 const CityInsurancePage = lazy(() => import("./pages/seo/CityInsurancePage"));
+const CountyInsurancePage = lazy(() => import("./pages/seo/CountyInsurancePage"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const ForProviders = lazy(() => import("./pages/ForProviders"));
 const ProviderResources = lazy(() => import("./pages/ProviderResources"));
