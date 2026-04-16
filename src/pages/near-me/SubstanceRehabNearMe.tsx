@@ -153,7 +153,6 @@ export default function SubstanceRehabNearMe({ configSlug }: SubstanceRehabNearM
   const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
     stateSlug,
     basePath: `/${config.slug}`,
-    searchFilter: config.searchFilter,
   });
 
   const faqs = stateData
