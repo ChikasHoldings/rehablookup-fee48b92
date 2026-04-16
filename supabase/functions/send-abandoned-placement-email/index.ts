@@ -331,6 +331,8 @@ Deno.serve(async (req) => {
           resumeUrl,
         });
 
+        const newCount = (inquiry.payment_reminder_count || 0) + 1;
+
         const { error: sendError } = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [inquiry.user_email],
@@ -341,9 +343,6 @@ Deno.serve(async (req) => {
         if (sendError) {
           throw new Error(sendError.message);
         }
-
-        // Update the inquiry to increment reminder count
-        const newCount = (inquiry.payment_reminder_count || 0) + 1;
         await supabase
           .from("concierge_inquiries")
           .update({ 
