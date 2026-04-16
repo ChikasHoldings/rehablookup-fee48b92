@@ -236,19 +236,21 @@ export default function SeekerHome() {
     return [...new Set(allFacilities.map(f => f.facility_type).filter(Boolean))].sort() as string[];
   }, [allFacilities]);
 
-  const activeFiltersCount = (selectedType !== "all" ? 1 : 0) + (selectedState !== "all" ? 1 : 0);
+  const activeFiltersCount = (selectedType !== "all" ? 1 : 0) + (selectedState !== "all" ? 1 : 0) + (searchQuery.trim() ? 1 : 0);
 
   const clearFilters = () => {
     setSelectedType("all");
     setSelectedState("all");
+    setSearchQuery("");
     setSortBy("proximity");
     setCurrentPage(1);
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    // Inline search filters results in real-time; form submit navigates to full search for advanced filters
     if (searchQuery.trim()) {
-      navigate(`/search-results?q=${encodeURIComponent(searchQuery)}`);
+      setCurrentPage(1);
     }
   };
 
