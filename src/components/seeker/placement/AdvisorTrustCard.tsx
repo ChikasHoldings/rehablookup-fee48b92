@@ -50,7 +50,7 @@ export function AdvisorTrustCard({ advisorId, caseStatus }: AdvisorTrustCardProp
             <div className="relative shrink-0">
               <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-primary/10 flex items-center justify-center">
                 {advisor?.avatar_url ? (
-                  <img src={advisor.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+                  <img src={advisor.avatar_url} alt={`${advisor.display_name || advisor.first_name} avatar`} className="h-full w-full rounded-full object-cover" />
                 ) : (
                   <User className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
                 )}

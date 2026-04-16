@@ -679,7 +679,7 @@ const SearchResults = () => {
                 }`}
               >
                 {filter.logo ? (
-                  <img src={filter.logo} alt="" className="h-4 w-5 object-contain shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  <img src={filter.logo} alt={`${filter.label} logo`} className="h-4 w-5 object-contain shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                 ) : (
                   <CreditCard className="h-4 w-4 shrink-0 text-muted-foreground" />
                 )}
@@ -762,7 +762,7 @@ const SearchResults = () => {
       <div className="rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 border border-primary/15">
         <div className="flex items-center gap-3 mb-3">
           <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
-            <img src={supportSpecialistImg} alt="" className="w-full h-full object-cover object-top scale-110" />
+            <img src={supportSpecialistImg} alt="RehabLookup support specialist" className="w-full h-full object-cover object-top scale-110" />
           </div>
           <div>
             <p className="text-xs font-semibold text-foreground">Need Help?</p>

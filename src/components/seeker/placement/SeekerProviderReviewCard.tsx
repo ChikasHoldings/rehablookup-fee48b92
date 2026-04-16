@@ -485,7 +485,7 @@ function FacilityCard({
           <div className="absolute bottom-3 right-3 flex gap-1.5">
             {facility.gallery_urls.slice(1, 4).map((url, i) => (
               <div key={i} className="h-10 w-10 rounded-lg overflow-hidden border-2 border-white/50 shadow-sm">
-                <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                <img src={url} alt={`${facility.name} gallery photo`} className="h-full w-full object-cover" loading="lazy" />
               </div>
             ))}
           </div>

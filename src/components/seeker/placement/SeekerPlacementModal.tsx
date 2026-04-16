@@ -335,7 +335,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
                       <div key={facility.id} className="flex items-center gap-3 px-4 py-3">
                         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                           {facility.logo_url ? (
-                            <img src={facility.logo_url} alt="" className="h-8 w-8 rounded-md object-cover" />
+                            <img src={facility.logo_url} alt={`${facility.name} logo`} className="h-8 w-8 rounded-md object-cover" />
                           ) : (
                             <Heart className="h-5 w-5 text-primary" />
                           )}
