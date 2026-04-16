@@ -1410,7 +1410,9 @@ function generateNearMeCountyRoutes(): RouteEntry[] {
     "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
     "rehab-near-me", "inpatient-rehab-near-me", "outpatient-near-me",
     "free-rehab-near-me", "sober-living-near-me", "dual-diagnosis-near-me",
-    "mat-clinic-near-me",
+    "mat-clinic-near-me", "medicaid-rehab-near-me", "emergency-rehab-near-me",
+    "womens-rehab-near-me", "mens-rehab-near-me", "veterans-rehab-near-me",
+    "affordable-rehab-near-me", "opioid-rehab-near-me",
   ];
   for (const prefix of topNearMeForCounties) {
     for (const [stateSlug, counties] of Object.entries(STATE_COUNTIES)) {
