@@ -649,7 +649,7 @@ export default function ProviderSettingsPage() {
     setIsDeletingAccount(true);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) {
         throw new Error("Not authenticated");
       }
@@ -696,7 +696,7 @@ export default function ProviderSettingsPage() {
   const handleSignOutAllSessions = async () => {
     setIsSigningOutAll(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       
       if (session) {
         logActivity.mutate({
