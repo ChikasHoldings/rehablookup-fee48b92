@@ -90,6 +90,7 @@ export function SEOLandingTemplate({
   metaTitle,
   metaDescription,
   canonical,
+  noindex = false,
   structuredData,
   breadcrumbs,
   heroTitle,
