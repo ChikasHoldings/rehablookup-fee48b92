@@ -19,8 +19,8 @@ export default function ResetPassword() {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Check if we have a valid recovery session
-    supabase.auth.onAuthStateChange((event, session) => {
+    // Subscribe to auth state changes (must be set up before getSession)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsValidSession(true);
       } else if (session) {
@@ -36,6 +36,10 @@ export default function ResetPassword() {
       }
       setIsChecking(false);
     });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -51,8 +55,8 @@ export default function ResetPassword() {
       return;
     }
     
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters');
       return;
     }
     
