@@ -352,6 +352,12 @@ export default function ConciergeIntake() {
     const newState = { verified: true, verifiedAt };
     setEmailVerification(newState);
     localStorage.setItem(EMAIL_VERIFICATION_KEY, JSON.stringify(newState));
+    // Auto-advance to review step after email verification
+    setTimeout(() => {
+      setDirection(1);
+      setCurrentStep(7);
+      scrollToTopSmooth();
+    }, 800);
   };
 
   const handleEditEmail = () => {
