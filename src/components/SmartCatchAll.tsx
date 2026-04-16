@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
+import { NEAR_ME_SLUGS } from "@/data/nearMeTypes";
 
 const BestInStatePage = lazy(() => import("@/pages/seo/BestInStatePage"));
 const ListYourFacilityState = lazy(() => import("@/pages/provider-guides/ListYourFacilityState"));
@@ -10,6 +11,8 @@ const CityTreatmentPage = lazy(() => import("@/pages/seo/CityTreatmentPage"));
 const CityProviderPage = lazy(() => import("@/pages/provider-guides/CityProviderPage"));
 const CityTreatmentProviderPage = lazy(() => import("@/pages/provider-guides/CityTreatmentProviderPage"));
 const CityInsuranceProviderPage = lazy(() => import("@/pages/provider-guides/CityInsuranceProviderPage"));
+const NearMeCityPage = lazy(() => import("@/pages/near-me/NearMeCityPage"));
+const NearMeCountyPage = lazy(() => import("@/pages/near-me/NearMeCountyPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 /**
@@ -62,6 +65,36 @@ const CITY_INSURANCE_PROVIDER_PREFIXES = [
   "/get-more-cigna-patients-in-",
   "/get-more-united-healthcare-patients-in-",
 ];
+
+/**
+ * Parse near-me city/county patterns:
+ * /{near-me-slug}/{stateSlug}/{citySlug}
+ * /{near-me-slug}/{stateSlug}/county/{countySlug}
+ */
+function parseNearMePath(pathname: string): {
+  type: "city" | "county";
+  nearMeSlug: string;
+  stateSlug: string;
+  cityOrCountySlug: string;
+} | null {
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts.length < 3) return null;
+
+  const nearMeSlug = parts[0];
+  if (!NEAR_ME_SLUGS.includes(nearMeSlug)) return null;
+
+  // /{near-me-slug}/{stateSlug}/county/{countySlug}
+  if (parts.length === 4 && parts[2] === "county") {
+    return { type: "county", nearMeSlug, stateSlug: parts[1], cityOrCountySlug: parts[3] };
+  }
+
+  // /{near-me-slug}/{stateSlug}/{citySlug}
+  if (parts.length === 3) {
+    return { type: "city", nearMeSlug, stateSlug: parts[1], cityOrCountySlug: parts[2] };
+  }
+
+  return null;
+}
 
 export function SmartCatchAll() {
   const { pathname } = useLocation();
@@ -151,6 +184,27 @@ export function SmartCatchAll() {
       <PublicRouteGuard>
         <Suspense fallback={null}>
           <CityProviderPage />
+        </Suspense>
+      </PublicRouteGuard>
+    );
+  }
+
+  // Near Me + City/County pages (e.g., /drug-rehab-near-me/california/los-angeles)
+  const nearMeParsed = parseNearMePath(pathname);
+  if (nearMeParsed) {
+    if (nearMeParsed.type === "county") {
+      return (
+        <PublicRouteGuard>
+          <Suspense fallback={null}>
+            <NearMeCountyPage />
+          </Suspense>
+        </PublicRouteGuard>
+      );
+    }
+    return (
+      <PublicRouteGuard>
+        <Suspense fallback={null}>
+          <NearMeCityPage />
         </Suspense>
       </PublicRouteGuard>
     );
