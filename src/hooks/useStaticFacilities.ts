@@ -80,15 +80,14 @@ export const useStaticFacilities = () => {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       
-      // Use direct fetch to avoid supabase-js auth initialization deadlock
+      // GET request so the CDN can cache the response (POST is never cached).
+      // Use direct fetch to avoid supabase-js auth initialization deadlock.
       const res = await fetch(`${supabaseUrl}/functions/v1/get-public-facilities`, {
-        method: "POST",
+        method: "GET",
         headers: {
           "Authorization": `Bearer ${anonKey}`,
           "apikey": anonKey,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify({}),
       });
 
       if (!res.ok) {
