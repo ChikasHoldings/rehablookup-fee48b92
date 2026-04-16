@@ -413,7 +413,9 @@ export default function GenericNearMePage({ configSlug }: GenericNearMePageProps
               {config.treatmentType} Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Browse {facilities.length}+ verified facilities specializing in {config.treatmentType.toLowerCase()}.
+              {facilities.length > 0
+                ? `Browse ${facilities.length}+ verified facilities specializing in ${config.treatmentType.toLowerCase()}.`
+                : `We're growing our ${config.treatmentType.toLowerCase()} network. Browse all centers or get personalized help.`}
             </p>
           </div>
 

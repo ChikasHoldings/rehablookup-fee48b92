@@ -92,7 +92,9 @@ export default function DetoxNearMe() {
             Detox Centers {stateData ? `in ${stateData.state}` : "Near You"}
           </h2>
           <p className="text-muted-foreground mb-8">
-            Browse {facilities.length}+ medically-supervised detox facilities.
+            {facilities.length > 0
+              ? `Browse ${facilities.length}+ medically-supervised detox facilities.`
+              : "We're expanding our detox network. Browse all centers or get personalized help finding treatment."}
           </p>
 
           {isLoading ? (
