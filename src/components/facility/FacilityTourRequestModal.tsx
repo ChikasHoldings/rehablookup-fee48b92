@@ -82,18 +82,30 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
         }
       }
 
-      // For non-concierge users, create a lead/contact request
-      const { error } = await supabase.from("leads").insert({
-        facility_id: facilityId,
-        name: name.trim(),
-        email,
-        phone,
-        message: `Tour Request (${tourType === "virtual" ? "Virtual" : "In-Person"})\n\nPreferred dates: ${preferredDates.map(d => format(d, "MMM d, yyyy")).join(", ")}\n\n${notes || "No additional notes"}`,
-        inquiry_type: "tour_request",
-        source: "facility_profile",
+      // For non-concierge users, route through the hardened edge function
+      // This ensures sanitization, rate limiting, duplicate detection, and notifications
+      const nameParts = name.trim().split(/\s+/);
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+      const tourMessage = `Tour Request (${tourType === "virtual" ? "Virtual" : "In-Person"})\n\nPreferred dates: ${preferredDates.map(d => format(d, "MMM d, yyyy")).join(", ")}\n\n${notes || "No additional notes"}`;
+
+      const { data, error } = await supabase.functions.invoke("submit-qualified-lead", {
+        body: {
+          facilityId,
+          name: name.trim(),
+          firstName,
+          lastName,
+          email: email.toLowerCase().trim(),
+          phone: phone.replace(/\D/g, ""),
+          message: tourMessage,
+          preferredContact: "call",
+          source: "facility_profile",
+          idempotencyKey: `tour-${facilityId}-${email.toLowerCase().trim()}-${Date.now()}`,
+        },
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       return { type: "lead" };
     },
     onSuccess: () => {
