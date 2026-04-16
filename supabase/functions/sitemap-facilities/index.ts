@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v7.3.0";
+const VERSION = "v7.4.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
@@ -363,6 +363,14 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/how-to-help-alcoholic-family-member", priority: 0.85, changefreq: "monthly" },
   { path: "/what-to-expect-loved-one-in-rehab", priority: 0.85, changefreq: "monthly" },
   { path: "/how-to-find-rehab-for-family-member", priority: 0.85, changefreq: "monthly" },
+  { path: "/how-to-pay-for-rehab-without-insurance", priority: 0.85, changefreq: "monthly" },
+  { path: "/what-happens-after-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/how-to-choose-between-inpatient-and-outpatient", priority: 0.85, changefreq: "monthly" },
+  { path: "/recovery-support-groups-guide", priority: 0.85, changefreq: "monthly" },
+  { path: "/talking-to-your-employer-about-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/rehab-for-seniors-guide", priority: 0.85, changefreq: "monthly" },
+  { path: "/understanding-rehab-levels-of-care", priority: 0.85, changefreq: "monthly" },
+  { path: "/addiction-and-relationships-guide", priority: 0.85, changefreq: "monthly" },
 
   // BEST REHAB IN STATE ROUNDUP PAGES (all 50 states)
   { path: "/best-rehab-centers-in-california", priority: 0.85, changefreq: "weekly" },
