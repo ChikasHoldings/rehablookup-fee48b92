@@ -286,14 +286,12 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
 
 function getFacilityNotificationEmail(
   leadName: string,
-  _leadEmail: string,
-  _leadPhone: string,
   facilityName: string,
   details: { urgency?: string; levelOfCare?: string; insuranceType?: string; message?: string; preferredContact?: string }
 ): string {
   const maskedName = maskLeadName(leadName);
-  const maskedEmail = maskEmail(_leadEmail);
-  const maskedPhone = maskPhone();
+  const maskedEmail = "●●●@●●●.com";
+  const maskedPhone = "(●●●) ●●●-●●●●";
   const firstName = leadName.split(" ")[0];
   
   const urgencyDisplay = details.urgency === 'immediate' ? '🔴 Immediate' 
