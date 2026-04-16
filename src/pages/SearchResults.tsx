@@ -915,6 +915,20 @@ const SearchResults = () => {
                 <SearchResultsLoading count={6} />
               ) : paginatedCenters.length > 0 ? (
                 <>
+                  {/* Expanded search notice */}
+                  {isExpandedSearch && location && (
+                    <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-4 py-3 flex items-start gap-3">
+                      <Navigation className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          No exact matches near "{location}"
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Showing the closest facilities nationwide, sorted by proximity. Results nearest to your search appear first.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {/* Results Summary */}
                   <div className="flex items-center justify-between mb-5">
                     <div className="flex flex-col gap-0.5">
