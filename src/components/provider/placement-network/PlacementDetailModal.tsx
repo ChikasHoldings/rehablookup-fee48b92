@@ -899,3 +899,83 @@ function LockedSection({ message }: { message: string }) {
     </div>
   );
 }
+
+function ProviderMessageInput({ inquiryId, facilityId }: { inquiryId: string; facilityId: string }) {
+  const [msg, setMsg] = useState("");
+  const [sending, setSending] = useState(false);
+  const queryClient = useQueryClient();
+
+  const sendMessage = async () => {
+    const text = msg.trim();
+    if (!text || sending) return;
+    setSending(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Find or create thread
+      let threadId: string;
+      const { data: existingThread } = await supabase
+        .from("concierge_threads")
+        .select("id")
+        .eq("inquiry_id", inquiryId)
+        .eq("facility_id", facilityId)
+        .maybeSingle();
+
+      if (existingThread) {
+        threadId = existingThread.id;
+      } else {
+        const { data: newThread, error: threadErr } = await supabase
+          .from("concierge_threads")
+          .insert({
+            inquiry_id: inquiryId,
+            facility_id: facilityId,
+            user_id: user.id,
+            thread_type: "provider_advisor",
+          })
+          .select("id")
+          .single();
+        if (threadErr) throw threadErr;
+        threadId = newThread.id;
+      }
+
+      const { error: msgErr } = await supabase.from("concierge_messages").insert({
+        thread_id: threadId,
+        sender_id: user.id,
+        sender_type: "provider",
+        content: text,
+      });
+      if (msgErr) throw msgErr;
+
+      // Update thread last_message_at
+      await supabase.from("concierge_threads")
+        .update({ last_message_at: new Date().toISOString() })
+        .eq("id", threadId);
+
+      setMsg("");
+      queryClient.invalidateQueries({ queryKey: ["placement-messages", inquiryId, facilityId] });
+    } catch (e: any) {
+      console.error("Send message error:", e);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 border-t pt-3 mt-auto">
+      <input
+        type="text"
+        value={msg}
+        onChange={(e) => setMsg(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+        placeholder="Message your advisor..."
+        className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+        disabled={sending}
+      />
+      <Button size="sm" onClick={sendMessage} disabled={!msg.trim() || sending} className="h-9 gap-1.5">
+        {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+        Send
+      </Button>
+    </div>
+  );
+}
