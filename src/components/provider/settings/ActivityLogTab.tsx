@@ -1,6 +1,7 @@
 import { useState, useEffect, forwardRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -86,7 +87,7 @@ export const ActivityLogTab = forwardRef<HTMLDivElement>((_, ref) => {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (session?.user) {
         setUserId(session.user.id);
       }

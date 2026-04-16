@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { useToast } from "@/hooks/use-toast";
 import { sanitizeText, sanitizePersonName, sanitizeJobTitle, validateEmail, validatePhone as validatePhoneSanitize } from "@/lib/facilitySanitization";
 import { 
@@ -191,20 +192,23 @@ export default function ProviderSettingsPage() {
   const queryClient = useQueryClient();
   const logActivity = useLogActivity();
 
-  // Fetch user ID and notification preferences
+  // Fetch user ID
+  useEffect(() => {
+    getCachedSession().then(session => {
+      if (session?.user) setUserId(session.user.id);
+    });
+  }, []);
+
+  // Fetch notification preferences
   const { data: notificationPrefs, isLoading: isLoadingNotifications } = useQuery({
-    queryKey: ["notification-preferences"],
+    queryKey: ["notification-preferences", userId],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
-      
-      // Set userId for phone verification
-      setUserId(session.user.id);
+      if (!userId) return null;
 
       const { data, error } = await supabase
         .from("notification_preferences")
         .select("email_lead_alerts, email_weekly_digest, email_product_updates, sms_lead_alerts, browser_notifications, lead_notification_frequency, notify_new_leads, notify_lead_status_changes, notify_lead_limit_warnings, notify_facility_views, digest_time, followup_reminders_enabled, default_snooze_duration")
-        .eq("user_id", session.user.id)
+        .eq("user_id", userId)
         .maybeSingle();
 
       if (error) {
@@ -214,6 +218,7 @@ export default function ProviderSettingsPage() {
 
       return data as unknown as NotificationPreferences | null;
     },
+    enabled: !!userId,
   });
 
   // Initial profile from providerData
@@ -298,6 +303,17 @@ export default function ProviderSettingsPage() {
     return false;
   }, [activeTab, hasProfileChanges, hasNotificationChanges]);
 
+  // Browser-level guard for unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasUnsavedChanges]);
+
   // Sync notification preferences state when data loads
   useEffect(() => {
     if (notificationPrefs) {
@@ -358,7 +374,7 @@ export default function ProviderSettingsPage() {
   const handleSaveNotifications = async () => {
     setIsSavingNotifications(true);
     
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getCachedSession();
     if (!session) {
       setIsSavingNotifications(false);
       toast({
@@ -451,7 +467,7 @@ export default function ProviderSettingsPage() {
     lastProfileSaveRef.current = now;
 
     setIsSaving(true);
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getCachedSession();
     if (!session) {
       setIsSaving(false);
       toast({
@@ -534,6 +550,11 @@ export default function ProviderSettingsPage() {
       return;
     }
 
+    if (!currentPassword) {
+      setPasswordError("Current password is required");
+      return;
+    }
+
     if (!newPassword || !confirmPassword) {
       setPasswordError("Please fill in all password fields");
       return;
@@ -547,6 +568,11 @@ export default function ProviderSettingsPage() {
 
     if (newPassword !== confirmPassword) {
       setPasswordError("New password and confirmation must match");
+      return;
+    }
+
+    if (newPassword === currentPassword) {
+      setPasswordError("New password must be different from current password");
       return;
     }
 
@@ -565,20 +591,36 @@ export default function ProviderSettingsPage() {
     setIsUpdatingPassword(true);
     
     try {
+      // Verify current password first
+      const session = await getCachedSession();
+      if (!session?.user?.email) {
+        setPasswordError("Session expired. Please log in again.");
+        setIsUpdatingPassword(false);
+        return;
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: session.user.email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        setPasswordError("Current password is incorrect");
+        setIsUpdatingPassword(false);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
 
       if (error) throw error;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        logActivity.mutate({
-          userId: session.user.id,
-          eventType: "password_change",
-          eventDescription: "Password was changed successfully",
-        });
-      }
+      logActivity.mutate({
+        userId: session.user.id,
+        eventType: "password_change",
+        eventDescription: "Password was changed successfully",
+      });
       
       setCurrentPassword("");
       setNewPassword("");
@@ -607,7 +649,7 @@ export default function ProviderSettingsPage() {
     setIsDeletingAccount(true);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) {
         throw new Error("Not authenticated");
       }
@@ -654,7 +696,7 @@ export default function ProviderSettingsPage() {
   const handleSignOutAllSessions = async () => {
     setIsSigningOutAll(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       
       if (session) {
         logActivity.mutate({
@@ -1131,7 +1173,7 @@ export default function ProviderSettingsPage() {
                     variant="outline" 
                     size="sm"
                     onClick={handleUpdatePassword}
-                    disabled={isUpdatingPassword || !newPassword || !confirmPassword}
+                    disabled={isUpdatingPassword || !currentPassword || !newPassword || !confirmPassword}
                     className="gap-2"
                   >
                     {isUpdatingPassword ? (
