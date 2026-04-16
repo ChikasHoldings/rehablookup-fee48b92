@@ -137,6 +137,50 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/mat-clinic-near-me", priority: 0.85, changefreq: "weekly" },
   { path: "/affordable-rehab-near-me", priority: 0.9, changefreq: "weekly" },
 
+  // SUBSTANCE-SPECIFIC NEAR ME (Batch 1)
+  { path: "/cocaine-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/heroin-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/opioid-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/meth-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/prescription-drug-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/benzo-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/xanax-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/kratom-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+
+  // EDUCATIONAL "WHAT IS" PAGES (Batch 2)
+  { path: "/what-is-detox", priority: 0.85, changefreq: "monthly" },
+  { path: "/what-is-mat", priority: 0.85, changefreq: "monthly" },
+  { path: "/what-is-php", priority: 0.85, changefreq: "monthly" },
+  { path: "/what-is-iop", priority: 0.85, changefreq: "monthly" },
+  { path: "/what-is-dual-diagnosis", priority: 0.85, changefreq: "monthly" },
+  { path: "/what-is-sober-living", priority: 0.85, changefreq: "monthly" },
+  { path: "/what-is-residential-treatment", priority: 0.85, changefreq: "monthly" },
+  { path: "/what-is-intensive-outpatient", priority: 0.85, changefreq: "monthly" },
+
+  // WITHDRAWAL & SIGNS PAGES (Batch 3)
+  { path: "/alcohol-withdrawal-symptoms", priority: 0.85, changefreq: "monthly" },
+  { path: "/opioid-withdrawal-timeline", priority: 0.85, changefreq: "monthly" },
+  { path: "/benzo-withdrawal-symptoms", priority: 0.85, changefreq: "monthly" },
+  { path: "/meth-withdrawal-symptoms", priority: 0.85, changefreq: "monthly" },
+  { path: "/signs-of-alcohol-addiction", priority: 0.85, changefreq: "monthly" },
+  { path: "/signs-of-drug-addiction", priority: 0.85, changefreq: "monthly" },
+  { path: "/signs-of-opioid-addiction", priority: 0.85, changefreq: "monthly" },
+  { path: "/signs-of-meth-addiction", priority: 0.85, changefreq: "monthly" },
+
+  // NEW THERAPY MODALITY PAGES (Batch 5)
+  { path: "/equine-therapy-for-addiction", priority: 0.8, changefreq: "monthly" },
+  { path: "/yoga-therapy-for-addiction", priority: 0.8, changefreq: "monthly" },
+  { path: "/meditation-therapy-for-addiction", priority: 0.8, changefreq: "monthly" },
+  { path: "/family-therapy-for-addiction", priority: 0.8, changefreq: "monthly" },
+  { path: "/group-therapy-for-addiction", priority: 0.8, changefreq: "monthly" },
+  { path: "/12-step-facilitation-therapy", priority: 0.8, changefreq: "monthly" },
+
+  // NEW CO-OCCURRING PAGES (Batch 6)
+  { path: "/ocd-and-addiction-treatment", priority: 0.8, changefreq: "monthly" },
+  { path: "/bpd-and-addiction-treatment", priority: 0.8, changefreq: "monthly" },
+  { path: "/schizophrenia-and-addiction-treatment", priority: 0.8, changefreq: "monthly" },
+  { path: "/chronic-pain-and-addiction-treatment", priority: 0.8, changefreq: "monthly" },
+
   // INSURANCE PAGES (only routes that exist in App.tsx)
   { path: "/insurance/aetna-rehab", priority: 0.85, changefreq: "weekly" },
   { path: "/insurance/bcbs-treatment", priority: 0.85, changefreq: "weekly" },
@@ -185,10 +229,21 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/same-day-detox-usa", priority: 0.85, changefreq: "weekly" },
   { path: "/top-detox-centers-usa", priority: 0.85, changefreq: "weekly" },
 
-  // COMPARISON PAGES
+  // COMPARISON PAGES (all)
   { path: "/inpatient-vs-outpatient-rehab", priority: 0.85, changefreq: "monthly" },
   { path: "/detox-vs-rehab", priority: 0.85, changefreq: "monthly" },
   { path: "/private-vs-public-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/php-vs-iop", priority: 0.85, changefreq: "monthly" },
+  { path: "/30-day-vs-90-day-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/mat-vs-abstinence-based-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/12-step-vs-non-12-step-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/rehab-vs-therapy", priority: 0.85, changefreq: "monthly" },
+  { path: "/inpatient-vs-residential-treatment", priority: 0.85, changefreq: "monthly" },
+  { path: "/sober-living-vs-halfway-house", priority: 0.85, changefreq: "monthly" },
+  { path: "/rehab-vs-self-detox", priority: 0.85, changefreq: "monthly" },
+  { path: "/faith-based-vs-secular-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/luxury-vs-standard-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/short-term-vs-long-term-rehab", priority: 0.85, changefreq: "monthly" },
 
   // TREATMENT HUB PAGES
   { path: "/alcohol-rehab-centers", priority: 0.85, changefreq: "weekly" },
