@@ -1,7 +1,10 @@
 import { useRef, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
 
 interface ResponsiveListingGridProps {
   facilities: any[];
@@ -15,6 +18,35 @@ export function ResponsiveListingGrid({ facilities, maxItems = 12 }: ResponsiveL
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const items = facilities.slice(0, maxItems);
+
+  // Empty state fallback
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-xl border border-dashed border-border bg-muted/20">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+          <Search className="h-7 w-7 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground mb-2">No Facilities Listed Yet</h3>
+        <p className="text-muted-foreground mb-6 max-w-md">
+          We're expanding our network in this area. Browse all centers nationwide or let our team find the right match for you.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link to="/search-results">
+            <Button variant="outline" className="gap-2">
+              <Search className="h-4 w-4" />
+              Browse All Centers
+            </Button>
+          </Link>
+          <Link to="/concierge">
+            <Button className="gap-2">
+              <Heart className="h-4 w-4" />
+              Get Personalized Help
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const checkScroll = () => {
     const el = scrollRef.current;
