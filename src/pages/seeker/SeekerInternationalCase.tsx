@@ -269,6 +269,9 @@ export default function SeekerInternationalCase() {
           <div className="border-t pt-4">
             <h3 className="font-medium mb-2">What Happens Next</h3>
             <p className="text-sm text-muted-foreground">
+              {placementCase.status === "pending_verification" && (
+                "Please verify your email address to proceed. Check your inbox for a verification link."
+              )}
               {placementCase.status === "in_review" && (
                 "Your dedicated placement advisor is reviewing your intake and will reach out within 24 hours to discuss options."
               )}
@@ -283,6 +286,9 @@ export default function SeekerInternationalCase() {
               )}
               {placementCase.status === "admitted" && (
                 "Congratulations! Your admission is confirmed. Your advisor will help coordinate travel and arrival details."
+              )}
+              {(placementCase.status === "closed" || placementCase.status === "closed_no_fit" || placementCase.status === "closed_withdrew") && (
+                "This case has been closed. If you'd like to start a new placement request, please contact our team."
               )}
               {(placementCase.status === "new" || !placementCase.status) && (
                 "Your case has been received. Our team will begin reviewing your information shortly."
