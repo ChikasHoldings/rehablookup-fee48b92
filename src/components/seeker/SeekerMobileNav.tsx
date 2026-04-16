@@ -5,6 +5,7 @@ import {
   Search, 
   Heart,
   Star,
+  Bell,
   MoreHorizontal,
   HeartHandshake,
   FileText,
@@ -51,7 +52,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
   const moreItems = isAuthenticated ? [
     { href: "/account/saved", label: "Saved Facilities", icon: Heart },
     { href: "/account/reviews", label: "My Reviews", icon: Star },
-    { href: "/account/notifications", label: "Notifications", icon: Home },
+    { href: "/account/notifications", label: "Notifications", icon: Bell },
     { href: "/account/settings", label: "Settings", icon: Settings },
     { href: "/account/help", label: "Help & Support", icon: HelpCircle },
   ] : [
