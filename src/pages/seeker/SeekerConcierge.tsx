@@ -665,7 +665,7 @@ export default function SeekerConcierge() {
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
                 This placement request has been closed. If you'd like to start a new request, click below.
               </p>
-              <Button variant="outline" onClick={() => setShowIntakeFlow(true)} className="mt-2">
+              <Button variant="outline" onClick={() => navigate("/concierge/intake")} className="mt-2">
                 Start New Request
               </Button>
             </CardContent>
