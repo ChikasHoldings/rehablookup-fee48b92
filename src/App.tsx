@@ -90,6 +90,8 @@ const CityProviderPage = lazy(() => import("./pages/provider-guides/CityProvider
 const CityTreatmentProviderPage = lazy(() => import("./pages/provider-guides/CityTreatmentProviderPage"));
 const CityInsuranceProviderPage = lazy(() => import("./pages/provider-guides/CityInsuranceProviderPage"));
 const CountyProviderPage = lazy(() => import("./pages/provider-guides/CountyProviderPage"));
+const CountyTreatmentProviderPage = lazy(() => import("./pages/provider-guides/CountyTreatmentProviderPage"));
+const ListYourFacilityCity = lazy(() => import("./pages/provider-guides/ListYourFacilityCity"));
 const TreatmentProviderPage = lazy(() => import("./pages/provider-guides/TreatmentProviderPage"));
 const StateTreatmentProviderPage = lazy(() => import("./pages/provider-guides/StateTreatmentProviderPage"));
 const InsuranceProviderPage = lazy(() => import("./pages/provider-guides/InsuranceProviderPage"));
