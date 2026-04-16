@@ -63,6 +63,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { getPlanPriority } from "@/lib/facilityPlanSort";
 
+// Restore user ID from localStorage to avoid getSession/getUser deadlocks
+function getStoredUserId(): string | null {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+    const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'plckxokpyiubuekvodtc';
+    const storageKey = `sb-${projectRef}-auth-token`;
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    const session = parsed?.currentSession || parsed;
+    return session?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const ITEMS_PER_PAGE = 12;
 
 type SortOption = "proximity" | "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc" | "reviews";
