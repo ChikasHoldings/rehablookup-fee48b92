@@ -58,7 +58,7 @@ export function useAutoReloadSettings(facilityId?: string) {
         throw new Error("Invalid threshold amount");
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
