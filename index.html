@@ -23,13 +23,9 @@
     <meta name="keywords" content="rehab near me, drug rehab near me, alcohol rehab near me, addiction treatment centers, detox centers near me, inpatient rehab, outpatient treatment, dual diagnosis treatment, free rehab near me, luxury rehab, womens rehab, mens rehab, fentanyl addiction treatment, opioid rehab, heroin rehab, suboxone treatment, MAT treatment, sober living near me, recovery programs, substance abuse treatment, PHP program, IOP treatment, residential treatment, alcohol detox, drug detox, rehab centers California, rehab centers Florida, rehab centers Texas, affordable rehab, state funded rehab, medicaid rehab, veterans rehab, teen rehab, young adult treatment" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow" />
-    <link rel="canonical" href="https://rehablookup.com" />
-
-    <!-- Open Graph / Facebook -->
+    <!-- NOTE: canonical, og:*, and twitter:* tags are injected per-route by <SEO /> (react-helmet-async).
+         No hardcoded canonical here — that would force every route to alias the homepage in Google. -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://rehablookup.com/" />
-    <meta property="og:title" content="RehabLookup - Find Trusted Addiction Treatment Centers" />
-    <meta property="og:description" content="Search and compare verified addiction treatment centers. Take the first step toward recovery today. 24/7 confidential support available." />
     <meta property="og:image" content="https://rehablookup.com/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -37,11 +33,8 @@
     <meta property="og:site_name" content="RehabLookup" />
     <meta property="og:locale" content="en_US" />
 
-    <!-- Twitter -->
+    <!-- Twitter defaults (per-route values overridden by <SEO />) -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://rehablookup.com/" />
-    <meta name="twitter:title" content="RehabLookup - Find Trusted Addiction Treatment Centers" />
-    <meta name="twitter:description" content="Search and compare verified addiction treatment centers near you. Free, confidential help available 24/7." />
     <meta name="twitter:image" content="https://rehablookup.com/og-image.jpg" />
     <meta name="twitter:creator" content="@rehablookup" />
 
@@ -222,14 +215,6 @@
           "@type": "SearchAction",
           "target": {
             "@type": "EntryPoint",
-            "urlTemplate": "https://rehablookup.com/search-results?location={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        },
-        {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint", 
             "urlTemplate": "https://rehablookup.com/rehab-centers?location={search_term_string}"
           },
           "query-input": "required name=search_term_string"
