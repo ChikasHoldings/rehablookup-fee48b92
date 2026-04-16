@@ -743,34 +743,43 @@ export function PlacementDetailModal({
                 <Skeleton className="h-14 w-3/4 rounded-xl" />
                 <Skeleton className="h-14 w-2/3 ml-auto rounded-xl" />
               </div>
-            ) : messages && messages.length > 0 ? (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground mb-4">Messages between you and the placement advisor.</p>
-                {messages.map((msg) => {
-                  const isYou = msg.sender_type === "provider" || msg.sender_type === "facility";
-                  return (
-                    <div key={msg.id} className={cn("flex", isYou ? "justify-end" : "justify-start")}>
-                      <div className={cn(
-                        "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
-                        isYou ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"
-                      )}>
-                        <p className="text-xs font-semibold opacity-70 mb-1">{isYou ? "You" : "Advisor"}</p>
-                        <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
-                        <p className="text-xs opacity-50 mt-2 text-right">{format(new Date(msg.created_at), "MMM d, h:mm a")}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-4">
-                  <MessageSquare className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <p className="text-sm font-semibold text-foreground">No messages yet</p>
-                <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                  Messages from the placement advisor will appear here once coordination begins.
-                </p>
+              <div className="flex flex-col h-full">
+                {messages && messages.length > 0 ? (
+                  <div className="space-y-3 mb-4">
+                    <p className="text-sm text-muted-foreground mb-4">Messages between you and the placement advisor.</p>
+                    {messages.map((msg) => {
+                      const isYou = msg.sender_type === "provider" || msg.sender_type === "facility";
+                      return (
+                        <div key={msg.id} className={cn("flex", isYou ? "justify-end" : "justify-start")}>
+                          <div className={cn(
+                            "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
+                            isYou ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted rounded-bl-md"
+                          )}>
+                            <p className="text-xs font-semibold opacity-70 mb-1">{isYou ? "You" : "Advisor"}</p>
+                            <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
+                            <p className="text-xs opacity-50 mt-2 text-right">{format(new Date(msg.created_at), "MMM d, h:mm a")}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center mb-4">
+                    <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center mb-4">
+                      <MessageSquare className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">No messages yet</p>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                      Send a message to your placement advisor below.
+                    </p>
+                  </div>
+                )}
+                {/* Message send input */}
+                <ProviderMessageInput
+                  inquiryId={introduction?.inquiry_id || ""}
+                  facilityId={facilityId}
+                />
               </div>
             )}
           </TabPanel>
