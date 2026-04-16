@@ -30,7 +30,7 @@ interface SeekerMobileNavProps extends React.HTMLAttributes<HTMLElement> {
 const navItems = [
   { href: "/account", label: "Home", icon: Home },
   { href: "/account/search", label: "Search", icon: Search },
-  { href: "/account/concierge", label: "Concierge", icon: HeartHandshake },
+  { href: "/account/concierge", label: "Placement", icon: HeartHandshake },
   { href: "/account/requests", label: "Inbox", icon: FileText },
 ];
 
@@ -51,6 +51,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
   const moreItems = isAuthenticated ? [
     { href: "/account/saved", label: "Saved Facilities", icon: Heart },
     { href: "/account/reviews", label: "My Reviews", icon: Star },
+    { href: "/account/notifications", label: "Notifications", icon: Home },
     { href: "/account/settings", label: "Settings", icon: Settings },
     { href: "/account/help", label: "Help & Support", icon: HelpCircle },
   ] : [
