@@ -1091,6 +1091,7 @@ const AppInner = () => {
               <Route path="concierge" element={<SeekerConcierge />} />
               <Route path="concierge/:inquiryId" element={<SeekerConcierge />} />
               <Route path="international" element={<SeekerInternationalCase />} />
+              <Route path="*" element={<Navigate to="/account" replace />} />
             </Route>
             
             {/* Legacy /my-account redirect */}
