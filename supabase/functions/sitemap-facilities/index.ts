@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v7.1.0";
+const VERSION = "v7.2.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
@@ -547,6 +547,132 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/terms-of-service", priority: 0.3, changefreq: "yearly" },
   { path: "/editorial-policy", priority: 0.3, changefreq: "yearly" },
   { path: "/medical-disclaimer", priority: 0.3, changefreq: "yearly" },
+
+  // PROVIDER COMPLIANCE & REGULATION PAGES
+  { path: "/provider-guides/rehab-hipaa-compliance-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-42-cfr-part-2-compliance", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-legitscript-certification-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-state-licensing-requirements", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-joint-commission-accreditation", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER REVENUE & REIMBURSEMENT PAGES
+  { path: "/provider-guides/rehab-insurance-reimbursement-optimization", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-private-pay-revenue-strategies", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-medicaid-reimbursement-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-utilization-review-optimization", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-value-based-care-transition", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER FACILITY TYPE MARKETING PAGES
+  { path: "/provider-guides/luxury-rehab-center-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/faith-based-rehab-growth-strategies", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/sober-living-home-marketing", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/mat-clinic-patient-acquisition", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/adolescent-treatment-center-marketing", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER TECHNOLOGY & SYSTEMS PAGES
+  { path: "/provider-guides/rehab-ehr-software-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-crm-patient-management", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-intake-automation", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-website-conversion-optimization", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-call-tracking-analytics", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER STARTUP & EXPANSION PAGES
+  { path: "/provider-guides/how-to-start-outpatient-rehab-center", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-facility-acquisition-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-market-analysis-new-location", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-franchise-opportunities", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-construction-design-guide", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER CLINICAL OPERATIONS PAGES
+  { path: "/provider-guides/rehab-evidence-based-program-development", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-outcomes-measurement-reporting", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-clinical-staff-recruitment", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-group-therapy-programming", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-family-program-development", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER PAYER RELATIONS & CONTRACTING PAGES
+  { path: "/provider-guides/rehab-insurance-credentialing-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-payer-contract-negotiation", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-single-case-agreement-strategy", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-network-adequacy-strategy", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-out-of-network-billing-strategy", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER RISK MANAGEMENT & LEGAL PAGES
+  { path: "/provider-guides/rehab-malpractice-liability-prevention", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-patient-safety-protocols", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-insurance-audit-preparation", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-employment-law-compliance", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-crisis-management-plan", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER COMMUNITY & REFERRAL PARTNERSHIPS PAGES
+  { path: "/provider-guides/rehab-physician-referral-network", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-hospital-er-partnership", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-court-criminal-justice-referrals", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-employer-eap-partnerships", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-alumni-referral-program", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER STAFFING & WORKFORCE PAGES
+  { path: "/provider-guides/rehab-staff-recruitment-strategies", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-employee-retention-programs", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-staff-credentialing-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-burnout-prevention-programs", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-staff-training-development", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER MARKETING CHANNEL PAGES
+  { path: "/provider-guides/rehab-seo-marketing-strategy", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-ppc-advertising-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-social-media-marketing-strategy", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-content-marketing-strategy", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-reputation-management-guide", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER PATIENT EXPERIENCE PAGES
+  { path: "/provider-guides/rehab-intake-optimization-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-family-engagement-programs", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-aftercare-planning-programs", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-patient-satisfaction-measurement", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-discharge-planning-best-practices", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER TELEHEALTH & VIRTUAL CARE PAGES
+  { path: "/provider-guides/rehab-telehealth-program-launch", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-virtual-iop-program-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-remote-patient-monitoring", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-hybrid-treatment-model", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-telebehavioral-health-compliance", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER DATA & ANALYTICS PAGES
+  { path: "/provider-guides/rehab-census-forecasting-tools", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-kpi-dashboard-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-outcome-reporting-systems", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-payer-analytics-reporting", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-marketing-attribution-guide", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER ACCREDITATION & QUALITY PAGES
+  { path: "/provider-guides/rehab-carf-accreditation-preparation", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-joint-commission-readiness", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-state-licensing-survey-preparation", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-quality-improvement-programs", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-peer-review-clinical-governance", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER INSURANCE & BILLING OPERATIONS PAGES
+  { path: "/provider-guides/rehab-claim-denial-management", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-prior-authorization-optimization", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-billing-compliance-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-revenue-cycle-management", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-out-of-network-billing-strategies", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER FACILITY DESIGN & ENVIRONMENT PAGES
+  { path: "/provider-guides/rehab-therapeutic-environment-design", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-ada-accessibility-compliance", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-safety-design-standards", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-amenity-planning-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-outdoor-recreation-programming", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER CRISIS & EMERGENCY PREPAREDNESS PAGES
+  { path: "/provider-guides/rehab-overdose-response-protocols", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-disaster-preparedness-planning", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-workplace-violence-prevention", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-pandemic-response-planning", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-behavioral-emergency-management", priority: 0.75, changefreq: "monthly" },
 ];
 
 // Near-me types that have /:stateSlug routes
@@ -925,6 +1051,92 @@ function generatePaymentStateRoutes(): RouteEntry[] {
   return routes;
 }
 
+// Insurance + State + City combo pages (CityInsurancePage)
+const INSURANCE_CITY_COMBOS: Record<string, string[]> = {
+  "california": ["los-angeles", "san-diego", "san-francisco", "san-jose", "malibu", "sacramento"],
+  "florida": ["miami", "tampa", "orlando", "jacksonville"],
+  "texas": ["houston", "dallas", "austin", "san-antonio", "fort-worth"],
+  "new-york": ["new-york-city"],
+  "arizona": ["phoenix", "scottsdale", "tucson"],
+  "colorado": ["denver"],
+  "ohio": ["columbus", "cleveland", "cincinnati"],
+  "pennsylvania": ["philadelphia", "pittsburgh"],
+  "illinois": ["chicago"],
+  "georgia": ["atlanta"],
+  "massachusetts": ["boston"],
+  "washington": ["seattle"],
+  "tennessee": ["nashville", "memphis"],
+  "north-carolina": ["charlotte", "raleigh"],
+  "indiana": ["indianapolis"],
+  "oregon": ["portland"],
+  "nevada": ["las-vegas"],
+  "michigan": ["detroit"],
+  "missouri": ["st-louis", "kansas-city"],
+  "maryland": ["baltimore"],
+  "wisconsin": ["milwaukee"],
+  "utah": ["salt-lake-city"],
+  "minnesota": ["minneapolis"],
+  "louisiana": ["new-orleans"],
+  "kentucky": ["louisville"],
+  "oklahoma": ["oklahoma-city"],
+  "hawaii": ["honolulu"],
+  "new-mexico": ["albuquerque"],
+  "nebraska": ["omaha"],
+  "idaho": ["boise"],
+};
+
+function generateInsuranceCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const ins of INSURANCE_SLUGS) {
+    for (const [stateSlug, cities] of Object.entries(INSURANCE_CITY_COMBOS)) {
+      for (const citySlug of cities) {
+        routes.push({ path: `/insurance/${ins}/${stateSlug}/${citySlug}`, priority: 0.65, changefreq: "weekly" });
+      }
+    }
+  }
+  return routes;
+}
+
+function generateSubstanceCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const sub of SUBSTANCE_SLUGS) {
+    for (const city of MAJOR_CITIES) {
+      routes.push({ path: `/${sub}/${city.state}/${city.city}`, priority: 0.60, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generateDemographicCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const demo of DEMOGRAPHIC_SLUGS) {
+    for (const city of MAJOR_CITIES) {
+      routes.push({ path: `/${demo}/${city.state}/${city.city}`, priority: 0.55, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generateCoOccurringCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const slug of CO_OCCURRING_SLUGS) {
+    for (const city of MAJOR_CITIES) {
+      routes.push({ path: `/${slug}/${city.state}/${city.city}`, priority: 0.55, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generateDurationCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const slug of DURATION_SETTING_SLUGS) {
+    for (const city of MAJOR_CITIES) {
+      routes.push({ path: `/${slug}/${city.state}/${city.city}`, priority: 0.55, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
 // Provider city conversion pages
 const PROVIDER_CITIES = [
   "los-angeles-california","new-york-city-new-york","chicago-illinois","houston-texas","phoenix-arizona",
@@ -1197,11 +1409,16 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
     ...generateExpandedTreatmentStateRoutes(),
     ...generateExpandedTreatmentCityRoutes(),
     ...generateSubstanceStateRoutes(),
+    ...generateSubstanceCityRoutes(),
     ...generateDemographicStateRoutes(),
+    ...generateDemographicCityRoutes(),
     ...generateTherapyModalityRoutes(),
     ...generateCoOccurringRoutes(),
+    ...generateCoOccurringCityRoutes(),
     ...generateDurationSettingRoutes(),
+    ...generateDurationCityRoutes(),
     ...generatePaymentStateRoutes(),
+    ...generateInsuranceCityRoutes(),
     ...generateProviderConversionRoutes(),
     ...articleRoutes
   ];
