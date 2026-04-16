@@ -797,6 +797,14 @@ function generateCountyRoutes(): RouteEntry[] {
           changefreq: "weekly"
         });
       }
+      // County + Insurance combo pages (seeker-facing)
+      for (const ins of INSURANCE_SLUGS) {
+        routes.push({
+          path: `/insurance/${ins}/${stateSlug}/county/${countySlug}`,
+          priority: 0.65,
+          changefreq: "weekly"
+        });
+      }
     }
   }
   return routes;
