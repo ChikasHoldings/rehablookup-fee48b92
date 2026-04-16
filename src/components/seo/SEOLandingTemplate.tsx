@@ -34,6 +34,7 @@ interface SEOLandingTemplateProps {
   metaTitle: string;
   metaDescription: string;
   canonical?: string;
+  noindex?: boolean;
   structuredData?: object;
   breadcrumbs?: { name: string; url: string }[];
 
@@ -89,6 +90,7 @@ export function SEOLandingTemplate({
   metaTitle,
   metaDescription,
   canonical,
+  noindex = false,
   structuredData,
   breadcrumbs,
   heroTitle,
@@ -125,6 +127,7 @@ export function SEOLandingTemplate({
         title={metaTitle}
         description={metaDescription}
         canonical={canonical}
+        noindex={noindex}
         structuredData={structuredData}
         breadcrumbs={breadcrumbs}
       />

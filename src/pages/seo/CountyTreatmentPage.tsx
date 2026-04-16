@@ -149,6 +149,7 @@ export default function CountyTreatmentPage() {
       metaTitle={`${treatment.pluralLabel} in ${countyData.name} County, ${stateData.abbreviation} | RehabLookup`}
       metaDescription={`Find ${treatment.label.toLowerCase()} in ${countyData.name} County, ${stateData.name}. Compare ${facilities.length}+ verified facilities, check insurance, get help today.`}
       canonical={`https://rehablookup.com/rehab-centers/${stateSlug}/county/${countySlug}/${treatmentSlug}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },
