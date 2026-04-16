@@ -1051,6 +1051,92 @@ function generatePaymentStateRoutes(): RouteEntry[] {
   return routes;
 }
 
+// Insurance + State + City combo pages (CityInsurancePage)
+const INSURANCE_CITY_COMBOS: Record<string, string[]> = {
+  "california": ["los-angeles", "san-diego", "san-francisco", "san-jose", "malibu", "sacramento"],
+  "florida": ["miami", "tampa", "orlando", "jacksonville"],
+  "texas": ["houston", "dallas", "austin", "san-antonio", "fort-worth"],
+  "new-york": ["new-york-city"],
+  "arizona": ["phoenix", "scottsdale", "tucson"],
+  "colorado": ["denver"],
+  "ohio": ["columbus", "cleveland", "cincinnati"],
+  "pennsylvania": ["philadelphia", "pittsburgh"],
+  "illinois": ["chicago"],
+  "georgia": ["atlanta"],
+  "massachusetts": ["boston"],
+  "washington": ["seattle"],
+  "tennessee": ["nashville", "memphis"],
+  "north-carolina": ["charlotte", "raleigh"],
+  "indiana": ["indianapolis"],
+  "oregon": ["portland"],
+  "nevada": ["las-vegas"],
+  "michigan": ["detroit"],
+  "missouri": ["st-louis", "kansas-city"],
+  "maryland": ["baltimore"],
+  "wisconsin": ["milwaukee"],
+  "utah": ["salt-lake-city"],
+  "minnesota": ["minneapolis"],
+  "louisiana": ["new-orleans"],
+  "kentucky": ["louisville"],
+  "oklahoma": ["oklahoma-city"],
+  "hawaii": ["honolulu"],
+  "new-mexico": ["albuquerque"],
+  "nebraska": ["omaha"],
+  "idaho": ["boise"],
+};
+
+function generateInsuranceCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const ins of INSURANCE_SLUGS) {
+    for (const [stateSlug, cities] of Object.entries(INSURANCE_CITY_COMBOS)) {
+      for (const citySlug of cities) {
+        routes.push({ path: `/insurance/${ins}/${stateSlug}/${citySlug}`, priority: 0.65, changefreq: "weekly" });
+      }
+    }
+  }
+  return routes;
+}
+
+function generateSubstanceCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const sub of SUBSTANCE_SLUGS) {
+    for (const city of MAJOR_CITIES) {
+      routes.push({ path: `/${sub}/${city.state}/${city.city}`, priority: 0.60, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generateDemographicCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const demo of DEMOGRAPHIC_SLUGS) {
+    for (const city of MAJOR_CITIES) {
+      routes.push({ path: `/${demo}/${city.state}/${city.city}`, priority: 0.55, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generateCoOccurringCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const slug of CO_OCCURRING_SLUGS) {
+    for (const city of MAJOR_CITIES) {
+      routes.push({ path: `/${slug}/${city.state}/${city.city}`, priority: 0.55, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+function generateDurationCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  for (const slug of DURATION_SETTING_SLUGS) {
+    for (const city of MAJOR_CITIES) {
+      routes.push({ path: `/${slug}/${city.state}/${city.city}`, priority: 0.55, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
 // Provider city conversion pages
 const PROVIDER_CITIES = [
   "los-angeles-california","new-york-city-new-york","chicago-illinois","houston-texas","phoenix-arizona",
