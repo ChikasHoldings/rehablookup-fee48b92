@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 
 /**
  * Hook to track pending (new/uncontacted) inquiries count across all provider facilities.
