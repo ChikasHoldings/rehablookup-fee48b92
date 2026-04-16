@@ -559,6 +559,7 @@ export default function SeekerConcierge() {
   // Show provider review when seeker can select from interested facilities
   const showProviderReview = selectedCase?.status === "presented_to_seeker" || selectedCase?.status === "seeker_selected";
   const isTerminalSuccess = ["admitted", "billed", "completed"].includes(selectedCase?.status || "");
+  const isClosed = selectedCase?.status === "closed";
   const showFeedback = isTerminalSuccess && !selectedCase?.seeker_feedback && !feedbackSubmitted;
   const hasMatches = matchedFacilities && matchedFacilities.length > 0;
 
