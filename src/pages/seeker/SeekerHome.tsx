@@ -160,6 +160,20 @@ export default function SeekerHome() {
     let result = allFacilities.filter((facility) => {
       const matchesType = selectedType === "all" || facility.facility_type === selectedType;
       const matchesState = selectedState === "all" || facility.state?.toLowerCase() === selectedState.toLowerCase();
+      
+      // Inline text search filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const tokens = q.split(/\s+/).filter(t => t.length > 1);
+        const haystack = `${facility.name} ${facility.city} ${facility.state} ${facility.facility_type || ''} ${facility.description || ''} ${facility.zipCode || ''}`.toLowerCase();
+        
+        if (tokens.length > 1) {
+          if (!tokens.every(token => haystack.includes(token))) return false;
+        } else if (tokens.length === 1) {
+          if (!haystack.includes(tokens[0])) return false;
+        }
+      }
+      
       return matchesType && matchesState;
     });
 
