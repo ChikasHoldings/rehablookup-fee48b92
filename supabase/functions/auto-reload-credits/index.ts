@@ -119,7 +119,23 @@ serve(async (req) => {
     const totalCreditsCents = amountCents + bonusCents;
     const facilityId = settings.facility_id;
 
-    // Idempotency: check if an auto-reload was already done in the last 5 minutes
+    // Idempotency layer 1: per-provider advisory lock (sub-second protection)
+    // Two near-simultaneous unlocks would each pass the threshold check and
+    // try to charge. The advisory lock guarantees only one charge attempt
+    // wins; the loser short-circuits cleanly.
+    const { data: lockAcquired } = await supabaseAdmin.rpc(
+      "try_acquire_auto_reload_lock",
+      { p_provider_id: providerId }
+    );
+
+    if (lockAcquired === false) {
+      return new Response(
+        JSON.stringify({ skipped: true, reason: "Auto-reload already in flight for this provider" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Idempotency layer 2: 5-minute window check (catches retries across requests)
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     const { data: recentAutoReload } = await supabaseAdmin
       .from("credit_transactions")

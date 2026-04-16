@@ -85,6 +85,35 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ============================================================
+    // GLOBAL EVENT DEDUPLICATION
+    // Stripe retries deliver the same evt_xxx multiple times. Even though
+    // our financial uniques (credit_transactions, lead_unlocks, pro_subscriptions)
+    // already prevent double-spend, retried events still re-run downstream
+    // side effects (notifications, emails). Claim the event atomically; if
+    // someone else already owns it, ack 200 and exit.
+    // ============================================================
+    try {
+      const { data: claimed, error: claimError } = await supabaseAdmin.rpc(
+        "claim_stripe_webhook_event",
+        { p_event_id: event.id, p_event_type: event.type }
+      );
+
+      if (claimError) {
+        logStep("WARN - claim_stripe_webhook_event failed, processing anyway", {
+          eventId: event.id,
+          error: claimError.message,
+        });
+      } else if (claimed === false) {
+        logStep("Duplicate Stripe event ignored", { eventId: event.id, type: event.type });
+        return new Response(JSON.stringify({ received: true, duplicate: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } catch (dedupErr) {
+      logStep("WARN - dedup check threw, processing anyway", { error: String(dedupErr) });
+    }
+
     // ==========================================
     // Handle checkout.session.completed
     // Handles: Lead unlocks, Credit purchases, Pro subscriptions, Additional listing slots
