@@ -173,6 +173,10 @@ const ProviderAccreditationPage = lazy(() => import("./pages/provider-guides/Pro
 const ProviderBillingOpsPage = lazy(() => import("./pages/provider-guides/ProviderBillingPage"));
 const ProviderFacilityDesignPage = lazy(() => import("./pages/provider-guides/ProviderFacilityDesignPage"));
 const ProviderCrisisPage = lazy(() => import("./pages/provider-guides/ProviderCrisisPage"));
+const ProviderFundingPage = lazy(() => import("./pages/provider-guides/ProviderFundingPage"));
+const ProviderLicensingPage = lazy(() => import("./pages/provider-guides/ProviderLicensingPage"));
+const ProviderBenchmarkPage = lazy(() => import("./pages/provider-guides/ProviderBenchmarkPage"));
+const ProviderOutreachPage = lazy(() => import("./pages/provider-guides/ProviderOutreachPage"));
 
 // ListYourFacilityState moved to SmartCatchAll
 
@@ -1375,6 +1379,35 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-workplace-violence-prevention" element={<PublicRouteGuard><ProviderCrisisPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-pandemic-response-planning" element={<PublicRouteGuard><ProviderCrisisPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/rehab-behavioral-emergency-management" element={<PublicRouteGuard><ProviderCrisisPage /></PublicRouteGuard>} />
+
+
+            {/* Provider Funding & Investment Pages */}
+            <Route path="/provider-guides/samhsa-grant-funding-rehab-center" element={<PublicRouteGuard><ProviderFundingPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/sba-loans-rehab-center-financing" element={<PublicRouteGuard><ProviderFundingPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-private-equity-investment" element={<PublicRouteGuard><ProviderFundingPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-for-sale-ma-guide" element={<PublicRouteGuard><ProviderFundingPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/opioid-settlement-funding-treatment-centers" element={<PublicRouteGuard><ProviderFundingPage /></PublicRouteGuard>} />
+
+            {/* Provider Licensing & Certification Pages */}
+            <Route path="/provider-guides/legitscript-certification-rehab" element={<PublicRouteGuard><ProviderLicensingPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/carf-vs-joint-commission-rehab-accreditation" element={<PublicRouteGuard><ProviderLicensingPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/state-licensing-requirements-rehab-center" element={<PublicRouteGuard><ProviderLicensingPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/hipaa-compliance-rehab-center-guide" element={<PublicRouteGuard><ProviderLicensingPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/medicare-certification-rehab-center" element={<PublicRouteGuard><ProviderLicensingPage /></PublicRouteGuard>} />
+
+            {/* Provider Benchmarks & Industry Pages */}
+            <Route path="/provider-guides/rehab-center-profitability-benchmarks" element={<PublicRouteGuard><ProviderBenchmarkPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-kpi-dashboard-metrics" element={<PublicRouteGuard><ProviderBenchmarkPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/addiction-treatment-industry-trends-2026" element={<PublicRouteGuard><ProviderBenchmarkPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-admissions-call-center-training" element={<PublicRouteGuard><ProviderBenchmarkPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-competitor-analysis-framework" element={<PublicRouteGuard><ProviderBenchmarkPage /></PublicRouteGuard>} />
+
+            {/* Provider Outreach & Referral Pages */}
+            <Route path="/provider-guides/how-to-get-referrals-rehab-center" element={<PublicRouteGuard><ProviderOutreachPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-community-outreach-strategy" element={<PublicRouteGuard><ProviderOutreachPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-interventionist-referral-partnerships" element={<PublicRouteGuard><ProviderOutreachPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-google-reviews-strategy" element={<PublicRouteGuard><ProviderOutreachPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/how-to-fill-beds-rehab-center" element={<PublicRouteGuard><ProviderOutreachPage /></PublicRouteGuard>} />
 
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
