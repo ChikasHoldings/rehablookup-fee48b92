@@ -502,7 +502,7 @@ const SearchResults = () => {
       });
     }
 
-    return results;
+    return { filteredCenters: results, isExpandedSearch: expanded };
   }, [allCenters, location, effectiveLocation, treatment, insurance, type, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData]);
 
   const hasFilters = location || treatment || insurance || type || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
