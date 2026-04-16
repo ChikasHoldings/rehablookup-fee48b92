@@ -1214,7 +1214,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                       {facility.logo_url && <Badge variant="outline" className="text-xs text-green-600 border-green-200">Uploaded</Badge>}
                     </div>
                     <p className="text-xs text-muted-foreground">Square image recommended. Appears on search results.</p>
-                    <FacilityImageUpload type="logo" currentImages={facility.logo_url ? [facility.logo_url] : []} userId={facility.user_id} facilityId={facility.id} onImagesChange={handleLogoChange} />
+                    <FacilityImageUpload type="logo" currentImages={facility.logo_url ? [facility.logo_url] : []} userId={facility.user_id} facilityId={facility.id} facilityName={facility.name} onImagesChange={handleLogoChange} />
                   </div>
                   <Separator />
                   <div className="space-y-3">
@@ -1223,7 +1223,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                       <Badge variant="outline" className="text-xs">{facility.gallery_urls?.length || 0} / {galleryLimit}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">Upload up to {galleryLimit} photos. First image is primary.</p>
-                    <FacilityImageUpload type="gallery" currentImages={facility.gallery_urls || []} userId={facility.user_id} facilityId={facility.id} onImagesChange={handleGalleryChange} maxImages={galleryLimit} />
+                    <FacilityImageUpload type="gallery" currentImages={facility.gallery_urls || []} userId={facility.user_id} facilityId={facility.id} facilityName={facility.name} onImagesChange={handleGalleryChange} maxImages={galleryLimit} />
                   </div>
                 </div>
               )}
