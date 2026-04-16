@@ -1,7 +1,7 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
-# Last updated: 2026-04-16 — v7.3.0 Full route sync
+# Last updated: 2026-04-16 — v7.4.0 Fix redirect-loop crawl issues
 # Last updated: 2026-04-13 — v7.2.0 Production launch
 # =============================================================================
 
@@ -30,6 +30,7 @@ Disallow: /provider-forgot-password
 Disallow: /provider-reset-password
 Disallow: /admin-login
 Disallow: /seeker/signup
+Disallow: /blog
 Disallow: /request-help
 Disallow: /placement-help
 Disallow: /my-account
