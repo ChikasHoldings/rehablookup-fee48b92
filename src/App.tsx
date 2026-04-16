@@ -646,6 +646,18 @@ const AppInner = () => {
              <Route path="/executive-rehab-programs/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
              <Route path="/teachers-rehab-programs/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
              <Route path="/college-student-addiction-treatment/:stateSlug" element={<PublicRouteGuard><DemographicStatePage /></PublicRouteGuard>} />
+
+             {/* Demographic + City Pages */}
+             <Route path="/young-adult-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><DemographicCityPage /></PublicRouteGuard>} />
+             <Route path="/teen-rehab-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><DemographicCityPage /></PublicRouteGuard>} />
+             <Route path="/senior-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><DemographicCityPage /></PublicRouteGuard>} />
+             <Route path="/lgbtq-rehab-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><DemographicCityPage /></PublicRouteGuard>} />
+             <Route path="/pregnant-women-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><DemographicCityPage /></PublicRouteGuard>} />
+             <Route path="/first-responders-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><DemographicCityPage /></PublicRouteGuard>} />
+             <Route path="/healthcare-professionals-rehab/:stateSlug/:citySlug" element={<PublicRouteGuard><DemographicCityPage /></PublicRouteGuard>} />
+             <Route path="/executive-rehab-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><DemographicCityPage /></PublicRouteGuard>} />
+             <Route path="/teachers-rehab-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><DemographicCityPage /></PublicRouteGuard>} />
+             <Route path="/college-student-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><DemographicCityPage /></PublicRouteGuard>} />
              
              {/* Seeker Intent / Family Guide Pages */}
              <Route path="/how-to-stage-an-intervention" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
@@ -678,6 +690,14 @@ const AppInner = () => {
              <Route path="/adhd-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
              <Route path="/eating-disorders-and-addiction-treatment" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
              <Route path="/eating-disorders-and-addiction-treatment/:stateSlug" element={<PublicRouteGuard><CoOccurringPage /></PublicRouteGuard>} />
+
+             {/* Co-Occurring + City Pages */}
+             <Route path="/anxiety-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
+             <Route path="/depression-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
+             <Route path="/ptsd-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
+             <Route path="/bipolar-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
+             <Route path="/adhd-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
+             <Route path="/eating-disorders-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
 
              {/* Duration & Setting Pages */}
              <Route path="/30-day-rehab-programs" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
