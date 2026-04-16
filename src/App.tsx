@@ -1411,6 +1411,20 @@ const AppInner = () => {
             <Route path="/provider-guides/rehab-center-google-reviews-strategy" element={<PublicRouteGuard><ProviderOutreachPage /></PublicRouteGuard>} />
             <Route path="/provider-guides/how-to-fill-beds-rehab-center" element={<PublicRouteGuard><ProviderOutreachPage /></PublicRouteGuard>} />
 
+            {/* Provider Entrepreneur & Startup Pages */}
+            <Route path="/provider-guides/how-to-open-drug-rehab-center" element={<PublicRouteGuard><ProviderEntrepreneurPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-business-plan-template" element={<PublicRouteGuard><ProviderEntrepreneurPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/how-to-start-sober-living-home" element={<PublicRouteGuard><ProviderEntrepreneurPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/how-to-start-mat-clinic" element={<PublicRouteGuard><ProviderEntrepreneurPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-succession-planning" element={<PublicRouteGuard><ProviderEntrepreneurPage /></PublicRouteGuard>} />
+
+            {/* Provider Specialized Market Pages */}
+            <Route path="/provider-guides/tricare-va-rehab-certification" element={<PublicRouteGuard><ProviderSpecializedMarketPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/managed-care-contracting-rehab" element={<PublicRouteGuard><ProviderSpecializedMarketPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/treatment-center-business-development" element={<PublicRouteGuard><ProviderSpecializedMarketPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-quality-reporting-hedis" element={<PublicRouteGuard><ProviderSpecializedMarketPage /></PublicRouteGuard>} />
+            <Route path="/provider-guides/rehab-center-dei-cultural-competency" element={<PublicRouteGuard><ProviderSpecializedMarketPage /></PublicRouteGuard>} />
+
             {/* Provider Resource Hub */}
             <Route path="/providers/resources" element={<PublicRouteGuard><ProviderResourceHub /></PublicRouteGuard>} />
             <Route path="/providers/resources/:slug" element={<PublicRouteGuard><ProviderResourceArticle /></PublicRouteGuard>} />
