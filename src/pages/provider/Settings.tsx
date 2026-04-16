@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { useToast } from "@/hooks/use-toast";
 import { sanitizeText, sanitizePersonName, sanitizeJobTitle, validateEmail, validatePhone as validatePhoneSanitize } from "@/lib/facilitySanitization";
 import { 
