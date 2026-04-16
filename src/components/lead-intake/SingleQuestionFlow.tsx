@@ -286,12 +286,17 @@ export function SingleQuestionFlow({
     }
   };
   
+  // Guard to prevent double-clicks during the entire contact submit flow
+  const isContactSubmitting = useRef(false);
+  
   // Handle contact submission - checks if email already verified, if so submits directly
   const handleContactSubmit = async () => {
-    if (isSubmittingRef.current) return;
+    if (isSubmittingRef.current || isContactSubmitting.current) return;
+    isContactSubmitting.current = true;
     
+    try {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
     if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
     if (!isValidPhoneNumber(formData.phone)) newErrors.phone = "Valid phone number is required";
