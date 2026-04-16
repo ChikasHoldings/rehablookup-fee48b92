@@ -192,20 +192,23 @@ export default function ProviderSettingsPage() {
   const queryClient = useQueryClient();
   const logActivity = useLogActivity();
 
-  // Fetch user ID and notification preferences
+  // Fetch user ID
+  useEffect(() => {
+    getCachedSession().then(session => {
+      if (session?.user) setUserId(session.user.id);
+    });
+  }, []);
+
+  // Fetch notification preferences
   const { data: notificationPrefs, isLoading: isLoadingNotifications } = useQuery({
-    queryKey: ["notification-preferences"],
+    queryKey: ["notification-preferences", userId],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
-      
-      // Set userId for phone verification
-      setUserId(session.user.id);
+      if (!userId) return null;
 
       const { data, error } = await supabase
         .from("notification_preferences")
         .select("email_lead_alerts, email_weekly_digest, email_product_updates, sms_lead_alerts, browser_notifications, lead_notification_frequency, notify_new_leads, notify_lead_status_changes, notify_lead_limit_warnings, notify_facility_views, digest_time, followup_reminders_enabled, default_snooze_duration")
-        .eq("user_id", session.user.id)
+        .eq("user_id", userId)
         .maybeSingle();
 
       if (error) {
@@ -215,6 +218,7 @@ export default function ProviderSettingsPage() {
 
       return data as unknown as NotificationPreferences | null;
     },
+    enabled: !!userId,
   });
 
   // Initial profile from providerData
@@ -298,6 +302,17 @@ export default function ProviderSettingsPage() {
     if (activeTab === 'notifications') return hasNotificationChanges;
     return false;
   }, [activeTab, hasProfileChanges, hasNotificationChanges]);
+
+  // Browser-level guard for unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasUnsavedChanges]);
 
   // Sync notification preferences state when data loads
   useEffect(() => {
