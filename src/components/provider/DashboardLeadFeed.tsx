@@ -209,7 +209,7 @@ function UnlockedLeadRow({
 
           {/* Contact Actions */}
           <div className="flex items-center gap-2 mt-2.5">
-            {lead.phone && lead.phone !== "••••••••••" && (
+            {lead.phone && !lead.phone.includes("•") && (
               <Button
                 size="sm"
                 variant="outline"
@@ -224,7 +224,7 @@ function UnlockedLeadRow({
                 Call Now
               </Button>
             )}
-            {lead.email && lead.email !== "••••••••••" && (
+            {lead.email && !lead.email.includes("•") && (
               <Button
                 size="sm"
                 variant="outline"
