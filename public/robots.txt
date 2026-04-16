@@ -311,6 +311,11 @@ Disallow: /provider-reset-password
 Disallow: /admin-login
 Disallow: /seeker/signup
 Disallow: /blog
+Disallow: /treatment/detox
+Disallow: /treatment/dual-diagnosis
+Disallow: /treatment/inpatient-rehab
+Disallow: /treatment/alcohol-rehab
+Disallow: /treatment-types/dual-diagnosis
 Disallow: /request-help
 Disallow: /placement-help
 Disallow: /my-account
