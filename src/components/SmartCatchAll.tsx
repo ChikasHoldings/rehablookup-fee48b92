@@ -17,6 +17,7 @@ const CITY_TREATMENT_PREFIXES = [
   "/alcohol-rehab-in-",
   "/drug-rehab-in-",
   "/detox-centers-in-",
+  "/detox-in-",
   "/inpatient-rehab-in-",
   "/outpatient-rehab-in-",
   "/dual-diagnosis-treatment-in-",
@@ -28,6 +29,10 @@ const CITY_TREATMENT_PREFIXES = [
   "/veterans-rehab-in-",
   "/womens-rehab-in-",
   "/mens-rehab-in-",
+  "/holistic-rehab-in-",
+  "/mat-clinic-in-",
+  "/iop-in-",
+  "/php-in-",
 ];
 
 /**
