@@ -37,7 +37,7 @@ export default function ProviderForgotPassword() {
     setIsLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/provider-reset-password`;
+      const redirectUrl = `${window.location.origin}/provider/reset-password`;
       
       const { data, error: invokeError } = await supabase.functions.invoke('send-password-reset', {
         body: { email, redirectTo: redirectUrl },

@@ -77,8 +77,8 @@ export default function ForgotPassword() {
       // Determine redirect URL based on account type
       const redirectBase = window.location.origin;
       const redirectTo = accountResult.type === "provider" 
-        ? `${redirectBase}/provider-reset-password`
-        : `${redirectBase}/reset-password`;
+        ? `${redirectBase}/provider/reset-password`
+        : `${redirectBase}/seeker/reset-password`;
 
       const { data: resetData, error: resetError } = await supabase.functions.invoke('send-password-reset', {
         body: { email: normalizedEmail, redirectTo },
