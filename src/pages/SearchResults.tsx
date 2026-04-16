@@ -264,8 +264,9 @@ const SearchResults = () => {
     setSearchParams(newParams);
   }, [searchParams, setSearchParams]);
 
-  const filteredCenters = useMemo(() => {
+  const { filteredCenters, isExpandedSearch } = useMemo(() => {
     let results = [...allCenters];
+    let expanded = false;
 
     // Build location match from explicit location or effective fallback
     let locationMatch: LocationMatch | null = null;
@@ -282,11 +283,10 @@ const SearchResults = () => {
       // Filter to include relevant results by location
       const locationFiltered = results.filter((c) => facilityMatchesLocation(c, locationMatch!));
       
-      // Auto-expand: if strict location filtering yields 0 results, include nearby states
-      if (locationFiltered.length === 0 && locationMatch.stateAbbr) {
-        // Expand to include nationwide results (proximity sorting will still rank closer ones higher)
-        // Don't filter at all — let proximity sort handle ranking
-        // This prevents "no results" dead ends
+      // Auto-expand: if strict location filtering yields 0 results, show all results sorted by proximity
+      if (locationFiltered.length === 0) {
+        expanded = true;
+        // Don't filter — let proximity sort handle ranking
       } else {
         results = locationFiltered;
       }
