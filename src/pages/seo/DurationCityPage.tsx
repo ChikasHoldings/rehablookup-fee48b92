@@ -169,7 +169,6 @@ export default function DurationCityPage() {
         stateSlug={stateSlug!}
         stateName={stateName}
         citySlug={citySlug}
-        cityName={cityName}
       />
     </SEOLandingTemplate>
   );

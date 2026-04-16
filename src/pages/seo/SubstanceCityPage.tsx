@@ -165,7 +165,6 @@ export default function SubstanceCityPage() {
         stateSlug={stateSlug!}
         stateName={stateName}
         citySlug={citySlug}
-        cityName={cityName}
       />
     </SEOLandingTemplate>
   );

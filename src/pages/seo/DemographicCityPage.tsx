@@ -160,7 +160,6 @@ export default function DemographicCityPage() {
         stateSlug={stateSlug!}
         stateName={stateName}
         citySlug={citySlug}
-        cityName={cityName}
       />
     </SEOLandingTemplate>
   );

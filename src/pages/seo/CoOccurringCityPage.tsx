@@ -143,7 +143,6 @@ export default function CoOccurringCityPage() {
         stateSlug={stateSlug!}
         stateName={stateName}
         citySlug={citySlug}
-        cityName={cityName}
       />
     </SEOLandingTemplate>
   );
