@@ -98,20 +98,6 @@ function maskLeadName(fullName: string): string {
   return `${firstName} ${lastInitial}.`;
 }
 
-function maskEmail(email: string): string {
-  if (!email) return "●●●@●●●.com";
-  const [local, domain] = email.split("@");
-  if (!domain) return "●●●@●●●.com";
-  const maskedLocal = local[0] + "●●●";
-  const domainParts = domain.split(".");
-  const tld = domainParts[domainParts.length - 1];
-  return `${maskedLocal}@●●●.${tld}`;
-}
-
-function maskPhone(): string {
-  return "(●●●) ●●●-●●●●";
-}
-
 // ============ DUPLICATE & RATE LIMIT CHECKS ============
 // deno-lint-ignore no-explicit-any
 async function checkForDuplicate(
@@ -286,14 +272,12 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
 
 function getFacilityNotificationEmail(
   leadName: string,
-  _leadEmail: string,
-  _leadPhone: string,
   facilityName: string,
   details: { urgency?: string; levelOfCare?: string; insuranceType?: string; message?: string; preferredContact?: string }
 ): string {
   const maskedName = maskLeadName(leadName);
-  const maskedEmail = maskEmail(_leadEmail);
-  const maskedPhone = maskPhone();
+  const maskedEmail = "●●●@●●●.com";
+  const maskedPhone = "(●●●) ●●●-●●●●";
   const firstName = leadName.split(" ")[0];
   
   const urgencyDisplay = details.urgency === 'immediate' ? '🔴 Immediate' 
@@ -833,7 +817,7 @@ Deno.serve(async (req) => {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [notificationEmail],
           subject: `New Inquiry from ${firstName} - ${facility.name}`,
-          html: getFacilityNotificationEmail(data.name, data.email, data.phone, facility.name, {
+          html: getFacilityNotificationEmail(data.name, facility.name, {
             urgency: data.urgency,
             levelOfCare: data.levelOfCare,
             insuranceType: data.insuranceType,
