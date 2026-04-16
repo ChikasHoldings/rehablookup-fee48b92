@@ -6245,6 +6245,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      provider_has_introduction: {
+        Args: { _inquiry_id: string; _user_id: string }
+        Returns: boolean
+      }
       register_trusted_device: {
         Args: {
           p_browser?: string
