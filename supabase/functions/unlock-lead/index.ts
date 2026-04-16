@@ -459,7 +459,7 @@ Deno.serve(async (req) => {
 
           logStep(requestId, "Credits rolled back successfully", { refunded: unlockPrice });
         } else {
-          logStep(requestId, "CRITICAL - Could not rollback credits, no record found");
+          logStep(requestId, "CRITICAL - Could not rollback credits", { error: rollbackError.message });
         }
       }
 
