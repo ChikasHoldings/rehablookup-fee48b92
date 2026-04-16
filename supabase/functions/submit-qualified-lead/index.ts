@@ -448,7 +448,7 @@ function getFacilityNotificationEmail(
 }
 
 // ============ ALLOWED VALUES WHITELIST ============
-const ALLOWED_URGENCY = ['immediate', 'within_week', 'within_month', 'flexible', 'Urgent', 'Immediately', 'This week', 'This month'];
+const ALLOWED_URGENCY = ['immediate', 'within-week', 'within_week', 'within-month', 'within_month', 'flexible', 'Urgent', 'Immediately', 'This week', 'This month'];
 const ALLOWED_PREFERRED_CONTACT = ['call', 'text', 'email', 'phone'];
 const ALLOWED_SOURCES = ['facility_profile', 'direct', 'search', 'seeker_dashboard', 'marketing', 'referral'];
 
@@ -646,7 +646,7 @@ Deno.serve(async (req) => {
     // Per-email rate limit: 10/hour
     const { count: globalEmailCount } = await supabase
       .from("leads")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("email", data.email)
       .gte("created_at", oneHourAgo);
 
@@ -661,7 +661,7 @@ Deno.serve(async (req) => {
     // Per-facility rate limit: 5/hour (same email)
     const { count: facilityEmailCount } = await supabase
       .from("leads")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("email", data.email)
       .eq("facility_id", data.facilityId)
       .gte("created_at", oneHourAgo);
@@ -681,7 +681,7 @@ Deno.serve(async (req) => {
       
       const { count: ipCount } = await supabase
         .from("leads")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("ip_hash", ipHashHex)
         .gte("created_at", oneHourAgo);
 
