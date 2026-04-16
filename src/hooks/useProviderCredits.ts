@@ -43,9 +43,6 @@ export function useProviderCredits(facilityId?: string) {
     queryFn: async (): Promise<ProviderCreditsData> => {
       try {
         const session = await getCachedSession();
-        
-        if (!session) {
-        
         if (!session) return DEFAULT_CREDITS;
 
         // Get credit balance
