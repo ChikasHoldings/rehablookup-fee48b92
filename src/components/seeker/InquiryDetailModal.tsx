@@ -133,7 +133,7 @@ function DetailRow({ icon: Icon, label, value }: { icon: any; label: string; val
   );
 }
 
-export function InquiryDetailModal({ open, onOpenChange, leadId, userEmail }: InquiryDetailModalProps) {
+export function InquiryDetailModal({ open, onOpenChange, leadId }: InquiryDetailModalProps) {
   const [lead, setLead] = useState<LeadDetail | null>(null);
   const [facility, setFacility] = useState<FacilityInfo | null>(null);
   const [providerResponse, setProviderResponse] = useState<ProviderResponse | null>(null);
@@ -152,23 +152,19 @@ export function InquiryDetailModal({ open, onOpenChange, leadId, userEmail }: In
 
     const fetchData = async () => {
       try {
-        // Fetch lead details — RLS ensures only the seeker's own leads via email match
-        const { data: leadData, error: leadError } = await supabase
-          .from("leads")
-          .select(
-            "id, name, email, phone, created_at, status, urgency, preferred_contact, level_of_care, insurance_type, primary_substance, message, location_city_state, location_zip, who_seeking_help, age_range, gender, provider_responded_at, provider_response_status, facility_id, source"
-          )
-          .eq("id", leadId)
-          .eq("email", userEmail.trim().toLowerCase())
-          .maybeSingle();
+        // Use RPC function instead of direct table query (leads table has no seeker SELECT RLS)
+        const { data: leadRows, error: leadError } = await supabase.rpc("get_seeker_lead_detail", {
+          p_lead_id: leadId,
+        });
 
         if (leadError) throw leadError;
+        const leadData = leadRows?.[0] ?? null;
         if (!leadData) {
           setError("Inquiry not found.");
           setIsLoading(false);
           return;
         }
-        setLead(leadData);
+        setLead(leadData as LeadDetail);
 
         // Fetch facility info
         if (leadData.facility_id) {
@@ -180,28 +176,22 @@ export function InquiryDetailModal({ open, onOpenChange, leadId, userEmail }: In
 
           if (facilityData) setFacility(facilityData);
 
-          // Check if any provider has unlocked this lead and left notes
-          const { data: unlockData } = await supabase
-            .from("lead_unlocks")
-            .select("unlocked_at, facility_id")
-            .eq("lead_id", leadId)
-            .order("unlocked_at", { ascending: false })
-            .limit(1);
+          // Check if provider has unlocked this lead (via RPC)
+          const { data: unlockData } = await supabase.rpc("get_seeker_lead_unlock_info", {
+            p_lead_id: leadId,
+          });
 
           if (unlockData && unlockData.length > 0) {
-            // Get notes left by provider
-            const { data: notesData } = await supabase
-              .from("lead_notes")
-              .select("note, created_at")
-              .eq("lead_id", leadId)
-              .order("created_at", { ascending: true })
-              .limit(50);
+            // Get notes left by provider (via RPC)
+            const { data: notesData } = await supabase.rpc("get_seeker_lead_notes", {
+              p_lead_id: leadId,
+            });
 
             setProviderResponse({
               unlocked_at: unlockData[0].unlocked_at,
               facility_name: facilityData?.name || "Treatment Center",
               facility_slug: facilityData?.slug || null,
-              notes: (notesData || []).map((n) => n.note),
+              notes: (notesData || []).map((n: any) => n.note),
             });
           }
         }
@@ -214,7 +204,7 @@ export function InquiryDetailModal({ open, onOpenChange, leadId, userEmail }: In
     };
 
     fetchData();
-  }, [open, leadId, userEmail]);
+  }, [open, leadId]);
 
   const statusInfo = lead ? getStatusInfo(lead.status) : null;
   const StatusIcon = statusInfo?.icon || FileText;
@@ -265,14 +255,14 @@ export function InquiryDetailModal({ open, onOpenChange, leadId, userEmail }: In
                         {facility.logo_url && !logoError ? (
                           <img
                             src={facility.logo_url}
-                            alt={facility.name}
+                            alt={`${facility.name} logo`}
                             className="h-full w-full object-contain p-1 bg-white"
                             onError={() => setLogoError(true)}
                           />
                         ) : (
                           <img
                             src={facilityPlaceholder}
-                            alt={facility.name}
+                            alt={`${facility.name} placeholder`}
                             className="h-full w-full object-cover"
                           />
                         )}
