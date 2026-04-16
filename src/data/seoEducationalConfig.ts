@@ -167,27 +167,8 @@ export const whatIsPages: EducationalPageConfig[] = [
       { question: "What should I pack for residential treatment?", answer: "Essentials include comfortable clothing for 1-2 weeks (laundry is available), personal hygiene items, any prescribed medications in original containers, health insurance information, a journal or notebook, and comfortable shoes for walking/exercise. Facilities typically provide bedding and towels." },
     ],
   },
-  {
-    slug: "what-is-intensive-outpatient",
-    title: "What Is Intensive Outpatient Treatment?",
-    metaTitle: "What Is Intensive Outpatient (IOP)? Complete Guide | RehabLookup",
-    metaDescription: "Comprehensive guide to intensive outpatient treatment for addiction. Learn the schedule, what to expect, costs, and how IOP compares to other treatment levels.",
-    heroSubtitle: "Flexible, structured treatment that allows you to heal while maintaining your daily responsibilities and routines.",
-    filterKeys: ["intensive outpatient", "IOP", "outpatient treatment", "flexible rehab"],
-    conditionName: "Intensive Outpatient Treatment",
-    introContent: "Intensive Outpatient Treatment (IOT/IOP) delivers structured addiction care without requiring overnight stays, allowing participants to maintain work, school, and family responsibilities while receiving evidence-based treatment. With 9-20 hours of weekly programming spread across 3-5 sessions, IOP provides the clinical foundation needed for recovery in a flexible format that fits real life.",
-    sections: [
-      { heading: "IOP Schedule and Structure", content: "Typical IOP schedules offer morning (9am-12pm) or evening (6-9pm) sessions, 3-5 days per week. Sessions include group therapy, individual counseling, psychoeducation, skills training, and case management. Some programs offer weekend sessions. The flexibility allows patients to work, attend school, or manage family obligations during non-session hours." },
-      { heading: "IOP as Part of a Treatment Continuum", content: "IOP typically serves two roles: as a step-down from inpatient or PHP (providing continued structure while reintegrating into daily life), or as an initial treatment level for mild-moderate addiction with stable living situations. Treatment intensity gradually decreases over 8-16 weeks as patients build recovery skills and demonstrate stability." },
-    ],
-    whatToExpect: ["9-20 hours of weekly programming", "Morning or evening session options", "Group therapy and individual counseling", "Regular drug screening", "Psychiatric medication management when needed", "Gradual intensity reduction over 8-16 weeks"],
-    benefits: ["Maintain work, school, and family life", "Apply recovery skills in real-time", "Lower cost than residential programs", "Evening and weekend options available", "Smooth transition from higher care levels", "Strong evidence base for effectiveness"],
-    faqs: [
-      { question: "Is IOP enough for serious addiction?", answer: "IOP alone may not be sufficient for severe addiction, active withdrawal, unstable living situations, or active psychosis. However, IOP combined with sober living, MAT, and community support can effectively treat moderate addiction. Your clinician will recommend the appropriate level based on assessment." },
-      { question: "How much does IOP cost?", answer: "IOP programs typically cost $3,000-$10,000 for the full program, significantly less than residential treatment. Most insurance plans cover IOP. Medicaid and Medicare provide coverage. Some programs offer sliding-scale fees for uninsured patients." },
-      { question: "Can I attend IOP while on MAT?", answer: "Absolutely. MAT and IOP complement each other well — medication addresses the biological component while IOP provides behavioral therapy, skills training, and peer support. Many patients successfully combine MAT with IOP for comprehensive outpatient treatment." },
-    ],
-  },
+  // NOTE: "what-is-intensive-outpatient" removed — duplicate of "what-is-iop" above.
+  // Route /what-is-intensive-outpatient redirects to /what-is-iop via App.tsx.
 ];
 
 export const withdrawalSignsPages: EducationalPageConfig[] = [
