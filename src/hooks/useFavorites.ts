@@ -75,8 +75,6 @@ export function useFavorites() {
       }
       
       isSyncingRef.current = true;
-      console.log('[useFavorites] Syncing favorites for user:', user.id);
-
       setIsLoading(true);
 
       // Fetch user's favorites from database
@@ -88,10 +86,9 @@ export function useFavorites() {
       if (error) {
         console.error('[useFavorites] Error fetching favorites:', error);
         setIsLoading(false);
+        isSyncingRef.current = false;
         return;
       }
-      
-      console.log('[useFavorites] Loaded', dbFavorites?.length || 0, 'favorites from DB');
 
       const dbFavoriteIds = dbFavorites?.map(f => f.facility_id) || [];
       
