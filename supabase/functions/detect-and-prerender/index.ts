@@ -94,6 +94,16 @@ const SEO_PATTERN_ROUTES = [
   '/us-rehab',
   '/providers/resources/',
   '/provider-guides/',
+  '/best-rehab-centers-in-',
+  '/first-responders-rehab/',
+  '/mountain-rehab-programs/',
+  '/ptsd-and-addiction-treatment/',
+  '/bipolar-and-addiction-treatment/',
+  '/opioid-addiction-treatment/',
+  '/alcohol-addiction-treatment/',
+  '/prescription-drug-rehab/',
+  '/benzodiazepine-addiction-treatment/',
+  '/kratom-addiction-treatment/',
 ];
 
 // Near-me landing pages
