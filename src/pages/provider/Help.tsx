@@ -182,7 +182,25 @@ export default function ProviderHelpPage() {
   const [contactMessage, setContactMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showAllTickets, setShowAllTickets] = useState(false);
   const lastSubmitRef = useRef<number>(0);
+
+  // Fetch user's submitted tickets
+  const { data: myTickets = [], isLoading: loadingTickets, refetch: refetchTickets } = useQuery({
+    queryKey: ["my-support-tickets"],
+    queryFn: async () => {
+      const session = await getCachedSession();
+      if (!session?.user) return [];
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("id, subject, category, status, priority, created_at, resolution_notes, resolved_at")
+        .eq("sender_user_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) { console.error("Error fetching tickets:", error); return []; }
+      return data || [];
+    },
+  });
 
   const trimmedSubject = contactSubject.trim();
   const trimmedMessage = contactMessage.trim();
