@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
-import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin, Settings, Video } from "lucide-react";
+import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin, Settings, Video, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +43,41 @@ interface SeekerProfile {
   zipcode: string | null;
   city: string | null;
   state: string | null;
+}
+
+function PasswordStrengthBar({ password }: { password: string }) {
+  const strength = useMemo(() => {
+    if (!password) return { score: 0, label: "", color: "" };
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 1) return { score: 1, label: "Weak", color: "bg-destructive" };
+    if (score <= 2) return { score: 2, label: "Fair", color: "bg-warning" };
+    if (score <= 3) return { score: 3, label: "Good", color: "bg-primary" };
+    return { score: 4, label: "Strong", color: "bg-success" };
+  }, [password]);
+
+  if (!password) return null;
+
+  return (
+    <div className="space-y-1">
+      <div className="flex gap-1">
+        {[1, 2, 3, 4].map(i => (
+          <div
+            key={i}
+            className={`h-1.5 flex-1 rounded-full transition-colors ${i <= strength.score ? strength.color : "bg-muted"}`}
+          />
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {strength.label} — use 8+ characters with uppercase, numbers, and symbols
+      </p>
+    </div>
+  );
 }
 
 export default function SeekerSettings() {
@@ -1045,6 +1080,7 @@ export default function SeekerSettings() {
                       {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  <PasswordStrengthBar password={newPassword} />
                 </div>
 
                 <div className="space-y-2">
@@ -1066,9 +1102,9 @@ export default function SeekerSettings() {
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Password must be at least 8 characters
-                  </p>
+                  {confirmPassword && confirmPassword !== newPassword && (
+                    <p className="text-xs text-destructive">Passwords don't match</p>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
