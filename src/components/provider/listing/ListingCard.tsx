@@ -106,7 +106,7 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
     queryFn: async () => {
       const { count, error } = await supabase
         .from('leads')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('facility_id', facility.id);
       
       if (error) throw error;

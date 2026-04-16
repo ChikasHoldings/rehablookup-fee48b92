@@ -366,7 +366,7 @@ export function FacilityImageUpload({
                     : `Add images (${currentImages.length}/${maxImages})`}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  PNG, JPG, or WebP up to 5MB
+                  PNG, JPG, or WebP up to 10MB
                 </span>
               </>
             )}
