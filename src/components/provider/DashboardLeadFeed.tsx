@@ -216,6 +216,7 @@ function UnlockedLeadRow({
                 className="h-7 text-xs gap-1.5 border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
                 onClick={(e) => {
                   e.stopPropagation();
+                  trackContact(lead.id, lead.facility_id, "call");
                   window.open(`tel:${lead.phone}`, "_self");
                 }}
               >
@@ -230,6 +231,7 @@ function UnlockedLeadRow({
                 className="h-7 text-xs gap-1.5 border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30"
                 onClick={(e) => {
                   e.stopPropagation();
+                  trackContact(lead.id, lead.facility_id, "email");
                   window.open(`mailto:${lead.email}`, "_blank");
                 }}
               >
