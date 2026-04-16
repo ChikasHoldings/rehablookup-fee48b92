@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 
 export interface SearchResult {
   id: string;
-  type: "lead" | "page";
+  type: "lead" | "page" | "placement" | "listing";
   title: string;
   subtitle?: string;
   url: string;
@@ -13,7 +14,7 @@ export interface SearchResult {
 
 const NAVIGATION_PAGES: SearchResult[] = [
   { id: "dashboard", type: "page", title: "Dashboard", subtitle: "Overview & statistics", url: "/provider/dashboard" },
-  { id: "listing", type: "page", title: "My Listing", subtitle: "Edit facility information", url: "/provider/listing" },
+  { id: "listing", type: "page", title: "My Listings", subtitle: "Edit facility information", url: "/provider/listings" },
   { id: "inquiries", type: "page", title: "Inquiries", subtitle: "View all inquiries", url: "/provider/inquiries" },
   { id: "credits", type: "page", title: "Credits", subtitle: "Purchase & manage credits", url: "/provider/billing?purchase_credits=true" },
   { id: "unlock-history", type: "page", title: "Unlock History", subtitle: "View unlocked leads", url: "/provider/settings?tab=unlock-history" },
@@ -21,12 +22,14 @@ const NAVIGATION_PAGES: SearchResult[] = [
   { id: "analytics", type: "page", title: "Analytics", subtitle: "Performance metrics", url: "/provider/analytics" },
   { id: "settings", type: "page", title: "Settings", subtitle: "Account preferences", url: "/provider/settings" },
   { id: "notifications", type: "page", title: "Notifications", subtitle: "View all notifications", url: "/provider/notifications" },
+  { id: "reviews", type: "page", title: "Reviews", subtitle: "Manage facility reviews", url: "/provider/reviews" },
+  { id: "placement-network", type: "page", title: "Placement Network", subtitle: "Manage placements & tours", url: "/provider/placement-network" },
+  { id: "billing", type: "page", title: "Billing", subtitle: "Credits, payments & invoices", url: "/provider/billing" },
 ];
 
 export function useProviderSearch(query: string, facilityId?: string) {
   const [debouncedQuery, setDebouncedQuery] = useState(query);
 
-  // Proper debounce with useEffect
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(query);
@@ -39,16 +42,12 @@ export function useProviderSearch(query: string, facilityId?: string) {
     queryKey: ["provider-search-leads", facilityId],
     queryFn: async () => {
       if (!facilityId) return [];
-      
-      // Use leads_provider_view instead of leads table directly
-      // (RLS on leads requires unlock, which would hide new leads from search)
       const { data, error } = await supabase
         .from("leads_provider_view")
         .select("id, name, email, phone, status, created_at, message, location_city_state")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(100);
-
       if (error) throw error;
       return data || [];
     },
@@ -56,23 +55,60 @@ export function useProviderSearch(query: string, facilityId?: string) {
     staleTime: 60 * 1000,
   });
 
+  // Fetch placements (concierge introductions) for search
+  const { data: placements = [], isLoading: placementsLoading } = useQuery({
+    queryKey: ["provider-search-placements", facilityId],
+    queryFn: async () => {
+      if (!facilityId) return [];
+      const { data, error } = await supabase
+        .from("concierge_introductions")
+        .select("id, inquiry_id, provider_response, created_at, concierge_inquiries(user_name, status, level_of_care)")
+        .eq("facility_id", facilityId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!facilityId,
+    staleTime: 60 * 1000,
+  });
+
+  // Fetch provider's own facilities (listings) for search
+  const { data: listings = [], isLoading: listingsLoading } = useQuery({
+    queryKey: ["provider-search-listings"],
+    queryFn: async () => {
+      const session = await getCachedSession();
+      if (!session) return [];
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("id, name, city, state, status, suspended")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60 * 1000,
+  });
+
   // Normalize phone number for search (remove all non-digits)
-  const normalizePhone = (phone: string | null | undefined) => 
+  const normalizePhone = (phone: string | null | undefined) =>
     phone?.replace(/\D/g, "") || "";
 
   // Filter and format results
   const results = useMemo(() => {
     const searchTerm = debouncedQuery.toLowerCase().trim();
     const normalizedSearchTerm = searchTerm.replace(/\D/g, "");
-    
+
     if (!searchTerm) {
-      return { leads: [], pages: [], total: 0 };
+      return { leads: [], pages: [], placements: [], listings: [], total: 0 };
     }
 
     // Search leads
     const matchedLeads: SearchResult[] = leads
       .filter((lead) => {
-        const phoneMatch = normalizedSearchTerm.length >= 3 && 
+        const phoneMatch =
+          normalizedSearchTerm.length >= 3 &&
           normalizePhone(lead.phone).includes(normalizedSearchTerm);
         return (
           lead.name?.toLowerCase().includes(searchTerm) ||
@@ -91,6 +127,54 @@ export function useProviderSearch(query: string, facilityId?: string) {
         metadata: { status: lead.status, email: lead.email, phone: lead.phone, location: lead.location_city_state },
       }));
 
+    // Search placements
+    const matchedPlacements: SearchResult[] = placements
+      .filter((p) => {
+        const inquiry = p.concierge_inquiries as Record<string, unknown> | null;
+        const name = (inquiry?.user_name as string) || "";
+        const status = (inquiry?.status as string) || "";
+        const care = (inquiry?.level_of_care as string) || "";
+        return (
+          name.toLowerCase().includes(searchTerm) ||
+          status.toLowerCase().includes(searchTerm) ||
+          care.toLowerCase().includes(searchTerm)
+        );
+      })
+      .slice(0, 5)
+      .map((p) => {
+        const inquiry = p.concierge_inquiries as Record<string, unknown> | null;
+        const name = (inquiry?.user_name as string) || "Unknown";
+        const status = (inquiry?.status as string) || "new";
+        const care = (inquiry?.level_of_care as string) || "";
+        return {
+          id: p.id,
+          type: "placement" as const,
+          title: name,
+          subtitle: [care, status, p.provider_response].filter(Boolean).join(" • "),
+          url: "/provider/placement-network",
+          metadata: { status, response: p.provider_response },
+        };
+      });
+
+    // Search listings
+    const matchedListings: SearchResult[] = listings
+      .filter((l) => {
+        return (
+          l.name?.toLowerCase().includes(searchTerm) ||
+          l.city?.toLowerCase().includes(searchTerm) ||
+          l.state?.toLowerCase().includes(searchTerm)
+        );
+      })
+      .slice(0, 5)
+      .map((l) => ({
+        id: l.id,
+        type: "listing" as const,
+        title: l.name,
+        subtitle: `${l.city}, ${l.state} • ${l.suspended ? "Suspended" : l.status}`,
+        url: `/provider/listings`,
+        metadata: { status: l.status, suspended: l.suspended },
+      }));
+
     // Search pages
     const matchedPages: SearchResult[] = NAVIGATION_PAGES.filter((page) => {
       return (
@@ -102,13 +186,15 @@ export function useProviderSearch(query: string, facilityId?: string) {
     return {
       leads: matchedLeads,
       pages: matchedPages,
-      total: matchedLeads.length + matchedPages.length,
+      placements: matchedPlacements,
+      listings: matchedListings,
+      total: matchedLeads.length + matchedPages.length + matchedPlacements.length + matchedListings.length,
     };
-  }, [debouncedQuery, leads]);
+  }, [debouncedQuery, leads, placements, listings]);
 
   return {
     results,
-    isLoading: leadsLoading && !!debouncedQuery,
+    isLoading: (leadsLoading || placementsLoading || listingsLoading) && !!debouncedQuery,
     query: debouncedQuery,
   };
 }
