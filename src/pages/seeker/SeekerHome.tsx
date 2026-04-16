@@ -563,6 +563,19 @@ export default function SeekerHome() {
                   <FacilityCardSkeleton key={i} />
                 ))}
               </div>
+            ) : facilitiesError ? (
+              <Card className="p-8 text-center border-destructive/30 bg-destructive/5">
+                <div className="p-3 rounded-full bg-destructive/10 w-fit mx-auto mb-3">
+                  <MapPin className="h-6 w-6 text-destructive" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-1">Unable to load facilities</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Something went wrong. Please try again.
+                </p>
+                <Button variant="outline" onClick={() => refetch()}>
+                  Retry
+                </Button>
+              </Card>
             ) : filteredFacilities.length === 0 ? (
               <Card className="p-8 text-center border-dashed">
                 <div className="p-3 rounded-full bg-muted w-fit mx-auto mb-3">
