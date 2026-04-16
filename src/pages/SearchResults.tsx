@@ -280,7 +280,16 @@ const SearchResults = () => {
       }
       
       // Filter to include relevant results by location
-      results = results.filter((c) => facilityMatchesLocation(c, locationMatch!));
+      const locationFiltered = results.filter((c) => facilityMatchesLocation(c, locationMatch!));
+      
+      // Auto-expand: if strict location filtering yields 0 results, include nearby states
+      if (locationFiltered.length === 0 && locationMatch.stateAbbr) {
+        // Expand to include nationwide results (proximity sorting will still rank closer ones higher)
+        // Don't filter at all — let proximity sort handle ranking
+        // This prevents "no results" dead ends
+      } else {
+        results = locationFiltered;
+      }
     }
 
     // Free-text search with fuzzy/partial matching

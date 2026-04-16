@@ -142,12 +142,19 @@ export function LocationSearchInput({
     return getLocationSuggestions(value);
   }, [value, isZipcode]);
   
-  // Handle input change with zipcode detection
+  // Handle input change with zipcode detection and "near me" detection
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
     setShowSuggestions(true);
     setHighlightedIndex(-1);
+    
+    // Detect "near me" input and auto-trigger geolocation
+    const normalizedInput = newValue.trim().toLowerCase().replace(/[^a-z\s]/g, "");
+    if (normalizedInput === "near me" || normalizedInput === "nearme" || normalizedInput === "my location") {
+      handleGeolocation();
+      return;
+    }
     
     // Clear previous timeout
     if (lookupTimeout) {
@@ -165,7 +172,7 @@ export function LocationSearchInput({
     } else {
       reset();
     }
-  }, [onChange, lookup, reset, lookupTimeout]);
+  }, [onChange, lookup, reset, lookupTimeout, handleGeolocation]);
   
   // Auto-fill location when zipcode data is received
   useEffect(() => {
