@@ -22,6 +22,7 @@ interface FacilityImageUploadProps {
   currentImages: string[];
   userId: string;
   facilityId: string;
+  facilityName?: string;
   onImagesChange: (images: string[]) => void;
   maxImages?: number;
   className?: string;
