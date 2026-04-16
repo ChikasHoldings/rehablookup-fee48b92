@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v7.4.0";
+const VERSION = "v7.5.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
@@ -245,7 +245,12 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/luxury-vs-standard-rehab", priority: 0.85, changefreq: "monthly" },
   { path: "/short-term-vs-long-term-rehab", priority: 0.85, changefreq: "monthly" },
 
-  // TREATMENT HUB PAGES
+  // DECISION-STAGE & EDUCATIONAL PAGES (HIGH CONVERSION)
+  { path: "/how-to-choose-rehab", priority: 0.9, changefreq: "monthly" },
+  { path: "/what-to-expect-in-rehab", priority: 0.9, changefreq: "monthly" },
+  { path: "/how-much-does-rehab-cost", priority: 0.9, changefreq: "monthly" },
+  { path: "/rehab-for-families", priority: 0.85, changefreq: "monthly" },
+
   { path: "/alcohol-rehab-centers", priority: 0.85, changefreq: "weekly" },
   { path: "/drug-rehab-centers", priority: 0.85, changefreq: "weekly" },
   { path: "/detox-centers", priority: 0.85, changefreq: "weekly" },
@@ -1373,13 +1378,26 @@ function generateNearMeCityRoutes(): RouteEntry[] {
   const routes: RouteEntry[] = [];
   // Top near-me types for city-level pages (highest search volume)
   const topNearMeForCities = [
+    // Core
     "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
     "inpatient-rehab-near-me", "outpatient-near-me", "rehab-near-me",
     "free-rehab-near-me", "luxury-rehab-near-me", "sober-living-near-me",
     "dual-diagnosis-near-me", "fentanyl-rehab-near-me", "iop-near-me",
     "php-near-me", "mat-clinic-near-me", "affordable-rehab-near-me",
+    // Substance-specific
     "cocaine-rehab-near-me", "heroin-rehab-near-me", "opioid-rehab-near-me",
-    "meth-rehab-near-me", "benzo-rehab-near-me",
+    "meth-rehab-near-me", "benzo-rehab-near-me", "marijuana-rehab-near-me",
+    // Insurance
+    "medicaid-rehab-near-me", "medicare-rehab-near-me", "blue-cross-rehab-near-me",
+    "aetna-rehab-near-me", "cigna-rehab-near-me", "united-healthcare-rehab-near-me",
+    // Demographics
+    "womens-rehab-near-me", "mens-rehab-near-me", "teen-rehab-near-me", "veterans-rehab-near-me",
+    // Urgency (HIGH CONVERSION)
+    "emergency-rehab-near-me", "same-day-rehab-near-me", "24-7-detox-near-me", "immediate-rehab-near-me",
+    // Cost & Duration
+    "low-cost-rehab-near-me", "30-day-rehab-near-me", "90-day-rehab-near-me",
+    // Facility type
+    "faith-based-rehab-near-me", "holistic-rehab-near-me", "couples-rehab-near-me",
   ];
   for (const prefix of topNearMeForCities) {
     for (const city of MAJOR_CITIES) {
@@ -1397,7 +1415,9 @@ function generateNearMeCountyRoutes(): RouteEntry[] {
     "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
     "rehab-near-me", "inpatient-rehab-near-me", "outpatient-near-me",
     "free-rehab-near-me", "sober-living-near-me", "dual-diagnosis-near-me",
-    "mat-clinic-near-me",
+    "mat-clinic-near-me", "medicaid-rehab-near-me", "emergency-rehab-near-me",
+    "womens-rehab-near-me", "mens-rehab-near-me", "veterans-rehab-near-me",
+    "affordable-rehab-near-me", "opioid-rehab-near-me",
   ];
   for (const prefix of topNearMeForCounties) {
     for (const [stateSlug, counties] of Object.entries(STATE_COUNTIES)) {

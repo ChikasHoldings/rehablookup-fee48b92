@@ -861,6 +861,12 @@ const AppInner = () => {
              <Route path="/luxury-vs-standard-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
              <Route path="/short-term-vs-long-term-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
 
+             {/* Decision-Stage & Educational Comparison Pages */}
+             <Route path="/how-to-choose-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+             <Route path="/what-to-expect-in-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+             <Route path="/how-much-does-rehab-cost" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+             <Route path="/rehab-for-families" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
+
              {/* New Therapy Modality Pages (Batch 5) */}
              <Route path="/equine-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
              <Route path="/yoga-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
