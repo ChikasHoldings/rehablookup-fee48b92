@@ -173,6 +173,10 @@ const ProviderAccreditationPage = lazy(() => import("./pages/provider-guides/Pro
 const ProviderBillingOpsPage = lazy(() => import("./pages/provider-guides/ProviderBillingPage"));
 const ProviderFacilityDesignPage = lazy(() => import("./pages/provider-guides/ProviderFacilityDesignPage"));
 const ProviderCrisisPage = lazy(() => import("./pages/provider-guides/ProviderCrisisPage"));
+const ProviderFundingPage = lazy(() => import("./pages/provider-guides/ProviderFundingPage"));
+const ProviderLicensingPage = lazy(() => import("./pages/provider-guides/ProviderLicensingPage"));
+const ProviderBenchmarkPage = lazy(() => import("./pages/provider-guides/ProviderBenchmarkPage"));
+const ProviderOutreachPage = lazy(() => import("./pages/provider-guides/ProviderOutreachPage"));
 
 // ListYourFacilityState moved to SmartCatchAll
 
