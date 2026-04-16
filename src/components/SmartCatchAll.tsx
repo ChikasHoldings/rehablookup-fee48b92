@@ -38,6 +38,42 @@ const CITY_TREATMENT_PREFIXES = [
   "/mat-clinic-in-",
   "/iop-in-",
   "/php-in-",
+  // Expanded coverage - cost/affordability
+  "/affordable-rehab-in-",
+  "/low-cost-rehab-in-",
+  // Demographics
+  "/teen-rehab-in-",
+  "/christian-rehab-in-",
+  "/couples-rehab-in-",
+  "/executive-rehab-in-",
+  "/court-ordered-rehab-in-",
+  "/lgbtq-rehab-in-",
+  "/young-adult-rehab-in-",
+  "/seniors-rehab-in-",
+  "/first-responder-rehab-in-",
+  // Substance-specific
+  "/opioid-rehab-in-",
+  "/heroin-rehab-in-",
+  "/cocaine-rehab-in-",
+  "/meth-rehab-in-",
+  "/benzo-rehab-in-",
+  "/xanax-rehab-in-",
+  "/marijuana-rehab-in-",
+  // Insurance
+  "/medicaid-rehab-in-",
+  "/medicare-rehab-in-",
+  // Duration
+  "/long-term-rehab-in-",
+  "/short-term-rehab-in-",
+  "/30-day-rehab-in-",
+  "/60-day-rehab-in-",
+  "/90-day-rehab-in-",
+  // Urgency
+  "/emergency-rehab-in-",
+  "/same-day-rehab-in-",
+  // MAT/Clinic
+  "/suboxone-clinic-in-",
+  "/methadone-clinic-in-",
 ];
 
 /**
