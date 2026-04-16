@@ -91,6 +91,7 @@ const CityTreatmentProviderPage = lazy(() => import("./pages/provider-guides/Cit
 const CityInsuranceProviderPage = lazy(() => import("./pages/provider-guides/CityInsuranceProviderPage"));
 const CountyProviderPage = lazy(() => import("./pages/provider-guides/CountyProviderPage"));
 const CountyTreatmentProviderPage = lazy(() => import("./pages/provider-guides/CountyTreatmentProviderPage"));
+const CountyInsuranceProviderPage = lazy(() => import("./pages/provider-guides/CountyInsuranceProviderPage"));
 const ListYourFacilityCity = lazy(() => import("./pages/provider-guides/ListYourFacilityCity"));
 const TreatmentProviderPage = lazy(() => import("./pages/provider-guides/TreatmentProviderPage"));
 const StateTreatmentProviderPage = lazy(() => import("./pages/provider-guides/StateTreatmentProviderPage"));
@@ -730,6 +731,7 @@ const AppInner = () => {
              <Route path="/medicare-rehab/:stateSlug" element={<PublicRouteGuard><PaymentStatePage paymentType="medicare" /></PublicRouteGuard>} />
             
             {/* Insurance + State + City Cross Pages */}
+            <Route path="/insurance/:slug/:stateSlug/county/:countySlug" element={<PublicRouteGuard><CountyInsurancePage /></PublicRouteGuard>} />
             <Route path="/insurance/:slug/:stateSlug/:citySlug" element={<PublicRouteGuard><CityInsurancePage /></PublicRouteGuard>} />
             {/* Insurance + State Cross Pages */}
             <Route path="/insurance/:slug/:stateSlug" element={<PublicRouteGuard><InsuranceStatePage /></PublicRouteGuard>} />
@@ -1010,10 +1012,11 @@ const AppInner = () => {
 
             {/* Rehab Marketing Hub */}
             <Route path="/rehab-marketing" element={<PublicRouteGuard><RehabMarketingHub /></PublicRouteGuard>} />
+            <Route path="/rehab-marketing/:stateSlug/county/:countySlug/insurance/:insurerSlug" element={<PublicRouteGuard><CountyInsuranceProviderPage /></PublicRouteGuard>} />
             <Route path="/rehab-marketing/:stateSlug/county/:countySlug/:treatmentSlug" element={<PublicRouteGuard><CountyTreatmentProviderPage /></PublicRouteGuard>} />
             <Route path="/rehab-marketing/:stateSlug/county/:countySlug" element={<PublicRouteGuard><CountyProviderPage /></PublicRouteGuard>} />
-            <Route path="/rehab-marketing/:stateSlug/:treatmentSlug" element={<PublicRouteGuard><StateTreatmentProviderPage /></PublicRouteGuard>} />
             <Route path="/rehab-marketing/:stateSlug/insurance/:insurerSlug" element={<PublicRouteGuard><StateInsuranceProviderPage /></PublicRouteGuard>} />
+            <Route path="/rehab-marketing/:stateSlug/:treatmentSlug" element={<PublicRouteGuard><StateTreatmentProviderPage /></PublicRouteGuard>} />
 
             {/* Treatment-Specific Provider Conversion Pages */}
             <Route path="/provider-guides/get-more-detox-patients" element={<PublicRouteGuard><TreatmentProviderPage /></PublicRouteGuard>} />
