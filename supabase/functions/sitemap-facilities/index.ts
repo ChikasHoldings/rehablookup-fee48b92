@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v7.3.0";
+const VERSION = "v7.4.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
@@ -363,6 +363,14 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/how-to-help-alcoholic-family-member", priority: 0.85, changefreq: "monthly" },
   { path: "/what-to-expect-loved-one-in-rehab", priority: 0.85, changefreq: "monthly" },
   { path: "/how-to-find-rehab-for-family-member", priority: 0.85, changefreq: "monthly" },
+  { path: "/how-to-pay-for-rehab-without-insurance", priority: 0.85, changefreq: "monthly" },
+  { path: "/what-happens-after-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/how-to-choose-between-inpatient-and-outpatient", priority: 0.85, changefreq: "monthly" },
+  { path: "/recovery-support-groups-guide", priority: 0.85, changefreq: "monthly" },
+  { path: "/talking-to-your-employer-about-rehab", priority: 0.85, changefreq: "monthly" },
+  { path: "/rehab-for-seniors-guide", priority: 0.85, changefreq: "monthly" },
+  { path: "/understanding-rehab-levels-of-care", priority: 0.85, changefreq: "monthly" },
+  { path: "/addiction-and-relationships-guide", priority: 0.85, changefreq: "monthly" },
 
   // BEST REHAB IN STATE ROUNDUP PAGES (all 50 states)
   { path: "/best-rehab-centers-in-california", priority: 0.85, changefreq: "weekly" },
@@ -1360,6 +1368,47 @@ function generateStateNearMeRoutes(): RouteEntry[] {
   return routes;
 }
 
+// Near-me city-level pages: /{near-me-slug}/{stateSlug}/{citySlug}
+function generateNearMeCityRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  // Top near-me types for city-level pages (highest search volume)
+  const topNearMeForCities = [
+    "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
+    "inpatient-rehab-near-me", "outpatient-near-me", "rehab-near-me",
+    "free-rehab-near-me", "luxury-rehab-near-me", "sober-living-near-me",
+    "dual-diagnosis-near-me", "fentanyl-rehab-near-me", "iop-near-me",
+    "php-near-me", "mat-clinic-near-me", "affordable-rehab-near-me",
+    "cocaine-rehab-near-me", "heroin-rehab-near-me", "opioid-rehab-near-me",
+    "meth-rehab-near-me", "benzo-rehab-near-me",
+  ];
+  for (const prefix of topNearMeForCities) {
+    for (const city of MAJOR_CITIES) {
+      routes.push({ path: `/${prefix}/${city.state}/${city.city}`, priority: 0.65, changefreq: "weekly" });
+    }
+  }
+  return routes;
+}
+
+// Near-me county-level pages: /{near-me-slug}/{stateSlug}/county/{countySlug}
+function generateNearMeCountyRoutes(): RouteEntry[] {
+  const routes: RouteEntry[] = [];
+  // Top near-me types for county pages
+  const topNearMeForCounties = [
+    "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
+    "rehab-near-me", "inpatient-rehab-near-me", "outpatient-near-me",
+    "free-rehab-near-me", "sober-living-near-me", "dual-diagnosis-near-me",
+    "mat-clinic-near-me",
+  ];
+  for (const prefix of topNearMeForCounties) {
+    for (const [stateSlug, counties] of Object.entries(STATE_COUNTIES)) {
+      for (const countySlug of counties) {
+        routes.push({ path: `/${prefix}/${stateSlug}/county/${countySlug}`, priority: 0.55, changefreq: "weekly" });
+      }
+    }
+  }
+  return routes;
+}
+
 function generateTreatmentGeoRoutes(): RouteEntry[] {
   const routes: RouteEntry[] = [];
   for (const type of TREATMENT_TYPES_WITH_GEO) {
@@ -1468,6 +1517,8 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
     ...generateCityRoutes(),
     ...generateCountyRoutes(),
     ...generateStateNearMeRoutes(),
+    ...generateNearMeCityRoutes(),
+    ...generateNearMeCountyRoutes(),
     ...generateTreatmentGeoRoutes(),
     ...generateCityTreatmentComboRoutes(),
     ...generateStateArticleRoutes(),
