@@ -670,6 +670,18 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [hasChanges, isSaving, isAutoSaving]);
 
+  // Warn before closing tab with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasChanges]);
+
   const handleLogoChange = (images: string[]) => {
     if (facility) {
       setFacility({ ...facility, logo_url: images[0] || null });
