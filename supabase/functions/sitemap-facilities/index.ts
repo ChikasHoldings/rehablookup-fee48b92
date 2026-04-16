@@ -245,7 +245,12 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/luxury-vs-standard-rehab", priority: 0.85, changefreq: "monthly" },
   { path: "/short-term-vs-long-term-rehab", priority: 0.85, changefreq: "monthly" },
 
-  // TREATMENT HUB PAGES
+  // DECISION-STAGE & EDUCATIONAL PAGES (HIGH CONVERSION)
+  { path: "/how-to-choose-rehab", priority: 0.9, changefreq: "monthly" },
+  { path: "/what-to-expect-in-rehab", priority: 0.9, changefreq: "monthly" },
+  { path: "/how-much-does-rehab-cost", priority: 0.9, changefreq: "monthly" },
+  { path: "/rehab-for-families", priority: 0.85, changefreq: "monthly" },
+
   { path: "/alcohol-rehab-centers", priority: 0.85, changefreq: "weekly" },
   { path: "/drug-rehab-centers", priority: 0.85, changefreq: "weekly" },
   { path: "/detox-centers", priority: 0.85, changefreq: "weekly" },
