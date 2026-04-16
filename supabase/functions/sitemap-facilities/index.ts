@@ -843,10 +843,8 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/signs-of-benzo-addiction", priority: 0.85, changefreq: "monthly" },
   { path: "/signs-of-fentanyl-addiction", priority: 0.85, changefreq: "monthly" },
 
-  // TREATMENT HUB SHORT ROUTES
-  { path: "/treatment/detox", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment/dual-diagnosis", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment/inpatient-rehab", priority: 0.85, changefreq: "weekly" },
+  // TREATMENT HUB SHORT ROUTES — removed /treatment/detox, /treatment/dual-diagnosis,
+  // /treatment/inpatient-rehab as they are redirects to /treatment-types/* equivalents
 ];
 
 // Near-me types that have /:stateSlug routes
