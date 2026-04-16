@@ -1,10 +1,12 @@
-import { useState, useMemo, useRef } from "react";
-import { BarChart3, CalendarIcon, X, ChevronDown, Building2 } from "lucide-react";
+import { useState, useMemo, useRef, useCallback } from "react";
+import { BarChart3, CalendarIcon, X, ChevronDown, Building2, Download } from "lucide-react";
 import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
 import { CentralizedEngagementAnalytics } from "@/components/provider/CentralizedEngagementAnalytics";
 import { ProviderPerformanceAnalytics } from "@/components/provider/ProviderPerformanceAnalytics";
 import { ROICalculatorWidget } from "@/components/provider/ROICalculatorWidget";
 import { DATE_RANGE_PRESETS, type DateRange } from "@/hooks/useLeadAnalytics";
+import { useCentralizedEngagementAnalytics } from "@/hooks/useCentralizedEngagementAnalytics";
+import { useCentralizedLeadAnalytics } from "@/hooks/useCentralizedLeadAnalytics";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -32,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 type TabKey = "overview" | "engagement" | "leads" | "performance" | "roi";
 
@@ -55,6 +58,46 @@ export default function ProviderAnalyticsPage() {
     () => facilities.filter(f => f.status === "approved"),
     [facilities]
   );
+
+  const effectiveFacilityId = selectedFacilityId !== "all" ? selectedFacilityId : undefined;
+  const { data: engagementData } = useCentralizedEngagementAnalytics(dateRange, effectiveFacilityId);
+  const { data: leadData } = useCentralizedLeadAnalytics(dateRange, effectiveFacilityId);
+
+  const handleExportCSV = useCallback(() => {
+    const rows: string[][] = [["Metric", "Period Value", "All-Time Value"]];
+
+    if (engagementData) {
+      rows.push(["Search Appearances", String(engagementData.periodImpressions), String(engagementData.totalImpressions)]);
+      rows.push(["Profile Views", String(engagementData.periodProfileViews), String(engagementData.totalProfileViews)]);
+      rows.push(["Click to Call", String(engagementData.periodClickToCalls), String(engagementData.totalClickToCalls)]);
+      rows.push(["Website Clicks", String(engagementData.periodWebsiteClicks), String(engagementData.totalWebsiteClicks)]);
+    }
+    if (leadData) {
+      rows.push(["Total Inquiries", String(leadData.thisMonthLeads), String(leadData.allTimeLeads)]);
+      rows.push(["Unlocked", String(leadData.conversionFunnel.contacted + leadData.conversionFunnel.qualified + leadData.conversionFunnel.converted), ""]);
+      rows.push(["Converted", String(leadData.conversionFunnel.converted), ""]);
+      rows.push(["Growth Rate", `${leadData.growthRate}%`, ""]);
+    }
+
+    if (engagementData?.facilityBreakdown && engagementData.facilityBreakdown.length > 0) {
+      rows.push([]);
+      rows.push(["Facility", "Impressions", "Views", "Calls", "Website", "Inquiries"]);
+      engagementData.facilityBreakdown.forEach(f => {
+        const facilityLeads = leadData?.facilityBreakdown.find(lf => lf.facilityId === f.facilityId)?.totalLeads || 0;
+        rows.push([f.facilityName, String(f.impressions), String(f.profileViews), String(f.clickToCalls), String(f.websiteClicks), String(facilityLeads)]);
+      });
+    }
+
+    const csvContent = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `analytics-export-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Analytics exported successfully");
+  }, [engagementData, leadData]);
 
   const handlePresetSelect = (preset: typeof DATE_RANGE_PRESETS[number]) => {
     const range = preset.getRange();
@@ -271,6 +314,17 @@ export default function ProviderAnalyticsPage() {
                 <X className="h-4 w-4" />
               </Button>
             )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-9 text-sm"
+              onClick={handleExportCSV}
+              disabled={!engagementData && !leadData}
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
           </div>
         </div>
 
