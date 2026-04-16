@@ -675,6 +675,14 @@ const AppInner = () => {
              <Route path="/how-to-help-alcoholic-family-member" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
              <Route path="/what-to-expect-loved-one-in-rehab" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
              <Route path="/how-to-find-rehab-for-family-member" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/how-to-pay-for-rehab-without-insurance" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/what-happens-after-rehab" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/how-to-choose-between-inpatient-and-outpatient" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/recovery-support-groups-guide" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/talking-to-your-employer-about-rehab" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/rehab-for-seniors-guide" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/understanding-rehab-levels-of-care" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
+             <Route path="/addiction-and-relationships-guide" element={<PublicRouteGuard><SeekerGuidePage /></PublicRouteGuard>} />
 
              {/* Therapy Modality & Educational Pages */}
              <Route path="/cbt-therapy-for-addiction" element={<PublicRouteGuard><TherapyModalityPage /></PublicRouteGuard>} />
