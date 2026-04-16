@@ -160,6 +160,20 @@ export default function SeekerHome() {
     let result = allFacilities.filter((facility) => {
       const matchesType = selectedType === "all" || facility.facility_type === selectedType;
       const matchesState = selectedState === "all" || facility.state?.toLowerCase() === selectedState.toLowerCase();
+      
+      // Inline text search filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const tokens = q.split(/\s+/).filter(t => t.length > 1);
+        const haystack = `${facility.name} ${facility.city} ${facility.state} ${facility.facility_type || ''} ${facility.description || ''} ${facility.zipCode || ''}`.toLowerCase();
+        
+        if (tokens.length > 1) {
+          if (!tokens.every(token => haystack.includes(token))) return false;
+        } else if (tokens.length === 1) {
+          if (!haystack.includes(tokens[0])) return false;
+        }
+      }
+      
       return matchesType && matchesState;
     });
 
@@ -199,7 +213,7 @@ export default function SeekerHome() {
     });
 
     return result;
-  }, [allFacilities, selectedType, selectedState, sortBy, getProximityScore]);
+  }, [allFacilities, selectedType, selectedState, searchQuery, sortBy, getProximityScore]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredFacilities.length / PAGE_SIZE));
@@ -222,19 +236,21 @@ export default function SeekerHome() {
     return [...new Set(allFacilities.map(f => f.facility_type).filter(Boolean))].sort() as string[];
   }, [allFacilities]);
 
-  const activeFiltersCount = (selectedType !== "all" ? 1 : 0) + (selectedState !== "all" ? 1 : 0);
+  const activeFiltersCount = (selectedType !== "all" ? 1 : 0) + (selectedState !== "all" ? 1 : 0) + (searchQuery.trim() ? 1 : 0);
 
   const clearFilters = () => {
     setSelectedType("all");
     setSelectedState("all");
+    setSearchQuery("");
     setSortBy("proximity");
     setCurrentPage(1);
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    // Inline search filters results in real-time; form submit navigates to full search for advanced filters
     if (searchQuery.trim()) {
-      navigate(`/search-results?q=${encodeURIComponent(searchQuery)}`);
+      setCurrentPage(1);
     }
   };
 
@@ -385,15 +401,31 @@ export default function SeekerHome() {
                   <Search className="absolute left-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
                     type="text"
-                    placeholder="Search city, state, or name..."
+                    placeholder="Search city, state, ZIP, or name..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                     className="pl-9 h-10 sm:h-11 bg-background border-border/60 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
                   />
+                  {searchQuery.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => { setSearchQuery(""); setCurrentPage(1); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
-              <Button type="submit" size="default" className="h-10 sm:h-11 px-4 sm:px-5 shadow-sm">
-                <Search className="h-4 w-4" />
+              <Button
+                type="button"
+                variant="outline"
+                size="default"
+                className="h-10 sm:h-11 px-4 sm:px-5 shadow-sm gap-1.5 text-sm"
+                onClick={() => navigate(`/search-results${searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery)}` : ''}`)}
+              >
+                <ArrowRight className="h-4 w-4" />
+                <span className="hidden sm:inline">Advanced</span>
               </Button>
             </form>
             <Button

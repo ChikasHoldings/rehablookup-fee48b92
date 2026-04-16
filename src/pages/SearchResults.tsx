@@ -63,6 +63,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { getPlanPriority } from "@/lib/facilityPlanSort";
 
+// Restore user ID from localStorage to avoid getSession/getUser deadlocks
+function getStoredUserId(): string | null {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+    const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'plckxokpyiubuekvodtc';
+    const storageKey = `sb-${projectRef}-auth-token`;
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    const session = parsed?.currentSession || parsed;
+    return session?.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 const ITEMS_PER_PAGE = 12;
 
 type SortOption = "proximity" | "featured" | "rating-high" | "rating-low" | "name-asc" | "name-desc" | "reviews";
@@ -126,6 +142,7 @@ const SearchResults = () => {
   const treatment = searchParams.get("treatment") || "";
   const insurance = searchParams.get("insurance") || "";
   const type = searchParams.get("type") || "";
+  const stateParam = searchParams.get("state") || ""; // Support direct state filtering from near-me pages
   const queryParam = searchParams.get("q") || ""; // Free-text search from header/seeker
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const sortParam = (searchParams.get("sort") as SortOption) || "proximity";
@@ -152,18 +169,19 @@ const SearchResults = () => {
   const [resolvedZipData, setResolvedZipData] = useState<{ city: string; state: string; stateAbbr: string } | null>(null);
 
   // Get seeker profile location for proximity when no explicit location is searched
+  const storedUserId = getStoredUserId();
   const { data: seekerProfile } = useQuery({
-    queryKey: ["seeker-profile-location-search"],
+    queryKey: ["seeker-profile-location-search", storedUserId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!storedUserId) return null;
       const { data } = await supabase
         .from("seeker_profiles")
         .select("state, city")
-        .eq("user_id", user.id)
+        .eq("user_id", storedUserId)
         .maybeSingle();
       return data;
     },
+    enabled: !!storedUserId,
     staleTime: 1000 * 60 * 10,
   });
 
@@ -267,6 +285,15 @@ const SearchResults = () => {
   const { filteredCenters, isExpandedSearch } = useMemo(() => {
     let results = [...allCenters];
     let expanded = false;
+
+    // Direct state filter from URL param (e.g. from near-me pages: ?state=FL)
+    if (stateParam) {
+      const stateUpper = stateParam.toUpperCase();
+      results = results.filter(c => {
+        const cState = getStateAbbr(c.state)?.toUpperCase() || c.state.toUpperCase();
+        return cState === stateUpper || c.state.toLowerCase() === stateParam.toLowerCase();
+      });
+    }
 
     // Build location match from explicit location or effective fallback
     let locationMatch: LocationMatch | null = null;
@@ -503,9 +530,9 @@ const SearchResults = () => {
     }
 
     return { filteredCenters: results, isExpandedSearch: expanded };
-  }, [allCenters, location, effectiveLocation, treatment, insurance, type, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData]);
+  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData]);
 
-  const hasFilters = location || treatment || insurance || type || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
+  const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
 
   // Count active filters
@@ -547,7 +574,7 @@ const SearchResults = () => {
   };
 
   // Determine if this is a search with query params (should be noindexed)
-  const hasSearchParams = !!(location || treatment || insurance || type || queryParam || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
+  const hasSearchParams = !!(location || treatment || insurance || type || stateParam || queryParam || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
   const shouldNoindex = hasSearchParams || filteredCenters.length === 0;
 
   // Determine display title
@@ -1087,7 +1114,7 @@ const SearchResults = () => {
                     <Link to="/rehab-centers">
                       <Button className="gap-2">Browse All Centers</Button>
                     </Link>
-                    <Link to="/concierge">
+                    <Link to="/account/concierge">
                       <Button variant="secondary" className="gap-2">
                         <Heart className="h-4 w-4" />
                         Get Personalized Help
