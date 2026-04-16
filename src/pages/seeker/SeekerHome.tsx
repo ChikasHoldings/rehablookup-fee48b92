@@ -401,15 +401,31 @@ export default function SeekerHome() {
                   <Search className="absolute left-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
                     type="text"
-                    placeholder="Search city, state, or name..."
+                    placeholder="Search city, state, ZIP, or name..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                     className="pl-9 h-10 sm:h-11 bg-background border-border/60 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-sm"
                   />
+                  {searchQuery.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => { setSearchQuery(""); setCurrentPage(1); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
-              <Button type="submit" size="default" className="h-10 sm:h-11 px-4 sm:px-5 shadow-sm">
-                <Search className="h-4 w-4" />
+              <Button
+                type="button"
+                variant="outline"
+                size="default"
+                className="h-10 sm:h-11 px-4 sm:px-5 shadow-sm gap-1.5 text-sm"
+                onClick={() => navigate(`/search-results${searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery)}` : ''}`)}
+              >
+                <ArrowRight className="h-4 w-4" />
+                <span className="hidden sm:inline">Advanced</span>
               </Button>
             </form>
             <Button
