@@ -81,7 +81,7 @@ function parseNearMePath(pathname: string): {
   if (parts.length < 3) return null;
 
   const nearMeSlug = parts[0];
-  if (!NEAR_ME_SLUGS.includes(nearMeSlug)) return null;
+  if (!(NEAR_ME_SLUGS as readonly string[]).includes(nearMeSlug)) return null;
 
   // /{near-me-slug}/{stateSlug}/county/{countySlug}
   if (parts.length === 4 && parts[2] === "county") {
