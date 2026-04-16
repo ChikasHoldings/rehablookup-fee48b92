@@ -1,9 +1,8 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Wallet, TrendingDown, DollarSign, Zap, RefreshCw, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
@@ -21,15 +20,21 @@ export function DashboardCreditSpendingPanel({
   balanceCents,
   isLoading: balanceLoading,
 }: DashboardCreditSpendingPanelProps) {
+  const queryClient = useQueryClient();
+
   const { data: spending, isLoading: spendingLoading } = useQuery({
     queryKey: ["credit-spending-monthly", facilityId],
     queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return { totalSpent: 0, leadCount: 0, avgCost: 0 };
+
       const monthStart = startOfMonth(new Date()).toISOString();
 
       const { data, error } = await supabase
         .from("credit_transactions")
         .select("amount_cents, transaction_type")
-        .eq("transaction_type", "debit")
+        .eq("provider_id", session.user.id)
+        .eq("transaction_type", "unlock")
         .gte("created_at", monthStart);
 
       if (error) throw error;
@@ -41,8 +46,30 @@ export function DashboardCreditSpendingPanel({
 
       return { totalSpent, leadCount, avgCost };
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 3,
+    refetchOnWindowFocus: true,
   });
+
+  // Real-time subscription for credit changes
+  useEffect(() => {
+    if (!facilityId) return;
+    const channel = supabase
+      .channel(`credit-spending-live-${facilityId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "credit_transactions",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["credit-spending-monthly", facilityId] });
+          queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [facilityId, queryClient]);
 
   const isLoading = balanceLoading || spendingLoading;
   const balanceDollars = (balanceCents / 100).toFixed(2);
@@ -119,13 +146,13 @@ export function DashboardCreditSpendingPanel({
         {/* CTAs */}
         <div className="flex gap-2">
           <Button size="sm" className="flex-1 h-8 text-xs" asChild>
-            <Link to="/provider/credits">
+            <Link to="/provider/billing?purchase_credits=true">
               <Plus className="h-3 w-3 mr-1" />
               Top Up Credits
             </Link>
           </Button>
           <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" asChild>
-            <Link to="/provider/credits?tab=auto-reload">
+            <Link to="/provider/billing?tab=auto-reload">
               <RefreshCw className="h-3 w-3 mr-1" />
               Auto-Reload
             </Link>

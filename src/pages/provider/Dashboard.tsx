@@ -329,8 +329,34 @@ export default function ProviderDashboardPage() {
     const interval = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
       queryClient.invalidateQueries({ queryKey: ["total-leads-count", facilityId] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-kpi-strip", facilityId] });
     }, 30000);
     return () => clearInterval(interval);
+  }, [facilityId, queryClient]);
+
+  // Real-time subscription for lead unlocks — refreshes unlock counts & credit balance instantly
+  useEffect(() => {
+    if (!facilityId) return;
+    const channel = supabase
+      .channel(`unlocks-live-${facilityId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "lead_unlocks",
+          filter: `facility_id=eq.${facilityId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["unlocked-lead-ids", facilityId] });
+          queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
+          queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-kpi-strip", facilityId] });
+          queryClient.invalidateQueries({ queryKey: ["credit-spending-monthly", facilityId] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [facilityId, queryClient]);
 
   const handleLeadClick = (lead: Lead) => {
@@ -471,7 +497,6 @@ export default function ProviderDashboardPage() {
                 impressionCount={impressionCount}
                 reviewCount={reviewCount}
                 totalLeadsCount={totalLeadsCount}
-                conciergeCount={conciergeCount}
               />
             )}
 

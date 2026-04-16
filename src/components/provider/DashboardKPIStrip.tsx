@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Inbox,
-  Users,
   Eye,
   Star,
   AlertTriangle,
@@ -26,7 +25,6 @@ interface DashboardKPIStripProps {
   impressionCount?: number;
   reviewCount?: number;
   totalLeadsCount?: number;
-  conciergeCount?: number;
 }
 
 interface WeeklyKPIs {
@@ -39,7 +37,7 @@ interface WeeklyKPIs {
 // Average revenue per admission (industry avg $2,000–$10,000; using $5,000 midpoint)
 const AVG_REVENUE_PER_LEAD_CENTS = 500000; // $5,000 average admission value
 
-export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impressionCount = 0, reviewCount = 0, totalLeadsCount = 0, conciergeCount = 0 }: DashboardKPIStripProps) {
+export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impressionCount = 0, reviewCount = 0, totalLeadsCount = 0 }: DashboardKPIStripProps) {
   const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(), []);
 
   const { data: kpis, isLoading } = useQuery({
@@ -95,20 +93,26 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
 
   const effectiveSavings = proSavingsCents || monthlySavings;
 
+  const unlockedThisWeek = kpis?.unlocked ?? 0;
+  const lockedThisWeek = Math.max(0, (kpis?.received ?? 0) - unlockedThisWeek);
+
   const metrics = [
     {
-      label: "Leads",
+      label: "Total Leads",
       value: totalLeadsCount,
+      subtitle: `${unlockedThisWeek} unlocked this week`,
       icon: Inbox,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
     },
     {
-      label: "Concierge",
-      value: conciergeCount,
-      icon: Users,
-      iconBg: "bg-emerald-500/10",
-      iconColor: "text-emerald-600 dark:text-emerald-400",
+      label: "Locked",
+      value: lockedThisWeek,
+      subtitle: "awaiting unlock",
+      icon: AlertTriangle,
+      iconBg: "bg-warning/10",
+      iconColor: "text-warning",
+      highlight: lockedThisWeek > 0,
     },
     {
       label: "Impressions",
@@ -150,12 +154,17 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
                   {isLoading ? (
                     <Skeleton className="h-6 w-10 mt-0.5" />
                   ) : (
-                    <p className={cn(
-                      "text-lg sm:text-xl font-bold leading-tight tabular-nums",
-                      (m as any).highlight ? "text-destructive" : "text-foreground"
-                    )}>
-                      {typeof m.value === "number" ? m.value : m.value}
-                    </p>
+                    <>
+                      <p className={cn(
+                        "text-lg sm:text-xl font-bold leading-tight tabular-nums",
+                        (m as any).highlight ? "text-destructive" : "text-foreground"
+                      )}>
+                        {m.value}
+                      </p>
+                      {m.subtitle && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{m.subtitle}</p>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
