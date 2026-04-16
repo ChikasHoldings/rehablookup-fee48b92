@@ -831,7 +831,7 @@ Deno.serve(async (req) => {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [notificationEmail],
           subject: `New Inquiry from ${firstName} - ${facility.name}`,
-          html: getFacilityNotificationEmail(data.name, data.email, data.phone, facility.name, {
+          html: getFacilityNotificationEmail(data.name, facility.name, {
             urgency: data.urgency,
             levelOfCare: data.levelOfCare,
             insuranceType: data.insuranceType,
