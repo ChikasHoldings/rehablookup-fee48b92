@@ -321,6 +321,33 @@ export default function SeekerFacilityProfile() {
     );
   }
 
+  if (facilityError) {
+    return (
+      <div className="flex-1 py-16">
+        <div className="max-w-md mx-auto text-center px-4">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10">
+            <Building2 className="h-8 w-8 text-destructive" />
+          </div>
+          <h1 className="mb-2 font-display text-xl font-bold text-foreground">
+            Something Went Wrong
+          </h1>
+          <p className="mb-6 text-sm text-muted-foreground">
+            We couldn't load this facility. Please try again.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button variant="outline" onClick={() => refetchFacility()} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Retry
+            </Button>
+            <Button onClick={() => navigate("/account")} className="gap-2">
+              Back to Home
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!facility) {
     return (
       <div className="flex-1 py-16">
