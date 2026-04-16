@@ -78,6 +78,7 @@ export function DashboardLeadFeed({
   isLoading,
   onLeadClick,
 }: DashboardLeadFeedProps) {
+  const { trackContact } = useLeadContactTracking();
   return (
     <Card>
       <CardHeader className="p-3 sm:p-4 pb-2 border-b">
