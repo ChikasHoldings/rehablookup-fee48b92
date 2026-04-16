@@ -579,6 +579,7 @@ export default function SeekerRequests() {
           <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle className="sr-only">Send Request</DialogTitle>
+              <DialogDescription className="sr-only">Send an inquiry to a treatment facility</DialogDescription>
             </DialogHeader>
             {selectedFacility ? (
               <SeekerRequestForm
