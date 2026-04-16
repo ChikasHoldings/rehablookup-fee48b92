@@ -574,7 +574,7 @@ const SearchResults = () => {
   };
 
   // Determine if this is a search with query params (should be noindexed)
-  const hasSearchParams = !!(location || treatment || insurance || type || queryParam || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
+  const hasSearchParams = !!(location || treatment || insurance || type || stateParam || queryParam || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
   const shouldNoindex = hasSearchParams || filteredCenters.length === 0;
 
   // Determine display title
