@@ -43,7 +43,7 @@ export const FloatingHelpButton = forwardRef<HTMLAnchorElement>((_, ref) => {
       ref={ref}
       to="/concierge"
       className={cn(
-        "fixed bottom-20 left-4 z-40 flex items-center gap-2 rounded-full bg-accent px-4 py-3 text-accent-foreground shadow-lg transition-all duration-300 hover:bg-accent/90 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2",
+        "fixed bottom-[5.5rem] left-4 z-40 flex items-center gap-2 rounded-full bg-accent px-4 py-3 text-accent-foreground shadow-lg transition-all duration-300 hover:bg-accent/90 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
       )}
       style={{ marginBottom: `env(safe-area-inset-bottom, 0px)` }}

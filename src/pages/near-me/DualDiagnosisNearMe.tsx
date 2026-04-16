@@ -44,7 +44,7 @@ export default function DualDiagnosisNearMe() {
     <Layout>
       <SEO
         title={`Dual Diagnosis Treatment Near Me ${stateData ? `in ${stateData.state}` : ""} | Co-Occurring Disorders`}
-        description={`Find dual diagnosis treatment centers near you${stateData ? ` in ${stateData.state}` : ""}. Integrated care for addiction and mental health disorders at ${facilities.length}+ verified facilities.`}
+        description={`Find dual diagnosis treatment centers near you${stateData ? ` in ${stateData.state}` : ""}. Integrated care for addiction and mental health disorders at ${facilities.length > 0 ? facilities.length + "+" : "verified"} verified facilities.`}
         canonical={stateSlug ? `/dual-diagnosis-near-me/${stateSlug}` : "/dual-diagnosis-near-me"}
         keywords={[
           "dual diagnosis treatment near me",
@@ -93,7 +93,7 @@ export default function DualDiagnosisNearMe() {
             Dual Diagnosis Centers {stateData ? `in ${stateData.state}` : "Near You"}
           </h2>
           <p className="text-muted-foreground mb-8">
-            Browse {facilities.length > 0 ? `${facilities.length}+` : ""} facilities offering integrated mental health and addiction treatment.
+            Browse {facilities.length > 0 ? `${facilities.length > 0 ? facilities.length + "+" : "verified"}` : ""} facilities offering integrated mental health and addiction treatment.
           </p>
 
           {isLoading ? (

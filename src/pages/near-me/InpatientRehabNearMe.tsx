@@ -67,7 +67,7 @@ export default function InpatientRehabNearMe() {
     <Layout>
       <SEO
         title={`Inpatient Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Residential Treatment`}
-        description={`Find inpatient rehab centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length}+ residential treatment facilities offering 24/7 care, medical detox, and evidence-based therapy.`}
+        description={`Find inpatient rehab centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : "verified"} residential treatment facilities offering 24/7 care, medical detox, and evidence-based therapy.`}
         canonical={stateSlug ? `/inpatient-rehab-near-me/${stateSlug}` : "/inpatient-rehab-near-me"}
         keywords={[
           "inpatient rehab near me",
@@ -116,7 +116,7 @@ export default function InpatientRehabNearMe() {
             Inpatient Treatment Centers {stateData ? `in ${stateData.state}` : "Near You"}
           </h2>
           <p className="text-muted-foreground mb-8">
-            Browse {facilities.length > 0 ? `${facilities.length}+` : ""} residential facilities offering intensive 24/7 addiction treatment.
+            Browse {facilities.length > 0 ? `${facilities.length > 0 ? facilities.length + "+" : "verified"}` : ""} residential facilities offering intensive 24/7 addiction treatment.
           </p>
 
           {isLoading ? (

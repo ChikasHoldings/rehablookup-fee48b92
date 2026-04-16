@@ -220,7 +220,7 @@ export default function SubstanceRehabNearMe({ configSlug }: SubstanceRehabNearM
               {config.treatmentType} Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Browse {facilities.length > 0 ? `${facilities.length}+` : ""} verified facilities specializing in {config.treatmentType.toLowerCase()}.
+              Browse {facilities.length > 0 ? `${facilities.length > 0 ? facilities.length + "+" : "verified"}` : ""} verified facilities specializing in {config.treatmentType.toLowerCase()}.
             </p>
           </div>
 

@@ -67,7 +67,7 @@ export default function OutpatientNearMe() {
     <Layout>
       <SEO
         title={`Outpatient Treatment Near Me ${stateData ? `in ${stateData.state}` : ""} | IOP & PHP Programs`}
-        description={`Find outpatient addiction treatment near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length}+ IOP, PHP, and flexible outpatient programs that fit your schedule.`}
+        description={`Find outpatient addiction treatment near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : "verified"} IOP, PHP, and flexible outpatient programs that fit your schedule.`}
         canonical={stateSlug ? `/outpatient-near-me/${stateSlug}` : "/outpatient-near-me"}
         keywords={[
           "outpatient treatment near me",
@@ -117,7 +117,7 @@ export default function OutpatientNearMe() {
             Outpatient Programs {stateData ? `in ${stateData.state}` : "Near You"}
           </h2>
           <p className="text-muted-foreground mb-8">
-            Browse {facilities.length > 0 ? `${facilities.length}+` : ""} facilities offering flexible IOP, PHP, and outpatient addiction treatment.
+            Browse {facilities.length > 0 ? `${facilities.length > 0 ? facilities.length + "+" : "verified"}` : ""} facilities offering flexible IOP, PHP, and outpatient addiction treatment.
           </p>
 
           {isLoading ? (

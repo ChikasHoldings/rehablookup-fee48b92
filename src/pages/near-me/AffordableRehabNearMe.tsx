@@ -50,7 +50,7 @@ export default function AffordableRehabNearMe() {
     <Layout>
       <SEO
         title={`Affordable Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find affordable rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length}+ verified treatment facilities. Free insurance verification.`}
+        description={`Find affordable rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : "verified"} verified treatment facilities. Free insurance verification.`}
         canonical={stateSlug ? `/affordable-rehab-near-me/${stateSlug}` : "/affordable-rehab-near-me"}
         keywords={[
           "affordable rehab near me",
@@ -100,7 +100,7 @@ export default function AffordableRehabNearMe() {
               Affordable Rehab Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Browse {facilities.length > 0 ? `${facilities.length}+` : ""} verified treatment facilities offering evidence-based care.
+              Browse {facilities.length > 0 ? `${facilities.length > 0 ? facilities.length + "+" : "verified"}` : ""} verified treatment facilities offering evidence-based care.
             </p>
           </div>
 
