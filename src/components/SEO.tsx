@@ -1206,7 +1206,7 @@ export function generateSearchResultsSchema(params: {
         "@type": "SearchAction",
         target: {
           "@type": "EntryPoint",
-          urlTemplate: "https://rehablookup.com/search-results?location={search_term_string}",
+          urlTemplate: "https://rehablookup.com/rehab-centers?location={search_term_string}",
         },
         "query-input": "required name=search_term_string",
       },
