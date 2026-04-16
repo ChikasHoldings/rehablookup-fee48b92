@@ -763,6 +763,14 @@ const NEAR_ME_TYPES_WITH_STATES = [
   "rehab-near-me",
   "mat-clinic-near-me",
   "affordable-rehab-near-me",
+  "cocaine-rehab-near-me",
+  "heroin-rehab-near-me",
+  "opioid-rehab-near-me",
+  "meth-rehab-near-me",
+  "prescription-drug-rehab-near-me",
+  "benzo-rehab-near-me",
+  "xanax-rehab-near-me",
+  "kratom-rehab-near-me",
 ];
 
 // Treatment types that have state/city sub-routes
