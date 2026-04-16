@@ -1,6 +1,7 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2026-04-16 — v7.3.0 Full route sync
 # Last updated: 2026-04-13 — v7.2.0 Production launch
 # =============================================================================
 
@@ -36,6 +37,8 @@ Disallow: /concierge/intake
 Disallow: /concierge/thank-you
 Disallow: /concierge/create-password
 Disallow: /concierge/dashboard
+Disallow: /international/intake
+Disallow: /international/thank-you
 Disallow: /lp/
 Disallow: /api/
 Disallow: /functions/
@@ -308,6 +311,8 @@ Disallow: /concierge/intake
 Disallow: /concierge/thank-you
 Disallow: /concierge/create-password
 Disallow: /concierge/dashboard
+Disallow: /international/intake
+Disallow: /international/thank-you
 Disallow: /lp/
 Disallow: /api/
 Disallow: /functions/

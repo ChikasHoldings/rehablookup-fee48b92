@@ -796,6 +796,58 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/provider-guides/rehab-center-google-reviews-strategy", priority: 0.75, changefreq: "monthly" },
   { path: "/provider-guides/how-to-fill-beds-rehab-center", priority: 0.85, changefreq: "monthly" },
   { path: "/provider-guides/how-to-get-referrals-rehab-center", priority: 0.85, changefreq: "monthly" },
+
+  // BLOG
+  { path: "/blog", priority: 0.85, changefreq: "daily" },
+
+  // ADDITIONAL NEAR-ME PAGES (Batch - Duration & Urgency)
+  { path: "/24-7-detox-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/30-day-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/60-day-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/90-day-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/same-day-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/immediate-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/emergency-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/short-term-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/outpatient-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/dual-diagnosis-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/low-cost-rehab-near-me", priority: 0.9, changefreq: "weekly" },
+  { path: "/young-adult-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/seniors-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/lgbtq-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/first-responder-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/marijuana-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+
+  // INSURANCE NEAR-ME PAGES
+  { path: "/aetna-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/blue-cross-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/cigna-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/humana-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/medicare-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/tricare-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+  { path: "/united-healthcare-rehab-near-me", priority: 0.85, changefreq: "weekly" },
+
+  // INSURANCE SHORT ROUTES (aliases)
+  { path: "/insurance/aetna", priority: 0.8, changefreq: "weekly" },
+  { path: "/insurance/anthem", priority: 0.8, changefreq: "weekly" },
+  { path: "/insurance/bcbs", priority: 0.8, changefreq: "weekly" },
+  { path: "/insurance/cigna", priority: 0.8, changefreq: "weekly" },
+  { path: "/insurance/humana", priority: 0.8, changefreq: "weekly" },
+  { path: "/insurance/kaiser", priority: 0.8, changefreq: "weekly" },
+  { path: "/insurance/medicaid", priority: 0.8, changefreq: "weekly" },
+  { path: "/insurance/medicare", priority: 0.8, changefreq: "weekly" },
+  { path: "/insurance/united-healthcare", priority: 0.8, changefreq: "weekly" },
+
+  // ADDITIONAL WITHDRAWAL / SIGNS PAGES
+  { path: "/cocaine-withdrawal-symptoms", priority: 0.85, changefreq: "monthly" },
+  { path: "/fentanyl-withdrawal-symptoms", priority: 0.85, changefreq: "monthly" },
+  { path: "/signs-of-benzo-addiction", priority: 0.85, changefreq: "monthly" },
+  { path: "/signs-of-fentanyl-addiction", priority: 0.85, changefreq: "monthly" },
+
+  // TREATMENT HUB SHORT ROUTES
+  { path: "/treatment/detox", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment/dual-diagnosis", priority: 0.85, changefreq: "weekly" },
+  { path: "/treatment/inpatient-rehab", priority: 0.85, changefreq: "weekly" },
 ];
 
 // Near-me types that have /:stateSlug routes
