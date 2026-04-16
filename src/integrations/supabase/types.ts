@@ -5592,8 +5592,6 @@ export type Database = {
       leads_provider_view: {
         Row: {
           age_range: string | null
-          assigned_at: string | null
-          assignment_reason: string | null
           assignment_status: string | null
           best_time_to_call: string | null
           budget_preference: string | null
@@ -5603,7 +5601,6 @@ export type Database = {
           email: string | null
           email_verified: boolean | null
           exclusive_until: string | null
-          exclusivity: string | null
           extended_until: string | null
           facility_id: string | null
           follow_up_reminder_sent_at: string | null
@@ -5612,7 +5609,6 @@ export type Database = {
           inquiry_type: string | null
           insurance_provider: string | null
           insurance_type: string | null
-          ip_hash: string | null
           is_unlocked: boolean | null
           level_of_care: string | null
           location_city_state: string | null
@@ -5629,24 +5625,18 @@ export type Database = {
           provider_response_status: string | null
           qualification_reason: string | null
           qualified: boolean | null
-          quality_flag: string | null
           readiness_level: string | null
           redistribution_status: string | null
           relationship_to_patient: string | null
-          routing_order: number | null
-          shared_with: string[] | null
           snooze_until: string | null
           source: string | null
           special_needs: string[] | null
           status: string | null
           urgency: string | null
-          validation_status: string | null
           who_seeking_help: string | null
         }
         Insert: {
           age_range?: string | null
-          assigned_at?: string | null
-          assignment_reason?: string | null
           assignment_status?: string | null
           best_time_to_call?: string | null
           budget_preference?: string | null
@@ -5656,7 +5646,6 @@ export type Database = {
           email?: never
           email_verified?: boolean | null
           exclusive_until?: string | null
-          exclusivity?: string | null
           extended_until?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
@@ -5665,12 +5654,11 @@ export type Database = {
           inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
-          ip_hash?: string | null
           is_unlocked?: never
           level_of_care?: string | null
           location_city_state?: string | null
           location_zip?: string | null
-          message?: string | null
+          message?: never
           name?: never
           original_facility_id?: string | null
           phone?: never
@@ -5682,24 +5670,18 @@ export type Database = {
           provider_response_status?: string | null
           qualification_reason?: string | null
           qualified?: boolean | null
-          quality_flag?: string | null
           readiness_level?: string | null
           redistribution_status?: string | null
           relationship_to_patient?: string | null
-          routing_order?: number | null
-          shared_with?: string[] | null
           snooze_until?: string | null
           source?: string | null
           special_needs?: string[] | null
           status?: string | null
           urgency?: string | null
-          validation_status?: string | null
           who_seeking_help?: string | null
         }
         Update: {
           age_range?: string | null
-          assigned_at?: string | null
-          assignment_reason?: string | null
           assignment_status?: string | null
           best_time_to_call?: string | null
           budget_preference?: string | null
@@ -5709,7 +5691,6 @@ export type Database = {
           email?: never
           email_verified?: boolean | null
           exclusive_until?: string | null
-          exclusivity?: string | null
           extended_until?: string | null
           facility_id?: string | null
           follow_up_reminder_sent_at?: string | null
@@ -5718,12 +5699,11 @@ export type Database = {
           inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
-          ip_hash?: string | null
           is_unlocked?: never
           level_of_care?: string | null
           location_city_state?: string | null
           location_zip?: string | null
-          message?: string | null
+          message?: never
           name?: never
           original_facility_id?: string | null
           phone?: never
@@ -5735,18 +5715,14 @@ export type Database = {
           provider_response_status?: string | null
           qualification_reason?: string | null
           qualified?: boolean | null
-          quality_flag?: string | null
           readiness_level?: string | null
           redistribution_status?: string | null
           relationship_to_patient?: string | null
-          routing_order?: number | null
-          shared_with?: string[] | null
           snooze_until?: string | null
           source?: string | null
           special_needs?: string[] | null
           status?: string | null
           urgency?: string | null
-          validation_status?: string | null
           who_seeking_help?: string | null
         }
         Relationships: [

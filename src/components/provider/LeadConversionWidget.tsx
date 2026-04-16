@@ -40,7 +40,7 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
       // Use leads_provider_view for accurate data (RLS on leads blocks non-unlocked)
       const { data, error } = await supabase
         .from("leads_provider_view")
-        .select("id, status, created_at, assigned_at, qualified")
+        .select("id, status, created_at, provider_responded_at, qualified")
         .gte("created_at", startOfLastMonth.toISOString())
         .order("created_at", { ascending: false })
         .limit(500);
@@ -82,12 +82,12 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
       
       // Calculate response time for leads that have been contacted
       const respondedLeads = leadsList.filter(l => 
-        l.assigned_at && ["contacted", "converted", "qualified", "in_progress"].includes(l.status)
+        l.provider_responded_at && ["contacted", "converted", "qualified", "in_progress"].includes(l.status)
       );
       
       const totalResponseTime = respondedLeads.reduce((acc, lead) => {
         const created = new Date(lead.created_at);
-        const responded = new Date(lead.assigned_at!);
+        const responded = new Date(lead.provider_responded_at!);
         return acc + differenceInHours(responded, created);
       }, 0);
       
