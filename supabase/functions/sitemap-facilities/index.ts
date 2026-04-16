@@ -281,15 +281,6 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/gabapentin-addiction-treatment", priority: 0.85, changefreq: "weekly" },
   { path: "/tramadol-addiction-treatment", priority: 0.85, changefreq: "weekly" },
 
-  // COMPARISON PAGES
-  { path: "/php-vs-iop", priority: 0.85, changefreq: "monthly" },
-  { path: "/30-day-vs-90-day-rehab", priority: 0.85, changefreq: "monthly" },
-  { path: "/mat-vs-abstinence-based-rehab", priority: 0.85, changefreq: "monthly" },
-  { path: "/12-step-vs-non-12-step-rehab", priority: 0.85, changefreq: "monthly" },
-  { path: "/rehab-vs-therapy", priority: 0.85, changefreq: "monthly" },
-  { path: "/inpatient-vs-residential-treatment", priority: 0.85, changefreq: "monthly" },
-  { path: "/sober-living-vs-halfway-house", priority: 0.85, changefreq: "monthly" },
-
   // TREATMENT DURATION PAGES
   { path: "/30-day-rehab-programs", priority: 0.85, changefreq: "monthly" },
   { path: "/60-day-rehab-programs", priority: 0.85, changefreq: "monthly" },
@@ -739,6 +730,72 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/provider-guides/rehab-workplace-violence-prevention", priority: 0.75, changefreq: "monthly" },
   { path: "/provider-guides/rehab-pandemic-response-planning", priority: 0.75, changefreq: "monthly" },
   { path: "/provider-guides/rehab-behavioral-emergency-management", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER ENTREPRENEUR & STARTUP PAGES
+  { path: "/provider-guides/how-to-open-drug-rehab-center", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-center-business-plan-template", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/how-to-start-sober-living-home", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/how-to-start-mat-clinic", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-center-succession-planning", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER SPECIALIZED MARKET PAGES
+  { path: "/provider-guides/tricare-va-rehab-certification", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/managed-care-contracting-rehab", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/treatment-center-business-development", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-center-quality-reporting-hedis", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-center-dei-cultural-competency", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER INSURANCE & REVENUE OPS PAGES
+  { path: "/provider-guides/how-to-bill-suboxone-mat-treatment", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-out-of-network-reimbursement-guide", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-workers-compensation-treatment", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-center-joint-venture-partnerships", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/medicaid-rehab-billing-reimbursement", priority: 0.8, changefreq: "monthly" },
+
+  // PROVIDER WORKFORCE & CLINICAL DEVELOPMENT PAGES
+  { path: "/provider-guides/how-to-hire-clinical-director-rehab", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-counselor-recruitment-retention", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-group-therapy-curriculum-development", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-trauma-informed-care-implementation", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-continuing-education-staff-development", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER GOVERNMENT & CONTRACT PAGES
+  { path: "/provider-guides/va-community-care-provider-rehab", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/drug-court-referral-partnerships-rehab", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/state-block-grant-funding-rehab", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/eap-corporate-wellness-rehab-partnerships", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER BRANDING & REPUTATION PAGES
+  { path: "/provider-guides/rehab-reputation-crisis-management", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-social-media-content-strategy", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-google-business-profile-optimization", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-public-relations-media-strategy", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-video-testimonial-production", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER FUNDING & LICENSING PAGES
+  { path: "/provider-guides/samhsa-grant-funding-rehab-center", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/sba-loans-rehab-center-financing", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/opioid-settlement-funding-treatment-centers", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-center-private-equity-investment", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/state-licensing-requirements-rehab-center", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/medicare-certification-rehab-center", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/legitscript-certification-rehab", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/hipaa-compliance-rehab-center-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/carf-vs-joint-commission-rehab-accreditation", priority: 0.75, changefreq: "monthly" },
+
+  // PROVIDER BENCHMARK & OUTREACH PAGES
+  { path: "/provider-guides/rehab-center-profitability-benchmarks", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-center-kpi-dashboard-metrics", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-center-for-sale-ma-guide", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/addiction-treatment-industry-trends-2026", priority: 0.8, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-community-outreach-strategy", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-interventionist-referral-partnerships", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-competitor-analysis-framework", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-admissions-call-center-training", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-student-athlete-treatment-programs", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/rehab-center-google-reviews-strategy", priority: 0.75, changefreq: "monthly" },
+  { path: "/provider-guides/how-to-fill-beds-rehab-center", priority: 0.85, changefreq: "monthly" },
+  { path: "/provider-guides/how-to-get-referrals-rehab-center", priority: 0.85, changefreq: "monthly" },
 ];
 
 // Near-me types that have /:stateSlug routes
