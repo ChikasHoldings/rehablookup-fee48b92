@@ -1173,7 +1173,7 @@ export default function ProviderSettingsPage() {
                     variant="outline" 
                     size="sm"
                     onClick={handleUpdatePassword}
-                    disabled={isUpdatingPassword || !newPassword || !confirmPassword}
+                    disabled={isUpdatingPassword || !currentPassword || !newPassword || !confirmPassword}
                     className="gap-2"
                   >
                     {isUpdatingPassword ? (
