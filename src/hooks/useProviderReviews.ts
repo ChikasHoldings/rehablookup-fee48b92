@@ -136,12 +136,13 @@ export function useProviderReviews() {
         
         const displayName = storedName || builtName || null;
         const facilityInfo = facilityMap.get(review.facility_id);
+        const safeName = displayName || '';
         
         return {
           ...review,
           disputed: review.disputed || false,
-          user_display_name: displayName,
-          reviewer_first_name: firstName || displayName.charAt(0),
+          user_display_name: displayName || 'Anonymous',
+          reviewer_first_name: firstName || safeName.charAt(0) || 'A',
           reviewer_last_initial: lastInitial || '',
           reviewer_city: profile?.city || null,
           reviewer_state: profile?.state || null,
