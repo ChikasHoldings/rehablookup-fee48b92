@@ -213,7 +213,7 @@ export default function SeekerHome() {
     });
 
     return result;
-  }, [allFacilities, selectedType, selectedState, sortBy, getProximityScore]);
+  }, [allFacilities, selectedType, selectedState, searchQuery, sortBy, getProximityScore]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredFacilities.length / PAGE_SIZE));
