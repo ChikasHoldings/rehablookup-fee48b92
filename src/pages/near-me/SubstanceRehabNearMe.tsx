@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
+import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { NearMeHero } from "@/components/seo/NearMeHero";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
@@ -162,7 +163,7 @@ export default function SubstanceRehabNearMe({ configSlug }: SubstanceRehabNearM
       }))
     : config.faqs;
 
-  const structuredData = [
+  const structuredData: object[] = [
     generateNearMeSchema({
       serviceType: config.serviceType,
       location: stateData
@@ -170,7 +171,9 @@ export default function SubstanceRehabNearMe({ configSlug }: SubstanceRehabNearM
         : { state: "United States", stateAbbr: "US" },
       facilityCount: facilities.length,
     }),
-    {
+  ];
+  if (shouldEmitFAQSchema(faqs)) {
+    structuredData.push({
       "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity: faqs.map((faq) => ({
@@ -178,8 +181,8 @@ export default function SubstanceRehabNearMe({ configSlug }: SubstanceRehabNearM
         name: faq.question,
         acceptedAnswer: { "@type": "Answer", text: faq.answer },
       })),
-    },
-  ];
+    });
+  }
 
   return (
     <Layout>

@@ -4,6 +4,7 @@ import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { costInsurancePages } from "@/data/seoPageConfig";
+import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 
 export default function CostInsurancePage() {
   const location = useLocation();
@@ -29,7 +30,7 @@ export default function CostInsurancePage() {
     return <Navigate to="/404" replace />;
   }
 
-  const structuredData = [
+  const structuredData: object[] = [
     {
       "@context": "https://schema.org",
       "@type": "Article",
@@ -41,15 +42,6 @@ export default function CostInsurancePage() {
     },
     {
       "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: config.faqs.map((faq) => ({
-        "@type": "Question",
-        name: faq.question,
-        acceptedAnswer: { "@type": "Answer", text: faq.answer },
-      })),
-    },
-    {
-      "@context": "https://schema.org",
       "@type": "MedicalWebPage",
       name: config.title,
       description: config.metaDescription,
@@ -58,6 +50,17 @@ export default function CostInsurancePage() {
       lastReviewed: new Date().toISOString().split("T")[0],
     },
   ];
+  if (shouldEmitFAQSchema(config.faqs)) {
+    structuredData.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: config.faqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: { "@type": "Answer", text: faq.answer },
+      })),
+    });
+  }
 
   return (
     <SEOLandingTemplate
