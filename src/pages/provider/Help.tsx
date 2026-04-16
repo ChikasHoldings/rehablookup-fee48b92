@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { 
   HelpCircle, 
   MessageSquare, 
@@ -16,13 +17,18 @@ import {
   CreditCard,
   Crown,
   Users,
-  BarChart3
+  BarChart3,
+  Ticket,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -38,7 +44,9 @@ import {
 } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 
 const SUBJECT_MAX = 200;
 const MESSAGE_MAX = 5000;
@@ -174,7 +182,25 @@ export default function ProviderHelpPage() {
   const [contactMessage, setContactMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showAllTickets, setShowAllTickets] = useState(false);
   const lastSubmitRef = useRef<number>(0);
+
+  // Fetch user's submitted tickets
+  const { data: myTickets = [], isLoading: loadingTickets, refetch: refetchTickets } = useQuery({
+    queryKey: ["my-support-tickets"],
+    queryFn: async () => {
+      const session = await getCachedSession();
+      if (!session?.user) return [];
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("id, subject, category, status, priority, created_at, resolution_notes, resolved_at")
+        .eq("sender_user_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) { console.error("Error fetching tickets:", error); return []; }
+      return data || [];
+    },
+  });
 
   const trimmedSubject = contactSubject.trim();
   const trimmedMessage = contactMessage.trim();
@@ -226,7 +252,8 @@ export default function ProviderHelpPage() {
       setContactSubject("");
       setContactCategory("");
       setContactMessage("");
-      
+      refetchTickets();
+
       setTimeout(() => setSubmitted(false), 8000);
     } catch (error) {
       console.error("Error submitting support request:", error);
@@ -453,6 +480,92 @@ export default function ProviderHelpPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* My Support Tickets */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Ticket className="h-5 w-5 text-primary" />
+                  My Support Tickets
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Track the status of your submitted requests
+                </CardDescription>
+              </div>
+              {myTickets.length > 0 && (
+                <Badge variant="secondary" className="text-xs">{myTickets.length}</Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {loadingTickets ? (
+              <div className="space-y-3">
+                {[1, 2].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+              </div>
+            ) : myTickets.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Ticket className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No tickets submitted yet</p>
+                <p className="text-xs mt-1">Use the contact form above to reach our team</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(showAllTickets ? myTickets : myTickets.slice(0, 3)).map((ticket) => {
+                  const statusConfig: Record<string, { label: string; className: string }> = {
+                    new: { label: "Submitted", className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
+                    open: { label: "In Review", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
+                    in_progress: { label: "In Progress", className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" },
+                    resolved: { label: "Resolved", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" },
+                    closed: { label: "Closed", className: "bg-muted text-muted-foreground" },
+                  };
+                  const st = statusConfig[ticket.status] || statusConfig.new;
+
+                  return (
+                    <div key={ticket.id} className="p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-medium truncate">{ticket.subject || "No subject"}</p>
+                            <Badge variant="secondary" className={cn("text-xs shrink-0", st.className)}>
+                              {st.label}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                            <span>{ticket.category}</span>
+                            <span>•</span>
+                            <span>{formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true })}</span>
+                          </div>
+                          {ticket.status === "resolved" && ticket.resolution_notes && (
+                            <p className="text-xs text-muted-foreground mt-2 p-2 rounded bg-muted/50 border border-border/50">
+                              <span className="font-medium text-foreground">Resolution: </span>
+                              {ticket.resolution_notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {myTickets.length > 3 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-muted-foreground gap-1.5"
+                    onClick={() => setShowAllTickets(!showAllTickets)}
+                  >
+                    {showAllTickets ? (
+                      <><ChevronUp className="h-3.5 w-3.5" /> Show less</>
+                    ) : (
+                      <><ChevronDown className="h-3.5 w-3.5" /> Show all {myTickets.length} tickets</>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
