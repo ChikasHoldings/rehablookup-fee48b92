@@ -83,6 +83,35 @@ export function useProviderCredits(facilityId?: string) {
     retry: 2,
   });
 
+  // Real-time subscription: instantly refresh on any credit_transactions or provider_credits change
+  useEffect(() => {
+    const session_promise = getCachedSession();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    session_promise.then((session) => {
+      if (!session) return;
+      const userId = session.user.id;
+
+      channel = supabase
+        .channel(`billing-realtime-${userId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "credit_transactions", filter: `provider_id=eq.${userId}` },
+          () => { queryClient.invalidateQueries({ queryKey: ["provider-credits"] }); }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "provider_credits", filter: `provider_id=eq.${userId}` },
+          () => { queryClient.invalidateQueries({ queryKey: ["provider-credits"] }); }
+        )
+        .subscribe();
+    });
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   // Track previous balance to detect when it drops below threshold
   const prevBalanceRef = useRef<number | null>(null);
   const hasWarnedRef = useRef(false);
