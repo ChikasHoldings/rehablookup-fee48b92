@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
@@ -8,7 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Facility } from "../ProviderListItem";
 
 interface ProviderCredentialsTabProps {
@@ -19,6 +31,8 @@ interface ProviderCredentialsTabProps {
 export function ProviderCredentialsTab({ provider, providerFacilities }: ProviderCredentialsTabProps) {
   const queryClient = useQueryClient();
   const facilityIds = providerFacilities?.map((f) => f.id) || [provider.id];
+  const [rejectDocId, setRejectDocId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const { data: accreditations, refetch: refetchAccreditations } = useQuery({
     queryKey: ["admin-provider-accreditations", provider.user_id, facilityIds],
@@ -60,6 +74,22 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
     onSuccess: () => { refetchAccreditations(); toast.success("Accreditation updated"); },
     onError: () => toast.error("Failed to update"),
   });
+
+  const handleRejectDocument = async () => {
+    if (!rejectDocId || !rejectReason.trim()) return;
+    const { error } = await supabase
+      .from("facility_credential_documents")
+      .update({ status: "rejected", rejection_reason: rejectReason.trim() })
+      .eq("id", rejectDocId);
+    if (error) {
+      toast.error("Failed to reject document");
+    } else {
+      toast.success("Document rejected");
+      refetchDocuments();
+    }
+    setRejectDocId(null);
+    setRejectReason("");
+  };
 
   const facilityName = (id: string) => providerFacilities?.find((f) => f.id === id)?.name || provider.name;
   const showFacilityCol = facilityIds.length > 1;
@@ -194,13 +224,7 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
                         }}>
                           <CheckCircle className="h-3.5 w-3.5 mr-1" />Verify
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={async () => {
-                          const reason = window.prompt("Enter rejection reason:");
-                          if (reason) {
-                            const { error } = await supabase.from("facility_credential_documents").update({ status: "rejected", rejection_reason: reason }).eq("id", doc.id);
-                            if (error) toast.error("Failed"); else { toast.success("Rejected"); refetchDocuments(); }
-                          }
-                        }}>
+                        <Button size="sm" variant="destructive" onClick={() => setRejectDocId(doc.id)}>
                           <XCircle className="h-3.5 w-3.5 mr-1" />Reject
                         </Button>
                       </>
@@ -219,6 +243,34 @@ export function ProviderCredentialsTab({ provider, providerFacilities }: Provide
           )}
         </CardContent>
       </Card>
+
+      {/* Reject Document Dialog */}
+      <AlertDialog open={!!rejectDocId} onOpenChange={(open) => { if (!open) { setRejectDocId(null); setRejectReason(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Provide a reason for rejecting this credential document. The provider will see this reason.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            placeholder="Enter rejection reason..."
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            className="min-h-[80px]"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRejectDocument}
+              disabled={!rejectReason.trim()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Reject Document
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

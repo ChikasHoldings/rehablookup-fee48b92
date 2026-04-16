@@ -500,7 +500,7 @@ function NotifyClientCard({ caseData, onRefresh }: { caseData: ConciergeInquiry;
             ) : (
               <Bell className="h-4 w-4 mr-1.5" />
             )}
-            Notify Seeker
+            Notify Client
           </Button>
         </div>
       </CardContent>
