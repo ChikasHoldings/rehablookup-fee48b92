@@ -7,11 +7,12 @@ const ListYourFacilityState = lazy(() => import("@/pages/provider-guides/ListYou
 const ForProvidersState = lazy(() => import("@/pages/provider-guides/ForProvidersState"));
 const CityTreatmentPage = lazy(() => import("@/pages/seo/CityTreatmentPage"));
 const CityProviderPage = lazy(() => import("@/pages/provider-guides/CityProviderPage"));
+const CityTreatmentProviderPage = lazy(() => import("@/pages/provider-guides/CityTreatmentProviderPage"));
+const CityInsuranceProviderPage = lazy(() => import("@/pages/provider-guides/CityInsuranceProviderPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 /**
- * City+Treatment combo prefixes that use inline params (e.g., /alcohol-rehab-in-los-angeles).
- * React Router v6 can't handle partial-segment params, so we match these manually.
+ * City+Treatment combo prefixes for seeker-facing pages.
  */
 const CITY_TREATMENT_PREFIXES = [
   "/alcohol-rehab-in-",
@@ -36,10 +37,31 @@ const CITY_TREATMENT_PREFIXES = [
 ];
 
 /**
- * Smart catch-all route handler for URL patterns that use inline params
- * (e.g., /best-rehab-centers-in-california, /alcohol-rehab-in-los-angeles)
- * which React Router v6 doesn't support as partial segment params.
+ * City+Treatment provider-facing prefixes (e.g., /get-more-detox-patients-in-los-angeles).
  */
+const CITY_TREATMENT_PROVIDER_PREFIXES = [
+  "/get-more-detox-patients-in-",
+  "/get-more-residential-patients-in-",
+  "/get-more-iop-patients-in-",
+  "/get-more-php-patients-in-",
+  "/get-more-sober-living-patients-in-",
+  "/get-more-mat-patients-in-",
+  "/get-more-luxury-patients-in-",
+  "/get-more-dual-diagnosis-patients-in-",
+];
+
+/**
+ * City+Insurance provider-facing prefixes (e.g., /get-more-medicaid-patients-in-miami).
+ */
+const CITY_INSURANCE_PROVIDER_PREFIXES = [
+  "/get-more-medicaid-patients-in-",
+  "/get-more-medicare-patients-in-",
+  "/get-more-blue-cross-patients-in-",
+  "/get-more-aetna-patients-in-",
+  "/get-more-cigna-patients-in-",
+  "/get-more-united-healthcare-patients-in-",
+];
+
 export function SmartCatchAll() {
   const { pathname } = useLocation();
 
@@ -76,6 +98,28 @@ export function SmartCatchAll() {
     );
   }
 
+  // City+Treatment provider pages (e.g., /get-more-detox-patients-in-los-angeles)
+  if (CITY_TREATMENT_PROVIDER_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return (
+      <PublicRouteGuard>
+        <Suspense fallback={null}>
+          <CityTreatmentProviderPage />
+        </Suspense>
+      </PublicRouteGuard>
+    );
+  }
+
+  // City+Insurance provider pages (e.g., /get-more-medicaid-patients-in-miami)
+  if (CITY_INSURANCE_PROVIDER_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return (
+      <PublicRouteGuard>
+        <Suspense fallback={null}>
+          <CityInsuranceProviderPage />
+        </Suspense>
+      </PublicRouteGuard>
+    );
+  }
+
   // City+Treatment combo pages (e.g., /alcohol-rehab-in-los-angeles)
   if (CITY_TREATMENT_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return (
@@ -86,6 +130,7 @@ export function SmartCatchAll() {
       </PublicRouteGuard>
     );
   }
+
   // City Provider Pages (e.g., /get-more-patients-in-los-angeles-california)
   if (pathname.startsWith("/get-more-patients-in-")) {
     return (
