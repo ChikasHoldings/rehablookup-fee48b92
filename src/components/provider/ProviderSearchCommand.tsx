@@ -58,7 +58,7 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { results, isLoading } = useProviderSearch(query, facilityId);
-  const allResults = [...results.leads, ...results.pages];
+  const allResults = [...results.leads, ...results.placements, ...results.listings, ...results.pages];
 
   // Load recent searches from localStorage
   useEffect(() => {
