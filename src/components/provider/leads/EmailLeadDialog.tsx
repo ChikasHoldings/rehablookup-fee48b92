@@ -596,7 +596,7 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden border-0 shadow-2xl max-h-[95vh] h-[680px]">
+      <DialogContent className="max-w-3xl w-[95vw] sm:w-full p-0 gap-0 overflow-hidden border-0 shadow-2xl max-h-[90vh] sm:max-h-[95vh] h-[85vh] sm:h-[680px]">
         {/* Header */}
         <DialogHeader className="px-6 py-4 border-b bg-gradient-to-br from-primary/8 via-primary/4 to-transparent flex-shrink-0">
           <div className="flex items-center gap-4">
@@ -625,7 +625,7 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
         ) : (
           <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
             {/* Left Panel - Controls */}
-            <div className="lg:w-[340px] flex-shrink-0 border-r border-border/50 p-5 space-y-5 overflow-y-auto">
+            <div className="lg:w-[340px] flex-shrink-0 lg:border-r border-border/50 p-3 sm:p-5 space-y-4 sm:space-y-5 overflow-y-auto">
               {/* Recipient */}
               <div className="space-y-2">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recipient</Label>
@@ -832,8 +832,8 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
               </div>
             </div>
 
-            {/* Right Panel - Email Preview */}
-            <div className="flex-1 bg-slate-100/80 p-5 min-h-[400px] lg:min-h-0 overflow-hidden flex flex-col">
+            {/* Right Panel - Email Preview (hidden on mobile to save space, controls have priority) */}
+            <div className="hidden lg:flex flex-1 bg-slate-100/80 p-5 min-h-0 overflow-hidden flex-col">
               <div className="flex items-center gap-2 mb-3">
                 <Eye className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Preview</span>
