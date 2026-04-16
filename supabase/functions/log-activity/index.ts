@@ -18,8 +18,10 @@ function sanitizeStr(str: unknown, maxLen = 500): string {
 const allowedEventTypes = [
   "login", "logout", "password_change", "email_change", "profile_update",
   "session_start", "session_end", "settings_change", "mfa_setup", "mfa_verify",
-  "security_action", "account_action"
+  "security_action", "account_action", "session_revoked", "all_sessions_revoked"
 ];
+
+const allowedEventPrefixes = ["welcome_modal_"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -99,8 +101,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Whitelist allowed event types
-    if (!allowedEventTypes.includes(event_type)) {
+    // Whitelist allowed event types (exact match or prefix match)
+    const isAllowed = allowedEventTypes.includes(event_type) ||
+      allowedEventPrefixes.some(prefix => event_type.startsWith(prefix));
+    if (!isAllowed) {
       return new Response(JSON.stringify({ error: "Invalid event type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

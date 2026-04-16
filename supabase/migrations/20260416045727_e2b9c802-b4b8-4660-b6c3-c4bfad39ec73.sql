@@ -1,0 +1,1 @@
+UPDATE blocked_identifiers SET is_active = false WHERE identifier = '35.146.112.85' AND is_active = true;
