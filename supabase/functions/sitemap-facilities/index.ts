@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v7.5.0";
+const VERSION = "v7.6.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
@@ -1699,8 +1699,13 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
   // Deduplicate by path
   const seen = new Set<string>();
   const unique = allRoutes.filter(r => {
-    if (seen.has(r.path)) return false;
-    seen.add(r.path);
+    // Strip trailing slash for dedup
+    const clean = r.path.length > 1 && r.path.endsWith("/") ? r.path.slice(0, -1) : r.path;
+    if (seen.has(clean)) return false;
+    if (EXCLUDED_PATHS.has(clean)) return false;
+    // Skip query-string URLs (e.g. ?source=)
+    if (clean.includes("?")) return false;
+    seen.add(clean);
     return true;
   });
 
