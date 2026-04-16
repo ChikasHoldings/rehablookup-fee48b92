@@ -689,7 +689,7 @@ export default function SeekerSettings() {
                   <Avatar className="h-28 w-28 ring-4 ring-background shadow-xl">
                     <AvatarImage 
                       src={avatarUrl || undefined} 
-                      alt={displayName}
+                      alt={displayName || "Profile picture"}
                       className="object-cover"
                     />
                     <AvatarFallback className="text-2xl font-semibold bg-gradient-to-br from-primary to-primary/70 text-primary-foreground">
@@ -700,6 +700,7 @@ export default function SeekerSettings() {
                   <div 
                     onClick={handleAvatarClick}
                     className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer flex items-center justify-center"
+                    aria-label="Change profile picture"
                   >
                     {isUploadingAvatar ? (
                       <Loader2 className="h-6 w-6 text-white animate-spin" />
@@ -1066,7 +1067,7 @@ export default function SeekerSettings() {
                     </button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Password must be at least 6 characters
+                    Password must be at least 8 characters
                   </p>
                 </div>
 
