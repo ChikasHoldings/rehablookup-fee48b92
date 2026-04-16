@@ -200,7 +200,7 @@ export function SEO({
         "@type": "SearchAction",
         target: {
           "@type": "EntryPoint",
-          urlTemplate: `${SITE_URL}/search-results?location={search_term_string}`,
+          urlTemplate: `${SITE_URL}/rehab-centers?location={search_term_string}`,
         },
         "query-input": "required name=search_term_string",
       },

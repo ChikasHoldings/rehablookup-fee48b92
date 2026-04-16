@@ -1605,7 +1605,10 @@ const EXCLUDED_PATHS = new Set([
   "/blog", "/request-help", "/provider-forgot-password", "/provider-reset-password",
   "/login", "/signup", "/forgot-password", "/reset-password", "/provider-login",
   "/provider-signup", "/admin-login", "/account/concierge", "/placement-help",
-  "/lp/social", "/404",
+  "/lp/social", "/404", "/search-results",
+  // Legacy redirect routes — these redirect to /treatment-types/* equivalents
+  "/treatment/detox", "/treatment/dual-diagnosis", "/treatment/inpatient-rehab",
+  "/treatment/alcohol-rehab", "/treatment-types/dual-diagnosis",
 ]);
 
 function generateUrlEntry(
