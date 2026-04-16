@@ -883,7 +883,7 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
                           Your information was shared with {providerName} to help connect you with treatment options.
                         </p>
                         <Separator className="my-2 bg-slate-200" />
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                           <p className="text-slate-400">
                             Powered by <span className="font-medium">RehabLookup</span>
                           </p>

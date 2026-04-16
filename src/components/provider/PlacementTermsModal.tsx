@@ -92,13 +92,13 @@ export function PlacementTermsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl w-[95vw] sm:w-full h-[90vh] flex flex-col p-0 gap-0">
         {/* Header */}
-        <DialogHeader className="px-6 py-4 border-b bg-muted/30 flex-shrink-0">
+        <DialogHeader className="px-4 sm:px-6 py-3 sm:py-4 border-b bg-muted/30 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
               <Shield className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <DialogTitle className="text-xl">Placement Network Agreement</DialogTitle>
+              <DialogTitle className="text-base sm:text-xl">Placement Network Agreement</DialogTitle>
               <DialogDescription className="mt-0.5">
                 Version {TERMS_VERSION} • {isAlreadySigned ? "Signed" : "Please review carefully before accepting"}
               </DialogDescription>
