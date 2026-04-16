@@ -550,6 +550,11 @@ export default function ProviderSettingsPage() {
       return;
     }
 
+    if (!currentPassword) {
+      setPasswordError("Current password is required");
+      return;
+    }
+
     if (!newPassword || !confirmPassword) {
       setPasswordError("Please fill in all password fields");
       return;
@@ -563,6 +568,11 @@ export default function ProviderSettingsPage() {
 
     if (newPassword !== confirmPassword) {
       setPasswordError("New password and confirmation must match");
+      return;
+    }
+
+    if (newPassword === currentPassword) {
+      setPasswordError("New password must be different from current password");
       return;
     }
 
@@ -581,20 +591,36 @@ export default function ProviderSettingsPage() {
     setIsUpdatingPassword(true);
     
     try {
+      // Verify current password first
+      const session = await getCachedSession();
+      if (!session?.user?.email) {
+        setPasswordError("Session expired. Please log in again.");
+        setIsUpdatingPassword(false);
+        return;
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: session.user.email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        setPasswordError("Current password is incorrect");
+        setIsUpdatingPassword(false);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
 
       if (error) throw error;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        logActivity.mutate({
-          userId: session.user.id,
-          eventType: "password_change",
-          eventDescription: "Password was changed successfully",
-        });
-      }
+      logActivity.mutate({
+        userId: session.user.id,
+        eventType: "password_change",
+        eventDescription: "Password was changed successfully",
+      });
       
       setCurrentPassword("");
       setNewPassword("");
