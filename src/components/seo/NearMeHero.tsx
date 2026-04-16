@@ -89,17 +89,17 @@ export function NearMeHero({
 
           {/* CTAs */}
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
-            <Link to="/rehab-centers">
+            <Link to="/concierge">
               <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
                 <Heart className="h-4 w-4" />
-                Find Treatment
+                Get Matched Instantly
               </Button>
             </Link>
             
-            <Link to="/search-results">
+            <Link to="/rehab-centers">
               <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
                 <Search className="h-4 w-4" />
-                Search All Centers
+                Browse All Centers
               </Button>
             </Link>
           </div>

@@ -3,6 +3,7 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { FloatingHelpButton } from "@/components/ui/floating-help-button";
+import { StickyConversionBar } from "@/components/seo/StickyConversionBar";
 import { InternationalBanner } from "@/components/InternationalBanner";
 import { preloadPublicPages } from "@/lib/routePrefetch";
 
@@ -30,6 +31,7 @@ export function Layout({ children }: LayoutProps) {
       <MemoizedFooter />
       <BackToTop />
       <FloatingHelpButton />
+      <StickyConversionBar />
     </div>
   );
 }

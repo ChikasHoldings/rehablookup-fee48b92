@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
+import { TrustBar } from "@/components/seo/TrustBar";
+import { ConversionSection } from "@/components/seo/ConversionSection";
+import { ComparisonSection } from "@/components/seo/ComparisonSection";
 import {
   InternalLinkingSection,
   treatmentTypeLinks,
@@ -211,6 +214,9 @@ export function SEOLandingTemplate({
         </div>
       </section>
 
+      {/* Trust Bar */}
+      <TrustBar />
+
       {/* Intro Content */}
       {introContent && (
         <section className="py-10 md:py-12 bg-background">
@@ -380,6 +386,12 @@ export function SEOLandingTemplate({
           )}
         </div>
       </section>
+
+      {/* Comparison */}
+      <ComparisonSection facilities={facilities} location={heroLocation} />
+
+      {/* Conversion Section */}
+      <ConversionSection location={heroLocation} />
 
       {/* CTA Section */}
       <section className="py-12 bg-background">

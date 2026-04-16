@@ -2,6 +2,9 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
 import { NearMeHero } from "@/components/seo/NearMeHero";
+import { TrustBar } from "@/components/seo/TrustBar";
+import { ConversionSection } from "@/components/seo/ConversionSection";
+import { ComparisonSection } from "@/components/seo/ComparisonSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
@@ -123,6 +126,8 @@ export default function NearMeCountyPage() {
         facilityCount={facilities.length}
       />
 
+      <TrustBar />
+
       <section className="py-12 bg-background">
         <div className="container">
           <div className="mb-8">
@@ -189,6 +194,12 @@ export default function NearMeCountyPage() {
           </div>
         </section>
       )}
+
+      {/* Comparison */}
+      <ComparisonSection facilities={facilities} location={`${countyName}, ${stateInfo.abbreviation}`} />
+
+      {/* Conversion */}
+      <ConversionSection location={`${countyName}, ${stateInfo.abbreviation}`} />
 
       <InternalLinkingSection
         title="Related Resources"
