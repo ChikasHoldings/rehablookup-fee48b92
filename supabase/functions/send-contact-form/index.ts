@@ -176,7 +176,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       subject: `[${subjectLabel}] Contact from ${escapeHtml(name.slice(0, 50))}`,
       html: emailHtml,
       reply_to: email,
-    }, { emailType: "contact_form" };
+    }, { emailType: "contact_form" });
 
     console.log("[SEND-CONTACT-FORM] Email sent:", emailResponse);
 

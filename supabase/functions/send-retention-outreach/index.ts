@@ -407,7 +407,7 @@ Deno.serve(async (req) => {
             "List-Unsubscribe": `<https://rehablookup.com/unsubscribe?token=${unsubToken}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
-        }, { emailType: "retention_outreach" };
+        }, { emailType: "retention_outreach" });
 
         if (emailResult.error) {
           logStep("Failed to send email", { email: provider.email, error: emailResult.error.message });

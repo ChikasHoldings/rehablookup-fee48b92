@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
             "List-Unsubscribe": `<https://rehablookup.com/unsubscribe?token=${unsubToken}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
-        }, { emailType: "marketing_followup" };
+        }, { emailType: "marketing_followup" });
 
         // Mark as sent
         await supabase

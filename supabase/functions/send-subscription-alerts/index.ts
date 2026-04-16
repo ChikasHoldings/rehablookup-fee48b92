@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
                 to: [profile.email],
                 subject: `${subjectPrefix}Your ${planName} subscription renews in ${days} day${days > 1 ? "s" : ""}`,
                 html: emailHtml,
-              }, { emailType: "subscription_alert" };
+              }, { emailType: "subscription_alert" });
 
               if (!emailError) {
                 await supabaseClient.from("subscription_alerts").insert({

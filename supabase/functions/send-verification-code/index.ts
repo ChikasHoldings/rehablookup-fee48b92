@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
 </body>
 </html>
       `,
-    }, { emailType: "verification_code" };
+    }, { emailType: "verification_code" });
 
     if (emailError) {
       console.error("Failed to send verification email:", emailError);
