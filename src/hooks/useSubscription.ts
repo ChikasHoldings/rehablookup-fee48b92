@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 
 export interface SubscriptionData {
   subscribed: boolean;
@@ -60,7 +61,7 @@ export function useSubscription() {
   return useQuery({
     queryKey: ["subscription"],
     queryFn: async (): Promise<SubscriptionData> => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       
       
       

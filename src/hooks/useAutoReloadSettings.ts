@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { toast } from "sonner";
 
 export interface AutoReloadSettings {
@@ -20,7 +21,7 @@ export function useAutoReloadSettings(facilityId?: string) {
   const query = useQuery({
     queryKey: ["auto-reload-settings"],
     queryFn: async (): Promise<AutoReloadSettings | null> => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       if (!session) return null;
 
       const { data, error } = await supabase
