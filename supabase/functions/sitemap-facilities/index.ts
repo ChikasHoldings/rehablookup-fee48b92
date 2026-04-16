@@ -832,6 +832,8 @@ const CO_OCCURRING_SLUGS = [
   "anxiety-and-addiction-treatment", "depression-and-addiction-treatment",
   "ptsd-and-addiction-treatment", "bipolar-and-addiction-treatment",
   "adhd-and-addiction-treatment", "eating-disorders-and-addiction-treatment",
+  "ocd-and-addiction-treatment", "bpd-and-addiction-treatment",
+  "schizophrenia-and-addiction-treatment", "chronic-pain-and-addiction-treatment",
 ];
 
 const DURATION_SETTING_SLUGS = [
