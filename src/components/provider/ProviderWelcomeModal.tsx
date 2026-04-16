@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/sessionCache";
 import { cn } from "@/lib/utils";
 
 interface ProviderWelcomeModalProps {
