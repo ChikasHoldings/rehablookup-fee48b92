@@ -1073,6 +1073,8 @@ const AppInner = () => {
             <Route path="/seeker/signup" element={<SeekerSignup />} />
             <Route path="/signup" element={<Navigate to="/seeker/signup" replace />} />
             <Route path="/seeker/reset-password" element={<ResetPassword />} />
+            <Route path="/reset-password" element={<Navigate to="/seeker/reset-password" replace />} />
+            <Route path="/provider-reset-password" element={<Navigate to="/provider/reset-password" replace />} />
             
             {/* Seeker Panel - /account is canonical */}
             <Route path="/account" element={<SeekerShell />}>
