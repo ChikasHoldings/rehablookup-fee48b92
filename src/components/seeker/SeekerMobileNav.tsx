@@ -158,13 +158,6 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
                 );
               })}
             </div>
-            {isAuthenticated && (
-              <div className="p-4 pt-0 border-t border-border mt-2">
-                <p className="text-xs text-muted-foreground text-center py-3">
-                  Account
-                </p>
-              </div>
-            )}
           </DrawerContent>
         </Drawer>
       </div>

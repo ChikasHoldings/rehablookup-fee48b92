@@ -145,6 +145,21 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
     if (searchOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
+    if (!searchOpen) {
+      setSearchQuery("");
+      setSearchResults([]);
+    }
+  }, [searchOpen]);
+
+  // Close search on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && searchOpen) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [searchOpen]);
 
   const handleSearchSubmit = (e?: React.FormEvent | React.MouseEvent) => {

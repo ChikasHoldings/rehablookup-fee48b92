@@ -3,6 +3,7 @@ import { Camera, X, RotateCcw, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -162,6 +163,7 @@ export function CameraCaptureDialog({
             <Camera className="h-5 w-5" />
             Take Profile Photo
           </DialogTitle>
+          <DialogDescription className="sr-only">Use your camera to capture a profile photo</DialogDescription>
         </DialogHeader>
 
         <div className="relative aspect-square bg-black">
