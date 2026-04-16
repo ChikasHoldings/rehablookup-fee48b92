@@ -888,7 +888,7 @@ const AppInner = () => {
              <Route path="/what-is-dual-diagnosis" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
              <Route path="/what-is-sober-living" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
              <Route path="/what-is-residential-treatment" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
-             <Route path="/what-is-intensive-outpatient" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
+             <Route path="/what-is-intensive-outpatient" element={<Navigate to="/what-is-iop" replace />} />
 
              {/* Withdrawal & Signs Pages (Batch 3) */}
              <Route path="/alcohol-withdrawal-symptoms" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
