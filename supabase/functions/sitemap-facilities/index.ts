@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v7.5.0";
+const VERSION = "v7.6.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 const corsHeaders = {
@@ -797,8 +797,7 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/provider-guides/how-to-fill-beds-rehab-center", priority: 0.85, changefreq: "monthly" },
   { path: "/provider-guides/how-to-get-referrals-rehab-center", priority: 0.85, changefreq: "monthly" },
 
-  // BLOG
-  { path: "/blog", priority: 0.85, changefreq: "daily" },
+  // BLOG — /blog redirects to /resources, do NOT include here
 
   // ADDITIONAL NEAR-ME PAGES (Batch - Duration & Urgency)
   { path: "/24-7-detox-near-me", priority: 0.9, changefreq: "weekly" },
@@ -1603,6 +1602,14 @@ function generateCityTreatmentComboRoutes(): RouteEntry[] {
   return routes;
 }
 
+// Paths that are known redirects or disallowed — never include in sitemap
+const EXCLUDED_PATHS = new Set([
+  "/blog", "/request-help", "/provider-forgot-password", "/provider-reset-password",
+  "/login", "/signup", "/forgot-password", "/reset-password", "/provider-login",
+  "/provider-signup", "/admin-login", "/account/concierge", "/placement-help",
+  "/lp/social", "/404",
+]);
+
 function generateUrlEntry(
   path: string,
   priority: number,
@@ -1610,9 +1617,11 @@ function generateUrlEntry(
   lastmod: string,
   images?: { loc: string; title?: string }[]
 ): string {
+  // Strip trailing slash (except root "/")
+  const cleanPath = path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
   const safePriority = typeof priority === "number" && !isNaN(priority) ? priority : 0.5;
   let entry = `  <url>
-    <loc>${BASE_URL}${path}</loc>
+    <loc>${BASE_URL}${cleanPath}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>${changefreq || "weekly"}</changefreq>
     <priority>${safePriority.toFixed(2)}</priority>`;
@@ -1690,8 +1699,13 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
   // Deduplicate by path
   const seen = new Set<string>();
   const unique = allRoutes.filter(r => {
-    if (seen.has(r.path)) return false;
-    seen.add(r.path);
+    // Strip trailing slash for dedup
+    const clean = r.path.length > 1 && r.path.endsWith("/") ? r.path.slice(0, -1) : r.path;
+    if (seen.has(clean)) return false;
+    if (EXCLUDED_PATHS.has(clean)) return false;
+    // Skip query-string URLs (e.g. ?source=)
+    if (clean.includes("?")) return false;
+    seen.add(clean);
     return true;
   });
 
