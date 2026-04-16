@@ -87,6 +87,9 @@ const DurationCityPage = lazy(() => import("./pages/seo/DurationCityPage"));
 
 // Provider Conversion Pages
 const CityProviderPage = lazy(() => import("./pages/provider-guides/CityProviderPage"));
+const CityTreatmentProviderPage = lazy(() => import("./pages/provider-guides/CityTreatmentProviderPage"));
+const CityInsuranceProviderPage = lazy(() => import("./pages/provider-guides/CityInsuranceProviderPage"));
+const CountyProviderPage = lazy(() => import("./pages/provider-guides/CountyProviderPage"));
 const TreatmentProviderPage = lazy(() => import("./pages/provider-guides/TreatmentProviderPage"));
 const StateTreatmentProviderPage = lazy(() => import("./pages/provider-guides/StateTreatmentProviderPage"));
 const InsuranceProviderPage = lazy(() => import("./pages/provider-guides/InsuranceProviderPage"));
@@ -1005,6 +1008,7 @@ const AppInner = () => {
 
             {/* Rehab Marketing Hub */}
             <Route path="/rehab-marketing" element={<PublicRouteGuard><RehabMarketingHub /></PublicRouteGuard>} />
+            <Route path="/rehab-marketing/:stateSlug/county/:countySlug" element={<PublicRouteGuard><CountyProviderPage /></PublicRouteGuard>} />
             <Route path="/rehab-marketing/:stateSlug/:treatmentSlug" element={<PublicRouteGuard><StateTreatmentProviderPage /></PublicRouteGuard>} />
             <Route path="/rehab-marketing/:stateSlug/insurance/:insurerSlug" element={<PublicRouteGuard><StateInsuranceProviderPage /></PublicRouteGuard>} />
 
