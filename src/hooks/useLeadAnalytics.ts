@@ -193,14 +193,30 @@ function calculateAnalytics(leads: Lead[], allTimeLeads: Lead[], dateRange?: Dat
     converted: leads.filter(l => l.status === "converted").length,
   };
 
-  // Response metrics (simulate based on status)
+  // Calculate real response metrics from provider_responded_at
+  let totalResponseHours = 0;
+  let respondedCount = 0;
+  let within24h = 0;
+  let within48h = 0;
+
+  leads.forEach((lead) => {
+    const respondedAt = (lead as any).provider_responded_at;
+    if (respondedAt) {
+      respondedCount++;
+      const createdDate = new Date(lead.created_at);
+      const respondedDate = new Date(respondedAt);
+      const diffHours = (respondedDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60);
+      totalResponseHours += Math.max(0, diffHours);
+      if (diffHours <= 24) within24h++;
+      else if (diffHours <= 48) within48h++;
+    }
+  });
+
   const newLeads = leads.filter(l => l.status === "new").length;
-  const respondedLeads = leads.filter(l => l.status !== "new").length;
-  
   const responseMetrics = {
-    avgResponseTime: respondedLeads > 0 ? 12 : 0,
-    respondedWithin24h: Math.round(respondedLeads * 0.6),
-    respondedWithin48h: Math.round(respondedLeads * 0.3),
+    avgResponseTime: respondedCount > 0 ? Math.round(totalResponseHours / respondedCount) : 0,
+    respondedWithin24h: within24h,
+    respondedWithin48h: within48h,
     notResponded: newLeads,
   };
 
