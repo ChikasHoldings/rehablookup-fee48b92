@@ -309,6 +309,76 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
                 </div>
               )}
 
+              {/* Placements Results */}
+              {results.placements.length > 0 && (
+                <div>
+                  <div className="px-3 py-2 bg-muted/50 border-b border-t">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Placements ({results.placements.length})
+                    </span>
+                  </div>
+                  {results.placements.map((result, index) => {
+                    const actualIndex = results.leads.length + index;
+                    return (
+                      <button
+                        key={result.id}
+                        onClick={() => handleSelect(result)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
+                          selectedIndex === actualIndex
+                            ? "bg-primary/10 text-primary"
+                            : "hover:bg-muted/50"
+                        )}
+                      >
+                        <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent/50 shrink-0">
+                          <Handshake className="h-4 w-4 text-accent-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{result.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Listings Results */}
+              {results.listings.length > 0 && (
+                <div>
+                  <div className="px-3 py-2 bg-muted/50 border-b border-t">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Listings ({results.listings.length})
+                    </span>
+                  </div>
+                  {results.listings.map((result, index) => {
+                    const actualIndex = results.leads.length + results.placements.length + index;
+                    return (
+                      <button
+                        key={result.id}
+                        onClick={() => handleSelect(result)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors",
+                          selectedIndex === actualIndex
+                            ? "bg-primary/10 text-primary"
+                            : "hover:bg-muted/50"
+                        )}
+                      >
+                        <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-muted shrink-0">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{result.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* Pages Results */}
               {results.pages.length > 0 && (
                 <div>
@@ -318,7 +388,7 @@ export function ProviderSearchCommand({ facilityId, onClose, variant = "header" 
                     </span>
                   </div>
                   {results.pages.map((result, index) => {
-                    const actualIndex = results.leads.length + index;
+                    const actualIndex = results.leads.length + results.placements.length + results.listings.length + index;
                     return (
                       <button
                         key={result.id}
