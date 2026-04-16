@@ -49,7 +49,7 @@ export default function DrugRehabNearMe() {
     <Layout>
       <SEO
         title={`Drug Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find drug rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length}+ verified treatment facilities offering detox, inpatient, and outpatient programs. Free insurance verification.`}
+        description={`Find drug rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : "verified"} verified treatment facilities offering detox, inpatient, and outpatient programs. Free insurance verification.`}
         canonical={stateSlug ? `/drug-rehab-near-me/${stateSlug}` : "/drug-rehab-near-me"}
         keywords={[
           "drug rehab near me",
@@ -101,7 +101,7 @@ export default function DrugRehabNearMe() {
               Drug Rehabilitation Centers {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Browse {facilities.length}+ verified treatment facilities offering evidence-based addiction care.
+              Browse {facilities.length > 0 ? `${facilities.length > 0 ? facilities.length + "+" : "verified"}` : ""} verified treatment facilities offering evidence-based addiction care.
             </p>
           </div>
 

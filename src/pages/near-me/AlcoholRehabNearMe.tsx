@@ -44,7 +44,7 @@ export default function AlcoholRehabNearMe() {
     <Layout>
       <SEO
         title={`Alcohol Rehab Near Me ${stateData ? `in ${stateData.state}` : ""} | Treatment Centers`}
-        description={`Find alcohol rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length}+ verified treatment facilities offering detox, inpatient, and outpatient alcohol treatment programs.`}
+        description={`Find alcohol rehabilitation centers near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : "verified"} verified treatment facilities offering detox, inpatient, and outpatient alcohol treatment programs.`}
         canonical={stateSlug ? `/alcohol-rehab-near-me/${stateSlug}` : "/alcohol-rehab-near-me"}
         keywords={[
           "alcohol rehab near me",
@@ -92,7 +92,7 @@ export default function AlcoholRehabNearMe() {
         <div className="container">
           <p className="text-center text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             {stateData 
-              ? `Searching for alcohol rehab in ${stateData.state}? Our directory features ${facilities.length}+ verified treatment centers offering detox, inpatient, and outpatient programs. Many facilities accept major insurance including Aetna, BCBS, Cigna, and United Healthcare.${
+              ? `Searching for alcohol rehab in ${stateData.state}? Our directory features ${facilities.length > 0 ? facilities.length + "+" : "verified"} verified treatment centers offering detox, inpatient, and outpatient programs. Many facilities accept major insurance including Aetna, BCBS, Cigna, and United Healthcare.${
                   stateData.state === "California" ? " California is home to some of the nation's leading alcohol addiction treatment programs." :
                   stateData.state === "Florida" ? " Florida offers year-round alcohol treatment options in supportive recovery environments." :
                   stateData.state === "Texas" ? " Texas provides comprehensive alcohol treatment options across major metropolitan areas." :
@@ -110,7 +110,7 @@ export default function AlcoholRehabNearMe() {
             Alcohol Treatment Centers {stateData ? `in ${stateData.state}` : "Near You"}
           </h2>
           <p className="text-muted-foreground mb-8">
-            Browse {facilities.length}+ verified facilities offering alcohol addiction treatment.
+            Browse {facilities.length > 0 ? `${facilities.length > 0 ? facilities.length + "+" : "verified"}` : ""} verified facilities offering alcohol addiction treatment.
           </p>
 
           {isLoading ? (

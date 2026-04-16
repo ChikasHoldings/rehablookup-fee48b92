@@ -1,7 +1,9 @@
 import { useRef, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Heart } from "lucide-react";
+import { Link } from "react-router-dom";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
 
 interface ResponsiveListingGridProps {
   facilities: any[];
@@ -42,6 +44,35 @@ export function ResponsiveListingGrid({ facilities, maxItems = 12 }: ResponsiveL
     el.scrollBy({ left: amount, behavior: "smooth" });
   };
 
+  // Empty state fallback
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-xl border border-dashed border-border bg-muted/20">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+          <Search className="h-7 w-7 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground mb-2">No Facilities Listed Yet</h3>
+        <p className="text-muted-foreground mb-6 max-w-md">
+          We're expanding our network in this area. Browse all centers nationwide or let our team find the right match for you.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link to="/search-results">
+            <Button variant="outline" className="gap-2">
+              <Search className="h-4 w-4" />
+              Browse All Centers
+            </Button>
+          </Link>
+          <Link to="/concierge">
+            <Button className="gap-2">
+              <Heart className="h-4 w-4" />
+              Get Personalized Help
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (!isMobile) {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -54,7 +85,6 @@ export function ResponsiveListingGrid({ facilities, maxItems = 12 }: ResponsiveL
 
   return (
     <div className="relative">
-      {/* Scroll track */}
       <div
         ref={scrollRef}
         className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-4 -mx-4 px-4"
@@ -70,7 +100,6 @@ export function ResponsiveListingGrid({ facilities, maxItems = 12 }: ResponsiveL
         ))}
       </div>
 
-      {/* Scroll dots indicator */}
       <div className="flex justify-center gap-1.5 mt-2">
         {items.slice(0, Math.min(items.length, 6)).map((_, i) => (
           <div key={i} className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />

@@ -50,7 +50,7 @@ export default function MATClinicNearMe() {
     <Layout>
       <SEO
         title={`MAT Clinic Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find medication-assisted treatment (MAT) clinics near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length}+ verified treatment facilities. Free insurance verification.`}
+        description={`Find medication-assisted treatment (MAT) clinics near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : "verified"} verified treatment facilities. Free insurance verification.`}
         canonical={stateSlug ? `/mat-clinic-near-me/${stateSlug}` : "/mat-clinic-near-me"}
         keywords={[
           "mat clinic near me",
@@ -100,7 +100,7 @@ export default function MATClinicNearMe() {
               MAT Clinics {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Browse {facilities.length}+ verified treatment facilities offering evidence-based care.
+              Browse {facilities.length > 0 ? `${facilities.length > 0 ? facilities.length + "+" : "verified"}` : ""} verified treatment facilities offering evidence-based care.
             </p>
           </div>
 

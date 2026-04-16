@@ -50,7 +50,7 @@ export default function PHPNearMe() {
     <Layout>
       <SEO
         title={`Partial Hospitalization (PHP) Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find partial hospitalization programs (PHP) near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length}+ verified treatment facilities. Free insurance verification.`}
+        description={`Find partial hospitalization programs (PHP) near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : "verified"} verified treatment facilities. Free insurance verification.`}
         canonical={stateSlug ? `/php-near-me/${stateSlug}` : "/php-near-me"}
         keywords={[
           "php near me",
@@ -100,7 +100,7 @@ export default function PHPNearMe() {
               Partial Hospitalization Programs (PHP) {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Browse {facilities.length}+ verified treatment facilities offering evidence-based care.
+              Browse {facilities.length > 0 ? `${facilities.length > 0 ? facilities.length + "+" : "verified"}` : ""} verified treatment facilities offering evidence-based care.
             </p>
           </div>
 

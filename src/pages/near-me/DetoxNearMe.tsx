@@ -74,7 +74,7 @@ export default function DetoxNearMe() {
         <div className="container">
           <p className="text-center text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             {stateData 
-              ? `Looking for medical detox in ${stateData.state}? Browse ${facilities.length}+ verified detoxification centers offering medically-supervised withdrawal management. Most facilities accept major insurance including Aetna, BCBS, Cigna, and United Healthcare.${
+              ? `Looking for medical detox in ${stateData.state}? Browse ${facilities.length > 0 ? facilities.length + "+" : "verified"} verified detoxification centers offering medically-supervised withdrawal management. Most facilities accept major insurance including Aetna, BCBS, Cigna, and United Healthcare.${
                   stateData.state === "California" ? " California offers world-class medical detox programs with holistic approaches." :
                   stateData.state === "Florida" ? " Florida provides year-round detox options in comfortable, therapeutic settings." :
                   stateData.state === "Texas" ? " Texas features comprehensive detox programs across major cities and suburban areas." :
@@ -92,7 +92,9 @@ export default function DetoxNearMe() {
             Detox Centers {stateData ? `in ${stateData.state}` : "Near You"}
           </h2>
           <p className="text-muted-foreground mb-8">
-            Browse {facilities.length}+ medically-supervised detox facilities.
+            {facilities.length > 0
+              ? `Browse ${facilities.length > 0 ? facilities.length + "+" : "verified"} medically-supervised detox facilities.`
+              : "We're expanding our detox network. Browse all centers or get personalized help finding treatment."}
           </p>
 
           {isLoading ? (

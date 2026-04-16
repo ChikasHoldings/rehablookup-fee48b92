@@ -50,7 +50,7 @@ export default function IOPNearMe() {
     <Layout>
       <SEO
         title={`Intensive Outpatient (IOP) Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
-        description={`Find intensive outpatient programs (IOP) near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length}+ verified treatment facilities. Free insurance verification.`}
+        description={`Find intensive outpatient programs (IOP) near you${stateData ? ` in ${stateData.state}` : ""}. Compare ${facilities.length > 0 ? facilities.length + "+" : "verified"} verified treatment facilities. Free insurance verification.`}
         canonical={stateSlug ? `/iop-near-me/${stateSlug}` : "/iop-near-me"}
         keywords={[
           "iop near me",
@@ -100,7 +100,7 @@ export default function IOPNearMe() {
               Intensive Outpatient Programs (IOP) {stateData ? `in ${stateData.state}` : "Near You"}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Browse {facilities.length}+ verified treatment facilities offering evidence-based care.
+              Browse {facilities.length > 0 ? `${facilities.length > 0 ? facilities.length + "+" : "verified"}` : ""} verified treatment facilities offering evidence-based care.
             </p>
           </div>
 
