@@ -747,22 +747,17 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     const toAdd = selectedServices.filter(s => !currentServiceNames.includes(s));
     const toRemove = services.filter(s => !selectedServices.includes(s.service_name));
     
-    // Add new services
-    for (const serviceName of toAdd) {
-      await supabase
-        .from("facility_services")
-        .insert({ facility_id: facility.id, service_name: serviceName });
+    // Batch operations in parallel
+    const ops: Promise<unknown>[] = [];
+    if (toAdd.length > 0) {
+      ops.push(supabase.from("facility_services").insert(toAdd.map(s => ({ facility_id: facility.id, service_name: s }))));
     }
-    
-    // Remove deselected services
     for (const service of toRemove) {
-      await supabase
-        .from("facility_services")
-        .delete()
-        .eq("id", service.id);
+      ops.push(supabase.from("facility_services").delete().eq("id", service.id));
     }
     
-    if (toAdd.length > 0 || toRemove.length > 0) {
+    if (ops.length > 0) {
+      await Promise.all(ops);
       refetchServices();
       queryClient.invalidateQueries({ queryKey: ["facility-services-count", facility.id] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
@@ -778,22 +773,16 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     const toAdd = selectedInsurance.filter(i => !currentInsuranceNames.includes(i));
     const toRemove = insurance.filter(i => !selectedInsurance.includes(i.insurance_name));
     
-    // Add new insurance
-    for (const insuranceName of toAdd) {
-      await supabase
-        .from("facility_insurance")
-        .insert({ facility_id: facility.id, insurance_name: insuranceName });
+    const ops: Promise<unknown>[] = [];
+    if (toAdd.length > 0) {
+      ops.push(supabase.from("facility_insurance").insert(toAdd.map(i => ({ facility_id: facility.id, insurance_name: i }))));
     }
-    
-    // Remove deselected insurance
     for (const ins of toRemove) {
-      await supabase
-        .from("facility_insurance")
-        .delete()
-        .eq("id", ins.id);
+      ops.push(supabase.from("facility_insurance").delete().eq("id", ins.id));
     }
     
-    if (toAdd.length > 0 || toRemove.length > 0) {
+    if (ops.length > 0) {
+      await Promise.all(ops);
       refetchInsurance();
       queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
@@ -809,22 +798,16 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     const toAdd = selectedAgeGroups.filter(ag => !currentAgeGroupNames.includes(ag));
     const toRemove = ageGroups.filter(ag => !selectedAgeGroups.includes(ag.age_group));
     
-    // Add new age groups
-    for (const ageGroup of toAdd) {
-      await supabase
-        .from("facility_age_groups")
-        .insert({ facility_id: facility.id, age_group: ageGroup });
+    const ops: Promise<unknown>[] = [];
+    if (toAdd.length > 0) {
+      ops.push(supabase.from("facility_age_groups").insert(toAdd.map(ag => ({ facility_id: facility.id, age_group: ag }))));
     }
-    
-    // Remove deselected age groups
     for (const ag of toRemove) {
-      await supabase
-        .from("facility_age_groups")
-        .delete()
-        .eq("id", ag.id);
+      ops.push(supabase.from("facility_age_groups").delete().eq("id", ag.id));
     }
     
-    if (toAdd.length > 0 || toRemove.length > 0) {
+    if (ops.length > 0) {
+      await Promise.all(ops);
       refetchAgeGroups();
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
