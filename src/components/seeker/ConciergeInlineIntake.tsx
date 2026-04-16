@@ -323,12 +323,13 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
             <SelectTrigger className={errors.ageRange ? "border-destructive" : ""}>
               <SelectValue placeholder="Select age range" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover">
               {AGE_RANGES.map(opt => (
                 <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {errors.ageRange && <p className="text-xs text-destructive">{errors.ageRange}</p>}
         </div>
 
         <div className="space-y-2">
@@ -337,13 +338,14 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
             <SelectTrigger className={errors.gender ? "border-destructive" : ""}>
               <SelectValue placeholder="Select gender" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover">
               <SelectItem value="male">Male</SelectItem>
               <SelectItem value="female">Female</SelectItem>
               <SelectItem value="non-binary">Non-binary</SelectItem>
               <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
             </SelectContent>
           </Select>
+          {errors.gender && <p className="text-xs text-destructive">{errors.gender}</p>}
         </div>
 
         <div className="space-y-2">
@@ -352,12 +354,13 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
             <SelectTrigger className={errors.currentState ? "border-destructive" : ""}>
               <SelectValue placeholder="Select state" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover">
               {US_STATES.map(state => (
                 <SelectItem key={state} value={state}>{state}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {errors.currentState && <p className="text-xs text-destructive">{errors.currentState}</p>}
         </div>
 
         <div className="space-y-2">
@@ -369,6 +372,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
             maxLength={100}
             className={errors.currentCity ? "border-destructive" : ""}
           />
+          {errors.currentCity && <p className="text-xs text-destructive">{errors.currentCity}</p>}
         </div>
       </div>
 
@@ -435,7 +439,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           <SelectTrigger className={errors.primaryConcern ? "border-destructive" : ""}>
             <SelectValue placeholder="Select primary concern" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-popover">
             {PRIMARY_CONCERNS.map(opt => (
               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
@@ -449,7 +453,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           <SelectTrigger className={errors.levelOfCare ? "border-destructive" : ""}>
             <SelectValue placeholder="Select level of care" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-popover">
             {LEVELS_OF_CARE.map(opt => (
               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
@@ -519,7 +523,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
             <SelectTrigger className={errors.desiredState ? "border-destructive" : ""}>
               <SelectValue placeholder="Select state" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-popover">
               <SelectItem value="anywhere">Open to Anywhere</SelectItem>
               {US_STATES.map(state => (
                 <SelectItem key={state} value={state}>{state}</SelectItem>
@@ -545,7 +549,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
           <SelectTrigger className={errors.timeline ? "border-destructive" : ""}>
             <SelectValue placeholder="When do you need treatment?" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-popover">
             {TIMELINE_OPTIONS.map(opt => (
               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}

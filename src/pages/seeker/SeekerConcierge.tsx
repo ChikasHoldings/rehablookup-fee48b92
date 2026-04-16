@@ -559,6 +559,7 @@ export default function SeekerConcierge() {
   // Show provider review when seeker can select from interested facilities
   const showProviderReview = selectedCase?.status === "presented_to_seeker" || selectedCase?.status === "seeker_selected";
   const isTerminalSuccess = ["admitted", "billed", "completed"].includes(selectedCase?.status || "");
+  const isClosed = selectedCase?.status === "closed";
   const showFeedback = isTerminalSuccess && !selectedCase?.seeker_feedback && !feedbackSubmitted;
   const hasMatches = matchedFacilities && matchedFacilities.length > 0;
 
@@ -653,6 +654,22 @@ export default function SeekerConcierge() {
             advisorId={selectedCase.assigned_advisor_id} 
             caseStatus={selectedCase.status} 
           />
+        )}
+
+        {/* Closed Case */}
+        {isClosed && selectedCase && (
+          <Card className="bg-muted/30 border-muted">
+            <CardContent className="py-8 text-center space-y-3">
+              <XCircle className="h-10 w-10 text-muted-foreground mx-auto" />
+              <h3 className="text-lg font-semibold text-muted-foreground">Request Closed</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                This placement request has been closed. If you'd like to start a new request, click below.
+              </p>
+              <Button variant="outline" onClick={() => navigate("/concierge/intake")} className="mt-2">
+                Start New Request
+              </Button>
+            </CardContent>
+          </Card>
         )}
 
         {/* Placed / Admitted Facility */}
