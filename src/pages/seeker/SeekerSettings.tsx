@@ -1045,6 +1045,7 @@ export default function SeekerSettings() {
                       {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  <PasswordStrengthBar password={newPassword} />
                 </div>
 
                 <div className="space-y-2">
@@ -1066,9 +1067,9 @@ export default function SeekerSettings() {
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Password must be at least 8 characters
-                  </p>
+                  {confirmPassword && confirmPassword !== newPassword && (
+                    <p className="text-xs text-destructive">Passwords don't match</p>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
