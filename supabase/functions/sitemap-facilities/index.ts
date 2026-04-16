@@ -747,10 +747,8 @@ const NEAR_ME_TYPES_WITH_STATES = [
   "alcohol-rehab-near-me",
   "detox-near-me",
   "inpatient-rehab-near-me",
-  "outpatient-near-me",
   "outpatient-rehab-near-me",
   "dual-diagnosis-near-me",
-  "dual-diagnosis-rehab-near-me",
   "free-rehab-near-me",
   "luxury-rehab-near-me",
   "womens-rehab-near-me",
@@ -782,6 +780,22 @@ const NEAR_ME_TYPES_WITH_STATES = [
   "benzo-rehab-near-me",
   "xanax-rehab-near-me",
   "kratom-rehab-near-me",
+  // New: insurance, urgency, duration, demographics
+  "medicare-rehab-near-me",
+  "blue-cross-rehab-near-me",
+  "aetna-rehab-near-me",
+  "cigna-rehab-near-me",
+  "united-healthcare-rehab-near-me",
+  "emergency-rehab-near-me",
+  "same-day-rehab-near-me",
+  "24-7-detox-near-me",
+  "immediate-rehab-near-me",
+  "low-cost-rehab-near-me",
+  "30-day-rehab-near-me",
+  "90-day-rehab-near-me",
+  "young-adult-rehab-near-me",
+  "lgbtq-rehab-near-me",
+  "marijuana-rehab-near-me",
 ];
 
 // Treatment types that have state/city sub-routes
@@ -1349,15 +1363,22 @@ function generateProviderConversionRoutes(): RouteEntry[] {
 
 const NEAR_ME_PREFIXES = [
   "drug-rehab-near-me", "alcohol-rehab-near-me", "detox-near-me",
-  "dual-diagnosis-near-me", "inpatient-rehab-near-me", "outpatient-near-me",
+  "dual-diagnosis-near-me", "inpatient-rehab-near-me", "outpatient-rehab-near-me",
   "free-rehab-near-me", "luxury-rehab-near-me", "womens-rehab-near-me",
   "mens-rehab-near-me", "fentanyl-rehab-near-me", "sober-living-near-me",
   "teen-rehab-near-me", "veterans-rehab-near-me", "medicaid-rehab-near-me",
   "court-ordered-rehab-near-me", "suboxone-clinic-near-me", "methadone-clinic-near-me",
-  "outpatient-rehab-near-me", "dual-diagnosis-rehab-near-me", "faith-based-rehab-near-me",
-  "holistic-rehab-near-me", "christian-rehab-near-me", "long-term-rehab-near-me",
-  "iop-near-me", "php-near-me", "couples-rehab-near-me", "executive-rehab-near-me",
-  "rehab-near-me", "mat-clinic-near-me", "affordable-rehab-near-me",
+  "faith-based-rehab-near-me", "holistic-rehab-near-me", "christian-rehab-near-me",
+  "long-term-rehab-near-me", "iop-near-me", "php-near-me",
+  "couples-rehab-near-me", "executive-rehab-near-me", "rehab-near-me",
+  "mat-clinic-near-me", "affordable-rehab-near-me",
+  // New canonical slugs
+  "emergency-rehab-near-me", "same-day-rehab-near-me", "24-7-detox-near-me",
+  "immediate-rehab-near-me", "low-cost-rehab-near-me",
+  "30-day-rehab-near-me", "90-day-rehab-near-me",
+  "medicare-rehab-near-me", "blue-cross-rehab-near-me", "aetna-rehab-near-me",
+  "cigna-rehab-near-me", "united-healthcare-rehab-near-me",
+  "young-adult-rehab-near-me", "lgbtq-rehab-near-me", "marijuana-rehab-near-me",
 ];
 
 function generateStateNearMeRoutes(): RouteEntry[] {
