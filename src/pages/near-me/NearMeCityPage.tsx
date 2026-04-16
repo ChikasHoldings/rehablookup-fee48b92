@@ -10,7 +10,7 @@ import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGr
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { statesData } from "@/data/locationSeoData";
-import { getNearMeTypeBySlug } from "@/data/nearMeTypes";
+import { getNearMeTypeBySlug, getCanonicalNearMeSlug } from "@/data/nearMeTypes";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin } from "lucide-react";
 import {
@@ -22,20 +22,71 @@ import {
 import { useMemo } from "react";
 
 /**
- * Generic city-level near-me page.
- * Pattern: /{nearMeSlug}/{stateSlug}/{citySlug}
- * Rendered from SmartCatchAll — parses path directly.
+ * Generate unique FAQs based on treatment type category to avoid duplicate FAQ content.
  */
+function generateCityFAQs(
+  label: string,
+  treatmentType: string,
+  cityName: string,
+  stateAbbr: string,
+  facilityCount: number,
+  slug: string
+) {
+  const base = [
+    {
+      question: `How many ${label.toLowerCase()} centers are in ${cityName}, ${stateAbbr}?`,
+      answer: `There are currently ${facilityCount || "several"} verified ${treatmentType.toLowerCase()} providers in ${cityName}, ${stateAbbr} listed on RehabLookup. New facilities are added regularly as they complete our verification process.`,
+    },
+  ];
+
+  // Add intent-specific FAQs to differentiate pages
+  if (slug.includes("emergency") || slug.includes("same-day") || slug.includes("immediate") || slug.includes("24-7")) {
+    base.push(
+      { question: `Can I get same-day admission to rehab in ${cityName}?`, answer: `Many treatment centers in ${cityName} offer same-day or next-day admission for urgent cases. Call facilities directly or use our concierge service for immediate placement assistance.` },
+      { question: `What should I do in an addiction emergency in ${cityName}?`, answer: `For immediate danger, call 911. For urgent treatment needs, contact our 24/7 concierge service or call SAMHSA's helpline at 1-800-662-4357. Several ${cityName} facilities accept walk-ins for crisis situations.` }
+    );
+  } else if (slug.includes("free") || slug.includes("affordable") || slug.includes("low-cost") || slug.includes("medicaid")) {
+    base.push(
+      { question: `How can I afford rehab in ${cityName} without insurance?`, answer: `${cityName} has several options: state-funded programs, non-profit facilities, sliding-scale fee centers, and SAMHSA grant-funded treatment. Our concierge team can help identify no-cost options near you.` },
+      { question: `Does Medicaid cover rehab in ${cityName}, ${stateAbbr}?`, answer: `Yes, Medicaid covers substance abuse treatment in ${stateAbbr}. Coverage includes detox, inpatient, outpatient, and medication-assisted treatment. Not all facilities accept Medicaid — verify with each provider.` }
+    );
+  } else if (slug.includes("womens") || slug.includes("mens") || slug.includes("teen") || slug.includes("veterans") || slug.includes("lgbtq") || slug.includes("senior")) {
+    base.push(
+      { question: `Why choose a specialized ${label.toLowerCase()} program in ${cityName}?`, answer: `Specialized programs address the unique challenges, trauma patterns, and social dynamics specific to their demographic. This targeted approach often leads to better engagement and long-term recovery outcomes.` },
+      { question: `What specialized services do ${label.toLowerCase()} programs offer?`, answer: `Programs typically include gender-specific or demographic-specific group therapy, specialized trauma processing, peer support from people with shared experiences, and tailored aftercare planning.` }
+    );
+  } else if (slug.includes("insurance") || slug.includes("blue-cross") || slug.includes("aetna") || slug.includes("cigna") || slug.includes("united") || slug.includes("tricare") || slug.includes("humana")) {
+    base.push(
+      { question: `How do I verify my insurance covers ${label.toLowerCase()} in ${cityName}?`, answer: `Contact the treatment facility directly with your insurance card, or use our free insurance verification tool. Ask about in-network vs out-of-network benefits, pre-authorization requirements, and covered levels of care.` },
+      { question: `What does insurance typically cover for ${treatmentType.toLowerCase()}?`, answer: `Most plans cover medical detox, inpatient/residential treatment, outpatient programs, medication-assisted treatment, and counseling. Coverage duration and copays vary by plan and provider.` }
+    );
+  } else if (slug.includes("detox")) {
+    base.push(
+      { question: `How long does detox take in ${cityName}?`, answer: `Medical detox typically lasts 3–10 days depending on the substance, severity of use, and individual health. ${cityName} detox centers provide 24/7 medical monitoring and medication management during withdrawal.` },
+      { question: `Is medical detox in ${cityName} safe?`, answer: `Yes, medically supervised detox is the safest way to manage withdrawal. Trained medical staff monitor vital signs and administer medications to prevent dangerous complications like seizures.` }
+    );
+  } else {
+    base.push(
+      { question: `Does insurance cover ${label.toLowerCase()} in ${cityName}?`, answer: `Most health insurance plans cover ${treatmentType.toLowerCase()} in ${cityName} under the Mental Health Parity Act. This includes Medicaid, Medicare, and most private insurance. Verify coverage with the specific facility.` },
+      { question: `How do I choose a ${label.toLowerCase()} center in ${cityName}?`, answer: `Look for accreditation (CARF or Joint Commission), verify licensing, check insurance acceptance, review treatment approaches, and consider location and aftercare planning. Our free concierge can help match you.` }
+    );
+  }
+
+  return base;
+}
+
 export default function NearMeCityPage() {
   const { pathname } = useLocation();
   const parts = pathname.split("/").filter(Boolean);
-  const nearMeSlug = parts[0] || "";
+  const rawNearMeSlug = parts[0] || "";
   const stateSlug = parts[1] || "";
   const citySlug = parts[2] || "";
 
   const { data: allFacilities = [], isLoading } = useStaticFacilities();
 
-  const nearMeType = getNearMeTypeBySlug(nearMeSlug);
+  // Handle legacy slug redirects
+  const canonicalSlug = getCanonicalNearMeSlug(rawNearMeSlug);
+  const nearMeType = getNearMeTypeBySlug(rawNearMeSlug);
   const stateData = statesData.find((s) => s.slug === stateSlug);
   const cityData = stateData?.cities.find((c) => c.slug === citySlug);
 
@@ -63,27 +114,28 @@ export default function NearMeCityPage() {
     return <Navigate to="/404" replace />;
   }
 
+  // If using a legacy slug, redirect to canonical URL
+  if (canonicalSlug !== rawNearMeSlug) {
+    return <Navigate to={`/${canonicalSlug}/${stateSlug}/${citySlug}`} replace />;
+  }
+
   const title = `${nearMeType.label} Near Me in ${cityData.name}, ${stateData.abbreviation}`;
   const description = `Find ${nearMeType.label.toLowerCase()} centers in ${cityData.name}, ${stateData.abbreviation}. Compare verified ${nearMeType.treatmentType.toLowerCase()} programs, check insurance, and get help today.`;
 
-  const faqs = [
-    {
-      question: `How many ${nearMeType.label.toLowerCase()} centers are in ${cityData.name}?`,
-      answer: `${cityData.name}, ${stateData.abbreviation} has ${facilities.length || "several"} verified ${nearMeType.treatmentType.toLowerCase()} centers listed on RehabLookup. Availability varies, so we recommend contacting facilities directly or using our concierge service for personalized matching.`,
-    },
-    {
-      question: `Does insurance cover ${nearMeType.label.toLowerCase()} in ${cityData.name}?`,
-      answer: `Most health insurance plans, including Medicaid and Medicare, cover ${nearMeType.treatmentType.toLowerCase()} in ${cityData.name}. Coverage varies by plan and provider. Contact the facility directly to verify your specific insurance is accepted.`,
-    },
-    {
-      question: `What should I look for in a ${nearMeType.label.toLowerCase()} center in ${cityData.name}?`,
-      answer: `When choosing a ${nearMeType.label.toLowerCase()} center in ${cityData.name}, consider: accreditation and licensing, treatment approaches offered, insurance acceptance, staff qualifications, aftercare planning, and patient reviews.`,
-    },
-    {
-      question: `How do I get started with ${nearMeType.label.toLowerCase()} in ${cityData.name}?`,
-      answer: `To start treatment in ${cityData.name}: 1) Browse facilities on this page, 2) Call facilities directly or use our free concierge service, 3) Verify your insurance coverage, 4) Complete an intake assessment, 5) Begin your recovery journey.`,
-    },
-  ];
+  // Unique FAQs based on treatment category (not template-swapped)
+  const faqs = generateCityFAQs(
+    nearMeType.label,
+    nearMeType.treatmentType,
+    cityData.name,
+    stateData.abbreviation,
+    facilities.length,
+    nearMeType.slug
+  );
+
+  // Thin page protection: noindex if no facilities AND no nearby content
+  const isThinPage = facilities.length === 0 && nearbyCities.length === 0;
+
+  const canonicalUrl = `/${canonicalSlug}/${stateData.slug}/${cityData.slug}`;
 
   const structuredData = [
     generateNearMeSchema({
@@ -91,15 +143,18 @@ export default function NearMeCityPage() {
       location: { state: stateData.name, stateAbbr: stateData.abbreviation, city: cityData.name },
       facilityCount: facilities.length,
     }),
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: faqs.map((faq) => ({
-        "@type": "Question",
-        name: faq.question,
-        acceptedAnswer: { "@type": "Answer", text: faq.answer },
-      })),
-    },
+    // Only include FAQPage schema if we have unique, substantive FAQs
+    ...(faqs.length >= 2
+      ? [{
+          "@context": "https://schema.org" as const,
+          "@type": "FAQPage" as const,
+          mainEntity: faqs.map((faq) => ({
+            "@type": "Question" as const,
+            name: faq.question,
+            acceptedAnswer: { "@type": "Answer" as const, text: faq.answer },
+          })),
+        }]
+      : []),
   ];
 
   return (
@@ -107,7 +162,8 @@ export default function NearMeCityPage() {
       <SEO
         title={`${title} | RehabLookup`}
         description={description}
-        canonical={`/${nearMeType.slug}/${stateData.slug}/${cityData.slug}`}
+        canonical={canonicalUrl}
+        noindex={isThinPage}
         keywords={[
           `${nearMeType.label.toLowerCase()} ${cityData.name}`,
           `${nearMeType.treatmentType.toLowerCase()} ${cityData.name} ${stateData.abbreviation}`,
@@ -118,7 +174,7 @@ export default function NearMeCityPage() {
           { name: "Home", url: "/" },
           { name: nearMeType.label, url: `/${nearMeType.slug}` },
           { name: stateData.name, url: `/${nearMeType.slug}/${stateData.slug}` },
-          { name: cityData.name, url: `/${nearMeType.slug}/${stateData.slug}/${cityData.slug}` },
+          { name: cityData.name, url: canonicalUrl },
         ]}
       />
 
@@ -156,7 +212,7 @@ export default function NearMeCityPage() {
                 No listings in {cityData.name} yet
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                We're expanding our directory. Browse {stateData.name} statewide or use our concierge service.
+                We're expanding our directory. Browse {stateData.name} statewide or use our concierge service for personalized matching.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link to={`/${nearMeType.slug}/${stateData.slug}`}>
@@ -199,10 +255,9 @@ export default function NearMeCityPage() {
         </section>
       )}
 
-      {/* Comparison */}
+      {/* Comparison — only if we have enough facilities */}
       <ComparisonSection facilities={facilities} location={`${cityData.name}, ${stateData.abbreviation}`} />
 
-      {/* Conversion */}
       <ConversionSection location={`${cityData.name}, ${stateData.abbreviation}`} />
 
       <InternalLinkingSection

@@ -11,7 +11,7 @@ import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleto
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { getCountyBySlug, getStateCounties } from "@/data/countySeoData";
 import { statesData } from "@/data/locationSeoData";
-import { getNearMeTypeBySlug } from "@/data/nearMeTypes";
+import { getNearMeTypeBySlug, getCanonicalNearMeSlug } from "@/data/nearMeTypes";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin } from "lucide-react";
 import {
@@ -23,20 +23,61 @@ import {
 import { useMemo } from "react";
 
 /**
- * Generic county-level near-me page.
- * Pattern: /{nearMeSlug}/{stateSlug}/county/{countySlug}
- * Rendered from SmartCatchAll — parses path directly.
+ * Generate unique county-specific FAQs based on treatment category.
  */
+function generateCountyFAQs(
+  label: string,
+  treatmentType: string,
+  countyName: string,
+  stateAbbr: string,
+  facilityCount: number,
+  majorCities: string[],
+  seat: string,
+  slug: string
+) {
+  const faqs = [
+    {
+      question: `How many ${label.toLowerCase()} centers serve ${countyName}?`,
+      answer: `${countyName}, ${stateAbbr} has ${facilityCount || "several"} verified ${treatmentType.toLowerCase()} centers serving residents across ${majorCities.slice(0, 4).join(", ")} and surrounding communities.`,
+    },
+    {
+      question: `Which cities in ${countyName} have ${label.toLowerCase()} options?`,
+      answer: `${treatmentType} centers in ${countyName} serve ${majorCities.join(", ")}. The county seat is ${seat}, which often has the most treatment options.`,
+    },
+  ];
+
+  // Category-specific unique FAQ
+  if (slug.includes("emergency") || slug.includes("same-day") || slug.includes("immediate")) {
+    faqs.push({
+      question: `Can I get emergency rehab admission in ${countyName}?`,
+      answer: `Several treatment centers in ${countyName} offer urgent or same-day admission. For immediate help, call our concierge or SAMHSA's helpline at 1-800-662-4357.`,
+    });
+  } else if (slug.includes("free") || slug.includes("affordable") || slug.includes("low-cost") || slug.includes("medicaid")) {
+    faqs.push({
+      question: `Are there free or low-cost rehab options in ${countyName}?`,
+      answer: `Yes, ${countyName} has state-funded and non-profit treatment programs. Many accept Medicaid and offer sliding-scale fees. Our concierge team can help identify affordable options.`,
+    });
+  } else {
+    faqs.push({
+      question: `Does insurance cover ${label.toLowerCase()} in ${countyName}?`,
+      answer: `Most insurance plans cover ${treatmentType.toLowerCase()} in ${countyName}, ${stateAbbr}. This includes Medicaid, Medicare, and private insurance. Verify with each facility.`,
+    });
+  }
+
+  return faqs;
+}
+
 export default function NearMeCountyPage() {
   const { pathname } = useLocation();
   const parts = pathname.split("/").filter(Boolean);
-  const nearMeSlug = parts[0] || "";
+  const rawNearMeSlug = parts[0] || "";
   const stateSlug = parts[1] || "";
   const countySlug = parts[3] || ""; // parts[2] is "county"
 
   const { data: allFacilities = [], isLoading } = useStaticFacilities();
 
-  const nearMeType = getNearMeTypeBySlug(nearMeSlug);
+  const canonicalSlug = getCanonicalNearMeSlug(rawNearMeSlug);
+  const nearMeType = getNearMeTypeBySlug(rawNearMeSlug);
   const stateInfo = statesData.find((s) => s.slug === stateSlug);
   const countyData = getCountyBySlug(stateSlug, countySlug);
   const stateCounties = getStateCounties(stateSlug);
@@ -62,24 +103,30 @@ export default function NearMeCountyPage() {
     return <Navigate to="/404" replace />;
   }
 
+  // Legacy slug redirect
+  if (canonicalSlug !== rawNearMeSlug) {
+    return <Navigate to={`/${canonicalSlug}/${stateSlug}/county/${countySlug}`} replace />;
+  }
+
   const countyName = `${countyData.name} County`;
   const title = `${nearMeType.label} Near Me in ${countyName}, ${stateInfo.abbreviation}`;
   const description = `Find ${nearMeType.label.toLowerCase()} centers in ${countyName}, ${stateInfo.abbreviation}. Compare verified ${nearMeType.treatmentType.toLowerCase()} programs serving ${countyData.majorCities.slice(0, 3).join(", ")}.`;
 
-  const faqs = [
-    {
-      question: `How many ${nearMeType.label.toLowerCase()} centers serve ${countyName}?`,
-      answer: `${countyName}, ${stateInfo.abbreviation} has ${facilities.length || "several"} verified ${nearMeType.treatmentType.toLowerCase()} centers serving residents across ${countyData.majorCities.slice(0, 5).join(", ")} and surrounding communities.`,
-    },
-    {
-      question: `Does insurance cover ${nearMeType.label.toLowerCase()} in ${countyName}?`,
-      answer: `Yes, most health insurance plans cover ${nearMeType.treatmentType.toLowerCase()} in ${countyName}, ${stateInfo.abbreviation}. This includes Medicaid, Medicare, and most private insurance. Verify your specific coverage with the facility.`,
-    },
-    {
-      question: `What cities in ${countyName} have ${nearMeType.label.toLowerCase()} centers?`,
-      answer: `${nearMeType.treatmentType} centers in ${countyName} serve communities including ${countyData.majorCities.join(", ")}. The county seat is ${countyData.seat}.`,
-    },
-  ];
+  // Unique FAQs per category
+  const faqs = generateCountyFAQs(
+    nearMeType.label,
+    nearMeType.treatmentType,
+    countyName,
+    stateInfo.abbreviation,
+    facilities.length,
+    countyData.majorCities,
+    countyData.seat,
+    nearMeType.slug
+  );
+
+  // Thin page: noindex if truly empty
+  const isThinPage = facilities.length === 0 && nearbyCounties.length === 0;
+  const canonicalUrl = `/${canonicalSlug}/${stateInfo.slug}/county/${countyData.slug}`;
 
   const structuredData = [
     generateNearMeSchema({
@@ -87,15 +134,17 @@ export default function NearMeCountyPage() {
       location: { state: stateInfo.name, stateAbbr: stateInfo.abbreviation },
       facilityCount: facilities.length,
     }),
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: faqs.map((faq) => ({
-        "@type": "Question",
-        name: faq.question,
-        acceptedAnswer: { "@type": "Answer", text: faq.answer },
-      })),
-    },
+    ...(faqs.length >= 2
+      ? [{
+          "@context": "https://schema.org" as const,
+          "@type": "FAQPage" as const,
+          mainEntity: faqs.map((faq) => ({
+            "@type": "Question" as const,
+            name: faq.question,
+            acceptedAnswer: { "@type": "Answer" as const, text: faq.answer },
+          })),
+        }]
+      : []),
   ];
 
   return (
@@ -103,7 +152,8 @@ export default function NearMeCountyPage() {
       <SEO
         title={`${title} | RehabLookup`}
         description={description}
-        canonical={`/${nearMeType.slug}/${stateInfo.slug}/county/${countyData.slug}`}
+        canonical={canonicalUrl}
+        noindex={isThinPage}
         keywords={[
           `${nearMeType.label.toLowerCase()} ${countyName}`,
           `${nearMeType.treatmentType.toLowerCase()} ${countyName} ${stateInfo.abbreviation}`,
@@ -114,7 +164,7 @@ export default function NearMeCountyPage() {
           { name: "Home", url: "/" },
           { name: nearMeType.label, url: `/${nearMeType.slug}` },
           { name: stateInfo.name, url: `/${nearMeType.slug}/${stateInfo.slug}` },
-          { name: countyName, url: `/${nearMeType.slug}/${stateInfo.slug}/county/${countyData.slug}` },
+          { name: countyName, url: canonicalUrl },
         ]}
       />
 
@@ -195,10 +245,7 @@ export default function NearMeCountyPage() {
         </section>
       )}
 
-      {/* Comparison */}
       <ComparisonSection facilities={facilities} location={`${countyName}, ${stateInfo.abbreviation}`} />
-
-      {/* Conversion */}
       <ConversionSection location={`${countyName}, ${stateInfo.abbreviation}`} />
 
       <InternalLinkingSection
