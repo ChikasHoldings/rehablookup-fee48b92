@@ -142,6 +142,7 @@ const SearchResults = () => {
   const treatment = searchParams.get("treatment") || "";
   const insurance = searchParams.get("insurance") || "";
   const type = searchParams.get("type") || "";
+  const stateParam = searchParams.get("state") || ""; // Support direct state filtering from near-me pages
   const queryParam = searchParams.get("q") || ""; // Free-text search from header/seeker
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const sortParam = (searchParams.get("sort") as SortOption) || "proximity";
@@ -168,18 +169,19 @@ const SearchResults = () => {
   const [resolvedZipData, setResolvedZipData] = useState<{ city: string; state: string; stateAbbr: string } | null>(null);
 
   // Get seeker profile location for proximity when no explicit location is searched
+  const storedUserId = getStoredUserId();
   const { data: seekerProfile } = useQuery({
-    queryKey: ["seeker-profile-location-search"],
+    queryKey: ["seeker-profile-location-search", storedUserId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!storedUserId) return null;
       const { data } = await supabase
         .from("seeker_profiles")
         .select("state, city")
-        .eq("user_id", user.id)
+        .eq("user_id", storedUserId)
         .maybeSingle();
       return data;
     },
+    enabled: !!storedUserId,
     staleTime: 1000 * 60 * 10,
   });
 
