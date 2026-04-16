@@ -1,4 +1,4 @@
-import { useParams, Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
 import { NearMeHero } from "@/components/seo/NearMeHero";
@@ -21,29 +21,27 @@ import { useMemo } from "react";
 
 /**
  * Generic county-level near-me page.
- * Route: /:nearMeSlug/:stateSlug/county/:countySlug
- * e.g. /drug-rehab-near-me/florida/county/miami-dade
+ * Pattern: /{nearMeSlug}/{stateSlug}/county/{countySlug}
+ * Rendered from SmartCatchAll — parses path directly.
  */
 export default function NearMeCountyPage() {
-  const { nearMeSlug, stateSlug, countySlug } = useParams<{
-    nearMeSlug: string;
-    stateSlug: string;
-    countySlug: string;
-  }>();
+  const { pathname } = useLocation();
+  const parts = pathname.split("/").filter(Boolean);
+  const nearMeSlug = parts[0] || "";
+  const stateSlug = parts[1] || "";
+  const countySlug = parts[3] || ""; // parts[2] is "county"
 
   const { data: allFacilities = [], isLoading } = useStaticFacilities();
 
-  const nearMeType = nearMeSlug ? getNearMeTypeBySlug(nearMeSlug) : undefined;
+  const nearMeType = getNearMeTypeBySlug(nearMeSlug);
   const stateInfo = statesData.find((s) => s.slug === stateSlug);
-  const countyData = stateSlug && countySlug ? getCountyBySlug(stateSlug, countySlug) : undefined;
-  const stateCounties = stateSlug ? getStateCounties(stateSlug) : [];
+  const countyData = getCountyBySlug(stateSlug, countySlug);
+  const stateCounties = getStateCounties(stateSlug);
 
   const facilities = useMemo(() => {
     if (!stateInfo || !countyData) return [];
-    const countyLower = countyData.name.toLowerCase();
     const stateLower = stateInfo.name.toLowerCase();
     const stateAbbr = stateInfo.abbreviation.toLowerCase();
-    // Match facilities in the county's cities
     const countyCities = countyData.majorCities.map((c) => c.toLowerCase());
     return allFacilities.filter((f) => {
       const fCity = (f.city || "").toLowerCase();
@@ -54,7 +52,6 @@ export default function NearMeCountyPage() {
   }, [allFacilities, stateInfo, countyData]);
 
   const nearbyCounties = useMemo(() => {
-    if (!countySlug) return [];
     return stateCounties.filter((c) => c.slug !== countySlug).slice(0, 6);
   }, [stateCounties, countySlug]);
 
@@ -64,7 +61,7 @@ export default function NearMeCountyPage() {
 
   const countyName = `${countyData.name} County`;
   const title = `${nearMeType.label} Near Me in ${countyName}, ${stateInfo.abbreviation}`;
-  const description = `Find ${nearMeType.label.toLowerCase()} centers in ${countyName}, ${stateInfo.abbreviation}. Compare verified ${nearMeType.treatmentType.toLowerCase()} programs serving ${countyData.majorCities.join(", ")}.`;
+  const description = `Find ${nearMeType.label.toLowerCase()} centers in ${countyName}, ${stateInfo.abbreviation}. Compare verified ${nearMeType.treatmentType.toLowerCase()} programs serving ${countyData.majorCities.slice(0, 3).join(", ")}.`;
 
   const faqs = [
     {
@@ -135,7 +132,7 @@ export default function NearMeCountyPage() {
             <p className="mt-2 text-muted-foreground">
               {facilities.length > 0
                 ? `Browse ${facilities.length} verified facilities serving ${countyName}.`
-                : `Explore ${nearMeType.treatmentType.toLowerCase()} options in ${countyName}. Browse statewide facilities or use our free concierge service.`}
+                : `Explore ${nearMeType.treatmentType.toLowerCase()} options in ${countyName}. Browse statewide or use our free concierge service.`}
             </p>
           </div>
 

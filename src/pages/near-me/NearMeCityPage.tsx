@@ -1,4 +1,4 @@
-import { useParams, Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
 import { NearMeHero } from "@/components/seo/NearMeHero";
@@ -20,27 +20,27 @@ import { useMemo } from "react";
 
 /**
  * Generic city-level near-me page.
- * Route: /:nearMeSlug/:stateSlug/:citySlug
- * e.g. /drug-rehab-near-me/california/los-angeles
+ * Pattern: /{nearMeSlug}/{stateSlug}/{citySlug}
+ * Rendered from SmartCatchAll — parses path directly.
  */
 export default function NearMeCityPage() {
-  const { nearMeSlug, stateSlug, citySlug } = useParams<{
-    nearMeSlug: string;
-    stateSlug: string;
-    citySlug: string;
-  }>();
+  const { pathname } = useLocation();
+  const parts = pathname.split("/").filter(Boolean);
+  const nearMeSlug = parts[0] || "";
+  const stateSlug = parts[1] || "";
+  const citySlug = parts[2] || "";
 
   const { data: allFacilities = [], isLoading } = useStaticFacilities();
 
-  const nearMeType = nearMeSlug ? getNearMeTypeBySlug(nearMeSlug) : undefined;
+  const nearMeType = getNearMeTypeBySlug(nearMeSlug);
   const stateData = statesData.find((s) => s.slug === stateSlug);
   const cityData = stateData?.cities.find((c) => c.slug === citySlug);
 
   const facilities = useMemo(() => {
     if (!stateData || !cityData) return [];
     const cityLower = cityData.name.toLowerCase();
-    const stateLower = stateData.name.toLowerCase();
     const stateAbbr = stateData.abbreviation.toLowerCase();
+    const stateLower = stateData.name.toLowerCase();
     return allFacilities.filter((f) => {
       const fCity = (f.city || "").toLowerCase();
       const fState = (f.state || "").toLowerCase();
@@ -53,9 +53,7 @@ export default function NearMeCityPage() {
 
   const nearbyCities = useMemo(() => {
     if (!stateData || !cityData) return [];
-    return stateData.cities
-      .filter((c) => c.slug !== citySlug)
-      .slice(0, 8);
+    return stateData.cities.filter((c) => c.slug !== citySlug).slice(0, 8);
   }, [stateData, cityData, citySlug]);
 
   if (!nearMeType || !stateData || !cityData) {
@@ -76,11 +74,11 @@ export default function NearMeCityPage() {
     },
     {
       question: `What should I look for in a ${nearMeType.label.toLowerCase()} center in ${cityData.name}?`,
-      answer: `When choosing a ${nearMeType.label.toLowerCase()} center in ${cityData.name}, consider: accreditation and licensing, treatment approaches offered, insurance acceptance, staff qualifications, aftercare planning, and patient reviews. Our directory provides verified information to help you compare options.`,
+      answer: `When choosing a ${nearMeType.label.toLowerCase()} center in ${cityData.name}, consider: accreditation and licensing, treatment approaches offered, insurance acceptance, staff qualifications, aftercare planning, and patient reviews.`,
     },
     {
-      question: `How do I get started with ${nearMeType.label.toLowerCase()} in ${cityData.name}, ${stateData.abbreviation}?`,
-      answer: `To start treatment in ${cityData.name}: 1) Browse facilities on this page, 2) Call facilities directly or use our free concierge service, 3) Verify your insurance coverage, 4) Complete an intake assessment, 5) Begin your recovery journey. Many facilities offer same-day or next-day admissions.`,
+      question: `How do I get started with ${nearMeType.label.toLowerCase()} in ${cityData.name}?`,
+      answer: `To start treatment in ${cityData.name}: 1) Browse facilities on this page, 2) Call facilities directly or use our free concierge service, 3) Verify your insurance coverage, 4) Complete an intake assessment, 5) Begin your recovery journey.`,
     },
   ];
 
@@ -111,7 +109,6 @@ export default function NearMeCityPage() {
           `${nearMeType.label.toLowerCase()} ${cityData.name}`,
           `${nearMeType.treatmentType.toLowerCase()} ${cityData.name} ${stateData.abbreviation}`,
           `${nearMeType.label.toLowerCase()} near me ${cityData.name}`,
-          `best ${nearMeType.label.toLowerCase()} ${cityData.name}`,
         ]}
         structuredData={structuredData}
         breadcrumbs={[
@@ -139,7 +136,7 @@ export default function NearMeCityPage() {
             <p className="mt-2 text-muted-foreground">
               {facilities.length > 0
                 ? `Browse ${facilities.length} verified facilities in ${cityData.name}.`
-                : `Explore ${nearMeType.treatmentType.toLowerCase()} options near ${cityData.name}. Browse statewide facilities or contact our concierge for help.`}
+                : `Explore ${nearMeType.treatmentType.toLowerCase()} options near ${cityData.name}. Browse statewide or use our free concierge.`}
             </p>
           </div>
 
