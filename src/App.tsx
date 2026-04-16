@@ -85,6 +85,8 @@ const SubstanceCityPage = lazy(() => import("./pages/seo/SubstanceCityPage"));
 const DemographicCityPage = lazy(() => import("./pages/seo/DemographicCityPage"));
 const CoOccurringCityPage = lazy(() => import("./pages/seo/CoOccurringCityPage"));
 const DurationCityPage = lazy(() => import("./pages/seo/DurationCityPage"));
+const EducationalPage = lazy(() => import("./pages/seo/EducationalPage"));
+const SubstanceRehabNearMe = lazy(() => import("./pages/near-me/SubstanceRehabNearMe"));
 
 // Provider Conversion Pages
 const CityProviderPage = lazy(() => import("./pages/provider-guides/CityProviderPage"));
