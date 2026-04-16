@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -9,12 +9,15 @@ import {
   MapPin, 
   Plus,
   FileText,
-  ExternalLink,
   ChevronRight,
+  RefreshCw,
+  CheckCircle,
+  Filter,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +61,8 @@ interface SavedRequestData {
   insuranceType?: string;
   primarySubstance?: string[];
 }
+
+type FilterTab = "all" | "pending" | "responded";
 
 function RequestCardSkeleton() {
   return (
@@ -105,6 +110,23 @@ function getUrgencyLabel(urgency: string | null) {
 }
 
 function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = diffMs / (1000 * 60 * 60);
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  if (diffHours < 1) return "Just now";
+  if (diffHours < 24) return `${Math.floor(diffHours)}h ago`;
+  if (diffDays < 7) return `${Math.floor(diffDays)}d ago`;
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+  });
+}
+
+function formatFullDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -114,7 +136,7 @@ function formatDate(dateString: string) {
   });
 }
 
-function RequestCard({ request, onClick }: { request: SubmittedRequest; onClick: () => void }) {
+function RequestCard({ request, onClick, isNew }: { request: SubmittedRequest; onClick: () => void; isNew: boolean }) {
   const [logoError, setLogoError] = useState(false);
   const hasLogo = request.facility_logo_url && !logoError;
   const hasProviderResponse = !!request.provider_responded_at || request.provider_response_status === "responded";
@@ -123,35 +145,41 @@ function RequestCard({ request, onClick }: { request: SubmittedRequest; onClick:
     <button
       type="button"
       onClick={onClick}
-      className="group w-full text-left rounded-xl border border-border bg-card shadow-sm hover:shadow-md hover:border-primary/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className={`group w-full text-left rounded-xl border bg-card shadow-sm hover:shadow-md hover:border-primary/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        isNew ? "border-primary/40 ring-1 ring-primary/20" : "border-border"
+      }`}
     >
-      <div className="p-4 flex gap-4">
-        <div className="h-14 w-14 rounded-lg overflow-hidden bg-muted shrink-0">
+      <div className="p-4 flex gap-3 sm:gap-4">
+        {/* Unread dot */}
+        <div className="relative h-12 w-12 sm:h-14 sm:w-14 rounded-lg overflow-hidden bg-muted shrink-0">
           {hasLogo ? (
             <img
               src={request.facility_logo_url!}
-              alt={request.facility_name}
+              alt={`${request.facility_name} logo`}
               className="h-full w-full object-contain p-1 bg-white"
               onError={() => setLogoError(true)}
             />
           ) : (
             <img
               src={facilityPlaceholder}
-              alt={request.facility_name}
+              alt={`${request.facility_name} placeholder`}
               className="h-full w-full object-cover"
               loading="lazy"
             />
+          )}
+          {isNew && (
+            <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-card" />
           )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1">
             <div className="min-w-0">
-              <span className="font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+              <span className={`font-semibold line-clamp-1 group-hover:text-primary transition-colors ${isNew ? "text-foreground" : "text-foreground"}`}>
                 {request.facility_name}
               </span>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span>{request.facility_city}, {request.facility_state}</span>
+                <span className="line-clamp-1">{request.facility_city}, {request.facility_state}</span>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -159,7 +187,7 @@ function RequestCard({ request, onClick }: { request: SubmittedRequest; onClick:
             </div>
           </div>
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
-            <span className="flex items-center gap-1 tabular-nums">
+            <span className="flex items-center gap-1 tabular-nums" title={formatFullDate(request.created_at)}>
               <Clock className="h-3 w-3" />
               {formatDate(request.created_at)}
             </span>
@@ -186,6 +214,7 @@ export default function SeekerRequests() {
 
   const [requests, setRequests] = useState<SubmittedRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [selectedFacility, setSelectedFacility] = useState<{
@@ -195,7 +224,32 @@ export default function SeekerRequests() {
     state?: string;
   } | null>(null);
   const [savedData, setSavedData] = useState<SavedRequestData | null>(null);
+  const [viewedLeadIds, setViewedLeadIds] = useState<Set<string>>(new Set());
+  const [filterTab, setFilterTab] = useState<FilterTab>("all");
   const { toast } = useToast();
+
+  // Load viewed lead IDs from localStorage
+  useEffect(() => {
+    if (!userId) return;
+    try {
+      const stored = localStorage.getItem(`seeker_viewed_leads_${userId}`);
+      if (stored) setViewedLeadIds(new Set(JSON.parse(stored)));
+    } catch {
+      // ignore
+    }
+  }, [userId]);
+
+  // Mark a lead as viewed
+  const markLeadViewed = useCallback((leadId: string) => {
+    setViewedLeadIds(prev => {
+      const next = new Set(prev);
+      next.add(leadId);
+      if (userId) {
+        localStorage.setItem(`seeker_viewed_leads_${userId}`, JSON.stringify([...next]));
+      }
+      return next;
+    });
+  }, [userId]);
 
   // Check if coming from a facility page with prefill
   useEffect(() => {
@@ -212,6 +266,54 @@ export default function SeekerRequests() {
     }
   }, [searchParams]);
 
+  const fetchRequests = useCallback(async (userEmail: string): Promise<SubmittedRequest[]> => {
+    const normalizedEmail = userEmail.trim().toLowerCase();
+    if (!normalizedEmail) return [];
+
+    try {
+      const { data: leadsData, error: leadsError } = await supabase.rpc("get_seeker_submitted_leads");
+      if (leadsError) throw leadsError;
+      if (!leadsData || leadsData.length === 0) return [];
+
+      const facilityIds = Array.from(new Set(leadsData.map((l: any) => l.facility_id).filter(Boolean))) as string[];
+      let facilitiesMap: Record<string, any> = {};
+
+      if (facilityIds.length > 0) {
+        const { data: facilitiesData } = await supabase
+          .from("facilities")
+          .select("id, name, slug, city, state, logo_url")
+          .in("id", facilityIds);
+        if (facilitiesData) {
+          facilitiesMap = facilitiesData.reduce((acc, f) => { acc[f.id] = f; return acc; }, {} as Record<string, any>);
+        }
+      }
+
+      return leadsData.map((req: any) => {
+        const facility = req.facility_id ? facilitiesMap[req.facility_id] : null;
+        return {
+          id: req.id,
+          facility_id: req.facility_id || "",
+          facility_name: facility?.name || "Treatment Center",
+          facility_slug: facility?.slug || null,
+          facility_city: facility?.city || "",
+          facility_state: facility?.state || "",
+          facility_logo_url: facility?.logo_url || null,
+          created_at: req.created_at,
+          status: req.status,
+          urgency: req.urgency,
+          preferred_contact: req.preferred_contact,
+          provider_responded_at: req.provider_responded_at,
+          provider_response_status: req.provider_response_status,
+        };
+      });
+    } catch (error: any) {
+      console.error("Error fetching requests:", error);
+      toast({ title: "Error loading inbox", description: "Could not load your inquiries. Please try again.", variant: "destructive" });
+      return [];
+    }
+  }, [toast]);
+
+  // Initial load
   useEffect(() => {
     let isCancelled = false;
 
@@ -239,56 +341,35 @@ export default function SeekerRequests() {
 
     void syncRequests();
     return () => { isCancelled = true; };
-  }, [isAuthenticated, isReady, email, userId]);
+  }, [isAuthenticated, isReady, email, userId, fetchRequests]);
 
-  const fetchRequests = async (userEmail: string): Promise<SubmittedRequest[]> => {
-    const normalizedEmail = userEmail.trim().toLowerCase();
-    if (!normalizedEmail) return [];
+  // Realtime subscription for lead status changes
+  useEffect(() => {
+    if (!email) return;
 
-    try {
-      // Use security definer function to fetch seeker's own leads
-      // (RLS on leads table has no seeker SELECT policy, so direct queries return empty)
-      const { data: leadsData, error: leadsError } = await supabase.rpc("get_seeker_submitted_leads");
-
-      if (leadsError) throw leadsError;
-      if (!leadsData || leadsData.length === 0) return [];
-
-      const facilityIds = Array.from(new Set(leadsData.map((l) => l.facility_id).filter(Boolean))) as string[];
-      let facilitiesMap: Record<string, any> = {};
-
-      if (facilityIds.length > 0) {
-        const { data: facilitiesData } = await supabase
-          .from("facilities")
-          .select("id, name, slug, city, state, logo_url")
-          .in("id", facilityIds);
-        if (facilitiesData) {
-          facilitiesMap = facilitiesData.reduce((acc, f) => { acc[f.id] = f; return acc; }, {} as Record<string, any>);
+    const channel = supabase
+      .channel("seeker-inbox-realtime")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "leads" },
+        () => {
+          // Refetch on any lead update (filtered server-side by RPC)
+          fetchRequests(email).then(setRequests);
         }
-      }
+      )
+      .subscribe();
 
-      return leadsData.map((req) => {
-        const facility = req.facility_id ? facilitiesMap[req.facility_id] : null;
-        return {
-          id: req.id,
-          facility_id: req.facility_id || "",
-          facility_name: facility?.name || "Treatment Center",
-          facility_slug: facility?.slug || null,
-          facility_city: facility?.city || "",
-          facility_state: facility?.state || "",
-          facility_logo_url: facility?.logo_url || null,
-          created_at: req.created_at,
-          status: req.status,
-          urgency: req.urgency,
-          preferred_contact: req.preferred_contact,
-          provider_responded_at: req.provider_responded_at,
-          provider_response_status: req.provider_response_status,
-        };
-      });
-    } catch (error: any) {
-      console.error("Error fetching requests:", error);
-      toast({ title: "Error loading requests", description: "Could not load your requests. Please try again.", variant: "destructive" });
-      return [];
-    }
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [email, fetchRequests]);
+
+  const handleRefresh = async () => {
+    if (!email || isRefreshing) return;
+    setIsRefreshing(true);
+    const nextRequests = await fetchRequests(email);
+    setRequests(nextRequests);
+    setIsRefreshing(false);
   };
 
   const loadSavedData = (currentUserId: string) => {
@@ -318,10 +399,27 @@ export default function SeekerRequests() {
     setIsLoading(false);
   };
 
+  const handleOpenDetail = (leadId: string) => {
+    setSelectedLeadId(leadId);
+    markLeadViewed(leadId);
+  };
+
+  // Filter requests
+  const filteredRequests = requests.filter(req => {
+    if (filterTab === "pending") return req.status === "new";
+    if (filterTab === "responded") return req.status !== "new";
+    return true;
+  });
+
+  // Counts for tabs
+  const pendingCount = requests.filter(r => r.status === "new").length;
+  const respondedCount = requests.filter(r => r.status !== "new").length;
+  const unviewedCount = requests.filter(r => !viewedLeadIds.has(r.id) && (r.provider_responded_at || r.provider_response_status === "responded")).length;
+
   if (isReady && !isAuthenticated) {
     return (
       <AuthPrompt
-        title="Sign in to manage your requests"
+        title="Sign in to view your inbox"
         description="Create a free account to send and track requests to treatment centers."
         icon="send"
         returnTo="/account/requests"
@@ -354,7 +452,8 @@ export default function SeekerRequests() {
       </Helmet>
 
       <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 mb-4 sm:mb-5">
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
               <Send className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -364,11 +463,23 @@ export default function SeekerRequests() {
               <p className="text-xs sm:text-sm text-muted-foreground">Track inquiries & responses</p>
             </div>
           </div>
-          {requests.length > 0 && (
-            <Badge variant="secondary" className="text-xs sm:text-xs shrink-0">
-              {requests.length}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {unviewedCount > 0 && (
+              <Badge className="bg-primary text-primary-foreground text-xs">
+                {unviewedCount} new
+              </Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Refresh inbox"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            </Button>
+          </div>
         </div>
 
         {requests.length === 0 ? (
@@ -377,12 +488,12 @@ export default function SeekerRequests() {
               <div className="p-3 rounded-full bg-muted w-fit mx-auto mb-4">
                 <FileText className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">No Requests Yet</h3>
+              <h3 className="font-semibold text-foreground mb-2">No Inquiries Yet</h3>
               <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
-                Browse treatment centers and send a request to get started.
+                Browse treatment centers and send an inquiry to get started. You'll see responses here.
               </p>
               <Button asChild>
-                <Link to="/account" className="gap-2">
+                <Link to="/account/search" className="gap-2">
                   <Building2 className="h-4 w-4" />
                   Browse Treatment Centers
                 </Link>
@@ -391,12 +502,32 @@ export default function SeekerRequests() {
           </Card>
         ) : (
           <div className="space-y-4">
+            {/* Filter tabs */}
+            <Tabs value={filterTab} onValueChange={(v) => setFilterTab(v as FilterTab)}>
+              <TabsList className="grid w-full grid-cols-3 h-9">
+                <TabsTrigger value="all" className="text-xs sm:text-sm gap-1">
+                  All
+                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-1">{requests.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="pending" className="text-xs sm:text-sm gap-1">
+                  <Clock className="h-3 w-3" />
+                  Pending
+                  {pendingCount > 0 && <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-1">{pendingCount}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="responded" className="text-xs sm:text-sm gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  Responded
+                  {respondedCount > 0 && <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-1">{respondedCount}</Badge>}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
             {/* Quick action */}
             <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-              <CardContent className="p-4 flex items-center justify-between gap-4">
+              <CardContent className="p-3 sm:p-4 flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground">Need to contact another facility?</p>
-                  <p className="text-sm text-muted-foreground">Your information will be prefilled.</p>
+                  <p className="font-medium text-foreground text-sm sm:text-base">Need to contact another facility?</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Your information will be prefilled.</p>
                 </div>
                 <Button asChild size="sm" className="shrink-0">
                   <Link to="/account/search" className="gap-2">
@@ -407,14 +538,28 @@ export default function SeekerRequests() {
               </CardContent>
             </Card>
 
-            {/* Clickable request cards */}
-            {requests.map((request) => (
-              <RequestCard
-                key={request.id}
-                request={request}
-                onClick={() => setSelectedLeadId(request.id)}
-              />
-            ))}
+            {/* Request cards */}
+            {filteredRequests.length === 0 ? (
+              <div className="text-center py-8">
+                <Filter className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  No {filterTab === "pending" ? "pending" : "responded"} inquiries
+                </p>
+              </div>
+            ) : (
+              filteredRequests.map((request) => {
+                const hasResponse = !!request.provider_responded_at || request.provider_response_status === "responded";
+                const isNew = hasResponse && !viewedLeadIds.has(request.id);
+                return (
+                  <RequestCard
+                    key={request.id}
+                    request={request}
+                    onClick={() => handleOpenDetail(request.id)}
+                    isNew={isNew}
+                  />
+                );
+              })
+            )}
           </div>
         )}
 
