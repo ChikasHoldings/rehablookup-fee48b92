@@ -750,10 +750,10 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     // Batch operations in parallel
     const ops: Promise<unknown>[] = [];
     if (toAdd.length > 0) {
-      ops.push(supabase.from("facility_services").insert(toAdd.map(s => ({ facility_id: facility.id, service_name: s }))).select());
+      ops.push(supabase.from("facility_services").insert(toAdd.map(s => ({ facility_id: facility.id, service_name: s }))).then());
     }
     for (const service of toRemove) {
-      ops.push(supabase.from("facility_services").delete().eq("id", service.id).select());
+      ops.push(supabase.from("facility_services").delete().eq("id", service.id).then());
     }
     
     if (ops.length > 0) {
@@ -775,10 +775,10 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     
     const ops: Promise<unknown>[] = [];
     if (toAdd.length > 0) {
-      ops.push(supabase.from("facility_insurance").insert(toAdd.map(i => ({ facility_id: facility.id, insurance_name: i }))).select());
+      ops.push(supabase.from("facility_insurance").insert(toAdd.map(i => ({ facility_id: facility.id, insurance_name: i }))).then());
     }
     for (const ins of toRemove) {
-      ops.push(supabase.from("facility_insurance").delete().eq("id", ins.id).select());
+      ops.push(supabase.from("facility_insurance").delete().eq("id", ins.id).then());
     }
     
     if (ops.length > 0) {
@@ -800,10 +800,10 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     
     const ops: Promise<unknown>[] = [];
     if (toAdd.length > 0) {
-      ops.push(supabase.from("facility_age_groups").insert(toAdd.map(ag => ({ facility_id: facility.id, age_group: ag }))).select());
+      ops.push(supabase.from("facility_age_groups").insert(toAdd.map(ag => ({ facility_id: facility.id, age_group: ag }))).then());
     }
     for (const ag of toRemove) {
-      ops.push(supabase.from("facility_age_groups").delete().eq("id", ag.id).select());
+      ops.push(supabase.from("facility_age_groups").delete().eq("id", ag.id).then());
     }
     
     if (ops.length > 0) {
