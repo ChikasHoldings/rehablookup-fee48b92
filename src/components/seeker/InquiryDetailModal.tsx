@@ -133,7 +133,7 @@ function DetailRow({ icon: Icon, label, value }: { icon: any; label: string; val
   );
 }
 
-export function InquiryDetailModal({ open, onOpenChange, leadId }: InquiryDetailModalProps) {
+export function InquiryDetailModal({ open, onOpenChange, leadId }: Omit<InquiryDetailModalProps, 'userEmail'> & { userEmail?: string }) {
   const [lead, setLead] = useState<LeadDetail | null>(null);
   const [facility, setFacility] = useState<FacilityInfo | null>(null);
   const [providerResponse, setProviderResponse] = useState<ProviderResponse | null>(null);
