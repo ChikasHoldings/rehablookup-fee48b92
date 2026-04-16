@@ -95,20 +95,26 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
 
   const effectiveSavings = proSavingsCents || monthlySavings;
 
+  const unlockedThisWeek = kpis?.unlocked ?? 0;
+  const lockedThisWeek = Math.max(0, (kpis?.received ?? 0) - unlockedThisWeek);
+
   const metrics = [
     {
-      label: "Leads",
+      label: "Total Leads",
       value: totalLeadsCount,
+      subtitle: `${unlockedThisWeek} unlocked this week`,
       icon: Inbox,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
     },
     {
-      label: "Concierge",
-      value: conciergeCount,
-      icon: Users,
-      iconBg: "bg-emerald-500/10",
-      iconColor: "text-emerald-600 dark:text-emerald-400",
+      label: "Locked",
+      value: lockedThisWeek,
+      subtitle: "awaiting unlock",
+      icon: AlertTriangle,
+      iconBg: "bg-warning/10",
+      iconColor: "text-warning",
+      highlight: lockedThisWeek > 0,
     },
     {
       label: "Impressions",
