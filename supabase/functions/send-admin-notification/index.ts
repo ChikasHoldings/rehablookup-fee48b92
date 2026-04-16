@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
               </body>
             </html>
           `,
-        });
+        }, { emailType: "admin_notification" };
 
         logStep("Email sent", { emailId: emailResult.data?.id });
       }

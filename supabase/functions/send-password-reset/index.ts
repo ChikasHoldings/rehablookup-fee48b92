@@ -189,7 +189,7 @@ Deno.serve(async (req) => {
 </body>
 </html>
       `,
-    });
+    }, { emailType: "password_reset" };
 
     if (emailError) {
       console.error("Resend email error:", emailError);

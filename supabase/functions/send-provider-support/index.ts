@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
       subject: `[Provider Support] ${topicLabel} - ${escapeHtml(name.slice(0, 50))}`,
       html: emailHtml,
       reply_to: email,
-    });
+    }, { emailType: "provider_support" };
 
     const confirmationHtml = `
 <!DOCTYPE html>
@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
       to: [email],
       subject: "We've received your support request",
       html: confirmationHtml,
-    });
+    }, { emailType: "provider_support" };
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -336,7 +336,7 @@ Deno.serve(async (req) => {
           to: [inquiry.user_email],
           subject: emailData.subject,
           html: emailData.html,
-        });
+        }, { emailType: "abandoned_placement" };
 
         if (sendError) {
           throw new Error(sendError.message);
@@ -390,7 +390,7 @@ Deno.serve(async (req) => {
           to: [inquiry.user_email],
           subject: emailData.subject,
           html: emailData.html,
-        });
+        }, { emailType: "abandoned_placement" };
 
         if (sendError) throw new Error(sendError.message);
 
@@ -435,7 +435,7 @@ Deno.serve(async (req) => {
           to: [caseData.client_email],
           subject: emailData.subject,
           html: emailData.html,
-        });
+        }, { emailType: "abandoned_placement" };
 
         if (sendError) {
           throw new Error(sendError.message);

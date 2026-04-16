@@ -494,7 +494,7 @@ Deno.serve(async (req) => {
           to: [admin.email],
           subject,
           html,
-        });
+        }, { emailType: "admin_digest" };
 
         sentCount++;
         console.log(`${LOG} ✓ Sent ${role} digest to ${admin.email}`);
