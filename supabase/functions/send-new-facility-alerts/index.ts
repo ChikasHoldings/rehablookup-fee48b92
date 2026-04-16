@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
             "List-Unsubscribe": `<mailto:no-reply@rehablookup.com?subject=unsubscribe>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
-        });
+        }, { emailType: "new_facility_alert", idempotencyKey: `new-fac-alert-${seeker.user_id}-${new Date().toISOString().slice(0,10)}` });
 
         // Track alerts
         const alertRows = unseenFacilities.map(f => ({

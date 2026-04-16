@@ -250,7 +250,7 @@ Deno.serve(async (req) => {
       subject: `[${sourceLabel}] ${categoryLabel} - ${subject}`,
       html: emailHtml,
       reply_to: userEmail,
-    });
+    }, { emailType: "support_request" });
 
     console.log("[SEND-SUPPORT-REQUEST] Email sent:", emailResponse);
 

@@ -194,7 +194,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         ? `Your credential document has been verified` 
         : `Action required: Your credential document needs attention`,
       html: emailHtml,
-    });
+    }, { emailType: "credential_notification" });
 
     console.log("Credential notification email sent:", emailResponse);
 

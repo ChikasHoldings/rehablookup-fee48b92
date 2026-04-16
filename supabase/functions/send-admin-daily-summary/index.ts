@@ -494,7 +494,7 @@ Deno.serve(async (req) => {
           to: [admin.email],
           subject,
           html,
-        });
+        }, { emailType: "admin_digest", idempotencyKey: `digest-${admin.user_id}-${period}-${dateRange}` });
 
         sentCount++;
         console.log(`${LOG} ✓ Sent ${role} digest to ${admin.email}`);

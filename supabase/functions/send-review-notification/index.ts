@@ -270,7 +270,7 @@ ${emailEnd()}
       to: adminEmails,
       subject: `New Review Pending: ${facility.name}`,
       html: emailHtml,
-    });
+    }, { emailType: "review_notification" });
     logStep("Admin email sent", { recipientCount: adminEmails.length });
   }
 }
@@ -343,7 +343,7 @@ ${emailEnd()}
       to: [providerEmail],
       subject: `${subjectPrefix}New ${review.rating}-Star Review for ${facility.name}`,
       html: emailHtml,
-    });
+    }, { emailType: "review_notification" });
     logStep("Provider email sent");
   }
 
@@ -367,7 +367,7 @@ ${emailEnd()}
       to: [seekerEmail],
       subject: "Your Review Has Been Published!",
       html: emailHtml,
-    });
+    }, { emailType: "review_notification" });
     logStep("Seeker approval email sent");
   }
 }
@@ -425,7 +425,7 @@ ${emailEnd()}
       to: [seekerEmail],
       subject: "Update on Your Review",
       html: emailHtml,
-    });
+    }, { emailType: "review_notification" });
     logStep("Seeker rejection email sent");
   }
 }
@@ -481,7 +481,7 @@ ${emailEnd()}
       to: [seekerEmail],
       subject: `${facility.name} Responded to Your Review`,
       html: emailHtml,
-    });
+    }, { emailType: "review_notification" });
     logStep("Seeker response notification email sent");
   }
 }
@@ -533,7 +533,7 @@ ${emailEnd()}
       to: adminEmails,
       subject: `⚠️ Review Dispute: ${facility.name}`,
       html: emailHtml,
-    });
+    }, { emailType: "review_notification" });
     logStep("Admin dispute email sent", { recipientCount: adminEmails.length });
   }
 }

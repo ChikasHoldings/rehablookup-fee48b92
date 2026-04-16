@@ -613,6 +613,48 @@ Deno.serve(async (req) => {
                 },
               });
 
+              // 5. Send credit purchase confirmation email
+              if (resend) {
+                try {
+                  const purchaseEmail = session.customer_email || session.customer_details?.email;
+                  if (purchaseEmail) {
+                    const amountFormatted = (amountCents / 100).toFixed(0);
+                    const totalFormatted = (totalCreditsCents / 100).toFixed(0);
+                    const balanceFormatted = typeof newBalance === "number" ? (newBalance / 100).toFixed(0) : "N/A";
+                    await sendEmailWithRetry(supabaseAdmin, resend, {
+                      from: "RehabLookup <no-reply@rehablookup.com>",
+                      to: [purchaseEmail],
+                      subject: `✅ Credit Purchase Confirmed — $${amountFormatted}`,
+                      html: `
+                        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">
+                          <div style="background-color: #1B365D; background: #1B365D; padding: 30px; border-radius: 12px 12px 0 0;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-family: Arial, Helvetica, sans-serif;">✅ Credits Added</h1>
+                          </div>
+                          <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
+                            <p style="color: #374151;">Your credit purchase has been confirmed.</p>
+                            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                              <tr><td style="padding: 8px 0; color: #6b7280;">Purchase Amount</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #374151;">$${amountFormatted}</td></tr>
+                              ${safeBonusCents > 0 ? `<tr><td style="padding: 8px 0; color: #059669;">Bonus Credits</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #059669;">+$${(safeBonusCents / 100).toFixed(0)}</td></tr>` : ""}
+                              <tr style="border-top: 2px solid #e5e7eb;"><td style="padding: 8px 0; font-weight: 700; color: #374151;">Total Credits Added</td><td style="padding: 8px 0; text-align: right; font-weight: 700; color: #374151;">$${totalFormatted}</td></tr>
+                              <tr><td style="padding: 8px 0; color: #6b7280;">New Balance</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #1B365D;">$${balanceFormatted}</td></tr>
+                            </table>
+                            <div style="text-align: center; margin: 30px 0;">
+                              <a href="https://rehablookup.com/provider/billing" style="background: #1B365D; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Billing</a>
+                            </div>
+                          </div>
+                          <div style="background-color: #1B365D; background: #1B365D; padding: 16px; border-radius: 0 0 12px 12px; text-align: center;">
+                            <p style="margin: 0; font-size: 13px; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif;">RehabLookup — Connecting families with trusted treatment providers</p>
+                          </div>
+                        </div>
+                      `,
+                    }, { emailType: "credit_purchase_receipt", idempotencyKey: `credit-receipt-${session.id}` });
+                    logStep("Credit purchase confirmation email sent", { email: purchaseEmail });
+                  }
+                } catch (emailErr) {
+                  logStep("Warning: Credit purchase email failed (non-critical)", { error: String(emailErr) });
+                }
+              }
+
               logStep("Credit purchase fully processed", { newBalance });
             }
           }

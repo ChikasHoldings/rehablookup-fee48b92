@@ -331,19 +331,18 @@ Deno.serve(async (req) => {
           resumeUrl,
         });
 
+        const newCount = (inquiry.payment_reminder_count || 0) + 1;
+
         const { error: sendError } = await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
           to: [inquiry.user_email],
           subject: emailData.subject,
           html: emailData.html,
-        });
+        }, { emailType: "abandoned_placement", idempotencyKey: `abandoned-domestic-${inquiry.id}-${newCount}` });
 
         if (sendError) {
           throw new Error(sendError.message);
         }
-
-        // Update the inquiry to increment reminder count
-        const newCount = (inquiry.payment_reminder_count || 0) + 1;
         await supabase
           .from("concierge_inquiries")
           .update({ 
@@ -390,7 +389,7 @@ Deno.serve(async (req) => {
           to: [inquiry.user_email],
           subject: emailData.subject,
           html: emailData.html,
-        });
+        }, { emailType: "abandoned_placement", idempotencyKey: `abandoned-early-${inquiry.id}` });
 
         if (sendError) throw new Error(sendError.message);
 
@@ -435,7 +434,7 @@ Deno.serve(async (req) => {
           to: [caseData.client_email],
           subject: emailData.subject,
           html: emailData.html,
-        });
+        }, { emailType: "abandoned_placement", idempotencyKey: `abandoned-intl-${caseData.id}` });
 
         if (sendError) {
           throw new Error(sendError.message);
