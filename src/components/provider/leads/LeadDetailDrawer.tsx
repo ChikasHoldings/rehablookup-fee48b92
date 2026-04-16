@@ -53,6 +53,7 @@ import { EmailLeadDialog } from "./EmailLeadDialog";
 import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
 import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 import { Lead } from "./LeadDetailPanel";
+import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
 
 interface LeadNote {
   id: string;
@@ -84,6 +85,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { trackContact } = useLeadContactTracking();
 
   // Lead unlock status - used for UI control, not masking
   // Data from leads_provider_view is already masked/unmasked at the DB level
@@ -401,7 +403,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                         className="h-12 flex-col gap-0.5 bg-green-600 hover:bg-green-700 text-white"
                         asChild
                       >
-                        <a href={`tel:${lead.phone}`}>
+                        <a href={`tel:${lead.phone}`} onClick={() => trackContact(lead.id, lead.facility_id, "call")}>
                           <Phone className="h-4 w-4" />
                           <span className="text-[10px] font-medium">📞 Call Now</span>
                         </a>
@@ -410,7 +412,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                         className="h-12 flex-col gap-0.5 bg-blue-600 hover:bg-blue-700 text-white"
                         asChild
                       >
-                        <a href={`sms:${lead.phone}`}>
+                        <a href={`sms:${lead.phone}`} onClick={() => trackContact(lead.id, lead.facility_id, "sms")}>
                           <Smartphone className="h-4 w-4" />
                           <span className="text-[10px] font-medium">Send SMS</span>
                         </a>
@@ -418,7 +420,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                       <Button 
                         className="h-12 flex-col gap-0.5"
                         variant="outline"
-                        onClick={() => setEmailDialogOpen(true)}
+                        onClick={() => { trackContact(lead.id, lead.facility_id, "email"); setEmailDialogOpen(true); }}
                       >
                         <Mail className="h-4 w-4" />
                         <span className="text-[10px] font-medium">📧 Email</span>

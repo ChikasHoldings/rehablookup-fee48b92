@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -157,6 +158,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
   const [pendingStatus, setPendingStatus] = useState<LeadStatus | null>(null);
   const [lostReason, setLostReason] = useState("");
   const queryClient = useQueryClient();
+  const { trackContact } = useLeadContactTracking();
   
   // Lead unlock status - used for UI control (show/hide buttons), not for masking
   // Data from leads_provider_view is already masked/unmasked at the DB level
@@ -609,7 +611,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                       className="h-14 flex-col gap-1 bg-green-600 hover:bg-green-700 text-white"
                       asChild
                     >
-                      <a href={`tel:${lead.phone}`}>
+                      <a href={`tel:${lead.phone}`} onClick={() => trackContact(lead.id, lead.facility_id, "call")}>
                         <Phone className="h-5 w-5" />
                         <span className="text-xs font-medium">📞 Call Now</span>
                       </a>
@@ -618,7 +620,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                       className="h-14 flex-col gap-1 bg-blue-600 hover:bg-blue-700 text-white"
                       asChild
                     >
-                      <a href={`sms:${lead.phone}`}>
+                      <a href={`sms:${lead.phone}`} onClick={() => trackContact(lead.id, lead.facility_id, "sms")}>
                         <Smartphone className="h-5 w-5" />
                         <span className="text-xs font-medium">Send SMS</span>
                       </a>
@@ -626,7 +628,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                     <Button 
                       className="h-14 flex-col gap-1"
                       variant="outline"
-                      onClick={() => setShowEmailDialog(true)}
+                      onClick={() => { trackContact(lead.id, lead.facility_id, "email"); setShowEmailDialog(true); }}
                     >
                       <Mail className="h-5 w-5" />
                       <span className="text-xs font-medium">📧 Email</span>
