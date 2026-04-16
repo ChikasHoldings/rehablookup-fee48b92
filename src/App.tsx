@@ -87,8 +87,9 @@ const CoOccurringCityPage = lazy(() => import("./pages/seo/CoOccurringCityPage")
 const DurationCityPage = lazy(() => import("./pages/seo/DurationCityPage"));
 const EducationalPage = lazy(() => import("./pages/seo/EducationalPage"));
 const SubstanceRehabNearMe = lazy(() => import("./pages/near-me/SubstanceRehabNearMe"));
+const NearMeCityPage = lazy(() => import("./pages/near-me/NearMeCityPage"));
+const NearMeCountyPage = lazy(() => import("./pages/near-me/NearMeCountyPage"));
 
-// Provider Conversion Pages
 const CityProviderPage = lazy(() => import("./pages/provider-guides/CityProviderPage"));
 const CityTreatmentProviderPage = lazy(() => import("./pages/provider-guides/CityTreatmentProviderPage"));
 const CityInsuranceProviderPage = lazy(() => import("./pages/provider-guides/CityInsuranceProviderPage"));
