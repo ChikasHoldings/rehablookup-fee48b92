@@ -843,10 +843,8 @@ const STATIC_ROUTES: RouteEntry[] = [
   { path: "/signs-of-benzo-addiction", priority: 0.85, changefreq: "monthly" },
   { path: "/signs-of-fentanyl-addiction", priority: 0.85, changefreq: "monthly" },
 
-  // TREATMENT HUB SHORT ROUTES
-  { path: "/treatment/detox", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment/dual-diagnosis", priority: 0.85, changefreq: "weekly" },
-  { path: "/treatment/inpatient-rehab", priority: 0.85, changefreq: "weekly" },
+  // TREATMENT HUB SHORT ROUTES — removed /treatment/detox, /treatment/dual-diagnosis,
+  // /treatment/inpatient-rehab as they are redirects to /treatment-types/* equivalents
 ];
 
 // Near-me types that have /:stateSlug routes
@@ -1607,7 +1605,10 @@ const EXCLUDED_PATHS = new Set([
   "/blog", "/request-help", "/provider-forgot-password", "/provider-reset-password",
   "/login", "/signup", "/forgot-password", "/reset-password", "/provider-login",
   "/provider-signup", "/admin-login", "/account/concierge", "/placement-help",
-  "/lp/social", "/404",
+  "/lp/social", "/404", "/search-results",
+  // Legacy redirect routes — these redirect to /treatment-types/* equivalents
+  "/treatment/detox", "/treatment/dual-diagnosis", "/treatment/inpatient-rehab",
+  "/treatment/alcohol-rehab", "/treatment-types/dual-diagnosis",
 ]);
 
 function generateUrlEntry(
