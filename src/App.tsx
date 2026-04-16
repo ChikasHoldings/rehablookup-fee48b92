@@ -713,7 +713,14 @@ const AppInner = () => {
              <Route path="/mountain-rehab-programs" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
              <Route path="/mountain-rehab-programs/:stateSlug" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
 
-             {/* Payment Method + State Pages */}
+             {/* Duration + City Pages */}
+             <Route path="/30-day-rehab-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><DurationCityPage /></PublicRouteGuard>} />
+             <Route path="/60-day-rehab-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><DurationCityPage /></PublicRouteGuard>} />
+             <Route path="/90-day-rehab-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><DurationCityPage /></PublicRouteGuard>} />
+             <Route path="/long-term-rehab-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><DurationCityPage /></PublicRouteGuard>} />
+             <Route path="/beach-rehab-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><DurationCityPage /></PublicRouteGuard>} />
+             <Route path="/mountain-rehab-programs/:stateSlug/:citySlug" element={<PublicRouteGuard><DurationCityPage /></PublicRouteGuard>} />
+
              <Route path="/medicaid-rehab/:stateSlug" element={<PublicRouteGuard><PaymentStatePage paymentType="medicaid" /></PublicRouteGuard>} />
              <Route path="/medicare-rehab/:stateSlug" element={<PublicRouteGuard><PaymentStatePage paymentType="medicare" /></PublicRouteGuard>} />
             
