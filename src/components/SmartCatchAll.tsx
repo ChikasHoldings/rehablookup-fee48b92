@@ -4,6 +4,7 @@ import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 
 const BestInStatePage = lazy(() => import("@/pages/seo/BestInStatePage"));
 const ListYourFacilityState = lazy(() => import("@/pages/provider-guides/ListYourFacilityState"));
+const ListYourFacilityCity = lazy(() => import("@/pages/provider-guides/ListYourFacilityCity"));
 const ForProvidersState = lazy(() => import("@/pages/provider-guides/ForProvidersState"));
 const CityTreatmentPage = lazy(() => import("@/pages/seo/CityTreatmentPage"));
 const CityProviderPage = lazy(() => import("@/pages/provider-guides/CityProviderPage"));
