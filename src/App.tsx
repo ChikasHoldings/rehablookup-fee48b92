@@ -87,6 +87,7 @@ const CoOccurringCityPage = lazy(() => import("./pages/seo/CoOccurringCityPage")
 const DurationCityPage = lazy(() => import("./pages/seo/DurationCityPage"));
 const EducationalPage = lazy(() => import("./pages/seo/EducationalPage"));
 const SubstanceRehabNearMe = lazy(() => import("./pages/near-me/SubstanceRehabNearMe"));
+const GenericNearMePage = lazy(() => import("./pages/near-me/GenericNearMePage"));
 const NearMeCityPage = lazy(() => import("./pages/near-me/NearMeCityPage"));
 const NearMeCountyPage = lazy(() => import("./pages/near-me/NearMeCountyPage"));
 
@@ -834,6 +835,50 @@ const AppInner = () => {
              <Route path="/xanax-rehab-near-me/:stateSlug" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="xanax-rehab-near-me" /></PublicRouteGuard>} />
              <Route path="/kratom-rehab-near-me" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="kratom-rehab-near-me" /></PublicRouteGuard>} />
              <Route path="/kratom-rehab-near-me/:stateSlug" element={<PublicRouteGuard><SubstanceRehabNearMe configSlug="kratom-rehab-near-me" /></PublicRouteGuard>} />
+
+             {/* Expanded Near Me Pages - Urgency, Insurance, Demographics, Duration (Batch 5) */}
+             <Route path="/emergency-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="emergency-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/emergency-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="emergency-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/same-day-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="same-day-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/same-day-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="same-day-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/24-7-detox-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="24-7-detox-near-me" /></PublicRouteGuard>} />
+             <Route path="/24-7-detox-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="24-7-detox-near-me" /></PublicRouteGuard>} />
+             <Route path="/immediate-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="immediate-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/immediate-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="immediate-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/low-cost-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="low-cost-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/low-cost-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="low-cost-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/medicare-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="medicare-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/medicare-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="medicare-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/blue-cross-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="blue-cross-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/blue-cross-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="blue-cross-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/aetna-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="aetna-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/aetna-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="aetna-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/cigna-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="cigna-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/cigna-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="cigna-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/united-healthcare-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="united-healthcare-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/united-healthcare-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="united-healthcare-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/tricare-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="tricare-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/tricare-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="tricare-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/humana-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="humana-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/humana-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="humana-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/30-day-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="30-day-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/30-day-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="30-day-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/60-day-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="60-day-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/60-day-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="60-day-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/90-day-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="90-day-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/90-day-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="90-day-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/short-term-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="short-term-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/short-term-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="short-term-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/lgbtq-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="lgbtq-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/lgbtq-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="lgbtq-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/young-adult-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="young-adult-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/young-adult-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="young-adult-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/seniors-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="seniors-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/seniors-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="seniors-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/first-responder-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="first-responder-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/first-responder-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="first-responder-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/marijuana-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="marijuana-rehab-near-me" /></PublicRouteGuard>} />
+             <Route path="/marijuana-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="marijuana-rehab-near-me" /></PublicRouteGuard>} />
 
              {/* Educational "What Is" Pages (Batch 2) */}
              <Route path="/what-is-detox" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
