@@ -161,6 +161,7 @@ export default function PaymentStatePage({ paymentType }: PaymentStatePageProps)
       metaTitle={config.metaTitle.replace("{state}", `${stateName} (${abbreviation})`)}
       metaDescription={config.metaDescription.replace("{state}", stateName)}
       canonical={`https://rehablookup.com${canonicalPath}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },

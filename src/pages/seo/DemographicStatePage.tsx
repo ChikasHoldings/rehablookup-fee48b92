@@ -121,6 +121,7 @@ export default function DemographicStatePage() {
       metaTitle={`${demographic.title} in ${stateName} (${abbreviation}) — Find Programs | RehabLookup`}
       metaDescription={`Find ${demographic.title.toLowerCase()} programs in ${stateName}. Compare ${facilities.length}+ verified facilities with specialized care. Get matched today.`}
       canonical={`https://rehablookup.com/${slug}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },

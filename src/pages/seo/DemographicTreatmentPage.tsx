@@ -5,6 +5,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { demographicPages } from "@/data/seoDemographicConfig";
 import { topCities, seoTreatmentTypes, getCityTreatmentSlug } from "@/data/seoPageConfig";
+import { validatePage } from "@/utils/seoPageValidator";
 
 export default function DemographicTreatmentPage() {
   const location = useLocation();
@@ -34,6 +35,8 @@ export default function DemographicTreatmentPage() {
       })
       .slice(0, 12);
   }, [approvedFacilities, config]);
+
+  const validation = validatePage("demographic-treatment", facilities.length);
 
   const relatedCityLinks = useMemo(() => {
     const treatmentType = seoTreatmentTypes[0];

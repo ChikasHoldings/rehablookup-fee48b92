@@ -129,6 +129,7 @@ export default function SubstanceStatePage() {
       metaTitle={`${substance.title} in ${stateName} (${abbreviation}) — Find Help | RehabLookup`}
       metaDescription={`Find ${substance.conditionName.toLowerCase()} treatment centers in ${stateName}. Compare ${facilities.length}+ verified programs, check insurance, get help today.`}
       canonical={`https://rehablookup.com/${slug}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },
