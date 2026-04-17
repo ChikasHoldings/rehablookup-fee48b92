@@ -78,6 +78,7 @@ export default function DemographicTreatmentPage() {
       metaTitle={config.metaTitle}
       metaDescription={config.metaDescription}
       canonical={`https://rehablookup.com/${config.slug}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },

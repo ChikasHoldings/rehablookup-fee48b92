@@ -76,6 +76,7 @@ export default function SubstanceTreatmentPage() {
       metaTitle={substance.metaTitle}
       metaDescription={substance.metaDescription}
       canonical={`https://rehablookup.com/${slug}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },
