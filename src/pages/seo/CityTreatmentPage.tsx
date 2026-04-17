@@ -174,6 +174,7 @@ export default function CityTreatmentPage() {
       metaTitle={`${treatment.pluralLabel} in ${city.city}, ${city.stateAbbr} — Find Treatment | RehabLookup`}
       metaDescription={`Find accredited ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}. Compare ${facilities.length}+ verified facilities, check insurance coverage, read reviews. Get help today.`}
       canonical={`https://rehablookup.com/${slug}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },
