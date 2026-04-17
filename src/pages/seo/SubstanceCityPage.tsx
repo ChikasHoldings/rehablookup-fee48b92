@@ -6,7 +6,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { substancePages } from "@/data/seoSubstanceConfig";
 import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
-import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
 export default function SubstanceCityPage() {
   const { stateSlug, citySlug } = useParams<{ stateSlug: string; citySlug: string }>();
@@ -25,8 +25,10 @@ export default function SubstanceCityPage() {
     return stateData.cities.find((c) => c.slug === citySlug) || null;
   }, [stateData, citySlug]);
 
-  const facilities = useMemo(() => {
-    if (!substance || !stateData || !cityData) return [];
+  const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
+    if (!substance || !stateData || !cityData) {
+      return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
+    }
     const all = [...treatmentCenters, ...approvedFacilities];
     const keywords = substance.filterKeys.map((k) => k.toLowerCase());
     const cityLower = cityData.name.toLowerCase();
@@ -39,15 +41,21 @@ export default function SubstanceCityPage() {
       return cityMatch && keyMatch;
     });
 
-    if (cityMatched.length >= 3) return cityMatched.slice(0, 12);
-
-    // Fallback to all city facilities
     const cityAll = all.filter((f) => f.city.toLowerCase() === cityLower && f.state.toLowerCase() === stateLower);
-    if (cityAll.length >= 3) return cityAll.slice(0, 12);
+    const stateAll = all.filter((f) => f.state.toLowerCase() === stateLower);
 
-    // Fallback to state
-    return all.filter((f) => f.state.toLowerCase() === stateLower).slice(0, 12);
+    let display = cityMatched;
+    if (display.length < 3) display = cityAll;
+    if (display.length < 3) display = stateAll;
+
+    return {
+      facilities: display.slice(0, 12),
+      directMatchCount: cityMatched.length,
+      stateFallbackCount: stateAll.length,
+    };
   }, [approvedFacilities, substance, stateData, cityData]);
+
+  const validation = validatePage("substance-city", directMatchCount, { stateFallbackCount });
 
   if (!substance || !stateData || !cityData) {
     return <Navigate to="/treatment-types" replace />;
@@ -124,6 +132,7 @@ export default function SubstanceCityPage() {
       metaTitle={`${substance.title} in ${cityName}, ${abbreviation} — Find Help | RehabLookup`}
       metaDescription={`Find ${substance.conditionName.toLowerCase()} treatment centers in ${cityName}, ${stateName}. Compare verified programs, check insurance, get help today.`}
       canonical={`https://rehablookup.com${canonicalPath}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },
