@@ -6,7 +6,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { demographicPages } from "@/data/seoDemographicConfig";
 import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
-import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
 export default function DemographicStatePage() {
   const { stateSlug } = useParams<{ stateSlug: string }>();
@@ -21,8 +21,10 @@ export default function DemographicStatePage() {
   const demographic = useMemo(() => demographicPages.find((d) => d.slug === demographicSlug) || null, [demographicSlug]);
   const stateData = useMemo(() => statesData.find((s) => s.slug === stateSlug) || null, [stateSlug]);
 
-  const facilities = useMemo(() => {
-    if (!demographic || !stateData) return [];
+  const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
+    if (!demographic || !stateData) {
+      return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
+    }
     const all = [...treatmentCenters, ...approvedFacilities];
     const keywords = demographic.filterKeys.map((k) => k.toLowerCase());
     const stateLower = stateData.name.toLowerCase();
@@ -33,10 +35,17 @@ export default function DemographicStatePage() {
         keywords.some((k) => f.description?.toLowerCase().includes(k));
       return stateMatch && keyMatch;
     });
+    const stateAll = all.filter((f) => f.state.toLowerCase() === stateLower);
+    const display = matched.length >= 3 ? matched : stateAll;
 
-    if (matched.length >= 3) return matched.slice(0, 12);
-    return all.filter((f) => f.state.toLowerCase() === stateLower).slice(0, 12);
+    return {
+      facilities: display.slice(0, 12),
+      directMatchCount: matched.length,
+      stateFallbackCount: stateAll.length,
+    };
   }, [approvedFacilities, demographic, stateData]);
+
+  const validation = validatePage("demographic-state", directMatchCount, { stateFallbackCount });
 
   if (!demographic || !stateData) {
     return <Navigate to="/treatment-types" replace />;
