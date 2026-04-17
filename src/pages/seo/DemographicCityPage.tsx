@@ -6,7 +6,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { demographicPages } from "@/data/seoDemographicConfig";
 import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
-import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
 export default function DemographicCityPage() {
   const { stateSlug, citySlug } = useParams<{ stateSlug: string; citySlug: string }>();
@@ -25,8 +25,10 @@ export default function DemographicCityPage() {
     return stateData.cities.find((c) => c.slug === citySlug) || null;
   }, [stateData, citySlug]);
 
-  const facilities = useMemo(() => {
-    if (!demographic || !stateData || !cityData) return [];
+  const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
+    if (!demographic || !stateData || !cityData) {
+      return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
+    }
     const all = [...treatmentCenters, ...approvedFacilities];
     const keywords = demographic.filterKeys.map((k) => k.toLowerCase());
     const cityLower = cityData.name.toLowerCase();
@@ -38,12 +40,21 @@ export default function DemographicCityPage() {
         keywords.some((k) => f.description?.toLowerCase().includes(k));
       return cityMatch && keyMatch;
     });
-
-    if (cityMatched.length >= 3) return cityMatched.slice(0, 12);
     const cityAll = all.filter((f) => f.city.toLowerCase() === cityLower && f.state.toLowerCase() === stateLower);
-    if (cityAll.length >= 3) return cityAll.slice(0, 12);
-    return all.filter((f) => f.state.toLowerCase() === stateLower).slice(0, 12);
+    const stateAll = all.filter((f) => f.state.toLowerCase() === stateLower);
+
+    let display = cityMatched;
+    if (display.length < 3) display = cityAll;
+    if (display.length < 3) display = stateAll;
+
+    return {
+      facilities: display.slice(0, 12),
+      directMatchCount: cityMatched.length,
+      stateFallbackCount: stateAll.length,
+    };
   }, [approvedFacilities, demographic, stateData, cityData]);
+
+  const validation = validatePage("demographic-city", directMatchCount, { stateFallbackCount });
 
   if (!demographic || !stateData || !cityData) {
     return <Navigate to="/treatment-types" replace />;
@@ -119,6 +130,7 @@ export default function DemographicCityPage() {
       metaTitle={`${demographic.title} in ${cityName}, ${abbreviation} — Find Programs | RehabLookup`}
       metaDescription={`Find ${demographic.title.toLowerCase()} programs in ${cityName}, ${stateName}. Compare verified facilities with specialized care. Get matched today.`}
       canonical={`https://rehablookup.com${canonicalPath}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },

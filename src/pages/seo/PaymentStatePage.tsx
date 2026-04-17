@@ -5,7 +5,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
-import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
 interface PaymentStateConfig {
   slug: string;
@@ -92,8 +92,8 @@ export default function PaymentStatePage({ paymentType }: PaymentStatePageProps)
     return !nonExpanded.includes(stateSlug || "");
   }, [stateSlug]);
 
-  const facilities = useMemo(() => {
-    if (!stateData) return [];
+  const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
+    if (!stateData) return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
     const all = [...treatmentCenters, ...approvedFacilities];
     const keywords = config.filterKeys.map((k) => k.toLowerCase());
     const stateLower = stateData.name.toLowerCase();
@@ -105,9 +105,17 @@ export default function PaymentStatePage({ paymentType }: PaymentStatePageProps)
       return stateMatch && keyMatch;
     });
 
-    if (matched.length >= 3) return matched.slice(0, 12);
-    return all.filter((f) => f.state.toLowerCase() === stateLower).slice(0, 12);
+    const stateAll = all.filter((f) => f.state.toLowerCase() === stateLower);
+    const display = matched.length >= 3 ? matched : stateAll;
+
+    return {
+      facilities: display.slice(0, 12),
+      directMatchCount: matched.length,
+      stateFallbackCount: stateAll.length,
+    };
   }, [approvedFacilities, stateData, config.filterKeys]);
+
+  const validation = validatePage("payment-state", directMatchCount, { stateFallbackCount });
 
   if (!stateData) return <Navigate to="/treatment-types" replace />;
 
@@ -153,6 +161,7 @@ export default function PaymentStatePage({ paymentType }: PaymentStatePageProps)
       metaTitle={config.metaTitle.replace("{state}", `${stateName} (${abbreviation})`)}
       metaDescription={config.metaDescription.replace("{state}", stateName)}
       canonical={`https://rehablookup.com${canonicalPath}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },

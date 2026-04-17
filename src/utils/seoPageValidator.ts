@@ -12,7 +12,26 @@ export type PageType =
   | "state-treatment"
   | "insurance-state"
   | "county-treatment"
-  | "city-insurance";
+  | "city-insurance"
+  | "substance-city"
+  | "substance-state"
+  | "substance-treatment"
+  | "demographic-city"
+  | "demographic-state"
+  | "demographic-treatment"
+  | "co-occurring-city"
+  | "co-occurring-state"
+  | "duration-city"
+  | "duration-state"
+  | "payment-state"
+  | "best-in-state"
+  | "treatment-hub"
+  | "expanded-treatment-hub"
+  | "therapy-modality"
+  | "comparison"
+  | "educational"
+  | "seeker-guide"
+  | "cost-insurance";
 
 export interface PageValidation {
   shouldIndex: boolean;
@@ -23,19 +42,53 @@ export interface PageValidation {
 }
 
 // Minimum facility thresholds by page type
+// City+treatment / city+substance / city+demographic combos are the largest source
+// of thin-content soft-404s. We require >=1 directly-matched facility before indexing.
+// Pure state pages and evergreen content pages always index.
 const MIN_FACILITIES: Record<PageType, number> = {
-  city: 0, // Cities always index (they have general value)
-  state: 0, // States always index
-  county: 0, // Counties always index
-  "city-treatment": 1, // Need at least 1 relevant facility
-  "state-treatment": 2, // Need at least 2 state-level facilities
-  "insurance-state": 1, // Need at least 1 insurance-matched facility
+  city: 0,
+  state: 0,
+  county: 0,
+  "city-treatment": 1,
+  "state-treatment": 2,
+  "insurance-state": 1,
   "county-treatment": 1,
   "city-insurance": 1,
+  "substance-city": 1,
+  "substance-state": 2,
+  "substance-treatment": 1,
+  "demographic-city": 1,
+  "demographic-state": 2,
+  "demographic-treatment": 1,
+  "co-occurring-city": 1,
+  "co-occurring-state": 2,
+  "duration-city": 1,
+  "duration-state": 2,
+  "payment-state": 2,
+  "best-in-state": 3, // "Best of" lists need real depth
+  "treatment-hub": 0, // Editorial hub pages always index
+  "expanded-treatment-hub": 0,
+  "therapy-modality": 0,
+  "comparison": 0,
+  "educational": 0,
+  "seeker-guide": 0,
+  "cost-insurance": 0,
 };
 
 // Page types that always index regardless of facility count
-const ALWAYS_INDEX: PageType[] = ["city", "state", "county"];
+// (evergreen content with intrinsic value beyond local facility listings)
+const ALWAYS_INDEX: PageType[] = [
+  "city",
+  "state",
+  "county",
+  "treatment-hub",
+  "expanded-treatment-hub",
+  "therapy-modality",
+  "comparison",
+  "educational",
+  "seeker-guide",
+  "cost-insurance",
+];
 
 /**
  * Validates whether a page meets quality standards for indexing.

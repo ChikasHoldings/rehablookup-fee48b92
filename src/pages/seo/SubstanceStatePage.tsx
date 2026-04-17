@@ -6,7 +6,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { substancePages } from "@/data/seoSubstanceConfig";
 import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
-import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
 export default function SubstanceStatePage() {
   const { stateSlug } = useParams<{ stateSlug: string }>();
@@ -22,8 +22,10 @@ export default function SubstanceStatePage() {
   const substance = useMemo(() => substancePages.find((s) => s.slug === substanceSlug) || null, [substanceSlug]);
   const stateData = useMemo(() => statesData.find((s) => s.slug === stateSlug) || null, [stateSlug]);
 
-  const facilities = useMemo(() => {
-    if (!substance || !stateData) return [];
+  const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
+    if (!substance || !stateData) {
+      return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
+    }
     const all = [...treatmentCenters, ...approvedFacilities];
     const keywords = substance.filterKeys.map((k) => k.toLowerCase());
     const stateLower = stateData.name.toLowerCase();
@@ -35,10 +37,17 @@ export default function SubstanceStatePage() {
       return stateMatch && keyMatch;
     });
 
-    if (matched.length >= 3) return matched.slice(0, 12);
+    const stateAll = all.filter((f) => f.state.toLowerCase() === stateLower);
+    const display = matched.length >= 3 ? matched : stateAll;
 
-    return all.filter((f) => f.state.toLowerCase() === stateLower).slice(0, 12);
+    return {
+      facilities: display.slice(0, 12),
+      directMatchCount: matched.length,
+      stateFallbackCount: stateAll.length,
+    };
   }, [approvedFacilities, substance, stateData]);
+
+  const validation = validatePage("substance-state", directMatchCount, { stateFallbackCount });
 
   if (!substance || !stateData) {
     return <Navigate to="/treatment-types" replace />;
@@ -120,6 +129,7 @@ export default function SubstanceStatePage() {
       metaTitle={`${substance.title} in ${stateName} (${abbreviation}) — Find Help | RehabLookup`}
       metaDescription={`Find ${substance.conditionName.toLowerCase()} treatment centers in ${stateName}. Compare ${facilities.length}+ verified programs, check insurance, get help today.`}
       canonical={`https://rehablookup.com/${slug}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },

@@ -16,7 +16,7 @@ import {
   getCityTreatmentSlug,
 } from "@/data/seoPageConfig";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
-import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
 export default function CityTreatmentPage() {
   const location = useLocation();
@@ -31,8 +31,10 @@ export default function CityTreatmentPage() {
   const { treatment, city } = parsed;
 
   // Filter facilities by city/state and treatment type
-  const facilities = useMemo(() => {
-    if (!treatment || !city) return [];
+  const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
+    if (!treatment || !city) {
+      return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
+    }
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
     const cityLower = city.city.toLowerCase();
     const stateLower = city.state.toLowerCase();
@@ -50,7 +52,7 @@ export default function CityTreatmentPage() {
         return a.name.localeCompare(b.name);
       });
 
-    let filtered = allFacilities.filter((f) => {
+    const directMatch = allFacilities.filter((f) => {
       const cityMatch = f.city.toLowerCase() === cityLower && f.state.toLowerCase() === stateLower;
       const typeMatch =
         f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) ||
@@ -58,24 +60,28 @@ export default function CityTreatmentPage() {
       return cityMatch && typeMatch;
     });
 
-    if (filtered.length < 3) {
-      filtered = allFacilities.filter((f) => {
-        const stateMatch = f.state.toLowerCase() === stateLower;
-        const typeMatch =
-          f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) ||
-          f.description?.toLowerCase().includes(filterLower);
-        return stateMatch && typeMatch;
-      });
-    }
+    const stateTypeMatch = allFacilities.filter((f) => {
+      const stateMatch = f.state.toLowerCase() === stateLower;
+      const typeMatch =
+        f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) ||
+        f.description?.toLowerCase().includes(filterLower);
+      return stateMatch && typeMatch;
+    });
 
-    if (filtered.length < 3) {
-      filtered = allFacilities.filter(
-        (f) => f.state.toLowerCase() === stateLower
-      );
-    }
+    const stateAll = allFacilities.filter((f) => f.state.toLowerCase() === stateLower);
 
-    return sortByRank(filtered).slice(0, 12);
+    let display = directMatch;
+    if (display.length < 3) display = stateTypeMatch;
+    if (display.length < 3) display = stateAll;
+
+    return {
+      facilities: sortByRank(display).slice(0, 12),
+      directMatchCount: directMatch.length,
+      stateFallbackCount: stateAll.length,
+    };
   }, [approvedFacilities, city, treatment]);
+
+  const validation = validatePage("city-treatment", directMatchCount, { stateFallbackCount });
 
   const faqs = useMemo(() => {
     if (!treatment || !city) return [];
@@ -168,6 +174,7 @@ export default function CityTreatmentPage() {
       metaTitle={`${treatment.pluralLabel} in ${city.city}, ${city.stateAbbr} — Find Treatment | RehabLookup`}
       metaDescription={`Find accredited ${treatment.label.toLowerCase()} in ${city.city}, ${city.stateAbbr}. Compare ${facilities.length}+ verified facilities, check insurance coverage, read reviews. Get help today.`}
       canonical={`https://rehablookup.com/${slug}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },

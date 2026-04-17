@@ -12,7 +12,7 @@ import {
   type StateInsuranceConfig,
 } from "@/data/seoInsuranceStateConfig";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
-import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
 export default function InsuranceStatePage() {
   const { slug, stateSlug } = useParams<{ slug: string; stateSlug: string }>();
@@ -28,13 +28,14 @@ export default function InsuranceStatePage() {
     return stateInsuranceConfigs.find((s) => s.slug === stateSlug) || null;
   }, [stateSlug]);
 
-  const facilities = useMemo(() => {
-    if (!insurer || !stateConfig) return [];
+  const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
+    if (!insurer || !stateConfig) {
+      return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
+    }
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
     const stateLower = stateConfig.state.toLowerCase();
     const insurerLower = insurer.name.toLowerCase();
 
-    // First try exact insurance match within state
     const exactMatch = allFacilities.filter((f) => {
       const stateMatch = f.state.toLowerCase() === stateLower;
       const insuranceMatch = f.insuranceAccepted?.some((i) =>
@@ -43,13 +44,17 @@ export default function InsuranceStatePage() {
       return stateMatch && insuranceMatch;
     });
 
-    // If we have insurance-matched facilities, use those; otherwise fall back to state facilities
-    const filtered = exactMatch.length > 0
-      ? exactMatch
-      : allFacilities.filter((f) => f.state.toLowerCase() === stateLower);
+    const stateAll = allFacilities.filter((f) => f.state.toLowerCase() === stateLower);
+    const display = exactMatch.length > 0 ? exactMatch : stateAll;
 
-    return filtered.slice(0, 12);
+    return {
+      facilities: display.slice(0, 12),
+      directMatchCount: exactMatch.length,
+      stateFallbackCount: stateAll.length,
+    };
   }, [approvedFacilities, insurer, stateConfig]);
+
+  const validation = validatePage("insurance-state", directMatchCount, { stateFallbackCount });
 
   const faqs = useMemo(() => {
     if (!insurer || !stateConfig) return [];
@@ -106,6 +111,7 @@ export default function InsuranceStatePage() {
       metaTitle={`${insurer.name} Rehab Coverage in ${stateConfig.state} — Find Treatment | RehabLookup`}
       metaDescription={`Find rehab centers accepting ${insurer.name} in ${stateConfig.state}. ${stateConfig.medicaidExpanded ? "Medicaid expanded state." : ""} Verify coverage, compare ${facilities.length}+ facilities. Get help today.`}
       canonical={`https://rehablookup.com/insurance/${slug}/${stateSlug}`}
+      noindex={!validation.shouldIndex}
       structuredData={[structuredData, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       breadcrumbs={[
         { name: "Home", url: "/" },

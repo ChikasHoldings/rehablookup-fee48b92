@@ -5,6 +5,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { substancePages, type SubstanceConfig } from "@/data/seoSubstanceConfig";
 import { topCities, seoTreatmentTypes, getCityTreatmentSlug } from "@/data/seoPageConfig";
+import { validatePage } from "@/utils/seoPageValidator";
 
 export default function SubstanceTreatmentPage() {
   const location = useLocation();
@@ -30,6 +31,8 @@ export default function SubstanceTreatmentPage() {
 
     return filtered.slice(0, 12);
   }, [approvedFacilities, substance]);
+
+  const validation = validatePage("substance-treatment", facilities.length);
 
   const relatedCityLinks = useMemo(() => {
     if (!substance) return [];
@@ -73,6 +76,7 @@ export default function SubstanceTreatmentPage() {
       metaTitle={substance.metaTitle}
       metaDescription={substance.metaDescription}
       canonical={`https://rehablookup.com/${slug}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },
