@@ -139,8 +139,19 @@ const StatePage = () => {
   const stateData = stateSlug ? getStateBySlug(stateSlug) : undefined;
   const [showAllCities, setShowAllCities] = useState(false);
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
-  
+
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+
+  // Recover gracefully from stale `/rehab-centers/{uuid}` links: if the slug
+  // is a UUID matching a known facility, redirect to its canonical profile.
+  const uuidMatch = useMemo(() => {
+    if (!stateSlug || !UUID_RE.test(stateSlug)) return null;
+    return approvedFacilities.find((f: any) => f.id === stateSlug) || null;
+  }, [stateSlug, approvedFacilities]);
+
+  if (uuidMatch?.slug) {
+    return <Navigate to={`/center/${uuidMatch.slug}`} replace />;
+  }
 
   const stateCenters = useMemo(() => {
     if (!stateData) return [];
