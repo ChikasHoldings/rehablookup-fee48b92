@@ -6328,6 +6328,7 @@ export type Database = {
         Returns: number
       }
       is_admin_session_active: { Args: { p_user_id: string }; Returns: boolean }
+      is_approved_facility: { Args: { _facility_id: string }; Returns: boolean }
       is_email_admin: { Args: { p_email: string }; Returns: boolean }
       is_email_provider: { Args: { p_email: string }; Returns: boolean }
       is_email_seeker: { Args: { p_email: string }; Returns: boolean }
@@ -6382,6 +6383,10 @@ export type Database = {
       }
       user_has_seeker_profile: { Args: { p_user_id: string }; Returns: boolean }
       user_is_admin: { Args: { p_user_id: string }; Returns: boolean }
+      user_owns_facility: {
+        Args: { _facility_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       admin_role_type: "super_admin" | "manager" | "customer_rep" | "advisor"
