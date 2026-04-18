@@ -6,6 +6,10 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 
+// Detect when a slug is actually a facility UUID that landed here via a stale
+// `/rehab-centers/{id}` link (legacy fallback). Matches v4 UUID format.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 import { getStateBySlug, getNearbyStates } from "@/data/locationSeoData";
 import { getCountiesForState } from "@/data/countySeoData";
 import { getStateArticles } from "@/data/stateArticlesData";
@@ -135,8 +139,15 @@ const StatePage = () => {
   const stateData = stateSlug ? getStateBySlug(stateSlug) : undefined;
   const [showAllCities, setShowAllCities] = useState(false);
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
-  
+
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
+
+  // Recover gracefully from stale `/rehab-centers/{uuid}` links: if the slug
+  // is a UUID matching a known facility, redirect to its canonical profile.
+  const uuidMatch = useMemo(() => {
+    if (!stateSlug || !UUID_RE.test(stateSlug)) return null;
+    return approvedFacilities.find((f: any) => f.id === stateSlug) || null;
+  }, [stateSlug, approvedFacilities]);
 
   const stateCenters = useMemo(() => {
     if (!stateData) return [];
@@ -167,6 +178,11 @@ const StatePage = () => {
   const capitalImage = stateSlug ? stateCapitalImages[stateSlug] : undefined;
   const stateFAQs = stateData ? getStateFAQs(stateData.name, stateData.abbreviation, stateData.cities.length, stateCenters.length) : [];
   const displayedCities = showAllCities ? stateData?.cities : stateData?.cities.slice(0, 12);
+
+  // Redirect stale `/rehab-centers/{uuid}` links to canonical /center/{slug}
+  if (uuidMatch?.slug) {
+    return <Navigate to={`/center/${uuidMatch.slug}`} replace />;
+  }
 
   if (!stateData) {
     return <Navigate to="/rehab-centers" replace />;
