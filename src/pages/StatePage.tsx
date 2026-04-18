@@ -149,10 +149,6 @@ const StatePage = () => {
     return approvedFacilities.find((f: any) => f.id === stateSlug) || null;
   }, [stateSlug, approvedFacilities]);
 
-  if (uuidMatch?.slug) {
-    return <Navigate to={`/center/${uuidMatch.slug}`} replace />;
-  }
-
   const stateCenters = useMemo(() => {
     if (!stateData) return [];
     const stateNameLower = stateData.name.toLowerCase();
