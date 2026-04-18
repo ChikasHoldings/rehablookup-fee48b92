@@ -74,7 +74,7 @@ export const FacilityCard = forwardRef<HTMLElement, FacilityCardProps>(
     const isInSeekerAccount = location.pathname.startsWith('/account');
     const facilityLink = isInSeekerAccount 
       ? `/account/facility/${facility.slug || facility.id}`
-      : facility.slug ? `/center/${facility.slug}` : `/center/${facility.id}`;
+      : facility.slug ? `/center/${facility.slug}` : `/rehab-centers`;
 
     const handleFavoriteClick = (e: React.MouseEvent) => {
       e.preventDefault();

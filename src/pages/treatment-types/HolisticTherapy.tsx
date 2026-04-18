@@ -358,7 +358,7 @@ const HolisticTherapy = () => {
               {featuredCenters.map((center, index) => (
                 <Link
                   key={center.id}
-                  to={`/center/${center.id}`}
+                  to={center.slug ? `/center/${center.slug}` : `/rehab-centers`}
                   className="flex-shrink-0 w-[280px] md:w-auto snap-center group rounded-xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-elevated hover:-translate-y-1 animate-fade-in"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
