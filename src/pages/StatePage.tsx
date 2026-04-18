@@ -6,6 +6,10 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 
+// Detect when a slug is actually a facility UUID that landed here via a stale
+// `/rehab-centers/{id}` link (legacy fallback). Matches v4 UUID format.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 import { getStateBySlug, getNearbyStates } from "@/data/locationSeoData";
 import { getCountiesForState } from "@/data/countySeoData";
 import { getStateArticles } from "@/data/stateArticlesData";
