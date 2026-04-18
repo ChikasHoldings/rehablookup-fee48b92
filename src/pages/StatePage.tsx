@@ -179,6 +179,11 @@ const StatePage = () => {
   const stateFAQs = stateData ? getStateFAQs(stateData.name, stateData.abbreviation, stateData.cities.length, stateCenters.length) : [];
   const displayedCities = showAllCities ? stateData?.cities : stateData?.cities.slice(0, 12);
 
+  // Redirect stale `/rehab-centers/{uuid}` links to canonical /center/{slug}
+  if (uuidMatch?.slug) {
+    return <Navigate to={`/center/${uuidMatch.slug}`} replace />;
+  }
+
   if (!stateData) {
     return <Navigate to="/rehab-centers" replace />;
   }
