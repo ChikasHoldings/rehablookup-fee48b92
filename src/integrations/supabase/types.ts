@@ -5844,21 +5844,26 @@ export type Database = {
       }
       public_facilities: {
         Row: {
+          accepts_international_patients: boolean | null
           address: string | null
           bed_count: string | null
+          calculated_ranking_score: number | null
           city: string | null
           created_at: string | null
           description: string | null
+          email: string | null
           facility_type: string | null
           featured: boolean | null
+          featured_display_order: number | null
           featured_pinned: boolean | null
           gallery_urls: string[] | null
           gender_served: string | null
           id: string | null
-          last_featured_shown_at: string | null
+          listing_completeness_score: number | null
           logo_url: string | null
           name: string | null
           phone: string | null
+          response_rate_score: number | null
           slug: string | null
           state: string | null
           status: string | null
@@ -5869,52 +5874,62 @@ export type Database = {
           zip_code: string | null
         }
         Insert: {
+          accepts_international_patients?: boolean | null
           address?: string | null
           bed_count?: string | null
+          calculated_ranking_score?: number | null
           city?: string | null
           created_at?: string | null
           description?: string | null
+          email?: string | null
           facility_type?: string | null
           featured?: boolean | null
+          featured_display_order?: number | null
           featured_pinned?: boolean | null
           gallery_urls?: string[] | null
           gender_served?: string | null
           id?: string | null
-          last_featured_shown_at?: string | null
+          listing_completeness_score?: number | null
           logo_url?: string | null
           name?: string | null
-          phone?: never
+          phone?: string | null
+          response_rate_score?: number | null
           slug?: string | null
           state?: string | null
           status?: string | null
           updated_at?: string | null
           verified?: boolean | null
-          website?: never
+          website?: string | null
           year_established?: number | null
           zip_code?: string | null
         }
         Update: {
+          accepts_international_patients?: boolean | null
           address?: string | null
           bed_count?: string | null
+          calculated_ranking_score?: number | null
           city?: string | null
           created_at?: string | null
           description?: string | null
+          email?: string | null
           facility_type?: string | null
           featured?: boolean | null
+          featured_display_order?: number | null
           featured_pinned?: boolean | null
           gallery_urls?: string[] | null
           gender_served?: string | null
           id?: string | null
-          last_featured_shown_at?: string | null
+          listing_completeness_score?: number | null
           logo_url?: string | null
           name?: string | null
-          phone?: never
+          phone?: string | null
+          response_rate_score?: number | null
           slug?: string | null
           state?: string | null
           status?: string | null
           updated_at?: string | null
           verified?: boolean | null
-          website?: never
+          website?: string | null
           year_established?: number | null
           zip_code?: string | null
         }
