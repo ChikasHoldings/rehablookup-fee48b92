@@ -104,9 +104,11 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
   const { trackImpression } = useProviderEventTracking();
   const { toggleFavorite, isFavorite } = useFavorites();
   
-  const detailsUrl = center.isFromDatabase && center.slug 
-    ? `/center/${center.slug}` 
-    : `/rehab-centers/${center.id}`;
+  // Always prefer slug → /center/{slug}. Fall back to safe directory listing
+  // instead of a UUID-based dead-end (legacy /rehab-centers/{uuid}).
+  const detailsUrl = center.slug
+    ? `/center/${center.slug}`
+    : `/rehab-centers`;
 
   const initials = getInitials(center.name);
   const hasValidLogo = center.logo_url && !logoError;

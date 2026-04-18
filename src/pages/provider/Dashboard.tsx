@@ -395,7 +395,9 @@ export default function ProviderDashboardPage() {
 
   const statusConfig = facility ? getStatusConfig(facility.status) : getStatusConfig("inactive");
   const StatusIcon = statusConfig.icon;
-  const profileUrl = facility?.slug ? `/center/${facility.slug}` : facility?.id ? `/rehab-centers/${facility.id}` : null;
+  // Only link to a real public profile when a slug exists. Avoid UUID-based
+  // legacy URLs (/rehab-centers/{uuid}) which render a "Not Found" page.
+  const profileUrl = facility?.slug ? `/center/${facility.slug}` : null;
 
   // Calculate leads awaiting follow-up
   const now = new Date();
