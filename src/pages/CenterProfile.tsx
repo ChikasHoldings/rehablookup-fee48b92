@@ -297,8 +297,9 @@ const CenterProfile = () => {
   const { data: facility, isLoading, error } = useQuery({
     queryKey: ["facility", slug, currentUserId],
     queryFn: async (): Promise<FacilityData | null> => {
-      const { data: approvedData, error: approvedError } = await supabase
-        .from("facilities")
+      // 1) Public read via the anon-safe view (excludes PII like email/user_id)
+      const { data: publicRow, error: publicErr } = await supabase
+        .from("public_facilities")
         .select(`
           id,
           name,
@@ -308,7 +309,6 @@ const CenterProfile = () => {
           zip_code,
           address,
           phone,
-          email,
           website,
           description,
           facility_type,
@@ -319,66 +319,57 @@ const CenterProfile = () => {
           year_established,
           logo_url,
           gallery_urls,
-          status,
-          user_id,
-          updated_at,
-          concierge_network_opted_in,
-          accepts_international_patients,
-          facility_services (service_name),
-          facility_insurance (insurance_name),
-          facility_age_groups (age_group),
-          facility_credentials (accreditations, licensing_info),
-          facility_accreditations (accreditation_type, verified)
+          status
         `)
         .eq("slug", slug)
-        .eq("status", "approved")
         .maybeSingle();
 
-      if (approvedData) return approvedData as FacilityData;
-
+      // 2) Owner-scoped read of the base table (RLS allows owners) — gets PII fields
+      let ownedRow: any = null;
       if (currentUserId) {
-        const { data: ownedData } = await supabase
+        const { data } = await supabase
           .from("facilities")
           .select(`
-            id,
-            name,
-            slug,
-            city,
-            state,
-            zip_code,
-            address,
-            phone,
-            email,
-            website,
-            description,
-            facility_type,
-            gender_served,
-            bed_count,
-            featured,
-            verified,
-            year_established,
-            logo_url,
-            gallery_urls,
-            status,
-            user_id,
-            updated_at,
-            concierge_network_opted_in,
-            accepts_international_patients,
-            facility_services (service_name),
-            facility_insurance (insurance_name),
-            facility_age_groups (age_group),
-            facility_credentials (accreditations, licensing_info),
-            facility_accreditations (accreditation_type, verified)
+            id, name, slug, city, state, zip_code, address, phone, email, website,
+            description, facility_type, gender_served, bed_count, featured, verified,
+            year_established, logo_url, gallery_urls, status, user_id, updated_at,
+            concierge_network_opted_in, accepts_international_patients
           `)
           .eq("slug", slug)
           .eq("user_id", currentUserId)
           .maybeSingle();
-
-        if (ownedData) return ownedData as FacilityData;
+        ownedRow = data;
       }
 
-      if (approvedError) throw approvedError;
-      return null;
+      const base = ownedRow ?? publicRow;
+      if (!base) {
+        if (publicErr) throw publicErr;
+        return null;
+      }
+
+      // 3) Fetch joined detail tables (anon-readable) in parallel
+      const facilityId = base.id as string;
+      const [services, insurance, ageGroups, credentials, accreditations] = await Promise.all([
+        supabase.from("facility_services").select("service_name").eq("facility_id", facilityId),
+        supabase.from("facility_insurance").select("insurance_name").eq("facility_id", facilityId),
+        supabase.from("facility_age_groups").select("age_group").eq("facility_id", facilityId),
+        supabase.from("facility_credentials").select("accreditations, licensing_info").eq("facility_id", facilityId),
+        supabase.from("facility_accreditations").select("accreditation_type, verified").eq("facility_id", facilityId),
+      ]);
+
+      return {
+        ...base,
+        // Ensure PII-only fields are at least defined for downstream typing
+        email: ownedRow?.email ?? null,
+        user_id: ownedRow?.user_id ?? null,
+        concierge_network_opted_in: ownedRow?.concierge_network_opted_in ?? null,
+        accepts_international_patients: ownedRow?.accepts_international_patients ?? null,
+        facility_services: services.data ?? [],
+        facility_insurance: insurance.data ?? [],
+        facility_age_groups: ageGroups.data ?? [],
+        facility_credentials: credentials.data ?? [],
+        facility_accreditations: accreditations.data ?? [],
+      } as FacilityData;
     },
     enabled: !!slug,
   });
@@ -422,10 +413,9 @@ const CenterProfile = () => {
     queryFn: async () => {
       if (!facility) return [];
       const { data } = await supabase
-        .from("facilities")
+        .from("public_facilities")
         .select("id, name, slug, city, state, zip_code, address, phone, description, facility_type, featured, verified, logo_url, gallery_urls, year_established")
         .eq("state", facility.state)
-        .eq("status", "approved")
         .neq("id", facility.id)
         .limit(6);
       return (data || []).map((f: any) => ({
