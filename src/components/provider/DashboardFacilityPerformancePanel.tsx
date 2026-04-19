@@ -173,7 +173,7 @@ export function DashboardFacilityPerformancePanel({ isPro }: DashboardFacilityPe
               className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md"
               asChild
             >
-              <Link to="/provider/pro">
+              <Link to="/provider/pro-upgrade">
                 <Crown className="h-3.5 w-3.5 mr-1.5" />
                 Upgrade to Pro
               </Link>
