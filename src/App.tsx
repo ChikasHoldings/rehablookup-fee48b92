@@ -1535,7 +1535,8 @@ const AppInner = () => {
             <Route path="/sitemap" element={<Navigate to="/sitemap-index.xml" replace />} />
             <Route path="/search" element={<Navigate to="/search-results" replace />} />
             
-            {/* 404 */}
+            {/* 404 - explicit route so SEO/near-me pages can <Navigate to="/404"> without falling through SmartCatchAll's prefix matchers */}
+            <Route path="/404" element={<SmartCatchAll />} />
             <Route path="*" element={<SmartCatchAll />} />
           </Routes>
         </Suspense>
