@@ -1,7 +1,25 @@
 import { lazy, Suspense } from "react";
-import { useLocation } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { ALL_ROUTABLE_NEAR_ME_SLUGS } from "@/data/nearMeTypes";
+import { usStates } from "@/data/usStates";
+
+/**
+ * Map of legacy hyphenated slug prefixes to canonical /treatment-types/* paths.
+ * Used to 301-redirect legacy SEO URLs (e.g. /alcohol-rehabilitation-maryland)
+ * to their canonical equivalents (/treatment-types/alcohol-rehabilitation/maryland)
+ * to eliminate "Duplicate without user-selected canonical" GSC errors.
+ */
+const LEGACY_STATE_SUFFIX_REDIRECTS: Array<{ prefix: string; canonical: string }> = [
+  { prefix: "/alcohol-rehabilitation-", canonical: "/treatment-types/alcohol-rehabilitation" },
+  { prefix: "/inpatient-rehabilitation-", canonical: "/treatment-types/residential-inpatient" },
+  { prefix: "/outpatient-rehabilitation-", canonical: "/treatment-types/outpatient-programs" },
+  { prefix: "/drug-rehabilitation-", canonical: "/treatment-types/drug-addiction-treatment" },
+  { prefix: "/detox-programs-", canonical: "/treatment-types/detox-programs" },
+  { prefix: "/dual-diagnosis-treatment-", canonical: "/treatment-types/dual-diagnosis-treatment" },
+];
+
+const STATE_SLUGS = new Set(usStates.map((s) => s.slug));
 
 const BestInStatePage = lazy(() => import("@/pages/seo/BestInStatePage"));
 const ListYourFacilityState = lazy(() => import("@/pages/provider-guides/ListYourFacilityState"));
