@@ -151,7 +151,26 @@ function parseNearMePath(pathname: string): {
 }
 
 export function SmartCatchAll() {
-  const { pathname } = useLocation();
+  const { pathname, search, hash } = useLocation();
+
+  // 1) Trailing-slash 301 (root excepted) — eliminates "/foo/" vs "/foo" duplicates in GSC.
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    const trimmed = pathname.replace(/\/+$/, "") || "/";
+    return <Navigate to={`${trimmed}${search}${hash}`} replace />;
+  }
+
+  // 2) Legacy hyphenated state-suffix slugs → canonical /treatment-types/* path.
+  // Eliminates "Duplicate without user-selected canonical" for legacy URLs like
+  // /alcohol-rehabilitation-maryland, /inpatient-rehabilitation-rhode-island, etc.
+  for (const { prefix, canonical } of LEGACY_STATE_SUFFIX_REDIRECTS) {
+    if (pathname.startsWith(prefix)) {
+      const stateSlug = pathname.slice(prefix.length).replace(/\/.*$/, "");
+      if (STATE_SLUGS.has(stateSlug)) {
+        return <Navigate to={`${canonical}/${stateSlug}`} replace />;
+      }
+      return <Navigate to={canonical} replace />;
+    }
+  }
 
   // Best Rehab Centers in [State]
   if (pathname.startsWith("/best-rehab-centers-in-")) {
