@@ -1770,13 +1770,58 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
     return true;
   });
 
-  unique.sort((a, b) => b.priority - a.priority);
+  // ===== INVENTORY GATE =====
+  // Drop city-level combo URLs that have ZERO approved facilities in that city.
+  // These are the GSC "Soft 404" / "Crawled - currently not indexed" offenders.
+  // State pages, county pages, evergreen hubs, and facility profiles are NOT gated.
+  const cityInventory = await fetchFacilityCitySet(supabase);
+  const beforeGate = unique.length;
 
-  const urlEntries = unique
+  // Patterns where the LAST two slug segments must form a `${state}::${city}` pair
+  // that exists in cityInventory. If the pattern doesn't apply, the route passes.
+  const isCityComboWithInventory = (path: string): boolean => {
+    const segs = path.split("/").filter(Boolean);
+    if (segs.length < 2) return true;
+
+    // /treatment-types/{type}/{state}/{city}
+    if (segs[0] === "treatment-types" && segs.length === 4) {
+      return cityInventory.has(`${segs[2]}::${segs[3]}`);
+    }
+    // /insurance/{ins}/{state}/{city}  (NOT /insurance/{ins}/{state}/county/{county})
+    if (segs[0] === "insurance" && segs.length === 4 && segs[2] !== "county") {
+      return cityInventory.has(`${segs[2]}::${segs[3]}`);
+    }
+    // Near-me city: /{near-me-slug}/{state}/{city}  (NOT /.../county/...)
+    if (segs.length === 3 && segs[0].endsWith("-near-me") && segs[1] !== "county") {
+      return cityInventory.has(`${segs[1]}::${segs[2]}`);
+    }
+    // Substance / demographic / co-occurring / duration city: /{slug}/{state}/{city}
+    // Catch-all 3-segment combo where seg[0] is a single slug (not "rehab-centers"/"insurance"/"treatment-types"/"rehab-marketing")
+    if (
+      segs.length === 3 &&
+      !["rehab-centers", "insurance", "treatment-types", "rehab-marketing", "for-providers-in", "resources"].includes(segs[0]) &&
+      segs[1] !== "county"
+    ) {
+      // Only filter if seg[1] looks like a known state slug
+      if (US_STATES.includes(segs[1])) {
+        return cityInventory.has(`${segs[1]}::${segs[2]}`);
+      }
+    }
+    // /rehab-centers/{state}/{city}  -> keep state-level city directory pages even when empty
+    // (these have evergreen content + statewide fallback already)
+    return true;
+  };
+
+  const gated = unique.filter(r => isCityComboWithInventory(r.path));
+  const dropped = beforeGate - gated.length;
+
+  gated.sort((a, b) => b.priority - a.priority);
+
+  const urlEntries = gated
     .map(route => generateUrlEntry(route.path, route.priority, route.changefreq, today))
     .join("\n");
 
-  console.log(`[Sitemap ${VERSION}] Generated main sitemap with ${unique.length} URLs (${articleRoutes.length} articles, ${generateStateNearMeRoutes().length} near-me state pages, ${generateTreatmentGeoRoutes().length} treatment geo pages)`);
+  console.log(`[Sitemap ${VERSION}] Generated main sitemap: ${gated.length} URLs (gated out ${dropped} city combos with no inventory). Articles=${articleRoutes.length}, near-me-states=${generateStateNearMeRoutes().length}, treatment-geo=${generateTreatmentGeoRoutes().length}`);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
