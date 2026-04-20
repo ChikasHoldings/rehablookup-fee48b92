@@ -1,7 +1,67 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v7.6.0";
+const VERSION = "v7.7.0";
 const DEPLOYED_AT = new Date().toISOString();
+
+// Slugify helper — must match how page routes derive slugs from facility city/state
+function slugify(s: string): string {
+  return (s || "")
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// Two-letter US state abbreviation -> full slug, for facilities stored as "CA" etc.
+const STATE_ABBR_TO_SLUG: Record<string, string> = {
+  al: "alabama", ak: "alaska", az: "arizona", ar: "arkansas", ca: "california",
+  co: "colorado", ct: "connecticut", de: "delaware", fl: "florida", ga: "georgia",
+  hi: "hawaii", id: "idaho", il: "illinois", in: "indiana", ia: "iowa",
+  ks: "kansas", ky: "kentucky", la: "louisiana", me: "maine", md: "maryland",
+  ma: "massachusetts", mi: "michigan", mn: "minnesota", ms: "mississippi", mo: "missouri",
+  mt: "montana", ne: "nebraska", nv: "nevada", nh: "new-hampshire", nj: "new-jersey",
+  nm: "new-mexico", ny: "new-york", nc: "north-carolina", nd: "north-dakota", oh: "ohio",
+  ok: "oklahoma", or: "oregon", pa: "pennsylvania", ri: "rhode-island", sc: "south-carolina",
+  sd: "south-dakota", tn: "tennessee", tx: "texas", ut: "utah", vt: "vermont",
+  va: "virginia", wa: "washington", wv: "west-virginia", wi: "wisconsin", wy: "wyoming",
+};
+
+/**
+ * Fetch the set of `${stateSlug}::${citySlug}` pairs that actually have at least
+ * one approved facility. Used to filter every city-level combo route generator
+ * so the sitemap never advertises a page that would render as a soft-404.
+ */
+async function fetchFacilityCitySet(
+  supabase: ReturnType<typeof createClient>
+): Promise<Set<string>> {
+  const set = new Set<string>();
+  let from = 0;
+  const batchSize = 1000;
+  while (true) {
+    const { data, error } = await supabase
+      .from("facilities")
+      .select("city, state")
+      .eq("status", "approved")
+      .range(from, from + batchSize - 1);
+    if (error) {
+      console.error(`[Sitemap ${VERSION}] fetchFacilityCitySet error:`, error);
+      break;
+    }
+    if (!data || data.length === 0) break;
+    for (const row of data) {
+      if (!row.city || !row.state) continue;
+      const stateRaw = String(row.state).toLowerCase().trim();
+      const stateSlug = stateRaw.length === 2 ? STATE_ABBR_TO_SLUG[stateRaw] : slugify(stateRaw);
+      if (!stateSlug) continue;
+      set.add(`${stateSlug}::${slugify(row.city)}`);
+    }
+    if (data.length < batchSize) break;
+    from += batchSize;
+  }
+  console.log(`[Sitemap ${VERSION}] fetchFacilityCitySet: ${set.size} unique state::city pairs with inventory`);
+  return set;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1710,13 +1770,58 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
     return true;
   });
 
-  unique.sort((a, b) => b.priority - a.priority);
+  // ===== INVENTORY GATE =====
+  // Drop city-level combo URLs that have ZERO approved facilities in that city.
+  // These are the GSC "Soft 404" / "Crawled - currently not indexed" offenders.
+  // State pages, county pages, evergreen hubs, and facility profiles are NOT gated.
+  const cityInventory = await fetchFacilityCitySet(supabase);
+  const beforeGate = unique.length;
 
-  const urlEntries = unique
+  // Patterns where the LAST two slug segments must form a `${state}::${city}` pair
+  // that exists in cityInventory. If the pattern doesn't apply, the route passes.
+  const isCityComboWithInventory = (path: string): boolean => {
+    const segs = path.split("/").filter(Boolean);
+    if (segs.length < 2) return true;
+
+    // /treatment-types/{type}/{state}/{city}
+    if (segs[0] === "treatment-types" && segs.length === 4) {
+      return cityInventory.has(`${segs[2]}::${segs[3]}`);
+    }
+    // /insurance/{ins}/{state}/{city}  (NOT /insurance/{ins}/{state}/county/{county})
+    if (segs[0] === "insurance" && segs.length === 4 && segs[2] !== "county") {
+      return cityInventory.has(`${segs[2]}::${segs[3]}`);
+    }
+    // Near-me city: /{near-me-slug}/{state}/{city}  (NOT /.../county/...)
+    if (segs.length === 3 && segs[0].endsWith("-near-me") && segs[1] !== "county") {
+      return cityInventory.has(`${segs[1]}::${segs[2]}`);
+    }
+    // Substance / demographic / co-occurring / duration city: /{slug}/{state}/{city}
+    // Catch-all 3-segment combo where seg[0] is a single slug (not "rehab-centers"/"insurance"/"treatment-types"/"rehab-marketing")
+    if (
+      segs.length === 3 &&
+      !["rehab-centers", "insurance", "treatment-types", "rehab-marketing", "for-providers-in", "resources"].includes(segs[0]) &&
+      segs[1] !== "county"
+    ) {
+      // Only filter if seg[1] looks like a known state slug
+      if (US_STATES.includes(segs[1])) {
+        return cityInventory.has(`${segs[1]}::${segs[2]}`);
+      }
+    }
+    // /rehab-centers/{state}/{city}  -> keep state-level city directory pages even when empty
+    // (these have evergreen content + statewide fallback already)
+    return true;
+  };
+
+  const gated = unique.filter(r => isCityComboWithInventory(r.path));
+  const dropped = beforeGate - gated.length;
+
+  gated.sort((a, b) => b.priority - a.priority);
+
+  const urlEntries = gated
     .map(route => generateUrlEntry(route.path, route.priority, route.changefreq, today))
     .join("\n");
 
-  console.log(`[Sitemap ${VERSION}] Generated main sitemap with ${unique.length} URLs (${articleRoutes.length} articles, ${generateStateNearMeRoutes().length} near-me state pages, ${generateTreatmentGeoRoutes().length} treatment geo pages)`);
+  console.log(`[Sitemap ${VERSION}] Generated main sitemap: ${gated.length} URLs (gated out ${dropped} city combos with no inventory). Articles=${articleRoutes.length}, near-me-states=${generateStateNearMeRoutes().length}, treatment-geo=${generateTreatmentGeoRoutes().length}`);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"

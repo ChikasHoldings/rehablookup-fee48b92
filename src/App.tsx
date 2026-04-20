@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-
 import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
+import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
@@ -493,6 +494,7 @@ const AppInner = () => {
         <CookieConsentBanner />
         <Suspense fallback={null}>
           <TrailingSlashRedirect>
+          <SEORouteBoundary>
           <Routes>
             {/* Public Routes - Providers are redirected away */}
             <Route path="/" element={<PublicRouteGuard><Index /></PublicRouteGuard>} />
@@ -1544,6 +1546,7 @@ const AppInner = () => {
             <Route path="/404" element={<SmartCatchAll />} />
             <Route path="*" element={<SmartCatchAll />} />
           </Routes>
+          </SEORouteBoundary>
           </TrailingSlashRedirect>
         </Suspense>
               </NavigationProvider>
