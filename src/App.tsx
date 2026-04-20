@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-
 import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
+import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
