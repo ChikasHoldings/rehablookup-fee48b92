@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 
 const treatmentFeatures = [
   {
@@ -74,6 +75,13 @@ const CityDualDiagnosis = () => {
 
   const nearbyCities = cities.filter(c => c.slug !== citySlug).slice(0, 6);
 
+  const { validation } = useTreatmentCityValidation({
+    stateName,
+    cityName,
+    treatmentKeywords: ["dual diagnosis", "co-occurring", "mental health"],
+    pageType: "city-treatment",
+  });
+
   const structuredData = [
     {
       "@context": "https://schema.org",
@@ -94,6 +102,7 @@ const CityDualDiagnosis = () => {
         title={`Dual Diagnosis Treatment in ${cityName}, ${abbreviation} | Mental Health & Addiction`}
         description={`Find dual diagnosis treatment centers in ${cityName}, ${stateName}. Integrated care for depression, anxiety, PTSD, and addiction. Insurance accepted.`}
         canonical={`/treatment-types/dual-diagnosis-treatment/${stateSlug}/${citySlug}`}
+        noindex={!validation.shouldIndex}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },

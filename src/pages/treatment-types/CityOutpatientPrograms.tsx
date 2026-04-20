@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 
 const programTypes = [
   {
@@ -71,6 +72,13 @@ const CityOutpatientPrograms = () => {
   const { name: cityName } = cityData;
   const otherCities = cities.filter(c => c.slug !== citySlug).slice(0, 6);
 
+  const { validation } = useTreatmentCityValidation({
+    stateName,
+    cityName,
+    treatmentKeywords: ["outpatient", "iop", "php", "intensive outpatient", "partial hospitalization"],
+    pageType: "city-treatment",
+  });
+
   const structuredData = [
     {
       "@context": "https://schema.org",
@@ -92,6 +100,7 @@ const CityOutpatientPrograms = () => {
         title={`Outpatient Rehab Programs in ${cityName}, ${abbreviation} | IOP & PHP`}
         description={`Find outpatient addiction treatment in ${cityName}, ${stateName}. IOP, PHP & flexible programs. Insurance accepted. Call now.`}
         canonical={`/treatment-types/outpatient-programs/${stateSlug}/${citySlug}`}
+        noindex={!validation.shouldIndex}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },

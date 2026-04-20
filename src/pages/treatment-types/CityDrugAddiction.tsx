@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 
 const substancesTreated = [
   { name: "Opioids", description: "Heroin, fentanyl, prescription painkillers (oxycodone, hydrocodone)" },
@@ -68,6 +69,13 @@ const CityDrugAddiction = () => {
   const { name: cityName } = cityData;
   const otherCities = stateData.cities.filter((c) => c.slug !== citySlug).slice(0, 6);
 
+  const { validation } = useTreatmentCityValidation({
+    stateName,
+    cityName,
+    treatmentKeywords: ["drug", "substance", "opioid", "stimulant"],
+    pageType: "city-treatment",
+  });
+
   const structuredData = [
     {
       "@context": "https://schema.org",
@@ -91,6 +99,7 @@ const CityDrugAddiction = () => {
         title={`Drug Addiction Treatment in ${cityName}, ${abbreviation} | Find Rehab`}
         description={`Find drug addiction treatment centers in ${cityName}, ${stateName}. Compare detox, inpatient, outpatient drug rehab programs with insurance verification.`}
         canonical={`/treatment-types/drug-addiction/${stateSlug}/${citySlug}`}
+        noindex={!validation.shouldIndex}
         structuredData={structuredData}
       />
 

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 
 const programTypes = [
   {
@@ -67,6 +68,13 @@ const CityInpatientRehab = () => {
   const { name: cityName } = cityData;
   const otherCities = cities.filter(c => c.slug !== citySlug).slice(0, 6);
 
+  const { validation } = useTreatmentCityValidation({
+    stateName,
+    cityName,
+    treatmentKeywords: ["inpatient", "residential"],
+    pageType: "city-treatment",
+  });
+
   const structuredData = [
     {
       "@context": "https://schema.org",
@@ -88,6 +96,7 @@ const CityInpatientRehab = () => {
         title={`Inpatient Rehab Centers in ${cityName}, ${abbreviation} | Residential Treatment`}
         description={`Find inpatient rehab centers in ${cityName}, ${stateName}. 24/7 residential addiction treatment. Insurance accepted. Call now.`}
         canonical={`/treatment-types/residential-inpatient/${stateSlug}/${citySlug}`}
+        noindex={!validation.shouldIndex}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },
