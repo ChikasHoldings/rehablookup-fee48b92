@@ -6,6 +6,7 @@ import { statesData } from "@/data/locationSeoData";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 import {
   Phone,
   Clock,
@@ -65,6 +66,13 @@ const CityAlcoholRehab = () => {
   const { name: cityName } = cityData;
   const otherCities = stateData.cities.filter((c) => c.slug !== citySlug).slice(0, 6);
 
+  const { validation } = useTreatmentCityValidation({
+    stateName,
+    cityName,
+    treatmentKeywords: ["alcohol"],
+    pageType: "city-treatment",
+  });
+
   const structuredData = [
     {
       "@context": "https://schema.org",
@@ -88,6 +96,7 @@ const CityAlcoholRehab = () => {
         title={`Alcohol Rehab Centers in ${cityName}, ${abbreviation} | Find Treatment`}
         description={`Find alcohol addiction treatment centers in ${cityName}, ${stateName}. Compare detox, inpatient, outpatient alcohol rehab programs with insurance verification.`}
         canonical={`/treatment-types/alcohol-rehabilitation/${stateSlug}/${citySlug}`}
+        noindex={!validation.shouldIndex}
         structuredData={structuredData}
       />
 
