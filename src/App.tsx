@@ -436,6 +436,11 @@ function InpatientStateRedirect() {
   return <Navigate to={`/treatment-types/residential-inpatient/${stateSlug}`} replace />;
 }
 
+function AlcoholStateRedirect() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/treatment-types/alcohol-rehabilitation/${stateSlug}`} replace />;
+}
+
 const AppInner = () => {
   // Global handler for unhandled promise rejections to prevent page blanking
   useEffect(() => {
@@ -966,7 +971,7 @@ const AppInner = () => {
             <Route path="/treatment/inpatient-rehab" element={<Navigate to="/treatment-types/residential-inpatient" replace />} />
             <Route path="/treatment/inpatient-rehab/:stateSlug" element={<InpatientStateRedirect />} />
             <Route path="/treatment/alcohol-rehab" element={<Navigate to="/treatment-types/alcohol-rehabilitation" replace />} />
-            <Route path="/treatment/alcohol-rehab/:stateSlug" element={<Navigate to="/treatment-types/alcohol-rehabilitation" replace />} />
+            <Route path="/treatment/alcohol-rehab/:stateSlug" element={<AlcoholStateRedirect />} />
 
             {/* International Placement Routes */}
             <Route path="/international" element={<PublicRouteGuard><InternationalLanding /></PublicRouteGuard>} />
@@ -1110,9 +1115,9 @@ const AppInner = () => {
             <Route path="/provider/login" element={<Navigate to="/login" replace />} />
             <Route path="/provider/forgot-password" element={<ProviderForgotPassword />} />
             <Route path="/provider/reset-password" element={<ProviderResetPassword />} />
-            <Route path="/provider/support" element={<ProviderSupport />} />
-            <Route path="/provider/faq" element={<ProviderFAQ />} />
-            <Route path="/provider/signup" element={<ProviderSignup />} />
+            <Route path="/provider/support" element={<Navigate to="/provider-support" replace />} />
+            <Route path="/provider/faq" element={<Navigate to="/provider-faq" replace />} />
+            <Route path="/provider/signup" element={<Navigate to="/provider-signup" replace />} />
             
             {/* Provider SEO Pages */}
             <Route path="/provider-guides/get-more-rehab-patients" element={<PublicRouteGuard><GetMoreRehabPatients /></PublicRouteGuard>} />
