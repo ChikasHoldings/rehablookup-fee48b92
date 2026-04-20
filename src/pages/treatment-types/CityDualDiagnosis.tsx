@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 
 const treatmentFeatures = [
   {
@@ -56,15 +57,22 @@ const conditionsTreated = [
 
 const CityDualDiagnosis = () => {
   const { stateSlug, citySlug } = useParams<{ stateSlug: string; citySlug: string }>();
-  
+
   const stateData = statesData.find(s => s.slug === stateSlug);
-  
+  const cityData = stateData?.cities.find(c => c.slug === citySlug);
+
+  // Hooks first — never call after a conditional return.
+  const { validation } = useTreatmentCityValidation({
+    stateName: stateData?.name,
+    cityName: cityData?.name,
+    treatmentKeywords: ["dual diagnosis", "co-occurring", "mental health"],
+    pageType: "city-treatment",
+  });
+
   if (!stateData) {
     return <Navigate to="/treatment-types/dual-diagnosis-treatment" replace />;
   }
 
-  const cityData = stateData.cities.find(c => c.slug === citySlug);
-  
   if (!cityData) {
     return <Navigate to={`/treatment-types/dual-diagnosis-treatment/${stateSlug}`} replace />;
   }
@@ -94,6 +102,7 @@ const CityDualDiagnosis = () => {
         title={`Dual Diagnosis Treatment in ${cityName}, ${abbreviation} | Mental Health & Addiction`}
         description={`Find dual diagnosis treatment centers in ${cityName}, ${stateName}. Integrated care for depression, anxiety, PTSD, and addiction. Insurance accepted.`}
         canonical={`/treatment-types/dual-diagnosis-treatment/${stateSlug}/${citySlug}`}
+        noindex={!validation.shouldIndex}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },

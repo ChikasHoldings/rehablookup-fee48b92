@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 
 const programTypes = [
   {
@@ -54,15 +55,20 @@ const benefits = [
 
 const CityOutpatientPrograms = () => {
   const { stateSlug, citySlug } = useParams<{ stateSlug: string; citySlug: string }>();
-  
+
   const stateData = statesData.find(s => s.slug === stateSlug);
-  
+  const cityData = stateData?.cities.find(c => c.slug === citySlug);
+
+  const { validation } = useTreatmentCityValidation({
+    stateName: stateData?.name,
+    cityName: cityData?.name,
+    treatmentKeywords: ["outpatient", "iop", "php", "intensive outpatient", "partial hospitalization"],
+    pageType: "city-treatment",
+  });
+
   if (!stateData) {
     return <Navigate to="/treatment-types/outpatient-programs" replace />;
   }
-
-  const cityData = stateData.cities.find(c => c.slug === citySlug);
-  
   if (!cityData) {
     return <Navigate to={`/treatment-types/outpatient-programs/${stateSlug}`} replace />;
   }
@@ -92,6 +98,7 @@ const CityOutpatientPrograms = () => {
         title={`Outpatient Rehab Programs in ${cityName}, ${abbreviation} | IOP & PHP`}
         description={`Find outpatient addiction treatment in ${cityName}, ${stateName}. IOP, PHP & flexible programs. Insurance accepted. Call now.`}
         canonical={`/treatment-types/outpatient-programs/${stateSlug}/${citySlug}`}
+        noindex={!validation.shouldIndex}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },

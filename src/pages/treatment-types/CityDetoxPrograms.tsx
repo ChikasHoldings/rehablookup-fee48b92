@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 
 const detoxTypes = [
   {
@@ -55,15 +56,20 @@ const detoxProcess = [
 
 const CityDetoxPrograms = () => {
   const { stateSlug, citySlug } = useParams<{ stateSlug: string; citySlug: string }>();
-  
+
   const stateData = statesData.find(s => s.slug === stateSlug);
-  
+  const cityData = stateData?.cities.find(c => c.slug === citySlug);
+
+  const { validation } = useTreatmentCityValidation({
+    stateName: stateData?.name,
+    cityName: cityData?.name,
+    treatmentKeywords: ["detox", "withdrawal", "medical detoxification"],
+    pageType: "city-treatment",
+  });
+
   if (!stateData) {
     return <Navigate to="/treatment-types/detox-programs" replace />;
   }
-
-  const cityData = stateData.cities.find(c => c.slug === citySlug);
-  
   if (!cityData) {
     return <Navigate to={`/treatment-types/detox-programs/${stateSlug}`} replace />;
   }
@@ -93,6 +99,7 @@ const CityDetoxPrograms = () => {
         title={`Detox Centers in ${cityName}, ${abbreviation} | Medical Detox Programs`}
         description={`Find medical detox centers in ${cityName}, ${stateName}. Safe withdrawal from alcohol & drugs with 24/7 care. Insurance accepted.`}
         canonical={`/treatment-types/detox-programs/${stateSlug}/${citySlug}`}
+        noindex={!validation.shouldIndex}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },

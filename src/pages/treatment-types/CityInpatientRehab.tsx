@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 
 const programTypes = [
   {
@@ -50,15 +51,20 @@ const treatmentFeatures = [
 
 const CityInpatientRehab = () => {
   const { stateSlug, citySlug } = useParams<{ stateSlug: string; citySlug: string }>();
-  
+
   const stateData = statesData.find(s => s.slug === stateSlug);
-  
+  const cityData = stateData?.cities.find(c => c.slug === citySlug);
+
+  const { validation } = useTreatmentCityValidation({
+    stateName: stateData?.name,
+    cityName: cityData?.name,
+    treatmentKeywords: ["inpatient", "residential"],
+    pageType: "city-treatment",
+  });
+
   if (!stateData) {
     return <Navigate to="/treatment-types/residential-inpatient" replace />;
   }
-
-  const cityData = stateData.cities.find(c => c.slug === citySlug);
-  
   if (!cityData) {
     return <Navigate to={`/treatment-types/residential-inpatient/${stateSlug}`} replace />;
   }
@@ -88,6 +94,7 @@ const CityInpatientRehab = () => {
         title={`Inpatient Rehab Centers in ${cityName}, ${abbreviation} | Residential Treatment`}
         description={`Find inpatient rehab centers in ${cityName}, ${stateName}. 24/7 residential addiction treatment. Insurance accepted. Call now.`}
         canonical={`/treatment-types/residential-inpatient/${stateSlug}/${citySlug}`}
+        noindex={!validation.shouldIndex}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },
