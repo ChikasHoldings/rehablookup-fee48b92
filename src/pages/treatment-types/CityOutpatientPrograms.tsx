@@ -55,15 +55,20 @@ const benefits = [
 
 const CityOutpatientPrograms = () => {
   const { stateSlug, citySlug } = useParams<{ stateSlug: string; citySlug: string }>();
-  
+
   const stateData = statesData.find(s => s.slug === stateSlug);
-  
+  const cityData = stateData?.cities.find(c => c.slug === citySlug);
+
+  const { validation } = useTreatmentCityValidation({
+    stateName: stateData?.name,
+    cityName: cityData?.name,
+    treatmentKeywords: ["outpatient", "iop", "php", "intensive outpatient", "partial hospitalization"],
+    pageType: "city-treatment",
+  });
+
   if (!stateData) {
     return <Navigate to="/treatment-types/outpatient-programs" replace />;
   }
-
-  const cityData = stateData.cities.find(c => c.slug === citySlug);
-  
   if (!cityData) {
     return <Navigate to={`/treatment-types/outpatient-programs/${stateSlug}`} replace />;
   }
@@ -71,13 +76,6 @@ const CityOutpatientPrograms = () => {
   const { name: stateName, abbreviation, cities } = stateData;
   const { name: cityName } = cityData;
   const otherCities = cities.filter(c => c.slug !== citySlug).slice(0, 6);
-
-  const { validation } = useTreatmentCityValidation({
-    stateName,
-    cityName,
-    treatmentKeywords: ["outpatient", "iop", "php", "intensive outpatient", "partial hospitalization"],
-    pageType: "city-treatment",
-  });
 
   const structuredData = [
     {

@@ -51,15 +51,20 @@ const treatmentFeatures = [
 
 const CityInpatientRehab = () => {
   const { stateSlug, citySlug } = useParams<{ stateSlug: string; citySlug: string }>();
-  
+
   const stateData = statesData.find(s => s.slug === stateSlug);
-  
+  const cityData = stateData?.cities.find(c => c.slug === citySlug);
+
+  const { validation } = useTreatmentCityValidation({
+    stateName: stateData?.name,
+    cityName: cityData?.name,
+    treatmentKeywords: ["inpatient", "residential"],
+    pageType: "city-treatment",
+  });
+
   if (!stateData) {
     return <Navigate to="/treatment-types/residential-inpatient" replace />;
   }
-
-  const cityData = stateData.cities.find(c => c.slug === citySlug);
-  
   if (!cityData) {
     return <Navigate to={`/treatment-types/residential-inpatient/${stateSlug}`} replace />;
   }
@@ -67,13 +72,6 @@ const CityInpatientRehab = () => {
   const { name: stateName, abbreviation, cities } = stateData;
   const { name: cityName } = cityData;
   const otherCities = cities.filter(c => c.slug !== citySlug).slice(0, 6);
-
-  const { validation } = useTreatmentCityValidation({
-    stateName,
-    cityName,
-    treatmentKeywords: ["inpatient", "residential"],
-    pageType: "city-treatment",
-  });
 
   const structuredData = [
     {

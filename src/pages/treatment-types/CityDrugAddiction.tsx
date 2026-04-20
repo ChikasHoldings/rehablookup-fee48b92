@@ -61,6 +61,13 @@ const CityDrugAddiction = () => {
   const stateData = statesData.find((s) => s.slug === stateSlug);
   const cityData = stateData?.cities.find((c) => c.slug === citySlug);
 
+  const { validation } = useTreatmentCityValidation({
+    stateName: stateData?.name,
+    cityName: cityData?.name,
+    treatmentKeywords: ["drug", "substance", "opioid", "stimulant"],
+    pageType: "city-treatment",
+  });
+
   if (!stateData || !cityData) {
     return <Navigate to="/treatment-types/drug-addiction-treatment" replace />;
   }
@@ -68,13 +75,6 @@ const CityDrugAddiction = () => {
   const { name: stateName, abbreviation } = stateData;
   const { name: cityName } = cityData;
   const otherCities = stateData.cities.filter((c) => c.slug !== citySlug).slice(0, 6);
-
-  const { validation } = useTreatmentCityValidation({
-    stateName,
-    cityName,
-    treatmentKeywords: ["drug", "substance", "opioid", "stimulant"],
-    pageType: "city-treatment",
-  });
 
   const structuredData = [
     {
