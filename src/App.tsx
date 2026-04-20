@@ -1544,6 +1544,7 @@ const AppInner = () => {
             <Route path="/404" element={<SmartCatchAll />} />
             <Route path="*" element={<SmartCatchAll />} />
           </Routes>
+          </TrailingSlashRedirect>
         </Suspense>
               </NavigationProvider>
             </SafeBrowserRouter>
