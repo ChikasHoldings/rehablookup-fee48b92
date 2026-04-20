@@ -1,7 +1,67 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "v7.6.0";
+const VERSION = "v7.7.0";
 const DEPLOYED_AT = new Date().toISOString();
+
+// Slugify helper — must match how page routes derive slugs from facility city/state
+function slugify(s: string): string {
+  return (s || "")
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// Two-letter US state abbreviation -> full slug, for facilities stored as "CA" etc.
+const STATE_ABBR_TO_SLUG: Record<string, string> = {
+  al: "alabama", ak: "alaska", az: "arizona", ar: "arkansas", ca: "california",
+  co: "colorado", ct: "connecticut", de: "delaware", fl: "florida", ga: "georgia",
+  hi: "hawaii", id: "idaho", il: "illinois", in: "indiana", ia: "iowa",
+  ks: "kansas", ky: "kentucky", la: "louisiana", me: "maine", md: "maryland",
+  ma: "massachusetts", mi: "michigan", mn: "minnesota", ms: "mississippi", mo: "missouri",
+  mt: "montana", ne: "nebraska", nv: "nevada", nh: "new-hampshire", nj: "new-jersey",
+  nm: "new-mexico", ny: "new-york", nc: "north-carolina", nd: "north-dakota", oh: "ohio",
+  ok: "oklahoma", or: "oregon", pa: "pennsylvania", ri: "rhode-island", sc: "south-carolina",
+  sd: "south-dakota", tn: "tennessee", tx: "texas", ut: "utah", vt: "vermont",
+  va: "virginia", wa: "washington", wv: "west-virginia", wi: "wisconsin", wy: "wyoming",
+};
+
+/**
+ * Fetch the set of `${stateSlug}::${citySlug}` pairs that actually have at least
+ * one approved facility. Used to filter every city-level combo route generator
+ * so the sitemap never advertises a page that would render as a soft-404.
+ */
+async function fetchFacilityCitySet(
+  supabase: ReturnType<typeof createClient>
+): Promise<Set<string>> {
+  const set = new Set<string>();
+  let from = 0;
+  const batchSize = 1000;
+  while (true) {
+    const { data, error } = await supabase
+      .from("facilities")
+      .select("city, state")
+      .eq("status", "approved")
+      .range(from, from + batchSize - 1);
+    if (error) {
+      console.error(`[Sitemap ${VERSION}] fetchFacilityCitySet error:`, error);
+      break;
+    }
+    if (!data || data.length === 0) break;
+    for (const row of data) {
+      if (!row.city || !row.state) continue;
+      const stateRaw = String(row.state).toLowerCase().trim();
+      const stateSlug = stateRaw.length === 2 ? STATE_ABBR_TO_SLUG[stateRaw] : slugify(stateRaw);
+      if (!stateSlug) continue;
+      set.add(`${stateSlug}::${slugify(row.city)}`);
+    }
+    if (data.length < batchSize) break;
+    from += batchSize;
+  }
+  console.log(`[Sitemap ${VERSION}] fetchFacilityCitySet: ${set.size} unique state::city pairs with inventory`);
+  return set;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
