@@ -1,24 +1,28 @@
-import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 /**
- * Component that handles trailing slash normalization.
- * Redirects URLs with trailing slashes to their canonical version without.
- * This helps prevent duplicate content issues in search engines.
+ * Synchronous trailing-slash normalizer.
+ *
+ * IMPORTANT: This component MUST render BEFORE <Routes> so it intercepts
+ * trailing-slash URLs (e.g. /rehab-centers/maryland/towson/) before any
+ * route is matched. The previous useEffect-based version was async and
+ * caused the page to render with the trailing slash — Google then flagged
+ * the URL as a duplicate of the no-slash canonical.
+ *
+ * Returns null when the path is already canonical, otherwise returns a
+ * client-side <Navigate replace /> which swaps the URL synchronously.
+ *
+ * Children render only when the path is canonical, ensuring no SEO content
+ * is rendered under a duplicate URL.
  */
-export function TrailingSlashRedirect() {
-  const location = useLocation();
-  const navigate = useNavigate();
+export function TrailingSlashRedirect({ children }: { children: React.ReactNode }) {
+  const { pathname, search, hash } = useLocation();
 
-  useEffect(() => {
-    const { pathname, search, hash } = location;
-    
-    // If path has trailing slash (and isn't just "/"), redirect to non-trailing version
-    if (pathname.length > 1 && pathname.endsWith('/')) {
-      const newPath = pathname.slice(0, -1);
-      navigate(newPath + search + hash, { replace: true });
-    }
-  }, [location, navigate]);
+  // Root "/" is always canonical
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    const trimmed = pathname.replace(/\/+$/, "") || "/";
+    return <Navigate to={`${trimmed}${search}${hash}`} replace />;
+  }
 
-  return null;
+  return <>{children}</>;
 }
