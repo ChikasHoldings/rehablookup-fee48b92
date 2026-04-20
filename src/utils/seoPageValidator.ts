@@ -90,6 +90,15 @@ const ALWAYS_INDEX: PageType[] = [
   "cost-insurance",
 ];
 
+const STATE_FALLBACK_INDEXABLE: PageType[] = [
+  "insurance-state",
+  "substance-state",
+  "demographic-state",
+  "co-occurring-state",
+  "duration-state",
+  "payment-state",
+];
+
 /**
  * Validates whether a page meets quality standards for indexing.
  */
@@ -123,6 +132,18 @@ export function validatePage(
       facilityCount,
       hasMinimumContent: hasUniqueContent,
       recommendation: "index",
+    };
+  }
+
+  // State-level templates can still be valuable when local facet matching is sparse
+  // but the broader state directory has enough inventory to support the content.
+  if (STATE_FALLBACK_INDEXABLE.includes(pageType) && stateFallbackCount >= 3 && hasUniqueContent) {
+    return {
+      shouldIndex: true,
+      facilityCount,
+      hasMinimumContent: true,
+      recommendation: "index",
+      reason: `Indexed with statewide fallback inventory (${stateFallbackCount} facilities)` ,
     };
   }
 
