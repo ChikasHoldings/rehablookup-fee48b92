@@ -57,15 +57,22 @@ const conditionsTreated = [
 
 const CityDualDiagnosis = () => {
   const { stateSlug, citySlug } = useParams<{ stateSlug: string; citySlug: string }>();
-  
+
   const stateData = statesData.find(s => s.slug === stateSlug);
-  
+  const cityData = stateData?.cities.find(c => c.slug === citySlug);
+
+  // Hooks first — never call after a conditional return.
+  const { validation } = useTreatmentCityValidation({
+    stateName: stateData?.name,
+    cityName: cityData?.name,
+    treatmentKeywords: ["dual diagnosis", "co-occurring", "mental health"],
+    pageType: "city-treatment",
+  });
+
   if (!stateData) {
     return <Navigate to="/treatment-types/dual-diagnosis-treatment" replace />;
   }
 
-  const cityData = stateData.cities.find(c => c.slug === citySlug);
-  
   if (!cityData) {
     return <Navigate to={`/treatment-types/dual-diagnosis-treatment/${stateSlug}`} replace />;
   }
@@ -74,13 +81,6 @@ const CityDualDiagnosis = () => {
   const { name: cityName } = cityData;
 
   const nearbyCities = cities.filter(c => c.slug !== citySlug).slice(0, 6);
-
-  const { validation } = useTreatmentCityValidation({
-    stateName,
-    cityName,
-    treatmentKeywords: ["dual diagnosis", "co-occurring", "mental health"],
-    pageType: "city-treatment",
-  });
 
   const structuredData = [
     {
