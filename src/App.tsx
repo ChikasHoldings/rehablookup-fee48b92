@@ -490,9 +490,9 @@ const AppInner = () => {
             <SafeBrowserRouter>
               <NavigationProvider>
                 <ScrollToTop />
-        <TrailingSlashRedirect />
         <CookieConsentBanner />
         <Suspense fallback={null}>
+          <TrailingSlashRedirect>
           <Routes>
             {/* Public Routes - Providers are redirected away */}
             <Route path="/" element={<PublicRouteGuard><Index /></PublicRouteGuard>} />

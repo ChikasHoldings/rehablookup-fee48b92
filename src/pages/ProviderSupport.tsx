@@ -102,7 +102,12 @@ export default function ProviderSupport() {
 
   return (
     <>
-    <Helmet><title>Provider Support | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
+    <Helmet>
+      <title>Provider Support | RehabLookup</title>
+      <meta name="description" content="Get help with your RehabLookup provider account, billing, listings, and lead notifications. Contact our provider support team or browse our knowledge base." />
+      <link rel="canonical" href="https://rehablookup.com/provider-support" />
+      <meta name="robots" content="index, follow" />
+    </Helmet>
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1">
