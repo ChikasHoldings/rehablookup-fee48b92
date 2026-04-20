@@ -760,7 +760,7 @@ const AppInner = () => {
             
             {/* Insurance + State + City Cross Pages */}
             <Route path="/insurance/:slug/:stateSlug/county/:countySlug" element={<PublicRouteGuard><CountyInsurancePage /></PublicRouteGuard>} />
-            <Route path="/insurance/:slug/:stateSlug/:citySlug" element={<PublicRouteGuard><CityInsurancePage /></PublicRouteGuard>} />
+            <Route path="/insurance/:insurerSlug/:stateSlug/:citySlug" element={<PublicRouteGuard><CityInsurancePage /></PublicRouteGuard>} />
             {/* Insurance + State Cross Pages */}
             <Route path="/insurance/:slug/:stateSlug" element={<PublicRouteGuard><InsuranceStatePage /></PublicRouteGuard>} />
             
