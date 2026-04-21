@@ -137,7 +137,7 @@ export function DashboardPlacementPanel({ facilityIds, isPro }: DashboardPlaceme
             )}
           </div>
           <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" asChild>
-            <Link to="/provider/placements">
+            <Link to="/provider/placement-network">
               View All <ArrowRight className="h-3 w-3 ml-1" />
             </Link>
           </Button>
