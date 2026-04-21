@@ -1493,6 +1493,7 @@ const AppInner = () => {
               <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
               <Route path="image-guidelines" element={<ProviderImageGuidelines />} />
               <Route path="placement-network" element={<ProviderPlacementNetworkPage />} />
+              <Route path="placements" element={<Navigate to="/provider/placement-network" replace />} />
             </Route>
 
             {/* Admin Routes */}
