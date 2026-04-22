@@ -6,6 +6,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { bestInStateConfigs, type BestInStateConfig } from "@/data/seoBestInStateConfig";
 import { topCities, seoTreatmentTypes, getCityTreatmentSlug } from "@/data/seoPageConfig";
 import { insurerConfigs, stateInsuranceConfigs } from "@/data/seoInsuranceStateConfig";
+import { validatePage } from "@/utils/seoPageValidator";
 
 export default function BestInStatePage() {
   const location = useLocation();
