@@ -142,23 +142,23 @@ function extractTypeBlocks(src, type) {
 
 /**
  * Inspects FAQPage literal blocks in the source and verifies each one has
- * `mainEntity` populated.
+ * `mainEntity` populated. Accepts both bare and quoted property keys.
  */
 function inspectFAQBlocks(src) {
   const blocks = extractTypeBlocks(src, "FAQPage");
   const missing = [];
   blocks.forEach((block, idx) => {
-    if (!/mainEntity\s*:/.test(block)) missing.push(`FAQPage[${idx}].mainEntity`);
+    if (!/["']?mainEntity["']?\s*:/.test(block)) missing.push(`FAQPage[${idx}].mainEntity`);
   });
   return { count: blocks.length, missingFields: missing };
 }
 
-/** Inspects ItemList blocks for `itemListElement`. */
+/** Inspects ItemList blocks for `itemListElement`. Accepts quoted keys. */
 function inspectItemListBlocks(src) {
   const blocks = extractTypeBlocks(src, "ItemList");
   const missing = [];
   blocks.forEach((block, idx) => {
-    if (!/itemListElement\s*:/.test(block)) missing.push(`ItemList[${idx}].itemListElement`);
+    if (!/["']?itemListElement["']?\s*:/.test(block)) missing.push(`ItemList[${idx}].itemListElement`);
   });
   return { count: blocks.length, missingFields: missing };
 }
