@@ -75,21 +75,76 @@ function rendersTemplate(src) {
 }
 
 /**
- * Pulls the `breadcrumbs` prop array length (best-effort) and verifies every
- * item has both `name` and `url`. Returns { count, missingFields: string[] }.
+ * Pulls the `breadcrumbs` prop expression (best-effort) and verifies every
+ * `[ ... ]` array literal inside it contains items with both `name` and `url`.
+ * Handles both forms:
+ *    breadcrumbs={[ {name,url}, ... ]}
+ *    breadcrumbs={isStatePage ? [ ... ] : [ ... ]}
+ *    breadcrumbs={breadcrumbsVar}    // identifier — counted as 1 to suppress warn
+ * Returns { count, missingFields: string[] }.
  */
 function inspectBreadcrumbs(src) {
-  const m = src.match(/breadcrumbs\s*=\s*\{\s*\[([\s\S]*?)\]\s*\}/);
-  if (!m) return { count: 0, missingFields: [] };
-  const body = m[1];
-  // crude split on top-level objects
-  const items = body.split(/\},\s*\{/).map((x) => x.replace(/^\s*\{?|\}?\s*$/g, ""));
+  // Locate `breadcrumbs={` and walk to the matching `}` with brace balance.
+  const idx = src.search(/\bbreadcrumbs\s*=\s*\{/);
+  if (idx === -1) return { count: 0, missingFields: [] };
+  const openBrace = src.indexOf("{", idx);
+  let bal = 0;
+  let close = -1;
+  for (let i = openBrace; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === "{") bal++;
+    else if (ch === "}") {
+      bal--;
+      if (bal === 0) { close = i; break; }
+    }
+  }
+  if (close === -1) return { count: 0, missingFields: [] };
+  const expr = src.slice(openBrace + 1, close);
+
+  // Find every top-level `[ ... ]` literal inside the expression.
+  const arrays = [];
+  for (let i = 0; i < expr.length; i++) {
+    if (expr[i] !== "[") continue;
+    let b = 0;
+    for (let j = i; j < expr.length; j++) {
+      if (expr[j] === "[") b++;
+      else if (expr[j] === "]") {
+        b--;
+        if (b === 0) { arrays.push(expr.slice(i, j + 1)); i = j; break; }
+      }
+    }
+  }
+  // No literal arrays — page passes a variable identifier; treat as present.
+  if (arrays.length === 0) return { count: 1, missingFields: [] };
+
+  let totalItems = 0;
   const missing = [];
-  items.forEach((item, idx) => {
-    if (!/\bname\s*:/.test(item)) missing.push(`breadcrumb[${idx}].name`);
-    if (!/\burl\s*:/.test(item)) missing.push(`breadcrumb[${idx}].url`);
+  arrays.forEach((arr, ai) => {
+    // Split into top-level `{...}` items inside this array.
+    const items = [];
+    let depth = 0;
+    let start = -1;
+    for (let i = 0; i < arr.length; i++) {
+      const ch = arr[i];
+      if (ch === "{") {
+        if (depth === 0) start = i;
+        depth++;
+      } else if (ch === "}") {
+        depth--;
+        if (depth === 0 && start !== -1) {
+          items.push(arr.slice(start, i + 1));
+          start = -1;
+        }
+      }
+    }
+    items.forEach((item, ii) => {
+      if (!/["']?name["']?\s*:/.test(item)) missing.push(`breadcrumb[arr${ai}][${ii}].name`);
+      if (!/["']?url["']?\s*:/.test(item)) missing.push(`breadcrumb[arr${ai}][${ii}].url`);
+    });
+    totalItems += items.length;
   });
-  return { count: items.length, missingFields: missing };
+
+  return { count: totalItems, missingFields: missing };
 }
 
 /**
