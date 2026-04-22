@@ -93,11 +93,59 @@ function inspectBreadcrumbs(src) {
 }
 
 /**
+ * Extracts the brace-balanced object literal that contains a given
+ * `"@type": "<TYPE>"` declaration. Walks backward from the @type literal to
+ * find the enclosing `{`, then forward to the matching `}`.
+ *
+ * Returns the array of full object-literal source strings (one per @type
+ * occurrence). Handles nested braces produced by `faqs.map(faq => ({ ... }))`.
+ */
+function extractTypeBlocks(src, type) {
+  const re = new RegExp(`["']@type["']\\s*:\\s*["']${type}["']`, "g");
+  const blocks = [];
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    // Find the opening `{` for the object that contains this @type.
+    let depth = 0;
+    let start = -1;
+    for (let i = m.index; i >= 0; i--) {
+      const ch = src[i];
+      if (ch === "}") depth++;
+      else if (ch === "{") {
+        if (depth === 0) {
+          start = i;
+          break;
+        }
+        depth--;
+      }
+    }
+    if (start === -1) continue;
+    // Walk forward from start to find the matching `}`.
+    let bal = 0;
+    let end = -1;
+    for (let i = start; i < src.length; i++) {
+      const ch = src[i];
+      if (ch === "{") bal++;
+      else if (ch === "}") {
+        bal--;
+        if (bal === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    if (end === -1) continue;
+    blocks.push(src.slice(start, end + 1));
+  }
+  return blocks;
+}
+
+/**
  * Inspects FAQPage literal blocks in the source and verifies each one has
  * `mainEntity` populated.
  */
 function inspectFAQBlocks(src) {
-  const blocks = src.match(/\{\s*[^{}]*?["']@type["']\s*:\s*["']FAQPage["'][\s\S]*?\}\s*[,)]/g) || [];
+  const blocks = extractTypeBlocks(src, "FAQPage");
   const missing = [];
   blocks.forEach((block, idx) => {
     if (!/mainEntity\s*:/.test(block)) missing.push(`FAQPage[${idx}].mainEntity`);
@@ -107,7 +155,7 @@ function inspectFAQBlocks(src) {
 
 /** Inspects ItemList blocks for `itemListElement`. */
 function inspectItemListBlocks(src) {
-  const blocks = src.match(/\{\s*[^{}]*?["']@type["']\s*:\s*["']ItemList["'][\s\S]*?\}\s*[,)]/g) || [];
+  const blocks = extractTypeBlocks(src, "ItemList");
   const missing = [];
   blocks.forEach((block, idx) => {
     if (!/itemListElement\s*:/.test(block)) missing.push(`ItemList[${idx}].itemListElement`);
