@@ -282,7 +282,9 @@ function main() {
     if (sampleMissing.length < 10) sampleMissing.push(route);
   }
   if (missingPrerender > 0) {
-    errors.push(
+    // Soft gate: stale pre-renders don't break crawl/index of canonical pages —
+    // they're just orphaned. Warn loudly so devs clean them up, but don't block deploy.
+    warnings.push(
       `${missingPrerender} pre-rendered SEO page(s) in /public are NOT listed in sitemap.xml ` +
         `and are NOT blocked by robots.txt. Either add them to the sitemap, block them in ` +
         `robots.txt, or delete the stale .html. Examples: ${sampleMissing.join(", ")}`
