@@ -132,8 +132,10 @@ export default function NearMeCityPage() {
     nearMeType.slug
   );
 
-  // Thin page protection: noindex if no facilities AND no nearby content
-  const isThinPage = facilities.length === 0 && nearbyCities.length === 0;
+  // Thin page protection: noindex when no direct facilities AND no nearby cities
+  // (matches our seoPageValidator policy for substance/demographic-city combos —
+  // generic listings without local inventory are the source of "Crawled - not indexed")
+  const isThinPage = facilities.length === 0;
 
   const canonicalUrl = `/${canonicalSlug}/${stateData.slug}/${cityData.slug}`;
 

@@ -5,7 +5,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
-import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
 // Import duration config from DurationSettingPage
 const durationConfigs: { slug: string; title: string; filterKeys: string[] }[] = [
@@ -34,8 +34,10 @@ export default function DurationCityPage() {
     return stateData.cities.find((c) => c.slug === citySlug) || null;
   }, [stateData, citySlug]);
 
-  const facilities = useMemo(() => {
-    if (!config || !stateData || !cityData) return [];
+  const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
+    if (!config || !stateData || !cityData) {
+      return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
+    }
     const all = [...treatmentCenters, ...approvedFacilities];
     const keywords = config.filterKeys.map((k) => k.toLowerCase());
     const cityLower = cityData.name.toLowerCase();
@@ -48,11 +50,20 @@ export default function DurationCityPage() {
       return cityMatch && keyMatch;
     });
 
-    if (cityMatched.length >= 3) return cityMatched.slice(0, 12);
-    const cityAll = all.filter((f) => f.city.toLowerCase() === cityLower && f.state.toLowerCase() === stateLower);
-    if (cityAll.length >= 3) return cityAll.slice(0, 12);
-    return all.filter((f) => f.state.toLowerCase() === stateLower).slice(0, 12);
+    const stateAll = all.filter((f) => f.state.toLowerCase() === stateLower);
+    let displayed = cityMatched;
+    if (displayed.length < 3) {
+      const cityAll = all.filter((f) => f.city.toLowerCase() === cityLower && f.state.toLowerCase() === stateLower);
+      displayed = cityAll.length >= 3 ? cityAll : stateAll;
+    }
+    return {
+      facilities: displayed.slice(0, 12),
+      directMatchCount: cityMatched.length,
+      stateFallbackCount: stateAll.length,
+    };
   }, [approvedFacilities, config, stateData, cityData]);
+
+  const validation = validatePage("duration-city", directMatchCount, { stateFallbackCount });
 
   if (!config || !stateData || !cityData) {
     return <Navigate to="/treatment-types" replace />;
@@ -128,6 +139,7 @@ export default function DurationCityPage() {
       metaTitle={`${config.title} in ${cityName}, ${abbreviation} | RehabLookup`}
       metaDescription={`Find ${config.title.toLowerCase()} in ${cityName}, ${stateName}. Compare verified treatment facilities and get matched today.`}
       canonical={`https://rehablookup.com${canonicalPath}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },
