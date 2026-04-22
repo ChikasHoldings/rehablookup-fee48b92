@@ -65,6 +65,10 @@ export default function BestInStatePage() {
   }
 
   const pageTitle = `Best Rehab Centers in ${stateConfig.state} (${stateConfig.stateAbbr})`;
+  // "Best of" lists need real depth — gate to noindex when state inventory is too thin
+  const validation = validatePage("best-in-state", facilities.length, {
+    stateFallbackCount: facilities.length,
+  });
 
   const structuredData = [
     {
@@ -110,6 +114,7 @@ export default function BestInStatePage() {
       metaTitle={stateConfig.metaTitle}
       metaDescription={stateConfig.metaDescription}
       canonical={`https://rehablookup.com/best-rehab-centers-in-${stateConfig.slug}`}
+      noindex={!validation.shouldIndex}
       structuredData={structuredData}
       breadcrumbs={[
         { name: "Home", url: "/" },
