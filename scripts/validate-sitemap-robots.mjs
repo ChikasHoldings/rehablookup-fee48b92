@@ -266,20 +266,26 @@ function main() {
   }
 
   // ---- 5. Pre-rendered HTML files must be in sitemap ----------------------
-  // If we shipped a static .html for SEO, it MUST be discoverable via sitemap.
+  // If we shipped a static .html for SEO, it MUST be discoverable via sitemap
+  // — UNLESS the path is explicitly Disallow'd in robots.txt (in which case
+  // the .html is served for direct visitors but intentionally excluded from
+  // the index, e.g. /request-help, /placement-help conversion pages).
   const prerendered = discoverPrerenderedRoutes();
+  const googleGroup = robots.groups.get("Googlebot");
   let missingPrerender = 0;
   const sampleMissing = [];
   for (const route of prerendered) {
-    if (!allSitemapPaths.has(route) && !allSitemapPaths.has(route + "/")) {
-      missingPrerender++;
-      if (sampleMissing.length < 10) sampleMissing.push(route);
-    }
+    if (allSitemapPaths.has(route) || allSitemapPaths.has(route + "/")) continue;
+    // Skip pages intentionally blocked from Google's index.
+    if (googleGroup && !isAllowed(route, googleGroup)) continue;
+    missingPrerender++;
+    if (sampleMissing.length < 10) sampleMissing.push(route);
   }
   if (missingPrerender > 0) {
     errors.push(
-      `${missingPrerender} pre-rendered SEO page(s) in /public are NOT listed in sitemap.xml. ` +
-        `Examples: ${sampleMissing.join(", ")}`
+      `${missingPrerender} pre-rendered SEO page(s) in /public are NOT listed in sitemap.xml ` +
+        `and are NOT blocked by robots.txt. Either add them to the sitemap, block them in ` +
+        `robots.txt, or delete the stale .html. Examples: ${sampleMissing.join(", ")}`
     );
   }
 
