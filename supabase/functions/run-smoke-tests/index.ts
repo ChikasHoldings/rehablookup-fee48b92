@@ -282,7 +282,14 @@ Deno.serve(async (req) => {
 
   // ---- 2. Walk the happy path as the test admin --------------------------
   for (const [from, to] of HAPPY_PATH) {
-    const step = await timed(`transition: ${from} → ${to}`, async () => {
+    const step = await timed(`transition: ${from} → ${to}`, async (ctx) => {
+      ctx.request = {
+        kind: "db",
+        method: "UPDATE",
+        target: "public.concierge_inquiries",
+        body: { status: to },
+        filter: { id: inquiryId, status: from },
+      };
       const { data, error } = await testAdminClient
         .from("concierge_inquiries")
         .update({ status: to })
@@ -290,6 +297,7 @@ Deno.serve(async (req) => {
         .eq("status", from)
         .select("status")
         .single();
+      ctx.response = { status: null, body: data, code: error?.code ?? null };
       if (error) throw new Error(error.message);
       if (!data || data.status !== to) {
         throw new Error(`Expected status=${to}, got=${data?.status ?? "null"}`);
@@ -302,7 +310,7 @@ Deno.serve(async (req) => {
 
   // ---- 3. Negative probes (each must throw) ------------------------------
   for (const probe of ILLEGAL_PROBES) {
-    const step = await timed(`reject: ${probe.from} → ${probe.to}`, async () => {
+    const step = await timed(`reject: ${probe.from} → ${probe.to}`, async (ctx) => {
       // Force the row into the source state via service role (bypasses trigger
       // would re-fire) — but the trigger fires on UPDATE regardless of role.
       // Instead, create a sibling row pinned at probe.from.
@@ -317,10 +325,18 @@ Deno.serve(async (req) => {
       });
       if (insertErr) throw new Error(`Probe seed failed: ${insertErr.message}`);
 
+      ctx.request = {
+        kind: "db",
+        method: "UPDATE",
+        target: "public.concierge_inquiries",
+        body: { status: probe.to },
+        filter: { id: probeId },
+      };
       const { error: updateErr } = await testAdminClient
         .from("concierge_inquiries")
         .update({ status: probe.to })
         .eq("id", probeId);
+      ctx.response = { status: null, body: updateErr?.message ?? null, code: updateErr?.code ?? null };
 
       // Cleanup the probe row regardless of outcome.
       await admin.from("concierge_inquiries").delete().eq("id", probeId);
