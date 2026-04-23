@@ -193,20 +193,11 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     }
   }, [resendCooldown]);
   
-  const trackAnalytics = async (eventType: string, metadata?: Record<string, unknown>) => {
-    try {
-      await supabase.functions.invoke("track-request-help", {
-        body: {
-          eventType,
-          source,
-          facilityId: facilityId || null,
-          stepNumber: currentStep,
-          metadata,
-        },
-      });
-    } catch (error) {
-      console.error("Analytics tracking error:", error);
-    }
+  // Analytics tracking - track-request-help edge function was removed.
+  // Kept as a no-op to preserve call sites; primary analytics flow through
+  // the `analytics` helper (GA/Meta Pixel) elsewhere in this hook.
+  const trackAnalytics = async (_eventType: string, _metadata?: Record<string, unknown>) => {
+    // no-op
   };
   
   const updateFormData = useCallback((updates: Partial<LeadIntakeFormData>) => {
