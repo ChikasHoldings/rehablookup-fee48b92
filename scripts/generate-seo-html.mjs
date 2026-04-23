@@ -131,11 +131,11 @@ const demographicPages = [
   { slug: "senior-addiction-treatment", title: "Senior Addiction Treatment", metaTitle: "Senior Addiction Treatment — Elderly Substance Abuse Help | RehabLookup", metaDescription: "Find addiction treatment programs for seniors and elderly adults.", intro: "Substance abuse among seniors is a growing yet underrecognized crisis." },
   { slug: "lgbtq-rehab-programs", title: "LGBTQ+ Rehab Programs", metaTitle: "LGBTQ+ Rehab Programs — Affirming Addiction Treatment | RehabLookup", metaDescription: "Find LGBTQ+ affirming rehab programs with specialized therapy.", intro: "LGBTQ+ individuals experience substance use disorders at significantly higher rates than the general population." },
   { slug: "pregnant-women-addiction-treatment", title: "Pregnant Women Addiction Treatment", metaTitle: "Pregnant Women Addiction Treatment — Safe Prenatal Recovery | RehabLookup", metaDescription: "Find addiction treatment for pregnant women with prenatal care and safe detox.", intro: "Substance use during pregnancy affects approximately 5-10% of pregnancies." },
-  { slug: "first-responders-rehab", title: "First Responders Rehab", metaTitle: "First Responders Rehab — Addiction Treatment for EMS, Fire & Police | RehabLookup", metaDescription: "Find addiction treatment for first responders.", intro: "First responders face substance abuse rates significantly higher than the general population." },
+  { slug: "first-responders-rehab", title: "First Responders Rehab", metaTitle: "First Responders Rehab — Addiction Treatment for EMS, Fire & Police | RehabLookup", metaDescription: "Find specialized addiction treatment for first responders — EMS, fire, and police — with trauma-informed care and confidential recovery programs.", intro: "First responders face substance abuse rates significantly higher than the general population." },
   { slug: "healthcare-professionals-rehab", title: "Healthcare Professionals Rehab", metaTitle: "Healthcare Professionals Rehab — Nurses, Doctors Recovery | RehabLookup", metaDescription: "Find addiction treatment for healthcare professionals.", intro: "Healthcare professionals face unique addiction challenges stemming from occupational stress and access to controlled substances." },
   { slug: "executive-rehab-programs", title: "Executive Rehab Programs", metaTitle: "Executive Rehab Programs — Luxury, Private Treatment | RehabLookup", metaDescription: "Find executive rehab programs offering luxury accommodations and privacy.", intro: "Executive rehab programs cater to business leaders requiring addiction treatment that accommodates demanding careers." },
   { slug: "teachers-rehab-programs", title: "Rehab Programs for Teachers & Educators", metaTitle: "Rehab for Teachers & Educators — Confidential Treatment | RehabLookup", metaDescription: "Find addiction treatment for teachers and educators.", intro: "Teachers and educators face substance abuse challenges driven by occupational burnout and high stress." },
-  { slug: "college-student-addiction-treatment", title: "College Student Addiction Treatment", metaTitle: "College Student Addiction Treatment — Campus Recovery | RehabLookup", metaDescription: "Find addiction treatment for college students.", intro: "College students face disproportionate substance abuse risks driven by peer pressure and academic stress." },
+  { slug: "college-student-addiction-treatment", title: "College Student Addiction Treatment", metaTitle: "College Student Addiction Treatment — Campus Recovery | RehabLookup", metaDescription: "Find addiction treatment programs for college students — confidential, campus-friendly recovery options that work around academic schedules.", intro: "College students face disproportionate substance abuse risks driven by peer pressure and academic stress." },
 ];
 
 const seekerGuidePages = [
@@ -281,9 +281,14 @@ function generatePage({ urlPath, title, metaTitle, metaDescription, h1, content,
   <meta property="og:description" content="${safeDesc}">
   <meta property="og:url" content="${canonical}">
   <meta property="og:site_name" content="RehabLookup">
+  <meta property="og:image" content="https://rehablookup.com/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${safeTitle}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="twitter:description" content="${safeDesc}">
+  <meta name="twitter:image" content="https://rehablookup.com/og-image.jpg">
   <link rel="icon" type="image/png" href="/favicon.png">
   ${breadcrumbSchema ? `<script type="application/ld+json">${breadcrumbSchema}</script>` : ""}
   ${sdScripts}
