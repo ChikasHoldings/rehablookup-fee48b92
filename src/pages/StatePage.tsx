@@ -1,14 +1,20 @@
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { Loader2 } from "lucide-react";
 
 // Detect when a slug is actually a facility UUID that landed here via a stale
 // `/rehab-centers/{id}` link (legacy fallback). Matches v4 UUID format.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Lazy-load the legacy resolver only when a UUID is detected in the path.
+// It handles DB lookup (by id or slug) and redirects to /center/{slug}, keeping
+// behavior consistent with the dedicated /treatment-centers/{slug} entry point.
+const TreatmentCenterProfile = lazy(() => import("./TreatmentCenterProfile"));
 
 import { getStateBySlug, getNearbyStates } from "@/data/locationSeoData";
 import { getCountiesForState } from "@/data/countySeoData";
@@ -143,18 +149,18 @@ const StatePage = () => {
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
   // Recover gracefully from stale `/rehab-centers/{uuid}` links: if the slug
-  // is a UUID matching a known facility, redirect to its canonical profile.
-  const uuidMatch = useMemo(() => {
-    if (!stateSlug || !UUID_RE.test(stateSlug)) return null;
-    return approvedFacilities.find((f: any) => f.id === stateSlug) || null;
-  }, [stateSlug, approvedFacilities]);
+  // looks like a UUID, hand off to the legacy resolver, which performs an
+  // authoritative DB lookup (by id) and redirects to /center/{slug}. This
+  // matches the behavior of the dedicated /treatment-centers/{slug} route
+  // and avoids race conditions with the static facility cache.
+  const isUuidParam = !!stateSlug && UUID_RE.test(stateSlug);
 
   const stateCenters = useMemo(() => {
     if (!stateData) return [];
     const stateNameLower = stateData.name.toLowerCase();
     const stateAbbrevLower = stateData.abbreviation.toLowerCase();
-    
-    return approvedFacilities.filter(center => 
+
+    return approvedFacilities.filter(center =>
       center.state.toLowerCase() === stateNameLower ||
       center.state.toLowerCase() === stateAbbrevLower
     ).sort((a, b) => {
@@ -162,12 +168,12 @@ const StatePage = () => {
       const aPro = (a as any).isPro ? 1 : 0;
       const bPro = (b as any).isPro ? 1 : 0;
       if (bPro !== aPro) return bPro - aPro;
-      
+
       // Then by calculated ranking score
       const aScore = (a as any).calculatedRankingScore || 0;
       const bScore = (b as any).calculatedRankingScore || 0;
       if (bScore !== aScore) return bScore - aScore;
-      
+
       // Fallback to name
       return a.name.localeCompare(b.name);
     });
@@ -179,9 +185,21 @@ const StatePage = () => {
   const stateFAQs = stateData ? getStateFAQs(stateData.name, stateData.abbreviation, stateData.cities.length, stateCenters.length) : [];
   const displayedCities = showAllCities ? stateData?.cities : stateData?.cities.slice(0, 12);
 
-  // Redirect stale `/rehab-centers/{uuid}` links to canonical /center/{slug}
-  if (uuidMatch?.slug) {
-    return <Navigate to={`/center/${uuidMatch.slug}`} replace />;
+  // UUID in the slot → delegate to the legacy resolver (DB-backed redirect).
+  if (isUuidParam) {
+    return (
+      <Suspense
+        fallback={
+          <Layout>
+            <div className="min-h-[60vh] flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          </Layout>
+        }
+      >
+        <TreatmentCenterProfile paramOverride={stateSlug} />
+      </Suspense>
+    );
   }
 
   if (!stateData) {
