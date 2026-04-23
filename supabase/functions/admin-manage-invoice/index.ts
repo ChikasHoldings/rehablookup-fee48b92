@@ -399,14 +399,12 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
+    if (error instanceof ApiError) {
+      logStep("ERROR", { code: error.code, message: error.message, status: error.httpStatus });
+      return jsonError(error.code, error.message, error.httpStatus);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    return jsonError("INTERNAL_ERROR", errorMessage, 500);
   }
 });
