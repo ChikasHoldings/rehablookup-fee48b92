@@ -185,9 +185,12 @@ function ProviderShellContent() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background isolate" data-shell>
-      {/* Fixed Header */}
-      <div className="flex-shrink-0 z-50">
+    <div
+      className="h-[100dvh] w-full overflow-hidden bg-background isolate grid grid-rows-[auto_minmax(0,1fr)_auto] lg:grid-rows-[auto_minmax(0,1fr)]"
+      data-shell
+    >
+      {/* Row 1 — Header */}
+      <div className="z-50 min-w-0">
         <ProviderHeader
           facilityName={facility?.name}
           facilityId={facility?.id}
@@ -198,54 +201,55 @@ function ProviderShellContent() {
         />
       </div>
 
-      <div className="flex flex-1 min-h-0 w-full">
-        {/* Fixed Desktop Sidebar - Consistent width */}
+      {/* Row 2 — Sidebar + Main (single grid cell, internal flex) */}
+      <div className="flex min-h-0 w-full overflow-hidden">
+        {/* Fixed Desktop Sidebar */}
         <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-border bg-card/50 backdrop-blur-sm overflow-y-auto z-40">
           <ProviderSidebar />
         </aside>
 
-        {/* Mobile Sidebar Sheet - slides from right */}
+        {/* Mobile Sidebar Sheet — slides from right */}
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent 
-            side="right" 
-            className="w-[80vw] max-w-[300px] p-0 border-l border-border/50 [&>button]:hidden"
+          <SheetContent
+            side="right"
+            className="w-[85vw] max-w-[320px] p-0 border-l border-border/50 [&>button]:hidden"
           >
             <div className="flex flex-col h-full bg-card">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
                 <p className="font-display font-semibold text-foreground text-sm">Menu</p>
                 <button
                   onClick={handleCloseSidebar}
-                  className="flex items-center justify-center h-7 w-7 rounded-full bg-muted/80 hover:bg-muted transition-colors"
+                  className="flex items-center justify-center h-8 w-8 rounded-full bg-muted/80 hover:bg-muted transition-colors"
                   aria-label="Close menu"
                 >
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="14" 
-                    height="14" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2.5" 
-                    strokeLinecap="round" 
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
                     strokeLinejoin="round"
                     className="text-muted-foreground"
                   >
-                    <path d="M18 6 6 18"/>
-                    <path d="m6 6 12 12"/>
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
                   </svg>
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 min-h-0 overflow-y-auto">
                 <ProviderSidebar onNavigate={handleCloseSidebar} />
               </div>
             </div>
           </SheetContent>
         </Sheet>
 
-        {/* Main Content Area - Responsive with proper overflow handling */}
-        <main 
-          ref={mainContentRef} 
-          className="flex-1 min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
+        {/* Main scroll area — bounded by grid, no padding hack needed */}
+        <main
+          ref={mainContentRef}
+          className="flex-1 min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-muted/30"
         >
           <ProviderErrorBoundary>
             <Suspense fallback={null}>
@@ -255,7 +259,7 @@ function ProviderShellContent() {
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Row 3 — Mobile Bottom Navigation (in-flow, not fixed) */}
       <MobileBottomNav onMoreClick={handleMoreClick} />
     </div>
   );
