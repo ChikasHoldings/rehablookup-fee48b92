@@ -415,23 +415,23 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
 
   return (
     <>
-      <header className="sticky top-0 z-50 h-16 border-b border-slate-700 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex items-center px-4 lg:px-6">
+      <header className="sticky top-0 z-50 h-14 sm:h-16 border-b border-slate-700 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex items-center px-2.5 sm:px-4 lg:px-6 gap-2">
         {/* Left Section - Logo */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <img 
               src={logoDarkBg} 
               alt="RehabLookup" 
-              className="h-7 sm:h-8 w-auto"
+              className="h-6 sm:h-7 md:h-8 w-auto flex-shrink-0"
             />
-            <span className="text-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 px-2.5 py-1 rounded-md font-semibold uppercase tracking-wide shadow-sm">
+            <span className="text-[10px] sm:text-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md font-semibold uppercase tracking-wide shadow-sm flex-shrink-0">
               Admin
             </span>
           </div>
         </div>
 
         {/* Center Section - Search Bar */}
-        <div className="flex-1 flex justify-center px-4">
+        <div className="flex-1 flex justify-center px-2 sm:px-4 min-w-0">
           <div className="hidden md:block w-full max-w-md">
             <Button
               variant="ghost"
@@ -450,12 +450,12 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
         </div>
 
         {/* Right Section - Actions & Profile */}
-        <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
           {/* Mobile Search Button */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 rounded-xl"
+            className="md:hidden h-9 w-9 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 rounded-xl"
             onClick={() => setSearchOpen(true)}
           >
             <Search className="h-5 w-5" />
