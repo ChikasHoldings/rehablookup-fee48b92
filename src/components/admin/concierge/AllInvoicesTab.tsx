@@ -6,6 +6,7 @@ import {
   explainInvoiceActionBlock,
   type InvoiceAction,
 } from "@/lib/statusTransitions";
+import { reportRejectedTransition } from "@/lib/transitionAlerts";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -137,7 +138,19 @@ export function AllInvoicesTab() {
     }) => {
       // Client-side guard mirrors validate_invoice_status_transition + admin-manage-invoice gating.
       const block = explainInvoiceActionBlock(action, currentStatus);
-      if (block) throw new Error(block);
+      if (block) {
+        void reportRejectedTransition({
+          domain: "invoice",
+          source: "AllInvoicesTab.manageMutation",
+          fromStatus: currentStatus,
+          toStatus: action,
+          recordId: invoiceId,
+          action,
+          reason: block,
+          context: { reason, newAmount },
+        });
+        throw new Error(block);
+      }
 
       const response = await supabase.functions.invoke("admin-manage-invoice", {
         body: { invoiceId, action, reason, newAmount },

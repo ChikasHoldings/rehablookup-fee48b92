@@ -4,6 +4,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
 import { VALID_TRANSITIONS, type PlacementStage } from "@/components/admin/concierge/placementPipelineConfig";
 import { validateTransition } from "@/lib/statusTransitions";
+import { reportRejectedTransition } from "@/lib/transitionAlerts";
 
 /**
  * Centralized placement case status transition hook.
@@ -64,6 +65,17 @@ export function useCaseTransition() {
       // Client-side validation against shared transition rules (mirrors DB trigger).
       const check = validateTransition("concierge", fromStatus, toStatus);
       if (!check.ok) {
+        // Fire-and-forget integrity alert so admins can investigate.
+        void reportRejectedTransition({
+          domain: "placement",
+          source: "useCaseTransition",
+          fromStatus,
+          toStatus,
+          recordId: caseId,
+          action: via,
+          reason: check.reason || "Invalid status transition",
+          context: { eventType, label, role: isAdvisor ? "advisor" : "admin" },
+        });
         throw new Error(check.reason || "Invalid status transition");
       }
       // Defensive sanity check against the typed config too.
