@@ -24,10 +24,10 @@ export function Layout({ children }: LayoutProps) {
   // Public layout — no role checks, no redirects.
   // Admin and Provider portals have their own shells (AdminShell, ProviderShell).
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col w-full max-w-[100vw] overflow-x-hidden">
       <InternationalBanner />
       <MemoizedHeader />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 w-full min-w-0">{children}</main>
       <MemoizedFooter />
       <BackToTop />
       <FloatingHelpButton />

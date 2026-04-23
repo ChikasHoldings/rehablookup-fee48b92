@@ -44,10 +44,10 @@ export function BreadcrumbNav({ items, className = "", variant = "dark" }: Bread
       />
       <nav
         aria-label="Breadcrumb"
-        className={`text-sm ${className}`}
+        className={`text-sm min-w-0 max-w-full overflow-x-auto scrollbar-hide ${className}`}
       >
         <ol
-          className="flex flex-row items-center gap-1.5 flex-nowrap"
+          className="flex flex-row items-center gap-1.5 flex-nowrap min-w-0"
           itemScope
           itemType="https://schema.org/BreadcrumbList"
         >
@@ -68,35 +68,39 @@ export function BreadcrumbNav({ items, className = "", variant = "dark" }: Bread
             <meta itemProp="position" content="1" />
           </li>
 
-          {items.map((item, index) => (
-            <li
-              key={index}
-              className="inline-flex items-center shrink-0"
-              itemProp="itemListElement"
-              itemScope
-              itemType="https://schema.org/ListItem"
-            >
-              <ChevronRight className={`h-3 w-3 mx-0.5 ${colors.sep}`} />
-              {item.href ? (
-                <Link
-                  to={item.href}
-                  className={`transition-colors ${colors.link}`}
-                  itemProp="item"
-                >
-                  <span itemProp="name">{item.label}</span>
-                </Link>
-              ) : (
-                <span
-                  className={`font-medium ${colors.current}`}
-                  itemProp="name"
-                  aria-current="page"
-                >
-                  {item.label}
-                </span>
-              )}
-              <meta itemProp="position" content={String(index + 2)} />
-            </li>
-          ))}
+          {items.map((item, index) => {
+            const isLast = index === items.length - 1;
+            return (
+              <li
+                key={index}
+                className={`inline-flex items-center ${isLast ? "min-w-0" : "shrink-0"}`}
+                itemProp="itemListElement"
+                itemScope
+                itemType="https://schema.org/ListItem"
+              >
+                <ChevronRight className={`h-3 w-3 mx-0.5 shrink-0 ${colors.sep}`} />
+                {item.href ? (
+                  <Link
+                    to={item.href}
+                    className={`transition-colors ${colors.link}`}
+                    itemProp="item"
+                  >
+                    <span itemProp="name">{item.label}</span>
+                  </Link>
+                ) : (
+                  <span
+                    className={`font-medium truncate ${colors.current}`}
+                    itemProp="name"
+                    aria-current="page"
+                    title={item.label}
+                  >
+                    {item.label}
+                  </span>
+                )}
+                <meta itemProp="position" content={String(index + 2)} />
+              </li>
+            );
+          })}
         </ol>
       </nav>
     </>
