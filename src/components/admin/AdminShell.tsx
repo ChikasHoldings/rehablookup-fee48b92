@@ -134,17 +134,22 @@ export function AdminShell() {
     .filter((section) => section.items.length > 0);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 isolate" data-shell>
+    <div
+      className="h-[100dvh] w-full overflow-hidden bg-slate-100 isolate grid grid-rows-[auto_minmax(0,1fr)]"
+      data-shell
+    >
       {/* Impersonation Banner */}
       {isImpersonating && (
-        <div className="bg-amber-400 text-amber-950 px-4 py-2 flex items-center justify-center gap-3 text-sm font-medium z-[60] relative">
-          <Eye className="h-4 w-4" />
-          <span>Viewing as <strong>{impersonating?.displayName}</strong> ({impersonating?.role?.replace('_', ' ')})</span>
+        <div className="bg-amber-400 text-amber-950 px-3 sm:px-4 py-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm font-medium z-[60] relative">
+          <Eye className="h-4 w-4 flex-shrink-0" />
+          <span className="min-w-0 truncate">
+            Viewing as <strong>{impersonating?.displayName}</strong> ({impersonating?.role?.replace('_', ' ')})
+          </span>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => user?.id && stopImpersonation(user.id)}
-            className="h-6 px-2 text-amber-950 hover:bg-amber-500/50 ml-2"
+            className="h-6 px-2 text-amber-950 hover:bg-amber-500/50"
           >
             <X className="h-3 w-3 mr-1" />
             Exit
