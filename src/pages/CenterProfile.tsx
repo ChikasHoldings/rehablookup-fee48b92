@@ -678,12 +678,12 @@ const CenterProfile = () => {
                     )}
                   </div>
                   <div className="flex-1 min-w-0 pb-0.5">
-                    <h1 className="speakable-headline font-display text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">
+                    <h1 className="speakable-headline font-display text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight line-clamp-2 break-words drop-shadow-lg">
                       {facility.name}
                     </h1>
-                    <div className="speakable-contact flex items-center gap-1.5 mt-1">
+                    <div className="speakable-contact flex items-center gap-1.5 mt-1 min-w-0">
                       <MapPin className="h-3.5 w-3.5 text-white/70 shrink-0" />
-                      <span className="text-sm text-white/85 font-medium">{facility.city}, {facility.state}</span>
+                      <span className="text-sm text-white/85 font-medium truncate">{facility.city}, {facility.state}</span>
                     </div>
                   </div>
                 </div>
@@ -737,23 +737,23 @@ const CenterProfile = () => {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex items-stretch gap-2 px-4 py-3 md:px-6 border-t border-border/30 bg-card">
+            <div className="flex flex-col xs:flex-row items-stretch gap-2 px-3 py-3 sm:px-4 md:px-6 border-t border-border/30 bg-card">
               <Button 
                 size="lg" 
-                className="flex-1 gap-2 h-11 text-sm font-semibold shadow-sm"
+                className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold shadow-sm"
                 onClick={() => setRequestModalOpen(true)}
               >
-                <Phone className="h-4 w-4" />
-                Request Call
+                <Phone className="h-4 w-4 shrink-0" />
+                <span className="truncate">Request Call</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="lg"
-                className="flex-1 gap-2 h-11 text-sm font-semibold"
+                className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold"
                 onClick={() => setRequestModalOpen(true)}
               >
-                <MessageSquare className="h-4 w-4" />
-                Request Info
+                <MessageSquare className="h-4 w-4 shrink-0" />
+                <span className="truncate">Request Info</span>
               </Button>
               {showContactDetails && facility.website && (
                 <a 
