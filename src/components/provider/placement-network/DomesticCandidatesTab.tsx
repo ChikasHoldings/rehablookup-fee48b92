@@ -135,13 +135,18 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
       if (!["interested", "not_available"].includes(response)) throw new Error("Invalid response value");
       const { data: current } = await supabase
         .from("concierge_introductions")
-        .select("provider_response, concierge_inquiries(status)")
+        .select("provider_response, inquiry_id")
         .eq("id", id)
         .eq("facility_id", selectedFacility?.id)
         .maybeSingle();
       if (current?.provider_response && current.provider_response !== "pending") throw new Error("You've already responded to this candidate");
-      const caseStatus = (current?.concierge_inquiries as any)?.status;
-      if (caseStatus === "closed" || caseStatus === "completed") throw new Error("This case is no longer active");
+      // Inquiry status check via safe RPC (RLS no longer permits row reads of concierge_inquiries)
+      if (current?.inquiry_id && selectedFacility?.id) {
+        const { data: safeInquiries } = await supabase
+          .rpc("get_provider_safe_inquiries", { p_facility_id: selectedFacility.id });
+        const caseStatus = (safeInquiries || []).find((i: any) => i.id === current.inquiry_id)?.status;
+        if (caseStatus === "closed" || caseStatus === "completed") throw new Error("This case is no longer active");
+      }
       const { error } = await supabase
         .from("concierge_introductions")
         .update({ provider_response: response, provider_responded_at: new Date().toISOString(), provider_notes: notes?.trim() || null })

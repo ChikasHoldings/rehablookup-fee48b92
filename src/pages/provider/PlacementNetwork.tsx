@@ -128,13 +128,23 @@ export default function ProviderPlacementNetworkPage() {
     queryKey: ["placement-introductions", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
-      const { data, error } = await supabase
-        .from("concierge_introductions")
-        .select(`*, concierge_inquiries (id, level_of_care, payment_type, timeline_urgency, preferred_state, status, seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at, placed_facility_id)`)
-        .eq("facility_id", selectedFacility.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
+      // Provider RLS no longer permits a row-level read of concierge_inquiries.
+      // Fetch introductions, then enrich via the safe RPC for non-PII fields.
+      const [introsRes, safeRes] = await Promise.all([
+        supabase
+          .from("concierge_introductions")
+          .select("*")
+          .eq("facility_id", selectedFacility.id)
+          .order("created_at", { ascending: false }),
+        supabase.rpc("get_provider_safe_inquiries", { p_facility_id: selectedFacility.id }),
+      ]);
+      if (introsRes.error) throw introsRes.error;
+      if (safeRes.error) throw safeRes.error;
+      const inquiryMap = new Map((safeRes.data || []).map((i: any) => [i.id, i]));
+      return (introsRes.data || []).map((intro: any) => ({
+        ...intro,
+        concierge_inquiries: inquiryMap.get(intro.inquiry_id) || null,
+      }));
     },
     enabled: !!selectedFacility?.id,
   });
@@ -144,11 +154,7 @@ export default function ProviderPlacementNetworkPage() {
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
       const { data, error } = await supabase
-        .from("concierge_inquiries")
-        .select("id, user_name, status, placed_facility_id, placement_confirmed, placement_confirmed_at, provider_fee_cents, provider_fee_status, provider_fee_type, level_of_care, created_at, updated_at")
-        .eq("placed_facility_id", selectedFacility.id)
-        .in("status", ["admitted", "billed", "completed"])
-        .order("placement_confirmed_at", { ascending: false });
+        .rpc("get_provider_facility_placements", { p_facility_id: selectedFacility.id });
       if (error) throw error;
       return data || [];
     },
