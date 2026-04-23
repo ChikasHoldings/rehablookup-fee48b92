@@ -410,8 +410,15 @@ async function finalize(
 ): Promise<Response> {
   // Teardown: always attempt to delete the ephemeral inquiry.
   if (inquiryId) {
-    const teardown = await timed("teardown: delete ephemeral inquiry", async () => {
+    const teardown = await timed("teardown: delete ephemeral inquiry", async (ctx) => {
+      ctx.request = {
+        kind: "db",
+        method: "DELETE",
+        target: "public.concierge_inquiries",
+        filter: { id: inquiryId },
+      };
       const { error } = await admin.from("concierge_inquiries").delete().eq("id", inquiryId);
+      ctx.response = { status: null, body: null, code: error?.code ?? null };
       if (error) throw new Error(error.message);
       return "deleted";
     });
