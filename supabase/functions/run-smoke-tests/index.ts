@@ -255,19 +255,22 @@ Deno.serve(async (req) => {
   let inquiryId: string | null = null;
 
   // ---- 1. Setup ----------------------------------------------------------
-  const setup = await timed("setup: create ephemeral inquiry", async () => {
+  const setup = await timed("setup: create ephemeral inquiry", async (ctx) => {
     const tag = `smoke-${crypto.randomUUID()}`;
+    const payload = {
+      user_name: tag,
+      user_email: `${tag}@smoke.test`,
+      user_phone: "+15555550100",
+      status: "intake_submitted",
+      admin_notes: "AUTOMATED SMOKE TEST — safe to delete",
+    };
+    ctx.request = { kind: "db", method: "INSERT", target: "public.concierge_inquiries", body: payload };
     const { data, error } = await admin
       .from("concierge_inquiries")
-      .insert({
-        user_name: tag,
-        user_email: `${tag}@smoke.test`,
-        user_phone: "+15555550100",
-        status: "intake_submitted",
-        admin_notes: "AUTOMATED SMOKE TEST — safe to delete",
-      })
+      .insert(payload)
       .select("id")
       .single();
+    ctx.response = { status: null, body: data, code: error?.code ?? null };
     if (error) throw new Error(error.message);
     return data.id as string;
   });
