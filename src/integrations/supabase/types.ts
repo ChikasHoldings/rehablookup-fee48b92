@@ -6157,6 +6157,55 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_disclosed_inquiry_for_provider: {
+        Args: { p_inquiry_id: string }
+        Returns: {
+          age_range: string
+          amenity_preferences: Json
+          assessment_preference: string
+          budget_range: string
+          co_occurring_concerns: Json
+          created_at: string
+          current_living_situation: string
+          current_medications: string
+          decision_maker_name: string
+          decision_maker_phone: string
+          detox_needed: string
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          faith_based_preference: string
+          gender: string
+          holistic_interest: boolean
+          id: string
+          insurance_carrier: string
+          insurance_group_number: string
+          insurance_member_id: string
+          level_of_care: string
+          mobility_needs: string
+          notes: string
+          payment_type: string
+          pii_unlocked: boolean
+          placed_facility_id: string
+          placement_confirmed: boolean
+          placement_confirmed_at: string
+          preferred_city: string
+          preferred_environment: string
+          preferred_language: string
+          preferred_state: string
+          primary_concern: string
+          prior_treatment_history: boolean
+          prior_treatment_notes: string
+          seeker_confirmed: boolean
+          seeker_confirmed_at: string
+          status: string
+          substance_use_duration: string
+          substance_use_frequency: string
+          timeline_urgency: string
+          user_email: string
+          user_name: string
+          user_phone: string
+        }[]
+      }
       get_facility_leads_count: {
         Args: { p_facility_id: string }
         Returns: {
