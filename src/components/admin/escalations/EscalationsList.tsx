@@ -58,7 +58,7 @@ export function EscalationsList({
   const [quickResolveId, setQuickResolveId] = useState<string | null>(null);
   const [resolutionNotes, setResolutionNotes] = useState("");
 
-  const { data: escalations, isLoading } = useQuery({
+  const { data: escalations, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-escalations", filterStatus, filterPriority, searchQuery],
     queryFn: async () => {
       let query = supabase
@@ -158,6 +158,21 @@ export function EscalationsList({
         {[1, 2, 3, 4].map((i) => (
           <Skeleton key={i} className="h-20 w-full rounded-xl" />
         ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-16 rounded-xl border border-destructive/20 bg-destructive/5">
+        <AlertTriangle className="h-10 w-10 mx-auto mb-3 text-destructive/70" />
+        <p className="text-base font-semibold">Couldn't load escalations</p>
+        <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+          {(error as Error)?.message || "An unexpected error occurred."}
+        </p>
+        <Button size="sm" variant="outline" onClick={() => refetch()} className="mt-4">
+          Try again
+        </Button>
       </div>
     );
   }
