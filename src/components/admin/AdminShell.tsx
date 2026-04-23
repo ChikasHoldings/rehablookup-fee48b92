@@ -134,47 +134,65 @@ export function AdminShell() {
     .filter((section) => section.items.length > 0);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 isolate" data-shell>
-      {/* Impersonation Banner */}
-      {isImpersonating && (
-        <div className="bg-amber-400 text-amber-950 px-4 py-2 flex items-center justify-center gap-3 text-sm font-medium z-[60] relative">
-          <Eye className="h-4 w-4" />
-          <span>Viewing as <strong>{impersonating?.displayName}</strong> ({impersonating?.role?.replace('_', ' ')})</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => user?.id && stopImpersonation(user.id)}
-            className="h-6 px-2 text-amber-950 hover:bg-amber-500/50 ml-2"
-          >
-            <X className="h-3 w-3 mr-1" />
-            Exit
-          </Button>
-        </div>
-      )}
-
-      {/* Force password change dialog */}
+    <div
+      className="h-[100dvh] w-full overflow-hidden bg-slate-100 isolate grid grid-rows-[auto_minmax(0,1fr)]"
+      data-shell
+    >
+      {/* Force password change dialog (portaled) */}
       <ForcePasswordChangeDialog 
         open={forcePasswordChange} 
         onPasswordChanged={clearForcePasswordChange} 
       />
 
-      {/* 2FA enforcement dialog - shown after password change if needed */}
+      {/* 2FA enforcement dialog (portaled) */}
       <TwoFactorEnforcementDialog
         open={requireMfaSetup && !forcePasswordChange}
         onSuccess={completeMfaSetup}
         onSkip={skipMfaSetup}
       />
-      
-      <AdminHeader userEmail={user?.email} userId={user?.id} adminRole={isImpersonating ? impersonating!.role : adminRole} onLogout={logout} isSuperAdmin={effectiveIsSuperAdmin} hasPermission={effectiveHasPermission} />
-      
-      <div className="flex flex-1 min-h-0">
-        <AdminSidebar isSuperAdmin={effectiveIsSuperAdmin} hasPermission={effectiveHasPermission} adminRole={effectiveAdminRole} />
-        
+
+      {/* Row 1 — Optional impersonation banner + sticky header */}
+      <div className="z-50 min-w-0 flex flex-col">
+        {isImpersonating && (
+          <div className="bg-amber-400 text-amber-950 px-3 sm:px-4 py-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm font-medium relative">
+            <Eye className="h-4 w-4 flex-shrink-0" />
+            <span className="min-w-0">
+              Viewing as <strong>{impersonating?.displayName}</strong> ({impersonating?.role?.replace('_', ' ')})
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => user?.id && stopImpersonation(user.id)}
+              className="h-6 px-2 text-amber-950 hover:bg-amber-500/50"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Exit
+            </Button>
+          </div>
+        )}
+        <AdminHeader
+          userEmail={user?.email}
+          userId={user?.id}
+          adminRole={isImpersonating ? impersonating!.role : adminRole}
+          onLogout={logout}
+          isSuperAdmin={effectiveIsSuperAdmin}
+          hasPermission={effectiveHasPermission}
+        />
+      </div>
+
+      {/* Sidebar + Main content row (single grid cell, internal flex) */}
+      <div className="flex min-h-0 w-full overflow-hidden">
+        <AdminSidebar
+          isSuperAdmin={effectiveIsSuperAdmin}
+          hasPermission={effectiveHasPermission}
+          adminRole={effectiveAdminRole}
+        />
+
         <main
           ref={mainContentRef}
-          className="flex-1 overflow-y-auto h-[calc(100vh-4rem)] p-4 lg:p-6"
+          className="flex-1 min-w-0 min-h-0 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-6"
         >
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto w-full">
             <AdminErrorBoundary>
               {hasRouteAccess ? (
                 <Suspense fallback={<AdminPageLoading />}>
@@ -188,22 +206,32 @@ export function AdminShell() {
         </main>
       </div>
 
-      {/* Mobile FAB */}
-      <div className="lg:hidden fixed bottom-4 right-4 z-50">
+      {/* Mobile FAB — respects safe area */}
+      <div
+        className="lg:hidden fixed right-3 z-50"
+        style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+      >
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button size="icon" className="h-14 w-14 rounded-full shadow-xl bg-slate-900 hover:bg-slate-800 text-white ring-2 ring-white/10">
-              <Menu className="h-6 w-6" />
+            <Button
+              size="icon"
+              aria-label="Open admin menu"
+              className="h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-xl bg-slate-900 hover:bg-slate-800 text-white ring-2 ring-white/10"
+            >
+              <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 p-0 bg-white border-r border-slate-200">
-            <div className="p-4 border-b bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+          <SheetContent
+            side="left"
+            className="w-[85vw] max-w-[300px] p-0 bg-white border-r border-slate-200 flex flex-col"
+          >
+            <div className="p-4 border-b bg-gradient-to-r from-slate-900 to-slate-800 text-white flex-shrink-0">
               <span className="text-lg font-bold tracking-tight">Admin Menu</span>
               <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wider">
                 {effectiveAdminRole?.replace('_', ' ')}
               </p>
             </div>
-            <nav className="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-80px)]">
+            <nav className="flex-1 min-h-0 p-3 space-y-3 overflow-y-auto">
               {visibleMobileSections.map((section) => (
                 <div key={section.label || "core"}>
                   {section.label && (
@@ -235,14 +263,14 @@ export function AdminShell() {
                           )}
                         >
                           <div className={cn(
-                            "flex items-center justify-center w-8 h-8 rounded-lg transition-colors",
+                            "flex items-center justify-center w-8 h-8 rounded-lg transition-colors flex-shrink-0",
                             isActive
                               ? "bg-white/20"
                               : "bg-slate-100"
                           )}>
                             <Icon className={cn("h-4 w-4", isActive ? "text-primary-foreground" : "text-slate-500")} />
                           </div>
-                          <span className="text-sm font-medium">{item.label}</span>
+                          <span className="text-sm font-medium truncate">{item.label}</span>
                         </Link>
                       );
                     })}

@@ -415,23 +415,23 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
 
   return (
     <>
-      <header className="sticky top-0 z-50 h-16 border-b border-slate-700 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex items-center px-4 lg:px-6">
+      <header className="sticky top-0 z-50 h-14 sm:h-16 border-b border-slate-700 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex items-center px-2.5 sm:px-4 lg:px-6 gap-2">
         {/* Left Section - Logo */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <img 
               src={logoDarkBg} 
               alt="RehabLookup" 
-              className="h-7 sm:h-8 w-auto"
+              className="h-6 sm:h-7 md:h-8 w-auto flex-shrink-0"
             />
-            <span className="text-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 px-2.5 py-1 rounded-md font-semibold uppercase tracking-wide shadow-sm">
+            <span className="text-[10px] sm:text-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md font-semibold uppercase tracking-wide shadow-sm flex-shrink-0">
               Admin
             </span>
           </div>
         </div>
 
         {/* Center Section - Search Bar */}
-        <div className="flex-1 flex justify-center px-4">
+        <div className="flex-1 flex justify-center px-2 sm:px-4 min-w-0">
           <div className="hidden md:block w-full max-w-md">
             <Button
               variant="ghost"
@@ -450,12 +450,12 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
         </div>
 
         {/* Right Section - Actions & Profile */}
-        <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 flex-shrink-0">
           {/* Mobile Search Button */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 rounded-xl"
+            className="md:hidden h-9 w-9 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 rounded-xl"
             onClick={() => setSearchOpen(true)}
           >
             <Search className="h-5 w-5" />
@@ -467,17 +467,17 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="relative text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 rounded-xl"
+                className="relative h-9 w-9 sm:h-10 sm:w-10 text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all duration-200 rounded-xl"
               >
                 <Bell className={`h-5 w-5 transition-transform ${bellAnimating ? "animate-wiggle" : ""}`} />
                 {unreadCount > 0 && (
-                  <Badge className={`absolute -top-1 -right-1 h-5 min-w-5 p-0 flex items-center justify-center bg-destructive text-destructive-foreground text-xs border-2 border-slate-800 rounded-full tabular-nums ${bellAnimating ? "animate-pulse" : ""}`}>
+                  <Badge className={`absolute -top-1 -right-1 h-5 min-w-5 p-0 flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] border-2 border-slate-800 rounded-full tabular-nums ${bellAnimating ? "animate-pulse" : ""}`}>
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </Badge>
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-80 bg-background" align="end">
+            <DropdownMenuContent className="w-[calc(100vw-1rem)] max-w-sm sm:w-80 bg-background" align="end" sideOffset={8}>
               <div className="flex items-center justify-between px-4 py-3 border-b">
                 <h3 className="font-semibold">Notifications</h3>
                 <div className="flex items-center gap-2">
@@ -585,9 +585,9 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="relative flex items-center gap-3 h-10 px-2 lg:px-3 rounded-xl hover:bg-slate-700/50 transition-all duration-200"
+                className="relative flex items-center gap-2 sm:gap-3 h-9 sm:h-10 px-1.5 sm:px-2 lg:px-3 rounded-xl hover:bg-slate-700/50 transition-all duration-200"
               >
-                <Avatar className="h-8 w-8 ring-2 ring-amber-400/30 hover:ring-amber-400/50 transition-all">
+                <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-2 ring-amber-400/30 hover:ring-amber-400/50 transition-all flex-shrink-0">
                   <AvatarImage 
                     src={adminProfile?.avatar_url || undefined} 
                     alt={adminProfile?.display_name || userEmail || "Admin"} 
@@ -607,7 +607,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 bg-background" align="end" sideOffset={8}>
+            <DropdownMenuContent className="w-[calc(100vw-1rem)] max-w-xs sm:w-64 bg-background" align="end" sideOffset={8}>
               {/* Profile Header Section */}
               <div className="flex items-center gap-3 px-3 py-3 border-b bg-muted/30">
                 <Avatar className="h-11 w-11 ring-2 ring-primary/20">
