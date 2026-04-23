@@ -204,7 +204,18 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
       // Client-side guard mirrors the DB trigger so we don't ship a doomed write.
       const { validateTransition } = await import("@/lib/statusTransitions");
       const check = validateTransition("lead", lead.status, newStatus);
-      if (!check.ok) throw new Error(check.reason || "Invalid status change");
+      if (!check.ok) {
+        const { reportRejectedTransition } = await import("@/lib/transitionAlerts");
+        void reportRejectedTransition({
+          domain: "lead",
+          source: "LeadDetailPanel.updateStatus",
+          fromStatus: lead.status,
+          toStatus: newStatus,
+          recordId: lead.id,
+          reason: check.reason || "Invalid status change",
+        });
+        throw new Error(check.reason || "Invalid status change");
+      }
       const { error } = await supabase.from("leads").update({ status: newStatus }).eq("id", lead.id);
       if (error) throw error;
       return newStatus;
