@@ -502,13 +502,20 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep(requestId, "ERROR", { message: errorMessage });
+    if (error instanceof ApiError) {
+      return apiErrorResponse(error, corsHeaders, { requestId, _version: VERSION });
+    }
     const isClientError = errorMessage.includes("not found") ||
       errorMessage.includes("required") || errorMessage.includes("Invalid") ||
       errorMessage.includes("Only administrators") || errorMessage.includes("not confirmed") ||
       errorMessage.includes("No valid customer");
     return new Response(
-      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: isClientError ? 400 : 500 }
+      JSON.stringify({
+        error: { code: isClientError ? "BAD_REQUEST" : "INTERNAL_ERROR", message: errorMessage },
+        requestId,
+        _version: VERSION,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: isClientError ? 400 : 500 },
     );
   }
 });
