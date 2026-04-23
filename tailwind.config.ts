@@ -23,6 +23,9 @@ export default {
       },
     },
     extend: {
+      screens: {
+        xs: "400px",
+      },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
         display: ["Plus Jakarta Sans", "Inter", "sans-serif"],
