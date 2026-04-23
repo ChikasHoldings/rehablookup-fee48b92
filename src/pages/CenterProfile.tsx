@@ -469,7 +469,13 @@ const CenterProfile = () => {
     }
   }, [facility?.id, trackClickToCall, trackWebsiteClick]);
 
-  if (isLoading) {
+  // Show skeleton while:
+  // - the slug isn't ready yet (route param still resolving), OR
+  // - react-query is loading/fetching, OR
+  // - the query hasn't completed at least once yet.
+  // This prevents a premature "Center Not Found" flash before the client
+  // query has had a chance to verify the slug against the database.
+  if (!slug || isLoading || isFetching || !isFetched) {
     return (
       <Layout>
         <CenterProfileSkeleton />
@@ -477,7 +483,9 @@ const CenterProfile = () => {
     );
   }
 
-  if (error || !facility) {
+  // Only after a completed fetch do we render the not-found state, and only
+  // when the query truly returned no row (or hard-errored).
+  if (error || facility === null || facility === undefined) {
     return (
       <Layout>
         <SEO
