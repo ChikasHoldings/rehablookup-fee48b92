@@ -12,8 +12,9 @@
     "validate:sitemap-robots": "node scripts/validate-sitemap-robots.mjs",
     "check:gsc-indexing": "node scripts/check-gsc-indexing.mjs",
     "check:structured-data": "node scripts/check-structured-data.mjs",
-    "build": "npm run validate:seo-schema && npm run generate:seo-html && npm run generate:missing-html && npm run generate:sitemaps && npm run validate:sitemap-robots && npm run check:gsc-indexing && npm run check:structured-data && vite build",
-    "build:dev": "npm run validate:seo-schema && npm run generate:seo-html && npm run generate:sitemaps && npm run validate:sitemap-robots && npm run check:gsc-indexing && npm run check:structured-data && vite build --mode development",
+    "check:faq-jsonld": "node scripts/check-faq-jsonld.mjs",
+    "build": "npm run validate:seo-schema && npm run generate:seo-html && npm run generate:missing-html && npm run generate:sitemaps && npm run validate:sitemap-robots && npm run check:gsc-indexing && npm run check:structured-data && npm run check:faq-jsonld && vite build",
+    "build:dev": "npm run validate:seo-schema && npm run generate:seo-html && npm run generate:missing-html && npm run generate:sitemaps && npm run validate:sitemap-robots && npm run check:gsc-indexing && npm run check:structured-data && npm run check:faq-jsonld && vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
   },
