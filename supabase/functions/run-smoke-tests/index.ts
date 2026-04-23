@@ -76,19 +76,20 @@ const ILLEGAL_PROBES: Array<{ from: string; to: string }> = [
 ];
 
 // Required-field probes: each call to a transition edge function MUST fail
-// with the expected HTTP status AND an error message that names the specific
-// missing field (not just the generic word "required"). This catches both
-// regressions in validation logic and regressions in error copy clarity.
+// with the expected HTTP status AND a structured error envelope:
+//   { error: { code: string, message: string }, ...extras }
+// We assert on the envelope shape, the status code, the error.code, and that
+// error.message names the missing field.
 type RequiredFieldProbe = {
   name: string;
   fn: "confirm-placement" | "admin-manage-invoice";
   body: Record<string, unknown>;
   /** Expected HTTP status (validation errors should be 4xx, typically 400). */
   expectStatus: number;
-  /** Field name that MUST appear (case-insensitive) in the error message. */
+  /** Exact `error.code` the function must return. */
+  expectCode: string;
+  /** Field name that MUST appear (case-insensitive) in error.message. */
   expectField: string;
-  /** Additional substring(s) that must also appear (case-insensitive). */
-  expectAlso?: string[];
 };
 const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
   {
@@ -96,16 +97,16 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
     fn: "confirm-placement",
     body: { facilityId: "00000000-0000-0000-0000-000000000000", confirmationType: "admin" },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_INQUIRY_ID",
     expectField: "inquiryId",
-    expectAlso: ["required"],
   },
   {
     name: "confirm-placement: missing facilityId",
     fn: "confirm-placement",
     body: { inquiryId: "00000000-0000-0000-0000-000000000000", confirmationType: "admin" },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_FACILITY_ID",
     expectField: "facilityId",
-    expectAlso: ["required"],
   },
   {
     name: "confirm-placement: missing confirmationType",
@@ -115,24 +116,24 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
       facilityId: "00000000-0000-0000-0000-000000000000",
     },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_CONFIRMATION_TYPE",
     expectField: "confirmationType",
-    expectAlso: ["required"],
   },
   {
     name: "admin-manage-invoice: missing invoiceId",
     fn: "admin-manage-invoice",
     body: { action: "waive", reason: "smoke test reason" },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_INVOICE_ID",
     expectField: "invoiceId",
-    expectAlso: ["required"],
   },
   {
     name: "admin-manage-invoice: waive without reason",
     fn: "admin-manage-invoice",
     body: { invoiceId: "00000000-0000-0000-0000-000000000000", action: "waive" },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_REASON",
     expectField: "reason",
-    expectAlso: ["required"],
   },
   {
     name: "admin-manage-invoice: override without amount",
@@ -143,6 +144,7 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
       reason: "smoke test reason",
     },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_AMOUNT",
     expectField: "amount",
   },
 ];
