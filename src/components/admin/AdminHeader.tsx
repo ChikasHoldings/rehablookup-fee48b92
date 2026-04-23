@@ -607,7 +607,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 bg-background" align="end" sideOffset={8}>
+            <DropdownMenuContent className="w-[calc(100vw-1rem)] max-w-xs sm:w-64 bg-background" align="end" sideOffset={8}>
               {/* Profile Header Section */}
               <div className="flex items-center gap-3 px-3 py-3 border-b bg-muted/30">
                 <Avatar className="h-11 w-11 ring-2 ring-primary/20">
