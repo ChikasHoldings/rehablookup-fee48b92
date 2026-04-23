@@ -44,10 +44,10 @@ export function BreadcrumbNav({ items, className = "", variant = "dark" }: Bread
       />
       <nav
         aria-label="Breadcrumb"
-        className={`text-sm ${className}`}
+        className={`text-sm min-w-0 max-w-full overflow-x-auto scrollbar-hide ${className}`}
       >
         <ol
-          className="flex flex-row items-center gap-1.5 flex-nowrap"
+          className="flex flex-row items-center gap-1.5 flex-nowrap min-w-0"
           itemScope
           itemType="https://schema.org/BreadcrumbList"
         >
