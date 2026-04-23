@@ -131,14 +131,36 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
   },
 ];
 
-async function timed<T>(name: string, fn: () => Promise<T>): Promise<StepResult & { value?: T }> {
+type StepCtx = { request?: RequestInfo; response?: ResponseInfo };
+
+async function timed<T>(
+  name: string,
+  fn: (ctx: StepCtx) => Promise<T>,
+): Promise<StepResult & { value?: T }> {
   const t0 = performance.now();
+  const ctx: StepCtx = {};
   try {
-    const value = await fn();
-    return { name, ok: true, durationMs: Math.round(performance.now() - t0), value };
+    const value = await fn(ctx);
+    return {
+      name,
+      ok: true,
+      durationMs: Math.round(performance.now() - t0),
+      value,
+      request: ctx.request,
+      response: ctx.response,
+    };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    return { name, ok: false, durationMs: Math.round(performance.now() - t0), error: message };
+    const stack = e instanceof Error ? e.stack : undefined;
+    return {
+      name,
+      ok: false,
+      durationMs: Math.round(performance.now() - t0),
+      error: message,
+      stack,
+      request: ctx.request,
+      response: ctx.response,
+    };
   }
 }
 
