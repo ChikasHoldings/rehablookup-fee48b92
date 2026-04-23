@@ -28,6 +28,26 @@ nav, [data-navbar] {
   contain: layout style;
 }
 
+/* ─── Responsive safety net ───────────────────────────────────────────────
+   Prevents oversized media, embeds, and rich content (blog HTML, iframes,
+   user-pasted markup) from breaking layout on any viewport. Pure guard —
+   does not affect components that already constrain their own width. */
+img, video, svg, canvas, picture {
+  max-width: 100%;
+  height: auto;
+}
+iframe, embed, object {
+  max-width: 100%;
+}
+/* Long URLs and unbreakable strings shouldn't blow out narrow containers */
+.prose a,
+.prose code,
+[data-rich-content] a,
+[data-rich-content] code {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 @layer base {
   :root {
     /* Navy Blue & Gold Healthcare Theme */
