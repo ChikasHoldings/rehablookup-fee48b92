@@ -6020,6 +6020,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_can_manage_invoices: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       assess_login_risk: {
         Args: {
           p_browser?: string
@@ -6384,6 +6388,10 @@ export type Database = {
       provider_has_introduction: {
         Args: { _inquiry_id: string; _user_id: string }
         Returns: boolean
+      }
+      purge_provider_data: {
+        Args: { p_delete_user?: boolean; p_facility_id: string }
+        Returns: Json
       }
       purge_seeker_data: {
         Args: { p_user_email: string; p_user_id: string }

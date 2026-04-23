@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    console.log("[ADMIN-DELETE-PROVIDER] Function started");
+    console.log("[ADMIN-DELETE-PROVIDER] Function started (v2 - purge RPC)");
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
     });
 
     const { data: { user }, error: userError } = await userClient.auth.getUser();
-    
     if (userError || !user) {
       console.error("[ADMIN-DELETE-PROVIDER] Auth error:", userError);
       return new Response(
@@ -40,9 +39,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user has admin role
     const { data: isAdmin } = await userClient.rpc("user_is_admin", { p_user_id: user.id });
-
     if (!isAdmin) {
       console.error("[ADMIN-DELETE-PROVIDER] User is not an admin:", user.id);
       return new Response(
@@ -51,12 +48,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use admin client for service-level operations
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify caller has moderation permission (super_admin or manager only)
     const { data: canModerate } = await adminClient.rpc("can_moderate_users", { p_user_id: user.id });
-    
     if (!canModerate) {
       console.error("[ADMIN-DELETE-PROVIDER] User lacks moderation permission:", user.id);
       return new Response(
@@ -65,10 +59,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body
-    const { facilityId, deleteUser } = await req.json();
+    const body = await req.json();
+    const { facilityId, deleteUser } = body;
 
-    // Input validation - UUID format check
+    // UUID validation
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!facilityId || typeof facilityId !== "string" || !uuidRegex.test(facilityId)) {
       return new Response(
@@ -77,11 +71,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("[ADMIN-DELETE-PROVIDER] Admin:", user.id, "deleting facility:", facilityId, "deleteUser:", deleteUser);
-
-    // adminClient already created above for moderation check
-
-    // Get facility info before deletion
+    // Look up facility to capture name + owner before purge
     const { data: facility, error: facilityError } = await adminClient
       .from("facilities")
       .select("id, name, user_id")
@@ -89,7 +79,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (facilityError || !facility) {
-      console.error("[ADMIN-DELETE-PROVIDER] Facility not found:", facilityError);
       return new Response(
         JSON.stringify({ error: "Facility not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -99,141 +88,44 @@ Deno.serve(async (req) => {
     const providerUserId = facility.user_id;
     const facilityName = facility.name;
 
-    // Delete all facility-related data
-    console.log("[ADMIN-DELETE-PROVIDER] Deleting facility data for:", facilityId);
-
-    // Delete facility staff
-    await adminClient.from("facility_staff").delete().eq("facility_id", facilityId);
-
-    // Delete leads and related data
-    const { data: leads } = await adminClient.from("leads").select("id").eq("facility_id", facilityId);
-    const leadIds = leads?.map(l => l.id) || [];
-    
-    if (leadIds.length > 0) {
-      await adminClient.from("lead_notes").delete().in("lead_id", leadIds);
-      await adminClient.from("lead_emails").delete().in("lead_id", leadIds);
+    // Prevent destructive action against an admin / privileged account
+    if (providerUserId) {
+      const { data: targetIsAdmin } = await adminClient.rpc("user_is_admin", { p_user_id: providerUserId });
+      if (targetIsAdmin) {
+        return new Response(
+          JSON.stringify({ error: "Cannot delete a facility owned by an admin account" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
-    await adminClient.from("leads").delete().eq("facility_id", facilityId);
 
-    // Delete lead routing logs
-    await adminClient.from("lead_routing_logs").delete().eq("assigned_provider_id", facilityId);
-    await adminClient.from("lead_routing_logs").delete().eq("requested_facility_id", facilityId);
+    console.log("[ADMIN-DELETE-PROVIDER] Admin:", user.id, "purging facility:", facilityId, "deleteUser:", deleteUser);
 
-    // Delete facility views and interactions
-    await adminClient.from("facility_views").delete().eq("facility_id", facilityId);
-    await adminClient.from("facility_interactions").delete().eq("facility_id", facilityId);
+    // Single transactional purge call — replaces dozens of orphaned per-table deletes
+    const { data: purgeResult, error: purgeError } = await adminClient.rpc("purge_provider_data", {
+      p_facility_id: facilityId,
+      p_delete_user: !!deleteUser,
+    });
 
-    // Delete facility services, insurance, age groups
-    await adminClient.from("facility_services").delete().eq("facility_id", facilityId);
-    await adminClient.from("facility_insurance").delete().eq("facility_id", facilityId);
-    await adminClient.from("facility_age_groups").delete().eq("facility_id", facilityId);
-
-    // Delete credentials
-    await adminClient.from("facility_credentials").delete().eq("facility_id", facilityId);
-    await adminClient.from("facility_accreditations").delete().eq("facility_id", facilityId);
-    await adminClient.from("facility_credential_documents").delete().eq("facility_id", facilityId);
-
-    // Delete reviews and related data
-    const { data: reviews } = await adminClient.from("facility_reviews").select("id").eq("facility_id", facilityId);
-    const reviewIds = reviews?.map(r => r.id) || [];
-    
-    if (reviewIds.length > 0) {
-      await adminClient.from("review_helpful_votes").delete().in("review_id", reviewIds);
-      await adminClient.from("review_responses").delete().in("review_id", reviewIds);
-      await adminClient.from("review_disputes").delete().in("review_id", reviewIds);
-    }
-    await adminClient.from("facility_reviews").delete().eq("facility_id", facilityId);
-    
-
-    // Delete pending changes
-    await adminClient.from("facility_pending_changes").delete().eq("facility_id", facilityId);
-
-    // Delete provider events and notifications
-    await adminClient.from("provider_events").delete().eq("facility_id", facilityId);
-    await adminClient.from("provider_notifications").delete().eq("facility_id", facilityId);
-
-    // Delete featured placement analytics
-    await adminClient.from("featured_placement_analytics").delete().eq("facility_id", facilityId);
-
-    // Delete flagged images
-    await adminClient.from("flagged_images").delete().eq("facility_id", facilityId);
-
-    // Delete reply email verification codes
-    await adminClient.from("reply_email_verification_codes").delete().eq("facility_id", facilityId);
-
-    // Delete request help analytics
-    await adminClient.from("request_help_analytics").delete().eq("facility_id", facilityId);
-
-    // Delete user favorites referencing this facility
-    await adminClient.from("user_favorites").delete().eq("facility_id", facilityId);
-
-    // Finally delete the facility
-    const { error: deleteFacilityError } = await adminClient
-      .from("facilities")
-      .delete()
-      .eq("id", facilityId);
-
-    if (deleteFacilityError) {
-      console.error("[ADMIN-DELETE-PROVIDER] Error deleting facility:", deleteFacilityError);
+    if (purgeError) {
+      console.error("[ADMIN-DELETE-PROVIDER] purge_provider_data failed:", purgeError);
       return new Response(
-        JSON.stringify({ error: "Failed to delete facility" }),
+        JSON.stringify({ error: "Failed to purge provider data" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // If deleteUser is true and user has no other facilities, delete the user account
-    if (deleteUser && providerUserId) {
-      const { data: otherFacilities } = await adminClient
-        .from("facilities")
-        .select("id")
-        .eq("user_id", providerUserId);
-
-      if (!otherFacilities || otherFacilities.length === 0) {
-        console.log("[ADMIN-DELETE-PROVIDER] Deleting user account:", providerUserId);
-
-        // Get user email for verification cleanup
-        const { data: authUser } = await adminClient.auth.admin.getUserById(providerUserId);
-        const userEmail = authUser?.user?.email;
-
-        // Delete profile
-        await adminClient.from("profiles").delete().eq("user_id", providerUserId);
-
-        // Delete notification preferences
-        await adminClient.from("notification_preferences").delete().eq("user_id", providerUserId);
-
-        // Delete user roles
-        await adminClient.from("user_roles").delete().eq("user_id", providerUserId);
-
-        // Delete user sessions
-        await adminClient.from("user_sessions").delete().eq("user_id", providerUserId);
-
-        // Delete activity log
-        await adminClient.from("account_activity_log").delete().eq("user_id", providerUserId);
-
-        // Delete subscription alerts and events
-        await adminClient.from("subscription_alerts").delete().eq("user_id", providerUserId);
-        await adminClient.from("subscription_events").delete().eq("user_id", providerUserId);
-
-        // Clean up email verification codes so they can re-verify on re-registration
-        if (userEmail) {
-          await adminClient.from("email_verification_codes").delete().eq("email", userEmail.toLowerCase());
-        }
-
-        // Delete the auth user
-        const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(providerUserId);
-
-        if (deleteAuthError) {
-          console.error("[ADMIN-DELETE-PROVIDER] Error deleting auth user:", deleteAuthError);
-          // Non-blocking - facility is already deleted
-        } else {
-          console.log("[ADMIN-DELETE-PROVIDER] User account deleted:", providerUserId);
-        }
+    let userDeleted = false;
+    if (deleteUser && providerUserId && (purgeResult as { user_eligible_for_deletion?: boolean })?.user_eligible_for_deletion) {
+      const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(providerUserId);
+      if (deleteAuthError) {
+        console.error("[ADMIN-DELETE-PROVIDER] Error deleting auth user:", deleteAuthError);
       } else {
-        console.log("[ADMIN-DELETE-PROVIDER] User has other facilities, not deleting account");
+        userDeleted = true;
       }
     }
 
-    // Log admin action
+    // Audit
     await adminClient.from("admin_audit_log").insert({
       admin_user_id: user.id,
       action_type: "provider_deleted",
@@ -242,14 +134,15 @@ Deno.serve(async (req) => {
       details: {
         facility_name: facilityName,
         provider_user_id: providerUserId,
-        user_deleted: deleteUser && (!await adminClient.from("facilities").select("id").eq("user_id", providerUserId).then(r => r.data?.length)),
+        user_deleted: userDeleted,
+        purge_summary: purgeResult,
       },
     });
 
     console.log("[ADMIN-DELETE-PROVIDER] Successfully deleted facility:", facilityId);
 
     return new Response(
-      JSON.stringify({ success: true, message: "Provider deleted successfully" }),
+      JSON.stringify({ success: true, userDeleted, message: "Provider deleted successfully" }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

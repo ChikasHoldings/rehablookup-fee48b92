@@ -119,45 +119,23 @@ Deno.serve(async (req) => {
       'Unknown User';
 
     if (action === "delete") {
-      // Delete all related data in order
-      console.log("[ADMIN-DELETE-SEEKER] Deleting user data...");
-      
-      const deletions = [
-        adminClient.from("user_favorites").delete().eq("user_id", targetUserId),
-        adminClient.from("facility_reviews").delete().eq("user_id", targetUserId),
-        adminClient.from("seeker_notifications").delete().eq("user_id", targetUserId),
-        adminClient.from("account_activity_log").delete().eq("user_id", targetUserId),
-        adminClient.from("review_helpful_votes").delete().eq("user_id", targetUserId),
-        adminClient.from("user_roles").delete().eq("user_id", targetUserId),
-        adminClient.from("user_sessions").delete().eq("user_id", targetUserId),
-        // Clean up email verification so they can re-verify on re-registration
-        ...(targetEmail ? [adminClient.from("email_verification_codes").delete().eq("email", targetEmail.toLowerCase())] : []),
-      ];
+      // Delete all related data using the centralized GDPR-compliant purge RPC
+      console.log("[ADMIN-DELETE-SEEKER] Purging user data via RPC...");
 
-      const results = await Promise.all(deletions);
-      
-      // Check for errors
-      for (const result of results) {
-        if (result.error) {
-          console.error("[ADMIN-DELETE-SEEKER] Error during data deletion:", result.error);
-        }
-      }
+      const { error: purgeError } = await adminClient.rpc("purge_seeker_data", {
+        p_user_id: targetUserId,
+        p_user_email: targetEmail || "",
+      });
 
-      // Delete seeker profile
-      const { error: profileError } = await adminClient
-        .from("seeker_profiles")
-        .delete()
-        .eq("user_id", targetUserId);
-
-      if (profileError) {
-        console.error("[ADMIN-DELETE-SEEKER] Error deleting seeker profile:", profileError);
+      if (purgeError) {
+        console.error("[ADMIN-DELETE-SEEKER] purge_seeker_data failed:", purgeError);
         return new Response(
-          JSON.stringify({ error: "Failed to delete seeker profile" }),
+          JSON.stringify({ error: "Failed to purge seeker data" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      // Delete auth user
+      // Delete auth user (last step so the purge runs against an existing auth.users row)
       const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(targetUserId);
 
       if (deleteAuthError) {

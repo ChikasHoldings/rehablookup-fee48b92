@@ -40,23 +40,46 @@ Deno.serve(async (req) => {
       throw new Error("Authentication failed");
     }
 
-    // Verify admin role
+    // Verify admin role + manager/super-admin gate for invoice actions
     const supabaseService = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: adminProfile } = await supabaseService
-      .from('admin_user_profiles')
-      .select('status')
-      .eq('user_id', userData.user.id)
-      .eq('status', 'active')
-      .maybeSingle();
+    const { data: canManage } = await supabaseService.rpc("admin_can_manage_invoices", {
+      _user_id: userData.user.id,
+    });
 
-    if (!adminProfile) {
-      throw new Error("Admin access required");
+    if (!canManage) {
+      throw new Error("Only Super Admins and Managers can manage invoices");
     }
 
-    const { invoiceId, action, reason, newAmount } = await req.json();
-    
+    const body = await req.json();
+    const { invoiceId, action, reason, newAmount } = body;
+
     if (!invoiceId || !action) {
       throw new Error("Invoice ID and action are required");
+    }
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (typeof invoiceId !== "string" || !uuidRegex.test(invoiceId)) {
+      throw new Error("Invalid invoiceId format");
+    }
+
+    const validActions = ["waive", "override", "mark_paid", "send_reminder", "retry_charge"];
+    if (!validActions.includes(action)) {
+      throw new Error(`Invalid action: ${action}`);
+    }
+
+    // Validate newAmount when present
+    if (action === "override") {
+      if (typeof newAmount !== "number" || !Number.isInteger(newAmount) || newAmount <= 0 || newAmount > 100_000_00) {
+        throw new Error("New amount must be a positive integer of cents (max $100,000)");
+      }
+      if (!reason || typeof reason !== "string" || reason.trim().length < 3) {
+        throw new Error("A reason of at least 3 characters is required");
+      }
+    }
+    if (action === "waive") {
+      if (!reason || typeof reason !== "string" || reason.trim().length < 3) {
+        throw new Error("A reason of at least 3 characters is required");
+      }
     }
 
     logStep("Processing action", { invoiceId, action });
@@ -149,6 +172,11 @@ Deno.serve(async (req) => {
       }
 
       case "mark_paid": {
+        // Idempotency: refuse to mark already-terminal invoices
+        if (["paid", "waived", "refunded"].includes(invoice.status)) {
+          throw new Error(`Invoice is already in terminal status: ${invoice.status}`);
+        }
+
         await supabaseService
           .from('placement_invoices')
           .update({
@@ -249,6 +277,11 @@ Deno.serve(async (req) => {
       case "retry_charge": {
         const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
         if (!stripeKey) throw new Error("Stripe not configured");
+
+        // Idempotency: refuse retry on terminal invoices to prevent double-charges
+        if (["paid", "waived", "refunded"].includes(invoice.status)) {
+          throw new Error(`Cannot retry: invoice is already ${invoice.status}`);
+        }
 
         // Get payment method with stored customer ID
         const { data: paymentMethod } = await supabaseService
