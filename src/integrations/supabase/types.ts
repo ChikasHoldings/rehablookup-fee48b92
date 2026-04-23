@@ -6385,6 +6385,10 @@ export type Database = {
         Args: { _inquiry_id: string; _user_id: string }
         Returns: boolean
       }
+      purge_seeker_data: {
+        Args: { p_user_email: string; p_user_id: string }
+        Returns: undefined
+      }
       register_trusted_device: {
         Args: {
           p_browser?: string
@@ -6395,6 +6399,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      seeker_confirm_placement: {
+        Args: { p_facility_id: string; p_inquiry_id: string }
+        Returns: undefined
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
