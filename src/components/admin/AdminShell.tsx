@@ -138,40 +138,38 @@ export function AdminShell() {
       className="h-[100dvh] w-full overflow-hidden bg-slate-100 isolate grid grid-rows-[auto_minmax(0,1fr)]"
       data-shell
     >
-      {/* Impersonation Banner */}
-      {isImpersonating && (
-        <div className="bg-amber-400 text-amber-950 px-3 sm:px-4 py-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm font-medium z-[60] relative">
-          <Eye className="h-4 w-4 flex-shrink-0" />
-          <span className="min-w-0 truncate">
-            Viewing as <strong>{impersonating?.displayName}</strong> ({impersonating?.role?.replace('_', ' ')})
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => user?.id && stopImpersonation(user.id)}
-            className="h-6 px-2 text-amber-950 hover:bg-amber-500/50"
-          >
-            <X className="h-3 w-3 mr-1" />
-            Exit
-          </Button>
-        </div>
-      )}
-
-      {/* Force password change dialog */}
+      {/* Force password change dialog (portaled) */}
       <ForcePasswordChangeDialog 
         open={forcePasswordChange} 
         onPasswordChanged={clearForcePasswordChange} 
       />
 
-      {/* 2FA enforcement dialog - shown after password change if needed */}
+      {/* 2FA enforcement dialog (portaled) */}
       <TwoFactorEnforcementDialog
         open={requireMfaSetup && !forcePasswordChange}
         onSuccess={completeMfaSetup}
         onSkip={skipMfaSetup}
       />
 
-      {/* Header (sticky, full width) */}
-      <div className="z-50 min-w-0">
+      {/* Row 1 — Optional impersonation banner + sticky header */}
+      <div className="z-50 min-w-0 flex flex-col">
+        {isImpersonating && (
+          <div className="bg-amber-400 text-amber-950 px-3 sm:px-4 py-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm font-medium relative">
+            <Eye className="h-4 w-4 flex-shrink-0" />
+            <span className="min-w-0">
+              Viewing as <strong>{impersonating?.displayName}</strong> ({impersonating?.role?.replace('_', ' ')})
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => user?.id && stopImpersonation(user.id)}
+              className="h-6 px-2 text-amber-950 hover:bg-amber-500/50"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Exit
+            </Button>
+          </div>
+        )}
         <AdminHeader
           userEmail={user?.email}
           userId={user?.id}
