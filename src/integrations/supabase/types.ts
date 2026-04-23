@@ -6367,10 +6367,19 @@ export type Database = {
         Args: { p_identifier: string }
         Returns: boolean
       }
-      is_lead_unlocked: {
-        Args: { p_facility_id: string; p_lead_id: string }
-        Returns: boolean
-      }
+      is_lead_unlocked:
+        | {
+            Args: { p_facility_id: string; p_lead_id: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_facility_id: string
+              p_lead_id: string
+              p_provider_id: string
+            }
+            Returns: boolean
+          }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_rate_limit_event: {
         Args: {
