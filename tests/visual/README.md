@@ -56,3 +56,19 @@ Then review and commit the updated baseline PNGs.
 - Blog index
 
 Add new pages by appending to the `PAGES` array in `public-pages.spec.ts`.
+
+## How navigation works
+
+The spec boots the SPA **once per worker** by visiting `/`, then navigates
+to every other route via `history.pushState` + a synthetic `popstate` — the
+same code path React Router uses for `<Link>` clicks. This avoids a full
+document reload per page and exercises the SPA's own basename.
+
+Before each screenshot we verify three things to guarantee the correct page
+actually rendered:
+1. `window.location.pathname` matches the requested route
+2. Helmet has set a `<title>` containing the expected substring
+3. An `<h1>` is visible in the DOM (catches blank "shell-only" renders)
+
+A failed snapshot can therefore only mean a real visual regression — never
+a routing mismatch or a half-mounted page.
