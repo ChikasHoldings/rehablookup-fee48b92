@@ -216,11 +216,41 @@ const pages = [
   { path: "/rehab-in-usa-for-canadians", title: "Rehab in USA for Canadians", desc: "Addiction treatment in America for Canadian patients. Skip wait times, access world-class US rehab centers with placement assistance.", bc: [{ name: "Home", url: "/" }, { name: "US Rehab", url: "/us-rehab" }, { name: "For Canadians", url: "/rehab-in-usa-for-canadians" }] },
   { path: "/rehab-in-usa-for-uk-patients", title: "Rehab in USA for UK Patients", desc: "Addiction treatment in America for British patients. Access innovative US programs, visa guidance, and personalized placement.", bc: [{ name: "Home", url: "/" }, { name: "US Rehab", url: "/us-rehab" }, { name: "For UK Patients", url: "/rehab-in-usa-for-uk-patients" }] },
   { path: "/rehab-in-usa-for-international-patients", title: "Rehab in USA for International Patients", desc: "Complete guide for international patients seeking rehab in America. Visa, costs, admission, and placement assistance.", bc: [{ name: "Home", url: "/" }, { name: "US Rehab", url: "/us-rehab" }, { name: "For International Patients", url: "/rehab-in-usa-for-international-patients" }] },
+
+  // FAQ pages — must include FAQPage JSON-LD with valid Q/A pairs
+  { path: "/provider-faq", title: "Provider FAQ", desc: "Common questions for treatment providers about listing on RehabLookup, verification, inquiries, billing, and Pro Visibility.", bc: [{ name: "Home", url: "/" }, { name: "For Providers", url: "/for-providers" }, { name: "Provider FAQ", url: "/provider-faq" }],
+    faqs: [
+      { q: "How do I list my treatment center on RehabLookup?", a: "Click 'List Your Facility' and complete our registration form with your facility details. Our team will review your submission and verify your credentials within 2-3 business days. Once approved, your listing goes live immediately." },
+      { q: "Is it free to list my facility?", a: "Yes, listing your facility is completely free. You only pay when you choose to unlock an inquiry to connect with a family. There are no monthly fees or hidden costs. An optional Pro upgrade is available for enhanced visibility and discounts on unlocks." },
+      { q: "How does the unlock system work?", a: "When you see an inquiry that matches your facility, you can choose to unlock it to view full contact details. You only pay for inquiries you decide to pursue. Pro members receive 20% off all unlocks." },
+      { q: "What information is included in an inquiry?", a: "Before unlocking, you see treatment needs, insurance type, location preference, and urgency level. After unlocking, you get full contact details including name, phone, email, and any additional message from the family." },
+      { q: "What is Pro Visibility?", a: "Pro Visibility is an optional upgrade that gives you featured placement on homepage, state, and city pages plus 20% off every inquiry unlock. It's designed for facilities that want maximum exposure and savings." },
+      { q: "How long does the verification process take?", a: "Verification typically takes 2-3 business days. We verify your state licensing, accreditations, and facility credentials. You'll receive an email notification once your listing is approved and live on the platform." },
+      { q: "How can I contact provider support?", a: "You can reach our provider support team via email at providers@rehablookup.com, through live chat in your dashboard, or by visiting our support page. Business hours are Monday-Friday, 9am-6pm EST." },
+    ],
+  },
 ];
+
+// Override default /faq entry to include FAQPage JSON-LD
+const faqIndex = pages.findIndex((p) => p.path === "/faq");
+if (faqIndex !== -1) {
+  pages[faqIndex] = {
+    ...pages[faqIndex],
+    faqs: [
+      { q: "How do I know if I or a loved one needs treatment?", a: "Signs that treatment may be needed include inability to control substance use, experiencing withdrawal symptoms when not using, neglecting responsibilities, relationship problems, and continuing despite negative consequences. If substance use is causing distress or impairment in any area of life, it's worth speaking with a professional." },
+      { q: "What is the difference between inpatient and outpatient treatment?", a: "Inpatient (residential) treatment means living at the facility full-time, typically for 30-90 days, with 24/7 medical support. Outpatient treatment allows you to live at home while attending scheduled therapy sessions several times per week. Intensive Outpatient Programs (IOP) offer a middle ground with 9-20 hours of weekly programming." },
+      { q: "Does insurance cover addiction treatment?", a: "Yes, most health insurance plans cover addiction treatment under mental health and substance use disorder benefits, as required by the Mental Health Parity and Addiction Equity Act and the Affordable Care Act. Coverage typically includes detox, residential treatment, outpatient programs, and medications." },
+      { q: "What is medical detox and do I need it?", a: "Medical detoxification is medically supervised withdrawal from substances in a clinical setting. Medical staff monitor vital signs, manage symptoms, and provide medications to ensure safety and comfort. Detox is strongly recommended for alcohol, opioids, benzodiazepines, and barbiturates." },
+      { q: "What if I don't have insurance?", a: "Many options exist: state-funded treatment programs, sliding scale fees based on income, payment plans, nonprofit treatment centers, SAMHSA-funded programs, and scholarships offered by individual facilities. Medicaid covers treatment in all states." },
+      { q: "How long does rehab take?", a: "Treatment length varies by individual needs. Common program lengths are 30, 60, or 90 days for residential treatment, with outpatient programs often lasting 3-12 months. Research shows that longer treatment durations generally lead to better long-term outcomes." },
+      { q: "Is information about my treatment kept confidential?", a: "Yes. Federal law (42 CFR Part 2) provides strict confidentiality protections for substance use treatment records, often stronger than HIPAA. Your treatment information cannot be shared without your written consent except in very limited circumstances." },
+    ],
+  };
+}
 
 async function main() {
   console.log(`[missing-html] Generating ${pages.length} static HTML pages...`);
-  
+
   for (const p of pages) {
     const content = `<p>${escHtml(p.desc)}</p>`;
     const h = html({
@@ -231,6 +261,7 @@ async function main() {
       h1: p.title,
       content,
       breadcrumbs: p.bc,
+      faqs: p.faqs,
     });
     
     // Determine file path
