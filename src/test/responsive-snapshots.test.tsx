@@ -78,9 +78,10 @@ describe("Responsive: BreadcrumbNav with long facility name", () => {
 
       it("matches DOM snapshot", () => {
         const { container } = render(withProviders(<BreadcrumbNav items={items} />));
-        // Strip JSON-LD (timestamps/URLs differ across runs we don't care about)
-        container.querySelectorAll('script[type="application/ld+json"]').forEach((n) => n.remove());
-        expect(container.firstChild).toMatchSnapshot();
+        // Snapshot only the <nav> — Helmet portals JSON-LD into <head>
+        // separately, which we don't need for layout-shift detection.
+        const nav = container.querySelector("nav");
+        expect(nav).toMatchSnapshot();
       });
     });
   }
