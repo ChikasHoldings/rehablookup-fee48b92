@@ -361,7 +361,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                   )}
                 </SelectTrigger>
                 <SelectContent className="bg-background">
-                  {getStatusOptions().map((o) => (
+                  {getStatusOptions(lead.status as LeadStatus).map((o) => (
                     <SelectItem 
                       key={o.value} 
                       value={o.value}
