@@ -368,7 +368,8 @@ Deno.serve(async (req) => {
   }
 
   // ---- 4. Required-field probes ------------------------------------------
-  // Each MUST fail with an error message that names the missing field clearly.
+  // Each MUST fail with the standard JSON envelope:
+  //   { error: { code: string, message: string }, ...extras }
   // We invoke as the seeded test admin to exercise real auth + validation.
   const testAdminToken = signIn.session?.access_token;
   for (const probe of REQUIRED_FIELD_PROBES) {
@@ -385,13 +386,26 @@ Deno.serve(async (req) => {
         body: JSON.stringify(probe.body),
       });
       const text = await res.text();
+      const contentType = res.headers.get("content-type") ?? "";
 
-      // Parse body — keep raw text on failure.
-      let parsedBody: unknown = text;
+      // 1. Response MUST be JSON. Non-JSON responses are a contract violation.
+      if (!contentType.toLowerCase().includes("application/json")) {
+        ctx.response = { status: res.status, body: text };
+        throw new Error(
+          `Expected JSON response (Content-Type: application/json), got "${contentType}". ` +
+            `Body: "${text.slice(0, 200)}"`,
+        );
+      }
+
+      let parsedBody: unknown;
       try {
         parsedBody = JSON.parse(text);
-      } catch {
-        // keep raw
+      } catch (parseErr) {
+        ctx.response = { status: res.status, body: text };
+        throw new Error(
+          `Response body was not valid JSON: ${(parseErr as Error).message}. ` +
+            `Body: "${text.slice(0, 200)}"`,
+        );
       }
       ctx.response = { status: res.status, body: parsedBody };
 
@@ -399,7 +413,7 @@ Deno.serve(async (req) => {
         throw new Error(`Expected failure but got HTTP ${res.status}: ${text.slice(0, 200)}`);
       }
 
-      // 1. Assert HTTP status code matches expectation.
+      // 2. Assert HTTP status code matches expectation.
       if (res.status !== probe.expectStatus) {
         throw new Error(
           `Expected HTTP ${probe.expectStatus}, got HTTP ${res.status}. ` +
@@ -407,33 +421,50 @@ Deno.serve(async (req) => {
         );
       }
 
-      const message =
-        typeof parsedBody === "object" && parsedBody !== null
-          ? String((parsedBody as Record<string, unknown>).error ??
-              (parsedBody as Record<string, unknown>).message ?? text)
-          : text;
-      const lower = message.toLowerCase();
-
-      // 2. Assert the specific field name appears in the error message.
-      if (!lower.includes(probe.expectField.toLowerCase())) {
+      // 3. Assert envelope shape: { error: { code, message } }.
+      if (typeof parsedBody !== "object" || parsedBody === null) {
+        throw new Error(`Expected JSON object envelope, got: ${typeof parsedBody}`);
+      }
+      const envelope = parsedBody as Record<string, unknown>;
+      const errObj = envelope.error;
+      if (typeof errObj !== "object" || errObj === null) {
         throw new Error(
-          `Error message did not name the missing field "${probe.expectField}". ` +
+          `Envelope missing "error" object. Found keys: [${Object.keys(envelope).join(", ")}]. ` +
+            `Body: "${text.slice(0, 200)}"`,
+        );
+      }
+      const errRec = errObj as Record<string, unknown>;
+      if (typeof errRec.code !== "string" || errRec.code.length === 0) {
+        throw new Error(
+          `Envelope missing string "error.code". Found: ${JSON.stringify(errRec).slice(0, 200)}`,
+        );
+      }
+      if (typeof errRec.message !== "string" || errRec.message.length === 0) {
+        throw new Error(
+          `Envelope missing string "error.message". Found: ${JSON.stringify(errRec).slice(0, 200)}`,
+        );
+      }
+
+      const code = errRec.code;
+      const message = errRec.message;
+
+      // 4. Assert exact error.code.
+      if (code !== probe.expectCode) {
+        throw new Error(
+          `Expected error.code="${probe.expectCode}", got "${code}". ` +
+            `Message: "${message.slice(0, 200)}"`,
+        );
+      }
+
+      // 5. Assert error.message names the specific missing field.
+      if (!message.toLowerCase().includes(probe.expectField.toLowerCase())) {
+        throw new Error(
+          `error.message did not name the missing field "${probe.expectField}". ` +
             `Got: "${message.slice(0, 200)}"`,
         );
       }
 
-      // 3. Assert any additional required substrings (e.g. "required").
-      const missingExtras = (probe.expectAlso ?? []).filter(
-        (kw) => !lower.includes(kw.toLowerCase()),
-      );
-      if (missingExtras.length > 0) {
-        throw new Error(
-          `Error message missing expected substring(s) [${missingExtras.join(", ")}]. ` +
-            `Got: "${message.slice(0, 200)}"`,
-        );
-      }
-
-      return `HTTP ${res.status} · field="${probe.expectField}" · ${message.slice(0, 100)}`;
+      return `HTTP ${res.status} · code=${code} · field="${probe.expectField}"`;
     });
     results.push(step);
   }
