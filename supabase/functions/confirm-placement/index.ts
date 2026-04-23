@@ -288,15 +288,28 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
+    if (error instanceof ApiError) {
+      logStep(requestId, "ERROR", { code: error.code, message: error.message, status: error.httpStatus });
+      return jsonError(error.code, error.message, error.httpStatus, requestId);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep(requestId, "ERROR", { message: errorMessage });
     const isClientError = errorMessage.includes("not found") ||
       errorMessage.includes("required") || errorMessage.includes("Invalid") ||
       errorMessage.includes("Cannot") || errorMessage.includes("Only administrators") ||
       errorMessage.includes("not in matched") || errorMessage.includes("conflict");
-    return new Response(
-      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: isClientError ? 400 : 500 }
-    );
+    const code = isClientError ? "BAD_REQUEST" : "INTERNAL_ERROR";
+    return jsonError(code, errorMessage, isClientError ? 400 : 500, requestId);
   }
 });
+
+function jsonError(code: string, message: string, status: number, requestId: string): Response {
+  return new Response(
+    JSON.stringify({
+      error: { code, message },
+      requestId,
+      _version: VERSION,
+    }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" }, status },
+  );
+}
