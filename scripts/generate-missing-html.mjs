@@ -59,6 +59,7 @@ function html({ urlPath, title, metaTitle, metaDescription, h1, content, breadcr
   <main>
     <h1>${escHtml(h1||title)}</h1>
     ${content}
+    ${faqHtml}
     <p style="margin-top:24px"><a href="/rehab-centers">Browse All Treatment Centers</a> &middot; <a href="/concierge">Get Personalized Help</a> &middot; <a href="/">Home</a></p>
   </main>
   <footer><p>&copy; 2026 RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy</a> &middot; <a href="/terms-of-service">Terms</a></p></footer>
