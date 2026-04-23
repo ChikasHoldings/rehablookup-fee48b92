@@ -153,6 +153,91 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
     expectCode: "MISSING_FIELD_AMOUNT",
     expectField: "amount",
   },
+  // ── charge-placement-fee ──
+  {
+    name: "charge-placement-fee: missing inquiryId",
+    fn: "charge-placement-fee",
+    body: { facilityId: "00000000-0000-0000-0000-000000000000" },
+    expectStatus: 400,
+    expectCode: "MISSING_FIELD_INQUIRY_ID",
+    expectField: "inquiryId",
+  },
+  {
+    name: "charge-placement-fee: missing facilityId",
+    fn: "charge-placement-fee",
+    body: { inquiryId: "00000000-0000-0000-0000-000000000000" },
+    expectStatus: 400,
+    expectCode: "MISSING_FIELD_FACILITY_ID",
+    expectField: "facilityId",
+  },
+  // ── unlock-lead ──
+  {
+    name: "unlock-lead: missing leadId",
+    fn: "unlock-lead",
+    body: { facilityId: "00000000-0000-0000-0000-000000000000" },
+    expectStatus: 400,
+    expectCode: "MISSING_FIELD_LEAD_ID",
+    expectField: "leadId",
+  },
+  {
+    name: "unlock-lead: missing facilityId",
+    fn: "unlock-lead",
+    body: { leadId: "11111111-1111-1111-8111-111111111111" },
+    expectStatus: 400,
+    expectCode: "MISSING_FIELD_FACILITY_ID",
+    expectField: "facilityId",
+  },
+  // ── send-concierge-introduction ──
+  {
+    name: "send-concierge-introduction: missing inquiryId",
+    fn: "send-concierge-introduction",
+    body: {
+      facilityId: "11111111-1111-1111-8111-111111111111",
+      introductionId: "11111111-1111-1111-8111-111111111111",
+    },
+    expectStatus: 400,
+    expectCode: "MISSING_FIELD_INQUIRY_ID",
+    expectField: "inquiryId",
+  },
+  {
+    name: "send-concierge-introduction: missing facilityId",
+    fn: "send-concierge-introduction",
+    body: {
+      inquiryId: "11111111-1111-1111-8111-111111111111",
+      introductionId: "11111111-1111-1111-8111-111111111111",
+    },
+    expectStatus: 400,
+    expectCode: "MISSING_FIELD_FACILITY_ID",
+    expectField: "facilityId",
+  },
+  {
+    name: "send-concierge-introduction: missing introductionId",
+    fn: "send-concierge-introduction",
+    body: {
+      inquiryId: "11111111-1111-1111-8111-111111111111",
+      facilityId: "11111111-1111-1111-8111-111111111111",
+    },
+    expectStatus: 400,
+    expectCode: "MISSING_FIELD_INTRODUCTION_ID",
+    expectField: "introductionId",
+  },
+  // ── respond-international-case ──
+  {
+    name: "respond-international-case: missing action",
+    fn: "respond-international-case",
+    body: { matchId: "11111111-1111-1111-8111-111111111111" },
+    expectStatus: 400,
+    expectCode: "MISSING_FIELD_ACTION",
+    expectField: "action",
+  },
+  {
+    name: "respond-international-case: missing matchId",
+    fn: "respond-international-case",
+    body: { action: "respond" },
+    expectStatus: 400,
+    expectCode: "MISSING_FIELD_MATCH_ID",
+    expectField: "matchId",
+  },
 ];
 
 type StepCtx = { request?: RequestInfo; response?: ResponseInfo };
