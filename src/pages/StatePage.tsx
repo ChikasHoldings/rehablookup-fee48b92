@@ -1,14 +1,20 @@
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { Loader2 } from "lucide-react";
 
 // Detect when a slug is actually a facility UUID that landed here via a stale
 // `/rehab-centers/{id}` link (legacy fallback). Matches v4 UUID format.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Lazy-load the legacy resolver only when a UUID is detected in the path.
+// It handles DB lookup (by id or slug) and redirects to /center/{slug}, keeping
+// behavior consistent with the dedicated /treatment-centers/{slug} entry point.
+const TreatmentCenterProfile = lazy(() => import("./TreatmentCenterProfile"));
 
 import { getStateBySlug, getNearbyStates } from "@/data/locationSeoData";
 import { getCountiesForState } from "@/data/countySeoData";
