@@ -40,6 +40,7 @@ function html({ urlPath, title, metaTitle, metaDescription, h1, content, breadcr
   <meta name="twitter:description" content="${sd}">
   <link rel="icon" type="image/png" href="/favicon.png">
   ${bcSchema}
+  ${faqSchema}
   <style>
     body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:32px 20px;color:#1a2b4a;line-height:1.7}
     h1{font-size:2rem;color:#1B365D;margin-bottom:12px}
