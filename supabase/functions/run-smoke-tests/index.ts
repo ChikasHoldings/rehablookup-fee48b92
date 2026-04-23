@@ -82,7 +82,13 @@ const ILLEGAL_PROBES: Array<{ from: string; to: string }> = [
 // error.message names the missing field.
 type RequiredFieldProbe = {
   name: string;
-  fn: "confirm-placement" | "admin-manage-invoice";
+  fn:
+    | "confirm-placement"
+    | "admin-manage-invoice"
+    | "charge-placement-fee"
+    | "unlock-lead"
+    | "send-concierge-introduction"
+    | "respond-international-case";
   body: Record<string, unknown>;
   /** Expected HTTP status (validation errors should be 4xx, typically 400). */
   expectStatus: number;
