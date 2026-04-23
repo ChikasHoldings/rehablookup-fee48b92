@@ -13,6 +13,24 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[ADMIN-MANAGE-INVOICE] ${step}${detailsStr}`);
 };
 
+/**
+ * Structured error so callers (and the smoke test runner) get a stable
+ * `{ error: { code, message } }` envelope instead of free-form strings.
+ */
+class ApiError extends Error {
+  constructor(public code: string, message: string, public httpStatus = 400) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+function jsonError(code: string, message: string, status: number): Response {
+  return new Response(
+    JSON.stringify({ error: { code, message } }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" }, status },
+  );
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -53,31 +71,35 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { invoiceId, action, reason, newAmount } = body;
 
-    if (!invoiceId) throw new Error("invoiceId is required");
-    if (!action) throw new Error("action is required");
+    if (!invoiceId) throw new ApiError("MISSING_FIELD_INVOICE_ID", "invoiceId is required", 400);
+    if (!action)    throw new ApiError("MISSING_FIELD_ACTION", "action is required", 400);
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (typeof invoiceId !== "string" || !uuidRegex.test(invoiceId)) {
-      throw new Error("Invalid invoiceId format");
+      throw new ApiError("INVALID_INVOICE_ID", "Invalid invoiceId format", 400);
     }
 
     const validActions = ["waive", "override", "mark_paid", "send_reminder", "retry_charge"];
     if (!validActions.includes(action)) {
-      throw new Error(`Invalid action: ${action}`);
+      throw new ApiError("INVALID_ACTION", `Invalid action: ${action}`, 400);
     }
 
     // Validate newAmount when present
     if (action === "override") {
       if (typeof newAmount !== "number" || !Number.isInteger(newAmount) || newAmount <= 0 || newAmount > 100_000_00) {
-        throw new Error("amount (newAmount) must be a positive integer of cents (max $100,000)");
+        throw new ApiError(
+          "MISSING_FIELD_AMOUNT",
+          "amount (newAmount) must be a positive integer of cents (max $100,000)",
+          400,
+        );
       }
       if (!reason || typeof reason !== "string" || reason.trim().length < 3) {
-        throw new Error("reason is required (at least 3 characters)");
+        throw new ApiError("MISSING_FIELD_REASON", "reason is required (at least 3 characters)", 400);
       }
     }
     if (action === "waive") {
       if (!reason || typeof reason !== "string" || reason.trim().length < 3) {
-        throw new Error("reason is required (at least 3 characters)");
+        throw new ApiError("MISSING_FIELD_REASON", "reason is required (at least 3 characters)", 400);
       }
     }
 
@@ -377,14 +399,12 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
+    if (error instanceof ApiError) {
+      logStep("ERROR", { code: error.code, message: error.message, status: error.httpStatus });
+      return jsonError(error.code, error.message, error.httpStatus);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    return jsonError("INTERNAL_ERROR", errorMessage, 500);
   }
 });

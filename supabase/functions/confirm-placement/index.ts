@@ -23,6 +23,17 @@ const isValidISODate = (str: string): boolean => {
 };
 
 /**
+ * Structured error so callers (and the smoke test runner) get a stable
+ * `{ error: { code, message } }` envelope instead of free-form strings.
+ */
+class ApiError extends Error {
+  constructor(public code: string, message: string, public httpStatus = 400) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+/**
  * The DB trigger `validate_concierge_status_transition` enforces sequential transitions.
  * To go from e.g. `presented_to_seeker` → `admitted` we must step through each intermediate status.
  * This map defines the canonical path to `admitted`.
@@ -42,9 +53,7 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonError("METHOD_NOT_ALLOWED", "Method not allowed", 405, requestId);
   }
 
   try {
@@ -54,15 +63,13 @@ Deno.serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
-      throw new Error("Supabase configuration missing");
+      throw new ApiError("SERVER_MISCONFIGURED", "Supabase configuration missing", 500);
     }
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "No authorization header", requestId, _version: VERSION }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("MISSING_AUTH_HEADER", "No authorization header", 401, requestId);
     }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -70,18 +77,14 @@ Deno.serve(async (req) => {
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
 
     if (userError || !userData.user) {
-      return new Response(JSON.stringify({ error: "Authentication failed", requestId, _version: VERSION }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("AUTH_FAILED", "Authentication failed", 401, requestId);
     }
 
     let body: Record<string, unknown>;
     try {
       body = await req.json();
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body", requestId, _version: VERSION }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("INVALID_JSON", "Invalid JSON body", 400, requestId);
     }
 
     const { inquiryId, facilityId, confirmationType, admittedAt, isInternational } = body as {
@@ -89,18 +92,18 @@ Deno.serve(async (req) => {
     };
 
     // Per-field validation so callers (and smoke tests) can pinpoint the missing input.
-    if (!inquiryId) throw new Error("inquiryId is required");
-    if (!facilityId) throw new Error("facilityId is required");
-    if (!confirmationType) throw new Error("confirmationType is required");
-    if (!isValidUUID(inquiryId)) throw new Error("Invalid inquiryId format");
-    if (!isValidUUID(facilityId)) throw new Error("Invalid facilityId format");
+    if (!inquiryId)        throw new ApiError("MISSING_FIELD_INQUIRY_ID", "inquiryId is required", 400);
+    if (!facilityId)       throw new ApiError("MISSING_FIELD_FACILITY_ID", "facilityId is required", 400);
+    if (!confirmationType) throw new ApiError("MISSING_FIELD_CONFIRMATION_TYPE", "confirmationType is required", 400);
+    if (!isValidUUID(inquiryId))  throw new ApiError("INVALID_INQUIRY_ID", "Invalid inquiryId format", 400);
+    if (!isValidUUID(facilityId)) throw new ApiError("INVALID_FACILITY_ID", "Invalid facilityId format", 400);
 
     const validConfirmationTypes = ["admin", "admin_confirm", "placement_confirm"];
     if (!validConfirmationTypes.includes(confirmationType)) {
-      throw new Error("Invalid confirmationType");
+      throw new ApiError("INVALID_CONFIRMATION_TYPE", "Invalid confirmationType", 400);
     }
     if (admittedAt && !isValidISODate(admittedAt)) {
-      throw new Error("Invalid admitted date format");
+      throw new ApiError("INVALID_ADMITTED_AT", "Invalid admitted date format", 400);
     }
 
     logStep(requestId, "Processing confirmation", { inquiryId, facilityId, confirmationType });
@@ -285,15 +288,28 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
+    if (error instanceof ApiError) {
+      logStep(requestId, "ERROR", { code: error.code, message: error.message, status: error.httpStatus });
+      return jsonError(error.code, error.message, error.httpStatus, requestId);
+    }
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep(requestId, "ERROR", { message: errorMessage });
     const isClientError = errorMessage.includes("not found") ||
       errorMessage.includes("required") || errorMessage.includes("Invalid") ||
       errorMessage.includes("Cannot") || errorMessage.includes("Only administrators") ||
       errorMessage.includes("not in matched") || errorMessage.includes("conflict");
-    return new Response(
-      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: isClientError ? 400 : 500 }
-    );
+    const code = isClientError ? "BAD_REQUEST" : "INTERNAL_ERROR";
+    return jsonError(code, errorMessage, isClientError ? 400 : 500, requestId);
   }
 });
+
+function jsonError(code: string, message: string, status: number, requestId: string): Response {
+  return new Response(
+    JSON.stringify({
+      error: { code, message },
+      requestId,
+      _version: VERSION,
+    }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" }, status },
+  );
+}

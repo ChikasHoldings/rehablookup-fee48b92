@@ -76,19 +76,20 @@ const ILLEGAL_PROBES: Array<{ from: string; to: string }> = [
 ];
 
 // Required-field probes: each call to a transition edge function MUST fail
-// with the expected HTTP status AND an error message that names the specific
-// missing field (not just the generic word "required"). This catches both
-// regressions in validation logic and regressions in error copy clarity.
+// with the expected HTTP status AND a structured error envelope:
+//   { error: { code: string, message: string }, ...extras }
+// We assert on the envelope shape, the status code, the error.code, and that
+// error.message names the missing field.
 type RequiredFieldProbe = {
   name: string;
   fn: "confirm-placement" | "admin-manage-invoice";
   body: Record<string, unknown>;
   /** Expected HTTP status (validation errors should be 4xx, typically 400). */
   expectStatus: number;
-  /** Field name that MUST appear (case-insensitive) in the error message. */
+  /** Exact `error.code` the function must return. */
+  expectCode: string;
+  /** Field name that MUST appear (case-insensitive) in error.message. */
   expectField: string;
-  /** Additional substring(s) that must also appear (case-insensitive). */
-  expectAlso?: string[];
 };
 const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
   {
@@ -96,16 +97,16 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
     fn: "confirm-placement",
     body: { facilityId: "00000000-0000-0000-0000-000000000000", confirmationType: "admin" },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_INQUIRY_ID",
     expectField: "inquiryId",
-    expectAlso: ["required"],
   },
   {
     name: "confirm-placement: missing facilityId",
     fn: "confirm-placement",
     body: { inquiryId: "00000000-0000-0000-0000-000000000000", confirmationType: "admin" },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_FACILITY_ID",
     expectField: "facilityId",
-    expectAlso: ["required"],
   },
   {
     name: "confirm-placement: missing confirmationType",
@@ -115,24 +116,24 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
       facilityId: "00000000-0000-0000-0000-000000000000",
     },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_CONFIRMATION_TYPE",
     expectField: "confirmationType",
-    expectAlso: ["required"],
   },
   {
     name: "admin-manage-invoice: missing invoiceId",
     fn: "admin-manage-invoice",
     body: { action: "waive", reason: "smoke test reason" },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_INVOICE_ID",
     expectField: "invoiceId",
-    expectAlso: ["required"],
   },
   {
     name: "admin-manage-invoice: waive without reason",
     fn: "admin-manage-invoice",
     body: { invoiceId: "00000000-0000-0000-0000-000000000000", action: "waive" },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_REASON",
     expectField: "reason",
-    expectAlso: ["required"],
   },
   {
     name: "admin-manage-invoice: override without amount",
@@ -143,6 +144,7 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
       reason: "smoke test reason",
     },
     expectStatus: 400,
+    expectCode: "MISSING_FIELD_AMOUNT",
     expectField: "amount",
   },
 ];
@@ -366,7 +368,8 @@ Deno.serve(async (req) => {
   }
 
   // ---- 4. Required-field probes ------------------------------------------
-  // Each MUST fail with an error message that names the missing field clearly.
+  // Each MUST fail with the standard JSON envelope:
+  //   { error: { code: string, message: string }, ...extras }
   // We invoke as the seeded test admin to exercise real auth + validation.
   const testAdminToken = signIn.session?.access_token;
   for (const probe of REQUIRED_FIELD_PROBES) {
@@ -383,13 +386,26 @@ Deno.serve(async (req) => {
         body: JSON.stringify(probe.body),
       });
       const text = await res.text();
+      const contentType = res.headers.get("content-type") ?? "";
 
-      // Parse body — keep raw text on failure.
-      let parsedBody: unknown = text;
+      // 1. Response MUST be JSON. Non-JSON responses are a contract violation.
+      if (!contentType.toLowerCase().includes("application/json")) {
+        ctx.response = { status: res.status, body: text };
+        throw new Error(
+          `Expected JSON response (Content-Type: application/json), got "${contentType}". ` +
+            `Body: "${text.slice(0, 200)}"`,
+        );
+      }
+
+      let parsedBody: unknown;
       try {
         parsedBody = JSON.parse(text);
-      } catch {
-        // keep raw
+      } catch (parseErr) {
+        ctx.response = { status: res.status, body: text };
+        throw new Error(
+          `Response body was not valid JSON: ${(parseErr as Error).message}. ` +
+            `Body: "${text.slice(0, 200)}"`,
+        );
       }
       ctx.response = { status: res.status, body: parsedBody };
 
@@ -397,7 +413,7 @@ Deno.serve(async (req) => {
         throw new Error(`Expected failure but got HTTP ${res.status}: ${text.slice(0, 200)}`);
       }
 
-      // 1. Assert HTTP status code matches expectation.
+      // 2. Assert HTTP status code matches expectation.
       if (res.status !== probe.expectStatus) {
         throw new Error(
           `Expected HTTP ${probe.expectStatus}, got HTTP ${res.status}. ` +
@@ -405,33 +421,50 @@ Deno.serve(async (req) => {
         );
       }
 
-      const message =
-        typeof parsedBody === "object" && parsedBody !== null
-          ? String((parsedBody as Record<string, unknown>).error ??
-              (parsedBody as Record<string, unknown>).message ?? text)
-          : text;
-      const lower = message.toLowerCase();
-
-      // 2. Assert the specific field name appears in the error message.
-      if (!lower.includes(probe.expectField.toLowerCase())) {
+      // 3. Assert envelope shape: { error: { code, message } }.
+      if (typeof parsedBody !== "object" || parsedBody === null) {
+        throw new Error(`Expected JSON object envelope, got: ${typeof parsedBody}`);
+      }
+      const envelope = parsedBody as Record<string, unknown>;
+      const errObj = envelope.error;
+      if (typeof errObj !== "object" || errObj === null) {
         throw new Error(
-          `Error message did not name the missing field "${probe.expectField}". ` +
+          `Envelope missing "error" object. Found keys: [${Object.keys(envelope).join(", ")}]. ` +
+            `Body: "${text.slice(0, 200)}"`,
+        );
+      }
+      const errRec = errObj as Record<string, unknown>;
+      if (typeof errRec.code !== "string" || errRec.code.length === 0) {
+        throw new Error(
+          `Envelope missing string "error.code". Found: ${JSON.stringify(errRec).slice(0, 200)}`,
+        );
+      }
+      if (typeof errRec.message !== "string" || errRec.message.length === 0) {
+        throw new Error(
+          `Envelope missing string "error.message". Found: ${JSON.stringify(errRec).slice(0, 200)}`,
+        );
+      }
+
+      const code = errRec.code;
+      const message = errRec.message;
+
+      // 4. Assert exact error.code.
+      if (code !== probe.expectCode) {
+        throw new Error(
+          `Expected error.code="${probe.expectCode}", got "${code}". ` +
+            `Message: "${message.slice(0, 200)}"`,
+        );
+      }
+
+      // 5. Assert error.message names the specific missing field.
+      if (!message.toLowerCase().includes(probe.expectField.toLowerCase())) {
+        throw new Error(
+          `error.message did not name the missing field "${probe.expectField}". ` +
             `Got: "${message.slice(0, 200)}"`,
         );
       }
 
-      // 3. Assert any additional required substrings (e.g. "required").
-      const missingExtras = (probe.expectAlso ?? []).filter(
-        (kw) => !lower.includes(kw.toLowerCase()),
-      );
-      if (missingExtras.length > 0) {
-        throw new Error(
-          `Error message missing expected substring(s) [${missingExtras.join(", ")}]. ` +
-            `Got: "${message.slice(0, 200)}"`,
-        );
-      }
-
-      return `HTTP ${res.status} · field="${probe.expectField}" · ${message.slice(0, 100)}`;
+      return `HTTP ${res.status} · code=${code} · field="${probe.expectField}"`;
     });
     results.push(step);
   }
