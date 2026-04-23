@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EscalationsList } from "@/components/admin/escalations/EscalationsList";
+import { SmokeTestRunner } from "@/components/admin/SmokeTestRunner";
 
 export default function AdminBackOffice() {
   const { user, isSuperAdmin } = useAdminAuth();
@@ -267,6 +268,9 @@ export default function AdminBackOffice() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Smoke Tests — Super Admin only */}
+      {isSuperAdmin && <SmokeTestRunner />}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Open Escalations */}
