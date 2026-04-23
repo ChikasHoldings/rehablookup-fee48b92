@@ -30,23 +30,23 @@ export const StickyConversionBar = forwardRef<HTMLDivElement>(function StickyCon
       )}
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <div className="container flex items-center justify-between gap-3 py-2.5 md:py-3">
-        <div className="hidden sm:block">
-          <p className="text-sm font-semibold text-foreground">Need help finding treatment?</p>
-          <p className="text-xs text-muted-foreground">Free, confidential matching — no obligation</p>
+      <div className="container flex items-center justify-between gap-2 py-2.5 md:py-3">
+        <div className="hidden sm:block min-w-0">
+          <p className="text-sm font-semibold text-foreground truncate">Need help finding treatment?</p>
+          <p className="text-xs text-muted-foreground truncate">Free, confidential matching — no obligation</p>
         </div>
-        <p className="sm:hidden text-sm font-semibold text-foreground">Find treatment today</p>
+        <p className="sm:hidden text-sm font-semibold text-foreground min-w-0 truncate">Find treatment today</p>
 
-        <div className="flex items-center gap-2">
-          <Button asChild size="sm" className="gap-1.5 px-4">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <Button asChild size="sm" className="gap-1.5 px-3 sm:px-4">
             <Link to="/concierge">
-              <Heart className="h-3.5 w-3.5" />
-              Get Help Now
+              <Heart className="h-3.5 w-3.5 shrink-0" />
+              <span className="whitespace-nowrap">Get Help</span>
             </Link>
           </Button>
           <button
             onClick={() => setDismissed(true)}
-            className="p-1.5 rounded-full text-muted-foreground hover:bg-muted transition-colors"
+            className="p-1.5 rounded-full text-muted-foreground hover:bg-muted transition-colors shrink-0"
             aria-label="Dismiss"
           >
             <X className="h-4 w-4" />

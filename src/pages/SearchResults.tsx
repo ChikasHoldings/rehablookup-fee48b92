@@ -828,27 +828,28 @@ const SearchResults = () => {
       {/* Compact Top Bar */}
       <div className="sticky top-[68px] z-30 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm">
         <div className="container">
-          <div className="flex items-center justify-between gap-4 py-2.5">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-2 sm:gap-4 py-2.5">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <Link
                 to="/rehab-centers"
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors group"
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors group shrink-0"
+                aria-label="Back to all centers"
               >
                 <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
                 <span className="hidden sm:inline">Back</span>
               </Link>
-              <div className="h-5 w-px bg-border" />
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10">
+              <div className="h-5 w-px bg-border shrink-0 hidden xs:block" />
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 shrink-0">
                   <Search className="h-3.5 w-3.5 text-primary" />
                 </div>
-                <div>
-                  <span className="text-sm font-semibold">
+                <div className="min-w-0">
+                  <span className="text-sm font-semibold whitespace-nowrap">
                     <span className="text-primary">{filteredCenters.length}</span>
                     <span className="text-foreground"> Centers</span>
                   </span>
                   {(location || queryParam) && (
-                    <p className="text-xs text-muted-foreground hidden sm:block">
+                    <p className="text-xs text-muted-foreground hidden sm:block truncate">
                       {queryParam ? `"${queryParam}"` : `Near ${location}`}
                     </p>
                   )}
