@@ -17,12 +17,39 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+type RequestInfo = {
+  kind: "http" | "db";
+  /** Method or DB verb (POST, UPDATE, INSERT, DELETE, SELECT). */
+  method: string;
+  /** URL or `${schema}.${table}`. */
+  target: string;
+  /** Body sent with the request (HTTP) or row payload (DB). */
+  body?: unknown;
+  /** Filter / WHERE clause for DB ops. */
+  filter?: Record<string, unknown>;
+};
+
+type ResponseInfo = {
+  /** HTTP status code (HTTP) or null (DB ops without status). */
+  status?: number | null;
+  /** Parsed body, raw text, or returned row(s). */
+  body?: unknown;
+  /** Postgres error code if a DB op failed. */
+  code?: string | null;
+};
+
 type StepResult = {
   name: string;
   ok: boolean;
   durationMs: number;
   detail?: string;
   error?: string;
+  /** Captured request payload for diagnostics. */
+  request?: RequestInfo;
+  /** Captured response payload for diagnostics. */
+  response?: ResponseInfo;
+  /** JS stack trace when the step threw. */
+  stack?: string;
 };
 
 // Full happy path through validate_concierge_status_transition.
