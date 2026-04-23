@@ -6024,6 +6024,46 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      admin_get_facility_admin_fields: {
+        Args: { p_facility_id: string }
+        Returns: {
+          admin_notes: string
+          bonus_leads: number
+          calculated_ranking_score: number
+          featured_display_order: number
+          featured_pinned: boolean
+          last_featured_shown_at: string
+          lead_limit_override: number
+          listing_completeness_score: number
+          profile_reminder_count: number
+          profile_reminder_sent_at: string
+          response_rate_score: number
+        }[]
+      }
+      admin_get_inquiry_internals: {
+        Args: { p_inquiry_id: string }
+        Returns: {
+          abandoned_cart_email_sent_at: string
+          admin_matched_facility_ids: string[]
+          admin_notes: string
+          checkout_session_id: string
+          idempotency_key: string
+          introductions_sent_at: string
+          introductions_sent_count: number
+          match_count: number
+          match_scores: Json
+          matched_facility_ids: string[]
+          payment_amount_cents: number
+          payment_reminder_count: number
+          provider_fee_cents: number
+          provider_fee_status: string
+          provider_fee_type: string
+          provider_invoice_id: string
+          stripe_customer_id: string
+          stripe_payment_intent_id: string
+          suicide_history: string
+        }[]
+      }
       assess_login_risk: {
         Args: {
           p_browser?: string
@@ -6125,6 +6165,16 @@ export type Database = {
         }[]
       }
       get_lead_score_label: { Args: { p_score: number }; Returns: string }
+      get_my_inquiry_billing: {
+        Args: { p_inquiry_id: string }
+        Returns: {
+          checkout_session_id: string
+          payment_amount_cents: number
+          payment_status: string
+          payment_type: string
+          stripe_payment_intent_id: string
+        }[]
+      }
       get_owner_facility_data: {
         Args: { p_user_id: string }
         Returns: {
