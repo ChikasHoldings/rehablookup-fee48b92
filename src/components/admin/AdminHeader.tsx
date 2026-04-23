@@ -585,7 +585,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="relative flex items-center gap-3 h-10 px-2 lg:px-3 rounded-xl hover:bg-slate-700/50 transition-all duration-200"
+                className="relative flex items-center gap-2 sm:gap-3 h-9 sm:h-10 px-1.5 sm:px-2 lg:px-3 rounded-xl hover:bg-slate-700/50 transition-all duration-200"
               >
                 <Avatar className="h-8 w-8 ring-2 ring-amber-400/30 hover:ring-amber-400/50 transition-all">
                   <AvatarImage 
