@@ -62,35 +62,44 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
   ];
 
   return (
-    <nav {...props} className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card backdrop-blur-lg border-t border-border safe-area-bottom shadow-2xl">
-      <div className="flex items-center justify-around h-16 px-2">
+    <nav
+      {...props}
+      className="lg:hidden z-40 w-full bg-card/95 backdrop-blur-lg border-t border-border safe-area-bottom shadow-[0_-4px_16px_-8px_hsl(var(--foreground)/0.15)]"
+      aria-label="Account primary navigation"
+    >
+      <div className="flex items-stretch justify-around h-16 px-1">
         {navItems.map((item) => {
-          const isActive = item.href === "/account" 
+          const isActive = item.href === "/account"
             ? location.pathname === "/account"
             : location.pathname.startsWith(item.href);
           const Icon = item.icon;
-          
+
           return (
             <a
               key={item.href}
               href={item.href}
-              onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); startTransition(() => { navNavigate(item.href); }); }}
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                e.preventDefault();
+                startTransition(() => { navNavigate(item.href); });
+              }}
               onMouseEnter={() => handlePrefetch(item.href)}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={item.label}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
-                isActive 
-                  ? "text-primary" 
-                  : "text-muted-foreground hover:text-foreground"
+                "flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1.5",
+                "rounded-xl transition-all duration-200 active:scale-95 select-none",
+                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className={cn(
                 "flex items-center justify-center h-7 w-7 rounded-lg transition-all",
-                isActive && "bg-primary/20"
+                isActive && "bg-primary/15"
               )}>
                 <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} />
               </div>
               <span className={cn(
-                "text-xs font-medium transition-colors",
+                "text-[10px] sm:text-xs font-medium leading-tight truncate max-w-full",
                 isActive ? "text-primary font-semibold" : "text-muted-foreground"
               )}>
                 {item.label}
@@ -98,26 +107,27 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
             </a>
           );
         })}
-        
+
         {/* More button with drawer */}
         <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
           <DrawerTrigger asChild>
             <button
+              aria-label="More navigation options"
+              aria-current={isMoreActive ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] transition-all duration-200 active:scale-95",
-                isMoreActive 
-                  ? "text-primary" 
-                  : "text-muted-foreground hover:text-foreground"
+                "flex flex-1 min-w-0 flex-col items-center justify-center gap-0.5 px-1 py-1.5",
+                "rounded-xl transition-all duration-200 active:scale-95 select-none",
+                isMoreActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className={cn(
                 "flex items-center justify-center h-7 w-7 rounded-lg transition-all",
-                isMoreActive && "bg-primary/20"
+                isMoreActive && "bg-primary/15"
               )}>
                 <MoreHorizontal className={cn("h-5 w-5 transition-transform", isMoreActive && "scale-110")} />
               </div>
               <span className={cn(
-                "text-xs font-medium transition-colors",
+                "text-[10px] sm:text-xs font-medium leading-tight",
                 isMoreActive ? "text-primary font-semibold" : "text-muted-foreground"
               )}>
                 More
@@ -130,7 +140,7 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
                 {isAuthenticated ? "Account & Settings" : "Get Started"}
               </DrawerTitle>
             </DrawerHeader>
-            <div className="p-4 space-y-1">
+            <div className="p-4 space-y-1 max-h-[60vh] overflow-y-auto">
               {moreItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
@@ -138,22 +148,27 @@ export function SeekerMobileNav({ isAuthenticated = false, ...props }: SeekerMob
                   <a
                     key={item.href}
                     href={item.href}
-                    onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); setDrawerOpen(false); startTransition(() => { navNavigate(item.href); }); }}
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                      e.preventDefault();
+                      setDrawerOpen(false);
+                      startTransition(() => { navNavigate(item.href); });
+                    }}
                     onMouseEnter={() => handlePrefetch(item.href)}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 active:scale-[0.98]",
-                      isActive 
-                        ? "bg-primary/10 text-foreground" 
+                      isActive
+                        ? "bg-primary/10 text-foreground"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
                     <div className={cn(
-                      "flex items-center justify-center h-10 w-10 rounded-lg",
+                      "flex items-center justify-center h-10 w-10 rounded-lg shrink-0",
                       isActive ? "bg-primary/20" : "bg-muted"
                     )}>
                       <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
                     </div>
-                    <span className="font-medium">{item.label}</span>
+                    <span className="font-medium truncate">{item.label}</span>
                   </a>
                 );
               })}

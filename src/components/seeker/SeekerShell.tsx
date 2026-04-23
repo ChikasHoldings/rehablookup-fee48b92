@@ -122,17 +122,18 @@ export function SeekerShell() {
   if (userRole === "admin" || userRole === "provider") return null;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background isolate" data-shell>
-      {/* Email Verification Banner */}
-      {isAuthenticated && isEmailVerified === false && (
-        <EmailVerificationBanner
-          email={userEmail ?? undefined}
-          onVerified={() => queryClient.invalidateQueries({ queryKey: ['email-verified', userEmail] })}
-        />
-      )}
-
-      {/* Fixed Header */}
-      <div className="flex-shrink-0 z-50">
+    <div
+      className="h-[100dvh] w-full overflow-hidden bg-background isolate grid grid-rows-[auto_minmax(0,1fr)_auto] lg:grid-rows-[auto_minmax(0,1fr)]"
+      data-shell
+    >
+      {/* Row 1 — Header (+ optional verification banner) */}
+      <div className="z-50 min-w-0">
+        {isAuthenticated && isEmailVerified === false && (
+          <EmailVerificationBanner
+            email={userEmail ?? undefined}
+            onVerified={() => queryClient.invalidateQueries({ queryKey: ['email-verified', userEmail] })}
+          />
+        )}
         <SeekerHeader
           userName={displayName}
           avatarUrl={profile?.avatar_url}
@@ -141,17 +142,17 @@ export function SeekerShell() {
         />
       </div>
 
-      {/* Main Content Area */}
+      {/* Row 2 — Main scroll area (bounded by grid, no padding-hack needed) */}
       <main
         ref={mainContentRef}
-        className="flex-1 min-h-0 overflow-y-auto bg-muted/30 pb-20 lg:pb-0"
+        className="min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-muted/30"
       >
         <Suspense fallback={null}>
           <Outlet context={{ isAuthenticated, userName: displayName, userId }} />
         </Suspense>
       </main>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Row 3 — Mobile Bottom Navigation (in-flow, not fixed) */}
       <SeekerMobileNav isAuthenticated={isAuthenticated} />
     </div>
   );

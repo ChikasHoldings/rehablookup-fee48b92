@@ -114,36 +114,41 @@ export function EmailVerificationBanner({ email, onVerified }: EmailVerification
   if (isDismissed) return null;
 
   return (
-    <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-3">
+    <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-3 sm:px-4 py-2 sm:py-3">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <Mail className="h-5 w-5 text-yellow-600 flex-shrink-0" />
-            <p className="text-sm text-yellow-800 dark:text-yellow-200 truncate">
+        <div className="flex items-center justify-between gap-2 sm:gap-4 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600 flex-shrink-0" />
+            <p className="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200 truncate">
               <span className="font-medium">Verify your email</span>
               <span className="hidden sm:inline"> to unlock all features like leaving reviews.</span>
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {!showCodeInput ? (
               <Button
                 size="sm"
                 variant="outline"
-                className="border-yellow-500/30 hover:bg-yellow-500/10 text-yellow-800 dark:text-yellow-200"
+                className="h-8 px-2.5 sm:px-3 text-xs sm:text-sm border-yellow-500/30 hover:bg-yellow-500/10 text-yellow-800 dark:text-yellow-200"
                 onClick={handleSendCode}
                 disabled={isResending}
               >
                 {isResending ? (
                   <>
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    Sending...
+                    <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
+                    <span className="hidden sm:inline">Sending...</span>
                   </>
-                ) : 'Send Code'}
+                ) : (
+                  <>
+                    <span className="sm:hidden">Verify</span>
+                    <span className="hidden sm:inline">Send Code</span>
+                  </>
+                )}
               </Button>
             ) : (
               <div className="flex items-center gap-2">
                 {resendCooldown > 0 ? (
-                  <span className="text-xs text-yellow-700 dark:text-yellow-300">{resendCooldown}s</span>
+                  <span className="text-xs text-yellow-700 dark:text-yellow-300 tabular-nums">{resendCooldown}s</span>
                 ) : (
                   <button
                     onClick={handleSendCode}
@@ -158,18 +163,18 @@ export function EmailVerificationBanner({ email, onVerified }: EmailVerification
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8 text-yellow-800 dark:text-yellow-200 hover:bg-yellow-500/10"
+              className="h-7 w-7 sm:h-8 sm:w-8 text-yellow-800 dark:text-yellow-200 hover:bg-yellow-500/10 shrink-0"
               onClick={() => setIsDismissed(true)}
+              aria-label="Dismiss"
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">Dismiss</span>
             </Button>
           </div>
         </div>
-        
+
         {/* Code input row */}
         {showCodeInput && (
-          <div className="flex items-center justify-center gap-2 mt-3" onPaste={handlePaste}>
+          <div className="flex items-center justify-center flex-wrap gap-1.5 sm:gap-2 mt-3" onPaste={handlePaste}>
             {code.map((digit, i) => (
               <input
                 key={i}
@@ -180,7 +185,7 @@ export function EmailVerificationBanner({ email, onVerified }: EmailVerification
                 value={digit}
                 onChange={(e) => handleCodeChange(i, e.target.value)}
                 onKeyDown={(e) => handleCodeKeyDown(i, e)}
-                className="w-9 h-10 text-center text-lg font-bold border-2 border-yellow-500/30 rounded-md bg-background text-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none"
+                className="w-8 h-10 sm:w-9 sm:h-10 text-center text-base sm:text-lg font-bold border-2 border-yellow-500/30 rounded-md bg-background text-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none"
                 disabled={isVerifying}
               />
             ))}
