@@ -1,6 +1,7 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { ApiError, apiErrorResponse } from "../_shared/validation.ts";
 
 const VERSION = "1.0.1";
 
@@ -89,16 +90,13 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { inquiryId, facilityId, introductionId }: IntroductionRequest = body;
 
-    // Strict UUID validation
-    if (!isValidUUID(inquiryId)) {
-      throw new Error("Invalid inquiry ID format");
-    }
-    if (!isValidUUID(facilityId)) {
-      throw new Error("Invalid facility ID format");
-    }
-    if (!isValidUUID(introductionId)) {
-      throw new Error("Invalid introduction ID format");
-    }
+    // Per-field validation so smoke tests / clients can pinpoint the missing input.
+    if (!inquiryId)      throw new ApiError("MISSING_FIELD_INQUIRY_ID", "inquiryId is required", 400);
+    if (!facilityId)     throw new ApiError("MISSING_FIELD_FACILITY_ID", "facilityId is required", 400);
+    if (!introductionId) throw new ApiError("MISSING_FIELD_INTRODUCTION_ID", "introductionId is required", 400);
+    if (!isValidUUID(inquiryId))      throw new ApiError("INVALID_INQUIRY_ID", "Invalid inquiryId format", 400);
+    if (!isValidUUID(facilityId))     throw new ApiError("INVALID_FACILITY_ID", "Invalid facilityId format", 400);
+    if (!isValidUUID(introductionId)) throw new ApiError("INVALID_INTRODUCTION_ID", "Invalid introductionId format", 400);
 
     logStep(requestId, "Processing", { inquiryId, facilityId, introductionId });
 
@@ -376,9 +374,6 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep(requestId, "ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage, requestId, _version: VERSION }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return apiErrorResponse(error, corsHeaders, { requestId, _version: VERSION });
   }
 });

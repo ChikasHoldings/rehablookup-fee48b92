@@ -168,7 +168,64 @@ export function isValidPaymentIntentId(piId: string): boolean {
 }
 
 /**
- * Build standardized error response
+ * Structured API error with a stable machine-readable code so callers
+ * (smoke tests, monitoring, the UI) can branch on the cause without
+ * pattern-matching on free-form messages.
+ *
+ * Throw it inside a Deno handler and convert it in the catch block via
+ * `apiErrorResponse(err, corsHeaders)`.
+ */
+export class ApiError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+    public readonly httpStatus: number = 400,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+/**
+ * Standard JSON error envelope: `{ error: { code, message }, ...extras }`.
+ * Use this for ALL error responses so smoke tests and clients can rely on
+ * a consistent shape.
+ */
+export function jsonError(
+  code: string,
+  message: string,
+  status: number,
+  corsHeaders: Record<string, string>,
+  extras: Record<string, unknown> = {},
+): Response {
+  return new Response(
+    JSON.stringify({ error: { code, message }, ...extras }),
+    {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status,
+    },
+  );
+}
+
+/**
+ * Convert any thrown error into the standard envelope.
+ * - ApiError → its declared code + httpStatus
+ * - everything else → INTERNAL_ERROR / 500
+ */
+export function apiErrorResponse(
+  err: unknown,
+  corsHeaders: Record<string, string>,
+  extras: Record<string, unknown> = {},
+): Response {
+  if (err instanceof ApiError) {
+    return jsonError(err.code, err.message, err.httpStatus, corsHeaders, extras);
+  }
+  const message = err instanceof Error ? err.message : String(err);
+  return jsonError("INTERNAL_ERROR", message, 500, corsHeaders, extras);
+}
+
+/**
+ * Build standardized error response (legacy shape — prefer `jsonError`).
  */
 export function errorResponse(
   message: string,

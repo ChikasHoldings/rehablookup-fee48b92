@@ -1,5 +1,6 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { ApiError, apiErrorResponse } from "../_shared/validation.ts";
 
 const VERSION = "2.0.0";
 
@@ -87,11 +88,11 @@ Deno.serve(async (req) => {
 
     const { inquiryId, facilityId, feeType, adminInitiated, isInternational } = await req.json();
 
-    if (!inquiryId || !facilityId) {
-      throw new Error("Inquiry ID and Facility ID are required");
-    }
-    if (!isValidUUID(inquiryId)) throw new Error("Invalid inquiry ID format");
-    if (!isValidUUID(facilityId)) throw new Error("Invalid facility ID format");
+    // Per-field validation so callers (and smoke tests) can pinpoint the missing input.
+    if (!inquiryId)  throw new ApiError("MISSING_FIELD_INQUIRY_ID", "inquiryId is required", 400);
+    if (!facilityId) throw new ApiError("MISSING_FIELD_FACILITY_ID", "facilityId is required", 400);
+    if (!isValidUUID(inquiryId))  throw new ApiError("INVALID_INQUIRY_ID", "Invalid inquiryId format", 400);
+    if (!isValidUUID(facilityId)) throw new ApiError("INVALID_FACILITY_ID", "Invalid facilityId format", 400);
 
     logStep(requestId, "Processing placement fee", { inquiryId, facilityId, feeType, adminInitiated, isInternational });
 
@@ -501,13 +502,20 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep(requestId, "ERROR", { message: errorMessage });
+    if (error instanceof ApiError) {
+      return apiErrorResponse(error, corsHeaders, { requestId, _version: VERSION });
+    }
     const isClientError = errorMessage.includes("not found") ||
       errorMessage.includes("required") || errorMessage.includes("Invalid") ||
       errorMessage.includes("Only administrators") || errorMessage.includes("not confirmed") ||
       errorMessage.includes("No valid customer");
     return new Response(
-      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: isClientError ? 400 : 500 }
+      JSON.stringify({
+        error: { code: isClientError ? "BAD_REQUEST" : "INTERNAL_ERROR", message: errorMessage },
+        requestId,
+        _version: VERSION,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: isClientError ? 400 : 500 },
     );
   }
 });

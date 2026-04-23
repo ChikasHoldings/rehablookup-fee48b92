@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { ApiError, apiErrorResponse } from "../_shared/validation.ts";
 
 const VERSION = "1.0.2";
 
@@ -64,14 +65,15 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, matchId, data } = body;
 
-    // Validate action
+    // Per-field validation so smoke tests / clients can pinpoint the missing input.
     if (!action || typeof action !== "string") {
-      throw new Error("Action is required");
+      throw new ApiError("MISSING_FIELD_ACTION", "action is required", 400);
     }
-
-    // Validate matchId
+    if (!matchId) {
+      throw new ApiError("MISSING_FIELD_MATCH_ID", "matchId is required", 400);
+    }
     if (!isValidUUID(matchId)) {
-      throw new Error("Invalid match ID format");
+      throw new ApiError("INVALID_MATCH_ID", "Invalid matchId format", 400);
     }
 
     logStep(requestId, "Processing action", { action, matchId, providerId: user.id });
@@ -156,12 +158,6 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep(requestId, "ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    return apiErrorResponse(error, corsHeaders, { requestId, _version: VERSION });
   }
 });
