@@ -397,21 +397,41 @@ Deno.serve(async (req) => {
         throw new Error(`Expected failure but got HTTP ${res.status}: ${text.slice(0, 200)}`);
       }
 
+      // 1. Assert HTTP status code matches expectation.
+      if (res.status !== probe.expectStatus) {
+        throw new Error(
+          `Expected HTTP ${probe.expectStatus}, got HTTP ${res.status}. ` +
+            `Body: "${text.slice(0, 200)}"`,
+        );
+      }
+
       const message =
         typeof parsedBody === "object" && parsedBody !== null
           ? String((parsedBody as Record<string, unknown>).error ??
               (parsedBody as Record<string, unknown>).message ?? text)
           : text;
-
       const lower = message.toLowerCase();
-      const matched = probe.expect.some((kw) => lower.includes(kw.toLowerCase()));
-      if (!matched) {
+
+      // 2. Assert the specific field name appears in the error message.
+      if (!lower.includes(probe.expectField.toLowerCase())) {
         throw new Error(
-          `Error message did not mention any of [${probe.expect.join(", ")}]. ` +
+          `Error message did not name the missing field "${probe.expectField}". ` +
             `Got: "${message.slice(0, 200)}"`,
         );
       }
-      return `HTTP ${res.status}: ${message.slice(0, 120)}`;
+
+      // 3. Assert any additional required substrings (e.g. "required").
+      const missingExtras = (probe.expectAlso ?? []).filter(
+        (kw) => !lower.includes(kw.toLowerCase()),
+      );
+      if (missingExtras.length > 0) {
+        throw new Error(
+          `Error message missing expected substring(s) [${missingExtras.join(", ")}]. ` +
+            `Got: "${message.slice(0, 200)}"`,
+        );
+      }
+
+      return `HTTP ${res.status} · field="${probe.expectField}" · ${message.slice(0, 100)}`;
     });
     results.push(step);
   }
