@@ -281,6 +281,49 @@ Deno.serve(async (req) => {
     results.push(step);
   }
 
+  // ---- 4. Required-field probes ------------------------------------------
+  // Each MUST fail with an error message that names the missing field clearly.
+  // We invoke as the seeded test admin to exercise real auth + validation.
+  const testAdminToken = signIn.session?.access_token;
+  for (const probe of REQUIRED_FIELD_PROBES) {
+    const step = await timed(`required-field: ${probe.name}`, async () => {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/${probe.fn}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${testAdminToken}`,
+          apikey: ANON_KEY,
+        },
+        body: JSON.stringify(probe.body),
+      });
+      const text = await res.text();
+
+      if (res.ok) {
+        throw new Error(`Expected failure but got HTTP ${res.status}: ${text.slice(0, 200)}`);
+      }
+
+      // Parse error message — fall back to raw text if non-JSON.
+      let message = text;
+      try {
+        const parsed = JSON.parse(text);
+        message = String(parsed.error ?? parsed.message ?? text);
+      } catch {
+        // keep raw text
+      }
+
+      const lower = message.toLowerCase();
+      const matched = probe.expect.some((kw) => lower.includes(kw.toLowerCase()));
+      if (!matched) {
+        throw new Error(
+          `Error message did not mention any of [${probe.expect.join(", ")}]. ` +
+            `Got: "${message.slice(0, 200)}"`,
+        );
+      }
+      return `HTTP ${res.status}: ${message.slice(0, 120)}`;
+    });
+    results.push(step);
+  }
+
   return finalize(results, inquiryId, admin);
 });
 
