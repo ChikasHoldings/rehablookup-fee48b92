@@ -257,6 +257,8 @@ export function PlacementDetailModal({
   } : null;
 
   // Log PII disclosure event once per modal open
+  const piiDisclosureLogged = useRef(false);
+
   useEffect(() => {
     if (!piiUnlocked || !seekerPii || piiDisclosureLogged.current || !introduction?.inquiry_id) return;
     piiDisclosureLogged.current = true;
