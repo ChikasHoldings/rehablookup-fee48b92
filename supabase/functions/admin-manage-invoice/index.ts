@@ -13,6 +13,24 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[ADMIN-MANAGE-INVOICE] ${step}${detailsStr}`);
 };
 
+/**
+ * Structured error so callers (and the smoke test runner) get a stable
+ * `{ error: { code, message } }` envelope instead of free-form strings.
+ */
+class ApiError extends Error {
+  constructor(public code: string, message: string, public httpStatus = 400) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+function jsonError(code: string, message: string, status: number): Response {
+  return new Response(
+    JSON.stringify({ error: { code, message } }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" }, status },
+  );
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
