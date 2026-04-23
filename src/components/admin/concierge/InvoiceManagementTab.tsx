@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  isInvoiceActionAllowed,
+  explainInvoiceActionBlock,
+  type InvoiceAction,
+} from "@/lib/statusTransitions";
 import { format } from "date-fns";
 import {
   Card,
@@ -163,12 +168,18 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
       action,
       reason,
       newAmount,
+      currentStatus,
     }: {
       invoiceId: string;
-      action: "waive" | "override" | "mark_paid" | "send_reminder" | "retry_charge";
+      action: InvoiceAction;
       reason?: string;
       newAmount?: number;
+      currentStatus: string;
     }) => {
+      // Client-side guard mirrors validate_invoice_status_transition + admin-manage-invoice gating.
+      const block = explainInvoiceActionBlock(action, currentStatus);
+      if (block) throw new Error(block);
+
       const response = await supabase.functions.invoke("admin-manage-invoice", {
         body: { invoiceId, action, reason, newAmount },
       });
@@ -205,6 +216,7 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
       invoiceId: selectedInvoice.id,
       action: "waive",
       reason: waiveReason,
+      currentStatus: selectedInvoice.status,
     });
   };
 
@@ -216,6 +228,7 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
       action: "override",
       reason: overrideReason,
       newAmount: amountCents,
+      currentStatus: selectedInvoice.status,
     });
   };
 
@@ -377,10 +390,12 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
+                              disabled={!isInvoiceActionAllowed("mark_paid", invoice.status)}
                               onClick={() =>
                                 manageMutation.mutate({
                                   invoiceId: invoice.id,
                                   action: "mark_paid",
+                                  currentStatus: invoice.status,
                                 })
                               }
                             >
@@ -388,22 +403,25 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                               Mark as Paid
                             </DropdownMenuItem>
                             <DropdownMenuItem
+                              disabled={!isInvoiceActionAllowed("send_reminder", invoice.status)}
                               onClick={() =>
                                 manageMutation.mutate({
                                   invoiceId: invoice.id,
                                   action: "send_reminder",
+                                  currentStatus: invoice.status,
                                 })
                               }
                             >
                               <Mail className="mr-2 h-4 w-4" />
                               Send Reminder
                             </DropdownMenuItem>
-                            {invoice.status === "failed" && (
+                            {isInvoiceActionAllowed("retry_charge", invoice.status) && (
                               <DropdownMenuItem
                                 onClick={() =>
                                   manageMutation.mutate({
                                     invoiceId: invoice.id,
                                     action: "retry_charge",
+                                    currentStatus: invoice.status,
                                   })
                                 }
                               >

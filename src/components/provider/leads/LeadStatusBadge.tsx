@@ -59,9 +59,12 @@ export function LeadStatusBadge({ status, size = "default" }: LeadStatusBadgePro
   );
 }
 
+import { LEAD_TRANSITIONS } from "@/lib/statusTransitions";
+
 /**
  * Returns the valid status options a provider can manually set,
- * based on the current status. Matches DB trigger rules.
+ * based on the current status. Sourced from the shared transition map
+ * so it stays in sync with the DB trigger (validate_lead_status_transition).
  */
 export function getStatusOptions(currentStatus?: LeadStatus): { value: LeadStatus; label: string }[] {
   // Provider-selectable statuses (excludes system-managed: new, unlocked, expired)
@@ -76,19 +79,6 @@ export function getStatusOptions(currentStatus?: LeadStatus): { value: LeadStatu
 
   if (!currentStatus) return allManual;
 
-  // Filter to only transitions the DB will accept
-  const allowedMap: Record<string, string[]> = {
-    new: ["contacted", "closed"],
-    unlocked: ["contacted", "in_progress", "responding", "converted", "lost", "closed"],
-    contacted: ["in_progress", "responding", "converted", "lost", "closed"],
-    in_progress: ["contacted", "responding", "converted", "lost", "closed"],
-    responding: ["in_progress", "contacted", "converted", "lost", "closed"],
-    converted: ["closed"],
-    lost: ["contacted", "in_progress", "closed"],
-    closed: [],
-    expired: ["closed"],
-  };
-
-  const allowed = allowedMap[currentStatus] || [];
+  const allowed = LEAD_TRANSITIONS[currentStatus] ?? [];
   return allManual.filter(o => allowed.includes(o.value));
 }
