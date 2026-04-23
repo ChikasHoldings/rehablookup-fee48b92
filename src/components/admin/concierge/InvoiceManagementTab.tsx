@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  isInvoiceActionAllowed,
+  explainInvoiceActionBlock,
+  type InvoiceAction,
+} from "@/lib/statusTransitions";
 import { format } from "date-fns";
 import {
   Card,
@@ -163,12 +168,18 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
       action,
       reason,
       newAmount,
+      currentStatus,
     }: {
       invoiceId: string;
-      action: "waive" | "override" | "mark_paid" | "send_reminder" | "retry_charge";
+      action: InvoiceAction;
       reason?: string;
       newAmount?: number;
+      currentStatus: string;
     }) => {
+      // Client-side guard mirrors validate_invoice_status_transition + admin-manage-invoice gating.
+      const block = explainInvoiceActionBlock(action, currentStatus);
+      if (block) throw new Error(block);
+
       const response = await supabase.functions.invoke("admin-manage-invoice", {
         body: { invoiceId, action, reason, newAmount },
       });
