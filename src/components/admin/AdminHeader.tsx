@@ -477,7 +477,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-80 bg-background" align="end">
+            <DropdownMenuContent className="w-[calc(100vw-1rem)] max-w-sm sm:w-80 bg-background" align="end" sideOffset={8}>
               <div className="flex items-center justify-between px-4 py-3 border-b">
                 <h3 className="font-semibold">Notifications</h3>
                 <div className="flex items-center gap-2">
