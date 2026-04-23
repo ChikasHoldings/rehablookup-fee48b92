@@ -18,8 +18,18 @@ import { Loader2 } from "lucide-react";
  * This eliminates "Center Not Found" dead-ends from any stale internal links,
  * inbound backlinks, or indexed pages still pointing at the legacy URL pattern.
  */
-const TreatmentCenterProfile = () => {
-  const { slug } = useParams<{ slug: string }>();
+interface TreatmentCenterProfileProps {
+  /**
+   * Optional override for the URL param. Defaults to the `:slug` route param,
+   * but callers (e.g. StatePage handling stale `/rehab-centers/{uuid}` links)
+   * can pass an explicit value when their route uses a different param name.
+   */
+  paramOverride?: string;
+}
+
+const TreatmentCenterProfile = ({ paramOverride }: TreatmentCenterProfileProps = {}) => {
+  const { slug: routeSlug } = useParams<{ slug: string }>();
+  const slug = paramOverride ?? routeSlug;
   const [resolvedSlug, setResolvedSlug] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
 
