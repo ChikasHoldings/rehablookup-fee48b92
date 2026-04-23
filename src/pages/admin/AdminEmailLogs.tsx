@@ -58,7 +58,7 @@ export default function AdminEmailLogs() {
   });
 
   // Main data query - deduplicated by email_id (latest per email_id)
-  const { data: rawLogs = [], isLoading, refetch } = useQuery({
+  const { data: rawLogs = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ["email-logs", timeRange, statusFilter, typeFilter, searchQuery, page],
     queryFn: async () => {
       let query = supabase
@@ -265,15 +265,43 @@ export default function AdminEmailLogs() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <TableRow key={`sk-${i}`}>
+                      <TableCell><div className="h-4 w-24 rounded bg-muted animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-40 rounded bg-muted animate-pulse" /></TableCell>
+                      <TableCell><div className="h-5 w-16 rounded-full bg-muted animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-32 rounded bg-muted animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-48 rounded bg-muted animate-pulse" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : isError ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      Loading email logs…
+                    <TableCell colSpan={5} className="py-10">
+                      <div className="flex flex-col items-center gap-3 text-center">
+                        <XCircle className="h-8 w-8 text-destructive/70" />
+                        <div>
+                          <p className="font-medium text-sm">Couldn't load email logs</p>
+                          <p className="text-xs text-muted-foreground mt-1 max-w-md">
+                            {(error as Error)?.message || "Something went wrong fetching the data."}
+                          </p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => refetch()} className="gap-1.5">
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          Try again
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : logs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      No emails found matching filters
+                    <TableCell colSpan={5} className="py-10">
+                      <div className="flex flex-col items-center gap-2 text-center">
+                        <Mail className="h-8 w-8 text-muted-foreground/40" />
+                        <p className="text-sm font-medium">No emails found</p>
+                        <p className="text-xs text-muted-foreground max-w-sm">
+                          Try widening the time range or clearing filters to see results.
+                        </p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
