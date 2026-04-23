@@ -519,9 +519,11 @@ Deno.serve(async (req) => {
       const url = `${SUPABASE_URL}/functions/v1/${probe.fn}`;
       ctx.request = { kind: "http", method: "POST", target: url, body: probe.body };
 
+      const acceptedKeywords = keywordsFor(probe);
+
       // Builds a failure message that always includes WHY it failed plus the
-      // exact missing field, request body, and response body so a developer
-      // can diagnose without re-running the suite.
+      // exact missing field, accepted keyword set, request body, and response
+      // body so a developer can diagnose without re-running the suite.
       const fail = (
         reason: string,
         observed: { status?: number | null; body?: unknown } = {},
@@ -534,6 +536,7 @@ Deno.serve(async (req) => {
             status: probe.expectStatus,
             errorCode: probe.expectCode,
             missingField: probe.expectField,
+            acceptedKeywords,
           },
           observed: {
             status: observed.status ?? null,
@@ -632,10 +635,14 @@ Deno.serve(async (req) => {
         });
       }
 
-      // 5. error.message must name the specific missing field.
-      if (!message.toLowerCase().includes(probe.expectField.toLowerCase())) {
+      // 5. error.message must contain at least one accepted keyword for the
+      //    field. The per-action keyword map (FIELD_KEYWORDS) tolerates copy
+      //    variants like "inquiryId" / "inquiry_id" / "inquiry id".
+      const lowerMsg = message.toLowerCase();
+      const matched = acceptedKeywords.some((k) => lowerMsg.includes(k));
+      if (!matched) {
         fail(
-          `error.message did not name the missing field "${probe.expectField}"`,
+          `error.message did not name field "${probe.expectField}" — none of [${acceptedKeywords.join(", ")}] found`,
           { status: res.status, body: parsedBody },
         );
       }
