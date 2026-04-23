@@ -576,8 +576,10 @@ export function SingleQuestionFlow({
               )}
             </Button>
             
-            <p className="text-xs text-muted-foreground text-center">
-              🔒 Your information is confidential and protected
+            <p className="text-[11px] sm:text-xs text-muted-foreground text-center leading-relaxed px-1">
+              By submitting, you agree to be contacted by{facilityName ? ` ${facilityName}` : " the selected treatment center"} via phone, SMS, or email about treatment options. Message &amp; data rates may apply. Your information is confidential — see our{" "}
+              <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Privacy Policy</a>{" "}and{" "}
+              <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Terms</a>.
             </p>
           </div>
         );
