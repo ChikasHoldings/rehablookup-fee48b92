@@ -103,28 +103,27 @@ Deno.serve(async (req) => {
     }
 
     const { leadId, facilityId, paymentMethod = 'credits' } = await req.json();
-    
-    // UUID validation
+
+    // Per-field validation so smoke tests / clients can pinpoint the missing input.
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!leadId || !uuidRegex.test(leadId)) {
-      return new Response(JSON.stringify({ error: "Invalid lead ID format", requestId }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!leadId) {
+      return jsonError("MISSING_FIELD_LEAD_ID", "leadId is required", 400, corsHeaders, { requestId });
     }
-    if (!facilityId || !uuidRegex.test(facilityId)) {
-      return new Response(JSON.stringify({ error: "Invalid facility ID format", requestId }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!uuidRegex.test(leadId)) {
+      return jsonError("INVALID_LEAD_ID", "Invalid leadId format", 400, corsHeaders, { requestId });
+    }
+    if (!facilityId) {
+      return jsonError("MISSING_FIELD_FACILITY_ID", "facilityId is required", 400, corsHeaders, { requestId });
+    }
+    if (!uuidRegex.test(facilityId)) {
+      return jsonError("INVALID_FACILITY_ID", "Invalid facilityId format", 400, corsHeaders, { requestId });
     }
 
     // Validate payment method against whitelist
     const ALLOWED_PAYMENT_METHODS = ['credits', 'stripe'];
     if (!ALLOWED_PAYMENT_METHODS.includes(paymentMethod)) {
       logStep(requestId, "Invalid payment method", { paymentMethod });
-      return new Response(JSON.stringify({ error: "Invalid payment method", requestId }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("INVALID_PAYMENT_METHOD", "Invalid payment method", 400, corsHeaders, { requestId });
     }
     
     logStep(requestId, "Processing unlock request", { leadId, facilityId, paymentMethod });
