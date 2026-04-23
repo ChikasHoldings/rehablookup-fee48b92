@@ -6269,6 +6269,23 @@ export type Database = {
         Args: { p_provider_id: string }
         Returns: number
       }
+      get_provider_facility_placements: {
+        Args: { p_facility_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          level_of_care: string
+          placed_facility_id: string
+          placement_confirmed: boolean
+          placement_confirmed_at: string
+          provider_fee_cents: number
+          provider_fee_status: string
+          provider_fee_type: string
+          status: string
+          updated_at: string
+          user_name: string
+        }[]
+      }
       get_provider_safe_inquiries: {
         Args: { p_facility_id: string }
         Returns: {
