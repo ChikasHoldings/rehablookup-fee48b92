@@ -35,9 +35,14 @@ function html({ urlPath, title, metaTitle, metaDescription, h1, content, breadcr
   <meta property="og:description" content="${sd}">
   <meta property="og:url" content="${canonical}">
   <meta property="og:site_name" content="RehabLookup">
+  <meta property="og:image" content="${BASE_URL}/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${st}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${st}">
   <meta name="twitter:description" content="${sd}">
+  <meta name="twitter:image" content="${BASE_URL}/og-image.jpg">
   <link rel="icon" type="image/png" href="/favicon.png">
   ${bcSchema}
   ${faqSchema}

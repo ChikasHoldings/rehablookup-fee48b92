@@ -281,9 +281,14 @@ function generatePage({ urlPath, title, metaTitle, metaDescription, h1, content,
   <meta property="og:description" content="${safeDesc}">
   <meta property="og:url" content="${canonical}">
   <meta property="og:site_name" content="RehabLookup">
+  <meta property="og:image" content="https://rehablookup.com/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${safeTitle}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="twitter:description" content="${safeDesc}">
+  <meta name="twitter:image" content="https://rehablookup.com/og-image.jpg">
   <link rel="icon" type="image/png" href="/favicon.png">
   ${breadcrumbSchema ? `<script type="application/ld+json">${breadcrumbSchema}</script>` : ""}
   ${sdScripts}
