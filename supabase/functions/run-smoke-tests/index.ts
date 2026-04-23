@@ -48,6 +48,62 @@ const ILLEGAL_PROBES: Array<{ from: string; to: string }> = [
   { from: "completed", to: "closed" }, // out of terminal
 ];
 
+// Required-field probes: each call to a transition edge function MUST fail
+// with a clear, user-facing error when a required field is missing.
+// We assert on the error message so a regression in copy fails loudly.
+type RequiredFieldProbe = {
+  name: string;
+  fn: "confirm-placement" | "admin-manage-invoice";
+  body: Record<string, unknown>;
+  /** Substring(s) the error message must contain (case-insensitive). */
+  expect: string[];
+};
+const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
+  {
+    name: "confirm-placement: missing inquiryId",
+    fn: "confirm-placement",
+    body: { facilityId: "00000000-0000-0000-0000-000000000000", confirmationType: "admin" },
+    expect: ["required"],
+  },
+  {
+    name: "confirm-placement: missing facilityId",
+    fn: "confirm-placement",
+    body: { inquiryId: "00000000-0000-0000-0000-000000000000", confirmationType: "admin" },
+    expect: ["required"],
+  },
+  {
+    name: "confirm-placement: missing confirmationType",
+    fn: "confirm-placement",
+    body: {
+      inquiryId: "00000000-0000-0000-0000-000000000000",
+      facilityId: "00000000-0000-0000-0000-000000000000",
+    },
+    expect: ["required"],
+  },
+  {
+    name: "admin-manage-invoice: missing invoiceId",
+    fn: "admin-manage-invoice",
+    body: { action: "waive", reason: "smoke test reason" },
+    expect: ["required"],
+  },
+  {
+    name: "admin-manage-invoice: waive without reason",
+    fn: "admin-manage-invoice",
+    body: { invoiceId: "00000000-0000-0000-0000-000000000000", action: "waive" },
+    expect: ["reason"],
+  },
+  {
+    name: "admin-manage-invoice: override without amount",
+    fn: "admin-manage-invoice",
+    body: {
+      invoiceId: "00000000-0000-0000-0000-000000000000",
+      action: "override",
+      reason: "smoke test reason",
+    },
+    expect: ["amount", "required"],
+  },
+];
+
 async function timed<T>(name: string, fn: () => Promise<T>): Promise<StepResult & { value?: T }> {
   const t0 = performance.now();
   try {
@@ -221,6 +277,49 @@ Deno.serve(async (req) => {
         throw new Error(`Trigger did NOT reject illegal transition ${probe.from} → ${probe.to}`);
       }
       return updateErr.message;
+    });
+    results.push(step);
+  }
+
+  // ---- 4. Required-field probes ------------------------------------------
+  // Each MUST fail with an error message that names the missing field clearly.
+  // We invoke as the seeded test admin to exercise real auth + validation.
+  const testAdminToken = signIn.session?.access_token;
+  for (const probe of REQUIRED_FIELD_PROBES) {
+    const step = await timed(`required-field: ${probe.name}`, async () => {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/${probe.fn}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${testAdminToken}`,
+          apikey: ANON_KEY,
+        },
+        body: JSON.stringify(probe.body),
+      });
+      const text = await res.text();
+
+      if (res.ok) {
+        throw new Error(`Expected failure but got HTTP ${res.status}: ${text.slice(0, 200)}`);
+      }
+
+      // Parse error message — fall back to raw text if non-JSON.
+      let message = text;
+      try {
+        const parsed = JSON.parse(text);
+        message = String(parsed.error ?? parsed.message ?? text);
+      } catch {
+        // keep raw text
+      }
+
+      const lower = message.toLowerCase();
+      const matched = probe.expect.some((kw) => lower.includes(kw.toLowerCase()));
+      if (!matched) {
+        throw new Error(
+          `Error message did not mention any of [${probe.expect.join(", ")}]. ` +
+            `Got: "${message.slice(0, 200)}"`,
+        );
+      }
+      return `HTTP ${res.status}: ${message.slice(0, 120)}`;
     });
     results.push(step);
   }
