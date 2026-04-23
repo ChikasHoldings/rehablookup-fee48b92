@@ -392,6 +392,12 @@ const Contact = () => {
                           </>
                         )}
                       </Button>
+
+                      <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                        By submitting, you agree to our{" "}
+                        <Link to="/privacy-policy" className="underline hover:text-foreground">Privacy Policy</Link>{" "}and{" "}
+                        <Link to="/terms-of-service" className="underline hover:text-foreground">Terms</Link>. We'll only use your information to respond to your inquiry.
+                      </p>
                     </form>
                   )}
                 </div>
