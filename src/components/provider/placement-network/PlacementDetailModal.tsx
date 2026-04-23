@@ -209,61 +209,56 @@ export function PlacementDetailModal({
   const hasAccepted = isAccepted || isPlaced;
   const displayName = piiUnlocked ? (inquiry?.user_name || "Client") : hasAccepted ? (inquiry?.user_name?.split(" ")[0] || "Client") : "Anonymized Client";
 
-  // Fetch full inquiry details (only clinical/preference data)
-  const { data: fullInquiry } = useQuery({
-    queryKey: ["placement-detail", introduction?.inquiry_id],
+  // Fetch full inquiry details via SECURITY DEFINER RPC.
+  // The RPC verifies the caller owns a facility introduced to this inquiry,
+  // returns only safe clinical/preference fields, and gates PII on disclosure.
+  const { data: disclosedInquiry } = useQuery({
+    queryKey: ["placement-detail-rpc", introduction?.inquiry_id, facilityId],
     queryFn: async () => {
       if (!introduction?.inquiry_id) return null;
       const { data, error } = await supabase
-        .from("concierge_inquiries")
-        .select(`
-          id, level_of_care, payment_type, timeline_urgency, preferred_state,
-          preferred_city, status, age_range, gender, primary_concern, insurance_carrier,
-          detox_needed, co_occurring_concerns, substance_use_duration, budget_range,
-          seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at,
-          placed_facility_id, preferred_language, preferred_environment,
-          faith_based_preference, holistic_interest, mobility_needs, substance_use_frequency,
-          prior_treatment_history, prior_treatment_notes, current_medications,
-          current_living_situation, assessment_preference, amenity_preferences, created_at
-        `)
-        .eq("id", introduction.inquiry_id)
-        .maybeSingle();
+        .rpc("get_disclosed_inquiry_for_provider", { p_inquiry_id: introduction.inquiry_id });
       if (error) throw error;
-      return data;
+      return (data && data[0]) || null;
     },
     enabled: open && !!introduction?.inquiry_id,
     staleTime: 60000,
   });
 
-  // ── PII Query: only fetch client contact details when PII is unlocked ──
-  const piiDisclosureLogged = useRef(false);
-  const { data: seekerPii } = useQuery({
-    queryKey: ["placement-pii", introduction?.inquiry_id, facilityId],
-    queryFn: async () => {
-      if (!introduction?.inquiry_id) return null;
-      const { data, error } = await supabase
-        .from("concierge_inquiries")
-        .select(`
-          user_name, user_email, user_phone, insurance_carrier,
-          insurance_member_id, insurance_group_number,
-          emergency_contact_name, emergency_contact_phone,
-          decision_maker_name, decision_maker_phone,
-          relationship_to_seeker, level_of_care, primary_concern,
-          detox_needed, co_occurring_concerns, substance_use_duration,
-          substance_use_frequency, prior_treatment_history, prior_treatment_notes,
-          current_medications, current_living_situation, budget_range,
-          timeline_urgency, notes
-        `)
-        .eq("id", introduction.inquiry_id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-    enabled: open && !!introduction?.inquiry_id && piiUnlocked,
-    staleTime: 60000,
-  });
+  // Clinical/preference projection (always safe for an introduced provider)
+  const fullInquiry = disclosedInquiry;
+
+  // PII projection (server returns nulls when not disclosed; pii_unlocked flag confirms)
+  const seekerPii = disclosedInquiry?.pii_unlocked ? {
+    user_name: disclosedInquiry.user_name,
+    user_email: disclosedInquiry.user_email,
+    user_phone: disclosedInquiry.user_phone,
+    insurance_carrier: disclosedInquiry.insurance_carrier,
+    insurance_member_id: disclosedInquiry.insurance_member_id,
+    insurance_group_number: disclosedInquiry.insurance_group_number,
+    emergency_contact_name: disclosedInquiry.emergency_contact_name,
+    emergency_contact_phone: disclosedInquiry.emergency_contact_phone,
+    decision_maker_name: disclosedInquiry.decision_maker_name,
+    decision_maker_phone: disclosedInquiry.decision_maker_phone,
+    relationship_to_seeker: null,
+    level_of_care: disclosedInquiry.level_of_care,
+    primary_concern: disclosedInquiry.primary_concern,
+    detox_needed: disclosedInquiry.detox_needed,
+    co_occurring_concerns: disclosedInquiry.co_occurring_concerns,
+    substance_use_duration: disclosedInquiry.substance_use_duration,
+    substance_use_frequency: disclosedInquiry.substance_use_frequency,
+    prior_treatment_history: disclosedInquiry.prior_treatment_history,
+    prior_treatment_notes: disclosedInquiry.prior_treatment_notes,
+    current_medications: disclosedInquiry.current_medications,
+    current_living_situation: disclosedInquiry.current_living_situation,
+    budget_range: disclosedInquiry.budget_range,
+    timeline_urgency: disclosedInquiry.timeline_urgency,
+    notes: disclosedInquiry.notes,
+  } : null;
 
   // Log PII disclosure event once per modal open
+  const piiDisclosureLogged = useRef(false);
+
   useEffect(() => {
     if (!piiUnlocked || !seekerPii || piiDisclosureLogged.current || !introduction?.inquiry_id) return;
     piiDisclosureLogged.current = true;

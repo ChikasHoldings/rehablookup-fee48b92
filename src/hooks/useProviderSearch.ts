@@ -60,14 +60,24 @@ export function useProviderSearch(query: string, facilityId?: string) {
     queryKey: ["provider-search-placements", facilityId],
     queryFn: async () => {
       if (!facilityId) return [];
-      const { data, error } = await supabase
-        .from("concierge_introductions")
-        .select("id, inquiry_id, provider_response, created_at, concierge_inquiries(user_name, status, level_of_care)")
-        .eq("facility_id", facilityId)
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (error) throw error;
-      return data || [];
+      // Provider RLS no longer permits row-level reads of concierge_inquiries.
+      // Fetch introductions and enrich with safe inquiry fields via RPC.
+      const [introsRes, safeRes] = await Promise.all([
+        supabase
+          .from("concierge_introductions")
+          .select("id, inquiry_id, provider_response, created_at")
+          .eq("facility_id", facilityId)
+          .order("created_at", { ascending: false })
+          .limit(50),
+        supabase.rpc("get_provider_safe_inquiries", { p_facility_id: facilityId }),
+      ]);
+      if (introsRes.error) throw introsRes.error;
+      if (safeRes.error) throw safeRes.error;
+      const inquiryMap = new Map((safeRes.data || []).map((i: any) => [i.id, i]));
+      return (introsRes.data || []).map((intro: any) => ({
+        ...intro,
+        concierge_inquiries: inquiryMap.get(intro.inquiry_id) || null,
+      }));
     },
     enabled: !!facilityId,
     staleTime: 60 * 1000,

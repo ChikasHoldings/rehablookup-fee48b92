@@ -6024,6 +6024,46 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      admin_get_facility_admin_fields: {
+        Args: { p_facility_id: string }
+        Returns: {
+          admin_notes: string
+          bonus_leads: number
+          calculated_ranking_score: number
+          featured_display_order: number
+          featured_pinned: boolean
+          last_featured_shown_at: string
+          lead_limit_override: number
+          listing_completeness_score: number
+          profile_reminder_count: number
+          profile_reminder_sent_at: string
+          response_rate_score: number
+        }[]
+      }
+      admin_get_inquiry_internals: {
+        Args: { p_inquiry_id: string }
+        Returns: {
+          abandoned_cart_email_sent_at: string
+          admin_matched_facility_ids: string[]
+          admin_notes: string
+          checkout_session_id: string
+          idempotency_key: string
+          introductions_sent_at: string
+          introductions_sent_count: number
+          match_count: number
+          match_scores: Json
+          matched_facility_ids: string[]
+          payment_amount_cents: number
+          payment_reminder_count: number
+          provider_fee_cents: number
+          provider_fee_status: string
+          provider_fee_type: string
+          provider_invoice_id: string
+          stripe_customer_id: string
+          stripe_payment_intent_id: string
+          suicide_history: string
+        }[]
+      }
       assess_login_risk: {
         Args: {
           p_browser?: string
@@ -6117,6 +6157,55 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_disclosed_inquiry_for_provider: {
+        Args: { p_inquiry_id: string }
+        Returns: {
+          age_range: string
+          amenity_preferences: Json
+          assessment_preference: string
+          budget_range: string
+          co_occurring_concerns: Json
+          created_at: string
+          current_living_situation: string
+          current_medications: string
+          decision_maker_name: string
+          decision_maker_phone: string
+          detox_needed: string
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          faith_based_preference: string
+          gender: string
+          holistic_interest: boolean
+          id: string
+          insurance_carrier: string
+          insurance_group_number: string
+          insurance_member_id: string
+          level_of_care: string
+          mobility_needs: string
+          notes: string
+          payment_type: string
+          pii_unlocked: boolean
+          placed_facility_id: string
+          placement_confirmed: boolean
+          placement_confirmed_at: string
+          preferred_city: string
+          preferred_environment: string
+          preferred_language: string
+          preferred_state: string
+          primary_concern: string
+          prior_treatment_history: boolean
+          prior_treatment_notes: string
+          seeker_confirmed: boolean
+          seeker_confirmed_at: string
+          status: string
+          substance_use_duration: string
+          substance_use_frequency: string
+          timeline_urgency: string
+          user_email: string
+          user_name: string
+          user_phone: string
+        }[]
+      }
       get_facility_leads_count: {
         Args: { p_facility_id: string }
         Returns: {
@@ -6125,6 +6214,16 @@ export type Database = {
         }[]
       }
       get_lead_score_label: { Args: { p_score: number }; Returns: string }
+      get_my_inquiry_billing: {
+        Args: { p_inquiry_id: string }
+        Returns: {
+          checkout_session_id: string
+          payment_amount_cents: number
+          payment_status: string
+          payment_type: string
+          stripe_payment_intent_id: string
+        }[]
+      }
       get_owner_facility_data: {
         Args: { p_user_id: string }
         Returns: {
@@ -6169,6 +6268,23 @@ export type Database = {
       get_provider_credit_balance: {
         Args: { p_provider_id: string }
         Returns: number
+      }
+      get_provider_facility_placements: {
+        Args: { p_facility_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          level_of_care: string
+          placed_facility_id: string
+          placement_confirmed: boolean
+          placement_confirmed_at: string
+          provider_fee_cents: number
+          provider_fee_status: string
+          provider_fee_type: string
+          status: string
+          updated_at: string
+          user_name: string
+        }[]
       }
       get_provider_safe_inquiries: {
         Args: { p_facility_id: string }
