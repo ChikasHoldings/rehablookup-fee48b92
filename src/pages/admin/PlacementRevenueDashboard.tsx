@@ -64,7 +64,7 @@ const COLORS = {
 
 export default function PlacementRevenueDashboard() {
   // Fetch all placement invoices
-  const { data: invoices, isLoading: invoicesLoading } = useQuery({
+  const { data: invoices, isLoading: invoicesLoading, isError: invoicesError, error: invoicesErr, refetch: refetchInvoices } = useQuery({
     queryKey: ["admin-placement-invoices"],
     queryFn: async () => {
       const { data, error } = await supabase
