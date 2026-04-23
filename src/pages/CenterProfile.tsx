@@ -294,7 +294,7 @@ const CenterProfile = () => {
     };
   }, [slug, queryClient]);
 
-  const { data: facility, isLoading, error } = useQuery({
+  const { data: facility, isLoading, isFetching, isFetched, error } = useQuery({
     queryKey: ["facility", slug, currentUserId],
     queryFn: async (): Promise<FacilityData | null> => {
       // 1) Public read via the anon-safe view (excludes PII like email/user_id)
