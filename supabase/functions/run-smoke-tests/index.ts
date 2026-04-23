@@ -79,22 +79,65 @@ const ILLEGAL_PROBES: Array<{ from: string; to: string }> = [
 // with the expected HTTP status AND a structured error envelope:
 //   { error: { code: string, message: string }, ...extras }
 // We assert on the envelope shape, the status code, the error.code, and that
-// error.message names the missing field.
+// error.message contains AT LEAST ONE keyword from a per-action keyword map.
+//
+// The keyword map exists so minor copy edits ("inquiryId is required" vs
+// "Missing inquiry_id" vs "Provide an inquiry id") don't break the suite —
+// we just need confidence that the message names the correct field.
+type EdgeFn =
+  | "confirm-placement"
+  | "admin-manage-invoice"
+  | "charge-placement-fee"
+  | "unlock-lead"
+  | "send-concierge-introduction"
+  | "respond-international-case";
+
+/**
+ * Per-action keyword map. Each entry lists acceptable substrings (case-
+ * insensitive); error.message must contain at least one. Add synonyms here
+ * whenever a function's copy evolves so the suite stays resilient to wording
+ * changes without losing field-level assertion strength.
+ */
+const FIELD_KEYWORDS: Record<EdgeFn, Record<string, string[]>> = {
+  "confirm-placement": {
+    inquiryId:        ["inquiryid", "inquiry_id", "inquiry id"],
+    facilityId:       ["facilityid", "facility_id", "facility id"],
+    confirmationType: ["confirmationtype", "confirmation_type", "confirmation type"],
+  },
+  "admin-manage-invoice": {
+    invoiceId: ["invoiceid", "invoice_id", "invoice id"],
+    reason:    ["reason"],
+    amount:    ["amount", "newamount", "new_amount", "new amount"],
+  },
+  "charge-placement-fee": {
+    inquiryId:  ["inquiryid", "inquiry_id", "inquiry id"],
+    facilityId: ["facilityid", "facility_id", "facility id"],
+  },
+  "unlock-lead": {
+    leadId:     ["leadid", "lead_id", "lead id"],
+    facilityId: ["facilityid", "facility_id", "facility id"],
+  },
+  "send-concierge-introduction": {
+    inquiryId:      ["inquiryid", "inquiry_id", "inquiry id"],
+    facilityId:     ["facilityid", "facility_id", "facility id"],
+    introductionId: ["introductionid", "introduction_id", "introduction id"],
+  },
+  "respond-international-case": {
+    action:  ["action"],
+    matchId: ["matchid", "match_id", "match id"],
+  },
+};
+
 type RequiredFieldProbe = {
   name: string;
-  fn:
-    | "confirm-placement"
-    | "admin-manage-invoice"
-    | "charge-placement-fee"
-    | "unlock-lead"
-    | "send-concierge-introduction"
-    | "respond-international-case";
+  fn: EdgeFn;
   body: Record<string, unknown>;
   /** Expected HTTP status (validation errors should be 4xx, typically 400). */
   expectStatus: number;
   /** Exact `error.code` the function must return. */
   expectCode: string;
-  /** Field name that MUST appear (case-insensitive) in error.message. */
+  /** Logical field name; resolved against FIELD_KEYWORDS[fn] to a list of
+   *  acceptable substrings. error.message must contain at least one. */
   expectField: string;
 };
 const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
@@ -239,6 +282,14 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
     expectField: "matchId",
   },
 ];
+
+/** Resolve the keyword list for a probe; falls back to the literal field name. */
+function keywordsFor(probe: RequiredFieldProbe): string[] {
+  const map = FIELD_KEYWORDS[probe.fn];
+  const list = map?.[probe.expectField];
+  if (list && list.length > 0) return list.map((k) => k.toLowerCase());
+  return [probe.expectField.toLowerCase()];
+}
 
 type StepCtx = { request?: RequestInfo; response?: ResponseInfo };
 
