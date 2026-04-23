@@ -213,23 +213,23 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
   return (
     <>
     <header className="sticky top-0 z-50 bg-primary border-b border-white/10 shadow-md">
-      <div className="h-16 md:h-[72px] max-w-[1800px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="h-14 sm:h-16 md:h-[72px] max-w-[1800px] mx-auto px-2.5 sm:px-4 md:px-6 flex items-center justify-between gap-1.5 sm:gap-3 md:gap-4 min-w-0">
         {/* Left - Logo */}
-        <div className="flex items-center shrink-0">
-          <img 
-            src={logoDarkBg} 
-            alt="RehabLookup" 
+        <div className="flex items-center shrink-0 min-w-0">
+          <img
+            src={logoDarkBg}
+            alt="RehabLookup"
             className="h-6 sm:h-7 md:h-8 w-auto"
           />
         </div>
 
         {/* Center - Search (Desktop) */}
-        <div className="hidden lg:flex flex-1 max-w-md">
+        <div className="hidden lg:flex flex-1 max-w-md min-w-0">
           <ProviderSearchCommand facilityId={facilityId} />
         </div>
 
         {/* Right - Actions */}
-        <div className="flex items-center gap-1 sm:gap-1.5">
+        <div className="flex items-center gap-0.5 sm:gap-1 md:gap-1.5 shrink-0 min-w-0">
 
           {/* Mobile Search Toggle */}
           <Button
