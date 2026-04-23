@@ -376,6 +376,32 @@ Deno.serve(async (req) => {
     const step = await timed(`required-field: ${probe.name}`, async (ctx) => {
       const url = `${SUPABASE_URL}/functions/v1/${probe.fn}`;
       ctx.request = { kind: "http", method: "POST", target: url, body: probe.body };
+
+      // Builds a failure message that always includes WHY it failed plus the
+      // exact missing field, request body, and response body so a developer
+      // can diagnose without re-running the suite.
+      const fail = (
+        reason: string,
+        observed: { status?: number | null; body?: unknown } = {},
+      ): never => {
+        const diag = {
+          reason,
+          probe: probe.name,
+          fn: probe.fn,
+          expected: {
+            status: probe.expectStatus,
+            errorCode: probe.expectCode,
+            missingField: probe.expectField,
+          },
+          observed: {
+            status: observed.status ?? null,
+            body: observed.body ?? null,
+          },
+          requestBody: probe.body,
+        };
+        throw new Error(`${reason}\n${JSON.stringify(diag, null, 2)}`);
+      };
+
       const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -388,12 +414,12 @@ Deno.serve(async (req) => {
       const text = await res.text();
       const contentType = res.headers.get("content-type") ?? "";
 
-      // 1. Response MUST be JSON. Non-JSON responses are a contract violation.
+      // 1. Response MUST be JSON.
       if (!contentType.toLowerCase().includes("application/json")) {
         ctx.response = { status: res.status, body: text };
-        throw new Error(
-          `Expected JSON response (Content-Type: application/json), got "${contentType}". ` +
-            `Body: "${text.slice(0, 200)}"`,
+        fail(
+          `Expected JSON response (Content-Type: application/json), got "${contentType}"`,
+          { status: res.status, body: text },
         );
       }
 
@@ -402,65 +428,73 @@ Deno.serve(async (req) => {
         parsedBody = JSON.parse(text);
       } catch (parseErr) {
         ctx.response = { status: res.status, body: text };
-        throw new Error(
-          `Response body was not valid JSON: ${(parseErr as Error).message}. ` +
-            `Body: "${text.slice(0, 200)}"`,
-        );
+        fail(`Response body was not valid JSON: ${(parseErr as Error).message}`, {
+          status: res.status,
+          body: text,
+        });
       }
       ctx.response = { status: res.status, body: parsedBody };
 
       if (res.ok) {
-        throw new Error(`Expected failure but got HTTP ${res.status}: ${text.slice(0, 200)}`);
+        fail(`Expected failure but got HTTP ${res.status}`, {
+          status: res.status,
+          body: parsedBody,
+        });
       }
 
-      // 2. Assert HTTP status code matches expectation.
+      // 2. HTTP status must match expectation.
       if (res.status !== probe.expectStatus) {
-        throw new Error(
-          `Expected HTTP ${probe.expectStatus}, got HTTP ${res.status}. ` +
-            `Body: "${text.slice(0, 200)}"`,
-        );
+        fail(`Expected HTTP ${probe.expectStatus}, got HTTP ${res.status}`, {
+          status: res.status,
+          body: parsedBody,
+        });
       }
 
-      // 3. Assert envelope shape: { error: { code, message } }.
+      // 3. Envelope shape: { error: { code, message } }.
       if (typeof parsedBody !== "object" || parsedBody === null) {
-        throw new Error(`Expected JSON object envelope, got: ${typeof parsedBody}`);
+        fail(`Expected JSON object envelope, got: ${typeof parsedBody}`, {
+          status: res.status,
+          body: parsedBody,
+        });
       }
       const envelope = parsedBody as Record<string, unknown>;
       const errObj = envelope.error;
       if (typeof errObj !== "object" || errObj === null) {
-        throw new Error(
-          `Envelope missing "error" object. Found keys: [${Object.keys(envelope).join(", ")}]. ` +
-            `Body: "${text.slice(0, 200)}"`,
+        fail(
+          `Envelope missing "error" object. Found keys: [${Object.keys(envelope).join(", ")}]`,
+          { status: res.status, body: parsedBody },
         );
       }
       const errRec = errObj as Record<string, unknown>;
       if (typeof errRec.code !== "string" || errRec.code.length === 0) {
-        throw new Error(
-          `Envelope missing string "error.code". Found: ${JSON.stringify(errRec).slice(0, 200)}`,
-        );
+        fail(`Envelope missing string "error.code"`, {
+          status: res.status,
+          body: parsedBody,
+        });
       }
       if (typeof errRec.message !== "string" || errRec.message.length === 0) {
-        throw new Error(
-          `Envelope missing string "error.message". Found: ${JSON.stringify(errRec).slice(0, 200)}`,
-        );
+        fail(`Envelope missing string "error.message"`, {
+          status: res.status,
+          body: parsedBody,
+        });
       }
 
-      const code = errRec.code;
-      const message = errRec.message;
+      const code = errRec.code as string;
+      const message = errRec.message as string;
 
-      // 4. Assert exact error.code.
+      // 4. Exact error.code match.
       if (code !== probe.expectCode) {
-        throw new Error(
-          `Expected error.code="${probe.expectCode}", got "${code}". ` +
-            `Message: "${message.slice(0, 200)}"`,
-        );
+        fail(`Expected error.code="${probe.expectCode}", got "${code}"`, {
+          status: res.status,
+          body: parsedBody,
+        });
       }
 
-      // 5. Assert error.message names the specific missing field.
+      // 5. error.message must name the specific missing field.
       if (!message.toLowerCase().includes(probe.expectField.toLowerCase())) {
-        throw new Error(
-          `error.message did not name the missing field "${probe.expectField}". ` +
-            `Got: "${message.slice(0, 200)}"`,
+        fail(
+          `error.message did not name the missing field "${probe.expectField}"`,
+          { status: res.status, body: parsedBody },
         );
       }
 
