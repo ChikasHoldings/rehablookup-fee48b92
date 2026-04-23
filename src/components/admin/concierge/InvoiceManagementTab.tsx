@@ -216,6 +216,7 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
       invoiceId: selectedInvoice.id,
       action: "waive",
       reason: waiveReason,
+      currentStatus: selectedInvoice.status,
     });
   };
 
@@ -227,6 +228,7 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
       action: "override",
       reason: overrideReason,
       newAmount: amountCents,
+      currentStatus: selectedInvoice.status,
     });
   };
 
@@ -388,10 +390,12 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
+                              disabled={!isInvoiceActionAllowed("mark_paid", invoice.status)}
                               onClick={() =>
                                 manageMutation.mutate({
                                   invoiceId: invoice.id,
                                   action: "mark_paid",
+                                  currentStatus: invoice.status,
                                 })
                               }
                             >
@@ -399,22 +403,25 @@ export function InvoiceManagementTab({ caseData }: InvoiceManagementTabProps) {
                               Mark as Paid
                             </DropdownMenuItem>
                             <DropdownMenuItem
+                              disabled={!isInvoiceActionAllowed("send_reminder", invoice.status)}
                               onClick={() =>
                                 manageMutation.mutate({
                                   invoiceId: invoice.id,
                                   action: "send_reminder",
+                                  currentStatus: invoice.status,
                                 })
                               }
                             >
                               <Mail className="mr-2 h-4 w-4" />
                               Send Reminder
                             </DropdownMenuItem>
-                            {invoice.status === "failed" && (
+                            {isInvoiceActionAllowed("retry_charge", invoice.status) && (
                               <DropdownMenuItem
                                 onClick={() =>
                                   manageMutation.mutate({
                                     invoiceId: invoice.id,
                                     action: "retry_charge",
+                                    currentStatus: invoice.status,
                                   })
                                 }
                               >
