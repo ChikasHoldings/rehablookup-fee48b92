@@ -2,7 +2,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
-import { ApiError, jsonError } from "../_shared/validation.ts";
+import { jsonError } from "../_shared/validation.ts";
 
 // Version tracking for deployment verification
 const VERSION = "2.1.0";
