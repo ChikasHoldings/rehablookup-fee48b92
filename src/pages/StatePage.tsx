@@ -149,18 +149,18 @@ const StatePage = () => {
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
   // Recover gracefully from stale `/rehab-centers/{uuid}` links: if the slug
-  // is a UUID matching a known facility, redirect to its canonical profile.
-  const uuidMatch = useMemo(() => {
-    if (!stateSlug || !UUID_RE.test(stateSlug)) return null;
-    return approvedFacilities.find((f: any) => f.id === stateSlug) || null;
-  }, [stateSlug, approvedFacilities]);
+  // looks like a UUID, hand off to the legacy resolver, which performs an
+  // authoritative DB lookup (by id) and redirects to /center/{slug}. This
+  // matches the behavior of the dedicated /treatment-centers/{slug} route
+  // and avoids race conditions with the static facility cache.
+  const isUuidParam = !!stateSlug && UUID_RE.test(stateSlug);
 
   const stateCenters = useMemo(() => {
     if (!stateData) return [];
     const stateNameLower = stateData.name.toLowerCase();
     const stateAbbrevLower = stateData.abbreviation.toLowerCase();
-    
-    return approvedFacilities.filter(center => 
+
+    return approvedFacilities.filter(center =>
       center.state.toLowerCase() === stateNameLower ||
       center.state.toLowerCase() === stateAbbrevLower
     ).sort((a, b) => {
@@ -168,12 +168,12 @@ const StatePage = () => {
       const aPro = (a as any).isPro ? 1 : 0;
       const bPro = (b as any).isPro ? 1 : 0;
       if (bPro !== aPro) return bPro - aPro;
-      
+
       // Then by calculated ranking score
       const aScore = (a as any).calculatedRankingScore || 0;
       const bScore = (b as any).calculatedRankingScore || 0;
       if (bScore !== aScore) return bScore - aScore;
-      
+
       // Fallback to name
       return a.name.localeCompare(b.name);
     });
@@ -185,9 +185,21 @@ const StatePage = () => {
   const stateFAQs = stateData ? getStateFAQs(stateData.name, stateData.abbreviation, stateData.cities.length, stateCenters.length) : [];
   const displayedCities = showAllCities ? stateData?.cities : stateData?.cities.slice(0, 12);
 
-  // Redirect stale `/rehab-centers/{uuid}` links to canonical /center/{slug}
-  if (uuidMatch?.slug) {
-    return <Navigate to={`/center/${uuidMatch.slug}`} replace />;
+  // UUID in the slot → delegate to the legacy resolver (DB-backed redirect).
+  if (isUuidParam) {
+    return (
+      <Suspense
+        fallback={
+          <Layout>
+            <div className="min-h-[60vh] flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          </Layout>
+        }
+      >
+        <TreatmentCenterProfile />
+      </Suspense>
+    );
   }
 
   if (!stateData) {
