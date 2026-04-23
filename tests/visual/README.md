@@ -72,3 +72,25 @@ actually rendered:
 
 A failed snapshot can therefore only mean a real visual regression — never
 a routing mismatch or a half-mounted page.
+
+## Canonical URL regression suite
+
+`canonical-urls.spec.ts` runs alongside the visual suite and asserts, for
+every key public route at every viewport, that the page emits:
+
+1. Exactly one `<link rel="canonical">`
+2. Exactly one `<meta property="og:url">`
+3. Both URLs equal `https://rehablookup.com{path}` (no trailing slash on
+   non-root paths, no query string, no hash)
+4. The canonical does not change when the viewport is resized mid-session
+
+Run it the same way as the visual suite:
+
+```bash
+npm run dev                                       # terminal 1
+npx playwright test canonical-urls.spec.ts        # terminal 2
+```
+
+Because each viewport project asserts the canonical matches the *same*
+constant string, cross-viewport consistency is proven by construction —
+any drift between 320 / 768 / 1024 will fail the corresponding project.
