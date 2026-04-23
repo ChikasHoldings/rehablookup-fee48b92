@@ -197,7 +197,7 @@ const StatePage = () => {
           </Layout>
         }
       >
-        <TreatmentCenterProfile />
+        <TreatmentCenterProfile paramOverride={stateSlug} />
       </Suspense>
     );
   }
