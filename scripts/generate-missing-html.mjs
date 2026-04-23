@@ -13,12 +13,14 @@ let count = 0;
 
 function escHtml(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
-function html({ urlPath, title, metaTitle, metaDescription, h1, content, breadcrumbs }) {
+function html({ urlPath, title, metaTitle, metaDescription, h1, content, breadcrumbs, faqs }) {
   const canonical = `${BASE_URL}${urlPath}`;
   const st = escHtml(metaTitle || title);
   const sd = escHtml(metaDescription);
   const bcHtml = breadcrumbs ? breadcrumbs.map((b,i) => `<li><a href="${b.url}">${escHtml(b.name)}</a>${i<breadcrumbs.length-1?" &rsaquo; ":""}</li>`).join("") : "";
   const bcSchema = breadcrumbs ? `<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":"BreadcrumbList",itemListElement:breadcrumbs.map((b,i)=>({"@type":"ListItem",position:i+1,name:b.name,item:`${BASE_URL}${b.url}`}))})}</script>` : "";
+  const faqSchema = (faqs && faqs.length) ? `<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":"FAQPage",mainEntity:faqs.map(f=>({"@type":"Question",name:f.q,acceptedAnswer:{"@type":"Answer",text:f.a}}))})}</script>` : "";
+  const faqHtml = (faqs && faqs.length) ? `<section aria-labelledby="faq-heading"><h2 id="faq-heading">Frequently Asked Questions</h2>${faqs.map(f=>`<article><h3>${escHtml(f.q)}</h3><p>${escHtml(f.a)}</p></article>`).join("")}</section>` : "";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
