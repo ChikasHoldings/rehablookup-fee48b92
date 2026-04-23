@@ -6166,6 +6166,32 @@ export type Database = {
         Args: { p_provider_id: string }
         Returns: number
       }
+      get_provider_safe_inquiries: {
+        Args: { p_facility_id: string }
+        Returns: {
+          age_range: string
+          budget_range: string
+          co_occurring_concerns: Json
+          detox_needed: string
+          gender: string
+          id: string
+          insurance_carrier: string
+          level_of_care: string
+          payment_type: string
+          placed_facility_id: string
+          placement_confirmed: boolean
+          placement_confirmed_at: string
+          preferred_city: string
+          preferred_state: string
+          primary_concern: string
+          seeker_confirmed: boolean
+          seeker_confirmed_at: string
+          status: string
+          substance_use_duration: string
+          timeline_urgency: string
+          user_name: string
+        }[]
+      }
       get_public_facility_data: {
         Args: { facility_id: string }
         Returns: {
