@@ -207,14 +207,14 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
 
   return (
     <header className="sticky top-0 z-50 bg-primary border-b border-white/10 shadow-md">
-      <div className="h-14 sm:h-16 md:h-[72px] max-w-[1800px] mx-auto px-3 sm:px-4 md:px-6 flex items-center justify-between gap-3 sm:gap-4">
+      <div className="h-14 sm:h-16 md:h-[72px] max-w-[1800px] mx-auto px-2.5 sm:px-4 md:px-6 flex items-center justify-between gap-1.5 sm:gap-3 md:gap-4 min-w-0">
         {/* Left - Logo */}
-        <div className="flex items-center shrink-0">
-          <Link to="/" className="flex items-center">
-            <img 
-              src={logoDarkBg} 
-              alt="RehabLookup" 
-              className="h-7 sm:h-8 md:h-9 w-auto"
+        <div className="flex items-center shrink-0 min-w-0">
+          <Link to="/" className="flex items-center" aria-label="RehabLookup home">
+            <img
+              src={logoDarkBg}
+              alt="RehabLookup"
+              className="h-6 sm:h-7 md:h-9 w-auto"
             />
           </Link>
         </div>
@@ -316,7 +316,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
         </nav>
 
         {/* Right - Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-0.5 sm:gap-1.5 md:gap-2 shrink-0 min-w-0">
           {/* Mobile Search Toggle */}
           <Button
             variant="ghost"
@@ -426,18 +426,18 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="gap-0 text-white hover:text-white hover:bg-white/15 h-9 sm:h-10 p-1 sm:px-1.5 rounded-xl transition-all duration-200 active:scale-[0.98]"
+                <Button
+                  variant="ghost"
+                  className="gap-0 text-white hover:text-white hover:bg-white/15 h-9 sm:h-10 p-0.5 sm:p-1 sm:px-1.5 rounded-xl transition-all duration-200 active:scale-[0.98] shrink-0"
                   aria-label="User menu"
                 >
-                  <div className="flex items-center gap-2 bg-white/10 rounded-lg px-2 py-1">
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-white/10 rounded-lg px-1.5 py-1 sm:px-2">
                     <div className="relative shrink-0">
                       <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-2 ring-white/30">
                         {avatarUrl ? (
-                          <AvatarImage 
-                            src={avatarUrl} 
-                            alt={userName || "User"} 
+                          <AvatarImage
+                            src={avatarUrl}
+                            alt={userName || "User"}
                             className="object-cover"
                           />
                         ) : null}
@@ -447,7 +447,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                       </Avatar>
                       <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success border-2 border-primary" />
                     </div>
-                    <div className="hidden md:flex flex-col items-start">
+                    <div className="hidden md:flex flex-col items-start min-w-0">
                       <span className="text-sm font-semibold text-white leading-tight max-w-[100px] truncate">
                         {userName || "User"}
                       </span>
