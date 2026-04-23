@@ -23,6 +23,17 @@ const isValidISODate = (str: string): boolean => {
 };
 
 /**
+ * Structured error so callers (and the smoke test runner) get a stable
+ * `{ error: { code, message } }` envelope instead of free-form strings.
+ */
+class ApiError extends Error {
+  constructor(public code: string, message: string, public httpStatus = 400) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+/**
  * The DB trigger `validate_concierge_status_transition` enforces sequential transitions.
  * To go from e.g. `presented_to_seeker` → `admitted` we must step through each intermediate status.
  * This map defines the canonical path to `admitted`.
