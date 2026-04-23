@@ -17,12 +17,39 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+type RequestInfo = {
+  kind: "http" | "db";
+  /** Method or DB verb (POST, UPDATE, INSERT, DELETE, SELECT). */
+  method: string;
+  /** URL or `${schema}.${table}`. */
+  target: string;
+  /** Body sent with the request (HTTP) or row payload (DB). */
+  body?: unknown;
+  /** Filter / WHERE clause for DB ops. */
+  filter?: Record<string, unknown>;
+};
+
+type ResponseInfo = {
+  /** HTTP status code (HTTP) or null (DB ops without status). */
+  status?: number | null;
+  /** Parsed body, raw text, or returned row(s). */
+  body?: unknown;
+  /** Postgres error code if a DB op failed. */
+  code?: string | null;
+};
+
 type StepResult = {
   name: string;
   ok: boolean;
   durationMs: number;
   detail?: string;
   error?: string;
+  /** Captured request payload for diagnostics. */
+  request?: RequestInfo;
+  /** Captured response payload for diagnostics. */
+  response?: ResponseInfo;
+  /** JS stack trace when the step threw. */
+  stack?: string;
 };
 
 // Full happy path through validate_concierge_status_transition.
@@ -104,14 +131,36 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
   },
 ];
 
-async function timed<T>(name: string, fn: () => Promise<T>): Promise<StepResult & { value?: T }> {
+type StepCtx = { request?: RequestInfo; response?: ResponseInfo };
+
+async function timed<T>(
+  name: string,
+  fn: (ctx: StepCtx) => Promise<T>,
+): Promise<StepResult & { value?: T }> {
   const t0 = performance.now();
+  const ctx: StepCtx = {};
   try {
-    const value = await fn();
-    return { name, ok: true, durationMs: Math.round(performance.now() - t0), value };
+    const value = await fn(ctx);
+    return {
+      name,
+      ok: true,
+      durationMs: Math.round(performance.now() - t0),
+      value,
+      request: ctx.request,
+      response: ctx.response,
+    };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    return { name, ok: false, durationMs: Math.round(performance.now() - t0), error: message };
+    const stack = e instanceof Error ? e.stack : undefined;
+    return {
+      name,
+      ok: false,
+      durationMs: Math.round(performance.now() - t0),
+      error: message,
+      stack,
+      request: ctx.request,
+      response: ctx.response,
+    };
   }
 }
 
@@ -206,19 +255,22 @@ Deno.serve(async (req) => {
   let inquiryId: string | null = null;
 
   // ---- 1. Setup ----------------------------------------------------------
-  const setup = await timed("setup: create ephemeral inquiry", async () => {
+  const setup = await timed("setup: create ephemeral inquiry", async (ctx) => {
     const tag = `smoke-${crypto.randomUUID()}`;
+    const payload = {
+      user_name: tag,
+      user_email: `${tag}@smoke.test`,
+      user_phone: "+15555550100",
+      status: "intake_submitted",
+      admin_notes: "AUTOMATED SMOKE TEST — safe to delete",
+    };
+    ctx.request = { kind: "db", method: "INSERT", target: "public.concierge_inquiries", body: payload };
     const { data, error } = await admin
       .from("concierge_inquiries")
-      .insert({
-        user_name: tag,
-        user_email: `${tag}@smoke.test`,
-        user_phone: "+15555550100",
-        status: "intake_submitted",
-        admin_notes: "AUTOMATED SMOKE TEST — safe to delete",
-      })
+      .insert(payload)
       .select("id")
       .single();
+    ctx.response = { status: null, body: data, code: error?.code ?? null };
     if (error) throw new Error(error.message);
     return data.id as string;
   });
@@ -230,7 +282,14 @@ Deno.serve(async (req) => {
 
   // ---- 2. Walk the happy path as the test admin --------------------------
   for (const [from, to] of HAPPY_PATH) {
-    const step = await timed(`transition: ${from} → ${to}`, async () => {
+    const step = await timed(`transition: ${from} → ${to}`, async (ctx) => {
+      ctx.request = {
+        kind: "db",
+        method: "UPDATE",
+        target: "public.concierge_inquiries",
+        body: { status: to },
+        filter: { id: inquiryId, status: from },
+      };
       const { data, error } = await testAdminClient
         .from("concierge_inquiries")
         .update({ status: to })
@@ -238,6 +297,7 @@ Deno.serve(async (req) => {
         .eq("status", from)
         .select("status")
         .single();
+      ctx.response = { status: null, body: data, code: error?.code ?? null };
       if (error) throw new Error(error.message);
       if (!data || data.status !== to) {
         throw new Error(`Expected status=${to}, got=${data?.status ?? "null"}`);
@@ -250,7 +310,7 @@ Deno.serve(async (req) => {
 
   // ---- 3. Negative probes (each must throw) ------------------------------
   for (const probe of ILLEGAL_PROBES) {
-    const step = await timed(`reject: ${probe.from} → ${probe.to}`, async () => {
+    const step = await timed(`reject: ${probe.from} → ${probe.to}`, async (ctx) => {
       // Force the row into the source state via service role (bypasses trigger
       // would re-fire) — but the trigger fires on UPDATE regardless of role.
       // Instead, create a sibling row pinned at probe.from.
@@ -265,10 +325,18 @@ Deno.serve(async (req) => {
       });
       if (insertErr) throw new Error(`Probe seed failed: ${insertErr.message}`);
 
+      ctx.request = {
+        kind: "db",
+        method: "UPDATE",
+        target: "public.concierge_inquiries",
+        body: { status: probe.to },
+        filter: { id: probeId },
+      };
       const { error: updateErr } = await testAdminClient
         .from("concierge_inquiries")
         .update({ status: probe.to })
         .eq("id", probeId);
+      ctx.response = { status: null, body: updateErr?.message ?? null, code: updateErr?.code ?? null };
 
       // Cleanup the probe row regardless of outcome.
       await admin.from("concierge_inquiries").delete().eq("id", probeId);
@@ -286,8 +354,10 @@ Deno.serve(async (req) => {
   // We invoke as the seeded test admin to exercise real auth + validation.
   const testAdminToken = signIn.session?.access_token;
   for (const probe of REQUIRED_FIELD_PROBES) {
-    const step = await timed(`required-field: ${probe.name}`, async () => {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/${probe.fn}`, {
+    const step = await timed(`required-field: ${probe.name}`, async (ctx) => {
+      const url = `${SUPABASE_URL}/functions/v1/${probe.fn}`;
+      ctx.request = { kind: "http", method: "POST", target: url, body: probe.body };
+      const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -298,18 +368,24 @@ Deno.serve(async (req) => {
       });
       const text = await res.text();
 
+      // Parse body — keep raw text on failure.
+      let parsedBody: unknown = text;
+      try {
+        parsedBody = JSON.parse(text);
+      } catch {
+        // keep raw
+      }
+      ctx.response = { status: res.status, body: parsedBody };
+
       if (res.ok) {
         throw new Error(`Expected failure but got HTTP ${res.status}: ${text.slice(0, 200)}`);
       }
 
-      // Parse error message — fall back to raw text if non-JSON.
-      let message = text;
-      try {
-        const parsed = JSON.parse(text);
-        message = String(parsed.error ?? parsed.message ?? text);
-      } catch {
-        // keep raw text
-      }
+      const message =
+        typeof parsedBody === "object" && parsedBody !== null
+          ? String((parsedBody as Record<string, unknown>).error ??
+              (parsedBody as Record<string, unknown>).message ?? text)
+          : text;
 
       const lower = message.toLowerCase();
       const matched = probe.expect.some((kw) => lower.includes(kw.toLowerCase()));
@@ -334,8 +410,15 @@ async function finalize(
 ): Promise<Response> {
   // Teardown: always attempt to delete the ephemeral inquiry.
   if (inquiryId) {
-    const teardown = await timed("teardown: delete ephemeral inquiry", async () => {
+    const teardown = await timed("teardown: delete ephemeral inquiry", async (ctx) => {
+      ctx.request = {
+        kind: "db",
+        method: "DELETE",
+        target: "public.concierge_inquiries",
+        filter: { id: inquiryId },
+      };
       const { error } = await admin.from("concierge_inquiries").delete().eq("id", inquiryId);
+      ctx.response = { status: null, body: null, code: error?.code ?? null };
       if (error) throw new Error(error.message);
       return "deleted";
     });
