@@ -139,23 +139,15 @@ export const CLOSED_STAGE: StageConfig = {
   key: "closed", label: "Closed", shortLabel: "Closed", description: "Case closed", icon: XCircle, color: "border-t-muted-foreground", badgeColor: "bg-muted text-muted-foreground border-border", nextAction: "Closed", actionOwner: "system", tabTarget: "overview",
 };
 
-/** Valid forward transitions */
-export const VALID_TRANSITIONS: Record<PlacementStage, PlacementStage[]> = {
-  pending_intake: ["intake_submitted", "closed"],
-  intake_submitted: ["intake_reviewed", "closed"],
-  intake_reviewed: ["advisor_assigned", "closed"],
-  advisor_assigned: ["matching_providers", "closed"],
-  matching_providers: ["provider_prequalification", "closed"],
-  provider_prequalification: ["providers_accepted", "closed"],
-  providers_accepted: ["presented_to_seeker", "closed"],
-  presented_to_seeker: ["seeker_selected", "closed"],
-  seeker_selected: ["admission_in_progress", "closed"],
-  admission_in_progress: ["admitted", "closed"],
-  admitted: ["billed", "closed"],
-  billed: ["completed"],
-  completed: [],
-  closed: [],
-};
+/**
+ * Valid forward transitions.
+ *
+ * Sourced from the central status-transition module so the UI map stays
+ * in sync with the DB trigger (validate_concierge_status_transition).
+ */
+import { CONCIERGE_TRANSITIONS } from "@/lib/statusTransitions";
+export const VALID_TRANSITIONS: Record<PlacementStage, PlacementStage[]> =
+  CONCIERGE_TRANSITIONS as Record<PlacementStage, PlacementStage[]>;
 
 export function getNextStage(current: PlacementStage): PlacementStage | null {
   const allowed = VALID_TRANSITIONS[current];

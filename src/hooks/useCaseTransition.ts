@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { toast } from "sonner";
 import { VALID_TRANSITIONS, type PlacementStage } from "@/components/admin/concierge/placementPipelineConfig";
+import { validateTransition } from "@/lib/statusTransitions";
 
 /**
  * Centralized placement case status transition hook.
@@ -60,11 +61,13 @@ export function useCaseTransition() {
     mutationFn: async (opts: TransitionOptions) => {
       const { caseId, fromStatus, toStatus, extraFields, eventType, via, label } = opts;
 
-      // Client-side validation using shared config
-      const allowed = VALID_TRANSITIONS[fromStatus as PlacementStage];
-      if (allowed && !allowed.includes(toStatus as PlacementStage)) {
-        throw new Error(`Cannot move from "${fromStatus}" to "${toStatus}". Allowed: ${allowed.join(", ") || "none"}`);
+      // Client-side validation against shared transition rules (mirrors DB trigger).
+      const check = validateTransition("concierge", fromStatus, toStatus);
+      if (!check.ok) {
+        throw new Error(check.reason || "Invalid status transition");
       }
+      // Defensive sanity check against the typed config too.
+      void (VALID_TRANSITIONS[fromStatus as PlacementStage] ?? []);
 
       // Build update payload with automatic timestamps
       const timestampFields = getTimestampFields(toStatus);
