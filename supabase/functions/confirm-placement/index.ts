@@ -88,15 +88,16 @@ Deno.serve(async (req) => {
       inquiryId: string; facilityId: string; confirmationType: string; admittedAt?: string; isInternational?: boolean;
     };
 
-    if (!inquiryId || !facilityId || !confirmationType) {
-      throw new Error("Inquiry ID, Facility ID, and confirmation type are required");
-    }
-    if (!isValidUUID(inquiryId)) throw new Error("Invalid inquiry ID format");
-    if (!isValidUUID(facilityId)) throw new Error("Invalid facility ID format");
+    // Per-field validation so callers (and smoke tests) can pinpoint the missing input.
+    if (!inquiryId) throw new Error("inquiryId is required");
+    if (!facilityId) throw new Error("facilityId is required");
+    if (!confirmationType) throw new Error("confirmationType is required");
+    if (!isValidUUID(inquiryId)) throw new Error("Invalid inquiryId format");
+    if (!isValidUUID(facilityId)) throw new Error("Invalid facilityId format");
 
     const validConfirmationTypes = ["admin", "admin_confirm", "placement_confirm"];
     if (!validConfirmationTypes.includes(confirmationType)) {
-      throw new Error("Invalid confirmation type");
+      throw new Error("Invalid confirmationType");
     }
     if (admittedAt && !isValidISODate(admittedAt)) {
       throw new Error("Invalid admitted date format");
