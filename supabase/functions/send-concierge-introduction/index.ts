@@ -374,9 +374,6 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep(requestId, "ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage, requestId, _version: VERSION }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return apiErrorResponse(error, corsHeaders, { requestId, _version: VERSION });
   }
 });
