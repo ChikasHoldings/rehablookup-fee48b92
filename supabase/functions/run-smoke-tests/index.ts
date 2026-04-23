@@ -354,8 +354,10 @@ Deno.serve(async (req) => {
   // We invoke as the seeded test admin to exercise real auth + validation.
   const testAdminToken = signIn.session?.access_token;
   for (const probe of REQUIRED_FIELD_PROBES) {
-    const step = await timed(`required-field: ${probe.name}`, async () => {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/${probe.fn}`, {
+    const step = await timed(`required-field: ${probe.name}`, async (ctx) => {
+      const url = `${SUPABASE_URL}/functions/v1/${probe.fn}`;
+      ctx.request = { kind: "http", method: "POST", target: url, body: probe.body };
+      const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -366,18 +368,24 @@ Deno.serve(async (req) => {
       });
       const text = await res.text();
 
+      // Parse body — keep raw text on failure.
+      let parsedBody: unknown = text;
+      try {
+        parsedBody = JSON.parse(text);
+      } catch {
+        // keep raw
+      }
+      ctx.response = { status: res.status, body: parsedBody };
+
       if (res.ok) {
         throw new Error(`Expected failure but got HTTP ${res.status}: ${text.slice(0, 200)}`);
       }
 
-      // Parse error message — fall back to raw text if non-JSON.
-      let message = text;
-      try {
-        const parsed = JSON.parse(text);
-        message = String(parsed.error ?? parsed.message ?? text);
-      } catch {
-        // keep raw text
-      }
+      const message =
+        typeof parsedBody === "object" && parsedBody !== null
+          ? String((parsedBody as Record<string, unknown>).error ??
+              (parsedBody as Record<string, unknown>).message ?? text)
+          : text;
 
       const lower = message.toLowerCase();
       const matched = probe.expect.some((kw) => lower.includes(kw.toLowerCase()));
