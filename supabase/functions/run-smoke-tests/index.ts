@@ -76,27 +76,36 @@ const ILLEGAL_PROBES: Array<{ from: string; to: string }> = [
 ];
 
 // Required-field probes: each call to a transition edge function MUST fail
-// with a clear, user-facing error when a required field is missing.
-// We assert on the error message so a regression in copy fails loudly.
+// with the expected HTTP status AND an error message that names the specific
+// missing field (not just the generic word "required"). This catches both
+// regressions in validation logic and regressions in error copy clarity.
 type RequiredFieldProbe = {
   name: string;
   fn: "confirm-placement" | "admin-manage-invoice";
   body: Record<string, unknown>;
-  /** Substring(s) the error message must contain (case-insensitive). */
-  expect: string[];
+  /** Expected HTTP status (validation errors should be 4xx, typically 400). */
+  expectStatus: number;
+  /** Field name that MUST appear (case-insensitive) in the error message. */
+  expectField: string;
+  /** Additional substring(s) that must also appear (case-insensitive). */
+  expectAlso?: string[];
 };
 const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
   {
     name: "confirm-placement: missing inquiryId",
     fn: "confirm-placement",
     body: { facilityId: "00000000-0000-0000-0000-000000000000", confirmationType: "admin" },
-    expect: ["required"],
+    expectStatus: 400,
+    expectField: "inquiryId",
+    expectAlso: ["required"],
   },
   {
     name: "confirm-placement: missing facilityId",
     fn: "confirm-placement",
     body: { inquiryId: "00000000-0000-0000-0000-000000000000", confirmationType: "admin" },
-    expect: ["required"],
+    expectStatus: 400,
+    expectField: "facilityId",
+    expectAlso: ["required"],
   },
   {
     name: "confirm-placement: missing confirmationType",
@@ -105,19 +114,25 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
       inquiryId: "00000000-0000-0000-0000-000000000000",
       facilityId: "00000000-0000-0000-0000-000000000000",
     },
-    expect: ["required"],
+    expectStatus: 400,
+    expectField: "confirmationType",
+    expectAlso: ["required"],
   },
   {
     name: "admin-manage-invoice: missing invoiceId",
     fn: "admin-manage-invoice",
     body: { action: "waive", reason: "smoke test reason" },
-    expect: ["required"],
+    expectStatus: 400,
+    expectField: "invoiceId",
+    expectAlso: ["required"],
   },
   {
     name: "admin-manage-invoice: waive without reason",
     fn: "admin-manage-invoice",
     body: { invoiceId: "00000000-0000-0000-0000-000000000000", action: "waive" },
-    expect: ["reason"],
+    expectStatus: 400,
+    expectField: "reason",
+    expectAlso: ["required"],
   },
   {
     name: "admin-manage-invoice: override without amount",
@@ -127,7 +142,8 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
       action: "override",
       reason: "smoke test reason",
     },
-    expect: ["amount", "required"],
+    expectStatus: 400,
+    expectField: "amount",
   },
 ];
 
@@ -381,21 +397,41 @@ Deno.serve(async (req) => {
         throw new Error(`Expected failure but got HTTP ${res.status}: ${text.slice(0, 200)}`);
       }
 
+      // 1. Assert HTTP status code matches expectation.
+      if (res.status !== probe.expectStatus) {
+        throw new Error(
+          `Expected HTTP ${probe.expectStatus}, got HTTP ${res.status}. ` +
+            `Body: "${text.slice(0, 200)}"`,
+        );
+      }
+
       const message =
         typeof parsedBody === "object" && parsedBody !== null
           ? String((parsedBody as Record<string, unknown>).error ??
               (parsedBody as Record<string, unknown>).message ?? text)
           : text;
-
       const lower = message.toLowerCase();
-      const matched = probe.expect.some((kw) => lower.includes(kw.toLowerCase()));
-      if (!matched) {
+
+      // 2. Assert the specific field name appears in the error message.
+      if (!lower.includes(probe.expectField.toLowerCase())) {
         throw new Error(
-          `Error message did not mention any of [${probe.expect.join(", ")}]. ` +
+          `Error message did not name the missing field "${probe.expectField}". ` +
             `Got: "${message.slice(0, 200)}"`,
         );
       }
-      return `HTTP ${res.status}: ${message.slice(0, 120)}`;
+
+      // 3. Assert any additional required substrings (e.g. "required").
+      const missingExtras = (probe.expectAlso ?? []).filter(
+        (kw) => !lower.includes(kw.toLowerCase()),
+      );
+      if (missingExtras.length > 0) {
+        throw new Error(
+          `Error message missing expected substring(s) [${missingExtras.join(", ")}]. ` +
+            `Got: "${message.slice(0, 200)}"`,
+        );
+      }
+
+      return `HTTP ${res.status} · field="${probe.expectField}" · ${message.slice(0, 100)}`;
     });
     results.push(step);
   }

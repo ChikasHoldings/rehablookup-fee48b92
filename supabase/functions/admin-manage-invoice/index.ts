@@ -53,9 +53,8 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { invoiceId, action, reason, newAmount } = body;
 
-    if (!invoiceId || !action) {
-      throw new Error("Invoice ID and action are required");
-    }
+    if (!invoiceId) throw new Error("invoiceId is required");
+    if (!action) throw new Error("action is required");
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (typeof invoiceId !== "string" || !uuidRegex.test(invoiceId)) {
@@ -70,15 +69,15 @@ Deno.serve(async (req) => {
     // Validate newAmount when present
     if (action === "override") {
       if (typeof newAmount !== "number" || !Number.isInteger(newAmount) || newAmount <= 0 || newAmount > 100_000_00) {
-        throw new Error("New amount must be a positive integer of cents (max $100,000)");
+        throw new Error("amount (newAmount) must be a positive integer of cents (max $100,000)");
       }
       if (!reason || typeof reason !== "string" || reason.trim().length < 3) {
-        throw new Error("A reason of at least 3 characters is required");
+        throw new Error("reason is required (at least 3 characters)");
       }
     }
     if (action === "waive") {
       if (!reason || typeof reason !== "string" || reason.trim().length < 3) {
-        throw new Error("A reason of at least 3 characters is required");
+        throw new Error("reason is required (at least 3 characters)");
       }
     }
 
