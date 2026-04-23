@@ -198,11 +198,12 @@ export function usePublicFacilityStaff(facilityId: string | undefined) {
     queryFn: async () => {
       if (!facilityId) return [];
       
+      // SECURITY: Use public_facility_staff view which excludes PII (email/phone)
+      // The base facility_staff table no longer allows anonymous reads.
       const { data, error } = await supabase
-        .from("facility_staff")
-        .select("id, name, job_title, bio, photo_url, email, phone, display_order")
+        .from("public_facility_staff")
+        .select("id, name, job_title, bio, photo_url, display_order")
         .eq("facility_id", facilityId)
-        .eq("is_visible", true)
         .order("display_order", { ascending: true });
 
       if (error) throw error;

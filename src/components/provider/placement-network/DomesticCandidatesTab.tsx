@@ -87,24 +87,28 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
     queryKey: ["placement-introductions", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
-      // PII-safe query: user_name included for first-name display after acceptance
-      // Full PII (email/phone) fetched separately in PlacementDetailModal only when unlocked
-      const { data, error } = await supabase
+      // SECURITY: Provider RLS on concierge_inquiries now requires admin disclosure.
+      // Fetch introductions list, then enrich via the safe RPC for non-PII fields.
+      const { data: intros, error } = await supabase
         .from("concierge_introductions")
         .select(`
           id, facility_id, inquiry_id, created_at,
-          provider_response, provider_responded_at, provider_notes, admin_disclosed_pii_at,
-          concierge_inquiries (
-            id, user_name, level_of_care, payment_type, timeline_urgency, preferred_state,
-            preferred_city, status, age_range, gender, primary_concern, insurance_carrier,
-            detox_needed, co_occurring_concerns, substance_use_duration, budget_range,
-            seeker_confirmed, seeker_confirmed_at, placement_confirmed, placement_confirmed_at, placed_facility_id
-          )
+          provider_response, provider_responded_at, provider_notes, admin_disclosed_pii_at
         `)
         .eq("facility_id", selectedFacility.id)
         .order("created_at", { ascending: false });
       if (error) throw new Error(`Failed to load introductions: ${error.message}`);
-      return (data || []) as Introduction[];
+
+      // Pull non-PII inquiry data for ALL introductions via SECURITY DEFINER RPC
+      const { data: safeInquiries, error: rpcError } = await supabase
+        .rpc("get_provider_safe_inquiries", { p_facility_id: selectedFacility.id });
+      if (rpcError) throw new Error(`Failed to load candidate details: ${rpcError.message}`);
+
+      const inquiryMap = new Map((safeInquiries || []).map((i: any) => [i.id, i]));
+      return (intros || []).map((intro: any) => ({
+        ...intro,
+        concierge_inquiries: inquiryMap.get(intro.inquiry_id) || null,
+      })) as Introduction[];
     },
     enabled: !!selectedFacility?.id,
     staleTime: 30000,

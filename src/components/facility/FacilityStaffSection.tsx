@@ -66,31 +66,8 @@ export function FacilityStaffSection({ facilityId }: FacilityStaffSectionProps) 
               </p>
             )}
 
-            {/* Contact icons */}
-            {(member.email || member.phone) && (
-              <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-border/40 w-full justify-center">
-                {member.email && (
-                  <a
-                    href={`mailto:${member.email}`}
-                    className="p-1.5 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                    title={`Email ${member.name}`}
-                  >
-                    <Mail className="h-3.5 w-3.5" />
-                    <span className="sr-only">Email {member.name}</span>
-                  </a>
-                )}
-                {member.phone && (
-                  <a
-                    href={`tel:${member.phone}`}
-                    className="p-1.5 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                    title={`Call ${member.name}`}
-                  >
-                    <Phone className="h-3.5 w-3.5" />
-                    <span className="sr-only">Call {member.name}</span>
-                  </a>
-                )}
-              </div>
-            )}
+            {/* Contact icons removed: staff PII (email/phone) is no longer
+                exposed publicly. Visitors should contact the facility directly. */}
           </div>
         ))}
       </div>
