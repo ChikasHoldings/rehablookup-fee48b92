@@ -188,6 +188,8 @@ interface OgMeta {
   publishedTime?: string;
   author?: string;
   section?: string;
+  jsonLd?: string;
+  robots?: string;
 }
 
 function buildOgHtml(meta: OgMeta, bodyContent: string): string {
@@ -195,6 +197,7 @@ function buildOgHtml(meta: OgMeta, bodyContent: string): string {
   const safeDesc = escHtml(meta.description).slice(0, 200);
   const safeImage = escHtml(meta.image);
   const safeUrl = escHtml(meta.url);
+  const robotsContent = escHtml(meta.robots || 'index, follow, max-image-preview:large, max-snippet:-1');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -203,7 +206,7 @@ function buildOgHtml(meta: OgMeta, bodyContent: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${safeTitle}</title>
   <meta name="description" content="${safeDesc}">
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+  <meta name="robots" content="${robotsContent}">
   <link rel="canonical" href="${safeUrl}">
 
   <!-- Open Graph / Facebook -->
@@ -228,13 +231,17 @@ function buildOgHtml(meta: OgMeta, bodyContent: string): string {
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="twitter:description" content="${safeDesc}">
   <meta name="twitter:image" content="${safeImage}">
-  <meta name="twitter:image:alt" content="${safeTitle}">
+  <meta name="twitter:image:alt" content="${safeTitle}">${meta.jsonLd ? `
+
+  <script type="application/ld+json">${meta.jsonLd}</script>` : ''}
 
   <style>
     body { font-family: 'Inter', -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px; color: #1B365D; }
     h1 { font-size: 2rem; margin-bottom: 16px; }
+    h2 { font-size: 1.25rem; margin-top: 32px; margin-bottom: 8px; }
     p { line-height: 1.7; color: #333; }
     a { color: #2563eb; }
+    ul { line-height: 1.7; color: #333; }
   </style>
 </head>
 <body>
@@ -247,6 +254,131 @@ function buildOgHtml(meta: OgMeta, bodyContent: string): string {
   </footer>
 </body>
 </html>`;
+}
+
+interface FacilityRow {
+  id: string;
+  name: string;
+  description: string | null;
+  city: string;
+  state: string;
+  address: string | null;
+  zip_code: string | null;
+  phone: string | null;
+  website: string | null;
+  logo_url: string | null;
+  gallery_urls: string[] | null;
+  facility_type: string | null;
+  gender_served: string | null;
+  bed_count: string | null;
+  year_established: number | null;
+  verified: boolean | null;
+  accepts_international_patients: boolean | null;
+}
+
+// Build a fully-crawlable HTML response for a treatment center profile.
+// Includes canonical, OG/Twitter, and MedicalBusiness JSON-LD plus a rich
+// body containing services, insurance, address, and phone — everything
+// Googlebot needs to index the page without executing JS.
+function buildFacilityHtml(
+  path: string,
+  f: FacilityRow,
+  treatments: string[],
+  insurances: string[],
+): string {
+  const url = `${BASE_URL}${path}`;
+  const title = `${f.name} - ${f.city}, ${f.state} | RehabLookup`;
+  const baseDesc = f.description?.trim()
+    ? f.description.trim()
+    : `${f.name} is a ${f.facility_type || 'addiction treatment'} center in ${f.city}, ${f.state}. View services, insurance accepted, contact info, and more.`;
+  const description = baseDesc.slice(0, 200);
+  const image = f.logo_url || (f.gallery_urls && f.gallery_urls[0]) || DEFAULT_OG_IMAGE;
+
+  // JSON-LD: MedicalBusiness is the most accurate type for a treatment center.
+  const jsonLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'MedicalBusiness',
+    name: f.name,
+    description: baseDesc,
+    url,
+    telephone: f.phone || undefined,
+    image: image,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: f.address || undefined,
+      addressLocality: f.city,
+      addressRegion: f.state,
+      postalCode: f.zip_code || undefined,
+      addressCountry: 'US',
+    },
+    medicalSpecialty: 'Addiction Medicine',
+    availableService: treatments.map((t) => ({
+      '@type': 'MedicalProcedure',
+      name: t,
+    })),
+  });
+
+  const treatmentsList = treatments.length
+    ? `<h2>Treatment Programs</h2><ul>${treatments.map((t) => `<li>${escHtml(t)}</li>`).join('')}</ul>`
+    : '';
+  const insuranceList = insurances.length
+    ? `<h2>Insurance Accepted</h2><ul>${insurances.map((i) => `<li>${escHtml(i)}</li>`).join('')}</ul>`
+    : '';
+  const facts: string[] = [];
+  if (f.facility_type) facts.push(`<li><strong>Facility Type:</strong> ${escHtml(f.facility_type)}</li>`);
+  if (f.gender_served) facts.push(`<li><strong>Gender Served:</strong> ${escHtml(f.gender_served)}</li>`);
+  if (f.bed_count) facts.push(`<li><strong>Bed Count:</strong> ${escHtml(f.bed_count)}</li>`);
+  if (f.year_established) facts.push(`<li><strong>Established:</strong> ${f.year_established}</li>`);
+  if (f.verified) facts.push(`<li><strong>Verified Provider</strong></li>`);
+  const factsList = facts.length ? `<h2>About This Center</h2><ul>${facts.join('')}</ul>` : '';
+
+  const fullAddress = [f.address, f.city, f.state, f.zip_code].filter(Boolean).join(', ');
+  const contactBlock = `<h2>Contact</h2>
+    <address style="font-style: normal;">
+      <strong>${escHtml(f.name)}</strong><br>
+      ${fullAddress ? `${escHtml(fullAddress)}<br>` : ''}
+      ${f.phone ? `Phone: <a href="tel:${escHtml(f.phone)}">${escHtml(f.phone)}</a><br>` : ''}
+      ${f.website ? `Website: <a href="${escHtml(f.website)}" rel="nofollow noopener">${escHtml(f.website)}</a>` : ''}
+    </address>`;
+
+  const body = `<h1>${escHtml(f.name)}</h1>
+    <p><strong>${escHtml(f.city)}, ${escHtml(f.state)}</strong></p>
+    <p>${escHtml(baseDesc)}</p>
+    ${factsList}
+    ${treatmentsList}
+    ${insuranceList}
+    ${contactBlock}
+    <p style="margin-top: 32px;"><a href="/rehab-centers">Browse all treatment centers</a></p>`;
+
+  return buildOgHtml(
+    {
+      title,
+      description,
+      image,
+      url,
+      type: 'website',
+      jsonLd,
+    },
+    body,
+  );
+}
+
+// Emits a noindex page for unknown center slugs so Google doesn't bank
+// thin/duplicate URLs while the SPA still renders the friendly 404 UI.
+function buildNotFoundCenterHtml(path: string): string {
+  return buildOgHtml(
+    {
+      title: 'Treatment Center Not Found | RehabLookup',
+      description: 'This treatment center listing is no longer available. Browse our directory of verified addiction treatment centers nationwide.',
+      image: DEFAULT_OG_IMAGE,
+      url: `${BASE_URL}${path}`,
+      type: 'website',
+      robots: 'noindex, follow',
+    },
+    `<h1>Treatment Center Not Found</h1>
+    <p>This listing is no longer available or may have moved.</p>
+    <p><a href="/rehab-centers">Browse all treatment centers</a> or <a href="/">return to homepage</a>.</p>`,
+  );
 }
 
 const DEFAULT_OG_IMAGE = 'https://rehablookup.com/og-image.jpg';
