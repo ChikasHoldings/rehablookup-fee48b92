@@ -836,6 +836,7 @@ function AdmissionContent({ caseData, placedFacility, canManageBilling, onRefres
   caseData: ConciergeInquiry; placedFacility: any; canManageBilling: boolean; onRefresh: () => void;
 }) {
   const queryClient = useQueryClient();
+  const { adminRole } = useAdminAuth();
   const isAdmitted = caseData.admission_status === "admitted" || caseData.placement_confirmed;
   const currentSubstatus = caseData.admission_substatus || "pending";
   const currentSubIdx = ADMISSION_SUBSTAGES.findIndex(s => s.key === currentSubstatus);
