@@ -265,18 +265,28 @@ export default function ConciergeIntake() {
     }
   }, [searchParams, setSearchParams]);
 
-  // Load draft from localStorage
+  // Load draft from localStorage (non-PII fields only, with TTL)
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setFormData(prev => ({ ...prev, ...parsed.data }));
-        if (parsed.savedAt) {
-          setLastSaved(new Date(parsed.savedAt));
+        // Enforce 30-min TTL — older drafts are discarded
+        const savedAtMs = parsed.savedAt ? new Date(parsed.savedAt).getTime() : 0;
+        if (savedAtMs && Date.now() - savedAtMs > DRAFT_TTL_MS) {
+          localStorage.removeItem(STORAGE_KEY);
+        } else if (parsed.data && typeof parsed.data === "object") {
+          // Defense-in-depth: re-pick whitelist on read in case an older
+          // pre-fix payload (with PII) is still in localStorage.
+          const safe = pickPersistableConciergeData(parsed.data as ConciergeIntakeData);
+          setFormData(prev => ({ ...prev, ...safe }));
+          if (parsed.savedAt) {
+            setLastSaved(new Date(parsed.savedAt));
+          }
         }
       } catch (e) {
         console.error("Failed to parse saved draft", e);
+        localStorage.removeItem(STORAGE_KEY);
       }
     }
 
@@ -309,15 +319,30 @@ export default function ConciergeIntake() {
     }
   }, []);
 
-  // Save draft to localStorage on every change
+  // Save draft to localStorage on every change — STRIPS PII via whitelist.
+  // Full intake (incl. PII) is persisted server-side via save-placement-draft.
   useEffect(() => {
     const saveData = {
-      data: formData,
+      data: pickPersistableConciergeData(formData),
       savedAt: new Date().toISOString(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
     setLastSaved(new Date());
   }, [formData]);
+
+  // Belt-and-suspenders: clear the local draft when the tab is closed/hidden
+  // so PII-adjacent selections (state, city, payment type) don't linger.
+  useEffect(() => {
+    const handleUnload = () => {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // ignore — best-effort cleanup
+      }
+    };
+    window.addEventListener("pagehide", handleUnload);
+    return () => window.removeEventListener("pagehide", handleUnload);
+  }, []);
 
   const updateFormData = (updates: Partial<ConciergeIntakeData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
