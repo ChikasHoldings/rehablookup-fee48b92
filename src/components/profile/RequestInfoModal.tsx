@@ -301,6 +301,19 @@ export function RequestInfoModal({
 
   const isPro = facilityPlan === "pro";
 
+  // Defensive normalization — when the parent failed to load center details we
+  // still want the form to render. We treat any missing fields as "unknown"
+  // and (when the facility id is missing) route the lead through the
+  // concierge-style generic intake instead of attaching it to a real record.
+  const safeFacilityId = facility?.id ?? null;
+  const safeFacilityName = facility?.name?.trim() || "the treatment center you selected";
+  const safeCity = facility?.city?.trim() || "";
+  const safeState = facility?.state?.trim() || "";
+  const safeLogoUrl = facility?.logo_url ?? null;
+  const hasFacilityRecord = Boolean(safeFacilityId);
+  const isFacilityDataIncomplete =
+    !facility || !facility.name || !facility.city || !facility.state;
+
   // Reset state when modal closes
   useEffect(() => {
     if (!open) {
@@ -310,49 +323,54 @@ export function RequestInfoModal({
     }
   }, [open]);
 
-  // Fetch lead usage to check capacity
+  // Fetch lead usage to check capacity (only when we actually have a facility id)
   useEffect(() => {
-    if (open) {
-      const fetchLeadUsage = async () => {
-        try {
-          const startOfMonth = new Date();
-          startOfMonth.setDate(1);
-          startOfMonth.setHours(0, 0, 0, 0);
-
-          const { count, error } = await supabase
-            .from("leads")
-            .select("*", { count: "exact", head: true })
-            .eq("facility_id", facility.id)
-            .gte("created_at", startOfMonth.toISOString());
-
-          if (error) throw error;
-
-          const limit = 100;
-          const used = count || 0;
-          setLeadUsage({ used, limit, remaining: Math.max(0, limit - used) });
-        } catch (err) {
-          console.error("Error fetching lead usage:", err);
-        }
-      };
-      fetchLeadUsage();
+    if (!open || !safeFacilityId) {
+      setLeadUsage(null);
+      return;
     }
-  }, [open, facility.id]);
+    const fetchLeadUsage = async () => {
+      try {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { count, error } = await supabase
+          .from("leads")
+          .select("*", { count: "exact", head: true })
+          .eq("facility_id", safeFacilityId)
+          .gte("created_at", startOfMonth.toISOString());
+
+        if (error) throw error;
+
+        const limit = 100;
+        const used = count || 0;
+        setLeadUsage({ used, limit, remaining: Math.max(0, limit - used) });
+      } catch (err) {
+        // Non-fatal — capacity gating is a nice-to-have. The form still works.
+        console.error("Error fetching lead usage:", err);
+      }
+    };
+    fetchLeadUsage();
+  }, [open, safeFacilityId]);
 
   // Track modal open
   useEffect(() => {
-    if (open) {
-      trackAnalyticsEvent("modal_open", facility.id, {
-        facilityName: facility.name,
+    if (open && safeFacilityId) {
+      trackAnalyticsEvent("modal_open", safeFacilityId, {
+        facilityName: safeFacilityName,
         hasPrefill: !!prefillData,
         facilityPlan,
+        facilityDataIncomplete: isFacilityDataIncomplete,
       });
     }
-  }, [open, facility.id, facility.name, prefillData, facilityPlan]);
+  }, [open, safeFacilityId, safeFacilityName, prefillData, facilityPlan, isFacilityDataIncomplete]);
 
   // Fetch nearby facilities when form is submitted (via useEffect, not during render)
   useEffect(() => {
     if (!formSubmitted || isPro || nearbyFacilities.length > 0) return;
-    
+    if (!safeFacilityId || !safeState) return;
+
     let cancelled = false;
     const fetchNearby = async () => {
       setLoadingNearby(true);
@@ -365,16 +383,16 @@ export function RequestInfoModal({
             facility_insurance (insurance_name)
           `)
           .eq("status", "approved")
-          .neq("id", facility.id)
-          .eq("state", facility.state)
+          .neq("id", safeFacilityId)
+          .eq("state", safeState)
           .order("featured", { ascending: false })
           .limit(10);
 
         if (cancelled || error) return;
 
         const sorted = (data || []).sort((a, b) => {
-          if (a.city === facility.city && b.city !== facility.city) return -1;
-          if (b.city === facility.city && a.city !== facility.city) return 1;
+          if (a.city === safeCity && b.city !== safeCity) return -1;
+          if (b.city === safeCity && a.city !== safeCity) return 1;
           if (a.featured && !b.featured) return -1;
           if (b.featured && !a.featured) return 1;
           return 0;
@@ -382,24 +400,27 @@ export function RequestInfoModal({
 
         setNearbyFacilities(sorted.slice(0, 3));
       } catch (err) {
+        // Silent — nearby suggestions are optional.
         console.error("Error fetching nearby facilities:", err);
       } finally {
         if (!cancelled) setLoadingNearby(false);
       }
     };
-    
+
     fetchNearby();
     return () => { cancelled = true; };
-  }, [formSubmitted, isPro, facility.id, facility.city, facility.state]);
+  }, [formSubmitted, isPro, safeFacilityId, safeCity, safeState, nearbyFacilities.length]);
 
   const handleNearbyRequest = (nearbyFacility: NearbyFacility) => {
-    trackAnalyticsEvent("nearby_facility_click", nearbyFacility.id, {
-      fromFacilityId: facility.id,
-      fromFacilityName: facility.name,
-      targetFacilityName: nearbyFacility.name,
-      isFeatured: nearbyFacility.featured,
-    });
-    
+    if (safeFacilityId) {
+      trackAnalyticsEvent("nearby_facility_click", nearbyFacility.id, {
+        fromFacilityId: safeFacilityId,
+        fromFacilityName: safeFacilityName,
+        targetFacilityName: nearbyFacility.name,
+        isFeatured: nearbyFacility.featured,
+      });
+    }
+
     navigate(`/center/${nearbyFacility.slug}`, {
       state: {
         openRequestModal: true,
@@ -410,15 +431,18 @@ export function RequestInfoModal({
   };
 
   const handleConcierge = () => {
-    trackAnalyticsEvent("concierge_conversion", facility.id, {
-      fromFacilityName: facility.name,
-    });
+    if (safeFacilityId) {
+      trackAnalyticsEvent("concierge_conversion", safeFacilityId, {
+        fromFacilityName: safeFacilityName,
+      });
+    }
     navigate("/concierge");
     onOpenChange(false);
   };
 
-  // Check if at capacity (for free tier providers)
-  const isAtCapacity = leadUsage && leadUsage.remaining === 0 && !isPro;
+  // Check if at capacity (for free tier providers) — only meaningful when we
+  // were able to load real lead usage for a real facility.
+  const isAtCapacity = hasFacilityRecord && leadUsage && leadUsage.remaining === 0 && !isPro;
 
   // Custom success handler for the form
   const renderSuccess = ({ firstName }: { firstName: string; facilityName?: string | null }) => {
@@ -426,12 +450,17 @@ export function RequestInfoModal({
     if (!formSubmitted) {
       setTimeout(() => setFormSubmitted(true), 0);
     }
-    
+
     return (
       <ModalSuccessView
         firstName={firstName}
-        facilityName={facility.name}
-        facility={facility}
+        facilityName={safeFacilityName}
+        facility={{
+          id: safeFacilityId ?? "unknown",
+          name: safeFacilityName,
+          city: safeCity,
+          state: safeState,
+        }}
         nearbyFacilities={nearbyFacilities}
         loadingNearby={loadingNearby}
         onClose={() => onOpenChange(false)}
@@ -446,12 +475,12 @@ export function RequestInfoModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="sr-only">
-          <DialogTitle>Request Information from {facility.name}</DialogTitle>
+          <DialogTitle>Request Information from {safeFacilityName}</DialogTitle>
           <DialogDescription>
             Fill out the form to connect with this treatment center
           </DialogDescription>
         </DialogHeader>
-        
+
         {/* Compact Facility Header */}
         <div className="px-6 pr-12 pt-5 pb-3">
           <div className="flex items-start gap-3">
@@ -459,8 +488,8 @@ export function RequestInfoModal({
               "h-10 w-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden",
               isPro ? "bg-gradient-to-br from-amber-100 to-amber-50 border border-amber-200/50" : "bg-muted"
             )}>
-              {facility.logo_url ? (
-                <img src={facility.logo_url} alt={`${facility.name} logo`} className="h-full w-full object-contain p-1" />
+              {safeLogoUrl ? (
+                <img src={safeLogoUrl} alt={`${safeFacilityName} logo`} className="h-full w-full object-contain p-1" />
               ) : (
                 <Building2 className={cn("h-4 w-4", isPro ? "text-amber-600" : "text-muted-foreground")} />
               )}
@@ -468,7 +497,7 @@ export function RequestInfoModal({
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 min-w-0">
-                <h3 className="font-medium text-foreground text-sm truncate flex-1 min-w-0 max-w-[220px] sm:max-w-[320px]" title={facility.name}>{facility.name}</h3>
+                <h3 className="font-medium text-foreground text-sm truncate flex-1 min-w-0 max-w-[220px] sm:max-w-[320px]" title={safeFacilityName}>{safeFacilityName}</h3>
                 {isPro && (
                   <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs px-1.5 py-0.5 shrink-0">
                     <Crown className="h-2.5 w-2.5 mr-0.5" />
@@ -476,23 +505,47 @@ export function RequestInfoModal({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground truncate">{facility.city}, {facility.state}</p>
+              {(safeCity || safeState) ? (
+                <p className="text-xs text-muted-foreground truncate">
+                  {[safeCity, safeState].filter(Boolean).join(", ")}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground truncate">
+                  Location details unavailable
+                </p>
+              )}
             </div>
           </div>
         </div>
-        
+
+        {/* Friendly fallback banner when center details failed to load */}
+        {isFacilityDataIncomplete && (
+          <div className="mx-6 mb-2 rounded-md border border-amber-200/60 bg-amber-50/60 px-3 py-2.5 text-xs text-amber-900">
+            <p className="font-medium">We're having trouble loading this center's details.</p>
+            <p className="mt-0.5 text-amber-800/90">
+              You can still send your information below — our team will match you
+              with the right program and follow up shortly.
+            </p>
+          </div>
+        )}
+
         {/* Content */}
         <div className="px-6 py-4">
           {isAtCapacity ? (
-            <CapacityWarning 
-              facility={facility} 
-              onOpenChange={onOpenChange} 
-              navigate={navigate} 
+            <CapacityWarning
+              facility={{
+                id: safeFacilityId ?? "unknown",
+                name: safeFacilityName,
+                city: safeCity,
+                state: safeState,
+              }}
+              onOpenChange={onOpenChange}
+              navigate={navigate}
             />
           ) : (
-            <LeadIntakeForm 
-              facilityId={facility.id}
-              facilityName={facility.name}
+            <LeadIntakeForm
+              facilityId={safeFacilityId ?? undefined}
+              facilityName={safeFacilityName}
               renderSuccess={renderSuccess}
             />
           )}
