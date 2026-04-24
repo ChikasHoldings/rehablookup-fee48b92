@@ -11,7 +11,18 @@ import { Mail, CheckCircle2, XCircle, AlertTriangle, Clock, Search, RefreshCw, C
 import { format } from "date-fns";
 
 type TimeRange = "24h" | "7d" | "30d" | "all";
-type StatusFilter = "all" | "sent" | "failed" | "suppressed" | "dlq" | "retry";
+type StatusFilter =
+  | "all"
+  | "sent"
+  | "delivered"
+  | "opened"
+  | "clicked"
+  | "bounced"
+  | "complained"
+  | "failed"
+  | "suppressed"
+  | "dlq"
+  | "retry";
 
 const PAGE_SIZE = 50;
 
@@ -27,12 +38,27 @@ function getTimeRangeStart(range: TimeRange): string | null {
 
 function statusBadge(status: string) {
   switch (status) {
-    case "sent": return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200"><CheckCircle2 className="h-3 w-3 mr-1" />Sent</Badge>;
+    case "sent":
+      return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200"><CheckCircle2 className="h-3 w-3 mr-1" />Sent</Badge>;
+    case "delivered":
+      return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200"><CheckCircle2 className="h-3 w-3 mr-1" />Delivered</Badge>;
+    case "opened":
+      return <Badge className="bg-sky-100 text-sky-800 border-sky-200"><Mail className="h-3 w-3 mr-1" />Opened</Badge>;
+    case "clicked":
+      return <Badge className="bg-indigo-100 text-indigo-800 border-indigo-200"><Mail className="h-3 w-3 mr-1" />Clicked</Badge>;
+    case "bounced":
+      return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Bounced</Badge>;
+    case "complained":
+      return <Badge className="bg-rose-100 text-rose-800 border-rose-200"><AlertTriangle className="h-3 w-3 mr-1" />Complained</Badge>;
     case "failed":
-    case "dlq": return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />{status === "dlq" ? "Dead Letter" : "Failed"}</Badge>;
-    case "suppressed": return <Badge className="bg-amber-100 text-amber-800 border-amber-200"><AlertTriangle className="h-3 w-3 mr-1" />Suppressed</Badge>;
-    case "retry": return <Badge className="bg-blue-100 text-blue-800 border-blue-200"><Clock className="h-3 w-3 mr-1" />Retry</Badge>;
-    default: return <Badge variant="outline">{status}</Badge>;
+    case "dlq":
+      return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />{status === "dlq" ? "Dead Letter" : "Failed"}</Badge>;
+    case "suppressed":
+      return <Badge className="bg-amber-100 text-amber-800 border-amber-200"><AlertTriangle className="h-3 w-3 mr-1" />Suppressed</Badge>;
+    case "retry":
+      return <Badge className="bg-blue-100 text-blue-800 border-blue-200"><Clock className="h-3 w-3 mr-1" />Retry</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
   }
 }
 
@@ -215,6 +241,11 @@ export default function AdminEmailLogs() {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="delivered">Delivered</SelectItem>
+                <SelectItem value="opened">Opened</SelectItem>
+                <SelectItem value="clicked">Clicked</SelectItem>
+                <SelectItem value="bounced">Bounced</SelectItem>
+                <SelectItem value="complained">Complained</SelectItem>
                 <SelectItem value="failed">Failed</SelectItem>
                 <SelectItem value="dlq">Dead Letter</SelectItem>
                 <SelectItem value="suppressed">Suppressed</SelectItem>
