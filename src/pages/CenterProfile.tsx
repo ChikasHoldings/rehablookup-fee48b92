@@ -1,4 +1,5 @@
-import { useParams, Link, useLocation, Navigate } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
+import CenterNotFound from "@/pages/CenterNotFound";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
@@ -514,12 +515,12 @@ const CenterProfile = () => {
   // Hard-redirect malformed slugs straight to the directory rather than
   // attempting a DB lookup that will always miss.
   if (slug && !isSlugFormatValid) {
-    return <Navigate to="/rehab-centers" replace />;
+    return <CenterNotFound attemptedSlug={slug} reason="invalid" />;
   }
 
   // Slug looks valid but the query resolved to no row (deleted, suspended,
-  // never existed) — redirect to the directory instead of dead-ending on
-  // a "Center Not Found" page.
+  // never existed) — render the dedicated Center Not Found page with
+  // search-and-retry instead of a silent redirect.
   if (
     isSlugFormatValid &&
     isFetched &&
@@ -527,17 +528,17 @@ const CenterProfile = () => {
     !error &&
     (facility === null || facility === undefined)
   ) {
-    return <Navigate to="/rehab-centers" replace />;
+    return <CenterNotFound attemptedSlug={slug} reason="missing" />;
   }
 
   // Listing exists but isn't publicly approved AND the visitor isn't the
-  // owner — treat as inactive and bounce to the directory.
+  // owner — show the Center Not Found page (inactive variant).
   if (
     facility &&
     facility.status !== "approved" &&
     facility.user_id !== currentUserId
   ) {
-    return <Navigate to="/rehab-centers" replace />;
+    return <CenterNotFound attemptedSlug={slug} reason="inactive" />;
   }
 
   if (!slug || isLoading || isFetching || !isFetched) {
