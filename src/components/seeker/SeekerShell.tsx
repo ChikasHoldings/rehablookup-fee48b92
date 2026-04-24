@@ -114,7 +114,8 @@ export function SeekerShell() {
   const queryClient = useQueryClient();
   const hasRedirected = useRef(false);
 
-  // Fetch seeker profile via React Query (allows invalidation from settings)
+  // Fetch seeker profile once per session.
+  // Cached for the full session — settings page invalidates this key after edits.
   const { data: profile } = useQuery({
     queryKey: ['seeker-profile', userId],
     queryFn: async () => {
@@ -127,9 +128,11 @@ export function SeekerShell() {
       return data as SeekerProfile | null;
     },
     enabled: isReady && !!userId,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    staleTime: Infinity,        // never auto-refetch within session
+    gcTime: Infinity,           // keep in cache across route changes
+    refetchOnMount: false,      // don't refetch on every navigation
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // Check email verification status
