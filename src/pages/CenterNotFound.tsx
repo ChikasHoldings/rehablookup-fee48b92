@@ -267,6 +267,13 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
           </div>
         </div>
       </div>
+
+      <ReportIssueDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        context="center-not-found"
+        attemptedSlug={attemptedSlug ?? null}
+      />
     </Layout>
   );
 };
