@@ -5,6 +5,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { ReportIssueDialog } from "@/components/feedback/ReportIssueDialog";
 import {
   Building2,
   Search,
@@ -14,6 +15,7 @@ import {
   Phone,
   Compass,
   ShieldCheck,
+  Flag,
 } from "lucide-react";
 
 interface CenterNotFoundProps {
