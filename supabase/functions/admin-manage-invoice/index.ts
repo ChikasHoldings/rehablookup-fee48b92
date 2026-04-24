@@ -2,6 +2,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { getCaseEventActorType } from "../_shared/case-event-actor.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,6 +68,15 @@ Deno.serve(async (req) => {
     if (!canManage) {
       throw new Error("Only Super Admins and Managers can manage invoices");
     }
+
+    // Resolve granular admin role for actor_type attribution
+    // (super_admin / manager — never the legacy "admin" literal).
+    const { data: adminProfile } = await supabaseService
+      .from("admin_user_profiles")
+      .select("admin_role")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+    const actorType = getCaseEventActorType(adminProfile?.admin_role ?? null);
 
     const body = await req.json();
     const { invoiceId, action, reason, newAmount } = body;

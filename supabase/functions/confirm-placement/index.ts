@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { getCaseEventActorType } from "../_shared/case-event-actor.ts";
 
-const VERSION = "3.0.0";
+const VERSION = "3.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -79,6 +80,15 @@ Deno.serve(async (req) => {
     if (userError || !userData.user) {
       return jsonError("AUTH_FAILED", "Authentication failed", 401, requestId);
     }
+
+    // Resolve granular admin role for actor_type attribution.
+    const supabaseRoleLookup = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: adminProfile } = await supabaseRoleLookup
+      .from("admin_user_profiles")
+      .select("admin_role")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+    const actorType = getCaseEventActorType(adminProfile?.admin_role ?? null);
 
     let body: Record<string, unknown>;
     try {
