@@ -423,12 +423,33 @@ Deno.serve(async (req) => {
             } else {
               logStep("Lead unlock created via Stripe", { leadId, facilityId, priceCents: amountTotal });
 
+              const unlockTimestamp = new Date().toISOString();
+
               // Update lead_distributions
               await supabaseAdmin
                 .from("lead_distributions")
-                .update({ unlocked_at: new Date().toISOString() })
+                .update({ unlocked_at: unlockTimestamp })
                 .eq("lead_id", leadId)
                 .eq("facility_id", facilityId);
+
+              // PARITY FIX (C2): mark lead.status = 'unlocked' so reminders stop
+              // and the provider UI reflects the unlocked state.
+              await supabaseAdmin
+                .from("leads")
+                .update({ status: "unlocked" })
+                .eq("id", leadId)
+                .in("status", ["new", "expired"]);
+
+              // PARITY FIX (C2): stamp ALL reminder columns so the cron
+              // never queues another unlock-reminder email for this lead.
+              await supabaseAdmin.from("leads").update({
+                reminder_1h_sent_at: unlockTimestamp,
+                reminder_2h_sent_at: unlockTimestamp,
+                reminder_6h_sent_at: unlockTimestamp,
+                reminder_12h_sent_at: unlockTimestamp,
+                reminder_20h_sent_at: unlockTimestamp,
+                reminder_24h_sent_at: unlockTimestamp,
+              }).eq("id", leadId);
 
               // Log credit transaction for record keeping
               await supabaseAdmin.from("credit_transactions").insert({
@@ -454,6 +475,82 @@ Deno.serve(async (req) => {
                 message: `A lead has been unlocked via card payment ($${(amountTotal / 100).toFixed(2)}).`,
                 metadata: { lead_id: leadId, amount_cents: amountTotal },
               });
+
+              // PARITY FIX (C2): track conversion event for analytics, mirror unlock-lead.
+              try {
+                const { data: leadCreated } = await supabaseAdmin
+                  .from("leads")
+                  .select("created_at")
+                  .eq("id", leadId)
+                  .maybeSingle();
+                const unlockTimeHours = leadCreated?.created_at
+                  ? (Date.now() - new Date(leadCreated.created_at).getTime()) / (1000 * 60 * 60)
+                  : null;
+
+                await supabaseAdmin.from("notification_events").insert({
+                  lead_id: leadId,
+                  facility_id: facilityId,
+                  user_id: userId,
+                  notification_stage: "unlock",
+                  channel: "platform",
+                  event_type: "unlocked",
+                  notification_type: "conversion",
+                  metadata: {
+                    price_paid: amountTotal,
+                    time_to_unlock_hours: unlockTimeHours ? Math.round(unlockTimeHours * 10) / 10 : null,
+                    payment_method: "stripe",
+                  },
+                });
+
+                await supabaseAdmin.from("notification_preferences").update({
+                  last_unlock_at: unlockTimestamp,
+                }).eq("user_id", userId);
+              } catch (trackErr) {
+                logStep("WARN - Failed to track Stripe unlock conversion", { error: String(trackErr) });
+              }
+
+              // PARITY FIX (C2): send the unlock-confirmation email to the provider
+              // (the credit-path equivalent in unlock-lead/index.ts).
+              try {
+                if (resend) {
+                  const { data: providerProfile } = await supabaseAdmin
+                    .from("profiles")
+                    .select("email, first_name")
+                    .eq("user_id", userId)
+                    .maybeSingle();
+
+                  const { data: facilityRow } = await supabaseAdmin
+                    .from("facilities")
+                    .select("name")
+                    .eq("id", facilityId)
+                    .maybeSingle();
+
+                  const { data: leadName } = await supabaseAdmin
+                    .from("leads")
+                    .select("name")
+                    .eq("id", leadId)
+                    .maybeSingle();
+
+                  if (providerProfile?.email) {
+                    const providerFirst = providerProfile.first_name || "there";
+                    const facilityNameStr = facilityRow?.name || "your facility";
+                    const seekerFirst = leadName?.name ? leadName.name.split(" ")[0] : "a seeker";
+
+                    await sendEmailWithRetry(supabaseAdmin, resend, {
+                      from: "RehabLookup <no-reply@rehablookup.com>",
+                      to: [providerProfile.email],
+                      subject: `Lead Unlocked — ${seekerFirst}'s contact details are ready`,
+                      html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;"><tr><td align="center" style="padding:40px 20px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);"><tr><td style="background:linear-gradient(135deg,#1B365D 0%,#2a4a7f 100%);padding:32px;text-align:center;"><div style="font-size:40px;margin-bottom:12px;">🔓</div><h1 style="margin:0;color:#fff;font-size:24px;font-weight:700;">Lead Unlocked</h1></td></tr><tr><td style="padding:32px;"><p style="margin:0 0 16px;font-size:16px;color:#1a1a1a;line-height:1.6;">Hi ${providerFirst},</p><p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">You've unlocked a lead for <strong>${facilityNameStr}</strong>. The contact details are now available in your dashboard.</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f9ff;border-radius:12px;margin-bottom:24px;"><tr><td style="padding:20px;"><p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>Amount:</strong> $${(amountTotal / 100).toFixed(2)}</p><p style="margin:0;font-size:14px;color:#1e40af;"><strong>Payment:</strong> Card</p></td></tr></table><p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">💡 <strong>Tip:</strong> Respond within 1 hour for the best chance of connecting with this lead.</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center"><a href="https://rehablookup.com/provider/inquiries" style="display:inline-block;background:#1B365D;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;">View Lead Details</a></td></tr></table></td></tr><tr><td style="background:#1B365D;padding:24px;text-align:center;"><p style="margin:0;font-size:18px;font-weight:700;color:#fff;">RehabLookup</p><p style="margin:8px 0 0;font-size:12px;color:rgba(255,255,255,0.6);">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p></td></tr></table></td></tr></table></body></html>`,
+                    }, {
+                      emailType: "lead_unlock_confirmation",
+                      idempotencyKey: `unlock-confirm-${leadId}-${facilityId}`,
+                    });
+                    logStep("Unlock confirmation email sent (Stripe path)");
+                  }
+                }
+              } catch (emailErr) {
+                logStep("WARN - Failed to send Stripe unlock confirmation email", { error: String(emailErr) });
+              }
 
               // Notify seeker that the facility is reviewing their inquiry
               try {
