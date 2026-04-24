@@ -213,7 +213,7 @@ export function AdvisorDashboard() {
       } else if (caseView === "unassigned") {
         query = query
           .is("assigned_advisor_id", null)
-          .not("status", "in", '("completed","closed")');
+          .not("status", "in", "(completed,closed)");
       } else {
         query = query.in("status", ACTIVE_STATUSES as unknown as string[]);
       }
@@ -294,7 +294,7 @@ export function AdvisorDashboard() {
         .from("concierge_inquiries")
         .select("id", { count: "exact", head: true })
         .is("assigned_advisor_id", null)
-        .not("status", "in", '("completed","closed")');
+        .not("status", "in", "(completed,closed)");
       return count || 0;
     },
     staleTime: 30 * 1000,
