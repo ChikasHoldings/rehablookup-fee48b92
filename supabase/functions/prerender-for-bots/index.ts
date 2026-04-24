@@ -476,25 +476,7 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
         return buildNotFoundCenterHtml(path);
       }
 
-      const facilityRow = facility as {
-        id: string;
-        name: string;
-        description: string | null;
-        city: string;
-        state: string;
-        address: string | null;
-        zip_code: string | null;
-        phone: string | null;
-        website: string | null;
-        logo_url: string | null;
-        gallery_urls: string[] | null;
-        facility_type: string | null;
-        gender_served: string | null;
-        bed_count: string | null;
-        year_established: number | null;
-        verified: boolean | null;
-        accepts_international_patients: boolean | null;
-      };
+      const facilityRow = facility as FacilityRow;
 
       // Pull related metadata in parallel for richer crawlable body.
       const [servicesRes, insuranceRes] = await Promise.all([
