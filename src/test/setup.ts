@@ -59,3 +59,9 @@ class ResizeObserverStub {
 
 // Stub scrollTo (jsdom warns)
 window.scrollTo = (() => {}) as any;
+
+// Stub scrollIntoView — jsdom does not implement it, but the lead-intake
+// flow calls it on every step transition.
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = function () {};
+}
