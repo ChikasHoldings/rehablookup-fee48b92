@@ -91,6 +91,59 @@ const STORAGE_KEY = "concierge_intake_draft";
 const EMAIL_VERIFICATION_KEY = "concierge_email_verified";
 const DRAFT_ID_KEY = "concierge_draft_id";
 
+// 30-minute TTL for the locally cached non-PII draft
+const DRAFT_TTL_MS = 30 * 60 * 1000;
+
+/**
+ * PII-SAFE WHITELIST — only non-PII fields may be persisted to localStorage.
+ *
+ * SECURITY: Browser extensions, shared devices, and any other JS on the page
+ * can read localStorage. Clinical PII (suicide history, medications, insurance
+ * IDs, names, phone, email, etc.) MUST NOT be persisted client-side. The full
+ * intake (including PII) is stored server-side via the `save-placement-draft`
+ * edge function, which is the source of truth.
+ */
+const CONCIERGE_PERSISTABLE_FIELDS: ReadonlyArray<keyof ConciergeIntakeData> = [
+  // Step 1 — non-PII demographics (no name/contact)
+  "ageRange",
+  "gender",
+  "preferredLanguage",
+  "state",
+  "city",
+  "currentLivingSituation",
+  "relationship",
+  "mobilityNeeds",
+  // Step 3 — logistics (location preferences only, no PII)
+  "desiredState",
+  "desiredCity",
+  "radiusMiles",
+  "preferredEnvironment",
+  "timeline",
+  "faithBasedPreference",
+  "holisticInterest",
+  "amenityPreferences",
+  "needsTransport",
+  "assessmentPreference",
+  // Step 4 — payment type only (no insurance IDs / employer)
+  "paymentType",
+  "budgetRange",
+  "scholarshipInterest",
+  "willingToTravel",
+  // Step 2 — only the broad level-of-care selector (no clinical narrative)
+  "levelOfCare",
+];
+
+function pickPersistableConciergeData(
+  data: ConciergeIntakeData
+): Partial<ConciergeIntakeData> {
+  const out: Partial<ConciergeIntakeData> = {};
+  for (const key of CONCIERGE_PERSISTABLE_FIELDS) {
+    // @ts-expect-error indexed assignment from typed key list
+    out[key] = data[key];
+  }
+  return out;
+}
+
 const initialData: ConciergeIntakeData = {
   ageRange: "",
   gender: "",
@@ -212,18 +265,28 @@ export default function ConciergeIntake() {
     }
   }, [searchParams, setSearchParams]);
 
-  // Load draft from localStorage
+  // Load draft from localStorage (non-PII fields only, with TTL)
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setFormData(prev => ({ ...prev, ...parsed.data }));
-        if (parsed.savedAt) {
-          setLastSaved(new Date(parsed.savedAt));
+        // Enforce 30-min TTL — older drafts are discarded
+        const savedAtMs = parsed.savedAt ? new Date(parsed.savedAt).getTime() : 0;
+        if (savedAtMs && Date.now() - savedAtMs > DRAFT_TTL_MS) {
+          localStorage.removeItem(STORAGE_KEY);
+        } else if (parsed.data && typeof parsed.data === "object") {
+          // Defense-in-depth: re-pick whitelist on read in case an older
+          // pre-fix payload (with PII) is still in localStorage.
+          const safe = pickPersistableConciergeData(parsed.data as ConciergeIntakeData);
+          setFormData(prev => ({ ...prev, ...safe }));
+          if (parsed.savedAt) {
+            setLastSaved(new Date(parsed.savedAt));
+          }
         }
       } catch (e) {
         console.error("Failed to parse saved draft", e);
+        localStorage.removeItem(STORAGE_KEY);
       }
     }
 
@@ -256,15 +319,30 @@ export default function ConciergeIntake() {
     }
   }, []);
 
-  // Save draft to localStorage on every change
+  // Save draft to localStorage on every change — STRIPS PII via whitelist.
+  // Full intake (incl. PII) is persisted server-side via save-placement-draft.
   useEffect(() => {
     const saveData = {
-      data: formData,
+      data: pickPersistableConciergeData(formData),
       savedAt: new Date().toISOString(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
     setLastSaved(new Date());
   }, [formData]);
+
+  // Belt-and-suspenders: clear the local draft when the tab is closed/hidden
+  // so PII-adjacent selections (state, city, payment type) don't linger.
+  useEffect(() => {
+    const handleUnload = () => {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // ignore — best-effort cleanup
+      }
+    };
+    window.addEventListener("pagehide", handleUnload);
+    return () => window.removeEventListener("pagehide", handleUnload);
+  }, []);
 
   const updateFormData = (updates: Partial<ConciergeIntakeData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
