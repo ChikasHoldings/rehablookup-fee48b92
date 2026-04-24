@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { MapPin, Search, Building2, Shield } from "lucide-react";
+import { MapPin, Search, Building2, Shield, Navigation } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +42,17 @@ const INSURANCE_OPTIONS = [
   { value: "tricare", label: "TRICARE" },
 ] as const;
 
+/**
+ * Distance options — values mirror the `distance` URL-param values used by
+ * the sidebar `distanceFilters` in SearchResults.tsx. Keep in sync.
+ */
+const DISTANCE_OPTIONS = [
+  { value: "10", label: "Within 10 miles" },
+  { value: "25", label: "Within 25 miles" },
+  { value: "50", label: "Within 50 miles" },
+  { value: "100", label: "Within 100 miles" },
+] as const;
+
 const ANY_VALUE = "__any__";
 
 /**
@@ -69,6 +80,7 @@ export function SearchResultsForm() {
     const raw = searchParams.get("insuranceTypes") ?? "";
     return raw.split(",").filter(Boolean)[0] ?? "";
   });
+  const [distance, setDistance] = useState<string>(searchParams.get("distance") ?? "");
 
   // Keep the form in sync if URL params change elsewhere (e.g. sidebar pills).
   useEffect(() => {
@@ -77,6 +89,7 @@ export function SearchResultsForm() {
     setTreatment(t);
     const i = (searchParams.get("insuranceTypes") ?? "").split(",").filter(Boolean)[0] ?? "";
     setInsurance(i);
+    setDistance(searchParams.get("distance") ?? "");
   }, [searchParams]);
 
   const handleSubmit = (e: FormEvent) => {
@@ -102,6 +115,12 @@ export function SearchResultsForm() {
       next.delete("insuranceTypes");
     }
 
+    if (distance) {
+      next.set("distance", distance);
+    } else {
+      next.delete("distance");
+    }
+
     // Reset pagination on a fresh search.
     next.delete("page");
     setSearchParams(next);
@@ -112,10 +131,10 @@ export function SearchResultsForm() {
       onSubmit={handleSubmit}
       role="search"
       aria-label="Search rehab centers"
-      className="grid grid-cols-1 gap-2 sm:grid-cols-12"
+      className="grid grid-cols-1 gap-2 sm:grid-cols-[repeat(14,minmax(0,1fr))]"
     >
       {/* Location */}
-      <div className="relative sm:col-span-5">
+      <div className="relative sm:col-span-4">
         <MapPin
           className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
           aria-hidden="true"
@@ -130,6 +149,32 @@ export function SearchResultsForm() {
           aria-label="Location: ZIP code, city, or state"
           className="h-10 pl-9 text-sm"
         />
+      </div>
+
+      {/* Distance */}
+      <div className="sm:col-span-3">
+        <Select
+          value={distance || ANY_VALUE}
+          onValueChange={(v) => setDistance(v === ANY_VALUE ? "" : v)}
+        >
+          <SelectTrigger
+            className="h-10 text-sm"
+            aria-label="Distance from location"
+          >
+            <span className="flex items-center gap-2 truncate">
+              <Navigation className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <SelectValue placeholder="Any distance" />
+            </span>
+          </SelectTrigger>
+          <SelectContent className="bg-card">
+            <SelectItem value={ANY_VALUE}>Any distance</SelectItem>
+            {DISTANCE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Treatment type */}
