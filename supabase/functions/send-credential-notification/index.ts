@@ -191,11 +191,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const emailResponse = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [profile.email],
-      subject: isVerified 
-        ? `Your credential document has been verified` 
+      subject: isVerified
+        ? `Your credential document has been verified`
         : `Action required: Your credential document needs attention`,
       html: emailHtml,
-    }, { emailType: "credential_notification" });
+    }, {
+      emailType: "credential_notification",
+      // Dedup retries on the same document+status decision so an admin
+      // double-click can't double-send. Status changes (verify -> reject)
+      // produce a different key, so legitimate flips still go through.
+      idempotencyKey: `cred-${facilityId}-${documentName}-${status}`,
+      metadata: { facilityId, documentName, documentType, status },
+    });
 
     console.log("Credential notification email sent:", emailResponse);
 
