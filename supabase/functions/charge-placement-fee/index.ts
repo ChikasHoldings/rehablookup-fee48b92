@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
           event_type: 'admin_confirmed_placement',
           event_data: { facility_id: facilityId },
           actor_id: actorId,
-          actor_type: 'admin',
+          actor_type: actorType,
         });
       }
     } else if (!inquiry.placement_confirmed) {
@@ -273,7 +273,7 @@ Deno.serve(async (req) => {
           ...(stripePaymentIntentId ? { payment_intent_id: stripePaymentIntentId } : {}),
         },
         actor_id: actorId,
-        actor_type: isServiceRoleCall ? 'system' : 'admin',
+        actor_type: actorType,
       });
 
       // Log to placement_fee_events audit trail
@@ -282,7 +282,7 @@ Deno.serve(async (req) => {
         inquiry_id: inquiryId,
         facility_id: facilityId,
         event_type: status === 'paid' ? 'charged' : 'created',
-        actor_type: isServiceRoleCall ? 'system' : 'admin',
+        actor_type: actorType,
         actor_id: actorId,
         amount_cents: feeCents,
         details: {
