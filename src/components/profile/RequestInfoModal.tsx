@@ -188,7 +188,7 @@ function ModalSuccessView({
 }: { 
   firstName: string;
   facilityName?: string | null;
-  facility: { id: string; name: string; city: string; state: string; slug: string; logo_url: string | null };
+  facility: { id: string; name: string; city: string; state: string; slug?: string | null; logo_url?: string | null };
   nearbyFacilities: NearbyFacility[];
   loadingNearby: boolean;
   onClose: () => void;
