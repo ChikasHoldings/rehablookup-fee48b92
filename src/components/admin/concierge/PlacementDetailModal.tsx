@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { format, formatDistanceToNow } from "date-fns";
 import { PlacementProgressStepper } from "./PlacementProgressStepper";
 import { CaseSlaDetailBanner } from "./CaseSlaAlerts";
@@ -282,6 +283,7 @@ function ModalNextActionBar({ caseData, onRefresh, onSwitchTab }: {
 
 /* Inline advisor assignment for the header */
 function InlineAdvisorAssign({ caseData, onRefresh }: { caseData: ConciergeInquiry; onRefresh: () => void }) {
+  const { adminRole } = useAdminAuth();
   const [selectedId, setSelectedId] = useState("");
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
@@ -508,6 +510,7 @@ function OverviewContent({ caseData, advisorName, placedFacility, onSwitchTab }:
    PROVIDERS TAB — Matched + Introductions + Messages
    ═══════════════════════════════════════════ */
 function ProvidersContent({ caseData, onRefresh }: { caseData: ConciergeInquiry; onRefresh: () => void }) {
+  const { adminRole } = useAdminAuth();
   const [isRunning, setIsRunning] = useState(false);
   const [sendingTo, setSendingTo] = useState<string | null>(null);
 
