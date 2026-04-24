@@ -45,8 +45,10 @@ function formatTimeAgo(dateString: string): string {
   return `${diffDays}d ago`;
 }
 
-// Canonical 14 statuses — kept in sync with statusTransitions.ts and the
-// validate_concierge_status_transition Postgres trigger.
+// Canonical statuses live in conciergeStatusConstants.ts to keep dashboards,
+// filters, and counts aligned with the Postgres validation trigger.
+import { ACTIVE_STATUSES, TERMINAL_STATUSES_NOT_IN } from "@/components/admin/concierge/conciergeStatusConstants";
+
 const statusConfig: Record<string, { label: string; color: string; bgColor: string; order: number }> = {
   pending_intake: { label: "Pending", color: "text-muted-foreground", bgColor: "bg-muted/40 border-border", order: 0 },
   intake_submitted: { label: "New", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 1 },
@@ -63,13 +65,6 @@ const statusConfig: Record<string, { label: string; color: string; bgColor: stri
   completed: { label: "Completed", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 12 },
   closed: { label: "Closed", color: "text-muted-foreground", bgColor: "bg-muted/50 border-border", order: 13 },
 };
-
-// All non-terminal statuses — used to filter "active" cases.
-const ACTIVE_STATUSES = [
-  "pending_intake", "intake_submitted", "intake_reviewed", "advisor_assigned",
-  "matching_providers", "provider_prequalification", "providers_accepted",
-  "presented_to_seeker", "seeker_selected", "admission_in_progress",
-] as const;
 
 export function AdvisorDashboard() {
   const queryClient = useQueryClient();
