@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { useEscalationTransition } from "@/hooks/useEscalationTransition";
+import { useEscalationTransition, type EscalationStatus } from "@/hooks/useEscalationTransition";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,7 +24,7 @@ import {
   FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EscalationDetailSheet } from "./EscalationDetailSheet";
+import { EscalationDetailSheet, type EscalationRow } from "./EscalationDetailSheet";
 
 const PRIORITY_CONFIG = {
   low: { label: "Low", color: "bg-muted text-muted-foreground", dot: "bg-muted-foreground" },
@@ -55,7 +55,7 @@ export function EscalationsList({
 }: EscalationsListProps) {
   const { user, isSuperAdmin } = useAdminAuth();
   const queryClient = useQueryClient();
-  const [selectedEscalation, setSelectedEscalation] = useState<any>(null);
+  const [selectedEscalation, setSelectedEscalation] = useState<EscalationRow | null>(null);
   const [quickResolveId, setQuickResolveId] = useState<string | null>(null);
   const [resolutionNotes, setResolutionNotes] = useState("");
 
@@ -117,23 +117,27 @@ export function EscalationsList({
 
   const updateMutation = useEscalationTransition();
 
-  const handleAssignToMe = (id: string, fromStatus: string) => {
+  const handleAssignToMe = (id: string, fromStatus: EscalationStatus) => {
     if (!user?.id) {
       toast.error("Not authenticated");
       return;
     }
+    // Claiming an "open" escalation moves it to "in_progress"; otherwise leave
+    // status untouched (no-op write) so we don't accidentally regress state.
+    const nextStatus: EscalationStatus | undefined =
+      fromStatus === "open" ? "in_progress" : undefined;
     updateMutation.mutate({
       id,
       fromStatus,
       updates: {
         assigned_to: user.id,
-        status: fromStatus === "open" ? "in_progress" : (fromStatus as "in_progress" | "resolved" | "closed"),
+        ...(nextStatus ? { status: nextStatus } : {}),
       },
       auditContext: { surface: "escalations_list_assign_self" },
     });
   };
 
-  const handleQuickResolve = (id: string, fromStatus: string) => {
+  const handleQuickResolve = (id: string, fromStatus: EscalationStatus) => {
     updateMutation.mutate({
       id,
       fromStatus,

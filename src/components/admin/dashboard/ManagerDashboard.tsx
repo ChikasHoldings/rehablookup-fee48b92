@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useEscalationTransition } from "@/hooks/useEscalationTransition";
+import { useEscalationTransition, type EscalationStatus } from "@/hooks/useEscalationTransition";
 import { ConfirmActionDialog } from "@/components/admin/ConfirmActionDialog";
 import { ManagerTeamPerformance } from "@/components/admin/dashboard/ManagerTeamPerformance";
 import { useEffect, useCallback, useState } from "react";
@@ -769,7 +769,7 @@ function RecentEscalationsList() {
 
   const escalationTransition = useEscalationTransition();
 
-  const handleResolve = (id: string, fromStatus: string) => {
+  const handleResolve = (id: string, fromStatus: EscalationStatus) => {
     escalationTransition.mutate({
       id,
       fromStatus,
@@ -779,17 +779,21 @@ function RecentEscalationsList() {
     });
   };
 
-  const handleAssignToMe = (id: string, fromStatus: string) => {
+  const handleAssignToMe = (id: string, fromStatus: EscalationStatus) => {
     if (!user?.id) {
       toast.error("Not authenticated");
       return;
     }
+    // Claiming an "open" escalation moves it to "in_progress"; otherwise leave
+    // status untouched so we don't accidentally regress state.
+    const nextStatus: EscalationStatus | undefined =
+      fromStatus === "open" ? "in_progress" : undefined;
     escalationTransition.mutate({
       id,
       fromStatus,
       updates: {
         assigned_to: user.id,
-        status: fromStatus === "open" ? "in_progress" : (fromStatus as "in_progress" | "resolved" | "closed"),
+        ...(nextStatus ? { status: nextStatus } : {}),
       },
       auditContext: { surface: "manager_dashboard_assign_self" },
       onSuccess: invalidateEscalations,
@@ -808,7 +812,7 @@ function RecentEscalationsList() {
   return (
     <>
     <div className="space-y-2 pt-2 border-t">
-      {recentEscalations.map((esc: any) => {
+      {recentEscalations.map((esc) => {
         const isAssignedToMe = esc.assigned_to === user?.id;
         return (
           <div key={esc.id} className="flex items-center justify-between p-2.5 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
@@ -868,7 +872,7 @@ function RecentEscalationsList() {
       isLoading={escalationTransition.isPending}
       onConfirm={async () => {
         if (confirmResolveEscId) {
-          const target = recentEscalations?.find((e: any) => e.id === confirmResolveEscId);
+          const target = recentEscalations?.find((e) => e.id === confirmResolveEscId);
           handleResolve(confirmResolveEscId, target?.status ?? "open");
           setConfirmResolveEscId(null);
         }

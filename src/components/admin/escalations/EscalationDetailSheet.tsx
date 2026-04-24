@@ -51,8 +51,24 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   closed: { label: "Closed", color: "bg-muted text-muted-foreground" },
 };
 
+export interface EscalationRow {
+  id: string;
+  subject: string;
+  description: string;
+  priority: "low" | "medium" | "high" | "critical";
+  status: EscalationStatus;
+  created_by: string;
+  assigned_to: string | null;
+  related_type: string | null;
+  related_id: string | null;
+  resolution_notes: string | null;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface EscalationDetailSheetProps {
-  escalation: any;
+  escalation: EscalationRow | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   adminNames: Record<string, string>;
@@ -113,12 +129,18 @@ export function EscalationDetailSheet({
   };
 
   const handleAssign = (adminId: string) => {
+    if (!escalation) return;
+    // Only auto-advance status when claiming an "open" escalation. For any
+    // other current state, leave status alone — never re-write the same
+    // status (which would be a wasted transition through the validator).
+    const nextStatus: EscalationStatus | undefined =
+      escalation.status === "open" ? "in_progress" : undefined;
     updateMutation.mutate({
       id: escalation.id,
       fromStatus: escalation.status,
       updates: {
         assigned_to: adminId,
-        status: escalation.status === "open" ? "in_progress" : (escalation.status as EscalationStatus),
+        ...(nextStatus ? { status: nextStatus } : {}),
       },
       auditContext: { surface: "escalation_detail_sheet_assign" },
     });
