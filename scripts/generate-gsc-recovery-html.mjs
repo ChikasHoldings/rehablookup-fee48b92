@@ -93,6 +93,7 @@ const NEAR_ME_LABEL = {
   "same-day-rehab-near-me": "Same-Day Rehab",
   "emergency-rehab-near-me": "Emergency Rehab",
   "30-day-rehab-near-me": "30-Day Rehab",
+  "dual-diagnosis-near-me": "Dual Diagnosis Treatment",
 };
 
 const TREATMENT_TYPE_LABEL = {
