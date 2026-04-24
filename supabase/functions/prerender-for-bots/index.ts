@@ -365,10 +365,10 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
       };
 
       // Pull related metadata in parallel for richer crawlable body.
-      const [treatmentRes, insuranceRes] = await Promise.all([
+      const [servicesRes, insuranceRes] = await Promise.all([
         supabase
-          .from('facility_treatments')
-          .select('treatment_name')
+          .from('facility_services')
+          .select('service_name')
           .eq('facility_id', facilityRow.id)
           .limit(25),
         supabase
@@ -378,8 +378,8 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
           .limit(25),
       ]);
 
-      const treatments = ((treatmentRes.data as Array<{ treatment_name: string }> | null) ?? [])
-        .map((t) => t.treatment_name)
+      const treatments = ((servicesRes.data as Array<{ service_name: string }> | null) ?? [])
+        .map((t) => t.service_name)
         .filter(Boolean);
       const insurances = ((insuranceRes.data as Array<{ insurance_name: string }> | null) ?? [])
         .map((i) => i.insurance_name)
