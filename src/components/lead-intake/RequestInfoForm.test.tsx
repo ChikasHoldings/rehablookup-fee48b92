@@ -165,8 +165,10 @@ describe("Request Information form — consent notice", () => {
     const submitBtn = await screen.findByRole("button", { name: /^submit$/i });
     expect(submitBtn).toBeInTheDocument();
 
-    // Required: explicit consent language naming the facility.
-    const consent = screen.getByText(
+    // Required: explicit consent language naming the facility. Framer-motion
+    // may keep both the outgoing and incoming step panels mounted during the
+    // transition, so we accept >=1 matching node.
+    const consentMatches = screen.getAllByText(
       (_content, node) => {
         if (!node) return false;
         const text = node.textContent || "";
@@ -175,16 +177,16 @@ describe("Request Information form — consent notice", () => {
           && /phone, SMS, or email/i.test(text);
       }
     );
-    expect(consent).toBeInTheDocument();
+    expect(consentMatches.length).toBeGreaterThan(0);
 
     // Required: Privacy Policy + Terms links inside the consent block.
-    const privacy = screen.getByRole("link", { name: /privacy policy/i });
-    const terms = screen.getByRole("link", { name: /^terms$/i });
+    const privacy = screen.getAllByRole("link", { name: /privacy policy/i })[0];
+    const terms = screen.getAllByRole("link", { name: /^terms$/i })[0];
     expect(privacy).toHaveAttribute("href", "/privacy-policy");
     expect(terms).toHaveAttribute("href", "/terms-of-service");
 
     // Confidentiality assurance.
-    expect(consent.textContent).toMatch(/confidential/i);
+    expect(consentMatches[0].textContent).toMatch(/confidential/i);
   }, 30000);
 
   it("falls back to a generic 'selected treatment center' wording when no facility name is provided", async () => {
@@ -193,7 +195,7 @@ describe("Request Information form — consent notice", () => {
     await advanceToContactStep(user);
 
     await screen.findByRole("button", { name: /^submit$/i });
-    expect(screen.getByText(/the selected treatment center/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/the selected treatment center/i).length).toBeGreaterThan(0);
   }, 30000);
 });
 
