@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useEscalationTransition } from "@/hooks/useEscalationTransition";
 import { ConfirmActionDialog } from "@/components/admin/ConfirmActionDialog";
 import { ManagerTeamPerformance } from "@/components/admin/dashboard/ManagerTeamPerformance";
 import { useEffect, useCallback, useState } from "react";
@@ -831,9 +832,9 @@ function RecentEscalationsList() {
                   className="text-xs h-7"
                   onClick={(e) => {
                     e.stopPropagation();
-                    assignMutation.mutate(esc.id);
+                    handleAssignToMe(esc.id, esc.status);
                   }}
-                  disabled={assignMutation.isPending}
+                  disabled={escalationTransition.isPending}
                 >
                   Take
                 </Button>
@@ -846,7 +847,7 @@ function RecentEscalationsList() {
                   e.stopPropagation();
                   setConfirmResolveEscId(esc.id);
                 }}
-                disabled={resolveMutation.isPending}
+                disabled={escalationTransition.isPending}
               >
                 Resolve
               </Button>
@@ -864,10 +865,11 @@ function RecentEscalationsList() {
       description="Mark this escalation as resolved? The resolution will be logged in the audit trail."
       confirmLabel="Resolve"
       variant="warning"
-      isLoading={resolveMutation.isPending}
+      isLoading={escalationTransition.isPending}
       onConfirm={async () => {
         if (confirmResolveEscId) {
-          resolveMutation.mutate(confirmResolveEscId);
+          const target = recentEscalations?.find((e: any) => e.id === confirmResolveEscId);
+          handleResolve(confirmResolveEscId, target?.status ?? "open");
           setConfirmResolveEscId(null);
         }
       }}
