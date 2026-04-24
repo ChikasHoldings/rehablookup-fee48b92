@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { requireAdmin } from "../_shared/require-admin.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import {
   getProviderPlan,
@@ -161,8 +162,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Admin-only endpoint: verify the caller is an active admin BEFORE
+    // doing any work. Without this, anyone with the URL can spam approval
+    // emails to arbitrary providers.
+    const auth = await requireAdmin(req);
+    if (!auth.ok) return auth.response;
+    const { supabase, adminUserId } = auth;
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
 
@@ -177,9 +184,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const body: ApprovalEmailRequest = await req.json();
     const { facilityId, facilityName, userId } = body;
 
-    console.log("Sending approval email for facility:", { facilityId, facilityName, userId });
+    console.log("Sending approval email for facility:", { facilityId, facilityName, userId, byAdmin: adminUserId });
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" }) : null;
 
     const { data: profile, error: profileError } = await supabase
