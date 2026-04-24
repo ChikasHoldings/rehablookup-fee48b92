@@ -52,6 +52,7 @@ import {
   useResolveSupportTicket,
 } from "@/hooks/useAdminSupportTickets";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -177,12 +178,25 @@ export function SupportTicketModal({
   };
 
   const handleDelete = async () => {
+    if (!ticket) return;
     setDeleting(true);
     try {
       // Delete notes first
       await supabase.from("support_ticket_notes").delete().eq("ticket_id", ticket.id);
       const { error } = await supabase.from("support_tickets").delete().eq("id", ticket.id);
       if (error) throw error;
+      // Audit destructive admin action
+      await logAdminAction({
+        actionType: AdminAuditActions.SUPPORT_TICKET_DELETED,
+        targetType: "support_ticket",
+        targetId: ticket.id,
+        details: {
+          subject: ticket.subject,
+          source: ticket.source,
+          status_before_delete: ticket.status,
+          contact_email: ticket.contact_email,
+        },
+      });
       toast.success("Ticket deleted");
       onOpenChange(false);
       onDeleted?.();

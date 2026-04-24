@@ -17,6 +17,7 @@ import { SupportTicketModal } from "@/components/admin/SupportTicketModal";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -165,12 +166,22 @@ export default function AdminSupport() {
     if (selectedIds.size === 0) return;
     setBulkDeleting(true);
     try {
+      const ids = Array.from(selectedIds);
       const { error } = await supabase
         .from("support_tickets")
         .delete()
-        .in("id", Array.from(selectedIds));
+        .in("id", ids);
       if (error) throw error;
-      toast.success(`${selectedIds.size} ticket(s) deleted`);
+      // Audit destructive bulk admin action
+      await logAdminAction({
+        actionType: AdminAuditActions.SUPPORT_TICKETS_BULK_DELETED,
+        targetType: "support_ticket",
+        details: {
+          count: ids.length,
+          ticket_ids: ids,
+        },
+      });
+      toast.success(`${ids.length} ticket(s) deleted`);
       setSelectedIds(new Set());
       queryClient.invalidateQueries({ queryKey: ["admin-support-tickets"] });
     } catch (err) {

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import {
   User,
   Mail,
@@ -301,6 +302,19 @@ export function MarketingLeadProfileModal({
       if (!lead) return;
       const { error } = await supabase.from("marketing_leads").delete().eq("id", lead.id);
       if (error) throw error;
+      // Audit destructive admin action
+      await logAdminAction({
+        actionType: AdminAuditActions.MARKETING_LEAD_DELETED,
+        targetType: "marketing_lead",
+        targetId: lead.id,
+        details: {
+          email: lead.email,
+          first_name: lead.first_name,
+          last_name: lead.last_name,
+          urgency: lead.urgency,
+          converted_to_concierge: lead.converted_to_concierge,
+        },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-marketing-leads"] });
