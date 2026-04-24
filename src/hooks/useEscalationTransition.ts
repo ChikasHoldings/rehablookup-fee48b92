@@ -28,14 +28,21 @@ const ALLOWED_TRANSITIONS: Record<EscalationStatus, EscalationStatus[]> = {
   closed: ["open"], // reopen only (super admin gated in UI)
 };
 
+export type EscalationPriority = "low" | "medium" | "high" | "critical";
+
 export interface EscalationUpdateOptions {
   id: string;
-  /** Current status — required when changing status, used for transition validation. */
-  fromStatus?: string;
+  /**
+   * Current persisted status of the escalation. REQUIRED whenever `updates.status`
+   * is set — it is what the client-side state-machine validates against and what
+   * the audit log records as `from_status`. Pass the value straight from the row
+   * you fetched (never infer/assume it).
+   */
+  fromStatus?: EscalationStatus;
   /** Patch to apply. */
   updates: {
     status?: EscalationStatus;
-    priority?: "low" | "medium" | "high" | "critical";
+    priority?: EscalationPriority;
     assigned_to?: string | null;
     resolution_notes?: string | null;
   };
