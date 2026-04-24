@@ -300,7 +300,7 @@ export function EscalationsList({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleAssignToMe(esc.id)}
+                        onClick={() => handleAssignToMe(esc.id, esc.status)}
                         disabled={updateMutation.isPending}
                         className="text-xs h-8"
                       >
@@ -337,7 +337,7 @@ export function EscalationsList({
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => handleQuickResolve(esc.id)}
+                      onClick={() => handleQuickResolve(esc.id, esc.status)}
                       disabled={updateMutation.isPending}
                     >
                       {updateMutation.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
