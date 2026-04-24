@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useEscalationTransition, type EscalationStatus } from "@/hooks/useEscalationTransition";
 import {
   Sheet,
   SheetContent,
@@ -82,38 +83,7 @@ export function EscalationDetailSheet({
     enabled: open,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async (updates: Record<string, any>) => {
-      if (!escalation) return;
-      const { error } = await supabase
-        .from("admin_escalations")
-        .update(updates)
-        .eq("id", escalation.id);
-      if (error) throw error;
-
-      // Audit log
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
-        await supabase.from("admin_audit_log").insert({
-          admin_user_id: authUser.id,
-          action_type: "escalation_update",
-          target_type: "escalation",
-          target_id: escalation.id,
-          details: updates,
-        });
-      }
-    },
-    onSuccess: () => {
-      toast.success("Escalation updated");
-      queryClient.invalidateQueries({ queryKey: ["admin-escalations"] });
-      queryClient.invalidateQueries({ queryKey: ["escalation-counts"] });
-      setResolutionNotes("");
-      setNewStatus("");
-    },
-    onError: (error: Error) => {
-      toast.error("Update failed: " + error.message);
-    },
-  });
+  const updateMutation = useEscalationTransition();
 
   if (!escalation) return null;
 
@@ -124,21 +94,33 @@ export function EscalationDetailSheet({
   const creatorName = adminNames[escalation.created_by] || "Unknown";
   const assigneeName = escalation.assigned_to ? (adminNames[escalation.assigned_to] || "Admin") : null;
 
-  const handleStatusChange = (status: string) => {
-    const updates: Record<string, any> = { status };
-    if (status === "resolved") {
-      updates.resolved_at = new Date().toISOString();
-      if (resolutionNotes.trim()) {
-        updates.resolution_notes = resolutionNotes.trim();
-      }
-    }
-    updateMutation.mutate(updates);
+  const handleStatusChange = (status: EscalationStatus) => {
+    updateMutation.mutate({
+      id: escalation.id,
+      fromStatus: escalation.status,
+      updates: {
+        status,
+        ...(status === "resolved" && resolutionNotes.trim()
+          ? { resolution_notes: resolutionNotes.trim() }
+          : {}),
+      },
+      auditContext: { surface: "escalation_detail_sheet" },
+      onSuccess: () => {
+        setResolutionNotes("");
+        setNewStatus("");
+      },
+    });
   };
 
   const handleAssign = (adminId: string) => {
     updateMutation.mutate({
-      assigned_to: adminId,
-      status: escalation.status === "open" ? "in_progress" : escalation.status,
+      id: escalation.id,
+      fromStatus: escalation.status,
+      updates: {
+        assigned_to: adminId,
+        status: escalation.status === "open" ? "in_progress" : (escalation.status as EscalationStatus),
+      },
+      auditContext: { surface: "escalation_detail_sheet_assign" },
     });
   };
 
@@ -240,7 +222,12 @@ export function EscalationDetailSheet({
                       <label className="text-sm font-medium">Priority</label>
                       <Select
                         value={escalation.priority}
-                        onValueChange={(v) => updateMutation.mutate({ priority: v })}
+                        onValueChange={(v) => updateMutation.mutate({
+                          id: escalation.id,
+                          fromStatus: escalation.status,
+                          updates: { priority: v as "low" | "medium" | "high" | "critical" },
+                          auditContext: { surface: "escalation_detail_sheet_priority" },
+                        })}
                       >
                         <SelectTrigger className="h-9">
                           <SelectValue />
@@ -279,7 +266,7 @@ export function EscalationDetailSheet({
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => updateMutation.mutate({ assigned_to: user?.id, status: "in_progress" })}
+                      onClick={() => user?.id && handleAssign(user.id)}
                       disabled={updateMutation.isPending}
                     >
                       <ShieldCheck className="h-4 w-4 mr-2" />

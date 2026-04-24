@@ -124,18 +124,55 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
 
   // === MUTATIONS ===
 
-  // Reassign lead to another facility
+  // Reassign lead to another facility — preserves attribution by stamping
+  // original_facility_id (if not already set) and flips redistribution_status
+  // so downstream analytics/RLS treat it as a redistributed lead.
   const reassignMutation = useMutation({
     mutationFn: async (facilityId: string) => {
-      const { error } = await supabase.from("leads").update({ facility_id: facilityId }).eq("id", lead.id);
+      if (!lead?.id) throw new Error("No lead selected");
+      if (!facilityId) throw new Error("No facility selected");
+      if (facilityId === lead.facility_id) {
+        throw new Error("Lead is already assigned to this facility");
+      }
+
+      const previousFacilityId = lead.facility_id ?? null;
+      const updates: Record<string, unknown> = {
+        facility_id: facilityId,
+        redistribution_status: "redistributed",
+        assigned_at: new Date().toISOString(),
+      };
+      // Only stamp original_facility_id the first time we redistribute, so
+      // we don't lose the true origin if the lead is moved more than once.
+      if (!lead.original_facility_id && previousFacilityId) {
+        updates.original_facility_id = previousFacilityId;
+      }
+
+      const { error } = await supabase.from("leads").update(updates).eq("id", lead.id);
       if (error) throw error;
+
+      // Audit log so admins can trace cross-facility moves.
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) {
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: user.id,
+          action_type: "lead_reassigned",
+          target_type: "lead",
+          target_id: lead.id,
+          details: {
+            from_facility_id: previousFacilityId,
+            to_facility_id: facilityId,
+            preserved_original: !lead.original_facility_id && !!previousFacilityId,
+          },
+        });
+      }
     },
     onSuccess: () => {
       onLeadUpdated();
       queryClient.invalidateQueries({ queryKey: ["inquiry-provider", lead?.facility_id] });
+      queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
       toast.success("Lead reassigned successfully");
     },
-    onError: () => toast.error("Failed to reassign lead"),
+    onError: (err: Error) => toast.error(err.message || "Failed to reassign lead"),
   });
 
   // Mark as contacted

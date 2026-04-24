@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useEscalationTransition } from "@/hooks/useEscalationTransition";
 import { ConfirmActionDialog } from "@/components/admin/ConfirmActionDialog";
 import { ManagerTeamPerformance } from "@/components/admin/dashboard/ManagerTeamPerformance";
 import { useEffect, useCallback, useState } from "react";
@@ -766,40 +767,34 @@ function RecentEscalationsList() {
     queryClient.invalidateQueries({ queryKey: ["manager-escalation-stats"] });
   };
 
-  const resolveMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("admin_escalations")
-        .update({ status: "resolved", resolved_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Escalation resolved");
-      invalidateEscalations();
-    },
-    onError: () => {
-      toast.error("Failed to resolve escalation");
-    },
-  });
+  const escalationTransition = useEscalationTransition();
 
-  const assignMutation = useMutation({
-    mutationFn: async (id: string) => {
-      if (!user?.id) throw new Error("Not authenticated");
-      const { error } = await supabase
-        .from("admin_escalations")
-        .update({ assigned_to: user.id, status: "in_progress" })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Assigned to you");
-      invalidateEscalations();
-    },
-    onError: () => {
-      toast.error("Failed to assign escalation");
-    },
-  });
+  const handleResolve = (id: string, fromStatus: string) => {
+    escalationTransition.mutate({
+      id,
+      fromStatus,
+      updates: { status: "resolved" },
+      auditContext: { surface: "manager_dashboard_quick_resolve" },
+      onSuccess: invalidateEscalations,
+    });
+  };
+
+  const handleAssignToMe = (id: string, fromStatus: string) => {
+    if (!user?.id) {
+      toast.error("Not authenticated");
+      return;
+    }
+    escalationTransition.mutate({
+      id,
+      fromStatus,
+      updates: {
+        assigned_to: user.id,
+        status: fromStatus === "open" ? "in_progress" : (fromStatus as "in_progress" | "resolved" | "closed"),
+      },
+      auditContext: { surface: "manager_dashboard_assign_self" },
+      onSuccess: invalidateEscalations,
+    });
+  };
 
   const priorityColors: Record<string, string> = {
     low: "bg-muted text-muted-foreground",
@@ -837,9 +832,9 @@ function RecentEscalationsList() {
                   className="text-xs h-7"
                   onClick={(e) => {
                     e.stopPropagation();
-                    assignMutation.mutate(esc.id);
+                    handleAssignToMe(esc.id, esc.status);
                   }}
-                  disabled={assignMutation.isPending}
+                  disabled={escalationTransition.isPending}
                 >
                   Take
                 </Button>
@@ -852,7 +847,7 @@ function RecentEscalationsList() {
                   e.stopPropagation();
                   setConfirmResolveEscId(esc.id);
                 }}
-                disabled={resolveMutation.isPending}
+                disabled={escalationTransition.isPending}
               >
                 Resolve
               </Button>
@@ -870,10 +865,11 @@ function RecentEscalationsList() {
       description="Mark this escalation as resolved? The resolution will be logged in the audit trail."
       confirmLabel="Resolve"
       variant="warning"
-      isLoading={resolveMutation.isPending}
+      isLoading={escalationTransition.isPending}
       onConfirm={async () => {
         if (confirmResolveEscId) {
-          resolveMutation.mutate(confirmResolveEscId);
+          const target = recentEscalations?.find((e: any) => e.id === confirmResolveEscId);
+          handleResolve(confirmResolveEscId, target?.status ?? "open");
           setConfirmResolveEscId(null);
         }
       }}
