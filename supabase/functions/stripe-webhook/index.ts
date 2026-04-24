@@ -392,6 +392,57 @@ Deno.serve(async (req) => {
         if (leadId && facilityId && userId) {
           logStep("Processing lead unlock payment", { leadId, facilityId, userId });
 
+          // H3 SECURITY: Stripe session metadata is mutable from the dashboard
+          // and must NOT be trusted as authoritative for ownership. Cross-check
+          // that the userId in metadata actually owns the facility being credited.
+          // If a leaked Stripe key (or a malicious admin) edits a session's
+          // metadata before the webhook fires, this check prevents the unlock
+          // from being mis-attributed to another provider.
+          const { data: facilityRow, error: facilityLookupErr } = await supabaseAdmin
+            .from("facilities")
+            .select("id, user_id")
+            .eq("id", facilityId)
+            .maybeSingle();
+
+          if (facilityLookupErr || !facilityRow) {
+            logStep("Lead unlock blocked: facility not found", {
+              leadId, facilityId, userId, error: facilityLookupErr?.message,
+            });
+            await supabaseAdmin.from("admin_notifications").insert({
+              type: "lead_unlock_attribution_failed",
+              title: "Stripe lead unlock blocked: facility missing",
+              message: `Webhook for session ${session.id} referenced facility ${facilityId} which does not exist. Manual review required.`,
+              metadata: { session_id: session.id, lead_id: leadId, facility_id: facilityId, claimed_user_id: userId },
+            });
+            return new Response(JSON.stringify({ received: true, blocked: "facility_missing" }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
+          if (facilityRow.user_id !== userId) {
+            logStep("Lead unlock blocked: userId/facility ownership mismatch", {
+              leadId, facilityId, claimedUserId: userId, actualOwnerId: facilityRow.user_id,
+            });
+            await supabaseAdmin.from("admin_notifications").insert({
+              type: "lead_unlock_attribution_failed",
+              title: "Stripe lead unlock blocked: ownership mismatch",
+              message:
+                `Webhook for session ${session.id} attempted to credit user ${userId} ` +
+                `for an unlock on facility ${facilityId} owned by ${facilityRow.user_id}. ` +
+                `Possible metadata tampering — manual review required.`,
+              metadata: {
+                session_id: session.id,
+                lead_id: leadId,
+                facility_id: facilityId,
+                claimed_user_id: userId,
+                actual_owner_id: facilityRow.user_id,
+              },
+            });
+            return new Response(JSON.stringify({ received: true, blocked: "ownership_mismatch" }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
           // Idempotency: check if already unlocked
           const { data: existingUnlock } = await supabaseAdmin
             .from("lead_unlocks")
