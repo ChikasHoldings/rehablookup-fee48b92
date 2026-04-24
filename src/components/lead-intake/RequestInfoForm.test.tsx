@@ -84,42 +84,64 @@ function renderForm(facilityName = FACILITY.name) {
 }
 
 /**
- * Walk the multi-step intake flow forward until the contact step renders.
- * Each `choice` step auto-advances 300ms after a click, so we wait between
- * clicks. The contact step is identifiable by the presence of the
- * placeholder `"you@example.com"`.
+ * Walk the multi-step intake flow forward until the contact step renders
+ * (identified by the visible heading "How can we reach you?").
+ *
+ * Strategy: read the current <h2> title, perform the matching action, then
+ * wait until the title changes before issuing the next action. This avoids
+ * the "double-click while transitioning" race that an indiscriminate
+ * walker hits with the 300ms auto-advance.
  */
 async function advanceToContactStep(user: ReturnType<typeof userEvent.setup>) {
-  for (let i = 0; i < 30; i++) {
-    if (screen.queryByPlaceholderText(/you@example\.com/i)) return;
+  const CONTACT_TITLE = /how can we reach you/i;
 
-    // Location step: type a ZIP then click Continue.
-    const zipInput = screen.queryByPlaceholderText(/^zip$/i) as HTMLInputElement | null;
+  const currentTitle = () => {
+    const h = document.querySelector("h2");
+    return h?.textContent?.trim() ?? "";
+  };
+
+  for (let safety = 0; safety < 25; safety++) {
+    const title = currentTitle();
+    if (CONTACT_TITLE.test(title)) return;
+
+    // Location step has a ZIP input + a Continue button.
+    const zipInput = document.querySelector(
+      'input[placeholder="ZIP" i], input[placeholder="Zip" i]'
+    ) as HTMLInputElement | null;
+
     if (zipInput) {
       await user.type(zipInput, "84010");
       const continueBtn = screen.getByRole("button", { name: /^continue$/i });
+      const before = title;
       await user.click(continueBtn);
-      await act(async () => {
-        await new Promise((r) => setTimeout(r, 350));
-      });
+      // Wait for the heading to change (location → next step).
+      await waitFor(() => {
+        expect(currentTitle()).not.toBe(before);
+      }, { timeout: 3000 });
       continue;
     }
 
-    // Choice step: click the first non-navigation answer button.
-    const candidates = screen.getAllByRole("button").filter((b) => {
+    // Choice step: pick the first answer button. Choice answers are buttons
+    // inside the question panel that are NOT the Back/Continue/Skip nav row.
+    const answerButtons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>("button")
+    ).filter((b) => {
       const txt = (b.textContent || "").trim().toLowerCase();
       if (!txt) return false;
-      if (txt.includes("back")) return false;
-      if (txt.includes("skip")) return false;
-      if (txt.includes("continue")) return false;
-      return true;
+      if (/^back$/.test(txt) || txt.includes("skip")) return false;
+      if (/^continue$/.test(txt)) return false;
+      // Choice option buttons have substantial label text.
+      return txt.length > 1;
     });
 
-    if (candidates.length === 0) return;
-    await user.click(candidates[0]);
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 350));
-    });
+    if (answerButtons.length === 0) return;
+
+    const before = title;
+    await user.click(answerButtons[0]);
+    // Auto-advance fires ~300ms after click; wait for heading to change.
+    await waitFor(() => {
+      expect(currentTitle()).not.toBe(before);
+    }, { timeout: 3000 });
   }
 }
 
