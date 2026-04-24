@@ -176,7 +176,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
       subject: `[${subjectLabel}] Contact from ${escapeHtml(name.slice(0, 50))}`,
       html: emailHtml,
       reply_to: email,
-    }, { emailType: "contact_form" });
+    }, {
+      emailType: "contact_form",
+      idempotencyKey: `contact-${email}-${Date.now().toString(36)}`,
+    });
 
     console.log("[SEND-CONTACT-FORM] Email sent:", emailResponse);
 

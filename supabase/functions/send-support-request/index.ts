@@ -250,7 +250,10 @@ Deno.serve(async (req) => {
       subject: `[${sourceLabel}] ${categoryLabel} - ${subject}`,
       html: emailHtml,
       reply_to: userEmail,
-    }, { emailType: "support_request" });
+    }, {
+      emailType: "support_request",
+      idempotencyKey: `support-${userEmail}-${subject.slice(0, 40)}-${Date.now().toString(36)}`,
+    });
 
     console.log("[SEND-SUPPORT-REQUEST] Email sent:", emailResponse);
 

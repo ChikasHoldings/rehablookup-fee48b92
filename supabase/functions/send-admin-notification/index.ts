@@ -1,11 +1,6 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { requireAdmin, requireAdminCorsHeaders as corsHeaders } from "../_shared/require-admin.ts";
 
 const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-ADMIN-NOTIFICATION] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
@@ -16,36 +11,15 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
-
   try {
     logStep("Function started");
 
-    // Verify admin role
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    
-    const adminUser = userData.user;
-    if (!adminUser) throw new Error("User not authenticated");
-
-    // Check if user is admin
-    const { data: roleData } = await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", adminUser.id)
-      .eq("role", "admin")
-      .maybeSingle();
-
-    if (!roleData) throw new Error("Unauthorized: Admin access required");
-    logStep("Admin verified", { adminId: adminUser.id });
+    // Verify caller is an active admin (JWT + admin_user_profiles).
+    const auth = await requireAdmin(req);
+    if (!auth.ok) return auth.response;
+    const { adminUserId, supabase: supabaseClient } = auth;
+    const adminUser = { id: adminUserId };
+    logStep("Admin verified", { adminId: adminUserId });
 
     const { 
       providerUserId, 
@@ -127,7 +101,10 @@ Deno.serve(async (req) => {
               </body>
             </html>
           `,
-        }, { emailType: "admin_notification" });
+        }, {
+          emailType: "admin_notification",
+          idempotencyKey: `admin-msg-${adminUser.id}-${providerUserId}-${Date.now().toString(36)}`,
+        });
 
         logStep("Email sent", { emailId: emailResult.data?.id });
       }
