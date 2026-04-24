@@ -25,8 +25,11 @@ import {
   ChevronDown,
   Navigation,
   CreditCard,
-  Compass
+  Compass,
+  Share2,
+  Check
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import supportSpecialistImg from "@/assets/support-specialist.png";
 import { Button } from "@/components/ui/button";
 import {
