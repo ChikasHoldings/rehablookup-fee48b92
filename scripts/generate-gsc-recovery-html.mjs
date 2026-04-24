@@ -618,9 +618,72 @@ function buildBestRehab(urlPath, slug) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Resolver
-// ---------------------------------------------------------------------------
+function buildNearMeHub(urlPath, key) {
+  const label = NEAR_ME_LABEL[key] || titleCase(key.replace(/-near-me$/, ""));
+  return {
+    metaTitle: `${label} Near Me | RehabLookup`,
+    metaDescription: `Find ${label.toLowerCase()} programs near you. Browse accredited centers nationwide, verify insurance, and start treatment today.`,
+    h1: `${label} Near Me`,
+    intro: `Looking for ${label.toLowerCase()} near you? RehabLookup lists accredited ${label.toLowerCase()} programs across the United States, with insurance verification and same-day admissions support.`,
+    breadcrumbs: [{ name: "Home", url: "/" }, { name: `${label} Near Me`, url: urlPath }],
+    sections: [
+      { h: `How to Find ${label} Near You`, body: [
+        `Browse RehabLookup's nationwide directory of ${label.toLowerCase()} programs. Filter by state, city, insurance, and clinical specialty to find the right fit.`,
+        `Most ${label.toLowerCase()} programs accept private insurance, Medicaid, Medicare, and self-pay. Verify benefits before admission for the lowest out-of-pocket cost.`,
+      ]},
+      { h: "What to Expect", body: [
+        `${label} typically begins with a clinical assessment, followed by an individualized treatment plan combining therapy, medical support, and aftercare planning.`,
+      ]},
+    ],
+    faqs: [
+      { q: `How do I find ${label.toLowerCase()} near me?`, a: `Use RehabLookup to browse ${label.toLowerCase()} programs by state and city, filter by insurance, and contact admissions directly.` },
+      { q: `Does insurance cover ${label.toLowerCase()}?`, a: `Most major insurers, Medicaid, and Medicare cover medically necessary ${label.toLowerCase()}. Request a free benefits verification before admission.` },
+    ],
+  };
+}
+
+function buildListYourFacility(urlPath, slug) {
+  // /list-your-facility-in-{slug}
+  const tail = slug.replace(/^list-your-facility-in-/, "");
+  // Detect if last segment is a known state
+  const tailParts = tail.split("-");
+  let stateSlug = null;
+  // Try matching trailing segments as state (longest first)
+  for (let i = 1; i <= 3 && i <= tailParts.length; i++) {
+    const candidate = tailParts.slice(-i).join("-");
+    if (STATE_NAMES[candidate]) { stateSlug = candidate; break; }
+  }
+  const state = stateSlug ? STATE_NAMES[stateSlug] : null;
+  const cityPart = stateSlug ? tailParts.slice(0, tailParts.length - stateSlug.split("-").length).join("-") : tail;
+  const city = cityPart ? titleCase(cityPart) : null;
+  const locale = city && state ? `${city}, ${state}` : state || titleCase(tail);
+  return {
+    metaTitle: `List Your Facility in ${locale} | RehabLookup`,
+    metaDescription: `List your treatment center on RehabLookup and reach families searching for accredited addiction treatment in ${locale}.`,
+    h1: `List Your Facility in ${locale}`,
+    intro: `${locale} families search RehabLookup every day for accredited addiction treatment. List your facility to reach them with a verified profile, insurance acceptance, and direct admissions inquiries.`,
+    breadcrumbs: [
+      { name: "Home", url: "/" },
+      { name: "For Providers", url: "/for-providers" },
+      { name: locale, url: urlPath },
+    ],
+    sections: [
+      { h: `Why List on RehabLookup in ${locale}`, body: [
+        `Verified directory listing with insurance acceptance, photos, accreditation badges, and direct family inquiries from people searching for treatment in ${locale}.`,
+        `Pro plans get priority placement, lead routing, and detailed performance analytics so you can measure cost per admission accurately.`,
+      ]},
+      { h: "Get Started", body: [
+        `Create your profile, verify accreditation, and start receiving inquiries within 24 hours. Our team helps with profile setup at no cost.`,
+      ]},
+    ],
+    faqs: [
+      { q: `How much does it cost to list a facility in ${locale}?`, a: `Free basic listings are available. Pro plans ($399/mo) include priority placement, verified inquiries, and a 20% discount on lead unlocks.` },
+      { q: `How long does verification take?`, a: `Most facilities are verified within 24-48 hours after submitting accreditation and licensure documentation.` },
+    ],
+  };
+}
+
+
 
 function resolve(urlPath) {
   const clean = urlPath.replace(/\/+$/, "");
