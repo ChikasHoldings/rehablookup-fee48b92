@@ -64,7 +64,7 @@ export const providerLicensingConfigs: ProviderBusinessConfig[] = [
       "Certificate of Need (CON) states (9 states still require them for certain facility types) add regulatory hurdles that can take 12-24 months to clear",
     ],
     insightHeadline: "Navigating the Licensing Landscape",
-    insightContent: "Smart operators begin licensing 12-18 months before planned opening and run credentialing in parallel with construction. Key resources: SAMHSA's Treatment Locator maps licensing authorities by state, NASADAD publishes state-by-state regulatory requirements, and healthcare attorneys specializing in behavioral health licensing reduce application errors that cause delays. Pre-listing your facility on RehabLookup as 'coming soon' captures early patient interest and demonstrates market demand to licensing authorities reviewing your application.",
+    insightContent: "Smart operators begin licensing 12-18 months before planned opening and run credentialing in parallel with construction. Key resources: SAMHSA's Treatment Locator maps licensing authorities by state, NASADAD publishes state-by-state regulatory requirements, and healthcare attorneys specializing in behavioral health licensing reduce application errors that cause delays. Once your facility is licensed, claiming and verifying your RehabLookup listing positions you to capture qualified patient demand from day one.",
     insightStats: [
       { label: "Fastest Licensing States", value: "3-4 mo" },
       { label: "Slowest Licensing States", value: "18+ mo" },

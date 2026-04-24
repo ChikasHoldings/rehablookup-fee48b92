@@ -23,8 +23,26 @@ serve(async (req) => {
   }
 
   try {
-    // This function is called internally after a lead unlock
-    // It checks if the provider has auto-reload enabled and triggers a Stripe checkout
+    // This function is called internally after a lead unlock.
+    // H5: require an HMAC signature derived from SUPABASE_SERVICE_ROLE_KEY so a leaked
+    // bearer token alone cannot trigger off-session card charges. The signature covers
+    // (providerId|timestamp) and the timestamp must be within a 5-minute window.
+    const sigHeader = req.headers.get("X-Internal-Trigger-Sig");
+    const tsHeader = req.headers.get("X-Internal-Trigger-Ts");
+    if (!sigHeader || !tsHeader) {
+      return new Response(
+        JSON.stringify({ error: "Missing internal trigger signature" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const tsNum = Number(tsHeader);
+    if (!Number.isFinite(tsNum) || Math.abs(Date.now() - tsNum) > 5 * 60 * 1000) {
+      return new Response(
+        JSON.stringify({ error: "Stale or invalid trigger timestamp" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { providerId, currentBalanceCents } = await req.json();
 
     if (!providerId || typeof currentBalanceCents !== "number") {
@@ -32,6 +50,37 @@ serve(async (req) => {
         JSON.stringify({ error: "Missing providerId or currentBalanceCents" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Verify HMAC over `${providerId}|${ts}` using the service-role key.
+    {
+      const enc = new TextEncoder();
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      const cryptoKey = await crypto.subtle.importKey(
+        "raw",
+        enc.encode(serviceRoleKey),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+      );
+      const sigBuf = await crypto.subtle.sign(
+        "HMAC",
+        cryptoKey,
+        enc.encode(`${providerId}|${tsHeader}`)
+      );
+      const expected = Array.from(new Uint8Array(sigBuf))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+      // Constant-time-ish compare
+      if (
+        expected.length !== sigHeader.length ||
+        !expected.split("").every((c, i) => c === sigHeader[i])
+      ) {
+        return new Response(
+          JSON.stringify({ error: "Invalid internal trigger signature" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const supabaseAdmin = createClient(

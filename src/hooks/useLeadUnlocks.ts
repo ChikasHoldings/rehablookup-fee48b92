@@ -57,23 +57,21 @@ export function useLeadUnlocks(facilityId?: string) {
 
   // Mutation to unlock a lead
   const unlockLead = useMutation({
-    mutationFn: async ({ 
-      leadId, 
+    mutationFn: async ({
+      leadId,
       facilityId: fId,
       paymentMethod = 'credits',
-      discountSaved = 0,
-    }: { 
-      leadId: string; 
+    }: {
+      leadId: string;
       facilityId: string;
       paymentMethod?: 'credits' | 'stripe';
-      discountSaved?: number;
     }) => {
       const { data, error } = await supabase.functions.invoke("unlock-lead", {
         body: { leadId, facilityId: fId, paymentMethod },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return { ...data, discountSaved };
+      return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["lead-unlocks"] });
@@ -81,10 +79,11 @@ export function useLeadUnlocks(facilityId?: string) {
       queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
       queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
       queryClient.invalidateQueries({ queryKey: ["lead-analytics"] });
-      
-      // Show savings toast for Pro members
-      if (data.discountSaved && data.discountSaved > 0) {
-        toast.success(`Lead unlocked! Pro discount saved you $${(data.discountSaved / 100).toFixed(2)}`);
+
+      // M1: trust server-computed discountAmount only — never client-passed value.
+      const serverDiscount = typeof data?.discountAmount === "number" ? data.discountAmount : 0;
+      if (data?.discountApplied && serverDiscount > 0) {
+        toast.success(`Lead unlocked! Pro discount saved you $${(serverDiscount / 100).toFixed(2)}`);
       } else {
         toast.success("Lead unlocked! You can now view contact details.");
       }

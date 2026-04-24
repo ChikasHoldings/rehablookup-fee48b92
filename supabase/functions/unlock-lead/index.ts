@@ -460,6 +460,24 @@ Deno.serve(async (req) => {
           logStep(requestId, "Credits rolled back successfully", { refunded: unlockPrice });
         } else {
           logStep(requestId, "CRITICAL - Could not rollback credits", { error: rollbackError.message });
+          // Surface to admins so they can manually reconcile (H3).
+          try {
+            await supabaseAdmin.from("admin_notifications").insert({
+              type: "unlock_rollback_failed",
+              title: "Unlock rollback failed — credits stuck",
+              message: `Provider ${user.id} was charged ${unlockPrice} cents for lead ${leadId} but the unlock record failed AND the credit refund RPC also failed. Manual reconciliation required.`,
+              metadata: {
+                provider_id: user.id,
+                facility_id: facilityId,
+                lead_id: leadId,
+                amount_cents: unlockPrice,
+                rollback_error: rollbackError.message,
+                request_id: requestId,
+              },
+            });
+          } catch (alertErr) {
+            logStep(requestId, "ALSO FAILED - Could not insert admin_notifications row", { error: String(alertErr) });
+          }
         }
       }
 
@@ -622,31 +640,54 @@ Deno.serve(async (req) => {
       try {
         const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
         const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-        
+
         // Get updated balance after deduction
         const { data: updatedCredits } = await supabaseAdmin
           .from("provider_credits")
           .select("balance_cents")
           .eq("provider_id", user.id)
           .maybeSingle();
-        
+
         const currentBalanceAfterUnlock = updatedCredits?.balance_cents ?? 0;
-        
+
+        // H5: sign the request with HMAC over (providerId|timestamp) using service-role key
+        // so the receiver can prove the call originated from another internal function and
+        // not from a leaked Authorization header. We still send the bearer because the
+        // receiver function relies on the Supabase admin client; the HMAC is the
+        // authenticator, not the bearer.
+        const payload = {
+          providerId: user.id,
+          currentBalanceCents: currentBalanceAfterUnlock,
+        };
+        const ts = Date.now().toString();
+        const signingMessage = `${payload.providerId}|${ts}`;
+        const enc = new TextEncoder();
+        const cryptoKey = await crypto.subtle.importKey(
+          "raw",
+          enc.encode(serviceRoleKey),
+          { name: "HMAC", hash: "SHA-256" },
+          false,
+          ["sign"]
+        );
+        const sigBuf = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(signingMessage));
+        const sigHex = Array.from(new Uint8Array(sigBuf))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+
         // Fire-and-forget: don't block the unlock response
         fetch(`${supabaseUrl}/functions/v1/auto-reload-credits`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${serviceRoleKey}`,
+            "X-Internal-Trigger-Ts": ts,
+            "X-Internal-Trigger-Sig": sigHex,
           },
-          body: JSON.stringify({
-            providerId: user.id,
-            currentBalanceCents: currentBalanceAfterUnlock,
-          }),
+          body: JSON.stringify(payload),
         }).catch(err => {
           logStep(requestId, "WARN - Auto-reload trigger failed (non-blocking)", { error: String(err) });
         });
-        
+
         logStep(requestId, "Auto-reload check triggered", { currentBalanceAfterUnlock });
       } catch (autoReloadErr) {
         logStep(requestId, "WARN - Auto-reload setup error (non-blocking)", { error: String(autoReloadErr) });

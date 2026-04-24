@@ -58,9 +58,10 @@ const clearProviderCaches = () => {
         localStorage.removeItem(key);
       }
     });
-    // Clear selected facility
-    localStorage.removeItem("selectedFacilityId");
-    localStorage.removeItem("selectedFacilityData");
+    // M5: do NOT clear selectedFacilityId here — if signup partially fails, the user
+    // would otherwise be left with no selection on next login. The new facility id is
+    // written to localStorage in step 8 (cache pre-population) which overwrites the
+    // previous value cleanly.
     // Clear user role cache
     localStorage.removeItem("rl_cached_role");
     localStorage.removeItem("rl_cached_uid");
@@ -585,10 +586,10 @@ export default function ProviderSignup() {
       // Non-blocking - continue even if cache fails
     }
 
-      // 9. Create notification preferences
-      await supabase.from("notification_preferences").insert({
-        user_id: userId,
-      });
+      // 9. Create notification preferences (H4: idempotent — signup retries shouldn't fatal on unique violation)
+      await supabase
+        .from("notification_preferences")
+        .upsert({ user_id: userId }, { onConflict: "user_id", ignoreDuplicates: true });
 
       // 10. Create initial login session tracking
       try {

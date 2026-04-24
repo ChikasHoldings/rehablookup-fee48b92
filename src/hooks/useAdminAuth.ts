@@ -17,35 +17,46 @@ const ADMIN_CACHE_KEYS = {
 
 const ADMIN_CACHE_TTL = 60000; // 1 minute
 
-// Get cached admin state for instant render
-function getCachedAdminState(): { isAdmin: boolean; isSuperAdmin: boolean; role: AdminRoleType } | null {
+// Get cached admin state for instant render.
+// M7: NEVER trust cached super-admin / role flags from localStorage for UI gating.
+// A user could set `rl_admin_super = "true"` and briefly see Super-Admin menu items
+// before the DB check runs (~1s). RLS still blocks all actions, but the menu
+// structure leaks. We only return the boolean `isAdmin` for skeleton render and
+// always force-refetch the role and super-admin flag from the DB.
+function getCachedAdminState(): { isAdmin: boolean } | null {
   try {
     const ts = localStorage.getItem(ADMIN_CACHE_KEYS.timestamp);
     if (!ts || Date.now() - parseInt(ts, 10) > ADMIN_CACHE_TTL) return null;
-    
+
     const isAdmin = localStorage.getItem(ADMIN_CACHE_KEYS.isAdmin) === "true";
-    const isSuperAdmin = localStorage.getItem(ADMIN_CACHE_KEYS.isSuperAdmin) === "true";
-    const role = (localStorage.getItem(ADMIN_CACHE_KEYS.role) || "customer_rep") as AdminRoleType;
-    
-    return isAdmin ? { isAdmin, isSuperAdmin, role } : null;
+    return isAdmin ? { isAdmin } : null;
   } catch {
+    // Silent failure is acceptable here — first paint just falls back to skeleton.
     return null;
   }
 }
 
-function cacheAdminState(isAdmin: boolean, isSuperAdmin: boolean, role: AdminRoleType) {
+function cacheAdminState(isAdmin: boolean, _isSuperAdmin: boolean, _role: AdminRoleType) {
   try {
+    // Only persist the boolean isAdmin flag — used purely to skip the auth-wall flash.
+    // Super-admin and role values are intentionally NOT cached (M7).
     localStorage.setItem(ADMIN_CACHE_KEYS.isAdmin, String(isAdmin));
-    localStorage.setItem(ADMIN_CACHE_KEYS.isSuperAdmin, String(isSuperAdmin));
-    localStorage.setItem(ADMIN_CACHE_KEYS.role, role);
     localStorage.setItem(ADMIN_CACHE_KEYS.timestamp, String(Date.now()));
-  } catch {}
+    // Aggressively clear any legacy values written by earlier builds so an attacker
+    // can't pre-seed them.
+    localStorage.removeItem(ADMIN_CACHE_KEYS.isSuperAdmin);
+    localStorage.removeItem(ADMIN_CACHE_KEYS.role);
+  } catch {
+    // First-paint cache is best-effort.
+  }
 }
 
 function clearAdminCache() {
   try {
     Object.values(ADMIN_CACHE_KEYS).forEach(k => localStorage.removeItem(k));
-  } catch {}
+  } catch {
+    // localStorage may be unavailable in private mode — safe to ignore.
+  }
 }
 
 // Map routes to permission keys
@@ -100,7 +111,8 @@ export function useAdminAuth() {
   
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(cached?.isAdmin ?? null);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(cached?.isSuperAdmin ?? false);
+  // M7: super-admin must always come from the DB (never localStorage) to prevent menu-leak.
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
   const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
   const [forcePasswordChange, setForcePasswordChange] = useState(false);
@@ -214,8 +226,10 @@ export function useAdminAuth() {
         setRequireMfaSetup(false);
         setAdminProfile((prev) => prev ? { ...prev, mfa_enabled: true } : null);
       }
-    } catch {}
-  }, [user]);
+      } catch (err) {
+        console.error("[useAdminAuth] complete_admin_mfa_setup failed:", err);
+      }
+    }, [user]);
 
   const skipMfaSetup = useCallback(() => {
     setRequireMfaSetup(false);
@@ -424,10 +438,10 @@ export function useAdminAuth() {
     }
   }, [user, isLoggingOut, queryClient, navigate]);
 
-  // Derive admin role
-  const adminRole: AdminRoleType = isSuperAdmin 
-    ? "super_admin" 
-    : (adminProfile?.admin_role || cached?.role || "customer_rep");
+  // Derive admin role — M7: never read role from localStorage, always wait for DB profile.
+  const adminRole: AdminRoleType = isSuperAdmin
+    ? "super_admin"
+    : (adminProfile?.admin_role || "customer_rep");
 
   // Compute full name
   const adminFullName = adminProfile?.first_name && adminProfile?.last_name

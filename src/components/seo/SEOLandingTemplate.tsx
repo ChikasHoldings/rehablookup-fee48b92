@@ -355,10 +355,10 @@ export function SEOLandingTemplate({
             <div className="text-center py-12 rounded-2xl border bg-card max-w-2xl mx-auto">
               <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                Treatment Centers Coming Soon
+                Talk to a Placement Advisor
               </h3>
               <p className="text-muted-foreground mb-2">
-                We're actively partnering with accredited facilities in this area. In the meantime, our concierge team can match you with nearby verified programs.
+                Our licensed placement advisors will personally match you with verified treatment centers — typically within 24 hours.
               </p>
               <p className="text-sm text-muted-foreground mb-6">
                 Over 16,000 treatment centers are available nationwide through our network.
