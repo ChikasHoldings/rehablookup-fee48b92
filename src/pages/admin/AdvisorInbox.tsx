@@ -177,10 +177,13 @@ export default function AdvisorInbox() {
     },
   });
 
-  // Filter threads
+  // Filter threads. "facility" tab includes both admin↔facility and
+  // provider↔advisor coordination threads, since both are facility-side.
   const filteredThreads = threads?.filter(t => {
-    if (threadFilter === "seeker" && t.thread_type !== "advisor") return false;
-    if (threadFilter === "facility" && t.thread_type !== "facility") return false;
+    const isSeekerThread = t.thread_type === "advisor";
+    const isFacilityThread = t.thread_type === "facility" || t.thread_type === "provider_advisor";
+    if (threadFilter === "seeker" && !isSeekerThread) return false;
+    if (threadFilter === "facility" && !isFacilityThread) return false;
     if (threadFilter === "unread" && !t.hasUnread) return false;
     if (searchInput) {
       const q = searchInput.toLowerCase();
