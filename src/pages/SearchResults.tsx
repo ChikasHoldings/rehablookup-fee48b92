@@ -568,6 +568,44 @@ const SearchResults = () => {
     setSearchParams(new URLSearchParams());
   };
 
+  // Build a shareable URL that preserves all current filters/location/sort/page
+  const handleShare = useCallback(async () => {
+    const url = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+    const shareTitle = location
+      ? `Rehab Centers near ${location} — RehabLookup`
+      : queryParam
+      ? `Rehab Centers matching "${queryParam}" — RehabLookup`
+      : "Rehab Centers Search — RehabLookup";
+
+    // Try Web Share API first (mobile-friendly)
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: shareTitle, url });
+        return;
+      } catch (err) {
+        // User cancelled or share failed — fall through to clipboard
+        if (err instanceof Error && err.name === "AbortError") return;
+      }
+    }
+
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      toast({
+        title: "Link copied",
+        description: "Shareable search link copied to your clipboard.",
+      });
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      toast({
+        title: "Couldn't copy link",
+        description: "Copy this URL manually from your address bar.",
+        variant: "destructive",
+      });
+    }
+  }, [location, queryParam, toast]);
+
   const handleSortChange = (value: SortOption) => {
     const newParams = new URLSearchParams(searchParams);
     if (value === "proximity") {
