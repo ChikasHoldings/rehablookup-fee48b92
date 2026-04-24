@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SeekerHeader } from "./SeekerHeader";
 import { SeekerMobileNav } from "./SeekerMobileNav";
+import { SeekerErrorBoundary } from "./SeekerErrorBoundary";
 import { EmailVerificationBanner } from "./EmailVerificationBanner";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -27,6 +28,7 @@ export function SeekerShell() {
   const location = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const hasRedirected = useRef(false);
 
   // Fetch seeker profile via React Query (allows invalidation from settings)
   const { data: profile } = useQuery({
@@ -83,20 +85,23 @@ export function SeekerShell() {
   });
 
   useEffect(() => {
-    if (!isReady || !userRole) return;
+    if (!isReady || !userRole || hasRedirected.current) return;
     if (typeof window !== "undefined" && window.self !== window.top) return;
 
     if (userRole === "admin") {
+      hasRedirected.current = true;
       navigate("/admin", { replace: true });
     } else if (userRole === "provider") {
+      hasRedirected.current = true;
       navigate("/provider/dashboard", { replace: true });
     }
   }, [userRole, isReady, navigate]);
 
   // Redirect unauthenticated users to login (only after auth is fully resolved)
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || hasRedirected.current) return;
     if (!isAuthenticated) {
+      hasRedirected.current = true;
       navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true });
     }
   }, [isReady, isAuthenticated, navigate, location.pathname]);
@@ -119,7 +124,7 @@ export function SeekerShell() {
   const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
 
   // Hide shell during redirect
-  if (userRole === "admin" || userRole === "provider") return null;
+  if (userRole === "admin" || userRole === "provider" || hasRedirected.current) return null;
 
   return (
     <div
@@ -147,9 +152,11 @@ export function SeekerShell() {
         ref={mainContentRef}
         className="min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-muted/30"
       >
-        <Suspense fallback={null}>
-          <Outlet context={{ isAuthenticated, userName: displayName, userId }} />
-        </Suspense>
+        <SeekerErrorBoundary>
+          <Suspense fallback={null}>
+            <Outlet context={{ isAuthenticated, userName: displayName, userId }} />
+          </Suspense>
+        </SeekerErrorBoundary>
       </main>
 
       {/* Row 3 — Mobile Bottom Navigation (in-flow, not fixed) */}

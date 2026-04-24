@@ -21,7 +21,7 @@ export const clearSentryUser = () => {
 export const captureError = (
   error: Error,
   context?: {
-    panel?: "admin" | "provider";
+    panel?: "admin" | "provider" | "seeker";
     page?: string;
     extra?: Record<string, unknown>;
   }
