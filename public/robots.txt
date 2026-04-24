@@ -63,6 +63,9 @@ Disallow: /*?gclid=
 Disallow: /*?msclkid=
 Disallow: /*?_ga=
 Disallow: /*?_gl=
+# /resources is the canonical hub; ?category=* are filter variants that duplicate the same content
+Disallow: /resources?category=
+Disallow: /resources/?category=
 
 User-agent: Googlebot-Image
 Allow: /
@@ -341,6 +344,8 @@ Disallow: /*?_ga=
 Disallow: /*?_gl=
 Disallow: /*?source=
 Disallow: /*?ref=
+Disallow: /resources?category=
+Disallow: /resources/?category=
 Crawl-delay: 2
 
 # =============================================================================
