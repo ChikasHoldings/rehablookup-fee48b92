@@ -207,6 +207,20 @@ export function SeekerShell() {
 
   const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
 
+  // Show loading skeleton while auth/profile is resolving
+  if (!isReady || (isAuthenticated && profile === undefined)) {
+    return <SeekerShellSkeleton />;
+  }
+
+  // Show empty state for authenticated users with no profile
+  if (isAuthenticated && profile === null) {
+    return (
+      <SeekerEmptyState 
+        onCompleteProfile={() => navigate('/account/settings')} 
+      />
+    );
+  }
+
   // Hide shell during redirect
   if (userRole === "admin" || userRole === "provider" || hasRedirected.current) return null;
 
