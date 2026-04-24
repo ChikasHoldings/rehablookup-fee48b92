@@ -12,20 +12,38 @@ DB triggers (`validate_concierge_status_transition`, `validate_lead_status_trans
   transitions. Optimistic-lock on previous status, auto-stamps timestamps
   (matched_at, introductions_sent_at, placement_confirmed_at, closed_at), logs
   to `concierge_case_events` with actor_id + actor_type (super_admin / manager /
-  customer_rep / advisor — never collapsed to "admin").
+  customer_rep / advisor — never collapsed to "admin"). Admin-only (uses
+  `useAdminAuth`); seeker / public flows must call `validateTransition` from
+  `src/lib/statusTransitions.ts` directly and write their own case events with
+  `actor_type: "seeker"`.
 - `useEscalationTransition` (src/hooks/useEscalationTransition.ts) — admin_escalations
-  updates (status, priority, assigned_to, resolution_notes). Validates allowed
-  transitions, auto-stamps `resolved_at` on resolve and clears it on reopen,
-  always writes admin_audit_log row.
+  updates. `fromStatus` is typed as `EscalationStatus` (not `string`) and is
+  REQUIRED whenever `updates.status` is set; the hook hard-throws otherwise.
+  Validates allowed transitions, auto-stamps `resolved_at` on resolve and clears
+  it on reopen, always writes admin_audit_log row.
 
-**Lead reassignment:** `InquiryDetailModal.reassignMutation` preserves attribution by
-stamping `original_facility_id` (only on first move), setting
-`redistribution_status='redistributed'`, refreshing `assigned_at`, and writing
-admin_audit_log with from→to facility ids.
+**Lead / advisor reassignment hardening:** Direct `assigned_advisor_id` rewrites
+on `concierge_inquiries` MUST: (1) snapshot the prior advisor for an
+optimistic-lock guard (`.eq("assigned_advisor_id", previous)` or `.is(..., null)`),
+(2) write a `concierge_case_events` row with `previous_advisor_id` + new id, and
+(3) write an `admin_audit_log` entry with `from_advisor_id` / `to_advisor_id`.
+Pattern applied in `InquiryDetailModal.reassignMutation` and
+`AdminBackOffice.reassignMutation`. PlacementDetailModal’s inline assign delegates
+to `useCaseTransition` (with `extraFields: { assigned_advisor_id }`) when the case
+is at `intake_reviewed`, and uses the locked-rebind pattern above otherwise — it
+must NEVER pre-write `assigned_advisor_id` outside the transition hook (would be
+a wasted, unlocked second write).
+
+**Seeker self-cancel (SeekerConcierge):** Cancellation runs `validateTransition`
+client-side BEFORE the update, applies an optimistic-lock on `status`
+(`.eq("status", fromStatus)`), and writes a `concierge_case_events` row with
+`actor_type: "seeker"`. Do not invoke `useCaseTransition` from non-admin
+surfaces — it requires admin auth context.
 
 **Rules:**
 - New admin_escalations / leads / concierge mutations MUST use the hook (no direct
-  `.update()`).
+  `.update()` on `status`).
 - Status changes MUST pass `fromStatus` so the client guard can run before the DB
   trigger rejects the write.
 - All escalation mutations MUST write admin_audit_log (handled inside the hook).
+- All advisor reassignments MUST snapshot the prior advisor + write the audit log.
