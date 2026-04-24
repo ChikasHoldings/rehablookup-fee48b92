@@ -376,6 +376,7 @@ export function generateLocalBusinessSchema(facility: {
   rating?: number;
   reviewCount?: number;
   image?: string;
+  gallery?: string[];
   services?: string[];
   insurance?: string[];
   slug?: string;
@@ -386,19 +387,73 @@ export function generateLocalBusinessSchema(facility: {
   verified?: boolean;
   featured?: boolean;
   accreditations?: string[];
+  bedCount?: string | number | null;
+  genderServed?: string | null;
+  ageGroups?: string[];
 }) {
-  const facilityUrl = `https://rehablookup.com/center/${facility.slug || facility.name.toLowerCase().replace(/\s+/g, "-")}`;
-  
-  return {
+  const SITE_URL = "https://rehablookup.com";
+  const slug = facility.slug || facility.name.toLowerCase().replace(/\s+/g, "-");
+  const facilityUrl = `${SITE_URL}/center/${slug}`;
+
+  // Build image array (logo first, then gallery photos) for image-rich SERP results
+  const images = [
+    facility.image,
+    ...(facility.gallery || []),
+  ].filter((url): url is string => Boolean(url));
+
+  // Parse bed count to a positive integer when possible (e.g. "50", "50 beds", "50-75")
+  const bedCountNum = (() => {
+    if (facility.bedCount == null) return undefined;
+    const raw = String(facility.bedCount).match(/\d+/);
+    if (!raw) return undefined;
+    const n = parseInt(raw[0], 10);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  })();
+
+  // Map gender_served to schema.org Audience
+  const audience = (() => {
+    if (!facility.genderServed && (!facility.ageGroups || facility.ageGroups.length === 0)) {
+      return undefined;
+    }
+    const gender = facility.genderServed?.toLowerCase();
+    return {
+      "@type": "PeopleAudience",
+      ...(gender === "men" || gender === "male"
+        ? { suggestedGender: "Male" }
+        : gender === "women" || gender === "female"
+        ? { suggestedGender: "Female" }
+        : {}),
+      ...(facility.ageGroups && facility.ageGroups.length > 0
+        ? { audienceType: facility.ageGroups.join(", ") }
+        : {}),
+    };
+  })();
+
+  // Google Maps "hasMap" URL — improves Knowledge Graph eligibility
+  const mapsQuery = encodeURIComponent(
+    `${facility.name}, ${facility.address}, ${facility.city}, ${facility.state} ${facility.zipCode}`
+  );
+  const hasMap = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+
+  // Use MedicalOrganization (Google's preferred healthcare type) alongside
+  // MedicalClinic / MedicalBusiness / LocalBusiness for maximum coverage.
+  const schema: Record<string, unknown> = {
     "@context": "https://schema.org",
-    "@type": ["MedicalClinic", "MedicalBusiness", "LocalBusiness"],
+    "@type": ["MedicalOrganization", "MedicalClinic", "MedicalBusiness", "LocalBusiness"],
     "@id": facilityUrl,
     url: facilityUrl,
     name: facility.name,
+    legalName: facility.name,
     description: facility.description,
-    image: facility.image ? [facility.image] : undefined,
+    image: images.length > 0 ? images : undefined,
+    logo: facility.image
+      ? {
+          "@type": "ImageObject",
+          url: facility.image,
+          caption: `${facility.name} logo`,
+        }
+      : undefined,
     telephone: facility.phone,
-    // email removed - provider emails are completely private
     address: {
       "@type": "PostalAddress",
       streetAddress: facility.address,
@@ -407,14 +462,15 @@ export function generateLocalBusinessSchema(facility: {
       postalCode: facility.zipCode,
       addressCountry: "US",
     },
-    areaServed: {
-      "@type": "State",
-      name: facility.state,
-    },
+    areaServed: [
+      { "@type": "City", name: facility.city },
+      { "@type": "State", name: facility.state },
+    ],
     geo: {
       "@type": "GeoCoordinates",
       addressCountry: "US",
     },
+    hasMap,
     // Open 24/7 for treatment facilities
     openingHoursSpecification: {
       "@type": "OpeningHoursSpecification",
@@ -428,6 +484,17 @@ export function generateLocalBusinessSchema(facility: {
       "@type": "MedicalTherapy",
       name: service,
       serviceType: "Addiction Treatment",
+      provider: { "@id": facilityUrl },
+    })),
+    makesOffer: facility.services?.map((service) => ({
+      "@type": "Offer",
+      itemOffered: {
+        "@type": "Service",
+        name: service,
+        serviceType: "Addiction Treatment",
+        category: "Healthcare",
+      },
+      availability: "https://schema.org/InStock",
     })),
     hasCredential: facility.accreditations?.map((accreditation) => ({
       "@type": "EducationalOccupationalCredential",
@@ -442,12 +509,14 @@ export function generateLocalBusinessSchema(facility: {
     slogan: "Your Path to Recovery Starts Here",
     knowsAbout: [
       "Drug Addiction Treatment",
-      "Alcohol Rehabilitation", 
+      "Alcohol Rehabilitation",
       "Mental Health Services",
       "Detoxification Programs",
       "Outpatient Treatment",
       "Inpatient Rehabilitation",
     ],
+    numberOfRooms: bedCountNum,
+    audience,
     ...(facility.rating && {
       aggregateRating: {
         "@type": "AggregateRating",
@@ -485,6 +554,13 @@ export function generateLocalBusinessSchema(facility: {
       },
     ],
   };
+
+  // Strip undefined values so the emitted JSON-LD stays clean for crawlers.
+  Object.keys(schema).forEach((key) => {
+    if (schema[key] === undefined) delete schema[key];
+  });
+
+  return schema;
 }
 
 export function generateArticleSchema(article: {
