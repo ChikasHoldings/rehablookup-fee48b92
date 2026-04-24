@@ -466,7 +466,7 @@ export function AdvisorDashboard() {
             ) : recentInquiries && recentInquiries.length > 0 ? (
               <div className="space-y-2.5">
                 {recentInquiries.map((inquiry: any) => {
-                  const status = statusConfig[inquiry.status] || statusConfig.new;
+                  const status = statusConfig[inquiry.status] || statusConfig.intake_submitted;
                   const isPaid = inquiry.payment_status === 'paid' || inquiry.payment_status === 'succeeded';
                   const location = inquiry.desired_location_state || inquiry.preferred_state;
                   const isUnassigned = !inquiry.assigned_advisor_id;
