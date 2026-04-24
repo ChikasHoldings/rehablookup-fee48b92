@@ -324,3 +324,122 @@ describe("Request Information form — email notification trigger", () => {
     );
   }, 30000);
 });
+
+// --------------------------------------------------------------------------
+// 3. Submit handler payload contract — exact field-by-field assertion
+//
+// This is an integration-style test: it drives the real form end-to-end
+// and asserts that the exact payload sent to `submit-qualified-lead`
+// matches the contract that the edge function depends on
+// (see supabase/functions/submit-qualified-lead/index.ts and
+// src/components/lead-intake/useLeadIntakeForm.ts:428).
+//
+// If any of these fields silently change shape, the seeker confirmation
+// email and facility notification email will fail in production. Locking
+// them down here gives us a regression-safe contract test.
+// --------------------------------------------------------------------------
+describe("Request Information form — submit-qualified-lead payload contract", () => {
+  const SEEKER = {
+    firstName: "Maria",
+    lastName: "Gonzalez",
+    phoneDigits: "5551234567",
+    email: "maria.gonzalez@example.com",
+  };
+
+  /**
+   * Helper: run the form to completion and return the payload object that
+   * was sent to `submit-qualified-lead`.
+   */
+  async function runFormAndCapturePayload(): Promise<Record<string, unknown>> {
+    // Stub: address verified, lead accepted.
+    mockState.invokeMock.mockImplementation(async (fnName: string) => {
+      if (fnName === "check-email-verified") {
+        return { data: { verified: true }, error: null };
+      }
+      if (fnName === "submit-qualified-lead") {
+        return { data: { success: true, leadId: "contract-test-id" }, error: null };
+      }
+      return { data: null, error: null };
+    });
+
+    const user = userEvent.setup();
+    renderForm();
+
+    await advanceToContactStep(user);
+    await screen.findByRole("button", { name: /^submit$/i });
+
+    await user.type(screen.getByPlaceholderText(/^john$/i), SEEKER.firstName);
+    await user.type(screen.getByPlaceholderText(/^doe$/i), SEEKER.lastName);
+
+    const telInput = document.querySelector('input[type="tel"]') as HTMLInputElement | null;
+    if (telInput) {
+      await user.type(telInput, SEEKER.phoneDigits);
+    }
+
+    await user.type(
+      screen.getByPlaceholderText(/you@example\.com/i),
+      SEEKER.email
+    );
+
+    await user.click(screen.getByRole("button", { name: /^submit$/i }));
+
+    // Wait for the submit-qualified-lead invocation, then return its body.
+    let payload: Record<string, unknown> | undefined;
+    await waitFor(
+      () => {
+        const submitCall = mockState.invokeMock.mock.calls.find(
+          (c) => c[0] === "submit-qualified-lead"
+        );
+        expect(submitCall).toBeDefined();
+        payload = submitCall![1].body as Record<string, unknown>;
+      },
+      { timeout: 5000 }
+    );
+
+    return payload!;
+  }
+
+  it("sends facilityId, full name, first/last name, normalised phone, and lowercased email", async () => {
+    const body = await runFormAndCapturePayload();
+
+    // Facility attribution — REQUIRED for lead-to-facility routing.
+    expect(body.facilityId).toBe(FACILITY.id);
+
+    // Composite name + components. The edge function uses `name` for
+    // the seeker-facing email greeting and the facility notification.
+    expect(body.name).toBe(`${SEEKER.firstName} ${SEEKER.lastName}`);
+    expect(body.firstName).toBe(SEEKER.firstName);
+    expect(body.lastName).toBe(SEEKER.lastName);
+
+    // Phone is normalised to digits-only on the client before send.
+    expect(body.phone).toBe(SEEKER.phoneDigits);
+    expect(body.phone).toMatch(/^\d{10}$/);
+
+    // Email is lowercased + trimmed for idempotent dedupe.
+    expect(body.email).toBe(SEEKER.email.toLowerCase());
+
+    // Idempotency key MUST be present — the edge function uses it to
+    // dedupe duplicate submissions and prevent double-sending emails.
+    expect(typeof body.idempotencyKey).toBe("string");
+    expect((body.idempotencyKey as string).length).toBeGreaterThan(0);
+  }, 30000);
+
+  it("omits the optional `message` field when the seeker did not provide one", async () => {
+    // The walker does not type into a message textarea (the contact step
+    // has no message field on the default flow), so `message` should be
+    // undefined — NOT an empty string. This matters because the edge
+    // function's email template branches on truthiness.
+    const body = await runFormAndCapturePayload();
+
+    expect(body.message).toBeUndefined();
+  }, 30000);
+
+  it("includes a non-empty `source` so the lead can be attributed by channel", async () => {
+    const body = await runFormAndCapturePayload();
+
+    // `source` drives lead-attribution analytics on the receiving side.
+    expect(body.source).toBeDefined();
+    expect(typeof body.source).toBe("string");
+    expect((body.source as string).length).toBeGreaterThan(0);
+  }, 30000);
+});
