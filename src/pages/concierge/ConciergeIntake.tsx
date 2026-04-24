@@ -254,15 +254,33 @@ export default function ConciergeIntake() {
   });
 
   // Handle canceled payment
+  // M5: When the user returns from a canceled Stripe checkout, force a fresh
+  // re-verification of email if the prior verification is older than 24h, and
+  // re-validate steps 5 + 6 so a stale form can't be re-submitted untouched.
   useEffect(() => {
     if (searchParams.get("canceled") === "true") {
-      setCurrentStep(7); // Go to review step
-      toast.info("Payment was canceled. You can try again when ready.");
+      // Force re-verify if email verification is missing or older than 24h
+      const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
+      let shouldReverify = !emailVerification.verified;
+      if (emailVerification.verified && emailVerification.verifiedAt) {
+        const ageMs = Date.now() - new Date(emailVerification.verifiedAt).getTime();
+        if (ageMs > VERIFY_TTL_MS) shouldReverify = true;
+      }
+      if (shouldReverify) {
+        setEmailVerification({ verified: false, verifiedAt: null });
+        localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+        setCurrentStep(6); // back to email-verification step
+        toast.info("Payment was canceled. Please re-verify your email to continue.");
+      } else {
+        setCurrentStep(7); // Go to review step
+        toast.info("Payment was canceled. You can try again when ready.");
+      }
       // Clear the param
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("canceled");
       setSearchParams(newParams, { replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, setSearchParams]);
 
   // Load draft from localStorage (non-PII fields only, with TTL)
