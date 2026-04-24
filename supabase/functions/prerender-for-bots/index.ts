@@ -327,28 +327,65 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
 
   // ---- Facility page: /center/{slug} ----
   if (path.startsWith('/center/') && supabase) {
-    const slug = path.replace('/center/', '');
+    const slug = path.replace('/center/', '').replace(/\/$/, '');
     try {
       const { data: facility } = await supabase
         .from('facilities')
-        .select('name, description, city, state, logo_url')
+        .select(
+          'id, name, description, city, state, address, zip_code, phone, website, logo_url, gallery_urls, facility_type, gender_served, bed_count, year_established, verified, accepts_international_patients'
+        )
         .eq('slug', slug)
         .eq('status', 'active')
-        .single();
-      if (facility) {
-        return buildOgHtml(
-          {
-            title: `${facility.name} - ${facility.city}, ${facility.state} | RehabLookup`,
-            description: facility.description?.slice(0, 160) || `${facility.name} treatment center in ${facility.city}, ${facility.state}.`,
-            image: facility.logo_url || DEFAULT_OG_IMAGE,
-            url: `${BASE_URL}${path}`,
-            type: 'website',
-          },
-          `<h1>${escHtml(facility.name)}</h1>
-    <p>${escHtml(facility.city)}, ${escHtml(facility.state)}</p>
-    <p>${escHtml(facility.description?.slice(0, 300) || '')}</p>`
-        );
+        .maybeSingle();
+
+      if (!facility) {
+        // Slug doesn't resolve → emit a noindex page so Google doesn't bank
+        // the URL as thin/duplicate content. Still 200 so SPA fallback works.
+        return buildNotFoundCenterHtml(path);
       }
+
+      const facilityRow = facility as {
+        id: string;
+        name: string;
+        description: string | null;
+        city: string;
+        state: string;
+        address: string | null;
+        zip_code: string | null;
+        phone: string | null;
+        website: string | null;
+        logo_url: string | null;
+        gallery_urls: string[] | null;
+        facility_type: string | null;
+        gender_served: string | null;
+        bed_count: string | null;
+        year_established: number | null;
+        verified: boolean | null;
+        accepts_international_patients: boolean | null;
+      };
+
+      // Pull related metadata in parallel for richer crawlable body.
+      const [treatmentRes, insuranceRes] = await Promise.all([
+        supabase
+          .from('facility_treatments')
+          .select('treatment_name')
+          .eq('facility_id', facilityRow.id)
+          .limit(25),
+        supabase
+          .from('facility_insurance')
+          .select('insurance_name')
+          .eq('facility_id', facilityRow.id)
+          .limit(25),
+      ]);
+
+      const treatments = ((treatmentRes.data as Array<{ treatment_name: string }> | null) ?? [])
+        .map((t) => t.treatment_name)
+        .filter(Boolean);
+      const insurances = ((insuranceRes.data as Array<{ insurance_name: string }> | null) ?? [])
+        .map((i) => i.insurance_name)
+        .filter(Boolean);
+
+      return buildFacilityHtml(path, facilityRow, treatments, insurances);
     } catch (err) {
       console.error('[Prerender] Facility fetch error:', err);
     }
