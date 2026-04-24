@@ -262,7 +262,7 @@ export default function SeekerReviews() {
         .limit(200);
 
       if (reviewsError) {
-        console.error('Error fetching reviews:', reviewsError);
+        console.error('[SeekerReviews] Error fetching reviews:', reviewsError);
         setError('Could not load your reviews');
         setIsLoading(false);
         return;
