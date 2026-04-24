@@ -135,18 +135,26 @@ export default function AdminEmailLogs() {
       const { data } = await query;
       if (!data) return { total: 0, sent: 0, failed: 0, suppressed: 0 };
 
-      // Deduplicate by email_id, take latest event_type
+      // Deduplicate by email_id; pick the "best" terminal status per email.
+      // Priority: delivered > sent > opened/clicked > bounced/complained/failed/dlq > suppressed > retry
+      const RANK: Record<string, number> = {
+        delivered: 6, sent: 5, opened: 4, clicked: 4,
+        bounced: 3, complained: 3, failed: 3, dlq: 3,
+        suppressed: 2, retry: 1,
+      };
       const latest = new Map<string, string>();
       for (const row of data) {
         const key = row.email_id || crypto.randomUUID();
         const existing = latest.get(key);
-        if (!existing) latest.set(key, row.event_type);
+        if (!existing || (RANK[row.event_type] ?? 0) > (RANK[existing] ?? 0)) {
+          latest.set(key, row.event_type);
+        }
       }
       const counts = { total: 0, sent: 0, failed: 0, suppressed: 0 };
       for (const status of latest.values()) {
         counts.total++;
-        if (status === "sent") counts.sent++;
-        else if (status === "failed" || status === "dlq") counts.failed++;
+        if (status === "sent" || status === "delivered" || status === "opened" || status === "clicked") counts.sent++;
+        else if (status === "failed" || status === "dlq" || status === "bounced" || status === "complained") counts.failed++;
         else if (status === "suppressed") counts.suppressed++;
       }
       return counts;
