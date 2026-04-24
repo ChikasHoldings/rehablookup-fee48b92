@@ -55,3 +55,19 @@ surfaces — it requires admin auth context.
   Falls back to `"system"` (not `"admin"`) when the role is unknown. Seeker and
   provider flows write their own literals (`"seeker"`, `"provider"`) and must NOT
   use the helper.
+
+**`auto-status-transition` edge function (v3.1):** Walks `FORWARD_PATH` one step at
+a time so the per-row DB trigger accepts each hop. Hardening rules:
+- The `actorType` body field is typed to the same granular taxonomy as the client
+  helper (`super_admin | manager | customer_rep | advisor | provider | seeker | system`).
+  Callers MUST pass `getCaseEventActorType(adminRole)` (or `"provider"` /
+  `"seeker"`) — never the literal `"admin"`. `"system"` is reserved for cron /
+  background jobs without a real human actor.
+- A mid-walk DB rejection now returns `partial: true` plus `error` / `lockConflictAt`
+  in the JSON response and stamps `partial: true` + `last_error` / `lock_miss_at`
+  on the summary `concierge_case_events` row, so silent half-walks are visible to
+  reviewers. The response also includes `targetStatus` and `reachedTarget`.
+- `introductions_sent_count` increments are race-safe: callers (PlacementDetailModal
+  `sendIntro`, ConciergeIntroductionsTab `sendIntroMutation`) apply an optimistic
+  lock on the prior count and re-read + retry once on miss. NEVER do a blind
+  `count + 1` write.
