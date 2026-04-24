@@ -131,7 +131,7 @@ export function SearchResultsForm() {
       onSubmit={handleSubmit}
       role="search"
       aria-label="Search rehab centers"
-      className="grid grid-cols-1 gap-2 sm:grid-cols-14"
+      className="grid grid-cols-1 gap-2 sm:grid-cols-[repeat(14,minmax(0,1fr))]"
     >
       {/* Location */}
       <div className="relative sm:col-span-4">
