@@ -93,6 +93,7 @@ const NEAR_ME_LABEL = {
   "same-day-rehab-near-me": "Same-Day Rehab",
   "emergency-rehab-near-me": "Emergency Rehab",
   "30-day-rehab-near-me": "30-Day Rehab",
+  "dual-diagnosis-near-me": "Dual Diagnosis Treatment",
 };
 
 const TREATMENT_TYPE_LABEL = {
@@ -867,6 +868,35 @@ const URLS = [
   "/rehab-centers/louisiana/lake-charles",
   "/insurance/cigna-rehab/ohio",
   "/rehab-centers/pennsylvania/harrisburg",
+
+  // ── Batch 2: GSC "Alternate page with proper canonical tag" recovery ──
+  "/insurance/tricare-rehab/massachusetts/county/worcester",
+  "/insurance/kaiser-rehab/california/malibu",
+  "/rehab-centers/maryland/towson",
+  "/emergency-rehab-near-me/nevada/las-vegas",
+  "/dual-diagnosis-near-me/alaska",
+  "/treatment-types/residential-inpatient/texas/frisco",
+  "/treatment-types/dual-diagnosis-treatment/illinois/naperville",
+  "/treatment-types/dual-diagnosis-treatment/vermont/montpelier",
+  "/treatment-types/residential-inpatient/texas/grand-prairie",
+  "/treatment-types/dual-diagnosis-treatment/hawaii/honolulu",
+  "/rehab-centers/florida/st-petersburg",
+  "/treatment-types/detox-programs/rhode-island",
+  "/treatment-types/detox-programs/rhode-island/east-providence",
+  "/treatment-types/dual-diagnosis-treatment/maryland/rockville",
+  "/treatment-types/detox-programs/maryland/baltimore",
+  "/treatment-types/dual-diagnosis-treatment/texas/lubbock",
+  "/treatment-types/dual-diagnosis-treatment/louisiana/new-orleans",
+  "/treatment-types/dual-diagnosis-treatment/louisiana/shreveport",
+  "/treatment-types/outpatient-programs/new-hampshire/dover",
+  "/treatment-types/outpatient-programs/kansas/kansas-city",
+  "/treatment-types/outpatient-programs/south-dakota/watertown",
+  "/dual-diagnosis-near-me/colorado",
+  "/treatment-types/detox-programs/hawaii/maui",
+  "/treatment-types/detox-programs/virginia",
+  "/rehab-centers/virginia/alexandria",
+  "/treatment-types/dual-diagnosis-treatment/massachusetts/lowell",
+  "/treatment-types/outpatient-programs/maryland/columbia",
 ];
 
 // ---------------------------------------------------------------------------
