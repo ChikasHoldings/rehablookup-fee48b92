@@ -66,7 +66,7 @@ export default function AdminBackOffice() {
       const [openEscalations, pendingProviders, activeCases, recentAudit, totalStaff] = await Promise.all([
         supabase.from("admin_escalations").select("id", { count: "exact", head: true }).eq("status", "open"),
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).not("status", "in", '("completed","closed")'),
+        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).not("status", "in", "(completed,closed)"),
         supabase.from("admin_audit_log").select("id", { count: "exact", head: true }),
         supabase.from("admin_user_profiles").select("id", { count: "exact", head: true }),
       ]);
@@ -134,24 +134,24 @@ export default function AdminBackOffice() {
     onError: (err: Error) => toast.error("Failed to reassign", { description: err.message }),
   });
 
-  // Force status mutation
+  // Force status mutation — uses SECURITY DEFINER RPC that bypasses
+  // the validate_concierge_status_transition trigger after verifying the
+  // caller is an active Super Admin. The RPC also writes the audit log
+  // and case-event entries server-side.
   const forceStatusMutation = useMutation({
     mutationFn: async () => {
-      if (!forceStatusCaseId.trim() || !forceStatusValue) throw new Error("Case ID and Status are required");
-      const updates: Record<string, any> = { status: forceStatusValue };
-      if (forceStatusValue === "closed") updates.closed_at = new Date().toISOString();
-      const { error } = await supabase
-        .from("concierge_inquiries")
-        .update(updates)
-        .eq("id", forceStatusCaseId.trim());
-      if (error) throw error;
-      await supabase.from("concierge_case_events").insert({
-        inquiry_id: forceStatusCaseId.trim(),
-        event_type: "status_force_changed",
-        event_data: { new_status: forceStatusValue, forced_by: user?.id },
-        actor_type: "admin",
-        actor_id: user?.id,
+      if (!forceStatusCaseId.trim() || !forceStatusValue) {
+        throw new Error("Case ID and Status are required");
+      }
+      if (!isSuperAdmin) {
+        throw new Error("Only Super Admin may force status changes");
+      }
+      const { error } = await supabase.rpc("admin_force_concierge_status", {
+        p_inquiry_id: forceStatusCaseId.trim(),
+        p_new_status: forceStatusValue,
+        p_reason: null,
       });
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Case status forced");
@@ -160,7 +160,8 @@ export default function AdminBackOffice() {
       setForceStatusValue("");
       queryClient.invalidateQueries({ queryKey: ["back-office-health"] });
     },
-    onError: (err: Error) => toast.error("Failed to update", { description: err.message }),
+    onError: (err: Error) =>
+      toast.error("Failed to update", { description: err.message }),
   });
 
   const handleImpersonate = async (targetUser: any) => {
@@ -236,38 +237,40 @@ export default function AdminBackOffice() {
         ))}
       </div>
 
-      {/* Override Actions */}
-      <Card className="border shadow-sm border-amber-200/50">
-        <CardHeader>
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <Zap className="h-4 w-4 text-warning" />
-            Override Actions
-          </CardTitle>
-          <CardDescription className="text-xs">Direct case management overrides (Super Admin only)</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <Button variant="outline" size="sm" onClick={() => setReassignOpen(true)}>
-            <ArrowRightLeft className="h-4 w-4 mr-1.5" />
-            Reassign Case
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setForceStatusOpen(true)}>
-            <Zap className="h-4 w-4 mr-1.5" />
-            Force Status Change
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/users">
-              <Users className="h-4 w-4 mr-1.5" />
-              Manage Staff
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/security-logs">
-              <Shield className="h-4 w-4 mr-1.5" />
-              Security Logs
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Override Actions — Super Admin only */}
+      {isSuperAdmin && (
+        <Card className="border shadow-sm border-amber-200/50">
+          <CardHeader>
+            <CardTitle className="text-base font-medium flex items-center gap-2">
+              <Zap className="h-4 w-4 text-warning" />
+              Override Actions
+            </CardTitle>
+            <CardDescription className="text-xs">Direct case management overrides (Super Admin only)</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <Button variant="outline" size="sm" onClick={() => setReassignOpen(true)}>
+              <ArrowRightLeft className="h-4 w-4 mr-1.5" />
+              Reassign Case
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setForceStatusOpen(true)}>
+              <Zap className="h-4 w-4 mr-1.5" />
+              Force Status Change
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/admin/users">
+                <Users className="h-4 w-4 mr-1.5" />
+                Manage Staff
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/admin/security-logs">
+                <Shield className="h-4 w-4 mr-1.5" />
+                Security Logs
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Smoke Tests — Super Admin only */}
       {isSuperAdmin && <SmokeTestRunner />}
