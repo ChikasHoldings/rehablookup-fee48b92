@@ -121,8 +121,13 @@ async function fetchSuperAdminData(supabase: any, start: string, end: string) {
   const { data: unlockRevenue } = await supabase.from("credit_transactions").select("amount_cents").eq("transaction_type", "unlock").gte("created_at", start).lte("created_at", end);
   const totalRevenueCents = (unlockRevenue || []).reduce((sum: number, t: { amount_cents: number }) => sum + Math.abs(t.amount_cents), 0);
 
-  // Profile views (from provider_events — source of truth, excludes impressions)
-  const { count: totalViews } = await supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("event_type", "profile_view").gte("created_at", start).lte("created_at", end);
+  // Profile views and listing impressions (from provider_events — source of truth)
+  const [profileViewsResult, listingImpressionsResult] = await Promise.all([
+    supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("event_type", "profile_view").gte("created_at", start).lte("created_at", end),
+    supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("event_type", "listing_impression").gte("created_at", start).lte("created_at", end),
+  ]);
+  const totalViews = profileViewsResult.count || 0;
+  const totalImpressions = listingImpressionsResult.count || 0;
 
   // System alerts (escalations)
   const { count: openEscalations } = await supabase.from("admin_escalations").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]);
@@ -132,7 +137,8 @@ async function fetchSuperAdminData(supabase: any, start: string, end: string) {
     newLeads: newLeads.count || 0,
     unlockedLeads: unlockedLeads.count || 0,
     totalRevenueCents,
-    totalViews: totalViews || 0,
+    totalViews,
+    totalImpressions,
     placements: placements.count || 0,
     confirmedPlacements: confirmedPlacements.count || 0,
     pendingProviders: pendingProviders.count || 0,
@@ -236,11 +242,14 @@ function buildSuperAdminBody(data: Awaited<ReturnType<typeof fetchSuperAdminData
   return `
     <p style="font-size:13px;color:${BRAND.muted};margin:0 0 16px;">Full platform visibility for the ${periodLabel(period).toLowerCase()} period.</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      ${statCard(data.totalImpressions.toLocaleString(), "Listing Impressions")}
       ${statCard(data.totalViews.toLocaleString(), "Profile Views")}
-      ${statCard(data.newLeads, "Leads Generated")}
     </tr><tr>
+      ${statCard(data.newLeads, "Leads Generated")}
       ${statCard(data.unlockedLeads, "Leads Unlocked")}
+    </tr><tr>
       ${statCard(revenue, "Unlock Revenue", BRAND.success)}
+      ${statCard(data.conciergeInquiries, "Placement Requests")}
     </tr><tr>
       ${statCard(data.conciergeInquiries, "Placement Requests")}
       ${statCard(data.confirmedPlacements, "Confirmed Placements", BRAND.success)}
