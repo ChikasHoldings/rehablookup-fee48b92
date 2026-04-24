@@ -80,6 +80,7 @@ export function SearchResultsForm() {
     const raw = searchParams.get("insuranceTypes") ?? "";
     return raw.split(",").filter(Boolean)[0] ?? "";
   });
+  const [distance, setDistance] = useState<string>(searchParams.get("distance") ?? "");
 
   // Keep the form in sync if URL params change elsewhere (e.g. sidebar pills).
   useEffect(() => {
@@ -88,6 +89,7 @@ export function SearchResultsForm() {
     setTreatment(t);
     const i = (searchParams.get("insuranceTypes") ?? "").split(",").filter(Boolean)[0] ?? "";
     setInsurance(i);
+    setDistance(searchParams.get("distance") ?? "");
   }, [searchParams]);
 
   const handleSubmit = (e: FormEvent) => {
