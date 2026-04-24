@@ -124,10 +124,10 @@ export function ManagerDashboard() {
     queryKey: ["manager-placement-stats"],
     queryFn: async () => {
       const [active, matching, placed, thisMonth] = await Promise.all([
-        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", ["intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "reviewing", "matching", "introductions_sent", "in_contact"]),
-        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", ["matching_providers", "provider_prequalification", "matching"]),
-        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", ["admitted", "billed", "completed"]),
-        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", ["admitted", "billed", "completed"]).gte("created_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", ACTIVE_STATUSES as unknown as string[]),
+        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", MATCHING_STATUSES as unknown as string[]),
+        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", PLACED_STATUSES as unknown as string[]),
+        supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).in("status", PLACED_STATUSES as unknown as string[]).gte("created_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
       ]);
       return {
         activeCases: active.count || 0,
