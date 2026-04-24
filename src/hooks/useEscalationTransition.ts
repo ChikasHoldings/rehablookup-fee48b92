@@ -78,13 +78,25 @@ export function useEscalationTransition() {
         }
       }
 
-      // Client-side state-machine guard.
-      if (updates.status && fromStatus && fromStatus !== updates.status) {
-        const allowed = ALLOWED_TRANSITIONS[fromStatus as EscalationStatus] ?? [];
-        if (!allowed.includes(updates.status)) {
+      // Client-side state-machine guard. We require fromStatus whenever the
+      // caller is changing status — without it we cannot safely validate the
+      // transition (and the DB trigger would be the only line of defense).
+      if (updates.status) {
+        if (!fromStatus) {
           throw new Error(
-            `Cannot change escalation from "${fromStatus}" to "${updates.status}". Allowed: ${allowed.join(", ") || "none"}`
+            "useEscalationTransition: `fromStatus` is required when updating `status`. Pass the current persisted status from the row."
           );
+        }
+        if (!(fromStatus in ALLOWED_TRANSITIONS)) {
+          throw new Error(`Unknown escalation fromStatus "${fromStatus}".`);
+        }
+        if (fromStatus !== updates.status) {
+          const allowed = ALLOWED_TRANSITIONS[fromStatus] ?? [];
+          if (!allowed.includes(updates.status)) {
+            throw new Error(
+              `Cannot change escalation from "${fromStatus}" to "${updates.status}". Allowed: ${allowed.join(", ") || "none"}`
+            );
+          }
         }
       }
 
