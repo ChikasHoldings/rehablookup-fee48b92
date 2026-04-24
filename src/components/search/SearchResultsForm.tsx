@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { MapPin, Search, Building2, Shield } from "lucide-react";
+import { MapPin, Search, Building2, Shield, Navigation } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
