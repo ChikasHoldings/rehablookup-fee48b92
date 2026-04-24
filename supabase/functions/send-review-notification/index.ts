@@ -270,7 +270,10 @@ ${emailEnd()}
       to: adminEmails,
       subject: `New Review Pending: ${facility.name}`,
       html: emailHtml,
-    }, { emailType: "review_notification" });
+    }, {
+      emailType: "review_notification",
+      idempotencyKey: `review-submitted-admin-${review.id}`,
+    });
     logStep("Admin email sent", { recipientCount: adminEmails.length });
   }
 }
@@ -343,7 +346,10 @@ ${emailEnd()}
       to: [providerEmail],
       subject: `${subjectPrefix}New ${review.rating}-Star Review for ${facility.name}`,
       html: emailHtml,
-    }, { emailType: "review_notification" });
+    }, {
+      emailType: "review_notification",
+      idempotencyKey: `review-approved-provider-${review.id}`,
+    });
     logStep("Provider email sent");
   }
 
@@ -367,7 +373,10 @@ ${emailEnd()}
       to: [seekerEmail],
       subject: "Your Review Has Been Published!",
       html: emailHtml,
-    }, { emailType: "review_notification" });
+    }, {
+      emailType: "review_notification",
+      idempotencyKey: `review-approved-seeker-${review.id}`,
+    });
     logStep("Seeker approval email sent");
   }
 }
@@ -425,7 +434,10 @@ ${emailEnd()}
       to: [seekerEmail],
       subject: "Update on Your Review",
       html: emailHtml,
-    }, { emailType: "review_notification" });
+    }, {
+      emailType: "review_notification",
+      idempotencyKey: `review-rejected-seeker-${review.id}`,
+    });
     logStep("Seeker rejection email sent");
   }
 }
@@ -481,7 +493,10 @@ ${emailEnd()}
       to: [seekerEmail],
       subject: `${facility.name} Responded to Your Review`,
       html: emailHtml,
-    }, { emailType: "review_notification" });
+    }, {
+      emailType: "review_notification",
+      idempotencyKey: `review-response-seeker-${review.id}`,
+    });
     logStep("Seeker response notification email sent");
   }
 }
@@ -533,7 +548,10 @@ ${emailEnd()}
       to: adminEmails,
       subject: `⚠️ Review Dispute: ${facility.name}`,
       html: emailHtml,
-    }, { emailType: "review_notification" });
+    }, {
+      emailType: "review_notification",
+      idempotencyKey: `review-disputed-admin-${review.id}`,
+    });
     logStep("Admin dispute email sent", { recipientCount: adminEmails.length });
   }
 }
