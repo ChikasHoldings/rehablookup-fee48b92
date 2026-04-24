@@ -891,6 +891,7 @@ const SearchResults = () => {
                   {activeFiltersCount}
                 </Badge>
               )}
+            </Button>
           </div>
 
           {/* Inline search form — location + treatment + insurance */}
