@@ -94,6 +94,11 @@ const NEAR_ME_LABEL = {
   "emergency-rehab-near-me": "Emergency Rehab",
   "30-day-rehab-near-me": "30-Day Rehab",
   "dual-diagnosis-near-me": "Dual Diagnosis Treatment",
+  "sober-living-near-me": "Sober Living",
+  "outpatient-near-me": "Outpatient Rehab",
+  "court-ordered-rehab-near-me": "Court-Ordered Rehab",
+  "faith-based-rehab-near-me": "Faith-Based Rehab",
+  "veterans-rehab-near-me": "Veterans Rehab",
 };
 
 const TREATMENT_TYPE_LABEL = {
@@ -488,14 +493,17 @@ function buildLocalizedRehab(urlPath, slug) {
 }
 
 function buildStateRehabilitation(urlPath, slug) {
-  // /{type}-rehabilitation-{state} or /dual-diagnosis-treatment-{state}
-  const m = slug.match(/^(alcohol|drug|outpatient|inpatient|dual-diagnosis-treatment)-?(rehabilitation|treatment)?-(.+)$/);
+  // /{type}-rehabilitation-{state}, /dual-diagnosis-treatment-{state}, /detox-programs-{state}
+  const m = slug.match(/^(alcohol|drug|outpatient|inpatient|dual-diagnosis-treatment|detox-programs)-?(rehabilitation|treatment|programs)?-(.+)$/);
   if (!m) return null;
   const typeRaw = m[1];
   const stateSlug = m[3];
   const state = stateName(stateSlug);
   if (!STATE_NAMES[stateSlug]) return null;
-  const typeLabel = typeRaw === "dual-diagnosis-treatment" ? "Dual Diagnosis Treatment" : `${titleCase(typeRaw)} Rehabilitation`;
+  const typeLabel =
+    typeRaw === "dual-diagnosis-treatment" ? "Dual Diagnosis Treatment"
+    : typeRaw === "detox-programs" ? "Detox Programs"
+    : `${titleCase(typeRaw)} Rehabilitation`;
   return {
     metaTitle: `${typeLabel} in ${state} | RehabLookup`,
     metaDescription: `Find ${typeLabel.toLowerCase()} programs in ${state}. Compare accredited facilities, verify insurance, and start treatment.`,
@@ -615,9 +623,72 @@ function buildBestRehab(urlPath, slug) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Resolver
-// ---------------------------------------------------------------------------
+function buildNearMeHub(urlPath, key) {
+  const label = NEAR_ME_LABEL[key] || titleCase(key.replace(/-near-me$/, ""));
+  return {
+    metaTitle: `${label} Near Me | RehabLookup`,
+    metaDescription: `Find ${label.toLowerCase()} programs near you. Browse accredited centers nationwide, verify insurance, and start treatment today.`,
+    h1: `${label} Near Me`,
+    intro: `Looking for ${label.toLowerCase()} near you? RehabLookup lists accredited ${label.toLowerCase()} programs across the United States, with insurance verification and same-day admissions support.`,
+    breadcrumbs: [{ name: "Home", url: "/" }, { name: `${label} Near Me`, url: urlPath }],
+    sections: [
+      { h: `How to Find ${label} Near You`, body: [
+        `Browse RehabLookup's nationwide directory of ${label.toLowerCase()} programs. Filter by state, city, insurance, and clinical specialty to find the right fit.`,
+        `Most ${label.toLowerCase()} programs accept private insurance, Medicaid, Medicare, and self-pay. Verify benefits before admission for the lowest out-of-pocket cost.`,
+      ]},
+      { h: "What to Expect", body: [
+        `${label} typically begins with a clinical assessment, followed by an individualized treatment plan combining therapy, medical support, and aftercare planning.`,
+      ]},
+    ],
+    faqs: [
+      { q: `How do I find ${label.toLowerCase()} near me?`, a: `Use RehabLookup to browse ${label.toLowerCase()} programs by state and city, filter by insurance, and contact admissions directly.` },
+      { q: `Does insurance cover ${label.toLowerCase()}?`, a: `Most major insurers, Medicaid, and Medicare cover medically necessary ${label.toLowerCase()}. Request a free benefits verification before admission.` },
+    ],
+  };
+}
+
+function buildListYourFacility(urlPath, slug) {
+  // /list-your-facility-in-{slug}
+  const tail = slug.replace(/^list-your-facility-in-/, "");
+  // Detect if last segment is a known state
+  const tailParts = tail.split("-");
+  let stateSlug = null;
+  // Try matching trailing segments as state (longest first)
+  for (let i = 1; i <= 3 && i <= tailParts.length; i++) {
+    const candidate = tailParts.slice(-i).join("-");
+    if (STATE_NAMES[candidate]) { stateSlug = candidate; break; }
+  }
+  const state = stateSlug ? STATE_NAMES[stateSlug] : null;
+  const cityPart = stateSlug ? tailParts.slice(0, tailParts.length - stateSlug.split("-").length).join("-") : tail;
+  const city = cityPart ? titleCase(cityPart) : null;
+  const locale = city && state ? `${city}, ${state}` : state || titleCase(tail);
+  return {
+    metaTitle: `List Your Facility in ${locale} | RehabLookup`,
+    metaDescription: `List your treatment center on RehabLookup and reach families searching for accredited addiction treatment in ${locale}.`,
+    h1: `List Your Facility in ${locale}`,
+    intro: `${locale} families search RehabLookup every day for accredited addiction treatment. List your facility to reach them with a verified profile, insurance acceptance, and direct admissions inquiries.`,
+    breadcrumbs: [
+      { name: "Home", url: "/" },
+      { name: "For Providers", url: "/for-providers" },
+      { name: locale, url: urlPath },
+    ],
+    sections: [
+      { h: `Why List on RehabLookup in ${locale}`, body: [
+        `Verified directory listing with insurance acceptance, photos, accreditation badges, and direct family inquiries from people searching for treatment in ${locale}.`,
+        `Pro plans get priority placement, lead routing, and detailed performance analytics so you can measure cost per admission accurately.`,
+      ]},
+      { h: "Get Started", body: [
+        `Create your profile, verify accreditation, and start receiving inquiries within 24 hours. Our team helps with profile setup at no cost.`,
+      ]},
+    ],
+    faqs: [
+      { q: `How much does it cost to list a facility in ${locale}?`, a: `Free basic listings are available. Pro plans ($399/mo) include priority placement, verified inquiries, and a 20% discount on lead unlocks.` },
+      { q: `How long does verification take?`, a: `Most facilities are verified within 24-48 hours after submitting accreditation and licensure documentation.` },
+    ],
+  };
+}
+
+
 
 function resolve(urlPath) {
   const clean = urlPath.replace(/\/+$/, "");
@@ -630,6 +701,11 @@ function resolve(urlPath) {
   if (parts[0] === "rehab-centers" && parts.length >= 2) return buildRehabCenters(clean, parts);
   if (NEAR_ME_LABEL[parts[0]] && parts.length >= 2) return buildNearMe(clean, parts);
 
+  // Bare near-me hubs (e.g., /sober-living-near-me, /teen-rehab-near-me)
+  if (parts.length === 1 && (NEAR_ME_LABEL[parts[0]] || parts[0].endsWith("-near-me"))) {
+    return buildNearMeHub(clean, parts[0]);
+  }
+
   const stateRehab = buildStateRehabilitation(clean, slug);
   if (stateRehab) return stateRehab;
 
@@ -638,6 +714,11 @@ function resolve(urlPath) {
 
   const provider = buildProviderCity(clean, slug);
   if (provider) return provider;
+
+  // Generalized list-your-facility-in-{location} resolver
+  if (slug.startsWith("list-your-facility-in-")) {
+    return buildListYourFacility(clean, slug);
+  }
 
   if (slug === "list-your-facility-in-indianapolis-indiana") {
     return {
@@ -897,6 +978,55 @@ const URLS = [
   "/rehab-centers/virginia/alexandria",
   "/treatment-types/dual-diagnosis-treatment/massachusetts/lowell",
   "/treatment-types/outpatient-programs/maryland/columbia",
+
+  // ── Batch 3: GSC "Soft 404" recovery ──
+  "/rehab-marketing/florida/county/lee/residential",
+  "/bpd-and-addiction-treatment/florida/jacksonville",
+  "/affordable-rehab-near-me/maryland",
+  "/list-your-facility-in-nevada",
+  "/alcohol-rehab-near-me/south-carolina",
+  "/drug-rehab-near-me/rhode-island",
+  "/luxury-rehab-near-me/georgia",
+  "/insurance/medicaid-rehab/north-dakota",
+  "/treatment-types/drug-addiction/tennessee",
+  "/alcohol-rehab-near-me/utah",
+  "/luxury-rehab-near-me/idaho",
+  "/detox-near-me/oregon/county/linn",
+  "/affordable-rehab-near-me/nevada/county/carson-city",
+  "/drug-rehab-near-me/south-carolina/county/lexington",
+  "/treatment-types/drug-addiction/california/san-francisco",
+  "/alcohol-rehabilitation-washington",
+  "/rehab-centers/pennsylvania",
+  "/detox-near-me/missouri/county/st-charles",
+  "/outpatient-rehabilitation-mississippi",
+  "/rehab-centers/rhode-island/cumberland-ri",
+  "/teen-rehab-near-me/indiana",
+  "/insurance/wellcare-rehab/oregon",
+  "/get-more-blue-cross-patients-in-nashville-tennessee",
+  "/rehab-centers/rhode-island",
+  "/treatment-types/drug-addiction/connecticut",
+  "/detox-programs-kentucky",
+  "/kratom-addiction-treatment/new-hampshire",
+  "/best-rehab-centers-in-nevada",
+  "/treatment-types/sober-living/florida",
+  "/dual-diagnosis-near-me/new-york/county/erie",
+  "/sober-living-near-me",
+  "/dual-diagnosis-near-me/california/county/san-mateo",
+  "/list-your-facility-in-richmond-virginia",
+  "/kratom-addiction-treatment/idaho",
+  "/treatment-types/alcohol-rehabilitation",
+  "/treatment-types/detox-programs",
+  "/outpatient-near-me",
+  "/court-ordered-rehab-near-me",
+  "/teen-rehab-near-me",
+  "/medicaid-rehab-near-me",
+  "/dual-diagnosis-near-me/north-carolina",
+  "/faith-based-rehab-near-me",
+  "/veterans-rehab-near-me",
+  "/rehab-centers/utah/county/cache/outpatient-rehab",
+  "/kratom-addiction-treatment/california",
+  "/treatment-types/drug-addiction/texas/amarillo",
+  "/detox-near-me/alaska",
 ];
 
 // ---------------------------------------------------------------------------
