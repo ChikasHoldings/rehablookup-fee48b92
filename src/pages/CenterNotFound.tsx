@@ -51,6 +51,7 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
   const [query, setQuery] = useState(
     attemptedSlug ? attemptedSlug.replace(/-/g, " ") : "",
   );
+  const [reportOpen, setReportOpen] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
