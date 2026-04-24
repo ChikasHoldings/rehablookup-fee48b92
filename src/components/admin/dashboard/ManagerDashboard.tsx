@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useEscalationTransition } from "@/hooks/useEscalationTransition";
+import { useEscalationTransition, type EscalationStatus } from "@/hooks/useEscalationTransition";
 import { ConfirmActionDialog } from "@/components/admin/ConfirmActionDialog";
 import { ManagerTeamPerformance } from "@/components/admin/dashboard/ManagerTeamPerformance";
 import { useEffect, useCallback, useState } from "react";
