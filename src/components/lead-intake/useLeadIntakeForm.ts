@@ -117,7 +117,7 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     }
   };
   
-  // Load saved form data from localStorage
+  // Load saved form data from localStorage (non-PII fields only)
   useEffect(() => {
     const loadSavedData = async () => {
       try {
@@ -125,17 +125,11 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
         if (saved) {
           const parsed: StoredFormData = JSON.parse(saved);
           if (Date.now() - parsed.timestamp < STORAGE_EXPIRY_MS) {
-            setFormData(parsed.data);
+            // Merge stored non-PII fields with the initial form data; PII fields
+            // (name/email/phone/insurance member id) are intentionally not stored
+            // and will be re-collected from the user.
+            setFormData(prev => ({ ...initialLeadIntakeFormData, ...prev, ...parsed.data }));
             setCurrentStep(parsed.step);
-            
-            // Check if the saved email is already verified
-            if (parsed.data.email) {
-              const alreadyVerified = await checkEmailAlreadyVerified(parsed.data.email);
-              if (alreadyVerified) {
-                setIsEmailVerified(true);
-                setCodeSent(true); // Show as verified state
-              }
-            }
           } else {
             localStorage.removeItem(STORAGE_KEY);
           }
@@ -144,7 +138,6 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
         localStorage.removeItem(STORAGE_KEY);
       }
     };
-    
     loadSavedData();
   }, []);
   
