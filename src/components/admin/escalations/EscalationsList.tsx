@@ -1,6 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useEscalationTransition } from "@/hooks/useEscalationTransition";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,40 +115,36 @@ export function EscalationsList({
     enabled: adminIds.length > 0,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Record<string, any> }) => {
-      const { error } = await supabase
-        .from("admin_escalations")
-        .update(updates)
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Escalation updated");
-      queryClient.invalidateQueries({ queryKey: ["admin-escalations"] });
-      queryClient.invalidateQueries({ queryKey: ["escalation-counts"] });
-      setQuickResolveId(null);
-      setResolutionNotes("");
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to update: " + error.message);
-    },
-  });
+  const updateMutation = useEscalationTransition();
 
-  const handleAssignToMe = (id: string) => {
+  const handleAssignToMe = (id: string, fromStatus: string) => {
+    if (!user?.id) {
+      toast.error("Not authenticated");
+      return;
+    }
     updateMutation.mutate({
       id,
-      updates: { assigned_to: user?.id, status: "in_progress" },
+      fromStatus,
+      updates: {
+        assigned_to: user.id,
+        status: fromStatus === "open" ? "in_progress" : (fromStatus as "in_progress" | "resolved" | "closed"),
+      },
+      auditContext: { surface: "escalations_list_assign_self" },
     });
   };
 
-  const handleQuickResolve = (id: string) => {
+  const handleQuickResolve = (id: string, fromStatus: string) => {
     updateMutation.mutate({
       id,
+      fromStatus,
       updates: {
         status: "resolved",
         resolution_notes: resolutionNotes || null,
-        resolved_at: new Date().toISOString(),
+      },
+      auditContext: { surface: "escalations_list_quick_resolve" },
+      onSuccess: () => {
+        setQuickResolveId(null);
+        setResolutionNotes("");
       },
     });
   };
