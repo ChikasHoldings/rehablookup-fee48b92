@@ -622,11 +622,14 @@ export default function ProviderSignup() {
       }
 
       // 11. Notify admin of new provider signup
+      // M6: sanitize facilityName before passing to email/notification payloads.
+      const safeFacilityName = sanitizeFacilityName(formData.facilityName);
+      const safeFirstName = sanitizePersonName(formData.firstName);
       try {
         await supabase.functions.invoke("notify-admin-provider-signup", {
           body: {
             facilityId,
-            facilityName: formData.facilityName,
+            facilityName: safeFacilityName,
             providerEmail: formData.email,
             city: formData.city,
             state: formData.state,
@@ -642,9 +645,9 @@ export default function ProviderSignup() {
         await supabase.functions.invoke("send-provider-welcome-email", {
           body: {
             facilityId,
-            facilityName: formData.facilityName,
+            facilityName: safeFacilityName,
             providerEmail: formData.email,
-            providerFirstName: formData.firstName,
+            providerFirstName: safeFirstName,
             selectedPlan: "free",
             idempotencyKey: `welcome-${facilityId}`,
           },
@@ -659,9 +662,9 @@ export default function ProviderSignup() {
         await supabase.functions.invoke("send-provider-welcome-offer-email", {
           body: {
             facilityId,
-            facilityName: formData.facilityName,
+            facilityName: safeFacilityName,
             providerEmail: formData.email,
-            providerFirstName: formData.firstName,
+            providerFirstName: safeFirstName,
             selectedPlan: "free",
             idempotencyKey: `welcome-offer-${facilityId}`,
           },

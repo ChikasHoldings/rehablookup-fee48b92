@@ -204,7 +204,6 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
   useEffect(() => {
     if (!hasTrackedPageView.current) {
       hasTrackedPageView.current = true;
-      trackAnalytics("page_view", { facilityId, source });
       analytics.leadFormStart();
     }
   }, [facilityId, source]);
@@ -213,7 +212,6 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
   useEffect(() => {
     if (!stepViewsTracked.current.has(currentStep)) {
       stepViewsTracked.current.add(currentStep);
-      trackAnalytics("step_view", { step: currentStep, facilityId, source });
     }
   }, [currentStep, facilityId, source]);
   
@@ -225,13 +223,9 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     }
   }, [resendCooldown]);
   
-  // Analytics tracking - track-request-help edge function was removed.
-  // Kept as a no-op to preserve call sites; primary analytics flow through
-  // the `analytics` helper (GA/Meta Pixel) elsewhere in this hook.
-  const trackAnalytics = async (_eventType: string, _metadata?: Record<string, unknown>) => {
-    // no-op
-  };
-  
+  // M4: Removed dead `track-request-help` analytics stub.
+  // Primary analytics now flow exclusively through the `analytics` helper
+  // (GA / Meta Pixel) — see `analytics.leadFormStep(...)` calls below.
   const updateFormData = useCallback((updates: Partial<LeadIntakeFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   }, []);
@@ -240,7 +234,6 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     if (currentStep < TOTAL_STEPS) {
       const nextStepNum = currentStep + 1;
       setCurrentStep(nextStepNum);
-      trackAnalytics("step_complete", { step: currentStep });
       analytics.leadFormStep(nextStepNum, `Step ${nextStepNum}`);
     }
   }, [currentStep]);
@@ -292,7 +285,6 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       setResendCooldown(60);
       setVerificationCode("");
       
-      trackAnalytics("verification_code_sent");
       
       toast({
         title: "Verification code sent",
@@ -329,7 +321,6 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       if (data?.error) throw new Error(data.error);
       
       setIsEmailVerified(true);
-      trackAnalytics("email_verified");
       
       toast({
         title: "Email verified",
@@ -369,7 +360,6 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     // Check honeypot
     if (formData.website) {
       console.log("Honeypot triggered");
-      trackAnalytics("spam_blocked", { reason: "honeypot" });
       // Pretend success to fool bots
       setIsSubmitted(true);
       return;
@@ -392,7 +382,6 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
         description: "Please select a treatment center before submitting",
         variant: "destructive",
       });
-      trackAnalytics("form_submit_error", { error: "missing_facility_id" });
       return;
     }
     
@@ -481,7 +470,6 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       localStorage.removeItem(STORAGE_KEY);
       idempotencyKeyRef.current = null;
       
-      trackAnalytics("form_submit_success");
       analytics.leadFormComplete(source);
       analytics.formSubmit("lead_intake", true);
       setIsSubmitted(true);
@@ -492,7 +480,6 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     } catch (error: any) {
       // Reset idempotency key so user can retry
       idempotencyKeyRef.current = null;
-      trackAnalytics("form_submit_error", { error: error.message });
       toast({
         title: "Submission failed",
         description: error.message || "Please try again",
@@ -536,8 +523,5 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     verifyCode,
     resetEmailVerification,
     checkAndAutoVerifyEmail,
-    
-    // Analytics
-    trackAnalytics,
   };
 }
