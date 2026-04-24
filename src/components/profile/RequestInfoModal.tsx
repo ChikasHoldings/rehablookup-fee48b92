@@ -42,15 +42,22 @@ interface NearbyFacility {
 interface RequestInfoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * Facility details. May be partially populated (or effectively empty) if the
+   * parent page failed to load the center record. The modal degrades
+   * gracefully in that case — the lead form is still rendered so the user can
+   * submit their information, and we route them to the concierge for matching
+   * when no specific facility id is available.
+   */
   facility: {
-    id: string;
-    name: string;
-    city: string;
-    state: string;
-    slug: string;
-    logo_url: string | null;
+    id?: string | null;
+    name?: string | null;
+    city?: string | null;
+    state?: string | null;
+    slug?: string | null;
+    logo_url?: string | null;
     featured?: boolean;
-  };
+  } | null;
   facilityPlan?: "free" | "pro";
   prefillData?: {
     firstName?: string;
