@@ -188,11 +188,11 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     prefill();
   }, [isAuthenticated, user]);
 
-  // Save form data to localStorage
+  // Save form data to localStorage (PII stripped — see toStorablePartial)
   useEffect(() => {
     if (!isSubmitted) {
       const toStore: StoredFormData = {
-        data: formData,
+        data: toStorablePartial(formData),
         step: currentStep,
         timestamp: Date.now(),
       };
