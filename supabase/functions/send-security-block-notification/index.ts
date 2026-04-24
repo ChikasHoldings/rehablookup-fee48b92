@@ -192,7 +192,10 @@ Deno.serve(async (req) => {
               </p>
             </div>
           `,
-        }, { emailType: "security_block" });
+        }, {
+          emailType: "security_block",
+          idempotencyKey: `sec-block-${identifier_type}-${identifier}-${Date.now().toString(36)}`,
+        });
         console.log("[SEND-SECURITY-BLOCK-NOTIFICATION] Block email sent successfully");
       } catch (emailError) {
         console.error("[SEND-SECURITY-BLOCK-NOTIFICATION] Block email error:", emailError);
