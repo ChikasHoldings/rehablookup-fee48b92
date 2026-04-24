@@ -176,11 +176,13 @@ export function useProviderCredits(facilityId?: string) {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
-      // Log successful checkout initiation
-      console.log("[useProviderCredits] Checkout initiated:", { 
-        sessionId: data?.sessionId, 
-        version: data?._version 
-      });
+      // Log successful checkout initiation (DEV only — sessionId is sensitive)
+      if (import.meta.env.DEV) {
+        console.log("[useProviderCredits] Checkout initiated:", {
+          sessionId: data?.sessionId,
+          version: data?._version,
+        });
+      }
     },
     onError: (error: Error) => {
       console.error("[useProviderCredits] Purchase mutation error:", error.message);
