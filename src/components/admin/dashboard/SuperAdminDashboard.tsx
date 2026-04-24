@@ -18,6 +18,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Shield, Sparkles, ChevronRight, AlertTriangle } from "lucide-react";
+import {
+  CANONICAL_STATUSES,
+  ACTIVE_STATUSES,
+  PLACED_STATUSES,
+} from "@/components/admin/concierge/conciergeStatusConstants";
 
 const PLAN_COLORS = {
   free: "hsl(215, 16%, 47%)",
