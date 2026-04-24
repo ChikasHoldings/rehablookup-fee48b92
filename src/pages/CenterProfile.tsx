@@ -411,6 +411,35 @@ const CenterProfile = () => {
     refetchOnReconnect: false,
   });
 
+  // Hard-redirect malformed slugs straight to the directory. We do this
+  // AFTER all hooks so hook order stays stable across renders.
+  if (slug && !isSlugFormatValid) {
+    return <Navigate to="/rehab-centers" replace />;
+  }
+
+  // Slug looks valid but no row was returned (deleted, suspended, or never
+  // existed) — also redirect to the directory rather than dead-ending the
+  // user on a "Center Not Found" page.
+  if (
+    isSlugFormatValid &&
+    isFetched &&
+    !isFetching &&
+    !error &&
+    (facility === null || facility === undefined)
+  ) {
+    return <Navigate to="/rehab-centers" replace />;
+  }
+
+  // Listings that exist but are not publicly approved (pending/suspended)
+  // and are NOT being viewed by their owner are redirected too.
+  if (
+    facility &&
+    facility.status !== "approved" &&
+    facility.user_id !== currentUserId
+  ) {
+    return <Navigate to="/rehab-centers" replace />;
+  }
+
   const { data: hasFeaturedSubscription } = useQuery({
     queryKey: ["featured-subscription-check", facility?.id],
     queryFn: async (): Promise<boolean> => {
