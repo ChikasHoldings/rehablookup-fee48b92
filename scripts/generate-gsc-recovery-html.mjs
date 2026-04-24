@@ -488,14 +488,17 @@ function buildLocalizedRehab(urlPath, slug) {
 }
 
 function buildStateRehabilitation(urlPath, slug) {
-  // /{type}-rehabilitation-{state} or /dual-diagnosis-treatment-{state}
-  const m = slug.match(/^(alcohol|drug|outpatient|inpatient|dual-diagnosis-treatment)-?(rehabilitation|treatment)?-(.+)$/);
+  // /{type}-rehabilitation-{state}, /dual-diagnosis-treatment-{state}, /detox-programs-{state}
+  const m = slug.match(/^(alcohol|drug|outpatient|inpatient|dual-diagnosis-treatment|detox-programs)-?(rehabilitation|treatment|programs)?-(.+)$/);
   if (!m) return null;
   const typeRaw = m[1];
   const stateSlug = m[3];
   const state = stateName(stateSlug);
   if (!STATE_NAMES[stateSlug]) return null;
-  const typeLabel = typeRaw === "dual-diagnosis-treatment" ? "Dual Diagnosis Treatment" : `${titleCase(typeRaw)} Rehabilitation`;
+  const typeLabel =
+    typeRaw === "dual-diagnosis-treatment" ? "Dual Diagnosis Treatment"
+    : typeRaw === "detox-programs" ? "Detox Programs"
+    : `${titleCase(typeRaw)} Rehabilitation`;
   return {
     metaTitle: `${typeLabel} in ${state} | RehabLookup`,
     metaDescription: `Find ${typeLabel.toLowerCase()} programs in ${state}. Compare accredited facilities, verify insurance, and start treatment.`,
@@ -630,6 +633,11 @@ function resolve(urlPath) {
   if (parts[0] === "rehab-centers" && parts.length >= 2) return buildRehabCenters(clean, parts);
   if (NEAR_ME_LABEL[parts[0]] && parts.length >= 2) return buildNearMe(clean, parts);
 
+  // Bare near-me hubs (e.g., /sober-living-near-me, /teen-rehab-near-me)
+  if (parts.length === 1 && (NEAR_ME_LABEL[parts[0]] || parts[0].endsWith("-near-me"))) {
+    return buildNearMeHub(clean, parts[0]);
+  }
+
   const stateRehab = buildStateRehabilitation(clean, slug);
   if (stateRehab) return stateRehab;
 
@@ -638,6 +646,11 @@ function resolve(urlPath) {
 
   const provider = buildProviderCity(clean, slug);
   if (provider) return provider;
+
+  // Generalized list-your-facility-in-{location} resolver
+  if (slug.startsWith("list-your-facility-in-")) {
+    return buildListYourFacility(clean, slug);
+  }
 
   if (slug === "list-your-facility-in-indianapolis-indiana") {
     return {
