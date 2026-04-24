@@ -10,9 +10,21 @@ interface BreadcrumbNavProps {
   items: BreadcrumbItem[];
   className?: string;
   variant?: "dark" | "light";
+  /**
+   * Whether this component should emit BreadcrumbList JSON-LD. Defaults to
+   * `true` for legacy callers, but pages whose `<SEO>` component already emits
+   * a BreadcrumbList (e.g. CenterProfile) must pass `false` to avoid Google
+   * flagging duplicate structured-data sets on the page.
+   */
+  emitJsonLd?: boolean;
 }
 
-export function BreadcrumbNav({ items, className = "", variant = "dark" }: BreadcrumbNavProps) {
+export function BreadcrumbNav({
+  items,
+  className = "",
+  variant = "dark",
+  emitJsonLd = true,
+}: BreadcrumbNavProps) {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -38,10 +50,12 @@ export function BreadcrumbNav({ items, className = "", variant = "dark" }: Bread
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
+      {emitJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      )}
       <nav
         aria-label="Breadcrumb"
         className={`text-sm min-w-0 max-w-full overflow-x-auto scrollbar-hide ${className}`}

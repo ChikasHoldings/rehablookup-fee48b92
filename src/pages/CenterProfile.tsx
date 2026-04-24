@@ -645,27 +645,43 @@ const CenterProfile = () => {
           rating: ratingData.averageRating || undefined,
           reviewCount: ratingData.reviewCount || undefined,
         })}
-        breadcrumbs={[
-          { name: "Home", url: "/" },
-          { name: "Find Rehab", url: "/rehab-centers" },
-          { name: facility.state, url: `/locations/${facility.state.toLowerCase().replace(/\s+/g, "-")}` },
-          { name: facility.name, url: `/center/${facility.slug}` },
-        ]}
+        breadcrumbs={(() => {
+          const stateSlug = facility.state.toLowerCase().replace(/\s+/g, "-");
+          const citySlug = facility.city.toLowerCase().replace(/\s+/g, "-");
+          return [
+            { name: "Home", url: "/" },
+            { name: "Find Rehab", url: "/rehab-centers" },
+            { name: facility.state, url: `/rehab-centers/${stateSlug}` },
+            { name: facility.city, url: `/rehab-centers/${stateSlug}/${citySlug}` },
+            { name: facility.name, url: `/center/${facility.slug}` },
+          ];
+        })()}
         modifiedTime={facility.updated_at}
       />
 
       {/* Main Content */}
       <div className="bg-gradient-to-b from-muted/40 via-background to-background min-h-screen pb-8">
         <div className="container max-w-7xl px-4 py-6 md:px-6 md:py-10">
-          <BreadcrumbNav
-            items={[
-              { label: "Find Rehab", href: "/rehab-centers" },
-              { label: facility.state, href: `/rehab-centers/${facility.state.toLowerCase().replace(/\s+/g, "-")}` },
-              { label: facility.name },
-            ]}
-            className="mb-4"
-            variant="light"
-          />
+          {(() => {
+            const stateSlug = facility.state.toLowerCase().replace(/\s+/g, "-");
+            const citySlug = facility.city.toLowerCase().replace(/\s+/g, "-");
+            return (
+              <BreadcrumbNav
+                items={[
+                  { label: "Find Rehab", href: "/rehab-centers" },
+                  { label: facility.state, href: `/rehab-centers/${stateSlug}` },
+                  { label: facility.city, href: `/rehab-centers/${stateSlug}/${citySlug}` },
+                  { label: facility.name },
+                ]}
+                className="mb-4"
+                variant="light"
+                /* JSON-LD already emitted by <SEO breadcrumbs={...}/> above —
+                   suppress the duplicate set here per Google's
+                   "one BreadcrumbList per page" guidance. */
+                emitJsonLd={false}
+              />
+            );
+          })()}
           {/* Pending Status Banner */}
           {isOwner && isPending && (
             <Alert className="mb-6 border-amber-300/50 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 shadow-sm">
