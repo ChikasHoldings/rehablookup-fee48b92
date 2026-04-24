@@ -1,4 +1,4 @@
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, Navigate } from "react-router-dom";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
@@ -220,6 +220,19 @@ const CenterProfile = () => {
   const fromSearch = location.state?.fromSearch;
   const openModalFromNav = location.state?.openRequestModal;
   const prefillDataFromNav = location.state?.prefillData;
+
+  // Slug format gate: a valid center slug is lowercase, hyphen-separated,
+  // alphanumerics only, between 3 and 200 chars. Anything else (UUIDs,
+  // empty segments, query-style noise, path traversal, etc.) is treated
+  // as an invalid route and redirected to the directory rather than
+  // attempting a DB lookup that will always miss.
+  const SLUG_FORMAT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+  const normalisedSlug = slug?.toLowerCase() ?? "";
+  const isSlugFormatValid =
+    !!normalisedSlug &&
+    normalisedSlug.length >= 3 &&
+    normalisedSlug.length <= 200 &&
+    SLUG_FORMAT.test(normalisedSlug);
 
   // Redirect mixed-case slugs to lowercase canonical URL
   useEffect(() => {
@@ -498,6 +511,35 @@ const CenterProfile = () => {
   // - the query hasn't completed at least once yet.
   // This prevents a premature "Center Not Found" flash before the client
   // query has had a chance to verify the slug against the database.
+  // Hard-redirect malformed slugs straight to the directory rather than
+  // attempting a DB lookup that will always miss.
+  if (slug && !isSlugFormatValid) {
+    return <Navigate to="/rehab-centers" replace />;
+  }
+
+  // Slug looks valid but the query resolved to no row (deleted, suspended,
+  // never existed) — redirect to the directory instead of dead-ending on
+  // a "Center Not Found" page.
+  if (
+    isSlugFormatValid &&
+    isFetched &&
+    !isFetching &&
+    !error &&
+    (facility === null || facility === undefined)
+  ) {
+    return <Navigate to="/rehab-centers" replace />;
+  }
+
+  // Listing exists but isn't publicly approved AND the visitor isn't the
+  // owner — treat as inactive and bounce to the directory.
+  if (
+    facility &&
+    facility.status !== "approved" &&
+    facility.user_id !== currentUserId
+  ) {
+    return <Navigate to="/rehab-centers" replace />;
+  }
+
   if (!slug || isLoading || isFetching || !isFetched) {
     return (
       <Layout>
