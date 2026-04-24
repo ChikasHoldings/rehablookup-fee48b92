@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   Megaphone,
@@ -145,6 +146,15 @@ export default function AdminMarketing() {
         .delete()
         .in("id", ids);
       if (error) throw error;
+      // Audit destructive bulk admin action
+      await logAdminAction({
+        actionType: AdminAuditActions.MARKETING_LEADS_BULK_DELETED,
+        targetType: "marketing_lead",
+        details: {
+          count: ids.length,
+          lead_ids: ids,
+        },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-marketing-leads"] });

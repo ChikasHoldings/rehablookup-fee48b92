@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import type { Json } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -141,8 +142,20 @@ export default function AdminBlog() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const article = articles?.find((a) => a.id === id);
       const { error } = await supabase.from("blog_articles").delete().eq("id", id);
       if (error) throw error;
+      // Audit log destructive admin action
+      await logAdminAction({
+        actionType: AdminAuditActions.BLOG_ARTICLE_DELETED,
+        targetType: "blog_article",
+        targetId: id,
+        details: {
+          title: article?.title,
+          slug: article?.slug,
+          status_before_delete: article?.status,
+        },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-blog-articles"] });
@@ -161,12 +174,28 @@ export default function AdminBlog() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const article = articles?.find((a) => a.id === id);
+      const previousStatus = article?.status;
       const updateData: Record<string, unknown> = { status };
       if (status === "published") {
         updateData.published_at = new Date().toISOString();
       }
       const { error } = await supabase.from("blog_articles").update(updateData).eq("id", id);
       if (error) throw error;
+      // Audit content publish/unpublish/archive transitions
+      if (previousStatus !== status) {
+        await logAdminAction({
+          actionType: AdminAuditActions.BLOG_ARTICLE_STATUS_CHANGED,
+          targetType: "blog_article",
+          targetId: id,
+          details: {
+            title: article?.title,
+            slug: article?.slug,
+            old_status: previousStatus,
+            new_status: status,
+          },
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-blog-articles"] });
