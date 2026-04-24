@@ -66,14 +66,21 @@ export function PlacementDetailModal({
 
   useEffect(() => { if (open) setActiveTab("overview"); }, [open, caseData?.id]);
 
-  // Auto-transition: intake_submitted → intake_reviewed when admin views
+  // Auto-transition: intake_submitted → intake_reviewed when admin views.
+  // Pass the granular adminRole through so the auto-logged case event records
+  // the actual admin classification (super_admin / manager / customer_rep /
+  // advisor) instead of collapsing to the generic "admin" literal.
   useEffect(() => {
     if (open && caseData?.status === "intake_submitted") {
       supabase.functions.invoke("auto-status-transition", {
-        body: { inquiryId: caseData.id, trigger: "admin_viewed", actorType: "admin" },
+        body: {
+          inquiryId: caseData.id,
+          trigger: "admin_viewed",
+          actorType: getCaseEventActorType(adminRole),
+        },
       }).then(() => onRefresh()).catch(console.error);
     }
-  }, [open, caseData?.id, caseData?.status]);
+  }, [open, caseData?.id, caseData?.status, adminRole]);
 
   if (!caseData) return null;
 
@@ -643,7 +650,11 @@ function ProvidersContent({ caseData, onRefresh }: { caseData: ConciergeInquiry;
 
     if (response === "interested") {
       await supabase.functions.invoke("auto-status-transition", {
-        body: { inquiryId: caseData.id, trigger: "provider_interested", actorType: "admin" },
+        body: {
+          inquiryId: caseData.id,
+          trigger: "provider_interested",
+          actorType: getCaseEventActorType(adminRole),
+        },
       });
     }
     toast.success("Response updated");
