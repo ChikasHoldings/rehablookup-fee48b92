@@ -221,6 +221,19 @@ const CenterProfile = () => {
   const openModalFromNav = location.state?.openRequestModal;
   const prefillDataFromNav = location.state?.prefillData;
 
+  // Slug format gate: a valid center slug is lowercase, hyphen-separated,
+  // alphanumerics only, between 3 and 200 chars. Anything else (UUIDs,
+  // empty segments, query-style noise, path traversal, etc.) is treated
+  // as an invalid route and redirected to the directory rather than
+  // attempting a DB lookup that will always miss.
+  const SLUG_FORMAT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+  const normalisedSlug = slug?.toLowerCase() ?? "";
+  const isSlugFormatValid =
+    !!normalisedSlug &&
+    normalisedSlug.length >= 3 &&
+    normalisedSlug.length <= 200 &&
+    SLUG_FORMAT.test(normalisedSlug);
+
   // Redirect mixed-case slugs to lowercase canonical URL
   useEffect(() => {
     if (slug && slug !== slug.toLowerCase()) {
