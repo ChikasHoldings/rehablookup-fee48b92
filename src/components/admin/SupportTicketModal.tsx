@@ -194,7 +194,7 @@ export function SupportTicketModal({
           subject: ticket.subject,
           source: ticket.source,
           status_before_delete: ticket.status,
-          contact_email: ticket.contact_email,
+          sender_email: ticket.sender_email,
         },
       });
       toast.success("Ticket deleted");
