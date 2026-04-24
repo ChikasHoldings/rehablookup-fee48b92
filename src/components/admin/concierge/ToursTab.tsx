@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { format } from "date-fns";
 import {
   Calendar as CalendarIcon,
@@ -66,6 +68,7 @@ const STATUS_LABELS: Record<
 
 export function ToursTab({ caseData }: ToursTabProps) {
   const queryClient = useQueryClient();
+  const { adminRole } = useAdminAuth();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createFacilityId, setCreateFacilityId] = useState("");
   const [createTourType, setCreateTourType] = useState("in_person");
@@ -155,7 +158,7 @@ export function ToursTab({ caseData }: ToursTabProps) {
         event_type: "tour_requested",
         event_data: { facility_id: createFacilityId, tour_type: createTourType },
         actor_id: user.id,
-        actor_type: "admin",
+        actor_type: getCaseEventActorType(adminRole),
       });
 
       // Notify facility of tour request
@@ -212,7 +215,7 @@ export function ToursTab({ caseData }: ToursTabProps) {
         event_type: eventType,
         event_data: { tour_id: tourId, ...updates },
         actor_id: user?.id,
-        actor_type: "admin",
+        actor_type: getCaseEventActorType(adminRole),
       });
     },
     onSuccess: () => {

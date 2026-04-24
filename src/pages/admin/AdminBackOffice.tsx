@@ -151,7 +151,7 @@ export default function AdminBackOffice() {
           previous_advisor_id: previousAdvisorId,
           reassigned_by: user?.id,
         },
-        actor_type: "admin",
+        actor_type: getCaseEventActorType(adminRole),
         actor_id: user?.id,
       });
 

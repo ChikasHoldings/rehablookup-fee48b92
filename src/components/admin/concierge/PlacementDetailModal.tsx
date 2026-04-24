@@ -340,7 +340,7 @@ function InlineAdvisorAssign({ caseData, onRefresh }: { caseData: ConciergeInqui
           event_type: "advisor_assigned",
           event_data: { advisor_id: selectedId, previous_advisor_id: previousAdvisorId },
           actor_id: user?.id || null,
-          actor_type: "admin",
+          actor_type: getCaseEventActorType(adminRole),
         });
         toast.success("Advisor assigned");
         queryClient.invalidateQueries({ queryKey: ["admin-concierge-cases-full"] });
@@ -634,7 +634,7 @@ function ProvidersContent({ caseData, onRefresh }: { caseData: ConciergeInquiry;
 
     await supabase.from("concierge_case_events").insert({
       inquiry_id: caseData.id, event_type: "pii_disclosed",
-      event_data: { introduction_id: introId }, actor_id: user.id, actor_type: "admin",
+      event_data: { introduction_id: introId }, actor_id: user.id, actor_type: getCaseEventActorType(adminRole),
     });
     toast.success("PII disclosed");
     refetchIntros();
@@ -905,7 +905,7 @@ function AdmissionContent({ caseData, placedFacility, canManageBilling, onRefres
     await supabase.from("concierge_case_events").insert({
       inquiry_id: caseData.id, event_type: "admission_substatus_changed",
       event_data: { from: currentSubstatus, to: newSubstatus },
-      actor_id: user?.id || null, actor_type: "admin",
+      actor_id: user?.id || null, actor_type: getCaseEventActorType(adminRole),
     });
     toast.success(`Updated to: ${newSubstatus.replace(/_/g, " ")}`);
     queryClient.invalidateQueries({ queryKey: ["admin-concierge-case-detail", caseData.id] });
@@ -918,7 +918,7 @@ function AdmissionContent({ caseData, placedFacility, canManageBilling, onRefres
     await supabase.from("concierge_case_events").insert({
       inquiry_id: caseData.id, event_type: "admission_note_added",
       event_data: { note: noteText.trim() },
-      actor_id: user?.id || null, actor_type: "admin",
+      actor_id: user?.id || null, actor_type: getCaseEventActorType(adminRole),
     });
     setNoteText("");
     toast.success("Note added");

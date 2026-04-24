@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +36,7 @@ const RESPONSE_STATUS = {
 };
 
 export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntroductionsTabProps) {
+  const { adminRole } = useAdminAuth();
   const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [disclosingTo, setDisclosingTo] = useState<string | null>(null);
 
@@ -254,7 +257,7 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
         event_type: "pii_disclosed",
         event_data: { introduction_id: introId },
         actor_id: user.id,
-        actor_type: "admin",
+        actor_type: getCaseEventActorType(adminRole),
       });
 
       // Log to PII disclosure audit table for compliance tracking
