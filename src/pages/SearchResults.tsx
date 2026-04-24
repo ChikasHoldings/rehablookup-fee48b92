@@ -920,21 +920,40 @@ const SearchResults = () => {
               </div>
             )}
 
-            {/* Mobile filter toggle */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="lg:hidden gap-2"
-              onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
-              {activeFiltersCount > 0 && (
-                <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-primary text-primary-foreground">
-                  {activeFiltersCount}
-                </Badge>
-              )}
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Share search button — preserves all filters in URL */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={handleShare}
+                aria-label="Copy a shareable link to this search"
+                title="Share this search"
+              >
+                {shareCopied ? (
+                  <Check className="h-4 w-4 text-primary" />
+                ) : (
+                  <Share2 className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">{shareCopied ? "Copied" : "Share"}</span>
+              </Button>
+
+              {/* Mobile filter toggle */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="lg:hidden gap-2"
+                onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+                {activeFiltersCount > 0 && (
+                  <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-primary text-primary-foreground">
+                    {activeFiltersCount}
+                  </Badge>
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Inline search form — location + treatment + insurance */}
