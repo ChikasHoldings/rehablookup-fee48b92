@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { format } from "date-fns";
 import { MessageSquare, Send, ArrowLeft, Building2, User, Paperclip, Loader2, Plus, ShieldCheck, HeadphonesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,7 @@ interface MessagesTabProps {
 
 export function MessagesTab({ caseData }: MessagesTabProps) {
   const queryClient = useQueryClient();
+  const { adminRole } = useAdminAuth();
   const [selectedThread, setSelectedThread] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
@@ -203,7 +206,7 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
         event_type: "facility_thread_created",
         event_data: { facility_id: facilityId },
         actor_id: user.id,
-        actor_type: "admin",
+        actor_type: getCaseEventActorType(adminRole),
       });
 
       return data;

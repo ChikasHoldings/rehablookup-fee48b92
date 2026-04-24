@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCaseTransition } from "@/hooks/useCaseTransition";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,7 @@ interface AdvisorAssignmentCardProps {
 
 export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignmentCardProps) {
   const queryClient = useQueryClient();
+  const { adminRole } = useAdminAuth();
   const [selectedAdvisor, setSelectedAdvisor] = useState(caseData.assigned_advisor_id || "unassigned");
 
   // Sync state when caseData changes (e.g., switching between cases)
@@ -88,7 +91,7 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
             previous_advisor_id: caseData.assigned_advisor_id,
           },
           actor_id: user?.id || null,
-          actor_type: "admin",
+          actor_type: getCaseEventActorType(adminRole),
         });
       }
 

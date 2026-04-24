@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCaseTransition } from "@/hooks/useCaseTransition";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { EscalationDialog } from "@/components/admin/escalations/EscalationDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,7 @@ function getStatusOptions(currentStatus: string, isAdvisor: boolean) {
 }
 
 export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = false, onSwitchTab }: ConciergeActionsTabProps) {
-  const { user } = useAdminAuth();
+  const { user, adminRole } = useAdminAuth();
   const queryClient = useQueryClient();
   const [status, setStatus] = useState(caseData.status);
   const [adminNotes, setAdminNotes] = useState(caseData.admin_notes || "");
@@ -121,7 +122,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
           event_type: "notes_updated",
           event_data: {},
           actor_id: user?.id || null,
-          actor_type: isAdvisor ? "advisor" : "admin",
+          actor_type: getCaseEventActorType(adminRole),
         });
       }
     },
@@ -443,6 +444,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
 }
 
 function NotifyClientCard({ caseData, onRefresh }: { caseData: ConciergeInquiry; onRefresh: () => void }) {
+  const { adminRole } = useAdminAuth();
   const [sending, setSending] = useState(false);
   const sendGuard = useRef(false);
 
@@ -465,7 +467,7 @@ function NotifyClientCard({ caseData, onRefresh }: { caseData: ConciergeInquiry;
         event_type: "seeker_notified_options",
         event_data: {},
         actor_id: user?.id || null,
-        actor_type: "admin",
+        actor_type: getCaseEventActorType(adminRole),
       });
 
       toast.success("Client has been notified to review provider options.");

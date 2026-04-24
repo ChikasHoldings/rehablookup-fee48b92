@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { format, formatDistanceToNow } from "date-fns";
 import { PlacementProgressStepper } from "./PlacementProgressStepper";
 import { CaseSlaDetailBanner } from "./CaseSlaAlerts";
@@ -282,6 +283,7 @@ function ModalNextActionBar({ caseData, onRefresh, onSwitchTab }: {
 
 /* Inline advisor assignment for the header */
 function InlineAdvisorAssign({ caseData, onRefresh }: { caseData: ConciergeInquiry; onRefresh: () => void }) {
+  const { adminRole } = useAdminAuth();
   const [selectedId, setSelectedId] = useState("");
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
@@ -340,7 +342,7 @@ function InlineAdvisorAssign({ caseData, onRefresh }: { caseData: ConciergeInqui
           event_type: "advisor_assigned",
           event_data: { advisor_id: selectedId, previous_advisor_id: previousAdvisorId },
           actor_id: user?.id || null,
-          actor_type: "admin",
+          actor_type: getCaseEventActorType(adminRole),
         });
         toast.success("Advisor assigned");
         queryClient.invalidateQueries({ queryKey: ["admin-concierge-cases-full"] });
@@ -508,6 +510,7 @@ function OverviewContent({ caseData, advisorName, placedFacility, onSwitchTab }:
    PROVIDERS TAB — Matched + Introductions + Messages
    ═══════════════════════════════════════════ */
 function ProvidersContent({ caseData, onRefresh }: { caseData: ConciergeInquiry; onRefresh: () => void }) {
+  const { adminRole } = useAdminAuth();
   const [isRunning, setIsRunning] = useState(false);
   const [sendingTo, setSendingTo] = useState<string | null>(null);
 
@@ -634,7 +637,7 @@ function ProvidersContent({ caseData, onRefresh }: { caseData: ConciergeInquiry;
 
     await supabase.from("concierge_case_events").insert({
       inquiry_id: caseData.id, event_type: "pii_disclosed",
-      event_data: { introduction_id: introId }, actor_id: user.id, actor_type: "admin",
+      event_data: { introduction_id: introId }, actor_id: user.id, actor_type: getCaseEventActorType(adminRole),
     });
     toast.success("PII disclosed");
     refetchIntros();
@@ -833,6 +836,7 @@ function AdmissionContent({ caseData, placedFacility, canManageBilling, onRefres
   caseData: ConciergeInquiry; placedFacility: any; canManageBilling: boolean; onRefresh: () => void;
 }) {
   const queryClient = useQueryClient();
+  const { adminRole } = useAdminAuth();
   const isAdmitted = caseData.admission_status === "admitted" || caseData.placement_confirmed;
   const currentSubstatus = caseData.admission_substatus || "pending";
   const currentSubIdx = ADMISSION_SUBSTAGES.findIndex(s => s.key === currentSubstatus);
@@ -905,7 +909,7 @@ function AdmissionContent({ caseData, placedFacility, canManageBilling, onRefres
     await supabase.from("concierge_case_events").insert({
       inquiry_id: caseData.id, event_type: "admission_substatus_changed",
       event_data: { from: currentSubstatus, to: newSubstatus },
-      actor_id: user?.id || null, actor_type: "admin",
+      actor_id: user?.id || null, actor_type: getCaseEventActorType(adminRole),
     });
     toast.success(`Updated to: ${newSubstatus.replace(/_/g, " ")}`);
     queryClient.invalidateQueries({ queryKey: ["admin-concierge-case-detail", caseData.id] });
@@ -918,7 +922,7 @@ function AdmissionContent({ caseData, placedFacility, canManageBilling, onRefres
     await supabase.from("concierge_case_events").insert({
       inquiry_id: caseData.id, event_type: "admission_note_added",
       event_data: { note: noteText.trim() },
-      actor_id: user?.id || null, actor_type: "admin",
+      actor_id: user?.id || null, actor_type: getCaseEventActorType(adminRole),
     });
     setNoteText("");
     toast.success("Note added");

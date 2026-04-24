@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,7 +20,7 @@ interface ConciergeTimelineTabProps {
 }
 
 export function ConciergeTimelineTab({ caseData, onRefresh }: ConciergeTimelineTabProps) {
-  const { user } = useAdminAuth();
+  const { user, adminRole } = useAdminAuth();
   const queryClient = useQueryClient();
   const [adminNotes, setAdminNotes] = useState(caseData.admin_notes || "");
   const [notes, setNotes] = useState(caseData.notes || "");
@@ -38,7 +39,7 @@ export function ConciergeTimelineTab({ caseData, onRefresh }: ConciergeTimelineT
         event_type: "notes_updated",
         event_data: { updated_by: user?.id },
         actor_id: user?.id,
-        actor_type: "admin",
+        actor_type: getCaseEventActorType(adminRole),
       });
     },
     onSuccess: () => {

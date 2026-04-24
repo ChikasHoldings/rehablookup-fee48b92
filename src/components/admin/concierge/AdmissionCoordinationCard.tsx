@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +65,7 @@ const ADMISSION_BADGE_COLORS: Record<string, string> = {
 
 export function AdmissionCoordinationCard({ caseData, onRefresh }: AdmissionCoordinationCardProps) {
   const queryClient = useQueryClient();
+  const { adminRole } = useAdminAuth();
   const [tourStatus, setTourStatus] = useState(caseData.tour_coordination_status || "not_started");
   const [admissionStatus, setAdmissionStatus] = useState(caseData.admission_status || "pending");
   const [moveInDate, setMoveInDate] = useState<Date | undefined>(
@@ -113,7 +116,7 @@ export function AdmissionCoordinationCard({ caseData, onRefresh }: AdmissionCoor
             changes,
           },
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: getCaseEventActorType(adminRole),
         });
 
         // Determine which notification to send based on what changed
