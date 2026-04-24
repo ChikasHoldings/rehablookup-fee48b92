@@ -374,11 +374,13 @@ function buildRehabMarketing(urlPath, parts) {
     }
     return CARE_TYPE_LABEL[angle] || titleCase(angle);
   })();
+  // Avoid awkward duplication like "Residential Treatment Treatment Centers"
+  const angleQualifier = angleLabel.replace(/\s+Treatment$/i, "").replace(/\s+Centers?$/i, "");
   const locale = county ? `${county} County, ${state}` : state;
   return {
-    metaTitle: `Marketing for ${angleLabel} Treatment Centers in ${locale} | RehabLookup`,
+    metaTitle: `Marketing for ${angleQualifier} Treatment Centers in ${locale} | RehabLookup`,
     metaDescription: `Grow your ${angleLabel.toLowerCase()} program in ${locale}. Patient acquisition, SEO, and admissions strategies for treatment centers.`,
-    h1: `Marketing for ${angleLabel} Treatment Centers in ${locale}`,
+    h1: `Marketing for ${angleQualifier} Treatment Centers in ${locale}`,
     intro: `Treatment centers in ${locale} that focus on ${angleLabel.toLowerCase()} face unique marketing challenges — from local competition to insurance positioning. This guide covers patient acquisition, SEO, and admissions strategies that work in ${state}.`,
     breadcrumbs: [
       { name: "Home", url: "/" }, { name: "For Providers", url: "/for-providers" },
