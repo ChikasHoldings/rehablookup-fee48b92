@@ -5851,7 +5851,6 @@ export type Database = {
           city: string | null
           created_at: string | null
           description: string | null
-          email: string | null
           facility_type: string | null
           featured: boolean | null
           featured_display_order: number | null
@@ -5881,7 +5880,6 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           description?: string | null
-          email?: string | null
           facility_type?: string | null
           featured?: boolean | null
           featured_display_order?: number | null
@@ -5911,7 +5909,6 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           description?: string | null
-          email?: string | null
           facility_type?: string | null
           featured?: boolean | null
           featured_display_order?: number | null
