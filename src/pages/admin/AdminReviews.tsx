@@ -150,7 +150,7 @@ export default function AdminReviews() {
       .limit(1000);
 
     if (error) {
-      console.error('Error fetching reviews:', error);
+      console.error('[AdminReviews] Error fetching reviews:', error);
       toast.error('Failed to load reviews');
       setIsLoading(false);
       return;

@@ -32,15 +32,17 @@ export function logAdminError(
     errorLogs.pop();
   }
 
-  // Console logging with structured format
-  console.group(`🔴 Admin Error: ${component}`);
-  console.error("Action:", action);
-  console.error("Error:", error);
-  if (context) {
-    console.error("Context:", context);
+  // Console logging with structured format (DEV only — production routes via Sentry)
+  if (import.meta.env.DEV) {
+    console.group(`🔴 Admin Error: ${component}`);
+    console.error("Action:", action);
+    console.error("Error:", error);
+    if (context) {
+      console.error("Context:", context);
+    }
+    console.error("Timestamp:", errorLog.timestamp);
+    console.groupEnd();
   }
-  console.error("Timestamp:", errorLog.timestamp);
-  console.groupEnd();
 
   // Report to Sentry
   const errorObj = error instanceof Error ? error : new Error(String(error));
@@ -59,7 +61,9 @@ export function logAdminWarning(
   message: string,
   context?: Record<string, unknown>
 ): void {
-  console.warn(`⚠️ Admin Warning [${component}]:`, message, context || "");
+  if (import.meta.env.DEV) {
+    console.warn(`⚠️ Admin Warning [${component}]:`, message, context || "");
+  }
 }
 
 export function logAdminInfo(
@@ -67,7 +71,7 @@ export function logAdminInfo(
   message: string,
   context?: Record<string, unknown>
 ): void {
-  if (process.env.NODE_ENV === "development") {
+  if (import.meta.env.DEV) {
     console.info(`ℹ️ Admin Info [${component}]:`, message, context || "");
   }
 }

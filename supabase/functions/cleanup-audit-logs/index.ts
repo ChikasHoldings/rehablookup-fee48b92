@@ -74,16 +74,18 @@ Deno.serve(async (req) => {
 
     console.log(`[cleanup-audit-logs] Successfully deleted ${toDeleteCount} audit logs`);
 
-    // Log this cleanup action (using a system user ID placeholder)
-    await supabase.from("admin_audit_log").insert({
-      admin_user_id: "00000000-0000-0000-0000-000000000000", // System action
-      action_type: "audit_logs_cleaned",
-      target_type: "platform",
-      details: {
-        deleted_count: toDeleteCount,
+    // Record the cleanup as a system notification (admin_audit_log requires a real
+    // admin_user_id; system-initiated cleanups are surfaced via admin_notifications instead).
+    await supabase.from("admin_notifications").insert({
+      type: "system_maintenance",
+      title: "Audit log retention cleanup",
+      message: `Deleted ${toDeleteCount || 0} audit logs older than ${retentionDays} days.`,
+      metadata: {
+        deleted_count: toDeleteCount || 0,
         retention_days: retentionDays,
         cutoff_date: cutoffISO,
         cleaned_at: new Date().toISOString(),
+        source: "cleanup-audit-logs",
       },
     });
 
