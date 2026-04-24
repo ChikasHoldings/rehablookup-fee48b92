@@ -24,7 +24,7 @@ import {
   FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EscalationDetailSheet } from "./EscalationDetailSheet";
+import { EscalationDetailSheet, type EscalationRow } from "./EscalationDetailSheet";
 
 const PRIORITY_CONFIG = {
   low: { label: "Low", color: "bg-muted text-muted-foreground", dot: "bg-muted-foreground" },
@@ -55,7 +55,7 @@ export function EscalationsList({
 }: EscalationsListProps) {
   const { user, isSuperAdmin } = useAdminAuth();
   const queryClient = useQueryClient();
-  const [selectedEscalation, setSelectedEscalation] = useState<any>(null);
+  const [selectedEscalation, setSelectedEscalation] = useState<EscalationRow | null>(null);
   const [quickResolveId, setQuickResolveId] = useState<string | null>(null);
   const [resolutionNotes, setResolutionNotes] = useState("");
 
