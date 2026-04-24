@@ -47,3 +47,11 @@ surfaces — it requires admin auth context.
   trigger rejects the write.
 - All escalation mutations MUST write admin_audit_log (handled inside the hook).
 - All advisor reassignments MUST snapshot the prior advisor + write the audit log.
+- All admin-side `concierge_case_events` writes MUST set `actor_type` via
+  `getCaseEventActorType(adminRole)` from `src/lib/caseEventActor.ts` — never the
+  literal `"admin"`. The helper resolves to the granular role
+  (`super_admin` / `manager` / `customer_rep` / `advisor`) so timeline filtering and
+  audit reviews can distinguish a super-admin override from a routine rep action.
+  Falls back to `"system"` (not `"admin"`) when the role is unknown. Seeker and
+  provider flows write their own literals (`"seeker"`, `"provider"`) and must NOT
+  use the helper.
