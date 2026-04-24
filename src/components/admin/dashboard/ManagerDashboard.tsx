@@ -769,7 +769,7 @@ function RecentEscalationsList() {
 
   const escalationTransition = useEscalationTransition();
 
-  const handleResolve = (id: string, fromStatus: string) => {
+  const handleResolve = (id: string, fromStatus: EscalationStatus) => {
     escalationTransition.mutate({
       id,
       fromStatus,
@@ -779,17 +779,21 @@ function RecentEscalationsList() {
     });
   };
 
-  const handleAssignToMe = (id: string, fromStatus: string) => {
+  const handleAssignToMe = (id: string, fromStatus: EscalationStatus) => {
     if (!user?.id) {
       toast.error("Not authenticated");
       return;
     }
+    // Claiming an "open" escalation moves it to "in_progress"; otherwise leave
+    // status untouched so we don't accidentally regress state.
+    const nextStatus: EscalationStatus | undefined =
+      fromStatus === "open" ? "in_progress" : undefined;
     escalationTransition.mutate({
       id,
       fromStatus,
       updates: {
         assigned_to: user.id,
-        status: fromStatus === "open" ? "in_progress" : (fromStatus as "in_progress" | "resolved" | "closed"),
+        ...(nextStatus ? { status: nextStatus } : {}),
       },
       auditContext: { surface: "manager_dashboard_assign_self" },
       onSuccess: invalidateEscalations,
