@@ -272,14 +272,14 @@ export function SuperAdminDashboard() {
   const { data: placementStats } = useQuery<Record<string, number>>({
     queryKey: ["admin-placement-pipeline"],
     queryFn: async () => {
-      const stages = ["intake_submitted", "intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "admitted", "billed", "completed", "closed"];
+      const stages = CANONICAL_STATUSES;
       const results = await Promise.all(
         stages.map(s => supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).eq("status", s))
       );
       const counts: Record<string, number> = {};
       stages.forEach((s, i) => { counts[s] = results[i].count || 0; });
-      counts.active = counts.intake_submitted + counts.intake_reviewed + counts.advisor_assigned + counts.matching_providers + counts.provider_prequalification + counts.providers_accepted + counts.presented_to_seeker + counts.seeker_selected + counts.admission_in_progress;
-      counts.placed = counts.admitted + counts.billed + counts.completed;
+      counts.active = ACTIVE_STATUSES.reduce((sum, s) => sum + (counts[s] || 0), 0);
+      counts.placed = PLACED_STATUSES.reduce((sum, s) => sum + (counts[s] || 0), 0);
       return counts;
     },
     staleTime: 5 * 60 * 1000,
