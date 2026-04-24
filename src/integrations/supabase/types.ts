@@ -6534,8 +6534,6 @@ export type Database = {
         Args: { p_facility_id: string; p_inquiry_id: string }
         Returns: undefined
       }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
       test_leads_provider_view_masks_non_owner: { Args: never; Returns: Json }
       touch_admin_activity: { Args: { p_user_id: string }; Returns: undefined }
       try_acquire_auto_reload_lock: {
