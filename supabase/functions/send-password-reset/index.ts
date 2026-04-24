@@ -189,7 +189,10 @@ Deno.serve(async (req) => {
 </body>
 </html>
       `,
-    }, { emailType: "password_reset" });
+    }, {
+      emailType: "password_reset",
+      idempotencyKey: `pwd-reset-${normalizedEmail}-${Date.now().toString(36)}`,
+    });
 
     if (emailError) {
       console.error("Resend email error:", emailError);
