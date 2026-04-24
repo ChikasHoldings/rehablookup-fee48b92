@@ -140,6 +140,8 @@ const amenityFilters = [
 
 const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
+  const [shareCopied, setShareCopied] = useState(false);
   
   // Basic search params
   const location = searchParams.get("location") || "";
