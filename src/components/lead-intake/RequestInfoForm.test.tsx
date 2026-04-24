@@ -83,6 +83,24 @@ function renderForm(facilityName = FACILITY.name) {
   );
 }
 
+function clearContactStepFields() {
+  const firstNameInput = screen.getByPlaceholderText(/^john$/i) as HTMLInputElement;
+  const lastNameInput = screen.getByPlaceholderText(/^doe$/i) as HTMLInputElement;
+  const emailInput = screen.getByPlaceholderText(/you@example\.com/i) as HTMLInputElement;
+  const telInput = document.querySelector('input[type="tel"]') as HTMLInputElement | null;
+
+  act(() => {
+    firstNameInput.value = "";
+    lastNameInput.value = "";
+    emailInput.value = "";
+    if (telInput) telInput.value = "";
+    firstNameInput.dispatchEvent(new Event("input", { bubbles: true }));
+    lastNameInput.dispatchEvent(new Event("input", { bubbles: true }));
+    emailInput.dispatchEvent(new Event("input", { bubbles: true }));
+    if (telInput) telInput.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
+
 /**
  * Walk the multi-step intake flow forward until the contact step renders
  * (identified by the visible heading "How can we reach you?" AND/OR the
@@ -367,6 +385,8 @@ describe("Request Information form — submit-qualified-lead payload contract", 
 
     await advanceToContactStep(user);
     await screen.findByRole("button", { name: /^submit$/i });
+
+    clearContactStepFields();
 
     await user.type(screen.getByPlaceholderText(/^john$/i), SEEKER.firstName);
     await user.type(screen.getByPlaceholderText(/^doe$/i), SEEKER.lastName);
