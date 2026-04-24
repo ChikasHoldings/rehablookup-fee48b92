@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
         steps: transitionPath.length,
       },
       actor_id: userData.user.id,
-      actor_type: "admin",
+      actor_type: actorType,
     });
 
     // Send notification (best-effort)

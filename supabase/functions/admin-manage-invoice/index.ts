@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
           facility_id: invoice.facility_id,
           event_type: 'waived',
           actor_id: userData.user.id,
-          actor_type: 'admin',
+          actor_type: actorType,
           amount_cents: invoice.amount_cents,
           details: { reason, waived_by_email: userData.user.email },
         });
@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
           facility_id: invoice.facility_id,
           event_type: 'overridden',
           actor_id: userData.user.id,
-          actor_type: 'admin',
+          actor_type: actorType,
           amount_cents: newAmount,
           details: { 
             reason, 
@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
           facility_id: invoice.facility_id,
           event_type: 'charged',
           actor_id: userData.user.id,
-          actor_type: 'admin',
+          actor_type: actorType,
           amount_cents: invoice.override_amount_cents || invoice.amount_cents,
           details: { marked_paid_by: userData.user.email, method: 'manual' },
         });
@@ -297,7 +297,7 @@ Deno.serve(async (req) => {
           facility_id: invoice.facility_id,
           event_type: 'reminder_sent',
           actor_id: userData.user.id,
-          actor_type: 'admin',
+          actor_type: actorType,
           amount_cents: invoice.override_amount_cents || invoice.amount_cents,
           details: { sent_to: facilityEmail, sent_by: userData.user.email },
         });
@@ -384,7 +384,7 @@ Deno.serve(async (req) => {
           facility_id: invoice.facility_id,
           event_type: paymentIntent.status === 'succeeded' ? 'charged' : 'retry_attempted',
           actor_id: userData.user.id,
-          actor_type: 'admin',
+          actor_type: actorType,
           amount_cents: amountToCharge,
           details: { 
             payment_intent_id: paymentIntent.id, 
