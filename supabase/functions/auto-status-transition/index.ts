@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "3.0.0";
+const VERSION = "3.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,7 +32,13 @@ interface TransitionRequest {
   inquiryId: string;
   trigger: "admin_viewed" | "matches_completed" | "introduction_sent" | "provider_interested";
   actorId?: string;
-  actorType?: "admin" | "provider" | "seeker" | "system";
+  /**
+   * Granular actor classification used to attribute the resulting case event.
+   * Mirror the client `getCaseEventActorType()` taxonomy — never collapse
+   * admin actions to the generic "admin" literal. "system" is reserved for
+   * background jobs / cron without a real human actor.
+   */
+  actorType?: "super_admin" | "manager" | "customer_rep" | "advisor" | "provider" | "seeker" | "system";
 }
 
 // The canonical forward path (must match the DB trigger exactly)
@@ -91,16 +97,18 @@ async function walkTransitions(
   currentStatus: string,
   targetStatus: string,
   requestId: string,
-): Promise<{ finalStatus: string; steps: number }> {
+): Promise<{ finalStatus: string; steps: number; lastError: string | null; lockMissAt: string | null }> {
   const currentIdx = FORWARD_PATH.indexOf(currentStatus);
   const targetIdx = FORWARD_PATH.indexOf(targetStatus);
 
   if (currentIdx < 0 || targetIdx < 0 || currentIdx >= targetIdx) {
-    return { finalStatus: currentStatus, steps: 0 };
+    return { finalStatus: currentStatus, steps: 0, lastError: null, lockMissAt: null };
   }
 
   let status = currentStatus;
   let steps = 0;
+  let lastError: string | null = null;
+  let lockMissAt: string | null = null;
 
   for (let i = currentIdx + 1; i <= targetIdx; i++) {
     const nextStatus = FORWARD_PATH[i];
@@ -115,10 +123,16 @@ async function walkTransitions(
       .maybeSingle();
 
     if (error) {
+      // Surface DB trigger rejection (e.g. validate_concierge_status_transition)
+      // so the caller can log / alert instead of silently returning success.
+      lastError = error.message;
       logStep(requestId, "Step failed", { from: status, to: nextStatus, error: error.message });
       break;
     }
     if (!updated) {
+      // Optimistic lock miss — another writer changed the status under us.
+      // Stop walking (continuing would be unsafe), and surface the conflict.
+      lockMissAt = status;
       logStep(requestId, "Optimistic lock failed", { from: status, to: nextStatus });
       break;
     }
@@ -128,7 +142,7 @@ async function walkTransitions(
     steps++;
   }
 
-  return { finalStatus: status, steps };
+  return { finalStatus: status, steps, lastError, lockMissAt };
 }
 
 Deno.serve(async (req) => {
@@ -199,7 +213,7 @@ Deno.serve(async (req) => {
     }
 
     // Walk through intermediate statuses
-    const { finalStatus, steps } = await walkTransitions(
+    const { finalStatus, steps, lastError, lockMissAt } = await walkTransitions(
       supabase,
       inquiryId,
       inquiry.status,
@@ -220,11 +234,17 @@ Deno.serve(async (req) => {
           trigger,
           auto: true,
           steps,
+          ...(lastError ? { partial: true, last_error: lastError } : {}),
+          ...(lockMissAt ? { partial: true, lock_miss_at: lockMissAt } : {}),
         },
         actor_id: actorId || null,
         actor_type: actorType,
       });
     }
+
+    // Surface partial-walk failures so callers (and admins reviewing logs)
+    // can distinguish a clean walk from one that stalled mid-path.
+    const reachedTarget = finalStatus === targetStatus;
 
     return new Response(
       JSON.stringify({
@@ -232,8 +252,12 @@ Deno.serve(async (req) => {
         transitionMade,
         previousStatus: inquiry.status,
         newStatus: finalStatus,
+        targetStatus,
+        reachedTarget,
         trigger,
         steps,
+        ...(lastError ? { error: lastError, partial: true } : {}),
+        ...(lockMissAt ? { lockConflictAt: lockMissAt, partial: true } : {}),
         requestId,
         _version: VERSION,
       }),

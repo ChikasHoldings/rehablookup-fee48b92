@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { LayoutDashboard, User, Users, Send, UserCheck, CalendarCheck, Home, DollarSign, Clock, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { toast } from "sonner";
 import { PlacementProgressStepper } from "./concierge/PlacementProgressStepper";
 import { CaseSlaDetailBanner } from "./concierge/CaseSlaAlerts";
@@ -81,14 +82,15 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
     }
   }, [open, caseData?.id, initialTab]);
 
-  // Auto-transition: new → reviewing when admin opens case
+  // Auto-transition: new → reviewing when admin opens case. Pass the granular
+  // adminRole so the auto-logged case event records the actual admin role.
   useEffect(() => {
     if (open && (caseData?.status === "intake_submitted" || caseData?.status === "new")) {
       supabase.functions.invoke("auto-status-transition", {
         body: {
           inquiryId: caseData.id,
           trigger: "admin_viewed",
-          actorType: "admin",
+          actorType: getCaseEventActorType(adminRole),
         },
       }).then(() => {
         onRefresh();
@@ -96,7 +98,7 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
         console.error("[ConciergeDetailSheet] Auto-transition failed:", err);
       });
     }
-  }, [open, caseData?.id, caseData?.status]);
+  }, [open, caseData?.id, caseData?.status, adminRole]);
 
   // Advance status via stepper (uses centralized transition hook)
   const advanceStatus = useCaseTransition();

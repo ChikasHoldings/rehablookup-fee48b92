@@ -128,23 +128,40 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
 
       if (error) throw error;
 
-      // Trigger auto-status transition for introduction sent
+      // Trigger auto-status transition for introduction sent — pass granular
+      // admin role so the resulting auto-logged case event is properly attributed.
       await supabase.functions.invoke("auto-status-transition", {
         body: {
           inquiryId: caseData.id,
           trigger: "introduction_sent",
           actorId: user?.id,
-          actorType: "admin",
+          actorType: getCaseEventActorType(adminRole),
         },
       });
 
-      // Update the intro count manually
-      await supabase
+      // Atomic-ish increment with optimistic lock on the prior count to prevent
+      // the read-modify-write race when two intros are sent concurrently.
+      const priorCount = caseData.introductions_sent_count || 0;
+      const { data: incUpdated } = await supabase
         .from("concierge_inquiries")
-        .update({
-          introductions_sent_count: (caseData.introductions_sent_count || 0) + 1,
-        })
-        .eq("id", caseData.id);
+        .update({ introductions_sent_count: priorCount + 1 })
+        .eq("id", caseData.id)
+        .eq("introductions_sent_count", priorCount)
+        .select("id")
+        .maybeSingle();
+      if (!incUpdated) {
+        const { data: fresh } = await supabase
+          .from("concierge_inquiries")
+          .select("introductions_sent_count")
+          .eq("id", caseData.id)
+          .maybeSingle();
+        const latest = fresh?.introductions_sent_count ?? priorCount;
+        await supabase
+          .from("concierge_inquiries")
+          .update({ introductions_sent_count: latest + 1 })
+          .eq("id", caseData.id)
+          .eq("introductions_sent_count", latest);
+      }
 
       // Send email notification to facility
       try {
@@ -209,13 +226,13 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
 
       if (error) throw error;
 
-      // If interested, trigger auto-status transition
+      // If interested, trigger auto-status transition with granular actor.
       if (response === "interested") {
         await supabase.functions.invoke("auto-status-transition", {
           body: {
             inquiryId: caseData.id,
             trigger: "provider_interested",
-            actorType: "admin",
+            actorType: getCaseEventActorType(adminRole),
           },
         });
       }
