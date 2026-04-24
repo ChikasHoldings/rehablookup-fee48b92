@@ -96,10 +96,10 @@ export function StateFacilitiesSection({
           <div className="text-center py-12 rounded-2xl border bg-card max-w-2xl mx-auto">
             <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              Treatment Centers Coming Soon
+              Talk to a Placement Advisor in {stateName}
             </h3>
             <p className="text-muted-foreground mb-2">
-              We're actively partnering with accredited facilities in {stateName}. Our concierge team can match you with nearby verified programs.
+              Our licensed placement advisors will personally match you with verified centers in {stateName} or nearby states — typically within 24 hours.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
               <Button asChild variant="default">

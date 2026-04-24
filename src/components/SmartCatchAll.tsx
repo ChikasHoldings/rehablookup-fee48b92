@@ -184,12 +184,23 @@ export function SmartCatchAll() {
   }
 
   // List Your Facility in [City-State] or [State]
+  // M3: prefer the explicit STATE_SLUGS check first so multi-word states like
+  // "rhode-island", "new-jersey", "new-mexico", "south-carolina" route to the State
+  // page instead of being misclassified as a city (the old `split('-').length > 2`
+  // heuristic always misrouted them).
   if (pathname.startsWith("/list-your-facility-in-")) {
     const slug = pathname.replace("/list-your-facility-in-", "");
-    // City slugs contain the state slug (e.g., "los-angeles-california"), state slugs are standalone (e.g., "california")
-    // If slug has more segments than a typical state, try city first
-    const isLikelyCity = slug.includes("-") && slug.split("-").length > 2;
-    if (isLikelyCity) {
+    if (STATE_SLUGS.has(slug)) {
+      return (
+        <PublicRouteGuard>
+          <Suspense fallback={null}>
+            <ListYourFacilityState />
+          </Suspense>
+        </PublicRouteGuard>
+      );
+    }
+    // Anything else with a hyphen is treated as a city slug (e.g. "los-angeles-california").
+    if (slug.includes("-")) {
       return (
         <PublicRouteGuard>
           <Suspense fallback={null}>
@@ -198,6 +209,7 @@ export function SmartCatchAll() {
         </PublicRouteGuard>
       );
     }
+    // Unknown single-token slug — fall back to the State page (renders its own 404 if missing).
     return (
       <PublicRouteGuard>
         <Suspense fallback={null}>

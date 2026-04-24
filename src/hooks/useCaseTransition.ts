@@ -98,14 +98,31 @@ export function useCaseTransition() {
         .select("id")
         .maybeSingle();
 
-      if (error) throw error;
+      // M2: distinguish trigger rejection (DB error) from optimistic-lock miss (no row).
+      // A trigger-thrown message like "Invalid status transition…" is far more useful than
+      // the generic "Status conflict" we used to show in both cases.
+      if (error) {
+        // Surface the trigger / DB reason verbatim so admins see the real cause.
+        throw new Error(error.message || "Database rejected the status update.");
+      }
       if (!updated) {
+        // Verify the row actually exists in a different status (true lock conflict)
+        // vs the row being missing entirely (deleted / wrong id).
+        const { data: existing } = await supabase
+          .from("concierge_inquiries")
+          .select("status")
+          .eq("id", caseId)
+          .maybeSingle();
+        if (!existing) {
+          throw new Error("Case not found — it may have been deleted.");
+        }
         throw new Error(
-          "Status conflict — another user changed this case. Please close and reopen to see the latest state."
+          `Status conflict — case is now in "${existing.status}", not "${fromStatus}". Please close and reopen to see the latest state.`
         );
       }
 
-      // Log timeline event
+      // Log timeline event — L3: persist the actual adminRole for audit granularity
+      // (super_admin / manager / customer_rep / advisor) instead of collapsing to "admin".
       await supabase.from("concierge_case_events").insert({
         inquiry_id: caseId,
         event_type: eventType || "status_changed",
@@ -116,7 +133,7 @@ export function useCaseTransition() {
           ...(label ? { label } : {}),
         },
         actor_id: user?.id || null,
-        actor_type: isAdvisor ? "advisor" : "admin",
+        actor_type: adminRole || "admin",
       });
 
       return { from: fromStatus, to: toStatus };

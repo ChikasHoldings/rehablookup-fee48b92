@@ -75,13 +75,12 @@ export function UnlockLeadButton({
         return;
       }
 
-      const discountSaved = (!isRedistributed && isPro) ? (basePrice - finalPrice) : 0;
-
+      // M1: client no longer passes discountSaved — server returns the authoritative
+      // discountAmount in the mutation result and the hook reads it from there.
       await unlockLead.mutateAsync({
         leadId,
         facilityId,
         paymentMethod: 'credits',
-        discountSaved,
       });
       setShowConfirmDialog(false);
       onUnlockSuccess?.();
