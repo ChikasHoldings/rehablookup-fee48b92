@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useImpersonation } from "@/hooks/useImpersonation";
 import { useAdminUserManagement, ROLE_DEFAULTS, type AdminRoleType } from "@/hooks/useAdminUserManagement";
+import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +47,7 @@ import { EscalationsList } from "@/components/admin/escalations/EscalationsList"
 import { SmokeTestRunner } from "@/components/admin/SmokeTestRunner";
 
 export default function AdminBackOffice() {
-  const { user, isSuperAdmin } = useAdminAuth();
+  const { user, isSuperAdmin, adminRole } = useAdminAuth();
   const { startImpersonation, isImpersonating } = useImpersonation();
   const { adminUsers, isLoading: loadingUsers } = useAdminUserManagement();
   const queryClient = useQueryClient();
