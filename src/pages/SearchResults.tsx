@@ -1072,46 +1072,151 @@ const SearchResults = () => {
                 </>
               ) : (
                 /* Empty State */
-                <div className="flex flex-col items-center justify-center py-20 px-4 animate-fade-in">
+                <div className="flex flex-col items-center justify-center py-16 px-4 animate-fade-in">
                   <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
                     <Search className="h-10 w-10 text-muted-foreground" />
                   </div>
                   <h2 className="text-2xl font-bold text-foreground mb-3">No Results Found</h2>
-                  <p className="text-muted-foreground text-center max-w-md mb-4">
+                  <p className="text-muted-foreground text-center max-w-md mb-6">
                     {queryParam
-                      ? `No treatment centers match "${queryParam}". Try a different search term or browse all centers.`
+                      ? `No treatment centers match "${queryParam}". Try a different search term or adjust the filters below.`
                       : location
-                        ? `No centers found near "${location}". Try expanding your search area or browse nationwide.`
-                        : "We couldn't find any treatment centers matching your criteria. Try adjusting your filters."}
+                        ? `No centers found near "${location}". Try a wider area or remove a filter below.`
+                        : "We couldn't find any treatment centers matching your criteria. Try one of the suggestions below."}
                   </p>
 
+                  {/* Suggested filter changes — one-tap removal of each active filter */}
+                  {(selectedTreatmentTypes.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly) && (
+                    <div className="w-full max-w-md mb-6 rounded-xl border border-border bg-card p-4">
+                      <p className="text-xs font-semibold text-foreground mb-3 uppercase tracking-wide">
+                        Try removing a filter
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedTreatmentTypes.map((t) => (
+                          <button
+                            key={`rm-t-${t}`}
+                            onClick={() => {
+                              const next = selectedTreatmentTypes.filter((x) => x !== t);
+                              setSingleFilter("treatmentTypes", next.join(","));
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                            Treatment: {t}
+                          </button>
+                        ))}
+                        {selectedInsuranceTypes.map((i) => (
+                          <button
+                            key={`rm-i-${i}`}
+                            onClick={() => {
+                              const next = selectedInsuranceTypes.filter((x) => x !== i);
+                              setSingleFilter("insuranceTypes", next.join(","));
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                            Insurance: {i}
+                          </button>
+                        ))}
+                        {selectedDistance && (
+                          <button
+                            onClick={() => setSingleFilter("distance", "")}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                            Within {selectedDistance} mi
+                          </button>
+                        )}
+                        {verifiedOnly && (
+                          <button
+                            onClick={() => toggleBooleanFilter("verified", true)}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                            Verified only
+                          </button>
+                        )}
+                        {featuredOnly && (
+                          <button
+                            onClick={() => toggleBooleanFilter("featuredOnly", true)}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                            Featured only
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Try a different treatment type */}
+                  {selectedTreatmentTypes.length > 0 && (
+                    <div className="w-full max-w-md mb-6">
+                      <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide text-center">
+                        Or try a different treatment type
+                      </p>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {[
+                          { value: "outpatient", label: "Outpatient" },
+                          { value: "inpatient", label: "Inpatient" },
+                          { value: "detox", label: "Detox" },
+                          { value: "dual-diagnosis", label: "Dual Diagnosis" },
+                          { value: "holistic", label: "Holistic" },
+                        ]
+                          .filter((opt) => !selectedTreatmentTypes.includes(opt.value))
+                          .slice(0, 4)
+                          .map((opt) => (
+                            <button
+                              key={`alt-${opt.value}`}
+                              onClick={() => setSingleFilter("treatmentTypes", opt.value)}
+                              className="rounded-full border border-border bg-background px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Nearby states (when location resolves to a state) */}
                   {location && (() => {
                     const parsed = parseLocationInput(location);
                     const nearbyAbbrs = parsed.stateAbbr ? getNearbyStates(parsed.stateAbbr) : [];
                     return nearbyAbbrs.length > 0 ? (
-                      <div className="flex flex-wrap justify-center gap-2 mb-6">
+                      <div className="flex flex-wrap justify-center items-center gap-2 mb-6">
                         <span className="text-xs text-muted-foreground">Try nearby states:</span>
-                        {nearbyAbbrs.slice(0, 4).map(abbr => (
-                          <Link key={abbr} to={`/search-results?location=${abbr}`} className="text-xs text-primary hover:underline font-medium">
+                        {nearbyAbbrs.slice(0, 4).map((abbr) => (
+                          <Link
+                            key={abbr}
+                            to={`/search-results?location=${abbr}`}
+                            className="text-xs text-primary hover:underline font-medium"
+                          >
                             {abbr}
                           </Link>
                         ))}
-                        <button onClick={clearAllFilters} className="text-xs text-primary hover:underline ml-2">
-                          or Search Nationwide
-                        </button>
                       </div>
                     ) : null;
                   })()}
 
-                  {!location && (queryParam || activeFiltersCount > 0) && (
-                    <div className="flex flex-wrap justify-center gap-2 mb-6">
-                      <span className="text-xs text-muted-foreground">Popular areas:</span>
-                      <Link to="/search-results?location=Florida" className="text-xs text-primary hover:underline">Florida</Link>
-                      <Link to="/search-results?location=California" className="text-xs text-primary hover:underline">California</Link>
-                      <Link to="/search-results?location=Texas" className="text-xs text-primary hover:underline">Texas</Link>
-                      <Link to="/search-results?location=New+York" className="text-xs text-primary hover:underline">New York</Link>
-                    </div>
-                  )}
+                  {/* Example locations — always offered as a quick reset path */}
+                  <div className="flex flex-wrap justify-center items-center gap-2 mb-6">
+                    <span className="text-xs text-muted-foreground">Try a popular location:</span>
+                    {[
+                      { label: "Los Angeles, CA", q: "Los Angeles, CA" },
+                      { label: "Miami, FL", q: "Miami, FL" },
+                      { label: "Houston, TX", q: "Houston, TX" },
+                      { label: "New York, NY", q: "New York, NY" },
+                      { label: "ZIP 90210", q: "90210" },
+                    ].map((ex) => (
+                      <Link
+                        key={ex.label}
+                        to={`/search-results?location=${encodeURIComponent(ex.q)}`}
+                        className="text-xs text-primary hover:underline font-medium"
+                      >
+                        {ex.label}
+                      </Link>
+                    ))}
+                  </div>
 
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button onClick={clearAllFilters} variant="outline" className="gap-2">
