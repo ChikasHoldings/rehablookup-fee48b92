@@ -42,6 +42,17 @@ const INSURANCE_OPTIONS = [
   { value: "tricare", label: "TRICARE" },
 ] as const;
 
+/**
+ * Distance options — values mirror the `distance` URL-param values used by
+ * the sidebar `distanceFilters` in SearchResults.tsx. Keep in sync.
+ */
+const DISTANCE_OPTIONS = [
+  { value: "10", label: "Within 10 miles" },
+  { value: "25", label: "Within 25 miles" },
+  { value: "50", label: "Within 50 miles" },
+  { value: "100", label: "Within 100 miles" },
+] as const;
+
 const ANY_VALUE = "__any__";
 
 /**
