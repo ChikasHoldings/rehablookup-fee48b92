@@ -10,10 +10,49 @@ const STORAGE_KEY = "lead_intake_form_data";
 const STORAGE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
 const SUBMISSION_DEBOUNCE_MS = 3000; // 3 second debounce between submissions
 
+// Fields that are SAFE to persist across reloads (no PII).
+// Anything sensitive (name, email, phone, insurance member id, free-text message,
+// prior-treatment notes) is stripped before write — see toStorablePartial below.
+const PERSISTABLE_FIELDS = [
+  "whoSeekingHelp",
+  "urgency",
+  "primarySubstance",
+  "levelOfCare",
+  "dualDiagnosis",
+  "insuranceType",
+  "budgetPreference",
+  "preferredContact",
+  "specialNeeds",
+  "ageRange",
+  "gender",
+  "relationshipToPatient",
+  "previousTreatment",
+  "coOccurringConditions",
+  "employmentStatus",
+  "veteranStatus",
+  "legalInvolvement",
+  "readinessLevel",
+  "bestTimeToCall",
+  "locationCityState",
+  "locationZip",
+] as const;
+
 interface StoredFormData {
-  data: LeadIntakeFormData;
+  data: Partial<LeadIntakeFormData>;
   step: number;
   timestamp: number;
+}
+
+function toStorablePartial(data: LeadIntakeFormData): Partial<LeadIntakeFormData> {
+  const out: Partial<LeadIntakeFormData> = {};
+  for (const key of PERSISTABLE_FIELDS) {
+    const value = data[key as keyof LeadIntakeFormData];
+    if (value !== undefined && value !== null && value !== "") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (out as any)[key] = value;
+    }
+  }
+  return out;
 }
 
 interface UseLeadIntakeFormOptions {
@@ -78,7 +117,7 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     }
   };
   
-  // Load saved form data from localStorage
+  // Load saved form data from localStorage (non-PII fields only)
   useEffect(() => {
     const loadSavedData = async () => {
       try {
@@ -86,17 +125,11 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
         if (saved) {
           const parsed: StoredFormData = JSON.parse(saved);
           if (Date.now() - parsed.timestamp < STORAGE_EXPIRY_MS) {
-            setFormData(parsed.data);
+            // Merge stored non-PII fields with the initial form data; PII fields
+            // (name/email/phone/insurance member id) are intentionally not stored
+            // and will be re-collected from the user.
+            setFormData(prev => ({ ...initialLeadIntakeFormData, ...prev, ...parsed.data }));
             setCurrentStep(parsed.step);
-            
-            // Check if the saved email is already verified
-            if (parsed.data.email) {
-              const alreadyVerified = await checkEmailAlreadyVerified(parsed.data.email);
-              if (alreadyVerified) {
-                setIsEmailVerified(true);
-                setCodeSent(true); // Show as verified state
-              }
-            }
           } else {
             localStorage.removeItem(STORAGE_KEY);
           }
@@ -105,7 +138,6 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
         localStorage.removeItem(STORAGE_KEY);
       }
     };
-    
     loadSavedData();
   }, []);
   
@@ -156,11 +188,11 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     prefill();
   }, [isAuthenticated, user]);
 
-  // Save form data to localStorage
+  // Save form data to localStorage (PII stripped — see toStorablePartial)
   useEffect(() => {
     if (!isSubmitted) {
       const toStore: StoredFormData = {
-        data: formData,
+        data: toStorablePartial(formData),
         step: currentStep,
         timestamp: Date.now(),
       };

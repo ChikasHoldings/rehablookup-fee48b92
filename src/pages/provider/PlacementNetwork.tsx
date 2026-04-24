@@ -133,7 +133,9 @@ export default function ProviderPlacementNetworkPage() {
       const [introsRes, safeRes] = await Promise.all([
         supabase
           .from("concierge_introductions")
-          .select("*")
+          .select(
+            "id, inquiry_id, facility_id, sent_at, sent_by, provider_response, provider_responded_at, provider_notes, seeker_contacted, seeker_contacted_at, created_at, admin_disclosed_pii_at"
+          )
           .eq("facility_id", selectedFacility.id)
           .order("created_at", { ascending: false }),
         supabase.rpc("get_provider_safe_inquiries", { p_facility_id: selectedFacility.id }),
