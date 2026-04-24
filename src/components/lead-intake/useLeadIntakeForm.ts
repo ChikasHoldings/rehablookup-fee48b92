@@ -523,8 +523,5 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     verifyCode,
     resetEmailVerification,
     checkAndAutoVerifyEmail,
-    
-    // Analytics
-    trackAnalytics,
   };
 }
