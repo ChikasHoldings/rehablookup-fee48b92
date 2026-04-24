@@ -128,7 +128,7 @@ export function ToursTab({ caseData }: ToursTabProps) {
         .select("id")
         .eq("inquiry_id", caseData.id)
         .eq("facility_id", createFacilityId)
-        .not("status", "in", '("cancelled","completed")')
+        .not("status", "in", "(cancelled,completed)")
         .maybeSingle();
 
       if (existingTour) {
