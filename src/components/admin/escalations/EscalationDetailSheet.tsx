@@ -222,7 +222,12 @@ export function EscalationDetailSheet({
                       <label className="text-sm font-medium">Priority</label>
                       <Select
                         value={escalation.priority}
-                        onValueChange={(v) => updateMutation.mutate({ priority: v })}
+                        onValueChange={(v) => updateMutation.mutate({
+                          id: escalation.id,
+                          fromStatus: escalation.status,
+                          updates: { priority: v as "low" | "medium" | "high" | "critical" },
+                          auditContext: { surface: "escalation_detail_sheet_priority" },
+                        })}
                       >
                         <SelectTrigger className="h-9">
                           <SelectValue />
@@ -261,7 +266,7 @@ export function EscalationDetailSheet({
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => updateMutation.mutate({ assigned_to: user?.id, status: "in_progress" })}
+                      onClick={() => user?.id && handleAssign(user.id)}
                       disabled={updateMutation.isPending}
                     >
                       <ShieldCheck className="h-4 w-4 mr-2" />
