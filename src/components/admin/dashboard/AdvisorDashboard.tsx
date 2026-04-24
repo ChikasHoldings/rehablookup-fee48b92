@@ -120,6 +120,11 @@ export function AdvisorDashboard() {
   }, [invalidateDashboard]);
 
   // Claim case mutation
+  // NOTE: We only assign the advisor — we do NOT change status here.
+  // The DB transition trigger only allows the advisor to claim from
+  // intake_reviewed → advisor_assigned via the regular stage-action flow.
+  // Touching status from this card would have failed for any case in
+  // intake_submitted/matching_providers/etc.
   const claimCaseMutation = useMutation({
     mutationFn: async (caseId: string) => {
       if (!advisorId) throw new Error("Not authenticated");
@@ -127,7 +132,7 @@ export function AdvisorDashboard() {
 
       const { error } = await supabase
         .from("concierge_inquiries")
-        .update({ assigned_advisor_id: advisorId, status: "reviewing" })
+        .update({ assigned_advisor_id: advisorId })
         .eq("id", caseId)
         .is("assigned_advisor_id", null);
 
