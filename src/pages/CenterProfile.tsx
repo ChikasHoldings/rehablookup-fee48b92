@@ -511,6 +511,35 @@ const CenterProfile = () => {
   // - the query hasn't completed at least once yet.
   // This prevents a premature "Center Not Found" flash before the client
   // query has had a chance to verify the slug against the database.
+  // Hard-redirect malformed slugs straight to the directory rather than
+  // attempting a DB lookup that will always miss.
+  if (slug && !isSlugFormatValid) {
+    return <Navigate to="/rehab-centers" replace />;
+  }
+
+  // Slug looks valid but the query resolved to no row (deleted, suspended,
+  // never existed) — redirect to the directory instead of dead-ending on
+  // a "Center Not Found" page.
+  if (
+    isSlugFormatValid &&
+    isFetched &&
+    !isFetching &&
+    !error &&
+    (facility === null || facility === undefined)
+  ) {
+    return <Navigate to="/rehab-centers" replace />;
+  }
+
+  // Listing exists but isn't publicly approved AND the visitor isn't the
+  // owner — treat as inactive and bounce to the directory.
+  if (
+    facility &&
+    facility.status !== "approved" &&
+    facility.user_id !== currentUserId
+  ) {
+    return <Navigate to="/rehab-centers" replace />;
+  }
+
   if (!slug || isLoading || isFetching || !isFetched) {
     return (
       <Layout>
