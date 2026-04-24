@@ -85,26 +85,74 @@ function renderForm(facilityName = FACILITY.name) {
 
 /**
  * Walk the multi-step intake flow forward until the contact step renders
- * (identified by the visible heading "How can we reach you?").
+ * (identified by the visible heading "How can we reach you?" AND/OR the
+ * presence of the email input).
  *
- * Strategy: read the current <h2> title, perform the matching action, then
- * wait until the title changes before issuing the next action. This avoids
- * the "double-click while transitioning" race that an indiscriminate
- * walker hits with the 300ms auto-advance.
+ * Strategy:
+ *   1. Detect the active step by inspecting the LAST <h2> in the DOM.
+ *      Framer-motion may keep the outgoing panel mounted during the
+ *      ~300ms transition, so the active step is the most recently
+ *      mounted heading.
+ *   2. Hard-stop the walker the instant the contact step is visible.
+ *      Never click anything on contact/verify — those are terminal
+ *      from the walker's perspective.
+ *   3. After each click, wait until the active heading actually changes
+ *      AND the outgoing panel has unmounted (only one <h2> remaining)
+ *      so the next iteration reads a stable DOM and cannot accidentally
+ *      double-act on a transitioning panel.
  */
 async function advanceToContactStep(user: ReturnType<typeof userEvent.setup>) {
   const CONTACT_TITLE = /how can we reach you/i;
+  const VERIFY_TITLE = /verify your email/i;
 
-  const currentTitle = () => {
-    const h = document.querySelector("h2");
-    return h?.textContent?.trim() ?? "";
+  const activeTitle = () => {
+    const headings = document.querySelectorAll("h2");
+    if (headings.length === 0) return "";
+    return headings[headings.length - 1].textContent?.trim() ?? "";
   };
 
-  for (let safety = 0; safety < 25; safety++) {
-    const title = currentTitle();
-    if (CONTACT_TITLE.test(title)) return;
+  const onContactStep = () => {
+    if (CONTACT_TITLE.test(activeTitle())) return true;
+    // Secondary signal: the email input only renders on the contact step.
+    return !!document.querySelector('input[placeholder="you@example.com" i]');
+  };
 
-    // Location step has a ZIP input + a Continue button.
+  const waitForStableTransition = async (previousTitle: string) => {
+    // Phase 1: heading must change to a NEW step.
+    await waitFor(
+      () => {
+        expect(activeTitle()).not.toBe(previousTitle);
+        expect(activeTitle().length).toBeGreaterThan(0);
+      },
+      { timeout: 3000 }
+    );
+    // Phase 2: outgoing panel must unmount so DOM is stable for the
+    // next iteration.
+    await waitFor(
+      () => {
+        expect(document.querySelectorAll("h2").length).toBe(1);
+      },
+      { timeout: 3000 }
+    );
+  };
+
+  for (let safety = 0; safety < 20; safety++) {
+    // Hard stop: never click past the contact step.
+    if (onContactStep()) return;
+
+    const title = activeTitle();
+
+    // Refuse to act on the verify step — that requires a real OTP code.
+    // Bail out so the test fails with a clear message rather than spin.
+    if (VERIFY_TITLE.test(title)) {
+      throw new Error(
+        "advanceToContactStep landed on the email-verification step. " +
+          "The test must mock check-email-verified to return verified:true " +
+          "so the flow skips OTP and goes straight to submit."
+      );
+    }
+
+    // Location step: ZIP input + Continue button.
     const zipInput = document.querySelector(
       'input[placeholder="ZIP" i], input[placeholder="Zip" i]'
     ) as HTMLInputElement | null;
@@ -112,37 +160,40 @@ async function advanceToContactStep(user: ReturnType<typeof userEvent.setup>) {
     if (zipInput) {
       await user.type(zipInput, "84010");
       const continueBtn = screen.getByRole("button", { name: /^continue$/i });
-      const before = title;
       await user.click(continueBtn);
-      // Wait for the heading to change (location → next step).
-      await waitFor(() => {
-        expect(currentTitle()).not.toBe(before);
-      }, { timeout: 3000 });
+      await waitForStableTransition(title);
       continue;
     }
 
-    // Choice step: pick the first answer button. Choice answers are buttons
-    // inside the question panel that are NOT the Back/Continue/Skip nav row.
+    // Choice step: pick the first answer button inside the active panel.
+    // Filter out navigation and submit-style buttons aggressively so we
+    // can never accidentally click "Submit" or "Send Code".
     const answerButtons = Array.from(
       document.querySelectorAll<HTMLButtonElement>("button")
     ).filter((b) => {
       const txt = (b.textContent || "").trim().toLowerCase();
       if (!txt) return false;
-      if (/^back$/.test(txt) || txt.includes("skip")) return false;
+      if (/^back$/.test(txt)) return false;
+      if (/skip/.test(txt)) return false;
       if (/^continue$/.test(txt)) return false;
-      // Choice option buttons have substantial label text.
+      if (/^submit$/.test(txt)) return false;
+      if (/^send code$/.test(txt)) return false;
+      if (/^resend/.test(txt)) return false;
       return txt.length > 1;
     });
 
-    if (answerButtons.length === 0) return;
+    if (answerButtons.length === 0) {
+      // Defensive: nothing actionable — bail rather than spin.
+      return;
+    }
 
-    const before = title;
     await user.click(answerButtons[0]);
-    // Auto-advance fires ~300ms after click; wait for heading to change.
-    await waitFor(() => {
-      expect(currentTitle()).not.toBe(before);
-    }, { timeout: 3000 });
+    await waitForStableTransition(title);
   }
+
+  throw new Error(
+    `advanceToContactStep exhausted 20 iterations without reaching the contact step. Last heading: "${activeTitle()}"`
+  );
 }
 
 beforeEach(() => {
