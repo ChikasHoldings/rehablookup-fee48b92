@@ -168,13 +168,24 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
               </Link>
             </div>
 
-            <button
-              onClick={() => window.history.back()}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              <ArrowLeft className="h-3 w-3" />
-              Go back to previous page
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+              <button
+                onClick={() => window.history.back()}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ArrowLeft className="h-3 w-3" />
+                Go back to previous page
+              </button>
+              <span className="hidden sm:inline text-muted-foreground/40">•</span>
+              <button
+                type="button"
+                onClick={() => setReportOpen(true)}
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Flag className="h-3 w-3" />
+                Report this issue
+              </button>
+            </div>
           </div>
 
           {/* Recovery options */}
