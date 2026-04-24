@@ -45,16 +45,31 @@ function formatTimeAgo(dateString: string): string {
   return `${diffDays}d ago`;
 }
 
+// Canonical 14 statuses — kept in sync with statusTransitions.ts and the
+// validate_concierge_status_transition Postgres trigger.
 const statusConfig: Record<string, { label: string; color: string; bgColor: string; order: number }> = {
-  new: { label: "New", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 1 },
-  reviewing: { label: "Reviewing", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 2 },
-  matching: { label: "Placing", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 3 },
-  matched: { label: "Matched", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 4 },
-  introductions_sent: { label: "Intros Sent", color: "text-accent-foreground", bgColor: "bg-accent/10 border-accent/30", order: 5 },
-  in_contact: { label: "In Contact", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 6 },
-  admitted: { label: "Admitted", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 7 },
-  closed: { label: "Closed", color: "text-muted-foreground", bgColor: "bg-muted/50 border-border", order: 8 },
+  pending_intake: { label: "Pending", color: "text-muted-foreground", bgColor: "bg-muted/40 border-border", order: 0 },
+  intake_submitted: { label: "New", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 1 },
+  intake_reviewed: { label: "Reviewed", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 2 },
+  advisor_assigned: { label: "Assigned", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 3 },
+  matching_providers: { label: "Matching", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 4 },
+  provider_prequalification: { label: "Pre-Qual", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 5 },
+  providers_accepted: { label: "Ready", color: "text-accent-foreground", bgColor: "bg-accent/10 border-accent/30", order: 6 },
+  presented_to_seeker: { label: "Presented", color: "text-accent-foreground", bgColor: "bg-accent/10 border-accent/30", order: 7 },
+  seeker_selected: { label: "Selected", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 8 },
+  admission_in_progress: { label: "Admitting", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 9 },
+  admitted: { label: "Admitted", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 10 },
+  billed: { label: "Billed", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 11 },
+  completed: { label: "Completed", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 12 },
+  closed: { label: "Closed", color: "text-muted-foreground", bgColor: "bg-muted/50 border-border", order: 13 },
 };
+
+// All non-terminal statuses — used to filter "active" cases.
+const ACTIVE_STATUSES = [
+  "pending_intake", "intake_submitted", "intake_reviewed", "advisor_assigned",
+  "matching_providers", "provider_prequalification", "providers_accepted",
+  "presented_to_seeker", "seeker_selected", "admission_in_progress",
+] as const;
 
 export function AdvisorDashboard() {
   const queryClient = useQueryClient();
@@ -105,6 +120,11 @@ export function AdvisorDashboard() {
   }, [invalidateDashboard]);
 
   // Claim case mutation
+  // NOTE: We only assign the advisor — we do NOT change status here.
+  // The DB transition trigger only allows the advisor to claim from
+  // intake_reviewed → advisor_assigned via the regular stage-action flow.
+  // Touching status from this card would have failed for any case in
+  // intake_submitted/matching_providers/etc.
   const claimCaseMutation = useMutation({
     mutationFn: async (caseId: string) => {
       if (!advisorId) throw new Error("Not authenticated");
@@ -112,7 +132,7 @@ export function AdvisorDashboard() {
 
       const { error } = await supabase
         .from("concierge_inquiries")
-        .update({ assigned_advisor_id: advisorId, status: "reviewing" })
+        .update({ assigned_advisor_id: advisorId })
         .eq("id", caseId)
         .is("assigned_advisor_id", null);
 
@@ -142,36 +162,34 @@ export function AdvisorDashboard() {
     },
   });
 
-  // Fetch concierge inquiry stats (always for my cases)
+  // Fetch concierge inquiry stats (always for my cases).
+  // Buckets group the canonical 14 statuses into the 7 visual stages used
+  // in the pipeline UI so counts always add up to `total`.
   const { data: inquiryStats, isLoading: loadingInquiries } = useQuery({
     queryKey: ["advisor-inquiry-stats", advisorId],
     queryFn: async () => {
-      const buildQuery = (status?: string) => {
-        let q = supabase.from("concierge_inquiries").select("id", { count: "exact", head: true })
-          .eq("assigned_advisor_id", advisorId!);
-        if (status) q = q.eq("status", status);
-        return q;
-      };
+      if (!advisorId) return null;
 
-      const [total, intake, reviewing, matching, presented, selected, admitted, closed] = await Promise.all([
-        buildQuery(),
-        buildQuery("intake_submitted"),
-        buildQuery("intake_reviewed"),
-        buildQuery("matching_providers"),
-        buildQuery("presented_to_seeker"),
-        buildQuery("seeker_selected"),
-        buildQuery("admitted"),
-        buildQuery("closed"),
-      ]);
+      const { data, error } = await supabase
+        .from("concierge_inquiries")
+        .select("status")
+        .eq("assigned_advisor_id", advisorId);
+
+      if (error) throw error;
+      const rows = data || [];
+
+      const inBucket = (statuses: readonly string[]) =>
+        rows.filter((r) => statuses.includes(r.status)).length;
+
       return {
-        total: total.count || 0,
-        newCases: intake.count || 0,
-        reviewing: reviewing.count || 0,
-        matching: matching.count || 0,
-        introsSent: presented.count || 0,
-        inContact: selected.count || 0,
-        placed: admitted.count || 0,
-        closed: closed.count || 0,
+        total: rows.length,
+        newCases: inBucket(["pending_intake", "intake_submitted"]),
+        reviewing: inBucket(["intake_reviewed", "advisor_assigned"]),
+        matching: inBucket(["matching_providers", "provider_prequalification", "providers_accepted"]),
+        introsSent: inBucket(["presented_to_seeker"]),
+        inContact: inBucket(["seeker_selected", "admission_in_progress"]),
+        placed: inBucket(["admitted", "billed", "completed"]),
+        closed: inBucket(["closed"]),
       };
     },
     enabled: !!advisorId,
@@ -191,14 +209,13 @@ export function AdvisorDashboard() {
       if (caseView === "mine") {
         query = query
           .eq("assigned_advisor_id", advisorId!)
-          .in("status", ["intake_submitted", "intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
+          .in("status", ACTIVE_STATUSES as unknown as string[]);
       } else if (caseView === "unassigned") {
         query = query
           .is("assigned_advisor_id", null)
           .not("status", "in", '("completed","closed")');
       } else {
-        query = query
-          .in("status", ["intake_submitted", "intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
+        query = query.in("status", ACTIVE_STATUSES as unknown as string[]);
       }
 
       const { data } = await query;
@@ -449,7 +466,7 @@ export function AdvisorDashboard() {
             ) : recentInquiries && recentInquiries.length > 0 ? (
               <div className="space-y-2.5">
                 {recentInquiries.map((inquiry: any) => {
-                  const status = statusConfig[inquiry.status] || statusConfig.new;
+                  const status = statusConfig[inquiry.status] || statusConfig.intake_submitted;
                   const isPaid = inquiry.payment_status === 'paid' || inquiry.payment_status === 'succeeded';
                   const location = inquiry.desired_location_state || inquiry.preferred_state;
                   const isUnassigned = !inquiry.assigned_advisor_id;
