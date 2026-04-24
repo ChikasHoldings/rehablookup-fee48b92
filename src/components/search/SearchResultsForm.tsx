@@ -115,6 +115,12 @@ export function SearchResultsForm() {
       next.delete("insuranceTypes");
     }
 
+    if (distance) {
+      next.set("distance", distance);
+    } else {
+      next.delete("distance");
+    }
+
     // Reset pagination on a fresh search.
     next.delete("page");
     setSearchParams(next);
