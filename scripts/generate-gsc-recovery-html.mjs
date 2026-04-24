@@ -94,6 +94,11 @@ const NEAR_ME_LABEL = {
   "emergency-rehab-near-me": "Emergency Rehab",
   "30-day-rehab-near-me": "30-Day Rehab",
   "dual-diagnosis-near-me": "Dual Diagnosis Treatment",
+  "sober-living-near-me": "Sober Living",
+  "outpatient-near-me": "Outpatient Rehab",
+  "court-ordered-rehab-near-me": "Court-Ordered Rehab",
+  "faith-based-rehab-near-me": "Faith-Based Rehab",
+  "veterans-rehab-near-me": "Veterans Rehab",
 };
 
 const TREATMENT_TYPE_LABEL = {
