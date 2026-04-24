@@ -45,16 +45,31 @@ function formatTimeAgo(dateString: string): string {
   return `${diffDays}d ago`;
 }
 
+// Canonical 14 statuses — kept in sync with statusTransitions.ts and the
+// validate_concierge_status_transition Postgres trigger.
 const statusConfig: Record<string, { label: string; color: string; bgColor: string; order: number }> = {
-  new: { label: "New", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 1 },
-  reviewing: { label: "Reviewing", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 2 },
-  matching: { label: "Placing", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 3 },
-  matched: { label: "Matched", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 4 },
-  introductions_sent: { label: "Intros Sent", color: "text-accent-foreground", bgColor: "bg-accent/10 border-accent/30", order: 5 },
-  in_contact: { label: "In Contact", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 6 },
-  admitted: { label: "Admitted", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 7 },
-  closed: { label: "Closed", color: "text-muted-foreground", bgColor: "bg-muted/50 border-border", order: 8 },
+  pending_intake: { label: "Pending", color: "text-muted-foreground", bgColor: "bg-muted/40 border-border", order: 0 },
+  intake_submitted: { label: "New", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 1 },
+  intake_reviewed: { label: "Reviewed", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 2 },
+  advisor_assigned: { label: "Assigned", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 3 },
+  matching_providers: { label: "Matching", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 4 },
+  provider_prequalification: { label: "Pre-Qual", color: "text-warning", bgColor: "bg-warning/10 border-warning/30", order: 5 },
+  providers_accepted: { label: "Ready", color: "text-accent-foreground", bgColor: "bg-accent/10 border-accent/30", order: 6 },
+  presented_to_seeker: { label: "Presented", color: "text-accent-foreground", bgColor: "bg-accent/10 border-accent/30", order: 7 },
+  seeker_selected: { label: "Selected", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 8 },
+  admission_in_progress: { label: "Admitting", color: "text-info", bgColor: "bg-info/10 border-info/30", order: 9 },
+  admitted: { label: "Admitted", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 10 },
+  billed: { label: "Billed", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 11 },
+  completed: { label: "Completed", color: "text-success", bgColor: "bg-success/10 border-success/30", order: 12 },
+  closed: { label: "Closed", color: "text-muted-foreground", bgColor: "bg-muted/50 border-border", order: 13 },
 };
+
+// All non-terminal statuses — used to filter "active" cases.
+const ACTIVE_STATUSES = [
+  "pending_intake", "intake_submitted", "intake_reviewed", "advisor_assigned",
+  "matching_providers", "provider_prequalification", "providers_accepted",
+  "presented_to_seeker", "seeker_selected", "admission_in_progress",
+] as const;
 
 export function AdvisorDashboard() {
   const queryClient = useQueryClient();
