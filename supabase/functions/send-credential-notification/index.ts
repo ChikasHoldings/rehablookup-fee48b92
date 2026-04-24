@@ -1,6 +1,6 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { requireAdmin } from "../_shared/require-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,8 +23,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    // Admin-only endpoint: verify caller before doing anything else.
+    const auth = await requireAdmin(req);
+    if (!auth.ok) return auth.response;
+    const { supabase, adminUserId } = auth;
+
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
     if (!resendApiKey) {
@@ -38,9 +41,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const body: CredentialNotificationRequest = await req.json();
     const { facilityId, facilityName, userId, documentName, documentType, status, rejectionReason } = body;
 
-    console.log("Sending credential notification:", { facilityId, documentName, status });
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log("Sending credential notification:", { facilityId, documentName, status, byAdmin: adminUserId });
 
     // Get provider profile for email
     const { data: profile, error: profileError } = await supabase
@@ -190,11 +191,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const emailResponse = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [profile.email],
-      subject: isVerified 
-        ? `Your credential document has been verified` 
+      subject: isVerified
+        ? `Your credential document has been verified`
         : `Action required: Your credential document needs attention`,
       html: emailHtml,
-    }, { emailType: "credential_notification" });
+    }, {
+      emailType: "credential_notification",
+      // Dedup retries on the same document+status decision so an admin
+      // double-click can't double-send. Status changes (verify -> reject)
+      // produce a different key, so legitimate flips still go through.
+      idempotencyKey: `cred-${facilityId}-${documentName}-${status}`,
+      metadata: { facilityId, documentName, documentType, status },
+    });
 
     console.log("Credential notification email sent:", emailResponse);
 

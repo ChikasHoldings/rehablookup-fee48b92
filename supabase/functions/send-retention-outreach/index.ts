@@ -425,12 +425,19 @@ Deno.serve(async (req) => {
           .eq("email", provider.email)
           .single();
 
-        await supabaseClient.from("subscription_alerts").insert({
-          alert_type: "retention_outreach",
-          alert_key: alertKey,
-          user_id: profileData?.user_id || "00000000-0000-0000-0000-000000000000",
-          resend_id: resendId,
-        });
+        // Skip the alert log row if we couldn't resolve the provider's
+        // user_id rather than inserting the synthetic 00000000 UUID, which
+        // pollutes audit data and breaks any FK joins downstream.
+        if (profileData?.user_id) {
+          await supabaseClient.from("subscription_alerts").insert({
+            alert_type: "retention_outreach",
+            alert_key: alertKey,
+            user_id: profileData.user_id,
+            resend_id: resendId,
+          });
+        } else {
+          logStep("Skipping alert log: no user_id for provider", { email: provider.email });
+        }
 
         emailsSent.push(provider.email);
         logStep("Retention email sent", { email: provider.email, subject });
