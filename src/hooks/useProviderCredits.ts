@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getCachedSession } from "@/lib/sessionCache";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { toast } from "sonner";
 
 export interface CreditBalance {
@@ -37,6 +37,9 @@ const LOW_CREDITS_THRESHOLD = 5000;
 
 export function useProviderCredits(facilityId?: string) {
   const queryClient = useQueryClient();
+  // M2: Track realtime channel readiness so we can disable redundant focus refetches
+  // when push-based updates are already flowing.
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
 
   const query = useQuery({
     queryKey: ["provider-credits", facilityId],
@@ -79,7 +82,8 @@ export function useProviderCredits(facilityId?: string) {
     },
     enabled: true,
     staleTime: 1000 * 60 * 2, // 2 minutes
-    refetchOnWindowFocus: true,
+    // M2: Avoid redundant refetches when realtime is already pushing updates.
+    refetchOnWindowFocus: !isRealtimeConnected,
     retry: 2,
   });
 
