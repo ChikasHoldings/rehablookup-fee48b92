@@ -108,10 +108,14 @@ export function useProviderCredits(facilityId?: string) {
           { event: "*", schema: "public", table: "provider_credits", filter: `provider_id=eq.${userId}` },
           () => { queryClient.invalidateQueries({ queryKey: ["provider-credits"] }); }
         )
-        .subscribe();
+        .subscribe((status) => {
+          // M2: Flip flag based on subscription status to gate window-focus refetch.
+          setIsRealtimeConnected(status === "SUBSCRIBED");
+        });
     });
 
     return () => {
+      setIsRealtimeConnected(false);
       if (channel) supabase.removeChannel(channel);
     };
   }, [queryClient]);

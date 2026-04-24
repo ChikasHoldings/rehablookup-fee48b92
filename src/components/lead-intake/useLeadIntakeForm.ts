@@ -225,13 +225,9 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     }
   }, [resendCooldown]);
   
-  // Analytics tracking - track-request-help edge function was removed.
-  // Kept as a no-op to preserve call sites; primary analytics flow through
-  // the `analytics` helper (GA/Meta Pixel) elsewhere in this hook.
-  const trackAnalytics = async (_eventType: string, _metadata?: Record<string, unknown>) => {
-    // no-op
-  };
-  
+  // M4: Removed dead `track-request-help` analytics stub.
+  // Primary analytics now flow exclusively through the `analytics` helper
+  // (GA / Meta Pixel) — see `analytics.leadFormStep(...)` calls below.
   const updateFormData = useCallback((updates: Partial<LeadIntakeFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   }, []);
