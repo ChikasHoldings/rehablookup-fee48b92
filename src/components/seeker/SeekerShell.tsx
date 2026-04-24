@@ -12,6 +12,7 @@ import { prefetchAdjacentRoutes, preloadSeekerPages } from "@/lib/routePrefetch"
 import { scrollContainerToTop } from "@/hooks/useScrollToTop";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { UserCircle2 } from "lucide-react";
 
 // Preload all seeker pages on module load for instant navigation
