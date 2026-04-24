@@ -117,23 +117,27 @@ export function EscalationsList({
 
   const updateMutation = useEscalationTransition();
 
-  const handleAssignToMe = (id: string, fromStatus: string) => {
+  const handleAssignToMe = (id: string, fromStatus: EscalationStatus) => {
     if (!user?.id) {
       toast.error("Not authenticated");
       return;
     }
+    // Claiming an "open" escalation moves it to "in_progress"; otherwise leave
+    // status untouched (no-op write) so we don't accidentally regress state.
+    const nextStatus: EscalationStatus | undefined =
+      fromStatus === "open" ? "in_progress" : undefined;
     updateMutation.mutate({
       id,
       fromStatus,
       updates: {
         assigned_to: user.id,
-        status: fromStatus === "open" ? "in_progress" : (fromStatus as "in_progress" | "resolved" | "closed"),
+        ...(nextStatus ? { status: nextStatus } : {}),
       },
       auditContext: { surface: "escalations_list_assign_self" },
     });
   };
 
-  const handleQuickResolve = (id: string, fromStatus: string) => {
+  const handleQuickResolve = (id: string, fromStatus: EscalationStatus) => {
     updateMutation.mutate({
       id,
       fromStatus,
