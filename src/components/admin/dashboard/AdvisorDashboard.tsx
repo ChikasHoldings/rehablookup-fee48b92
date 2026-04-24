@@ -139,7 +139,7 @@ export function AdvisorDashboard() {
         event_type: "advisor_claimed",
         event_data: { advisor_id: advisorId },
         actor_id: advisorId,
-        actor_type: "admin",
+        actor_type: "advisor",
       });
     },
     onSuccess: (_data, caseId) => {
