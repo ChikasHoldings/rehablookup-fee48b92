@@ -122,4 +122,17 @@ export const AdminAuditActions = {
   // Settings actions
   PLATFORM_SETTINGS_UPDATED: "platform_settings_updated",
   AUDIT_LOGS_CLEANED: "audit_logs_cleaned",
+
+  // Content moderation actions
+  BLOG_ARTICLE_DELETED: "blog_article_deleted",
+  BLOG_ARTICLE_STATUS_CHANGED: "blog_article_status_changed",
+  REVIEW_DELETED: "review_deleted",
+
+  // Support ticket actions
+  SUPPORT_TICKET_DELETED: "support_ticket_deleted",
+  SUPPORT_TICKETS_BULK_DELETED: "support_tickets_bulk_deleted",
+
+  // Marketing lead actions
+  MARKETING_LEAD_DELETED: "marketing_lead_deleted",
+  MARKETING_LEADS_BULK_DELETED: "marketing_leads_bulk_deleted",
 } as const;
