@@ -131,10 +131,10 @@ export function SearchResultsForm() {
       onSubmit={handleSubmit}
       role="search"
       aria-label="Search rehab centers"
-      className="grid grid-cols-1 gap-2 sm:grid-cols-12"
+      className="grid grid-cols-1 gap-2 sm:grid-cols-14"
     >
       {/* Location */}
-      <div className="relative sm:col-span-5">
+      <div className="relative sm:col-span-4">
         <MapPin
           className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
           aria-hidden="true"
@@ -149,6 +149,32 @@ export function SearchResultsForm() {
           aria-label="Location: ZIP code, city, or state"
           className="h-10 pl-9 text-sm"
         />
+      </div>
+
+      {/* Distance */}
+      <div className="sm:col-span-3">
+        <Select
+          value={distance || ANY_VALUE}
+          onValueChange={(v) => setDistance(v === ANY_VALUE ? "" : v)}
+        >
+          <SelectTrigger
+            className="h-10 text-sm"
+            aria-label="Distance from location"
+          >
+            <span className="flex items-center gap-2 truncate">
+              <Navigation className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <SelectValue placeholder="Any distance" />
+            </span>
+          </SelectTrigger>
+          <SelectContent className="bg-card">
+            <SelectItem value={ANY_VALUE}>Any distance</SelectItem>
+            {DISTANCE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Treatment type */}
