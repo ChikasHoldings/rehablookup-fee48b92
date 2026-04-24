@@ -253,7 +253,9 @@ function buildSuperAdminBody(data: Awaited<ReturnType<typeof fetchSuperAdminData
     </tr><tr>
       ${statCard(data.confirmedPlacements, "Confirmed Placements", BRAND.success)}
       ${statCard(data.newProviders, "Provider Signups")}
+    </tr><tr>
       ${statCard(data.openEscalations, "System Alerts", data.openEscalations > 0 ? BRAND.error : BRAND.muted)}
+      <td></td>
     </tr></table>
     ${actions.length > 0 ? `
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
