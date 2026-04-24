@@ -6,6 +6,7 @@ import { SearchResultCard } from "@/components/cards/SearchResultCard";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
+import { SearchResultsForm } from "@/components/search/SearchResultsForm";
 import { 
   Heart, 
   MapPin, 
@@ -891,6 +892,11 @@ const SearchResults = () => {
                 </Badge>
               )}
             </Button>
+          </div>
+
+          {/* Inline search form — location + treatment + insurance */}
+          <div className="pb-3">
+            <SearchResultsForm />
           </div>
         </div>
       </div>
