@@ -57,6 +57,11 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import {
+  fetchPublicFacilitiesSnapshot,
+  findPublicFacilityBySlug,
+  getCachedPublicFacilitiesSnapshot,
+} from "@/lib/publicFacilitiesSnapshot";
 
 interface FacilityData {
   id: string;
@@ -241,6 +246,7 @@ const CenterProfile = () => {
 
   useEffect(() => {
     if (!slug) return;
+    if (!currentUserId) return;
 
     const facilityChannel = supabase
       .channel(`center-profile-${slug}`)
@@ -292,37 +298,25 @@ const CenterProfile = () => {
       supabase.removeChannel(servicesChannel);
       supabase.removeChannel(insuranceChannel);
     };
-  }, [slug, queryClient]);
+  }, [slug, queryClient, currentUserId]);
 
   const { data: facility, isLoading, isFetching, isFetched, error } = useQuery({
     queryKey: ["facility", slug, currentUserId],
     queryFn: async (): Promise<FacilityData | null> => {
-      // 1) Public read via the anon-safe view (excludes PII like email/user_id)
-      const { data: publicRow, error: publicErr } = await supabase
-        .from("public_facilities")
-        .select(`
-          id,
-          name,
-          slug,
-          city,
-          state,
-          zip_code,
-          address,
-          phone,
-          website,
-          description,
-          facility_type,
-          gender_served,
-          bed_count,
-          featured,
-          verified,
-          year_established,
-          logo_url,
-          gallery_urls,
-          status
-        `)
-        .eq("slug", slug)
-        .maybeSingle();
+      const cachedFacilities = getCachedPublicFacilitiesSnapshot();
+      let snapshotRow = findPublicFacilityBySlug(cachedFacilities, slug);
+      let publicErr: Error | null = null;
+
+      if (!snapshotRow) {
+        try {
+          const snapshotFacilities = await fetchPublicFacilitiesSnapshot();
+          snapshotRow = findPublicFacilityBySlug(snapshotFacilities, slug);
+        } catch (error) {
+          publicErr = error instanceof Error
+            ? error
+            : new Error("Failed to load public facility snapshot");
+        }
+      }
 
       // 2) Owner-scoped read of the base table (RLS allows owners) — gets PII fields
       let ownedRow: any = null;
@@ -340,6 +334,32 @@ const CenterProfile = () => {
           .maybeSingle();
         ownedRow = data;
       }
+
+      const publicRow = snapshotRow
+        ? {
+            id: snapshotRow.id,
+            name: snapshotRow.name,
+            slug: snapshotRow.slug,
+            city: snapshotRow.city,
+            state: snapshotRow.state,
+            zip_code: snapshotRow.zipCode,
+            address: snapshotRow.address,
+            phone: snapshotRow.phone,
+            website: snapshotRow.website,
+            description: snapshotRow.description,
+            facility_type: snapshotRow.facilityType,
+            gender_served: snapshotRow.genderServed,
+            bed_count: snapshotRow.bedCount,
+            featured: snapshotRow.featured,
+            verified: snapshotRow.verified,
+            year_established: snapshotRow.yearEstablished,
+            logo_url: snapshotRow.logoUrl,
+            gallery_urls: snapshotRow.galleryUrls,
+            status: snapshotRow.status,
+            updated_at: snapshotRow.updatedAt ?? new Date().toISOString(),
+            accepts_international_patients: snapshotRow.acceptsInternationalPatients,
+          }
+        : null;
 
       const base = ownedRow ?? publicRow;
       if (!base) {
@@ -372,6 +392,10 @@ const CenterProfile = () => {
       } as FacilityData;
     },
     enabled: !!slug,
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const { data: hasFeaturedSubscription } = useQuery({
@@ -412,19 +436,17 @@ const CenterProfile = () => {
     queryKey: ["nearby-facilities", facility?.state, facility?.id],
     queryFn: async () => {
       if (!facility) return [];
-      const { data } = await supabase
-        .from("public_facilities")
-        .select("id, name, slug, city, state, zip_code, address, phone, description, facility_type, featured, verified, logo_url, gallery_urls, year_established")
-        .eq("state", facility.state)
-        .neq("id", facility.id)
-        .limit(6);
-      return (data || []).map((f: any) => ({
+      const facilities = getCachedPublicFacilitiesSnapshot() ?? await fetchPublicFacilitiesSnapshot();
+      return facilities
+        .filter((f) => f.state === facility.state && f.id !== facility.id)
+        .slice(0, 6)
+        .map((f) => ({
         id: f.id,
         name: f.name,
         slug: f.slug,
         city: f.city,
         state: f.state,
-        zipCode: f.zip_code,
+        zipCode: f.zipCode,
         address: f.address,
         phone: f.phone,
         description: f.description || "",
@@ -433,18 +455,19 @@ const CenterProfile = () => {
         amenities: [],
         rating: null,
         reviewCount: 0,
-        image: f.gallery_urls?.[0] || f.logo_url || null,
+        image: f.galleryUrls?.[0] || f.logoUrl || null,
         featured: f.featured,
         verified: f.verified,
-        logo_url: f.logo_url,
-        gallery_urls: f.gallery_urls,
-        year_established: f.year_established,
+        logo_url: f.logoUrl,
+        gallery_urls: f.galleryUrls,
+        year_established: f.yearEstablished,
         isFromDatabase: true,
         programOverview: "",
       }));
     },
     enabled: !!facility?.id && !!facility?.state,
     staleTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
