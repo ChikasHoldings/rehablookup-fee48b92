@@ -54,10 +54,15 @@ export function useFacilityReviews(facilityId: string) {
   const fetchReviews = useCallback(async () => {
     setIsLoading(true);
 
-    // Fetch approved reviews
+    // Fetch approved reviews. NOTE: user_id and seeker_profiles are no longer
+    // joined here — exposing reviewer identity (and reviewer city/state) to
+    // anonymous visitors lets anyone correlate a real person to a treatment
+    // facility they reviewed. Display name is sourced exclusively from the
+    // persisted `reviewer_display_name` snapshot the reviewer chose at
+    // submission time.
     const { data: reviewsData, error } = await supabase
       .from('facility_reviews')
-      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, created_at, updated_at, reviewer_display_name')
+      .select('id, facility_id, rating, review_text, status, helpful_count, created_at, updated_at, reviewer_display_name')
       .eq('facility_id', facilityId)
       .eq('status', 'approved')
       .order('created_at', { ascending: false });
@@ -79,34 +84,20 @@ export function useFacilityReviews(facilityId: string) {
       votedReviewIds = votes?.map(v => v.review_id) || [];
     }
 
-    // Fetch user profile info from seeker_profiles
-    const userIds = [...new Set(reviewsData?.map(r => r.user_id) || [])];
-    const { data: profiles } = await supabase
-      .from('seeker_profiles')
-      .select('user_id, display_name, first_name, last_name, city, state')
-      .in('user_id', userIds);
-
-    const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-
     const enrichedReviews: FacilityReview[] = (reviewsData || []).map(review => {
-      const profile = profileMap.get(review.user_id);
-      const storedName = (review as any).reviewer_display_name;
-      const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || '';
-      const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
-      const builtName = firstName ? firstName + (lastInitial ? ` ${lastInitial}.` : '') : '';
-      
-      // Priority: stored reviewer_display_name → built from profile (name is required at signup)
-      // Never fall back to "Anonymous" — name is mandatory at submission time
-      const displayName = storedName || builtName || null;
-      
+      const storedName = (review as any).reviewer_display_name as string | null;
+      const firstName = storedName?.split(' ')[0] || '';
+      const lastInitial = storedName?.split(' ')[1]?.charAt(0) || '';
+
       return {
         ...review,
-        user_display_name: displayName,
-        reviewer_first_name: firstName || displayName?.charAt(0) || '',
-        reviewer_last_initial: lastInitial || '',
-        reviewer_city: profile?.city || null,
-        reviewer_state: profile?.state || null,
-        has_voted_helpful: votedReviewIds.includes(review.id)
+        user_id: '', // not exposed publicly anymore
+        user_display_name: storedName || null,
+        reviewer_first_name: firstName,
+        reviewer_last_initial: lastInitial,
+        reviewer_city: null,
+        reviewer_state: null,
+        has_voted_helpful: votedReviewIds.includes(review.id),
       };
     }).filter(r => !!r.user_display_name);
 
