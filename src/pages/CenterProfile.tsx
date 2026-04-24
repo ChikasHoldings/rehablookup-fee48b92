@@ -57,6 +57,11 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import {
+  fetchPublicFacilitiesSnapshot,
+  findPublicFacilityBySlug,
+  getCachedPublicFacilitiesSnapshot,
+} from "@/lib/publicFacilitiesSnapshot";
 
 interface FacilityData {
   id: string;
