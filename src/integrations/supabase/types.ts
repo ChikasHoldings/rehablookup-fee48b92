@@ -6021,6 +6021,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      admin_force_concierge_status: {
+        Args: { p_inquiry_id: string; p_new_status: string; p_reason?: string }
+        Returns: undefined
+      }
       admin_get_facility_admin_fields: {
         Args: { p_facility_id: string }
         Returns: {
