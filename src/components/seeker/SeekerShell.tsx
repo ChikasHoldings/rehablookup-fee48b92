@@ -10,6 +10,9 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAuthReady } from "@/hooks/useAuthReady";
 import { prefetchAdjacentRoutes, preloadSeekerPages } from "@/lib/routePrefetch";
 import { scrollContainerToTop } from "@/hooks/useScrollToTop";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import { UserCircle2 } from "lucide-react";
 
 // Preload all seeker pages on module load for instant navigation
 preloadSeekerPages();
