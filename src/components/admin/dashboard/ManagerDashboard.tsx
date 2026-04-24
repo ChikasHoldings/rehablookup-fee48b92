@@ -812,7 +812,7 @@ function RecentEscalationsList() {
   return (
     <>
     <div className="space-y-2 pt-2 border-t">
-      {recentEscalations.map((esc: any) => {
+      {recentEscalations.map((esc) => {
         const isAssignedToMe = esc.assigned_to === user?.id;
         return (
           <div key={esc.id} className="flex items-center justify-between p-2.5 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
@@ -872,7 +872,7 @@ function RecentEscalationsList() {
       isLoading={escalationTransition.isPending}
       onConfirm={async () => {
         if (confirmResolveEscId) {
-          const target = recentEscalations?.find((e: any) => e.id === confirmResolveEscId);
+          const target = recentEscalations?.find((e) => e.id === confirmResolveEscId);
           handleResolve(confirmResolveEscId, target?.status ?? "open");
           setConfirmResolveEscId(null);
         }
