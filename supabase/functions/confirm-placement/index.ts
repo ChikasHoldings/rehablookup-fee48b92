@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
       event_data: {
         facility_id: facilityId,
         admitted_at: admittedAt || now,
-        confirmed_by: "admin",
+        confirmed_by: actorType,
         from_status: inquiry.status,
         to_status: "admitted",
         steps: transitionPath.length,
