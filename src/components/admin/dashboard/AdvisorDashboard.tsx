@@ -162,36 +162,34 @@ export function AdvisorDashboard() {
     },
   });
 
-  // Fetch concierge inquiry stats (always for my cases)
+  // Fetch concierge inquiry stats (always for my cases).
+  // Buckets group the canonical 14 statuses into the 7 visual stages used
+  // in the pipeline UI so counts always add up to `total`.
   const { data: inquiryStats, isLoading: loadingInquiries } = useQuery({
     queryKey: ["advisor-inquiry-stats", advisorId],
     queryFn: async () => {
-      const buildQuery = (status?: string) => {
-        let q = supabase.from("concierge_inquiries").select("id", { count: "exact", head: true })
-          .eq("assigned_advisor_id", advisorId!);
-        if (status) q = q.eq("status", status);
-        return q;
-      };
+      if (!advisorId) return null;
 
-      const [total, intake, reviewing, matching, presented, selected, admitted, closed] = await Promise.all([
-        buildQuery(),
-        buildQuery("intake_submitted"),
-        buildQuery("intake_reviewed"),
-        buildQuery("matching_providers"),
-        buildQuery("presented_to_seeker"),
-        buildQuery("seeker_selected"),
-        buildQuery("admitted"),
-        buildQuery("closed"),
-      ]);
+      const { data, error } = await supabase
+        .from("concierge_inquiries")
+        .select("status")
+        .eq("assigned_advisor_id", advisorId);
+
+      if (error) throw error;
+      const rows = data || [];
+
+      const inBucket = (statuses: readonly string[]) =>
+        rows.filter((r) => statuses.includes(r.status)).length;
+
       return {
-        total: total.count || 0,
-        newCases: intake.count || 0,
-        reviewing: reviewing.count || 0,
-        matching: matching.count || 0,
-        introsSent: presented.count || 0,
-        inContact: selected.count || 0,
-        placed: admitted.count || 0,
-        closed: closed.count || 0,
+        total: rows.length,
+        newCases: inBucket(["pending_intake", "intake_submitted"]),
+        reviewing: inBucket(["intake_reviewed", "advisor_assigned"]),
+        matching: inBucket(["matching_providers", "provider_prequalification", "providers_accepted"]),
+        introsSent: inBucket(["presented_to_seeker"]),
+        inContact: inBucket(["seeker_selected", "admission_in_progress"]),
+        placed: inBucket(["admitted", "billed", "completed"]),
+        closed: inBucket(["closed"]),
       };
     },
     enabled: !!advisorId,
@@ -211,14 +209,13 @@ export function AdvisorDashboard() {
       if (caseView === "mine") {
         query = query
           .eq("assigned_advisor_id", advisorId!)
-          .in("status", ["intake_submitted", "intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
+          .in("status", ACTIVE_STATUSES as unknown as string[]);
       } else if (caseView === "unassigned") {
         query = query
           .is("assigned_advisor_id", null)
           .not("status", "in", '("completed","closed")');
       } else {
-        query = query
-          .in("status", ["intake_submitted", "intake_reviewed", "advisor_assigned", "matching_providers", "provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "new", "reviewing", "matching", "matched", "introductions_sent", "in_contact"]);
+        query = query.in("status", ACTIVE_STATUSES as unknown as string[]);
       }
 
       const { data } = await query;
