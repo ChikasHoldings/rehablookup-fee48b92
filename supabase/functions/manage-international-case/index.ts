@@ -1,7 +1,8 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { getCaseEventActorType } from "../_shared/case-event-actor.ts";
 
- const VERSION = "1.0.2";
+ const VERSION = "1.0.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,6 +59,15 @@ Deno.serve(async (req) => {
       throw new Error("Admin access required");
     }
 
+    // Resolve granular admin role for actor_type attribution
+    // (super_admin / manager / customer_rep / advisor — never the legacy "admin" literal).
+    const { data: adminProfile } = await supabase
+      .from("admin_user_profiles")
+      .select("admin_role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const actorType = getCaseEventActorType(adminProfile?.admin_role ?? null);
+
     const { action, caseId, data } = await req.json();
 
     logStep("Processing action", { action, caseId, adminId: user.id });
@@ -83,7 +93,7 @@ Deno.serve(async (req) => {
           case_id: caseId,
           event_type: "status_updated",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { new_status: status },
         });
 
@@ -110,7 +120,7 @@ Deno.serve(async (req) => {
           case_id: caseId,
           event_type: "advisor_assigned",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { advisor_id: advisorId },
         });
 
@@ -138,7 +148,7 @@ Deno.serve(async (req) => {
           case_id: caseId,
           event_type: "facilities_matched",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { facility_ids: facilityIds },
         });
 
@@ -238,7 +248,7 @@ Deno.serve(async (req) => {
           case_id: caseId,
           event_type: "admission_confirmed",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { 
             facility_id: facilityId,
             facility_name: facility.name,
@@ -251,7 +261,7 @@ Deno.serve(async (req) => {
           case_id: caseId,
           event_type: refundType === "refunded" ? "client_fee_refunded" : "client_fee_credited",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { 
             resolution_type: refundType,
             amount_cents: caseData.payment_amount_cents,
@@ -306,7 +316,7 @@ Deno.serve(async (req) => {
             case_id: caseId,
             event_type: "client_fee_refunded",
             actor_id: user.id,
-            actor_type: "admin",
+            actor_type: actorType,
             event_data: { 
               refund_id: refund.id,
               amount_cents: caseData.payment_amount_cents,
@@ -335,7 +345,7 @@ Deno.serve(async (req) => {
             case_id: caseId,
             event_type: "client_fee_credited",
             actor_id: user.id,
-            actor_type: "admin",
+            actor_type: actorType,
             event_data: { amount_cents: caseData.payment_amount_cents },
           });
 
@@ -442,7 +452,7 @@ Deno.serve(async (req) => {
           case_id: dbInvoice.case_id,
           event_type: "facility_invoice_sent",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { 
             invoice_id: invoiceId,
             stripe_invoice_id: finalizedInvoice.id,
@@ -486,7 +496,7 @@ Deno.serve(async (req) => {
           case_id: dbInvoice.case_id,
           event_type: "facility_invoice_resent",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { invoice_id: invoiceId },
         });
 
@@ -535,7 +545,7 @@ Deno.serve(async (req) => {
           case_id: dbInvoice.case_id,
           event_type: "facility_invoice_voided",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { invoice_id: invoiceId, reason },
         });
 
@@ -578,7 +588,7 @@ Deno.serve(async (req) => {
           case_id: invoice.case_id,
           event_type: "facility_fee_waived",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { invoice_id: invoiceId, reason },
         });
 
@@ -611,7 +621,7 @@ Deno.serve(async (req) => {
           case_id: caseId,
           event_type: "note_added",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { note_id: note.id },
         });
 
@@ -674,7 +684,7 @@ Deno.serve(async (req) => {
           case_id: caseId,
           event_type: "facilities_invited",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { 
             facility_ids: facilityIds,
             facility_names: facilitiesData?.map(f => f.name),
@@ -706,7 +716,7 @@ Deno.serve(async (req) => {
           case_id: caseId,
           event_type: "facility_accepted",
           actor_id: user.id,
-          actor_type: "admin",
+          actor_type: actorType,
           event_data: { facility_id: facilityId },
         });
 

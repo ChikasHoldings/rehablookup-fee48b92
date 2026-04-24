@@ -2,8 +2,9 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { ApiError, apiErrorResponse } from "../_shared/validation.ts";
+import { getCaseEventActorType } from "../_shared/case-event-actor.ts";
 
-const VERSION = "1.0.1";
+const VERSION = "1.0.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -78,6 +79,15 @@ Deno.serve(async (req) => {
       .eq('user_id', userData.user.id)
       .eq('role', 'admin')
       .maybeSingle();
+
+    // Resolve granular admin role for actor_type attribution
+    // (super_admin / manager / customer_rep / advisor — never the legacy "admin" literal).
+    const { data: adminProfile } = await supabase
+      .from("admin_user_profiles")
+      .select("admin_role")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+    const actorType = getCaseEventActorType(adminProfile?.admin_role ?? null);
 
     if (!adminRole) {
       throw new Error("Only administrators can send introductions");
@@ -338,7 +348,7 @@ Deno.serve(async (req) => {
       event_type: "introduction_sent",
       event_data: { facility_id: facilityId, facility_name: facility.name },
       actor_id: userData.user.id,
-      actor_type: "admin",
+      actor_type: actorType,
     });
 
     // Create provider notification

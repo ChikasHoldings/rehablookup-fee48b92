@@ -2,6 +2,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { getCaseEventActorType } from "../_shared/case-event-actor.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,6 +68,15 @@ Deno.serve(async (req) => {
     if (!canManage) {
       throw new Error("Only Super Admins and Managers can manage invoices");
     }
+
+    // Resolve granular admin role for actor_type attribution
+    // (super_admin / manager — never the legacy "admin" literal).
+    const { data: adminProfile } = await supabaseService
+      .from("admin_user_profiles")
+      .select("admin_role")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+    const actorType = getCaseEventActorType(adminProfile?.admin_role ?? null);
 
     const body = await req.json();
     const { invoiceId, action, reason, newAmount } = body;
@@ -145,7 +155,7 @@ Deno.serve(async (req) => {
           facility_id: invoice.facility_id,
           event_type: 'waived',
           actor_id: userData.user.id,
-          actor_type: 'admin',
+          actor_type: actorType,
           amount_cents: invoice.amount_cents,
           details: { reason, waived_by_email: userData.user.email },
         });
@@ -178,7 +188,7 @@ Deno.serve(async (req) => {
           facility_id: invoice.facility_id,
           event_type: 'overridden',
           actor_id: userData.user.id,
-          actor_type: 'admin',
+          actor_type: actorType,
           amount_cents: newAmount,
           details: { 
             reason, 
@@ -221,7 +231,7 @@ Deno.serve(async (req) => {
           facility_id: invoice.facility_id,
           event_type: 'charged',
           actor_id: userData.user.id,
-          actor_type: 'admin',
+          actor_type: actorType,
           amount_cents: invoice.override_amount_cents || invoice.amount_cents,
           details: { marked_paid_by: userData.user.email, method: 'manual' },
         });
@@ -287,7 +297,7 @@ Deno.serve(async (req) => {
           facility_id: invoice.facility_id,
           event_type: 'reminder_sent',
           actor_id: userData.user.id,
-          actor_type: 'admin',
+          actor_type: actorType,
           amount_cents: invoice.override_amount_cents || invoice.amount_cents,
           details: { sent_to: facilityEmail, sent_by: userData.user.email },
         });
@@ -374,7 +384,7 @@ Deno.serve(async (req) => {
           facility_id: invoice.facility_id,
           event_type: paymentIntent.status === 'succeeded' ? 'charged' : 'retry_attempted',
           actor_id: userData.user.id,
-          actor_type: 'admin',
+          actor_type: actorType,
           amount_cents: amountToCharge,
           details: { 
             payment_intent_id: paymentIntent.id, 

@@ -71,3 +71,31 @@ a time so the per-row DB trigger accepts each hop. Hardening rules:
   `sendIntro`, ConciergeIntroductionsTab `sendIntroMutation`) apply an optimistic
   lock on the prior count and re-read + retry once on miss. NEVER do a blind
   `count + 1` write.
+
+**Server-side `actor_type` resolution (edge functions):** All admin-invoked edge
+functions that write to `concierge_case_events`, `international_case_events`, or
+`placement_fee_events` MUST resolve the granular `actor_type` from the JWT and
+NEVER persist the legacy `"admin"` literal. The shared helper
+`supabase/functions/_shared/case-event-actor.ts` exports
+`getCaseEventActorType(adminRole)` (mirrors the client helper) and the
+`CaseEventActorType` union (`super_admin | manager | customer_rep | advisor |
+provider | seeker | system`). The standard pattern after `requireAdmin()` (or an
+equivalent `auth.getUser()` + role gate) is:
+
+```ts
+const { data: adminProfile } = await supabaseService
+  .from("admin_user_profiles")
+  .select("admin_role")
+  .eq("user_id", userData.user.id)
+  .maybeSingle();
+const actorType = getCaseEventActorType(adminProfile?.admin_role ?? null);
+```
+
+Functions hardened to this pattern: `admin-manage-invoice`, `confirm-placement`,
+`charge-placement-fee` (falls back to `"system"` on service-role / cron paths via
+`isServiceRoleCall`), `manage-international-case`, and
+`send-concierge-introduction`. `auto-status-transition` already accepts the
+typed `actorType` from the client. Service-role / cron functions
+(`retry-failed-payments`, `match-concierge-intake`, `stripe-webhook`) keep
+`actor_type: "system"` since there is no human actor. Provider / seeker flows
+write `"provider"` / `"seeker"` directly and must NOT use the helper.

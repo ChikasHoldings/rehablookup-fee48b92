@@ -1,8 +1,9 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { ApiError, apiErrorResponse } from "../_shared/validation.ts";
+import { getCaseEventActorType, type CaseEventActorType } from "../_shared/case-event-actor.ts";
 
-const VERSION = "2.0.0";
+const VERSION = "2.0.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,6 +64,9 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const isServiceRoleCall = token === supabaseServiceKey;
     let actorId: string | null = null;
+    // Granular actor_type ("system" for service-role/cron; super_admin / manager /
+    // customer_rep / advisor for human admins — never the legacy "admin" literal).
+    let actorType: CaseEventActorType = "system";
 
     if (isServiceRoleCall) {
       logStep(requestId, "Service-role authentication (server-to-server call)");
@@ -83,7 +87,16 @@ Deno.serve(async (req) => {
       }
 
       actorId = userData.user.id;
-      logStep(requestId, "Admin authenticated", { adminId: actorId });
+
+      // Resolve granular admin role for actor_type attribution.
+      const { data: adminProfile } = await supabase
+        .from("admin_user_profiles")
+        .select("admin_role")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+      actorType = getCaseEventActorType(adminProfile?.admin_role ?? null);
+
+      logStep(requestId, "Admin authenticated", { adminId: actorId, actorType });
     }
 
     const { inquiryId, facilityId, feeType, adminInitiated, isInternational } = await req.json();
@@ -168,7 +181,7 @@ Deno.serve(async (req) => {
           event_type: 'admin_confirmed_placement',
           event_data: { facility_id: facilityId },
           actor_id: actorId,
-          actor_type: 'admin',
+          actor_type: actorType,
         });
       }
     } else if (!inquiry.placement_confirmed) {
@@ -260,7 +273,7 @@ Deno.serve(async (req) => {
           ...(stripePaymentIntentId ? { payment_intent_id: stripePaymentIntentId } : {}),
         },
         actor_id: actorId,
-        actor_type: isServiceRoleCall ? 'system' : 'admin',
+        actor_type: actorType,
       });
 
       // Log to placement_fee_events audit trail
@@ -269,7 +282,7 @@ Deno.serve(async (req) => {
         inquiry_id: inquiryId,
         facility_id: facilityId,
         event_type: status === 'paid' ? 'charged' : 'created',
-        actor_type: isServiceRoleCall ? 'system' : 'admin',
+        actor_type: actorType,
         actor_id: actorId,
         amount_cents: feeCents,
         details: {
