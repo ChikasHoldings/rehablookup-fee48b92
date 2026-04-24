@@ -10,10 +10,49 @@ const STORAGE_KEY = "lead_intake_form_data";
 const STORAGE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
 const SUBMISSION_DEBOUNCE_MS = 3000; // 3 second debounce between submissions
 
+// Fields that are SAFE to persist across reloads (no PII).
+// Anything sensitive (name, email, phone, insurance member id, free-text message,
+// prior-treatment notes) is stripped before write — see toStorablePartial below.
+const PERSISTABLE_FIELDS = [
+  "whoSeekingHelp",
+  "urgency",
+  "primarySubstance",
+  "levelOfCare",
+  "dualDiagnosis",
+  "insuranceType",
+  "budgetPreference",
+  "preferredContact",
+  "specialNeeds",
+  "ageRange",
+  "gender",
+  "relationshipToPatient",
+  "previousTreatment",
+  "coOccurringConditions",
+  "employmentStatus",
+  "veteranStatus",
+  "legalInvolvement",
+  "readinessLevel",
+  "bestTimeToCall",
+  "locationCityState",
+  "locationZip",
+] as const;
+
 interface StoredFormData {
-  data: LeadIntakeFormData;
+  data: Partial<LeadIntakeFormData>;
   step: number;
   timestamp: number;
+}
+
+function toStorablePartial(data: LeadIntakeFormData): Partial<LeadIntakeFormData> {
+  const out: Partial<LeadIntakeFormData> = {};
+  for (const key of PERSISTABLE_FIELDS) {
+    const value = data[key as keyof LeadIntakeFormData];
+    if (value !== undefined && value !== null && value !== "") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (out as any)[key] = value;
+    }
+  }
+  return out;
 }
 
 interface UseLeadIntakeFormOptions {
