@@ -1,7 +1,8 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { getCaseEventActorType } from "../_shared/case-event-actor.ts";
 
- const VERSION = "1.0.2";
+ const VERSION = "1.0.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,6 +58,15 @@ Deno.serve(async (req) => {
     if (!hasAdmin) {
       throw new Error("Admin access required");
     }
+
+    // Resolve granular admin role for actor_type attribution
+    // (super_admin / manager / customer_rep / advisor — never the legacy "admin" literal).
+    const { data: adminProfile } = await supabase
+      .from("admin_user_profiles")
+      .select("admin_role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const actorType = getCaseEventActorType(adminProfile?.admin_role ?? null);
 
     const { action, caseId, data } = await req.json();
 
