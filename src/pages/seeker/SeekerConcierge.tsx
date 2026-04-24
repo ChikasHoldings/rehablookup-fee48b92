@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useSeekerSession } from "@/hooks/useSeekerSession";
+import { validateTransition } from "@/lib/statusTransitions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -387,26 +388,31 @@ export default function SeekerConcierge() {
       if (!selectedCase) throw new Error("No case selected");
       if (!userId) throw new Error("Not authenticated");
 
-      // Guard: don't cancel already-closed or terminal cases
-      const terminalStatuses = ["closed", "admitted", "billed", "completed"];
-      if (terminalStatuses.includes(selectedCase.status)) {
-        throw new Error("This case cannot be cancelled");
+      // Run the same client-side state-machine guard the admin path uses,
+      // so we surface a clear message instead of an opaque DB rejection if
+      // the case has already advanced past a closeable stage.
+      const check = validateTransition("concierge", selectedCase.status, "closed");
+      if (!check.ok) {
+        throw new Error(
+          check.reason ||
+            "This case can no longer be cancelled — please contact your advisor."
+        );
       }
 
-      // Only allow cancellation of own cases (RLS enforces this too)
+      // Only allow cancellation of own cases (RLS enforces this too).
+      // The .eq("status", fromStatus) clause acts as an optimistic lock so
+      // we never blindly overwrite a status that has shifted under us.
       const { data: updated, error } = await supabase
         .from("concierge_inquiries")
         .update({ status: "closed", closed_at: new Date().toISOString() })
         .eq("id", selectedCase.id)
         .eq("user_id", userId)
-        .neq("status", "closed")
-        .neq("status", "admitted")
-        .neq("status", "completed")
+        .eq("status", selectedCase.status)
         .select("id")
         .maybeSingle();
-      
+
       if (error) throw error;
-      if (!updated) return; // Already closed — idempotent
+      if (!updated) return; // Already advanced/closed by someone else — idempotent.
 
       // Log case event
       await supabase.from("concierge_case_events").insert({

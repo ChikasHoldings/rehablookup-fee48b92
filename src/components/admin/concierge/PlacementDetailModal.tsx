@@ -305,14 +305,11 @@ function InlineAdvisorAssign({ caseData, onRefresh }: { caseData: ConciergeInqui
     if (!selectedId) return;
     setSaving(true);
     try {
-      // First assign the advisor
-      const { error } = await supabase
-        .from("concierge_inquiries")
-        .update({ assigned_advisor_id: selectedId })
-        .eq("id", caseData.id);
-      if (error) throw error;
-
-      // Auto-advance to advisor_assigned if at intake_reviewed (using transition hook)
+      // Auto-advance to advisor_assigned if the case is at intake_reviewed —
+      // the transition hook performs the assigned_advisor_id write atomically
+      // (via extraFields) and applies optimistic locking + timeline log, so we
+      // must NOT also pre-update the row outside the hook (would be a wasted,
+      // unlocked second write).
       if (caseData.status === "intake_reviewed") {
         await caseTransition.mutateAsync({
           caseId: caseData.id,
@@ -323,12 +320,27 @@ function InlineAdvisorAssign({ caseData, onRefresh }: { caseData: ConciergeInqui
           label: "Advisor assigned",
         });
       } else {
-        // Just log the assignment event
+        // Status is not eligible to advance — just rebind the advisor with
+        // an optimistic lock on the previous advisor id so concurrent admin
+        // actions don't silently clobber each other.
+        const previousAdvisorId = caseData.assigned_advisor_id ?? null;
+        let q = supabase
+          .from("concierge_inquiries")
+          .update({ assigned_advisor_id: selectedId })
+          .eq("id", caseData.id);
+        q = previousAdvisorId
+          ? q.eq("assigned_advisor_id", previousAdvisorId)
+          : q.is("assigned_advisor_id", null);
+        const { error } = await q;
+        if (error) throw error;
+
         const { data: { user } } = await supabase.auth.getUser();
         await supabase.from("concierge_case_events").insert({
-          inquiry_id: caseData.id, event_type: "advisor_assigned",
-          event_data: { advisor_id: selectedId, previous_advisor_id: null },
-          actor_id: user?.id || null, actor_type: "admin",
+          inquiry_id: caseData.id,
+          event_type: "advisor_assigned",
+          event_data: { advisor_id: selectedId, previous_advisor_id: previousAdvisorId },
+          actor_id: user?.id || null,
+          actor_type: "admin",
         });
         toast.success("Advisor assigned");
         queryClient.invalidateQueries({ queryKey: ["admin-concierge-cases-full"] });

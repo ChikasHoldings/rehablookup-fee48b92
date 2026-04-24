@@ -106,23 +106,70 @@ export default function AdminBackOffice() {
     },
   });
 
-  // Case reassignment mutation
+  // Case reassignment mutation — Super Admin / Manager tool.
+  // Hardened to: (1) read the prior advisor for an optimistic-lock guard,
+  // (2) write a `concierge_case_events` row with previous + new advisor,
+  // and (3) write an `admin_audit_log` row so the operation is traceable
+  // alongside other admin overrides.
   const reassignMutation = useMutation({
     mutationFn: async () => {
-      if (!reassignCaseId.trim() || !reassignAdvisorId) throw new Error("Case ID and Advisor are required");
-      const { error } = await supabase
+      const caseId = reassignCaseId.trim();
+      if (!caseId || !reassignAdvisorId) throw new Error("Case ID and Advisor are required");
+
+      // Snapshot the current advisor so we can apply an optimistic lock and
+      // record the from/to in the audit trail.
+      const { data: existing, error: fetchErr } = await supabase
+        .from("concierge_inquiries")
+        .select("id, assigned_advisor_id")
+        .eq("id", caseId)
+        .maybeSingle();
+      if (fetchErr) throw fetchErr;
+      if (!existing) throw new Error("Case not found");
+      const previousAdvisorId = existing.assigned_advisor_id ?? null;
+
+      let q = supabase
         .from("concierge_inquiries")
         .update({ assigned_advisor_id: reassignAdvisorId })
-        .eq("id", reassignCaseId.trim());
+        .eq("id", caseId);
+      q = previousAdvisorId
+        ? q.eq("assigned_advisor_id", previousAdvisorId)
+        : q.is("assigned_advisor_id", null);
+      const { data: updated, error } = await q.select("id").maybeSingle();
       if (error) throw error;
-      // Log event
+      if (!updated) {
+        throw new Error(
+          "This case's advisor was changed by someone else. Refresh and try again."
+        );
+      }
+
+      // Timeline event for the case.
       await supabase.from("concierge_case_events").insert({
-        inquiry_id: reassignCaseId.trim(),
+        inquiry_id: caseId,
         event_type: "advisor_reassigned",
-        event_data: { new_advisor_id: reassignAdvisorId, reassigned_by: user?.id },
+        event_data: {
+          new_advisor_id: reassignAdvisorId,
+          previous_advisor_id: previousAdvisorId,
+          reassigned_by: user?.id,
+        },
         actor_type: "admin",
         actor_id: user?.id,
       });
+
+      // Admin audit log entry — mirrors the hardening pattern used by
+      // useEscalationTransition and InquiryDetailModal.reassignMutation.
+      if (user?.id) {
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: user.id,
+          action_type: "concierge_advisor_reassign",
+          target_type: "concierge_inquiry",
+          target_id: caseId,
+          details: {
+            from_advisor_id: previousAdvisorId,
+            to_advisor_id: reassignAdvisorId,
+            surface: "back_office_reassign",
+          },
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Case reassigned successfully");
