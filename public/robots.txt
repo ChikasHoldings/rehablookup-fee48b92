@@ -1,6 +1,7 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2026-04-24 — v7.12.0 Block /resources?category=* query variants (canonical is bare /resources)
 # Last updated: 2026-04-24 — v7.11.0 Unblock /request-help (it 301s to /concierge); blocking source path causes "Page with redirect" GSC errors
 # Last updated: 2026-04-24 — v7.10.0 Force recrawl: confirm /treatment-types/* and /treatment/* are unblocked
 # Last updated: 2026-04-23 — v7.9.0 Refresh sitemaps + resubmit to GSC (35,489 URLs)
@@ -63,6 +64,9 @@ Disallow: /*?gclid=
 Disallow: /*?msclkid=
 Disallow: /*?_ga=
 Disallow: /*?_gl=
+# /resources is the canonical hub; ?category=* are filter variants that duplicate the same content
+Disallow: /resources?category=
+Disallow: /resources/?category=
 
 User-agent: Googlebot-Image
 Allow: /
@@ -341,6 +345,8 @@ Disallow: /*?_ga=
 Disallow: /*?_gl=
 Disallow: /*?source=
 Disallow: /*?ref=
+Disallow: /resources?category=
+Disallow: /resources/?category=
 Crawl-delay: 2
 
 # =============================================================================
