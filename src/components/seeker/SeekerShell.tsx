@@ -10,6 +10,10 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAuthReady } from "@/hooks/useAuthReady";
 import { prefetchAdjacentRoutes, preloadSeekerPages } from "@/lib/routePrefetch";
 import { scrollContainerToTop } from "@/hooks/useScrollToTop";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { UserCircle2 } from "lucide-react";
 
 // Preload all seeker pages on module load for instant navigation
 preloadSeekerPages();
@@ -18,6 +22,86 @@ interface SeekerProfile {
   display_name: string | null;
   first_name: string | null;
   avatar_url: string | null;
+}
+
+/**
+ * Loading skeleton for the seeker shell while auth/profile resolves.
+ * Prevents blank flashes during initial load.
+ */
+function SeekerShellSkeleton() {
+  return (
+    <div className="h-[100dvh] w-full overflow-hidden bg-background isolate grid grid-rows-[auto_minmax(0,1fr)_auto] lg:grid-rows-[auto_minmax(0,1fr)]">
+      {/* Header skeleton */}
+      <div className="z-50 min-w-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            <Skeleton className="h-8 w-32" />
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content skeleton */}
+      <main className="min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-muted/30 p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-4xl space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+              </div>
+              <Skeleton className="h-px w-full" />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+
+      {/* Mobile nav skeleton */}
+      <div className="lg:hidden border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex justify-around p-2">
+          <Skeleton className="h-10 w-16" />
+          <Skeleton className="h-10 w-16" />
+          <Skeleton className="h-10 w-16" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Empty state for when a seeker has no profile data.
+ * Provides a clear path to complete their profile.
+ */
+function SeekerEmptyState({ onCompleteProfile }: { onCompleteProfile: () => void }) {
+  return (
+    <div className="flex items-center justify-center min-h-[400px] p-6">
+      <Card className="max-w-md w-full">
+        <CardContent className="pt-6 text-center">
+          <UserCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Complete Your Profile</h2>
+          <p className="text-muted-foreground mb-4">
+            We need a few details to personalize your experience and help you find the right treatment options.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <Button onClick={onCompleteProfile}>
+              Complete Profile
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 export function SeekerShell() {
@@ -122,6 +206,20 @@ export function SeekerShell() {
   }, [navigate, toast, queryClient]);
 
   const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
+
+  // Show loading skeleton while auth/profile is resolving
+  if (!isReady || (isAuthenticated && profile === undefined)) {
+    return <SeekerShellSkeleton />;
+  }
+
+  // Show empty state for authenticated users with no profile
+  if (isAuthenticated && profile === null) {
+    return (
+      <SeekerEmptyState 
+        onCompleteProfile={() => navigate('/account/settings')} 
+      />
+    );
+  }
 
   // Hide shell during redirect
   if (userRole === "admin" || userRole === "provider" || hasRedirected.current) return null;
