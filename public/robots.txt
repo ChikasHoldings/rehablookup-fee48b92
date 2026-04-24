@@ -1,6 +1,7 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2026-04-24 — v7.11.0 Unblock /request-help (it 301s to /concierge); blocking source path causes "Page with redirect" GSC errors
 # Last updated: 2026-04-24 — v7.10.0 Force recrawl: confirm /treatment-types/* and /treatment/* are unblocked
 # Last updated: 2026-04-23 — v7.9.0 Refresh sitemaps + resubmit to GSC (35,489 URLs)
 # Last updated: 2026-04-22 — v7.8.0 Unblock redirected URLs so Google can follow canonicals
@@ -33,9 +34,10 @@ Disallow: /provider-reset-password
 Disallow: /admin-login
 Disallow: /seeker/signup
 # NOTE: /blog and legacy /treatment/* paths are 301 redirects to canonical URLs.
-# We must NOT Disallow them — blocking the source path prevents Google from
-# discovering the redirect target and produces "Page with redirect" GSC errors.
-Disallow: /request-help
+# NOTE: /blog, legacy /treatment/* paths, and /request-help are 301 redirects to
+# canonical URLs. We must NOT Disallow them — blocking the source path prevents
+# Google from discovering the redirect target and produces "Page with redirect"
+# GSC errors.
 Disallow: /placement-help
 Disallow: /my-account
 Disallow: /concierge/intake
@@ -309,8 +311,7 @@ Disallow: /provider-forgot-password
 Disallow: /provider-reset-password
 Disallow: /admin-login
 Disallow: /seeker/signup
-# NOTE: /blog and legacy /treatment/* paths are 301 redirects — do NOT block.
-Disallow: /request-help
+# NOTE: /blog, legacy /treatment/*, and /request-help are 301 redirects — do NOT block.
 Disallow: /placement-help
 Disallow: /my-account
 Disallow: /concierge/intake
