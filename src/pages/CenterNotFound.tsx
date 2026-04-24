@@ -5,6 +5,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { ReportIssueDialog } from "@/components/feedback/ReportIssueDialog";
 import {
   Building2,
   Search,
@@ -14,6 +15,7 @@ import {
   Phone,
   Compass,
   ShieldCheck,
+  Flag,
 } from "lucide-react";
 
 interface CenterNotFoundProps {
@@ -49,6 +51,7 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
   const [query, setQuery] = useState(
     attemptedSlug ? attemptedSlug.replace(/-/g, " ") : "",
   );
+  const [reportOpen, setReportOpen] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,13 +168,24 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
               </Link>
             </div>
 
-            <button
-              onClick={() => window.history.back()}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              <ArrowLeft className="h-3 w-3" />
-              Go back to previous page
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+              <button
+                onClick={() => window.history.back()}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ArrowLeft className="h-3 w-3" />
+                Go back to previous page
+              </button>
+              <span className="hidden sm:inline text-muted-foreground/40">•</span>
+              <button
+                type="button"
+                onClick={() => setReportOpen(true)}
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Flag className="h-3 w-3" />
+                Report this issue
+              </button>
+            </div>
           </div>
 
           {/* Recovery options */}
@@ -253,6 +267,13 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
           </div>
         </div>
       </div>
+
+      <ReportIssueDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        context="center-not-found"
+        attemptedSlug={attemptedSlug ?? null}
+      />
     </Layout>
   );
 };
