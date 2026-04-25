@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { filterRowsWithKeys, pluckNonNull } from "@/lib/nullableRows";
 import type { TreatmentCenter } from "@/data/treatmentCenters";
 
 interface FacilityWithRelations {
@@ -202,9 +203,10 @@ export const useApprovedFacilities = () => {
 
       if (facilitiesError) throw facilitiesError;
 
-      // Fetch services, insurance, and reviews separately since views don't support joins
-      const facilityIds = (facilitiesData || []).map(f => f.id).filter(Boolean) as string[];
-      
+      // Fetch services, insurance, and reviews separately since views don't support joins.
+      // `pluckNonNull` filters and narrows the nullable `id` from the view in one step.
+      const facilityIds = pluckNonNull(facilitiesData, "id");
+
       const [servicesResult, insuranceResult] = await Promise.all([
         supabase.from("facility_services").select("facility_id, service_name").in("facility_id", facilityIds),
         supabase.from("facility_insurance").select("facility_id, insurance_name").in("facility_id", facilityIds),
@@ -224,10 +226,12 @@ export const useApprovedFacilities = () => {
       });
 
       
-      return (facilitiesData || []).map(f => ({
+      // Drop view rows missing the primary key so `f.id` is non-null in the
+      // returned shape — no more `f.id!` non-null assertions downstream.
+      return filterRowsWithKeys(facilitiesData, ["id"]).map(f => ({
         ...f,
-        facility_services: (servicesMap.get(f.id!) || []).map(name => ({ service_name: name })),
-        facility_insurance: (insuranceMap.get(f.id!) || []).map(name => ({ insurance_name: name })),
+        facility_services: (servicesMap.get(f.id) || []).map(name => ({ service_name: name })),
+        facility_insurance: (insuranceMap.get(f.id) || []).map(name => ({ insurance_name: name })),
       }));
     },
     staleTime: 1000 * 60 * 2, // 2 minutes for fresher data

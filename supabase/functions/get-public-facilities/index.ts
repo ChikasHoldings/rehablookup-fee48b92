@@ -1,4 +1,5 @@
 import { createServiceClient } from "../_shared/supabase-client.ts";
+import { filterRowsWithKeys, pluckNonNull } from "../_shared/nullable-rows.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,7 +55,7 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to fetch facilities: ${facilitiesError.message}`);
     }
 
-    const facilityIds = (facilitiesData || []).map((f) => f.id).filter(Boolean) as string[];
+    const facilityIds = pluckNonNull(facilitiesData, "id");
 
     if (facilityIds.length === 0) {
       logStep("No facilities found");
@@ -90,13 +91,11 @@ Deno.serve(async (req) => {
     });
 
 
-    // Build complete facility objects.
-    // Filter out any rows missing a primary key — `public_facilities` is a
-    // view, so the generated `Database` type marks `id` as nullable. A
-    // facility without an id can't be looked up in the services / insurance
-    // maps and shouldn't appear in the public snapshot anyway.
-    const facilities = (facilitiesData || [])
-      .filter((f): f is typeof f & { id: string } => typeof f.id === "string")
+    // Build complete facility objects. `public_facilities` is a view so
+    // the generated `Database` type marks every column nullable; the
+    // shared `filterRowsWithKeys` helper drops rows missing a primary key
+    // and narrows the resulting type so downstream code can trust `f.id`.
+    const facilities = filterRowsWithKeys(facilitiesData, ["id"])
       .map((f) => ({
         id: f.id,
         name: f.name,
