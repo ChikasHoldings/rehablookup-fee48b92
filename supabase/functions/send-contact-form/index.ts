@@ -175,7 +175,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       to: ["Support@rehablookup.com"],
       subject: `[${subjectLabel}] Contact from ${escapeHtml(name.slice(0, 50))}`,
       html: emailHtml,
-      reply_to: email,
+      replyTo: email,
     }, {
       emailType: "contact_form",
       idempotencyKey: `contact-${email}-${Date.now().toString(36)}`,
