@@ -1072,7 +1072,9 @@ const AppInner = () => {
             <Route path="/about" element={<PublicRouteGuard><About /></PublicRouteGuard>} />
             <Route path="/contact" element={<PublicRouteGuard><Contact /></PublicRouteGuard>} />
             <Route path="/privacy-policy" element={<PublicRouteGuard><PrivacyPolicy /></PublicRouteGuard>} />
+            <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
             <Route path="/terms-of-service" element={<PublicRouteGuard><TermsOfService /></PublicRouteGuard>} />
+            <Route path="/terms" element={<Navigate to="/terms-of-service" replace />} />
             <Route path="/editorial-policy" element={<PublicRouteGuard><EditorialPolicy /></PublicRouteGuard>} />
             <Route path="/medical-disclaimer" element={<PublicRouteGuard><MedicalDisclaimer /></PublicRouteGuard>} />
             
