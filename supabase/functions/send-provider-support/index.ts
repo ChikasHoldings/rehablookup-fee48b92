@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
       to: ["providers@rehablookup.com"],
       subject: `[Provider Support] ${topicLabel} - ${escapeHtml(name.slice(0, 50))}`,
       html: emailHtml,
-      reply_to: email,
+      replyTo: email,
     }, {
       emailType: "provider_support",
       idempotencyKey: `${supportTicketKey}-internal`,

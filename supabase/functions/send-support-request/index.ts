@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
       to: ["Support@rehablookup.com"],
       subject: `[${sourceLabel}] ${categoryLabel} - ${subject}`,
       html: emailHtml,
-      reply_to: userEmail,
+      replyTo: userEmail,
     }, {
       emailType: "support_request",
       idempotencyKey: `support-${userEmail}-${subject.slice(0, 40)}-${Date.now().toString(36)}`,

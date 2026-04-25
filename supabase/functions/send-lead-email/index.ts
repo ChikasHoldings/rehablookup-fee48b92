@@ -560,7 +560,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       to: [lead.email],
       subject: emailSubject,
       html: emailHtml,
-      reply_to: replyToEmail,
+      replyTo: replyToEmail,
     }, {
       emailType: "lead_email",
       idempotencyKey: `lead-email-${lead.id}-${templateId}`,
@@ -580,7 +580,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         custom_note: customNote || null,
         recipient_email: lead.email,
         status: "sent",
-        resend_id: emailResponse.data?.id || null,
+        resend_id: emailResponse.emailId || null,
       })
       .select()
       .single();

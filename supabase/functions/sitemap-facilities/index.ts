@@ -33,7 +33,7 @@ const STATE_ABBR_TO_SLUG: Record<string, string> = {
  * so the sitemap never advertises a page that would render as a soft-404.
  */
 async function fetchFacilityCitySet(
-  supabase: ReturnType<typeof createClient>
+  supabase: any
 ): Promise<Set<string>> {
   const set = new Set<string>();
   let from = 0;
@@ -1711,7 +1711,7 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
-async function generateMainSitemap(supabase: ReturnType<typeof createClient>): Promise<string> {
+async function generateMainSitemap(supabase: any): Promise<string> {
   const today = new Date().toISOString().split("T")[0];
 
   const { data: articles } = await supabase
@@ -1719,7 +1719,7 @@ async function generateMainSitemap(supabase: ReturnType<typeof createClient>): P
     .select("slug, updated_at")
     .eq("status", "published");
 
-  const articleRoutes: RouteEntry[] = (articles || []).map(article => ({
+  const articleRoutes: RouteEntry[] = (articles || []).map((article: { slug: string }) => ({
     path: `/resources/${article.slug}`,
     priority: 0.8,
     changefreq: "monthly"

@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
         await sendIntakeReceivedEmail(resend, inquiry, supabase, results);
         // If seeker has no account, also send signup prompt
         if (!inquiry.user_id) {
-          await sendSignupPromptEmail(resend, inquiry, results);
+          await sendSignupPromptEmail(supabase, resend, inquiry, results);
         }
         break;
 
@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
 
       case 'signup_prompt':
         if (!inquiry.user_id) {
-          await sendSignupPromptEmail(resend, inquiry, results);
+          await sendSignupPromptEmail(supabase, resend, inquiry, results);
         }
         break;
 
@@ -923,6 +923,7 @@ async function sendProviderDeclinedNotification(
 
 // Signup prompt for seekers without an account
 async function sendSignupPromptEmail(
+  supabase: any,
   resend: Resend,
   inquiry: InquiryData,
   results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
