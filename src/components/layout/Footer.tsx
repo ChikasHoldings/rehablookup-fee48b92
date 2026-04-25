@@ -316,8 +316,8 @@ export const Footer = memo(function Footer() {
                   src={logoDarkBg}
                   alt="RehabLookup — Find Trusted Addiction Treatment Centers"
                   className="h-7 w-auto"
-                  width={134}
-                  height={28}
+                  width={400}
+                  height={67}
                   loading="lazy"
                 />
               </Link>
