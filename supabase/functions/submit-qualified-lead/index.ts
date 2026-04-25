@@ -678,7 +678,7 @@ Deno.serve(async (req) => {
       }
 
       // Store hashed IP for tracking
-      data.ipHash = ipHashHex;
+      (data as Record<string, unknown>).ipHash = ipHashHex;
     }
 
     // ===== LEAD INSERTION =====

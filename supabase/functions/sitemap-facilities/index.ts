@@ -1719,7 +1719,7 @@ async function generateMainSitemap(supabase: any): Promise<string> {
     .select("slug, updated_at")
     .eq("status", "published");
 
-  const articleRoutes: RouteEntry[] = (articles || []).map(article => ({
+  const articleRoutes: RouteEntry[] = (articles || []).map((article: { slug: string }) => ({
     path: `/resources/${article.slug}`,
     priority: 0.8,
     changefreq: "monthly"
