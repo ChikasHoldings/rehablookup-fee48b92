@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch related data in parallel
-    const [servicesResult, insuranceResult, reviewsResult] = await Promise.all([
+    const [servicesResult, insuranceResult] = await Promise.all([
       supabase
         .from("facility_services")
         .select("facility_id, service_name")
