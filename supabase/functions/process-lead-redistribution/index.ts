@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
     const { data: expiredExclusiveLeads } = await supabase
       .from("leads")
       .select(`
-        id, name, facility_id, state, level_of_care, insurance_type, location_city_state,
+        id, name, facility_id, level_of_care, insurance_type, location_city_state,
         facilities!facility_id (id, state, city)
       `)
       .eq("redistribution_status", "exclusive")
