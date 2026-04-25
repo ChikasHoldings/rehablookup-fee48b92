@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { Resend } from "https://esm.sh/resend@4.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "2.0.0";
@@ -341,7 +341,7 @@ Deno.serve(async (req) => {
         }, { emailType: "abandoned_placement", idempotencyKey: `abandoned-domestic-${inquiry.id}-${newCount}` });
 
         if (sendError) {
-          throw new Error(sendError.message);
+          throw new Error(sendError);
         }
         await supabase
           .from("concierge_inquiries")
@@ -391,7 +391,7 @@ Deno.serve(async (req) => {
           html: emailData.html,
         }, { emailType: "abandoned_placement", idempotencyKey: `abandoned-early-${inquiry.id}` });
 
-        if (sendError) throw new Error(sendError.message);
+        if (sendError) throw new Error(sendError);
 
         await supabase
           .from("concierge_inquiries")
@@ -437,7 +437,7 @@ Deno.serve(async (req) => {
         }, { emailType: "abandoned_placement", idempotencyKey: `abandoned-intl-${caseData.id}` });
 
         if (sendError) {
-          throw new Error(sendError.message);
+          throw new Error(sendError);
         }
 
         // Update the case to mark email sent

@@ -118,7 +118,7 @@ async function checkForDuplicate(
     .limit(1);
   
   if (emailError) {
-    log(requestId, "WARN", "Duplicate check error (email)", { error: emailError.message });
+    log(requestId, "WARN", "Duplicate check error (email)", { error: emailError });
   }
   
   if (emailLeads && emailLeads.length > 0) {

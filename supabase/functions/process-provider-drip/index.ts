@@ -319,7 +319,8 @@ const DAY_EMAILS: Record<number, { subject: string; generate: (name: string) => 
 // ============================================================================
 
 async function enrollProvider(
-  supabase: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
   userId: string,
   facilityId: string,
   providerName: string,

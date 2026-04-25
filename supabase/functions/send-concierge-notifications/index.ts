@@ -424,7 +424,7 @@ async function sendIntakeReceivedEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+  const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `We've Received Your Request - Case #${caseId}`,
@@ -435,7 +435,7 @@ async function sendIntakeReceivedEmail(
   });
 
   if (!emailError) {
-    results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
+    results.push({ recipient: inquiry.user_email, emailId: emailData });
   }
 
   // Create in-app notification for seeker
@@ -499,7 +499,7 @@ async function sendMatchesFoundEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+  const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `We Found ${matchCount} Matches for You - Case #${caseId}`,
@@ -510,7 +510,7 @@ async function sendMatchesFoundEmail(
   });
 
   if (!emailError) {
-    results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
+    results.push({ recipient: inquiry.user_email, emailId: emailData });
   }
 
   if (inquiry.user_id) {
@@ -563,7 +563,7 @@ async function sendIntroductionsSentEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+  const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `Your Advisor is Contacting Facilities - Case #${caseId}`,
@@ -574,7 +574,7 @@ async function sendIntroductionsSentEmail(
   });
 
   if (!emailError) {
-    results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
+    results.push({ recipient: inquiry.user_email, emailId: emailData });
   }
 
   if (inquiry.user_id) {
@@ -628,7 +628,7 @@ async function sendFacilitiesReadyForReviewEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+  const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `Your Treatment Options Are Ready - Case #${caseId}`,
@@ -639,7 +639,7 @@ async function sendFacilitiesReadyForReviewEmail(
   });
 
   if (!emailError) {
-    results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
+    results.push({ recipient: inquiry.user_email, emailId: emailData });
   }
 
   if (inquiry.user_id) {
@@ -737,7 +737,7 @@ async function sendAdmissionStageNotification(
   `);
 
   try {
-    const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+    const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup Concierge <no-reply@rehablookup.com>",
       to: [inquiry.user_email],
       subject: config.seekerSubject,
@@ -748,7 +748,7 @@ async function sendAdmissionStageNotification(
     });
 
     if (!emailError) {
-      results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
+      results.push({ recipient: inquiry.user_email, emailId: emailData });
     }
   } catch (e) {
     logStep("Seeker admission email failed", { error: String(e) });
@@ -871,7 +871,7 @@ async function sendProviderInterestedNotification(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+  const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `Progress Update on Your Case - Case #${caseId}`,
@@ -879,7 +879,7 @@ async function sendProviderInterestedNotification(
   });
 
   if (!emailError) {
-    results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
+    results.push({ recipient: inquiry.user_email, emailId: emailData });
   }
 }
 
@@ -961,7 +961,7 @@ async function sendSignupPromptEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+  const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `Create Your Account to Track Case #${caseId}`,
@@ -969,7 +969,7 @@ async function sendSignupPromptEmail(
   });
 
   if (!emailError) {
-    results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
+    results.push({ recipient: inquiry.user_email, emailId: emailData });
   }
 }
 
@@ -1009,7 +1009,7 @@ async function sendSeekerConfirmedEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+  const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [recipientEmail],
     subject: `Client Confirmed Admission - Case #${caseId}`,
@@ -1020,7 +1020,7 @@ async function sendSeekerConfirmedEmail(
   });
 
   if (!emailError) {
-    results.push({ recipient: recipientEmail, emailId: emailData?.id });
+    results.push({ recipient: recipientEmail, emailId: emailData });
   }
 
   // Provider in-app notification
@@ -1076,7 +1076,7 @@ async function sendProviderConfirmedEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+  const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `${facility.name} Confirmed Your Placement - Case #${caseId}`,
@@ -1087,7 +1087,7 @@ async function sendProviderConfirmedEmail(
   });
 
   if (!emailError) {
-    results.push({ recipient: inquiry.user_email, emailId: emailData?.id });
+    results.push({ recipient: inquiry.user_email, emailId: emailData });
   }
 
   if (inquiry.user_id) {
@@ -1157,7 +1157,7 @@ async function sendPlacementCompleteEmails(
     ${emailFooter()}
   `);
 
-  const { data: seekerEmailData, error: seekerEmailError } = await sendEmailWithRetry(supabase, resend, {
+  const { emailId: seekerEmailData, error: seekerEmailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup Concierge <no-reply@rehablookup.com>",
     to: [inquiry.user_email],
     subject: `Congratulations! Your Placement is Complete - Case #${caseId}`,
@@ -1168,7 +1168,7 @@ async function sendPlacementCompleteEmails(
   });
 
   if (!seekerEmailError) {
-    results.push({ recipient: inquiry.user_email, emailId: seekerEmailData?.id });
+    results.push({ recipient: inquiry.user_email, emailId: seekerEmailData });
   }
 
   // Email to provider
@@ -1196,7 +1196,7 @@ async function sendPlacementCompleteEmails(
       ${emailFooter()}
     `);
 
-    const { data: providerEmailData, error: providerEmailError } = await sendEmailWithRetry(supabase, resend, {
+    const { emailId: providerEmailData, error: providerEmailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup Concierge <no-reply@rehablookup.com>",
       to: [recipientEmail],
       subject: `Placement Complete - Case #${caseId}`,
@@ -1207,7 +1207,7 @@ async function sendPlacementCompleteEmails(
     });
 
     if (!providerEmailError) {
-      results.push({ recipient: recipientEmail, emailId: providerEmailData?.id });
+      results.push({ recipient: recipientEmail, emailId: providerEmailData });
     }
   }
 
@@ -1318,7 +1318,7 @@ async function sendInvoiceIssuedEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+  const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup <no-reply@rehablookup.com>",
     to: [recipientEmail],
     subject: `Placement Fee Invoice - ${amountFormatted} - Case #${caseId}`,
@@ -1329,7 +1329,7 @@ async function sendInvoiceIssuedEmail(
   });
 
   if (!emailError) {
-    results.push({ recipient: recipientEmail, emailId: emailData?.id });
+    results.push({ recipient: recipientEmail, emailId: emailData });
   }
 
   // Provider notification
@@ -1396,7 +1396,7 @@ async function sendInvoicePaidEmail(
     ${emailFooter()}
   `);
 
-  const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+  const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
     from: "RehabLookup <no-reply@rehablookup.com>",
     to: [recipientEmail],
     subject: `Payment Received - ${amountFormatted} - Case #${caseId}`,
@@ -1407,7 +1407,7 @@ async function sendInvoicePaidEmail(
   });
 
   if (!emailError) {
-    results.push({ recipient: recipientEmail, emailId: emailData?.id });
+    results.push({ recipient: recipientEmail, emailId: emailData });
   }
 
   // Provider notification

@@ -41,7 +41,8 @@ function normaliseEventType(rawType: string): string {
  * Falls back to "unknown" so a row is still recorded.
  */
 async function resolveEmailType(
-  supabase: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
   emailId: string,
 ): Promise<string> {
   // 1. Resilient sender stores the Resend id in event_data.resendId on "sent" rows.
@@ -53,7 +54,7 @@ async function resolveEmailType(
     .limit(1)
     .maybeSingle();
 
-  if (tracked?.email_type) return tracked.email_type;
+  if (tracked?.email_type) return tracked.email_type as string;
 
   // 2. Legacy subscription alerts.
   const { data: alert } = await supabase
@@ -62,7 +63,7 @@ async function resolveEmailType(
     .eq("resend_id", emailId)
     .maybeSingle();
 
-  if (alert?.alert_type) return alert.alert_type;
+  if (alert?.alert_type) return alert.alert_type as string;
 
   return "unknown";
 }

@@ -13,6 +13,8 @@ const logStep = (step: string, details?: unknown) => {
 };
 
 const sendSubscriptionNotificationEmail = async (
+  // deno-lint-ignore no-explicit-any
+  supabaseClient: any,
   resend: Resend,
   email: string,
   providerName: string,
@@ -459,7 +461,7 @@ Deno.serve(async (req) => {
 
     // Send notification email if needed
     if (shouldSendEmail && customerEmail) {
-      await sendSubscriptionNotificationEmail(resend, customerEmail, providerName, action, planName, reason);
+      await sendSubscriptionNotificationEmail(supabaseClient, resend, customerEmail, providerName, action, planName, reason);
     }
 
     // Log audit entry (only for non-list actions)
