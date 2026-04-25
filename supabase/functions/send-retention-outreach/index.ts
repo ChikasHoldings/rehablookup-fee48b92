@@ -407,16 +407,16 @@ Deno.serve(async (req) => {
             "List-Unsubscribe": `<https://rehablookup.com/unsubscribe?token=${unsubToken}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
-        }, { emailType: "retention_outreach", idempotencyKey: `retention-${provider.user_id}-${provider.retention_stage}` });
+        }, { emailType: "retention_outreach", idempotencyKey: `retention-${provider.facilityId}-${provider.riskScore}` });
 
         if (emailResult.error) {
-          logStep("Failed to send email", { email: provider.email, error: emailResult.error.message });
+          logStep("Failed to send email", { email: provider.email, error: emailResult.error });
           emailsFailed.push(provider.email);
           continue;
         }
 
         // Get the resend email ID for tracking
-        const resendId = emailResult.data?.id || null;
+        const resendId = emailResult.emailId || null;
 
         // Record that we sent this email with the resend_id for tracking
         const { data: profileData } = await supabaseClient
