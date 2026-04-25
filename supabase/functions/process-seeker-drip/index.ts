@@ -37,13 +37,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // 1. Enroll new seekers who don't have a drip record yet
-    const { data: unenrolled } = await supabase
-      .from("seeker_profiles")
-      .select("user_id")
-      .not("user_id", "in", `(SELECT user_id FROM seeker_onboarding_drip)`)
-      .limit(50);
-
-    // Manual approach since subqueries don't work in PostgREST
+    // (PostgREST doesn't support raw SQL subqueries — use manual diff below)
     const { data: allSeekers } = await supabase
       .from("seeker_profiles")
       .select("user_id, created_at")
