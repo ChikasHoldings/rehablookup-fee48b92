@@ -14,7 +14,8 @@ city, state, zip_code, phone, website, description, facility_type, bed_count,
 gender_served, logo_url, gallery_urls, featured, verified, status,
 year_established, suspended, created_at, updated_at, accepts_international_patients`
 plus user_id (needed for owner-write checks). Explicitly anon-locked:
-`email, reply_email, admin_notes, concierge_admissions_*, concierge_notes,
+`email, reply_email, reply_email_verified, reply_email_verified_at,
+admin_notes, concierge_admissions_*, concierge_notes,
 concierge_terms_accepted_by/at/version, concierge_agreement_preference,
 concierge_availability_status, concierge_accepted_care_types,
 concierge_accepted_insurance, concierge_network_opted_in, concierge_opted_in_at,
