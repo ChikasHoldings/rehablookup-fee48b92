@@ -33,7 +33,7 @@ export type WithRequired<T, K extends keyof T> = Omit<T, K> & {
  * Returns true when every listed key on `row` is a non-null/undefined value.
  * Acts as a TypeScript type predicate so callers get a narrowed row type.
  */
-export const hasRequiredKeys = <T extends Record<string, unknown>, K extends keyof T>(
+export const hasRequiredKeys = <T extends object, K extends keyof T>(
   row: T | null | undefined,
   keys: readonly K[],
 ): row is T & WithRequired<T, K> => {
@@ -52,7 +52,7 @@ export const hasRequiredKeys = <T extends Record<string, unknown>, K extends key
  * Use when you need to keep the full row but guarantee specific columns
  * (e.g. primary keys that views mark as nullable).
  */
-export const filterRowsWithKeys = <T extends Record<string, unknown>, K extends keyof T>(
+export const filterRowsWithKeys = <T extends object, K extends keyof T>(
   rows: readonly (T | null | undefined)[] | null | undefined,
   keys: readonly K[],
 ): (T & WithRequired<T, K>)[] => {
@@ -72,7 +72,7 @@ export const filterRowsWithKeys = <T extends Record<string, unknown>, K extends 
  * Common use: collecting facility IDs from `public_facilities` to feed
  * into an `.in("facility_id", ids)` lookup.
  */
-export const pluckNonNull = <T extends Record<string, unknown>, K extends keyof T>(
+export const pluckNonNull = <T extends object, K extends keyof T>(
   rows: readonly (T | null | undefined)[] | null | undefined,
   key: K,
 ): NonNullable<T[K]>[] => {
