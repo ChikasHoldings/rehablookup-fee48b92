@@ -369,11 +369,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    logStep(requestId, "Email sent successfully", { sentTo: recipientEmail, emailId: emailData?.id });
+    logStep(requestId, "Email sent successfully", { sentTo: recipientEmail, emailId: result.emailId });
 
     return new Response(JSON.stringify({ 
       success: true, 
-      emailId: emailData?.id,
+      emailId: result.emailId,
       sentTo: recipientEmail,
       requestId,
       _version: VERSION,

@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
           idempotencyKey: `admin-msg-${adminUser.id}-${providerUserId}-${Date.now().toString(36)}`,
         });
 
-        logStep("Email sent", { emailId: emailResult.data?.id });
+        logStep("Email sent", { emailId: emailResult.emailId });
       }
     }
 
