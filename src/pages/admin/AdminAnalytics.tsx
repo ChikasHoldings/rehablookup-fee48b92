@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, forwardRef } from "react";
+import { pluckNonNull } from "@/lib/nullableRows";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { supabase } from "@/integrations/supabase/client";

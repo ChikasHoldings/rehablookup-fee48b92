@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { pluckNonNull } from "@/lib/nullableRows";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { pluckNonNull } from "@/lib/nullableRows";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
