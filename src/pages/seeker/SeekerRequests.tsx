@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { pluckNonNull } from "@/lib/nullableRows";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -276,7 +277,7 @@ export default function SeekerRequests() {
       if (leadsError) throw leadsError;
       if (!leadsData || leadsData.length === 0) return [];
 
-      const facilityIds = Array.from(new Set(leadsData.map((l: any) => l.facility_id).filter(Boolean))) as string[];
+      const facilityIds = Array.from(new Set(pluckNonNull(leadsData as { facility_id: string | null }[], "facility_id")));
       let facilitiesMap: Record<string, any> = {};
 
       if (facilityIds.length > 0) {

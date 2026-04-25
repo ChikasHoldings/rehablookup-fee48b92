@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { pluckNonNull } from "@/lib/nullableRows";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,7 +78,7 @@ export default function AdminConcierge() {
     },
   });
 
-  const placedFacilityIds = [...new Set((cases || []).map(c => c.placed_facility_id).filter(Boolean))];
+  const placedFacilityIds = [...new Set(pluckNonNull(cases, "placed_facility_id"))];
   const { data: facilityMap } = useQuery({
     queryKey: ["admin-placement-facilities", placedFacilityIds],
     queryFn: async () => {

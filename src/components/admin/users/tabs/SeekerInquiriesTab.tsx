@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { pluckNonNull } from "@/lib/nullableRows";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -71,7 +72,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
       if (!data?.length) return [];
 
       // Enrich with facility names
-      const facilityIds = [...new Set(data.map((l: any) => l.facility_id).filter(Boolean))];
+      const facilityIds = [...new Set(pluckNonNull(data as { facility_id: string | null }[], "facility_id"))];
       let fMap: Record<string, any> = {};
       if (facilityIds.length > 0) {
         const { data: facilities } = await supabase

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { pluckNonNull } from "@/lib/nullableRows";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -79,7 +80,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
       }
 
       // Fetch advisor names
-      const advisorIds = [...new Set(inqs.map((i: any) => i.assigned_advisor_id).filter(Boolean))];
+      const advisorIds = [...new Set(pluckNonNull(inqs as { assigned_advisor_id: string | null }[], "assigned_advisor_id"))];
       let advisorMap: Record<string, string> = {};
       if (advisorIds.length) {
         const { data: advisors } = await supabase

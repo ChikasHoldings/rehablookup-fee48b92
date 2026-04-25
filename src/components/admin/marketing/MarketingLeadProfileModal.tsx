@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { pluckNonNull } from "@/lib/nullableRows";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
@@ -218,7 +219,7 @@ export function MarketingLeadProfileModal({
         .order("created_at", { ascending: false })
         .limit(100);
 
-      const facilityIds = [...new Set(leadInquiries?.map(l => l.facility_id).filter(Boolean) || [])];
+      const facilityIds = [...new Set(pluckNonNull(leadInquiries, "facility_id"))];
       let facilitiesMap: Record<string, any> = {};
 
       if (facilityIds.length > 0) {

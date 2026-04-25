@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, forwardRef } from "react";
+import { pluckNonNull } from "@/lib/nullableRows";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { supabase } from "@/integrations/supabase/client";
@@ -185,7 +186,7 @@ export default function AdminAnalytics() {
   const cities = useMemo(() => {
     if (!facilities) return [];
     const filtered = selectedState === "all" ? facilities : facilities.filter(f => f.state === selectedState);
-    return [...new Set(filtered.map(f => f.city).filter(Boolean))].sort();
+    return [...new Set(pluckNonNull(filtered, "city"))].sort();
   }, [facilities, selectedState]);
 
   // Fetch views data from provider_events (profile_view + listing_impression)
