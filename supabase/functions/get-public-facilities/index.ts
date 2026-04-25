@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createServiceClient } from "../_shared/supabase-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,20 +23,10 @@ Deno.serve(async (req) => {
   try {
     logStep("Function started");
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      logStep("Missing environment variables");
-      return new Response(
-        JSON.stringify({ facilities: [], error: "Configuration error" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
+    // Strongly-typed service-role client — `.from(...).select/insert/update`
+    // calls below are now fully inferred from the generated `Database` type.
+    // Missing env vars throw inside the helper with a clear message.
+    const supabase = createServiceClient();
 
     // Fetch all approved facilities with public data only
     const { data: facilitiesData, error: facilitiesError } = await supabase
