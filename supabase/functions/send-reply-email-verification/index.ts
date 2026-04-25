@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { data: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+    const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [normalizedEmail],
       subject: `${code} is your reply email verification code`,
@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
         .eq("email", normalizedEmail)
         .eq("code", code);
       
-      const errorMessage = emailError.message || JSON.stringify(emailError);
+      const errorMessage = emailError || JSON.stringify(emailError);
       
       let userMessage: string;
       let errorCode: string;
@@ -250,7 +250,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Verification email sent to ${normalizedEmail}, Resend ID: ${emailData?.id}`);
+    console.log(`Verification email sent to ${normalizedEmail}, Resend ID: ${emailData}`);
 
     return new Response(
       JSON.stringify({ success: true, message: "Verification code sent to your email" }),

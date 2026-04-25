@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
       ? `seeker-${type}-${seekerId}`
       : `seeker-${type}-${seekerEmail}`;
 
-    const { data: emailResult, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+    const { emailId: emailResult, error: emailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [seekerEmail],
       subject,
