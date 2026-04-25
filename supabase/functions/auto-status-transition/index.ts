@@ -91,9 +91,8 @@ function getTimestampFields(toStatus: string): Record<string, unknown> {
  * Walk from `currentStatus` to `targetStatus` one step at a time.
  * Returns the final status reached and whether any transition was made.
  */
-// deno-lint-ignore no-explicit-any
 async function walkTransitions(
-  supabase: any,
+  supabase: ReturnType<typeof createClient>,
   inquiryId: string,
   currentStatus: string,
   targetStatus: string,

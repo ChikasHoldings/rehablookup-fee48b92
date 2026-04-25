@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
 
     if (emailError) {
       console.error("Failed to send email:", emailError);
-      throw new Error(`Email send failed: ${emailError}`);
+      throw new Error(`Email send failed: ${emailError.message}`);
     }
 
     // Record that we sent this alert
