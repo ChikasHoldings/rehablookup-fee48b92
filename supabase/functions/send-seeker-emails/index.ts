@@ -250,10 +250,10 @@ Deno.serve(async (req) => {
       logStep("In-app notification created", { type, seekerId });
     }
 
-    logStep("Email sent successfully", { type, to: seekerEmail, resendId: emailResult?.id });
+    logStep("Email sent successfully", { type, to: seekerEmail, resendId: emailResult?.emailId });
 
     return new Response(
-      JSON.stringify({ success: true, messageId: emailResult?.id }),
+      JSON.stringify({ success: true, messageId: emailResult?.emailId }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
