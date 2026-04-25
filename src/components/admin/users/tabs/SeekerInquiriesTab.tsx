@@ -71,7 +71,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
       if (!data?.length) return [];
 
       // Enrich with facility names
-      const facilityIds = [...new Set(data.map((l: any) => l.facility_id).filter(Boolean))];
+      const facilityIds = [...new Set(pluckNonNull(data as { facility_id: string | null }[], "facility_id"))];
       let fMap: Record<string, any> = {};
       if (facilityIds.length > 0) {
         const { data: facilities } = await supabase

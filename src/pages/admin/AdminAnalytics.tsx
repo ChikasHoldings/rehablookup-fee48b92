@@ -185,7 +185,7 @@ export default function AdminAnalytics() {
   const cities = useMemo(() => {
     if (!facilities) return [];
     const filtered = selectedState === "all" ? facilities : facilities.filter(f => f.state === selectedState);
-    return [...new Set(filtered.map(f => f.city).filter(Boolean))].sort();
+    return [...new Set(pluckNonNull(filtered, "city"))].sort();
   }, [facilities, selectedState]);
 
   // Fetch views data from provider_events (profile_view + listing_impression)

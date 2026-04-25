@@ -233,7 +233,7 @@ export default function SeekerHome() {
   }, [allFacilities]);
 
   const availableTypes = useMemo(() => {
-    return [...new Set(allFacilities.map(f => f.facility_type).filter(Boolean))].sort() as string[];
+    return [...new Set(pluckNonNull(allFacilities, "facility_type"))].sort();
   }, [allFacilities]);
 
   const activeFiltersCount = (selectedType !== "all" ? 1 : 0) + (selectedState !== "all" ? 1 : 0) + (searchQuery.trim() ? 1 : 0);

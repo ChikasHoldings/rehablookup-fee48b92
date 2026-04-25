@@ -25,7 +25,7 @@ export function SeekerReviewsTab({ userId }: SeekerReviewsTabProps) {
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
-      const facilityIds = [...new Set((data || []).map((r: any) => r.facility_id).filter(Boolean))];
+      const facilityIds = [...new Set(pluckNonNull(data as { facility_id: string | null }[] | null, "facility_id"))];
       let facilityMap: Record<string, any> = {};
       if (facilityIds.length) {
         const { data: facilities } = await supabase

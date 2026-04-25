@@ -218,7 +218,7 @@ export function MarketingLeadProfileModal({
         .order("created_at", { ascending: false })
         .limit(100);
 
-      const facilityIds = [...new Set(leadInquiries?.map(l => l.facility_id).filter(Boolean) || [])];
+      const facilityIds = [...new Set(pluckNonNull(leadInquiries, "facility_id"))];
       let facilitiesMap: Record<string, any> = {};
 
       if (facilityIds.length > 0) {
