@@ -78,6 +78,8 @@ let cachedResponse: { data: unknown; expiresAt: number } | null = null;
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 async function sendFeaturedEmail(
+  // deno-lint-ignore no-explicit-any
+  supabaseClient: any,
   resend: Resend | null,
   providerEmail: string,
   providerName: string,
@@ -423,7 +425,7 @@ Deno.serve(async (req) => {
       Promise.all(
         newlyFeaturedFacilities
           .filter(f => f.provider_email)
-          .map(f => sendFeaturedEmail(resend, f.provider_email!, f.provider_name || "", f.facility_name || "Your facility", notificationSettings.admin_email_recipients))
+          .map(f => sendFeaturedEmail(supabaseClient, resend, f.provider_email!, f.provider_name || "", f.facility_name || "Your facility", notificationSettings.admin_email_recipients))
       ).catch(err => logStep("Email batch error", { error: String(err) }));
     }
 

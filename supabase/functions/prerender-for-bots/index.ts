@@ -168,15 +168,27 @@ function escHtml(str: string): string {
     .replace(/'/g, '&#39;');
 }
 
+interface BlogArticleRow {
+  title: string;
+  excerpt: string;
+  meta_title: string | null;
+  meta_description: string | null;
+  image_url: string | null;
+  author: string | null;
+  published_at: string | null;
+  category_label: string | null;
+  seo_keywords: string[] | null;
+}
+
 // Fetch blog article metadata from DB
-async function fetchBlogArticle(supabase: ReturnType<typeof createClient>, slug: string) {
+async function fetchBlogArticle(supabase: ReturnType<typeof createClient>, slug: string): Promise<BlogArticleRow | null> {
   const { data } = await supabase
     .from('blog_articles')
     .select('title, excerpt, meta_title, meta_description, image_url, author, published_at, category_label, seo_keywords')
     .eq('slug', slug)
     .eq('status', 'published')
     .single();
-  return data;
+  return (data as BlogArticleRow | null) ?? null;
 }
 
 interface OgMeta {
