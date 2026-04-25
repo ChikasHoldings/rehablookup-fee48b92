@@ -90,26 +90,32 @@ Deno.serve(async (req) => {
     });
 
 
-    // Build complete facility objects
-    const facilities = (facilitiesData || []).map((f) => ({
-      id: f.id,
-      name: f.name,
-      slug: f.slug,
-      city: f.city,
-      state: f.state,
-      zipCode: f.zip_code,
-      address: f.address,
-      phone: f.phone,
-      description: f.description || "",
-      featured: f.featured || false,
-      verified: f.verified || false,
-      facilityType: f.facility_type,
-      logoUrl: f.logo_url,
-      galleryUrls: f.gallery_urls || [],
-      yearEstablished: f.year_established,
-      treatmentTypes: servicesMap.get(f.id) || [],
-      insuranceAccepted: insuranceMap.get(f.id) || [],
-    }));
+    // Build complete facility objects.
+    // Filter out any rows missing a primary key — `public_facilities` is a
+    // view, so the generated `Database` type marks `id` as nullable. A
+    // facility without an id can't be looked up in the services / insurance
+    // maps and shouldn't appear in the public snapshot anyway.
+    const facilities = (facilitiesData || [])
+      .filter((f): f is typeof f & { id: string } => typeof f.id === "string")
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        slug: f.slug,
+        city: f.city,
+        state: f.state,
+        zipCode: f.zip_code,
+        address: f.address,
+        phone: f.phone,
+        description: f.description || "",
+        featured: f.featured || false,
+        verified: f.verified || false,
+        facilityType: f.facility_type,
+        logoUrl: f.logo_url,
+        galleryUrls: f.gallery_urls || [],
+        yearEstablished: f.year_established,
+        treatmentTypes: servicesMap.get(f.id) || [],
+        insuranceAccepted: insuranceMap.get(f.id) || [],
+      }));
 
     logStep("Successfully built facilities snapshot", { count: facilities.length });
 
