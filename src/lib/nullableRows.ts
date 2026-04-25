@@ -15,7 +15,7 @@ export type WithRequired<T, K extends keyof T> = Omit<T, K> & {
   [P in K]-?: NonNullable<T[P]>;
 };
 
-export const hasRequiredKeys = <T extends Record<string, unknown>, K extends keyof T>(
+export const hasRequiredKeys = <T extends object, K extends keyof T>(
   row: T | null | undefined,
   keys: readonly K[],
 ): row is T & WithRequired<T, K> => {
@@ -27,7 +27,7 @@ export const hasRequiredKeys = <T extends Record<string, unknown>, K extends key
   return true;
 };
 
-export const filterRowsWithKeys = <T extends Record<string, unknown>, K extends keyof T>(
+export const filterRowsWithKeys = <T extends object, K extends keyof T>(
   rows: readonly (T | null | undefined)[] | null | undefined,
   keys: readonly K[],
 ): (T & WithRequired<T, K>)[] => {
@@ -39,7 +39,7 @@ export const filterRowsWithKeys = <T extends Record<string, unknown>, K extends 
   return out;
 };
 
-export const pluckNonNull = <T extends Record<string, unknown>, K extends keyof T>(
+export const pluckNonNull = <T extends object, K extends keyof T>(
   rows: readonly (T | null | undefined)[] | null | undefined,
   key: K,
 ): NonNullable<T[K]>[] => {
