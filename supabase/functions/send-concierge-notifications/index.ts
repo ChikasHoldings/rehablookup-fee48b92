@@ -923,6 +923,7 @@ async function sendProviderDeclinedNotification(
 
 // Signup prompt for seekers without an account
 async function sendSignupPromptEmail(
+  supabase: ReturnType<typeof createClient>,
   resend: Resend,
   inquiry: InquiryData,
   results: Array<{ recipient: string; emailId?: string; notificationId?: string }>
