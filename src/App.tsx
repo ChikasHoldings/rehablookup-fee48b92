@@ -1596,6 +1596,7 @@ const AppInner = () => {
               <Route path="back-office" element={<AdminBackOffice />} />
               <Route path="provider-directory" element={<AdvisorProviderDirectory />} />
               <Route path="email-logs" element={<AdminEmailLogs />} />
+              <Route path="not-found-events" element={<AdminNotFoundEvents />} />
             </Route>
             
             {/* Marketing Landing Page (Ad Traffic) */}
