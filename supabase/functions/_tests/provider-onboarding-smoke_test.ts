@@ -227,10 +227,16 @@ for (const fn of FUNCTIONS) {
     assertStringIncludes(src, 'createLogger("' + fn.name + '")');
     assertStringIncludes(src, "const { shortId } = log;");
 
-    // Every 4xx/5xx body should include shortId so a failure reported by a
-    // user can be located in production logs.
-    const errorBodies = [...src.matchAll(/JSON\.stringify\(\{\s*error:[\s\S]{0,400}?\}\)/g)];
-    assert(errorBodies.length >= 3, `${fn.name} expected several error bodies`);
+    // Every 4xx/5xx body issued AFTER the logger is created should include
+    // shortId. The 405 method-not-allowed response is emitted before the
+    // logger exists (by design — guard runs first), so we exclude it.
+    const errorBodies = [...src.matchAll(/JSON\.stringify\(\{\s*error:[\s\S]{0,400}?\}\)/g)]
+      .filter((m) => !m[0].includes("method_not_allowed"));
+
+    assert(
+      errorBodies.length >= 3,
+      `${fn.name} expected several post-logger error bodies, got ${errorBodies.length}`,
+    );
     for (const m of errorBodies) {
       assert(
         m[0].includes("shortId"),
