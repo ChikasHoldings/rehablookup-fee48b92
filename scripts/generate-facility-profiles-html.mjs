@@ -73,8 +73,11 @@ function truncate(text, max) {
   return clean.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
 }
 
-function citySlug(s) {
-  return String(s ?? "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+// Mirror the live CenterProfile slug logic exactly so internal links resolve
+// to the same routes the SPA produces (lowercase, spaces → hyphens, keep dots).
+// Diverging from this would break "St. Louis" → /rehab-centers/missouri/st.-louis.
+function locationSlug(s) {
+  return String(s ?? "").toLowerCase().replace(/\s+/g, "-");
 }
 
 // ---------------------------------------------------------------------------
