@@ -38,7 +38,30 @@ Deno.serve(async (req) => {
 
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-    const { facilityId, facilityName, providerEmail, city, state }: SignupNotification = await req.json();
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch (_e) {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body", code: "invalid_json" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const parsed = SignupNotificationSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      logStep("Validation failed", parsed.error.flatten());
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request payload",
+          code: "validation_error",
+          fieldErrors: parsed.error.flatten().fieldErrors,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const { facilityId, facilityName, providerEmail, city, state }: SignupNotification = parsed.data;
     logStep("Received notification request", { facilityId, facilityName, providerEmail });
 
     const { error: notificationError } = await supabase
