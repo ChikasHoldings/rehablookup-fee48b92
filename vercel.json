@@ -6,6 +6,14 @@
   "framework": "vite",
   "trailingSlash": false,
   "cleanUrls": true,
+  "redirects": [
+    {
+      "//": "Trailing-slash drift fix. Vercel's `trailingSlash: false` only normalizes paths that map to a real file; SPA paths that fall through to the index rewrite kept resolving with the trailing slash, so Google indexed BOTH `/foo` and `/foo/` and de-duped them as 'crawled, not indexed'. This explicit 308 forces every non-root path with a trailing slash to its canonical no-slash form BEFORE the SPA rewrite runs.",
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/:path*",
