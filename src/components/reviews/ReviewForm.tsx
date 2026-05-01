@@ -56,6 +56,20 @@ export function ReviewForm({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
 
+  // When `bare`, replace shadcn Card primitives with plain divs so the form
+  // sits flush inside the parent's unified section (no nested card chrome).
+  const ShellCard: React.ElementType = bare
+    ? (props: React.HTMLAttributes<HTMLDivElement>) => <div {...props} />
+    : Card;
+  const ShellHeader: React.ElementType = bare
+    ? (props: React.HTMLAttributes<HTMLDivElement>) => (
+        <div {...props} className={cn('mb-3', props.className)} />
+      )
+    : CardHeader;
+  const ShellContent: React.ElementType = bare
+    ? (props: React.HTMLAttributes<HTMLDivElement>) => <div {...props} />
+    : CardContent;
+
   const handleResendVerification = async () => {
     if (!onResendVerification) return;
     setIsResending(true);
