@@ -37,6 +37,21 @@
       "source": "/request-help/create-password",
       "destination": "/concierge/thank-you",
       "permanent": true
+    },
+    {
+      "source": "/us-rehab/best-rehab-usa",
+      "destination": "/best-rehab-centers-in-usa",
+      "permanent": true
+    },
+    {
+      "source": "/detox-centers-centers",
+      "destination": "/detox-centers",
+      "permanent": true
+    },
+    {
+      "source": "/treatment/dual-diagnosis",
+      "destination": "/treatment-types/dual-diagnosis",
+      "permanent": true
     }
   ],
   "rewrites": [

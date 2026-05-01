@@ -47,3 +47,9 @@ jobs:
 
       - name: Validate sitemap & robots
         run: npm run validate:sitemap-robots
+
+      - name: Verify per-page SEO meta (title/description/canonical/OG)
+        run: npm run check:seo-meta
+
+      - name: Verify cross-page meta uniqueness
+        run: npm run check:unique-meta
