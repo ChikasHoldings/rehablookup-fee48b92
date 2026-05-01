@@ -195,8 +195,10 @@ Deno.serve(async (req) => {
   }
 
 
-  const log = createLogger("send-provider-welcome-email");
+  const inboundReqId = req.headers.get("x-request-id")?.trim().slice(0, 64) || undefined;
+  const log = createLogger("send-provider-welcome-email", inboundReqId);
   const { shortId } = log;
+  const idHeaders = { "x-request-id": shortId };
 
   try {
     log.info("started", { code: "request_received" });
