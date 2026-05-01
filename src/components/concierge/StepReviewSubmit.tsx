@@ -87,23 +87,12 @@ export function StepReviewSubmit({
 
   return (
     <div className="space-y-6">
-      {/* Cancellation Alert */}
+      {/* Legacy cancel param (from old paid flow) — safe to ignore but show a friendly note */}
       {wasCanceled && !paymentState.paid && (
-        <Alert variant="destructive">
+        <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Your payment was canceled. Your intake data is saved. 
-            Click "Pay to Submit" when you're ready to continue.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Payment Success Alert */}
-      {paymentState.paid && (
-        <Alert className="border-green-200 bg-green-50 text-green-800">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription>
-            Payment verified! Review your information below and click "Submit Intake" to complete your request.
+            Your information is saved. Click "Submit My Request" when you're ready.
           </AlertDescription>
         </Alert>
       )}
