@@ -92,9 +92,13 @@ Deno.serve(async (req) => {
       });
 
     if (notificationError) {
-      logStep("Error creating in-app notification", notificationError);
+      log.error("admin_notification_insert_failed", {
+        code: "in_app_notification_failed",
+        reason: notificationError.message ?? "Insert into admin_notifications failed",
+        facilityId,
+      });
     } else {
-      logStep("In-app notification created successfully");
+      log.info("admin_notification_created", { code: "in_app_notification_ok", facilityId });
     }
 
     // Get admin users with notify_new_providers enabled
@@ -104,8 +108,12 @@ Deno.serve(async (req) => {
       .eq("role", "admin");
 
     if (!adminRoles || adminRoles.length === 0) {
-      logStep("No admin users found");
-      return new Response(JSON.stringify({ success: true }), {
+      log.warn("no_admin_users", {
+        code: "no_admins_found",
+        reason: "No users have role=admin",
+        facilityId,
+      });
+      return new Response(JSON.stringify({ success: true, shortId, code: "no_admins_found" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -127,8 +135,12 @@ Deno.serve(async (req) => {
       .map(r => r.user_id);
 
     if (eligibleAdminIds.length === 0) {
-      logStep("No admins have new provider notifications enabled");
-      return new Response(JSON.stringify({ success: true }), {
+      log.info("no_eligible_admins", {
+        code: "all_admins_opted_out",
+        reason: "All admins have notify_new_providers=false",
+        facilityId,
+      });
+      return new Response(JSON.stringify({ success: true, shortId, code: "all_admins_opted_out" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -144,14 +156,23 @@ Deno.serve(async (req) => {
     }
 
     if (adminEmails.length === 0) {
-      logStep("No admin emails found for eligible admins");
-      return new Response(JSON.stringify({ success: true }), {
+      log.warn("no_admin_emails_resolved", {
+        code: "admin_emails_missing",
+        reason: "Eligible admins exist but auth.users lookup returned no emails",
+        eligibleAdminCount: eligibleAdminIds.length,
+        facilityId,
+      });
+      return new Response(JSON.stringify({ success: true, shortId, code: "admin_emails_missing" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    logStep("Sending email to admins with notifications enabled", { count: adminEmails.length });
+    log.info("sending_admin_email", {
+      code: "email_dispatch_started",
+      recipientCount: adminEmails.length,
+      facilityId,
+    });
 
     const emailHtml = `
 <!DOCTYPE html>
