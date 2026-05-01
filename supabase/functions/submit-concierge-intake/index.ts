@@ -228,6 +228,8 @@ Deno.serve(async (req) => {
     } catch {
       const code = "invalid_email";
       const message = "Valid email is required";
+      const diag = describeEmailInput("intakeData.email", intakeData.email);
+      logStep(requestId, "invalid_email", { code, ...diag });
       return new Response(
         JSON.stringify({
           error: { code, message },
