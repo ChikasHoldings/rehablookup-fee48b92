@@ -11,6 +11,7 @@ import { AlertTriangle, RefreshCw, Search, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 type TimeRange = "24h" | "7d" | "30d" | "all";
+type KindFilter = "all" | "spa_route" | "static_asset";
 
 interface NotFoundEvent {
   id: string;
@@ -18,6 +19,10 @@ interface NotFoundEvent {
   referrer: string | null;
   user_agent: string | null;
   created_at: string;
+  http_method: string | null;
+  query_string: string | null;
+  request_kind: string | null;
+  asset_extension: string | null;
 }
 
 interface PathSummary {
@@ -26,6 +31,10 @@ interface PathSummary {
   lastSeen: string;
   topReferrer: string | null;
   hasBotTraffic: boolean;
+  topMethod: string;
+  requestKind: string;
+  assetExtension: string | null;
+  sampleQuery: string | null;
 }
 
 function getTimeRangeStart(range: TimeRange): string | null {
