@@ -22,6 +22,11 @@ import {
   Loader2,
   Sparkles,
   ArrowRight,
+  Mail,
+  Phone,
+  MessageSquare,
+  User,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LeadIntakeForm } from "@/components/lead-intake";
