@@ -242,7 +242,8 @@ function main() {
     }
 
     // Layout parity: missing one of two is a warning by default.
-    if (!flat || !nested) {
+    // The homepage is exempt — its prerender lives at the SPA shell.
+    if (pathname !== "/" && (!flat || !nested)) {
       layoutWarnings.push({
         pathname,
         missing: !flat ? "flat (.html)" : "nested (/index.html)",
