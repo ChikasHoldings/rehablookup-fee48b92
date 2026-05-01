@@ -12,7 +12,7 @@
  *   const result = await sendEmailWithRetry(supabase, resend, { ...emailParams }, { emailType: "provider_welcome" });
  */
 
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 
 interface EmailParams {
   from: string;

@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { ApiError, apiErrorResponse } from "../_shared/validation.ts";
 
 const VERSION = "1.0.2";

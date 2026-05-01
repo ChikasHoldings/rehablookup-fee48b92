@@ -3,7 +3,7 @@
  * Professional branded email templates with dark navy blue headers/footers
  */
 
-import Stripe from "https://esm.sh/stripe@18.5.0";
+import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 
 // ============================================================================
 // BRAND COLORS - Professional Navy Blue Theme

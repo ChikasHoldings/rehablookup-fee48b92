@@ -8,7 +8,7 @@
 // Public endpoint — no auth required, but rate-limited by simple input
 // validation and short field lengths.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0?target=denonext";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

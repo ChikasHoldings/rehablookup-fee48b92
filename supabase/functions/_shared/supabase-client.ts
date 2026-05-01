@@ -37,7 +37,7 @@
 import {
   createClient,
   type SupabaseClient,
-} from "https://esm.sh/@supabase/supabase-js@2.57.2";
+} from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import type { Database } from "./database.types.ts";
 
 /**

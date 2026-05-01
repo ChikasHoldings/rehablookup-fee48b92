@@ -1,6 +1,6 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
-import { z } from "https://esm.sh/zod@3.23.8";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
+import { z } from "https://esm.sh/zod@3.23.8?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { createLogger } from "../_shared/structured-logger.ts";
 

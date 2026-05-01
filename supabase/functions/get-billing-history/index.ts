@@ -1,5 +1,5 @@
-import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
 // Pro product IDs - includes legacy IDs for backward compatibility
 const PRO_PRODUCT_IDS = [
