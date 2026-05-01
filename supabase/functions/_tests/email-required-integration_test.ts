@@ -225,25 +225,41 @@ function assertEmailRequired(
 // --------------------------------------------------------------------------
 // Tests
 // --------------------------------------------------------------------------
+//
+// We disable Deno's op/resource sanitisation per test because the imported
+// edge-function modules instantiate a Supabase client at module scope (which
+// starts a token-refresh interval). The interval is harmless in production
+// (the function process is short-lived) and irrelevant to what we're testing
+// here — the email validation runs before any client method is called.
+
+const TEST_OPTS = {
+  sanitizeOps: false,
+  sanitizeResources: false,
+} as const;
 
 for (const spec of SPECS) {
-  Deno.test(`[${spec.name}] missing email field -> 400 + code:"email_required"`, async () => {
-    const body = spec.buildBody({ omit: true });
-    const { status, payload } = await callFn(spec.name, body);
-    assertEmailRequired(spec.name, "missing field", status, payload);
+  Deno.test({
+    ...TEST_OPTS,
+    name: `[${spec.name}] missing email field -> 400 + code:"email_required"`,
+    fn: async () => {
+      const body = spec.buildBody({ omit: true });
+      const { status, payload } = await callFn(spec.name, body);
+      assertEmailRequired(spec.name, "missing field", status, payload);
+    },
   });
 
   // Whitespace variants — each MUST collapse to email_required, not invalid_email,
   // even though sanitizeEmail would throw "Invalid email format" after trimming.
   for (const ws of ["   ", "\t", "\n", "  \t\n  "]) {
-    Deno.test(
-      `[${spec.name}] whitespace-only email (${JSON.stringify(ws)}) -> 400 + code:"email_required"`,
-      async () => {
+    Deno.test({
+      ...TEST_OPTS,
+      name: `[${spec.name}] whitespace-only email (${JSON.stringify(ws)}) -> 400 + code:"email_required"`,
+      fn: async () => {
         const body = spec.buildBody({ value: ws });
         const { status, payload } = await callFn(spec.name, body);
         assertEmailRequired(spec.name, `whitespace ${JSON.stringify(ws)}`, status, payload);
       },
-    );
+    });
   }
 
   // Non-string variants — none of these can be safely .trim()'d, so the handler
@@ -256,20 +272,25 @@ for (const spec of SPECS) {
     { label: "array", value: ["a@b.com"] },
   ];
   for (const { label, value } of nonStringValues) {
-    Deno.test(
-      `[${spec.name}] non-string email (${label}) -> 400 + code:"email_required"`,
-      async () => {
+    Deno.test({
+      ...TEST_OPTS,
+      name: `[${spec.name}] non-string email (${label}) -> 400 + code:"email_required"`,
+      fn: async () => {
         const body = spec.buildBody({ value });
         const { status, payload } = await callFn(spec.name, body);
         assertEmailRequired(spec.name, `non-string ${label}`, status, payload);
       },
-    );
+    });
   }
 
   // Empty-string explicit (degenerate of whitespace-only).
-  Deno.test(`[${spec.name}] empty-string email -> 400 + code:"email_required"`, async () => {
-    const body = spec.buildBody({ value: "" });
-    const { status, payload } = await callFn(spec.name, body);
-    assertEmailRequired(spec.name, "empty string", status, payload);
+  Deno.test({
+    ...TEST_OPTS,
+    name: `[${spec.name}] empty-string email -> 400 + code:"email_required"`,
+    fn: async () => {
+      const body = spec.buildBody({ value: "" });
+      const { status, payload } = await callFn(spec.name, body);
+      assertEmailRequired(spec.name, "empty string", status, payload);
+    },
   });
 }
