@@ -583,6 +583,18 @@ const AppInner = () => {
             <Route path="/womens-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
             <Route path="/mens-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
             <Route path="/free-rehab-options" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            {/* "*-rehab-centers" hub aliases (mirror prerendered HTML so client-side nav works) */}
+            <Route path="/faith-based-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/fentanyl-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/veterans-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/womens-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/mens-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/inpatient-rehab-centers" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/luxury-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            {/* Typo / duplicate slug → canonical */}
+            <Route path="/detox-centers-centers" element={<Navigate to="/detox-centers" replace />} />
+            {/* Inverse comparison alias → canonical */}
+            <Route path="/rehab-vs-detox" element={<Navigate to="/detox-vs-rehab" replace />} />
             
             {/* SEO Comparison Pages */}
             <Route path="/inpatient-vs-outpatient-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
@@ -735,6 +747,8 @@ const AppInner = () => {
              <Route path="/bipolar-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
              <Route path="/adhd-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
              <Route path="/eating-disorders-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
+             <Route path="/bpd-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
+             <Route path="/ocd-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
 
              {/* Duration & Setting Pages */}
              <Route path="/30-day-rehab-programs" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
@@ -1112,6 +1126,8 @@ const AppInner = () => {
             {/* Provider Routes */}
             <Route path="/for-providers" element={<PublicRouteGuard><ForProviders /></PublicRouteGuard>} />
             <Route path="/provider-resources" element={<PublicRouteGuard><ProviderResources /></PublicRouteGuard>} />
+            {/* /provider-guides hub — canonical redirect to /provider-resources (which lists all guides) */}
+            <Route path="/provider-guides" element={<Navigate to="/provider-resources" replace />} />
             <Route path="/provider-signup" element={<ProviderSignup />} />
             <Route path="/provider-roi-calculator" element={<PublicRouteGuard><ProviderROICalculator /></PublicRouteGuard>} />
             <Route path="/provider-login" element={<Navigate to="/login" replace />} />
