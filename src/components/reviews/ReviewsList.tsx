@@ -24,6 +24,12 @@ interface ReviewsListProps {
   isAuthenticated: boolean;
   onToggleHelpful: (reviewId: string) => Promise<{ error: Error | null }>;
   facilityId?: string;
+  /**
+   * When true, render without an outer Card and without the duplicate
+   * "Community Reviews" header/avg-rating row (used when the parent already
+   * provides a unified section heading + summary).
+   */
+  bare?: boolean;
 }
 
 export function ReviewsList({ 
@@ -33,7 +39,8 @@ export function ReviewsList({
   isLoading,
   isAuthenticated,
   onToggleHelpful,
-  facilityId
+  facilityId,
+  bare = false,
 }: ReviewsListProps) {
   const [responses, setResponses] = useState<Map<string, ReviewResponse>>(new Map());
   const [visibleCount, setVisibleCount] = useState(REVIEWS_PER_PAGE);
