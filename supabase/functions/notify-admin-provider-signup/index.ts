@@ -24,8 +24,11 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const log = createLogger("notify-admin-provider-signup");
+  const { shortId } = log;
+
   try {
-    logStep("Function started");
+    log.info("started", { code: "request_received" });
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -39,27 +42,39 @@ Deno.serve(async (req) => {
     try {
       rawBody = await req.json();
     } catch (_e) {
+      log.warn("invalid_json_body", { code: "invalid_json", reason: "Body is not valid JSON" });
       return new Response(
-        JSON.stringify({ error: "Invalid JSON body", code: "invalid_json" }),
+        JSON.stringify({ error: "Invalid JSON body", code: "invalid_json", shortId }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const parsed = SignupNotificationSchema.safeParse(rawBody);
     if (!parsed.success) {
-      logStep("Validation failed", parsed.error.flatten());
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      log.warn("validation_failed", {
+        code: "validation_error",
+        reason: "Request payload failed schema validation",
+        fieldErrors,
+      });
       return new Response(
         JSON.stringify({
           error: "Invalid request payload",
           code: "validation_error",
-          fieldErrors: parsed.error.flatten().fieldErrors,
+          shortId,
+          fieldErrors,
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const { facilityId, facilityName, providerEmail, city, state }: SignupNotification = parsed.data;
-    logStep("Received notification request", { facilityId, facilityName, providerEmail });
+    log.info("payload_validated", {
+      code: "payload_ok",
+      facilityId,
+      facilityName,
+      providerEmail,
+    });
 
     const { error: notificationError } = await supabase
       .from("admin_notifications")
