@@ -533,17 +533,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!data.email) {
+    if (!data.email || typeof data.email !== "string" || data.email.trim().length === 0) {
+      const code = "email_required";
+      const message = "Email is required";
       return new Response(
-        JSON.stringify({ success: false, error: "Email is required" }),
+        JSON.stringify({
+          error: { code, message },
+          code,
+          reason: message,
+          _version: VERSION,
+          details: { field: "email" },
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
+      const code = "invalid_email";
+      const message = "Please provide a valid email address";
       return new Response(
-        JSON.stringify({ success: false, error: "Please provide a valid email address" }),
+        JSON.stringify({
+          error: { code, message },
+          code,
+          reason: message,
+          _version: VERSION,
+          details: { field: "email" },
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
