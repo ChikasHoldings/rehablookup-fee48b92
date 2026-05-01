@@ -676,7 +676,9 @@ const CenterProfile = () => {
           city: facility.city,
           state: facility.state,
           zipCode: facility.zip_code,
-          phone: facility.phone,
+          // Phone is a Pro-only contact channel; omit from structured data for
+          // non-Pro listings so search engines / rich results match the on-page UX.
+          phone: showContactDetails ? facility.phone : undefined,
           description: facility.description || `${facility.name} provides quality addiction treatment in ${facility.city}, ${facility.state}.`,
           image: facility.logo_url || facility.gallery_urls?.[0] || undefined,
           gallery: facility.gallery_urls || undefined,
