@@ -114,6 +114,7 @@ const superAdminNav: NavSection[] = [
           { to: "/admin/email-logs", icon: Mail, label: "Email Logs", permission: "security_logs" },
           { to: "/admin/security-logs", icon: ShieldAlert, label: "Security Logs", permission: "security_logs" },
           { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
+          { to: "/admin/lead-unlocks", icon: KeyRound, label: "Lead Unlocks", permission: "audit_log" },
         ],
       },
       { to: "/admin/settings", icon: Settings, label: "Settings", permission: "settings" },
