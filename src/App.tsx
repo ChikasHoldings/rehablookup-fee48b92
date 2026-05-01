@@ -583,6 +583,18 @@ const AppInner = () => {
             <Route path="/womens-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
             <Route path="/mens-rehab" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
             <Route path="/free-rehab-options" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            {/* "*-rehab-centers" hub aliases (mirror prerendered HTML so client-side nav works) */}
+            <Route path="/faith-based-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/fentanyl-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/veterans-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/womens-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/mens-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/inpatient-rehab-centers" element={<PublicRouteGuard><TreatmentHubPage /></PublicRouteGuard>} />
+            <Route path="/luxury-rehab-centers" element={<PublicRouteGuard><ExpandedTreatmentHubPage /></PublicRouteGuard>} />
+            {/* Typo / duplicate slug → canonical */}
+            <Route path="/detox-centers-centers" element={<Navigate to="/detox-centers" replace />} />
+            {/* Inverse comparison alias → canonical */}
+            <Route path="/rehab-vs-detox" element={<Navigate to="/detox-vs-rehab" replace />} />
             
             {/* SEO Comparison Pages */}
             <Route path="/inpatient-vs-outpatient-rehab" element={<PublicRouteGuard><ComparisonPage /></PublicRouteGuard>} />
