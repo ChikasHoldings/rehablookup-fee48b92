@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const contentLength = req.headers.get("content-length");
     if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
       logStep("ERROR: Request too large", { size: contentLength });
-      return errorResponse("Request body too large", 413, corsHeaders);
+      return jsonError("payload_too_large", "Request body too large", 413, corsHeaders, { _version: VERSION }, { maxBytes: MAX_BODY_SIZE, receivedBytes: parseInt(contentLength) });
     }
 
     // Parse and validate request body
@@ -53,19 +53,19 @@ Deno.serve(async (req) => {
     try {
       const rawBody = await req.text();
       if (rawBody.length > MAX_BODY_SIZE) {
-        return errorResponse("Request body too large", 413, corsHeaders);
+        return jsonError("payload_too_large", "Request body too large", 413, corsHeaders, { _version: VERSION }, { maxBytes: MAX_BODY_SIZE, receivedBytes: rawBody.length });
       }
       body = JSON.parse(rawBody);
     } catch {
       logStep("ERROR: Invalid JSON body");
-      return errorResponse("Invalid request body", 400, corsHeaders);
+      return jsonError("invalid_json", "Request body is not valid JSON", 400, corsHeaders, { _version: VERSION });
     }
 
     const { intakeData, emailVerifiedAt, draftId: existingDraftId } = body;
 
     if (!intakeData || typeof intakeData !== "object") {
       logStep("ERROR: Missing intake data");
-      return errorResponse("Intake data is required", 400, corsHeaders);
+      return jsonError("validation_error", "Intake data is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData" });
     }
 
     const data = intakeData as Record<string, unknown>;
@@ -76,7 +76,10 @@ Deno.serve(async (req) => {
       email = sanitizeEmail(data.email);
     } catch {
       logStep("ERROR: Invalid email");
-      return errorResponse("Valid email is required", 400, corsHeaders);
+      return jsonError("invalid_email", "Valid email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
+    }
+    if (!email) {
+      return jsonError("email_required", "Email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
     }
 
     const firstName = sanitizeString(data.first_name, 100);
@@ -87,12 +90,12 @@ Deno.serve(async (req) => {
 
     if (!firstName || !lastName) {
       logStep("ERROR: Missing required name fields");
-      return errorResponse("First name and last name are required", 400, corsHeaders);
+      return jsonError("validation_error", "First name and last name are required", 400, corsHeaders, { _version: VERSION }, { fields: ["intakeData.first_name", "intakeData.last_name"] });
     }
 
     if (!country) {
       logStep("ERROR: Missing country");
-      return errorResponse("Country is required", 400, corsHeaders);
+      return jsonError("validation_error", "Country is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.country" });
     }
 
     // Validate draft ID format if provided
