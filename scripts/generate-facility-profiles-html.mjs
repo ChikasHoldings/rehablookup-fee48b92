@@ -221,6 +221,34 @@ function renderFacilityHtml(f) {
     ? `<h2>About ${escapeHtml(f.name)}</h2><p>${escapeHtml(f.description)}</p>`
     : `<h2>About ${escapeHtml(f.name)}</h2><p>${escapeHtml(f.name)} provides accredited addiction treatment services in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}. View the full profile for programs, insurance accepted, and admissions details.</p>`;
 
+  // ── Facility-specific FAQs ────────────────────────────────────────────────
+  // Build 4+ Q/A pairs grounded ONLY in fields we actually have on the row.
+  // Required by mem://seo/faq-jsonld-audit + mem://seo/quality-and-thin-content-protection:
+  //   • Visible <section> with question/answer markup
+  //   • Matching FAQPage JSON-LD with ≥3 Question entries (acceptedAnswer.text)
+  //   • No fabricated claims (insurance, ratings, accreditations) — keep answers
+  //     factual and route detail-seekers to the live profile / concierge.
+  const faqs = buildFacilityFaqs(f);
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((q) => ({
+      "@type": "Question",
+      name: q.q,
+      acceptedAnswer: { "@type": "Answer", text: q.a },
+    })),
+  };
+  const faqHtml =
+    `<section class="faq" aria-labelledby="faq-heading">
+<h2 id="faq-heading">Frequently Asked Questions</h2>
+${faqs
+  .map(
+    (q) =>
+      `<div class="faq-item"><h3>${escapeHtml(q.q)}</h3><p>${escapeHtml(q.a)}</p></div>`,
+  )
+  .join("\n")}
+</section>`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
