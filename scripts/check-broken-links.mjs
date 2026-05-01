@@ -377,17 +377,25 @@ if (brokenInternal.length > 0) {
   }
   if (brokenInternal.length > 25) console.error(`  … ${brokenInternal.length - 25} more`);
 }
+// External link policy: by default, broken externals WARN (do not fail CI)
+// because we don't control upstream uptime. Set FAIL_ON_EXTERNAL=1 in the
+// nightly job to escalate to a hard failure when you want surface-level
+// visibility (uploaded report + red status on schedule run).
+const FAIL_ON_EXTERNAL = process.env.FAIL_ON_EXTERNAL === "1";
+
 if (brokenExternal.length > 0) {
-  console.error(`\n❌ Broken external links:`);
+  const verb = FAIL_ON_EXTERNAL ? "❌" : "⚠️ ";
+  console.error(`\n${verb} Broken external links:`);
   for (const b of brokenExternal.slice(0, 25)) {
     console.error(`  [${b.status || b.error}] ${b.url}`);
   }
   if (brokenExternal.length > 25) console.error(`  … ${brokenExternal.length - 25} more`);
 }
 
-if (brokenInternal.length > 0 || brokenExternal.length > 0) {
+if (brokenInternal.length > 0 || (FAIL_ON_EXTERNAL && brokenExternal.length > 0)) {
   console.error(`\n❌ Link checker failed. See ${REPORT_PATH}.\n`);
   process.exit(1);
 }
+
 
 console.log(`\n✅ Link checker passed — every internal & external link resolves.\n`);
