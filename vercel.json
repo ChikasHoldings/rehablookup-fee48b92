@@ -6,13 +6,6 @@
   "framework": "vite",
   "trailingSlash": false,
   "cleanUrls": true,
-  "redirects": [
-    {
-      "source": "/:path*/",
-      "destination": "/:path*",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/((?!api/|assets/|functions/).*)",
