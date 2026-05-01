@@ -20,13 +20,7 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[NOTIFY-ADMIN-PROVIDER-SIGNUP] ${step}`, details ? JSON.stringify(details) : "");
 };
 
-interface SignupNotification {
-  facilityId: string;
-  facilityName: string;
-  providerEmail: string;
-  city: string;
-  state: string;
-}
+type SignupNotification = z.infer<typeof SignupNotificationSchema>;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
