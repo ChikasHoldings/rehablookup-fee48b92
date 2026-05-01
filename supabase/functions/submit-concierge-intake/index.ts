@@ -175,18 +175,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { sessionId, intakeData, userId: passedUserId } = await req.json() as { 
-      sessionId: string; 
+    const { sessionId, intakeData, userId: passedUserId, skipPayment, emailVerifiedAt, phoneVerifiedAt } = await req.json() as { 
+      sessionId?: string; 
       intakeData: IntakeData;
       userId?: string;
+      skipPayment?: boolean;
+      emailVerifiedAt?: string | null;
+      phoneVerifiedAt?: string | null;
     };
     
     // Validate required fields
-    if (!sessionId) {
-      throw new Error("Session ID is required");
-    }
     if (!intakeData) {
       throw new Error("Intake data is required");
+    }
+    // sessionId only required when NOT skipping payment (legacy paid flow)
+    if (!skipPayment && !sessionId) {
+      throw new Error("Session ID is required");
     }
 
     // Validate and sanitize critical intake fields
@@ -260,25 +264,27 @@ Deno.serve(async (req) => {
       hasAuthHeader: !!authHeader
     });
 
-    // Verify payment with Stripe
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-    if (session.payment_status !== 'paid') {
-      throw new Error("Payment not verified");
+    // Verify payment with Stripe (only when not skipping)
+    let session: Stripe.Checkout.Session | null = null;
+    let sessionUserId: string | null = null;
+    if (!skipPayment) {
+      const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+      session = await stripe.checkout.sessions.retrieve(sessionId!);
+      if (session.payment_status !== 'paid') {
+        throw new Error("Payment not verified");
+      }
+      sessionUserId = (session.metadata?.user_id as string) || null;
+      logStep(requestId, "Payment verified", { paymentStatus: session.payment_status });
+    } else {
+      logStep(requestId, "Skipping Stripe payment verification (free intake)");
     }
 
-    // Get user_id from session metadata if not already set
-    const sessionUserId = session.metadata?.user_id || null;
     const effectiveUserId = finalUserId || sessionUserId;
 
-    logStep(requestId, "Payment verified", { 
-      paymentStatus: session.payment_status,
-      effectiveUserId 
-    });
-
-    // Create idempotency key from session ID
-    const idempotencyKey = `intake_${sessionId}`;
+    // Create idempotency key — session-based when paid, otherwise email+timestamp-window based
+    const idempotencyKey = !skipPayment && sessionId
+      ? `intake_${sessionId}`
+      : `intake_free_${sanitizedEmail}_${Math.floor(Date.now() / 60000)}`; // 1-minute window collapses retries
 
     // Check if already submitted (idempotency) — search by idempotency_key OR checkout_session_id
     const { data: existingByKey } = await supabase
@@ -309,7 +315,7 @@ Deno.serve(async (req) => {
     // Priority: 1) by checkout_session_id, 2) by idempotency_key (without intake), 3) by draft_id from metadata
     let existingRecordId: string | null = existingByKey?.id || null;
 
-    if (!existingRecordId) {
+    if (!existingRecordId && sessionId) {
       const { data: bySession } = await supabase
         .from('concierge_inquiries')
         .select('id, payment_status')
@@ -321,8 +327,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Also check by draft_id from Stripe metadata
-    if (!existingRecordId && session.metadata?.draft_id) {
+    // Also check by draft_id from Stripe metadata (paid path only)
+    if (!existingRecordId && session?.metadata?.draft_id) {
       const { data: byDraft } = await supabase
         .from('concierge_inquiries')
         .select('id, payment_status')
@@ -346,15 +352,16 @@ Deno.serve(async (req) => {
       user_phone: sanitizedPhone,
       preferred_state: sanitizeString(intakeData.desiredState, 50),
       preferred_city: sanitizeString(intakeData.desiredCity || currentCity, 100),
-      payment_status: 'paid',
-      payment_amount_cents: 2900,
+      payment_status: skipPayment ? 'free' : 'paid',
+      payment_amount_cents: skipPayment ? 0 : 2900,
       status: 'new',
-      checkout_session_id: sessionId,
-      stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
-      stripe_customer_id: typeof session.customer === 'string' ? session.customer : null,
+      checkout_session_id: sessionId ?? null,
+      stripe_payment_intent_id: session && typeof session.payment_intent === 'string' ? session.payment_intent : null,
+      stripe_customer_id: session && typeof session.customer === 'string' ? session.customer : null,
       idempotency_key: idempotencyKey,
       intake_submitted_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      email_verified_at: emailVerifiedAt || new Date().toISOString(),
       age_range: sanitizeString(intakeData.ageRange, 50),
       gender: sanitizeString(intakeData.gender, 50),
       preferred_language: sanitizeString((intakeData as FullIntakeData).preferredLanguage, 50) || null,

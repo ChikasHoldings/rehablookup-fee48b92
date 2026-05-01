@@ -25,6 +25,7 @@ import { StepLogistics } from "@/components/concierge/StepLogistics";
 import { StepPaymentInfo } from "@/components/concierge/StepPaymentInfo";
 import { StepContact } from "@/components/concierge/StepContact";
 import { StepEmailVerification } from "@/components/concierge/StepEmailVerification";
+import { StepPhoneVerification } from "@/components/concierge/StepPhoneVerification";
 import { SmsCallbackFallback } from "@/components/concierge/SmsCallbackFallback";
 import { StepReviewSubmit } from "@/components/concierge/StepReviewSubmit";
 import { IntakeProgress } from "@/components/concierge/IntakeProgress";
@@ -98,6 +99,7 @@ interface EmailVerificationState {
 
 const STORAGE_KEY = "concierge_intake_draft";
 const EMAIL_VERIFICATION_KEY = "concierge_email_verified";
+const PHONE_VERIFICATION_KEY = "concierge_phone_verified";
 const DRAFT_ID_KEY = "concierge_draft_id";
 
 // 30-minute TTL for the locally cached non-PII draft
@@ -206,7 +208,7 @@ const initialData: ConciergeIntakeData = {
   hipaaConsent: false,
 };
 
-// NEW: 7 steps with email verification as step 6
+// 8 steps: Who → Care → Logistics → Payment Info → Contact → Verify Email → Verify Phone → Review & Submit
 const STEP_CONFIG = [
   { 
     title: "Who Needs Help", 
@@ -235,15 +237,22 @@ const STEP_CONFIG = [
   },
   { 
     title: "Verify Email", 
-    description: "Confirm your email to proceed to payment",
+    description: "Confirm your email so we can send updates",
     icon: "✉️"
   },
   { 
-    title: "Review & Pay", 
-    description: "Review your information and complete payment",
+    title: "Verify Phone", 
+    description: "Confirm your phone so a specialist can reach you",
+    icon: "📱"
+  },
+  { 
+    title: "Review & Submit", 
+    description: "Review your information and submit your free request",
     icon: "✅"
   },
 ];
+
+const TOTAL_STEPS = STEP_CONFIG.length;
 
 export default function ConciergeIntake() {
   const navigate = useNavigate();
@@ -252,7 +261,7 @@ export default function ConciergeIntake() {
   const [direction, setDirection] = useState(1);
   const [formData, setFormData] = useState<ConciergeIntakeData>(initialData);
   const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
   
@@ -262,34 +271,19 @@ export default function ConciergeIntake() {
     verifiedAt: null,
   });
 
-  // Handle canceled payment
-  // M5: When the user returns from a canceled Stripe checkout, force a fresh
-  // re-verification of email if the prior verification is older than 24h, and
-  // re-validate steps 5 + 6 so a stale form can't be re-submitted untouched.
+  // Phone verification state (new — replaces the old $29 Stripe payment step)
+  const [phoneVerification, setPhoneVerification] = useState<EmailVerificationState>({
+    verified: false,
+    verifiedAt: null,
+  });
+
+  // Legacy: clean up any lingering ?canceled=true param from the old paid flow.
   useEffect(() => {
     if (searchParams.get("canceled") === "true") {
-      // Force re-verify if email verification is missing or older than 24h
-      const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
-      let shouldReverify = !emailVerification.verified;
-      if (emailVerification.verified && emailVerification.verifiedAt) {
-        const ageMs = Date.now() - new Date(emailVerification.verifiedAt).getTime();
-        if (ageMs > VERIFY_TTL_MS) shouldReverify = true;
-      }
-      if (shouldReverify) {
-        setEmailVerification({ verified: false, verifiedAt: null });
-        localStorage.removeItem(EMAIL_VERIFICATION_KEY);
-        setCurrentStep(6); // back to email-verification step
-        toast.info("Payment was canceled. Please re-verify your email to continue.");
-      } else {
-        setCurrentStep(7); // Go to review step
-        toast.info("Payment was canceled. You can try again when ready.");
-      }
-      // Clear the param
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("canceled");
       setSearchParams(newParams, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, setSearchParams]);
 
   // Phase 3: prefill from search-results / homepage / SEO page CTAs.
@@ -544,6 +538,25 @@ export default function ConciergeIntake() {
       }
     }
 
+    // Load phone verification state
+    const savedPhoneVerification = localStorage.getItem(PHONE_VERIFICATION_KEY);
+    if (savedPhoneVerification) {
+      try {
+        const parsed = JSON.parse(savedPhoneVerification);
+        if (parsed.verifiedAt) {
+          const verifiedTime = new Date(parsed.verifiedAt).getTime();
+          const hoursElapsed = (Date.now() - verifiedTime) / (1000 * 60 * 60);
+          if (hoursElapsed < 24) {
+            setPhoneVerification(parsed);
+          } else {
+            localStorage.removeItem(PHONE_VERIFICATION_KEY);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse phone verification state", e);
+      }
+    }
+
     // Load draft ID
     const savedDraftId = localStorage.getItem(DRAFT_ID_KEY);
     if (savedDraftId) {
@@ -589,6 +602,11 @@ export default function ConciergeIntake() {
     if ('email' in updates && updates.email !== formData.email) {
       setEmailVerification({ verified: false, verifiedAt: null });
       localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+    }
+    // If phone changed, invalidate stale phone verification
+    if ('phone' in updates && updates.phone !== formData.phone) {
+      setPhoneVerification({ verified: false, verifiedAt: null });
+      localStorage.removeItem(PHONE_VERIFICATION_KEY);
     }
   };
 
@@ -652,6 +670,11 @@ export default function ConciergeIntake() {
           errors.email = "Please verify your email to continue";
         }
         break;
+      case 7: // Phone verification
+        if (!phoneVerification.verified) {
+          errors.phone = "Please verify your phone number to continue";
+        }
+        break;
     }
 
     setStepErrors(errors);
@@ -662,7 +685,7 @@ export default function ConciergeIntake() {
     const newState = { verified: true, verifiedAt };
     setEmailVerification(newState);
     localStorage.setItem(EMAIL_VERIFICATION_KEY, JSON.stringify(newState));
-    // Auto-advance to review step after email verification
+    // Auto-advance to phone verification step
     setTimeout(() => {
       setDirection(1);
       setCurrentStep(7);
@@ -671,9 +694,28 @@ export default function ConciergeIntake() {
   };
 
   const handleEditEmail = () => {
-    // Clear email verification and go back to step 5
+    // Clear email verification and go back to contact step
     setEmailVerification({ verified: false, verifiedAt: null });
     localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+    setDirection(-1);
+    setCurrentStep(5);
+  };
+
+  const handlePhoneVerified = (verifiedAt: string) => {
+    const newState = { verified: true, verifiedAt };
+    setPhoneVerification(newState);
+    localStorage.setItem(PHONE_VERIFICATION_KEY, JSON.stringify(newState));
+    // Auto-advance to review step
+    setTimeout(() => {
+      setDirection(1);
+      setCurrentStep(8);
+      scrollToTopSmooth();
+    }, 800);
+  };
+
+  const handleEditPhone = () => {
+    setPhoneVerification({ verified: false, verifiedAt: null });
+    localStorage.removeItem(PHONE_VERIFICATION_KEY);
     setDirection(-1);
     setCurrentStep(5);
   };
@@ -737,9 +779,8 @@ export default function ConciergeIntake() {
   const handleNext = async () => {
     if (validateStep(currentStep)) {
       if (currentStep === 1) fireStartedEvent();
-      if (currentStep < 7) {
+      if (currentStep < TOTAL_STEPS) {
         // Auto-save draft to DB when leaving contact step (step 5)
-        // This captures leads who drop off before email verification or payment
         if (currentStep === 5) {
           try {
             const { data: draftData } = await supabase.functions.invoke("save-placement-draft", {
@@ -754,7 +795,6 @@ export default function ConciergeIntake() {
               localStorage.setItem(DRAFT_ID_KEY, draftData.draftId);
             }
           } catch (e) {
-            // Don't block navigation if draft save fails
             console.error("Auto-save draft failed:", e);
           }
         }
@@ -781,64 +821,64 @@ export default function ConciergeIntake() {
     scrollToTopSmooth();
   };
 
-  const handleProceedToPayment = async () => {
-    // Prevent double-click
-    if (isProcessingPayment) return;
+  // Free submit — replaces the old $29 Stripe checkout flow.
+  const handleSubmitFree = async () => {
+    if (isSubmitting) return;
 
-    // Validate all previous steps before payment
-    for (let step = 1; step <= 6; step++) {
+    // Validate all previous steps (incl. email + phone verification)
+    for (let step = 1; step <= 7; step++) {
       if (!validateStep(step)) {
         setCurrentStep(step);
-        toast.error("Please complete all required fields before payment");
+        toast.error("Please complete all required fields before submitting");
         return;
       }
     }
 
-    setIsProcessingPayment(true);
-    
-    try {
-      // Save draft to database first
-      const { data: draftData, error: draftError } = await supabase.functions.invoke("save-placement-draft", {
-        body: {
-          intakeData: formData,
-          emailVerifiedAt: emailVerification.verifiedAt,
-          draftId: draftId,
-        },
-      });
+    setIsSubmitting(true);
 
-      if (draftError) {
-        console.error("Draft save error:", draftError);
-        // Don't block payment if draft save fails
-      } else if (draftData?.draftId) {
-        setDraftId(draftData.draftId);
-        localStorage.setItem(DRAFT_ID_KEY, draftData.draftId);
+    try {
+      // Save final draft to DB so we have a server-side record even if submit retries
+      try {
+        const { data: draftData } = await supabase.functions.invoke("save-placement-draft", {
+          body: {
+            intakeData: formData,
+            emailVerifiedAt: emailVerification.verifiedAt,
+            draftId: draftId,
+          },
+        });
+        if (draftData?.draftId) {
+          setDraftId(draftData.draftId);
+          localStorage.setItem(DRAFT_ID_KEY, draftData.draftId);
+        }
+      } catch (e) {
+        console.error("Final draft save failed (non-blocking):", e);
       }
 
-      // Create checkout session
-      const { data, error } = await supabase.functions.invoke("create-concierge-checkout", {
+      const { data, error } = await supabase.functions.invoke("submit-concierge-intake", {
         body: {
-          email: formData.email,
-          intakeDraftKey: STORAGE_KEY,
-          draftId: draftData?.draftId || draftId,
+          intakeData: formData,
+          skipPayment: true,
+          emailVerifiedAt: emailVerification.verifiedAt,
+          phoneVerifiedAt: phoneVerification.verifiedAt,
         },
       });
 
       if (error) throw error;
+      if (!data?.inquiryId) throw new Error("Submission failed — no inquiry ID returned");
 
-      if (data?.url && (data.url.startsWith("https://checkout.stripe.com") || data.url.startsWith("https://billing.stripe.com"))) {
-        // Fire submit event before navigation — once we leave the SPA the
-        // analytics queue would otherwise be lost.
-        fireSubmittedEvent("checkout");
-        window.location.href = data.url;
-      } else if (data?.url) {
-        throw new Error("Invalid checkout URL");
-      } else {
-        throw new Error("No checkout URL returned");
-      }
+      fireSubmittedEvent("checkout", { free: true });
+
+      // Clear local draft state
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+      localStorage.removeItem(PHONE_VERIFICATION_KEY);
+      localStorage.removeItem(DRAFT_ID_KEY);
+
+      navigate(`/concierge/thank-you?channel=free&id=${data.inquiryId}`);
     } catch (err) {
-      console.error("Checkout error:", err);
-      toast.error("Failed to create checkout session. Please try again.");
-      setIsProcessingPayment(false);
+      console.error("Submit error:", err);
+      toast.error("Failed to submit your request. Please try again.");
+      setIsSubmitting(false);
     }
   };
 
@@ -895,7 +935,7 @@ export default function ConciergeIntake() {
               isVerified={emailVerification.verified}
               verifiedAt={emailVerification.verifiedAt}
             />
-            {/* Optional SMS-callback escape hatch — bypasses email verify + payment */}
+            {/* Optional SMS-callback escape hatch — bypasses email verify */}
             <SmsCallbackFallback
               draftId={draftId}
               firstName={formData.firstName}
@@ -905,9 +945,9 @@ export default function ConciergeIntake() {
               notes={formData.notes}
               onRequested={(inquiryId) => {
                 toast.success("Got it — a specialist will text you soon.");
-                // Clear local draft state so users can't double-submit.
                 localStorage.removeItem(STORAGE_KEY);
                 localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+                localStorage.removeItem(PHONE_VERIFICATION_KEY);
                 localStorage.removeItem(DRAFT_ID_KEY);
                 fireSubmittedEvent("sms");
                 navigate(`/concierge/thank-you?channel=sms&id=${inquiryId}`);
@@ -917,13 +957,24 @@ export default function ConciergeIntake() {
         );
       case 7:
         return (
+          <StepPhoneVerification
+            phone={formData.phone}
+            firstName={formData.firstName}
+            onVerified={handlePhoneVerified}
+            onEditPhone={handleEditPhone}
+            isVerified={phoneVerification.verified}
+            verifiedAt={phoneVerification.verifiedAt}
+          />
+        );
+      case 8:
+        return (
           <StepReviewSubmit
             data={formData}
             paymentState={{ sessionId: null, paid: false, verifiedAt: null }}
             onEdit={handleEditStep}
-            onPay={handleProceedToPayment}
+            onPay={handleSubmitFree}
             isSubmitting={false}
-            isProcessingPayment={isProcessingPayment}
+            isProcessingPayment={isSubmitting}
           />
         );
       default:
@@ -933,9 +984,8 @@ export default function ConciergeIntake() {
 
   // Determine if we can proceed from current step
   const canProceed = () => {
-    if (currentStep === 6) {
-      return emailVerification.verified;
-    }
+    if (currentStep === 6) return emailVerification.verified;
+    if (currentStep === 7) return phoneVerification.verified;
     return true;
   };
 
@@ -973,7 +1023,7 @@ export default function ConciergeIntake() {
               <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
                 {/* Progress */}
                 <div className="px-4 sm:px-6 md:px-8 pt-4 pb-3 border-b bg-muted/30">
-                  <IntakeProgress currentStep={currentStep} totalSteps={7} />
+                  <IntakeProgress currentStep={currentStep} totalSteps={TOTAL_STEPS} />
                 </div>
 
                 {/* Step Content */}
@@ -1015,7 +1065,7 @@ export default function ConciergeIntake() {
                 </div>
 
                 {/* Navigation */}
-                {currentStep < 7 && (
+                {currentStep < TOTAL_STEPS && (
                   <div className="px-4 sm:px-6 md:px-8 py-4 border-t bg-muted/20 flex flex-col-reverse sm:flex-row justify-center gap-3">
                     {currentStep > 1 && (
                       <Button
@@ -1028,8 +1078,17 @@ export default function ConciergeIntake() {
                       </Button>
                     )}
                     {currentStep === 6 ? (
-                      // Email verification step - only show Continue if verified
                       emailVerification.verified && (
+                        <Button
+                          onClick={handleNext}
+                          className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
+                        >
+                          Continue to Phone Verification
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      )
+                    ) : currentStep === 7 ? (
+                      phoneVerification.verified && (
                         <Button
                           onClick={handleNext}
                           className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
@@ -1050,7 +1109,7 @@ export default function ConciergeIntake() {
                   </div>
                 )}
 
-                {currentStep === 7 && (
+                {currentStep === TOTAL_STEPS && (
                   <div className="px-4 sm:px-6 py-3 border-t bg-muted/20 flex justify-center">
                     <Button
                       variant="ghost"
