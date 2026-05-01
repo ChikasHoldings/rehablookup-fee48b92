@@ -548,7 +548,21 @@ export function RequestInfoModal({
   const isAtCapacity = hasFacilityRecord && leadUsage && leadUsage.remaining === 0 && !isPro;
 
   // Custom success handler for the form
-  const renderSuccess = ({ firstName }: { firstName: string; facilityName?: string | null }) => {
+  const renderSuccess = ({
+    firstName,
+    contact,
+  }: {
+    firstName: string;
+    facilityName?: string | null;
+    contact: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      preferredContact: string;
+      bestTimeToCall: string;
+    };
+  }) => {
     // Mark form as submitted to trigger nearby fetch via useEffect
     if (!formSubmitted) {
       setTimeout(() => setFormSubmitted(true), 0);
@@ -570,6 +584,12 @@ export function RequestInfoModal({
         onNearbyRequest={handleNearbyRequest}
         onConcierge={handleConcierge}
         isPro={isPro}
+        contact={{
+          email: contact.email,
+          phone: contact.phone,
+          preferredContact: contact.preferredContact,
+          bestTimeToCall: contact.bestTimeToCall,
+        }}
       />
     );
   };
