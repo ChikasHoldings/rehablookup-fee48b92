@@ -131,11 +131,11 @@ export function UnlockLeadButton({
     setRevealLoading(true);
     setRevealError(null);
     const result = await fetchRevealedLead(leadId);
-    if (result.ok) {
+    if (result.ok === true) {
       setRevealedLead(result.data);
       setRevealError(null);
     } else {
-      setRevealError(result.error);
+      setRevealError((result as { ok: false; error: string }).error);
     }
     setRevealLoading(false);
   };
