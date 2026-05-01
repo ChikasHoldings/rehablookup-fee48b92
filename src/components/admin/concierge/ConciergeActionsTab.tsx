@@ -228,9 +228,9 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       {isUnpaid && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Payment Not Received</AlertTitle>
+          <AlertTitle>Legacy Unpaid Case</AlertTitle>
           <AlertDescription>
-            This case has not been paid ($29 intake fee). Avoid sending introductions until payment is confirmed.
+            This is an older case that was created when the $29 intake fee was active and was never paid. Domestic placement is now free for clients — review before proceeding.
           </AlertDescription>
         </Alert>
       )}
