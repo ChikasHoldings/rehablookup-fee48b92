@@ -11,6 +11,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ============ STANDARDIZED ERROR ENVELOPE ============
+// All non-2xx responses use this shape so the client can read either
+// `data.error.message`, `data.reason`, or the top-level `code`.
+function errorResponse(
+  status: number,
+  code: string,
+  message: string,
+  field?: string
+) {
+  return new Response(
+    JSON.stringify({
+      error: { code, message },
+      code,
+      reason: message,
+      _version: VERSION,
+      ...(field ? { details: { field } } : {}),
+    }),
+    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
 // ============ LOGGING ============
 const generateRequestId = () => crypto.randomUUID().slice(0, 8);
 
