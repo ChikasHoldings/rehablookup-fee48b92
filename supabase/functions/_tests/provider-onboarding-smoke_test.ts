@@ -218,10 +218,24 @@ for (const fn of FUNCTIONS) {
 
   Deno.test(`[${fn.name}] returns deduplicated flag when send is suppressed`, async () => {
     const src = await loadSource(fn.path);
-    // The success response surfaces deduplicated/email_deduplicated so
-    // callers (and tests) can prove duplicate sends are coalesced.
+    // The success response must surface idempotency state so callers
+    // (and tests) can prove duplicate sends are coalesced. We require:
+    //   - the legacy `email_deduplicated` code (back-compat), and
+    //   - either an explicit `status: "deduplicated"` field or the
+    //     `deduplicated` boolean on `result`.
     assertStringIncludes(src, "email_deduplicated");
-    assertStringIncludes(src, "result.deduplicated");
+    assert(
+      src.includes("result.deduplicated") || src.includes('status === "deduplicated"'),
+      `${fn.name} must branch on result.deduplicated`,
+    );
+    // The notify-admin function returns the legacy envelope; only the
+    // welcome-email functions are required to surface the richer
+    // idempotency contract (status / idempotencyKey / firstSentAt).
+    if (fn.name !== "notify-admin-provider-signup") {
+      assertStringIncludes(src, 'status: result.deduplicated ? "deduplicated" : "sent"');
+      assertStringIncludes(src, "idempotencyKey: effectiveIdempotencyKey");
+      assertStringIncludes(src, "firstSentAt: result.firstSentAt");
+    }
   });
 }
 
