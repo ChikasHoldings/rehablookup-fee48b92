@@ -766,10 +766,7 @@ Deno.serve(async (req) => {
       }
       
       log(requestId, "ERROR", "Failed to insert lead", { error: insertError.message, code: insertError.code });
-      return new Response(
-        JSON.stringify({ success: false, error: "Failed to submit inquiry. Please try again." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(500, "lead_insert_failed", "Failed to submit inquiry. Please try again.");
     }
 
     log(requestId, "INFO", "Lead inserted", { leadId: lead.id });
@@ -965,9 +962,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     log(requestId, "ERROR", "Unhandled error", { error: error instanceof Error ? error.message : String(error) });
-    return new Response(
-      JSON.stringify({ success: false, error: "An unexpected error occurred. Please try again." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(500, "internal_error", "An unexpected error occurred. Please try again.");
   }
 });
