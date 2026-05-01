@@ -503,6 +503,10 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Unlock row is committed — credits are now correctly attributed.
+    // Disarm the outer-catch rollback safety net (H1).
+    creditsDeducted = false;
+
     // Update lead status to 'unlocked' — only valid from 'new' or 'expired' (redistributed leads may be expired)
     const unlockTimestamp = new Date().toISOString();
     
