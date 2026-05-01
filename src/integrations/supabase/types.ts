@@ -458,6 +458,54 @@ export type Database = {
           },
         ]
       }
+      area_waitlist: {
+        Row: {
+          area_label: string | null
+          area_slug: string
+          city: string | null
+          created_at: string
+          email: string
+          id: string
+          ip_hash: string | null
+          is_notified: boolean
+          notified_at: string | null
+          source_path: string | null
+          state: string | null
+          treatment_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          area_label?: string | null
+          area_slug: string
+          city?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          ip_hash?: string | null
+          is_notified?: boolean
+          notified_at?: string | null
+          source_path?: string | null
+          state?: string | null
+          treatment_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          area_label?: string | null
+          area_slug?: string
+          city?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          ip_hash?: string | null
+          is_notified?: boolean
+          notified_at?: string | null
+          source_path?: string | null
+          state?: string | null
+          treatment_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       badge_impressions: {
         Row: {
           badge_size: string
