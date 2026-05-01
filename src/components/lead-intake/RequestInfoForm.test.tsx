@@ -410,6 +410,8 @@ describe("Request Information form — submit-qualified-lead payload contract", 
       SEEKER.email
     );
 
+    // Tick the required consent checkbox, then submit.
+    await user.click(screen.getByRole("checkbox", { name: /i agree to be contacted/i }));
     await user.click(screen.getByRole("button", { name: /^submit$/i }));
 
     // Wait for the submit-qualified-lead invocation, then return its body.
