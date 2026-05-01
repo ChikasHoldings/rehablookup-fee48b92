@@ -657,6 +657,32 @@ const SearchResults = () => {
     });
   }, [fromParam, isLoading, filteredCenters.length, location, treatment, insurance]);
 
+  // Phase 4: generic funnel event — fire `search_performed` and
+  // `search_zero_results` for every search (not just /404 referrals) so we
+  // can measure conversion drop-off across the whole funnel.
+  const reportedSearchKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (isLoading) return;
+    const key = `${location}|${treatment}|${insurance}|${queryParam}`;
+    if (reportedSearchKeyRef.current === key) return;
+    reportedSearchKeyRef.current = key;
+
+    analytics.search(queryParam || location || "(empty)", filteredCenters.length);
+    if (filteredCenters.length === 0) {
+      // Custom event captured server-side via gtag — surfaces as
+      // `search_zero_results` in GA4.
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "search_zero_results", {
+          event_category: "Search",
+          search_location: location || undefined,
+          search_treatment: treatment || undefined,
+          search_insurance: insurance || undefined,
+          query: queryParam || undefined,
+        });
+      }
+    }
+  }, [isLoading, filteredCenters.length, location, treatment, insurance, queryParam]);
+
   // Determine display title
   const searchDisplayTitle = queryParam
     ? `Results for "${queryParam}"`
