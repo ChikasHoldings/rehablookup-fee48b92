@@ -1,6 +1,7 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2026-05-01 — sitemap regenerated; 2055 URLs included (filtered from 31998). Prerender coverage: hybrid <path>.html + <path>/index.html.
 # Last updated: 2026-05-01 — v7.15.0 GSC "Blocked by robots.txt" remediation:
 #   Add explicit Allow rules for /blog, /treatment/, and /treatment-types/ to
 #   override stale GSC cache from prior robots.txt versions that blocked them.
