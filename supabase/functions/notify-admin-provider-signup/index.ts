@@ -1,6 +1,15 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { z } from "https://esm.sh/zod@3.23.8";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+
+const SignupNotificationSchema = z.object({
+  facilityId: z.string().uuid({ message: "facilityId must be a valid UUID" }),
+  facilityName: z.string().trim().min(1).max(255),
+  providerEmail: z.string().trim().email().max(255),
+  city: z.string().trim().min(1).max(120),
+  state: z.string().trim().min(1).max(120),
+});
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,13 +20,7 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[NOTIFY-ADMIN-PROVIDER-SIGNUP] ${step}`, details ? JSON.stringify(details) : "");
 };
 
-interface SignupNotification {
-  facilityId: string;
-  facilityName: string;
-  providerEmail: string;
-  city: string;
-  state: string;
-}
+type SignupNotification = z.infer<typeof SignupNotificationSchema>;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -35,7 +38,30 @@ Deno.serve(async (req) => {
 
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-    const { facilityId, facilityName, providerEmail, city, state }: SignupNotification = await req.json();
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch (_e) {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body", code: "invalid_json" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const parsed = SignupNotificationSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      logStep("Validation failed", parsed.error.flatten());
+      return new Response(
+        JSON.stringify({
+          error: "Invalid request payload",
+          code: "validation_error",
+          fieldErrors: parsed.error.flatten().fieldErrors,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const { facilityId, facilityName, providerEmail, city, state }: SignupNotification = parsed.data;
     logStep("Received notification request", { facilityId, facilityName, providerEmail });
 
     const { error: notificationError } = await supabase
