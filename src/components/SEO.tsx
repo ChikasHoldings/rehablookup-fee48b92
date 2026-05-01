@@ -586,6 +586,20 @@ export function generateLocalBusinessSchema(facility: {
     ...(facility.verified && {
       award: "RehabLookup Verified Facility",
     }),
+    // E-E-A-T: surface the most recent editorial review and reviewer for
+    // medical-content trust signals. `lastReviewed` is a schema.org/MedicalWebPage
+    // property and is also accepted on MedicalOrganization / MedicalClinic.
+    ...(facility.lastReviewed && {
+      lastReviewed: facility.lastReviewed.slice(0, 10),
+    }),
+    ...(facility.reviewedBy && {
+      reviewedBy: {
+        "@type": facility.reviewedBy.type || "Organization",
+        name: facility.reviewedBy.name,
+        ...(facility.reviewedBy.jobTitle ? { jobTitle: facility.reviewedBy.jobTitle } : {}),
+        ...(facility.reviewedBy.url ? { url: facility.reviewedBy.url } : {}),
+      },
+    }),
     potentialAction: [
       {
         "@type": "ReserveAction",
