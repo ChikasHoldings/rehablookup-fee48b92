@@ -380,7 +380,6 @@ export default function GenericNearMePage({ configSlug }: GenericNearMePageProps
   // change needed when the directory grows. This addresses GSC's "Duplicate
   // without user-selected canonical" report for thin /<service>-near-me/<state>
   // pages competing with /rehab-centers/<state>.
-  const hasMinimumListings = !isLoading && facilities.length >= 3;
   const shouldNoindex = !isLoading && facilities.length < 3;
 
   return (
