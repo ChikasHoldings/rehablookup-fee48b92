@@ -150,7 +150,18 @@ Deno.serve(async (req) => {
 
     // Sanitize and validate all inputs
     const seekerName = sanitizeString(body.seekerName, 100);
-    const seekerEmail = sanitizeEmail(body.seekerEmail);
+    let seekerEmail: string;
+    try {
+      seekerEmail = sanitizeEmail(body.seekerEmail);
+    } catch (emailErr) {
+      const message = emailErr instanceof Error ? emailErr.message : "Invalid email";
+      const code = message === "Email is required" ? "email_required" : "invalid_email";
+      logStep(requestId, "Email validation failed", { code, reason: message });
+      return new Response(
+        JSON.stringify({ error: message, code, field: "seekerEmail", requestId, _version: VERSION }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const seekerPhone = sanitizePhone(body.seekerPhone);
 
     if (!seekerName) {
