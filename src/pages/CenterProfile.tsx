@@ -534,6 +534,13 @@ const CenterProfile = () => {
   // query has had a chance to verify the slug against the database.
   // Hard-redirect malformed slugs straight to the directory rather than
   // attempting a DB lookup that will always miss.
+  // Canonical redirect: the slug normalizes to a valid form that differs
+  // from what's in the URL (e.g. mixed-case, whitespace, percent-encoded
+  // spaces, doubled hyphens). Replace in-place so back-button still works.
+  if (slugNeedsCanonicalRedirect) {
+    return <Navigate to={`/center/${normalisedSlug}${location.search}`} replace />;
+  }
+
   if (slug && !isSlugFormatValid) {
     return <CenterNotFound attemptedSlug={slug} reason="invalid" />;
   }
