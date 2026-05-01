@@ -446,15 +446,22 @@ function buildFacilityHtml(
   const insuranceList = insurances.length
     ? `<h2>Insurance Accepted</h2><ul>${insurances.map((i) => `<li>${escHtml(i)}</li>`).join('')}</ul>`
     : '';
+  const accreditationsList = accreditations.length
+    ? `<h2>Accreditations</h2><ul>${accreditations.map((a) => `<li>${escHtml(a)}</li>`).join('')}</ul>`
+    : '';
   const facts: string[] = [];
   if (f.facility_type) facts.push(`<li><strong>Facility Type:</strong> ${escHtml(f.facility_type)}</li>`);
   if (f.gender_served) facts.push(`<li><strong>Gender Served:</strong> ${escHtml(f.gender_served)}</li>`);
   if (f.bed_count) facts.push(`<li><strong>Bed Count:</strong> ${escHtml(f.bed_count)}</li>`);
   if (f.year_established) facts.push(`<li><strong>Established:</strong> ${f.year_established}</li>`);
   if (f.verified) facts.push(`<li><strong>Verified Provider</strong></li>`);
+  if (rating && rating.count > 0) {
+    facts.push(
+      `<li><strong>Rating:</strong> ${rating.value.toFixed(1)} / 5 (${rating.count} review${rating.count === 1 ? '' : 's'})</li>`,
+    );
+  }
   const factsList = facts.length ? `<h2>About This Center</h2><ul>${facts.join('')}</ul>` : '';
 
-  const fullAddress = [f.address, f.city, f.state, f.zip_code].filter(Boolean).join(', ');
   const contactBlock = `<h2>Contact</h2>
     <address style="font-style: normal;">
       <strong>${escHtml(f.name)}</strong><br>
@@ -469,6 +476,7 @@ function buildFacilityHtml(
     ${factsList}
     ${treatmentsList}
     ${insuranceList}
+    ${accreditationsList}
     ${contactBlock}
     <p style="margin-top: 32px;"><a href="/rehab-centers">Browse all treatment centers</a></p>`;
 
