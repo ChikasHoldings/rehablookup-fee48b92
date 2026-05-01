@@ -105,6 +105,7 @@ The 2xx success envelope additionally uses two informational codes (`email_sent`
 - **send-provider-support** — `email_required`, `email_send_failed`, `internal_error`, `invalid_email`, `method_not_allowed`, `missing_resend_key`, `name_required`, `phone_required`, `rate_limited`, `validation_failed`
 - **send-provider-welcome-email** — `email_deduplicated`, `email_rejected`, `email_sent`, `internal_error`, `invalid_json`, `method_not_allowed`, `missing_resend_key`, `validation_error`, `welcome_email_send_failed`
 - **send-provider-welcome-offer-email** — `email_deduplicated`, `email_rejected`, `email_sent`, `internal_error`, `invalid_json`, `method_not_allowed`, `missing_resend_key`, `validation_error`, `welcome_offer_email_send_failed`
+- **send-sms-notification** — `phone_rejected`
 - **submit-concierge-intake** — `internal_error`, `invalid_json`, `method_not_allowed`, `validation_error`
 - **submit-international-intake** — `case_create_failed`, `internal_error`, `international_invoice_failed`, `invalid_json`, `method_not_allowed`, `validation_error`
 - **submit-placement-case** — `case_create_failed`, `internal_error`, `invalid_json`, `method_not_allowed`, `validation_error`
