@@ -779,9 +779,8 @@ export default function ConciergeIntake() {
   const handleNext = async () => {
     if (validateStep(currentStep)) {
       if (currentStep === 1) fireStartedEvent();
-      if (currentStep < 7) {
+      if (currentStep < TOTAL_STEPS) {
         // Auto-save draft to DB when leaving contact step (step 5)
-        // This captures leads who drop off before email verification or payment
         if (currentStep === 5) {
           try {
             const { data: draftData } = await supabase.functions.invoke("save-placement-draft", {
@@ -796,7 +795,6 @@ export default function ConciergeIntake() {
               localStorage.setItem(DRAFT_ID_KEY, draftData.draftId);
             }
           } catch (e) {
-            // Don't block navigation if draft save fails
             console.error("Auto-save draft failed:", e);
           }
         }
@@ -823,64 +821,64 @@ export default function ConciergeIntake() {
     scrollToTopSmooth();
   };
 
-  const handleProceedToPayment = async () => {
-    // Prevent double-click
-    if (isProcessingPayment) return;
+  // Free submit — replaces the old $29 Stripe checkout flow.
+  const handleSubmitFree = async () => {
+    if (isSubmitting) return;
 
-    // Validate all previous steps before payment
-    for (let step = 1; step <= 6; step++) {
+    // Validate all previous steps (incl. email + phone verification)
+    for (let step = 1; step <= 7; step++) {
       if (!validateStep(step)) {
         setCurrentStep(step);
-        toast.error("Please complete all required fields before payment");
+        toast.error("Please complete all required fields before submitting");
         return;
       }
     }
 
-    setIsProcessingPayment(true);
-    
-    try {
-      // Save draft to database first
-      const { data: draftData, error: draftError } = await supabase.functions.invoke("save-placement-draft", {
-        body: {
-          intakeData: formData,
-          emailVerifiedAt: emailVerification.verifiedAt,
-          draftId: draftId,
-        },
-      });
+    setIsSubmitting(true);
 
-      if (draftError) {
-        console.error("Draft save error:", draftError);
-        // Don't block payment if draft save fails
-      } else if (draftData?.draftId) {
-        setDraftId(draftData.draftId);
-        localStorage.setItem(DRAFT_ID_KEY, draftData.draftId);
+    try {
+      // Save final draft to DB so we have a server-side record even if submit retries
+      try {
+        const { data: draftData } = await supabase.functions.invoke("save-placement-draft", {
+          body: {
+            intakeData: formData,
+            emailVerifiedAt: emailVerification.verifiedAt,
+            draftId: draftId,
+          },
+        });
+        if (draftData?.draftId) {
+          setDraftId(draftData.draftId);
+          localStorage.setItem(DRAFT_ID_KEY, draftData.draftId);
+        }
+      } catch (e) {
+        console.error("Final draft save failed (non-blocking):", e);
       }
 
-      // Create checkout session
-      const { data, error } = await supabase.functions.invoke("create-concierge-checkout", {
+      const { data, error } = await supabase.functions.invoke("submit-concierge-intake", {
         body: {
-          email: formData.email,
-          intakeDraftKey: STORAGE_KEY,
-          draftId: draftData?.draftId || draftId,
+          intakeData: formData,
+          skipPayment: true,
+          emailVerifiedAt: emailVerification.verifiedAt,
+          phoneVerifiedAt: phoneVerification.verifiedAt,
         },
       });
 
       if (error) throw error;
+      if (!data?.inquiryId) throw new Error("Submission failed — no inquiry ID returned");
 
-      if (data?.url && (data.url.startsWith("https://checkout.stripe.com") || data.url.startsWith("https://billing.stripe.com"))) {
-        // Fire submit event before navigation — once we leave the SPA the
-        // analytics queue would otherwise be lost.
-        fireSubmittedEvent("checkout");
-        window.location.href = data.url;
-      } else if (data?.url) {
-        throw new Error("Invalid checkout URL");
-      } else {
-        throw new Error("No checkout URL returned");
-      }
+      fireSubmittedEvent("checkout", { free: true });
+
+      // Clear local draft state
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+      localStorage.removeItem(PHONE_VERIFICATION_KEY);
+      localStorage.removeItem(DRAFT_ID_KEY);
+
+      navigate(`/concierge/thank-you?channel=free&id=${data.inquiryId}`);
     } catch (err) {
-      console.error("Checkout error:", err);
-      toast.error("Failed to create checkout session. Please try again.");
-      setIsProcessingPayment(false);
+      console.error("Submit error:", err);
+      toast.error("Failed to submit your request. Please try again.");
+      setIsSubmitting(false);
     }
   };
 
