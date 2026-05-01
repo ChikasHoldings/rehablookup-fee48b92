@@ -109,6 +109,11 @@ const Contact = () => {
       });
 
       if (error) throw error;
+      if (data && typeof data === "object" && (data as { success?: boolean }).success === false) {
+        const friendly = await getFriendlyMessageForError(data);
+        toast({ title: friendly.title, description: friendly.description, variant: "destructive" });
+        return;
+      }
 
       setIsSubmitted(true);
       toast({
@@ -117,9 +122,10 @@ const Contact = () => {
       });
     } catch (error) {
       console.error("Contact form error:", error);
+      const friendly = await getFriendlyMessageForError(error);
       toast({
-        title: "Error",
-        description: "Failed to send message. Please try again or email us directly.",
+        title: friendly.title,
+        description: friendly.description,
         variant: "destructive",
       });
     } finally {
