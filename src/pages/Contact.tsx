@@ -5,6 +5,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getFriendlyMessageForError } from "@/lib/contracts/friendly-error-messages";
 import {
   Mail,
   Clock,
