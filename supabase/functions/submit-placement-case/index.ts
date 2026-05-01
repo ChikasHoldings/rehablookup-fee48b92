@@ -415,9 +415,6 @@ Deno.serve(async (req) => {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     logStep(requestId, "ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return jsonError("internal_error", errorMessage, 500, corsHeaders, { requestId, _version: VERSION });
   }
 });
