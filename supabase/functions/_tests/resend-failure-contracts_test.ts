@@ -149,7 +149,7 @@ Deno.test("resend failures: permanent validation error returns success=false in 
   assertExists(result.error, "must surface a sanitized error string");
   // Only one Resend call (no retries on permanent errors)
   assertEquals(resend._calls.length, 1);
-  assertResultShapeIsSanitized(result as Record<string, unknown>);
+  assertResultShapeIsSanitized(result as unknown as Record<string, unknown>);
 });
 
 Deno.test("resend failures: transient 5xx is retried then dead-lettered with stable shape", async () => {
@@ -175,7 +175,7 @@ Deno.test("resend failures: transient 5xx is retried then dead-lettered with sta
   assertEquals(result.deadLettered, true, "must dead-letter after maxRetries");
   assertExists(result.error);
   assertEquals(resend._calls.length, 3);
-  assertResultShapeIsSanitized(result as Record<string, unknown>);
+  assertResultShapeIsSanitized(result as unknown as Record<string, unknown>);
 
   // DLQ tracking event must have been recorded
   const dlqEvents = supabase._inserts.filter(
@@ -206,7 +206,7 @@ Deno.test("resend failures: network exception is caught, retried, dead-lettered 
   assertEquals(result.success, false);
   assertEquals(result.attempts, 3);
   assertEquals(result.deadLettered, true);
-  assertResultShapeIsSanitized(result as Record<string, unknown>);
+  assertResultShapeIsSanitized(result as unknown as Record<string, unknown>);
   // Stack must not be leaked into the public error string
   assertFalse(
     (result.error ?? "").toLowerCase().includes("at tlssocket"),
@@ -240,7 +240,7 @@ Deno.test("resend failures: 429 rate-limit is treated as transient and retried",
   assertEquals(result.attempts, 2, "should succeed on the second attempt after 429");
   assertFalse(result.deadLettered);
   assertEquals(result.emailId, "resend_msg_abc123");
-  assertResultShapeIsSanitized(result as Record<string, unknown>);
+  assertResultShapeIsSanitized(result as unknown as Record<string, unknown>);
 });
 
 Deno.test("resend failures: result shape contains only allow-listed fields across all paths", async () => {
@@ -256,7 +256,7 @@ Deno.test("resend failures: result shape contains only allow-listed fields acros
     emailType: "shape_check",
     maxRetries: 2,
   });
-  assertResultShapeIsSanitized(r1 as Record<string, unknown>);
+  assertResultShapeIsSanitized(r1 as unknown as Record<string, unknown>);
 
   // DLQ path
   const resendDlq = makeResendStub({
@@ -269,7 +269,7 @@ Deno.test("resend failures: result shape contains only allow-listed fields acros
     emailType: "shape_check",
     maxRetries: 2,
   });
-  assertResultShapeIsSanitized(r2 as Record<string, unknown>);
+  assertResultShapeIsSanitized(r2 as unknown as Record<string, unknown>);
 
   // Success path
   const resendOk = makeResendStub({
@@ -278,6 +278,6 @@ Deno.test("resend failures: result shape contains only allow-listed fields acros
   const r3 = await sendEmailWithRetry(supabase, resendOk, baseParams, {
     emailType: "shape_check",
   });
-  assertResultShapeIsSanitized(r3 as Record<string, unknown>);
+  assertResultShapeIsSanitized(r3 as unknown as Record<string, unknown>);
   assertEquals(r3.success, true);
 });
