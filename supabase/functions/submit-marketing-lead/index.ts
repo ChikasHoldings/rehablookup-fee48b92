@@ -130,15 +130,31 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Validate & sanitize required fields
+    // Validate & sanitize required fields — emit a standardized error envelope
+    // so the frontend can render consistent messages.
+    const stdError = (code: string, message: string, status: number, field?: string) =>
+      new Response(
+        JSON.stringify({
+          error: { code, message },
+          code,
+          reason: message,
+          ...(field ? { details: { field } } : {}),
+        }),
+        { status, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
+
+    if (!body.email || typeof body.email !== "string" || body.email.trim().length === 0) {
+      return stdError("email_required", "Email is required", 400, "email");
+    }
+
     let sanitizedEmail: string;
     try {
       sanitizedEmail = sanitizeEmail(body.email);
     } catch {
-      return new Response(
-        JSON.stringify({ error: "Valid email address is required" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return stdError("invalid_email", "Valid email address is required", 400, "email");
+    }
+    if (!sanitizedEmail) {
+      return stdError("email_required", "Email is required", 400, "email");
     }
 
     const firstName = sanitizeStr(body.firstName, 50);

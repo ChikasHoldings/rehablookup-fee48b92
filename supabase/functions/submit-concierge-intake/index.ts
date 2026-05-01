@@ -189,8 +189,20 @@ Deno.serve(async (req) => {
     }
 
     // Validate and sanitize critical intake fields
-    if (!intakeData.email) {
-      throw new Error("Email is required");
+    if (!intakeData.email || typeof intakeData.email !== "string" || intakeData.email.trim().length === 0) {
+      const code = "email_required";
+      const message = "Email is required";
+      return new Response(
+        JSON.stringify({
+          error: { code, message },
+          code,
+          reason: message,
+          requestId,
+          _version: VERSION,
+          details: { field: "intakeData.email" },
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
     
     // Compute decisionMakerName from firstName + lastName if not provided
@@ -207,7 +219,24 @@ Deno.serve(async (req) => {
     }
 
     // Sanitize user-provided data
-    const sanitizedEmail = sanitizeEmail(intakeData.email);
+    let sanitizedEmail: string;
+    try {
+      sanitizedEmail = sanitizeEmail(intakeData.email);
+    } catch {
+      const code = "invalid_email";
+      const message = "Valid email is required";
+      return new Response(
+        JSON.stringify({
+          error: { code, message },
+          code,
+          reason: message,
+          requestId,
+          _version: VERSION,
+          details: { field: "intakeData.email" },
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const sanitizedName = sanitizeString(decisionMakerName, 100);
     const sanitizedPhone = sanitizePhone(intakeData.phone);
 

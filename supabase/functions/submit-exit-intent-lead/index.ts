@@ -80,11 +80,34 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (!body.email || typeof body.email !== "string" || email.length === 0) {
+      const code = "email_required";
+      const message = "Email is required";
+      return new Response(
+        JSON.stringify({
+          error: { code, message },
+          code,
+          reason: message,
+          _version: VERSION,
+          details: { field: "email" },
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     if (!isValidEmail(email)) {
-      return new Response(JSON.stringify({ error: "Valid email is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const code = "invalid_email";
+      const message = "Valid email is required";
+      return new Response(
+        JSON.stringify({
+          error: { code, message },
+          code,
+          reason: message,
+          _version: VERSION,
+          details: { field: "email" },
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
