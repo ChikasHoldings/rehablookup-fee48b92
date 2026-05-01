@@ -22,6 +22,7 @@
     "check:leads-view-rls": "node scripts/check-leads-view-rls.mjs",
     "check:provider-leads-masking": "node scripts/check-provider-leads-masking.mjs",
     "check:edge-fn-no-star": "node scripts/audit/check-edge-functions-no-star-select.mjs",
+    "check:auto-reload-query-shape": "node scripts/audit/check-auto-reload-query-shape.mjs",
     "validate:vercel-deploy": "node scripts/validate-vercel-deploy.mjs",
     "cleanup:orphan-prerenders": "node scripts/cleanup-orphan-prerenders.mjs",
     "cleanup:orphan-prerenders:apply": "node scripts/cleanup-orphan-prerenders.mjs --apply",
