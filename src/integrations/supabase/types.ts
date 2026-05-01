@@ -6633,6 +6633,7 @@ export type Database = {
         Args: { _facility_id: string; _user_id: string }
         Returns: boolean
       }
+      verify_leads_provider_view_rls: { Args: never; Returns: Json }
     }
     Enums: {
       admin_role_type: "super_admin" | "manager" | "customer_rep" | "advisor"
