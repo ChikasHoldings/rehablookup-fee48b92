@@ -260,6 +260,7 @@ const NotFound = () => {
             </p>
 
             {/* Search Box */}
+            <h2 className="sr-only">Search treatment centers</h2>
             <Card className="max-w-2xl mx-auto mb-8 shadow-lg border-border/50">
               <CardContent className="p-4">
                 <form onSubmit={handleSearch} className="flex flex-col gap-3">
