@@ -22,7 +22,8 @@ import {
   MapPin,
   Heart,
   ClipboardList,
-  Phone
+  Phone,
+  CheckCircle
 } from "lucide-react";
 
 // US States
