@@ -8,6 +8,7 @@ import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TrustBar } from "@/components/seo/TrustBar";
 import { ConversionSection } from "@/components/seo/ConversionSection";
 import { ComparisonSection } from "@/components/seo/ComparisonSection";
+import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
 import {
   InternalLinkingSection,
   treatmentTypeLinks,
@@ -84,6 +85,13 @@ interface SEOLandingTemplateProps {
   ctaButtonText?: string;
   ctaButtonLink?: string;
 
+  // Waitlist (shown only when there are zero facilities)
+  waitlistAreaSlug?: string;
+  waitlistAreaLabel?: string;
+  waitlistCity?: string;
+  waitlistState?: string;
+  waitlistTreatmentType?: string;
+
   // Extra content (e.g. SmartInternalLinks) rendered before internal linking
   children?: React.ReactNode;
 }
@@ -120,6 +128,11 @@ export function SEOLandingTemplate({
   ctaSubtitle = "Connect with accredited treatment facilities that match your needs. Our team is available 24/7.",
   ctaButtonText = "Get Help Now",
   ctaButtonLink = "/concierge",
+  waitlistAreaSlug,
+  waitlistAreaLabel,
+  waitlistCity,
+  waitlistState,
+  waitlistTreatmentType,
   children,
 }: SEOLandingTemplateProps) {
   const displayFacilities = facilities.slice(0, 12);
