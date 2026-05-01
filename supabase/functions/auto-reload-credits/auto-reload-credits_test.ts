@@ -184,12 +184,16 @@ Deno.test("response shape: never echoes the expected HMAC signature", () => {
     /AUTH_SIGNATURE_MISMATCH[\s\S]{0,800}?\}\)/,
   );
   assert(sigBlock, "AUTH_SIGNATURE_MISMATCH response block not found");
-  // Strip the allowed `expectedSigLength` diagnostic before scanning so
-  // the regex below catches a real `expected` echo only.
-  const block = sigBlock![0].replace(/expectedSigLength/g, "");
+  const block = sigBlock![0];
+  // Look for an object key that echoes the raw expected sig, e.g.
+  //   `expected: expected,` or `expected,` (shorthand) or `"expected":`.
+  // The allowed `expectedSigLength` diagnostic is a different identifier.
+  const echoesExpected =
+    /\bexpected\s*[:,]/.test(block.replace(/expectedSigLength/g, "")) ||
+    /["']expected["']\s*:/.test(block);
   assert(
-    !/\bexpected\b/.test(block),
-    "Signature-mismatch response must not include the expected HMAC",
+    !echoesExpected,
+    "Signature-mismatch response must not include the expected HMAC value as a key",
   );
   assert(
     !block.includes("serviceRoleKey"),
