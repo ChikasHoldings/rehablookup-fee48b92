@@ -264,25 +264,27 @@ Deno.serve(async (req) => {
       hasAuthHeader: !!authHeader
     });
 
-    // Verify payment with Stripe
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-    if (session.payment_status !== 'paid') {
-      throw new Error("Payment not verified");
+    // Verify payment with Stripe (only when not skipping)
+    let session: Stripe.Checkout.Session | null = null;
+    let sessionUserId: string | null = null;
+    if (!skipPayment) {
+      const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+      session = await stripe.checkout.sessions.retrieve(sessionId!);
+      if (session.payment_status !== 'paid') {
+        throw new Error("Payment not verified");
+      }
+      sessionUserId = (session.metadata?.user_id as string) || null;
+      logStep(requestId, "Payment verified", { paymentStatus: session.payment_status });
+    } else {
+      logStep(requestId, "Skipping Stripe payment verification (free intake)");
     }
 
-    // Get user_id from session metadata if not already set
-    const sessionUserId = session.metadata?.user_id || null;
     const effectiveUserId = finalUserId || sessionUserId;
 
-    logStep(requestId, "Payment verified", { 
-      paymentStatus: session.payment_status,
-      effectiveUserId 
-    });
-
-    // Create idempotency key from session ID
-    const idempotencyKey = `intake_${sessionId}`;
+    // Create idempotency key — session-based when paid, otherwise email+timestamp-window based
+    const idempotencyKey = !skipPayment && sessionId
+      ? `intake_${sessionId}`
+      : `intake_free_${sanitizedEmail}_${Math.floor(Date.now() / 60000)}`; // 1-minute window collapses retries
 
     // Check if already submitted (idempotency) — search by idempotency_key OR checkout_session_id
     const { data: existingByKey } = await supabase
