@@ -75,7 +75,14 @@ export function ResponsiveListingGrid({
               Browse All Centers
             </Button>
           </Link>
-          <Link to="/concierge">
+          <Link
+            to={buildConciergeHref({
+              location: conciergeLocation,
+              treatment: conciergeTreatment,
+              insurance: conciergeInsurance,
+              source: conciergeSource,
+            })}
+          >
             <Button className="gap-2">
               <Heart className="h-4 w-4" />
               Get Personalized Help
