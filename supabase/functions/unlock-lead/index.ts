@@ -353,6 +353,13 @@ Deno.serve(async (req) => {
         deducted: unlockPrice 
       });
 
+      // Mark for outer-catch rollback safety net (H1)
+      creditsDeducted = true;
+      deductedAmount = unlockPrice;
+      deductedProviderId = user.id;
+      deductedFacilityId = facilityId;
+      deductedLeadId = leadId;
+
       // Log the credit transaction with enhanced details
       const { error: txError } = await supabaseAdmin.from("credit_transactions").insert({
         provider_id: user.id,
