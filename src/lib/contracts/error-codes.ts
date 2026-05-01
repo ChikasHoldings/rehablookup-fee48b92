@@ -39,6 +39,7 @@ export const ERROR_CODES = {
   name_required: { code: "name_required", httpStatus: 400, category: "validation", description: "Required name field missing.", retryable: false, emittedBy: [] },
   phone_required: { code: "phone_required", httpStatus: 400, category: "validation", description: "Required phone field missing.", retryable: false, emittedBy: [] },
   email_rejected: { code: "email_rejected", httpStatus: 400, category: "validation", description: "Recipient email failed the recipient guard; see `reason`.", retryable: false, emittedBy: [] },
+  phone_rejected: { code: "phone_rejected", httpStatus: 400, category: "validation", description: "Recipient phone number is malformed or fails E.164 validation.", retryable: false, emittedBy: ["send-sms-notification"] },
   conflict: { code: "conflict", httpStatus: 409, category: "auth", description: "Resource already exists or invalid state transition.", retryable: false, emittedBy: [] },
   rate_limited: { code: "rate_limited", httpStatus: 429, category: "auth", description: "Caller exceeded the rate limit; honour `Retry-After`.", retryable: true, emittedBy: [] },
   facility_missing: { code: "facility_missing", httpStatus: 404, category: "business", description: "Referenced facility does not exist or is not accessible.", retryable: false, emittedBy: [] },
