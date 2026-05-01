@@ -76,12 +76,11 @@ export function UnlockLeadButton({
    * so an "all PII fields null" response is treated as a transient
    * failure worth retrying.
    */
-  const fetchRevealedLead = async (
-    targetLeadId: string,
-  ): Promise<
-    | { ok: true; data: { name: string | null; email: string | null; phone: string | null } }
-    | { ok: false; error: string }
-  > => {
+  type RevealedFields = { name: string | null; email: string | null; phone: string | null };
+  type RevealResult =
+    | { ok: true; data: RevealedFields }
+    | { ok: false; error: string };
+  const fetchRevealedLead = async (targetLeadId: string): Promise<RevealResult> => {
     const delays = [300, 800, 1500];
     let lastError = "Unable to load contact details.";
 
