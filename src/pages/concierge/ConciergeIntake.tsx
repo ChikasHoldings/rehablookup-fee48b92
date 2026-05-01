@@ -429,6 +429,67 @@ export default function ConciergeIntake() {
     // No PII is sent — only field names + lowercased treatment/insurance hints.
     try {
       const appliedAny = Object.values(applied).some(Boolean);
+
+      // Deterministic dedup key: same (session, params) ⇒ same hash ⇒ no
+      // duplicate event. Catches edge cases beyond StrictMode:
+      //   • bfcache restores re-running effects on browser back/forward
+      //   • client-side route re-mounts that don't reset module state
+      //   • analytics-script late-load that triggers a second flush
+      // Session id lives in sessionStorage so it resets per tab session,
+      // ensuring genuinely new visits still report.
+      const SESSION_KEY = "rl_session_id";
+      const SENT_KEY = "rl_prefill_events_sent";
+      let sessionId = "";
+      try {
+        sessionId = sessionStorage.getItem(SESSION_KEY) || "";
+        if (!sessionId) {
+          sessionId =
+            (crypto as any)?.randomUUID?.() ||
+            `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+          sessionStorage.setItem(SESSION_KEY, sessionId);
+        }
+      } catch {
+        // sessionStorage unavailable (privacy mode, sandboxed iframe) →
+        // fall through; useRef guard above still prevents double-fire in
+        // the current mount.
+      }
+
+      // FNV-1a 32-bit — small, deterministic, no deps, collision risk is
+      // irrelevant for analytics dedup at our volume.
+      const fnv1a = (input: string): string => {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < input.length; i++) {
+          h ^= input.charCodeAt(i);
+          h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+        }
+        return h.toString(16).padStart(8, "0");
+      };
+      const normalize = (v: string) => v.trim().toLowerCase();
+      const dedupKey = fnv1a(
+        [
+          sessionId,
+          normalize(source),
+          normalize(loc),
+          normalize(treatment),
+          normalize(insurance),
+        ].join("|"),
+      );
+
+      // Read prior sends (cap to 50 keys to bound memory growth)
+      let alreadySent = false;
+      let sentList: string[] = [];
+      try {
+        const raw = sessionStorage.getItem(SENT_KEY);
+        sentList = raw ? (JSON.parse(raw) as string[]) : [];
+        alreadySent = Array.isArray(sentList) && sentList.includes(dedupKey);
+      } catch {
+        sentList = [];
+      }
+
+      if (alreadySent) {
+        return; // exact (session, params) tuple already reported
+      }
+
       const payload = {
         source: source || "(direct)",
         has_location: !!loc,
@@ -443,11 +504,21 @@ export default function ConciergeIntake() {
         applied_payment_type: applied.payment_type,
         applied_level_of_care: applied.level_of_care,
         applied_any_field: appliedAny,
+        dedup_key: dedupKey, // surfaced for cross-tool reconciliation
       };
       // GA4
       (window as any).gtag?.("event", "concierge_intake_prefilled", payload);
       // Meta Pixel (custom event) — useful for retargeting prefilled visitors
       (window as any).fbq?.("trackCustom", "ConciergeIntakePrefilled", payload);
+
+      // Persist after dispatch so a thrown analytics call doesn't permanently
+      // suppress the event for this session.
+      try {
+        const next = [...sentList, dedupKey].slice(-50);
+        sessionStorage.setItem(SENT_KEY, JSON.stringify(next));
+      } catch {
+        // best-effort; in-memory ref still prevents re-fire in this mount
+      }
     } catch {
       // analytics is best-effort; never block the intake flow
     }
