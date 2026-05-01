@@ -252,6 +252,14 @@ Deno.serve(async (req) => {
         providerEmail,
         facilityId,
       });
+      recordEmailRejection({
+        fn: "send-provider-welcome-offer-email",
+        reason: recipientCheck.reason,
+        email: providerEmail,
+        shortId,
+        facilityId,
+        detail: recipientCheck.detail,
+      });
       return new Response(
         JSON.stringify({
           error: recipientCheck.detail,
