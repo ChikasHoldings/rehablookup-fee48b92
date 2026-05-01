@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
 
         if (updateError) {
           logStep("Error updating draft", { error: updateError.message });
-          throw new Error("Failed to update draft");
+          return jsonError("draft_update_failed", "Failed to update draft", 500, corsHeaders, { _version: VERSION }, { dbError: updateError.message, draftId, caseId: existingDraft.id });
         }
 
         logStep("Draft updated", { draftId, caseId: existingDraft.id });
