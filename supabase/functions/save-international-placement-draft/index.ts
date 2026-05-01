@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
 
     if (recentDrafts && recentDrafts >= 3 && !validatedDraftId) {
       logStep("Rate limit exceeded", { email, count: recentDrafts });
-      return errorResponse("Too many requests. Please try again later.", 429, corsHeaders);
+      return jsonError("rate_limited", "Too many requests. Please try again later.", 429, corsHeaders, { _version: VERSION }, { limit: 3, windowSeconds: 3600, recentCount: recentDrafts });
     }
 
     // Sanitize all intake data
