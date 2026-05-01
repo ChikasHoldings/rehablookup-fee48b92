@@ -186,6 +186,7 @@ function main() {
   const robotsPath = join(PUBLIC_DIR, "robots.txt");
   const sitemapPath = join(PUBLIC_DIR, "sitemap.xml");
   const facilitiesSitemapPath = join(PUBLIC_DIR, "sitemap-facilities.xml");
+  const extrasSitemapPath = join(PUBLIC_DIR, "sitemap-extras.xml");
 
   if (!existsSync(robotsPath)) {
     console.error("❌ public/robots.txt is missing.");
@@ -201,8 +202,15 @@ function main() {
   const facilityUrls = existsSync(facilitiesSitemapPath)
     ? parseSitemap(readFileSync(facilitiesSitemapPath, "utf8"))
     : [];
+  // sitemap-extras.xml hosts the long-tail near-me / treatment-geo / state
+  // landing pages that the main generator gates by inventory. Crawlers DO read
+  // it (it's declared in robots.txt), so it must be considered authoritative
+  // when checking which prerendered HTML files are "discoverable".
+  const extrasUrls = existsSync(extrasSitemapPath)
+    ? parseSitemap(readFileSync(extrasSitemapPath, "utf8"))
+    : [];
 
-  const allSitemapUrls = [...mainUrls, ...facilityUrls];
+  const allSitemapUrls = [...mainUrls, ...facilityUrls, ...extrasUrls];
   const allSitemapPaths = new Set(
     allSitemapUrls.map(urlPath).filter(Boolean)
   );
@@ -212,11 +220,17 @@ function main() {
     `${CANONICAL_HOST}/sitemap.xml`,
     `${CANONICAL_HOST}/sitemap-facilities.xml`,
   ];
+  // sitemap-extras.xml is OPTIONAL: only required to be declared in robots.txt
+  // if the file actually exists in /public. (Some build profiles skip it.)
+  if (existsSync(extrasSitemapPath)) {
+    expectedSitemaps.push(`${CANONICAL_HOST}/sitemap-extras.xml`);
+  }
   for (const s of expectedSitemaps) {
     if (!robots.sitemaps.includes(s)) {
       errors.push(`robots.txt missing \`Sitemap: ${s}\` directive.`);
     }
   }
+
 
   // ---- 2. Sitemap URL hygiene ---------------------------------------------
   const seen = new Set();
