@@ -357,6 +357,11 @@ a:hover{text-decoration:underline}
 .related h2{font-size:1.2rem}
 .related ul{padding-left:20px}
 .related li{margin:6px 0}
+.faq{margin-top:32px}
+.faq h2{font-size:1.4rem}
+.faq-item{margin:14px 0;padding:14px 16px;background:#fafafa;border:1px solid #eef2f7;border-radius:6px}
+.faq-item h3{margin:0 0 6px;font-size:1.05rem;color:#1B365D}
+.faq-item p{margin:0;color:#333}
 footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
 </style>
 </head>
