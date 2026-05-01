@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { createLogger } from "../_shared/structured-logger.ts";
 
 const SignupNotificationSchema = z.object({
   facilityId: z.string().uuid({ message: "facilityId must be a valid UUID" }),
@@ -14,10 +15,6 @@ const SignupNotificationSchema = z.object({
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
-const logStep = (step: string, details?: unknown) => {
-  console.log(`[NOTIFY-ADMIN-PROVIDER-SIGNUP] ${step}`, details ? JSON.stringify(details) : "");
 };
 
 type SignupNotification = z.infer<typeof SignupNotificationSchema>;
