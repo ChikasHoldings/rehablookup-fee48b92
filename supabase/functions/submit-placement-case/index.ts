@@ -247,10 +247,7 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       logStep(requestId, "Insert error", { error: insertError.message });
-      return new Response(
-        JSON.stringify({ error: "Failed to create placement case" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonError("case_create_failed", "Failed to create placement case", 500, corsHeaders, { requestId, _version: VERSION }, { dbError: insertError.message });
     }
 
     const caseNumber = caseData.id.slice(0, 8).toUpperCase();
