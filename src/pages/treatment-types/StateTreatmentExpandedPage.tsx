@@ -154,6 +154,11 @@ const StateTreatmentExpandedPage = ({ treatmentKey }: StateTreatmentExpandedPage
         title={`${config.label} Centers in ${stateName} (${abbreviation}) | Find Treatment`}
         description={`Find accredited ${config.label.toLowerCase()} in ${stateName}. Compare verified programs, verify insurance, and get matched with the right facility. ${cities.length}+ cities covered.`}
         canonical={`/treatment-types/${config.slug}/${stateSlug}`}
+        // Thin near-duplicate of /rehab-centers/:state — Google was choosing
+        // one as canonical anyway. Keep the page reachable for users (linked
+        // from treatment-type hubs) but exclude from index to consolidate
+        // ranking signals on /rehab-centers/:state.
+        noindex
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },

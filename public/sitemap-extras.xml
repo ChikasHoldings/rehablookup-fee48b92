@@ -1782,10 +1782,8 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
-  <url>
-    <loc>https://rehablookup.com/womens-rehab-centers</loc>
-    <lastmod>2026-05-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
+  <!-- /womens-rehab-centers removed: route redirects to /treatment-types and
+       Google was flagging it as duplicate of an unrelated canonical. The
+       real hub is /womens-rehab (already in sitemap.xml). -->
+
 </urlset>
