@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error("Missing required environment variables");
+      return jsonError("server_misconfigured", "Missing required environment variables", 500, corsHeaders, { _version: VERSION });
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
