@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { jsonError } from "../_shared/validation.ts";
+import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
 
 const VERSION = "2.0.0";
 
