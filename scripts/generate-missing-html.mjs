@@ -74,7 +74,13 @@ function html({ urlPath, title, metaTitle, metaDescription, h1, content, breadcr
 
 async function write(filePath, content) {
   await mkdir(path.dirname(filePath), { recursive: true });
+  // Hybrid layout: write /path.html AND /path/index.html (see generate-seo-html.mjs)
   await writeFile(filePath, content, "utf8");
+  if (filePath.endsWith(".html") && !filePath.endsWith("/index.html")) {
+    const nestedDir = filePath.slice(0, -".html".length);
+    await mkdir(nestedDir, { recursive: true });
+    await writeFile(path.join(nestedDir, "index.html"), content, "utf8");
+  }
   count++;
 }
 

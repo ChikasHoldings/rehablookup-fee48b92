@@ -8,7 +8,7 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/((?!api/|assets/|functions/).*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ],
