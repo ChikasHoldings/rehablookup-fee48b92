@@ -277,21 +277,36 @@ Deno.serve(async (req) => {
     });
 
     if (!result.success && !result.deduplicated) {
-      logStep("Error sending admin email", { error: result.error });
+      log.error("admin_email_send_failed", {
+        code: "email_send_failed",
+        reason: typeof result.error === "string" ? result.error : (result.error as { message?: string } | undefined)?.message ?? "Unknown send error",
+        recipients: adminEmails.length,
+        deadLettered: result.deadLettered ?? false,
+        facilityId,
+      });
     } else {
-      logStep("Admin email sent", { recipients: adminEmails.length, deduplicated: result.deduplicated });
+      log.info("admin_email_sent", {
+        code: result.deduplicated ? "email_deduplicated" : "email_sent",
+        recipients: adminEmails.length,
+        deduplicated: result.deduplicated ?? false,
+        facilityId,
+      });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: true, shortId, code: result.deduplicated ? "email_deduplicated" : "email_sent" }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    log.error("unhandled_exception", {
+      code: "internal_error",
+      reason: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
     });
+    return new Response(
+      JSON.stringify({ error: errorMessage, code: "internal_error", shortId }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 });
