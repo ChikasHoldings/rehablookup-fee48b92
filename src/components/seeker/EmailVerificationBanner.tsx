@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Mail, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/extractErrorMessage';
 
 interface EmailVerificationBannerProps {
   email?: string;
@@ -37,7 +38,7 @@ export function EmailVerificationBanner({ email, onVerified }: EmailVerification
       });
 
       if (error || data?.error) {
-        toast.error(data?.error || 'Failed to send verification code');
+        toast.error(extractErrorMessage(data ?? error, 'Failed to send verification code'));
         return;
       }
 
@@ -87,7 +88,7 @@ export function EmailVerificationBanner({ email, onVerified }: EmailVerification
       });
 
       if (error || data?.error) {
-        toast.error(data?.error || 'Invalid code. Please try again.');
+        toast.error(extractErrorMessage(data ?? error, 'Invalid code. Please try again.'));
         setCode(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
         return;

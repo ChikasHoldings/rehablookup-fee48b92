@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LeadIntakeFormData, initialLeadIntakeFormData, TOTAL_STEPS } from "./types";
 import { analytics } from "@/lib/analytics";
 import { useAuthReady } from "@/hooks/useAuthReady";
+import { extractErrorMessage } from "@/lib/extractErrorMessage";
 
 const STORAGE_KEY = "lead_intake_form_data";
 const STORAGE_EXPIRY_MS = 30 * 60 * 1000; // 30 minutes
@@ -277,8 +278,8 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
         body: { email: formData.email.toLowerCase().trim() },
       });
       
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) throw new Error(extractErrorMessage(error, "Failed to send code"));
+      if (data?.error) throw new Error(extractErrorMessage(data, "Failed to send code"));
       
       setCodeSent(true);
       setResendCount(prev => prev + 1);
@@ -317,8 +318,8 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
         },
       });
       
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) throw new Error(extractErrorMessage(error, "Invalid code"));
+      if (data?.error) throw new Error(extractErrorMessage(data, "Invalid code"));
       
       setIsEmailVerified(true);
       
@@ -352,14 +353,14 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
     // Submission debounce - prevent double-clicks and rapid resubmission
     const now = Date.now();
     if (now - lastSubmitAt.current < SUBMISSION_DEBOUNCE_MS) {
-      console.log("[useLeadIntakeForm] Submission debounced");
+      if (import.meta.env.DEV) console.log("[useLeadIntakeForm] Submission debounced");
       return;
     }
     lastSubmitAt.current = now;
 
     // Check honeypot
     if (formData.website) {
-      console.log("Honeypot triggered");
+      if (import.meta.env.DEV) console.log("Honeypot triggered");
       // Pretend success to fool bots
       setIsSubmitted(true);
       return;
@@ -474,8 +475,8 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
         },
       });
       
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) throw new Error(extractErrorMessage(error, "Submission failed. Please try again."));
+      if (data?.error) throw new Error(extractErrorMessage(data, "Submission failed. Please try again."));
       
       // Clear saved form data and idempotency key
       localStorage.removeItem(STORAGE_KEY);

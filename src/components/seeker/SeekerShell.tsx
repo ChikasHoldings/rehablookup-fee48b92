@@ -210,13 +210,15 @@ export function SeekerShell() {
 
   const displayName = profile?.first_name || profile?.display_name || userEmail?.split('@')[0];
 
-  // Show loading skeleton while auth/profile is resolving
-  if (!isReady || (isAuthenticated && profile === undefined)) {
+  // Show loading skeleton while auth/profile/role is resolving.
+  // We wait for BOTH profile and userRole so admins/providers don't briefly
+  // see the seeker "Complete Your Profile" empty state during the redirect race.
+  if (!isReady || (isAuthenticated && (profile === undefined || userRole === undefined))) {
     return <SeekerShellSkeleton />;
   }
 
-  // Show empty state for authenticated users with no profile
-  if (isAuthenticated && profile === null) {
+  // Show empty state ONLY for authenticated seekers (not admins/providers in transit).
+  if (isAuthenticated && profile === null && userRole === "seeker") {
     return (
       <SeekerEmptyState 
         onCompleteProfile={() => navigate('/account/settings')} 

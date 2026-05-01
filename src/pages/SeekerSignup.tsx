@@ -14,6 +14,7 @@ import { isValidPhoneNumber } from '@/lib/phoneUtils';
 import { isValidEmail } from '@/lib/emailUtils';
 import { useZipcodeLookup } from '@/hooks/useZipcodeLookup';
 import { PasswordStrengthIndicator, calculatePasswordStrength } from '@/components/ui/password-strength-indicator';
+import { extractErrorMessage } from '@/lib/extractErrorMessage';
 
 export default function SeekerSignup() {
   const navigate = useNavigate();
@@ -109,11 +110,11 @@ export default function SeekerSignup() {
     });
     
     if (error) {
-      throw new Error('Failed to send verification code');
+      throw new Error(extractErrorMessage(error, 'Failed to send verification code'));
     }
     
     if (data?.error) {
-      throw new Error(data.error);
+      throw new Error(extractErrorMessage(data, 'Failed to send verification code'));
     }
     
     return data;

@@ -1,6 +1,7 @@
 import { useState, forwardRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { extractErrorMessage } from "@/lib/extractErrorMessage";
 import {
   Dialog,
   DialogContent,
@@ -104,8 +105,8 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) throw new Error(extractErrorMessage(error, "Failed to submit tour request"));
+      if (data?.error) throw new Error(extractErrorMessage(data, "Failed to submit tour request"));
       return { type: "lead" };
     },
     onSuccess: () => {

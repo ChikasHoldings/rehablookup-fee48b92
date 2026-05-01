@@ -11,6 +11,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ============ STANDARDIZED ERROR ENVELOPE ============
+// All non-2xx responses use this shape so the client can read either
+// `data.error.message`, `data.reason`, or the top-level `code`.
+function errorResponse(
+  status: number,
+  code: string,
+  message: string,
+  field?: string
+) {
+  return new Response(
+    JSON.stringify({
+      error: { code, message },
+      code,
+      reason: message,
+      _version: VERSION,
+      ...(field ? { details: { field } } : {}),
+    }),
+    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
 // ============ LOGGING ============
 const generateRequestId = () => crypto.randomUUID().slice(0, 8);
 
@@ -453,9 +474,7 @@ Deno.serve(async (req) => {
 
   // Only accept POST
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), {
-      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return errorResponse(405, "method_not_allowed", "Method not allowed");
   }
 
   try {
@@ -471,10 +490,7 @@ Deno.serve(async (req) => {
     try {
       rawData = await req.json();
     } catch {
-      return new Response(
-        JSON.stringify({ success: false, error: "Invalid request body" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "invalid_body", "Invalid request body");
     }
     
     // ===== INPUT SANITIZATION =====
@@ -513,25 +529,16 @@ Deno.serve(async (req) => {
 
     // ===== VALIDATION: Required fields =====
     if (!data.facilityId) {
-      return new Response(
-        JSON.stringify({ success: false, error: "facility_id is required for all inquiries" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "facility_required", "facility_id is required for all inquiries", "facilityId");
     }
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(data.facilityId)) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Invalid facility ID" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "invalid_facility_id", "Invalid facility ID", "facilityId");
     }
 
     if (!data.name || data.name.length < 2) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Name is required (minimum 2 characters)" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "name_required", "Name is required (minimum 2 characters)", "name");
     }
 
     if (!data.email || typeof data.email !== "string" || data.email.trim().length === 0) {
@@ -570,10 +577,7 @@ Deno.serve(async (req) => {
     }
 
     if (!data.phone || data.phone.length < 10) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Please provide a valid phone number (minimum 10 digits)" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "phone_invalid", "Please provide a valid phone number (minimum 10 digits)", "phone");
     }
 
     // ===== ENUM VALIDATION (reject invalid values) =====
@@ -596,10 +600,7 @@ Deno.serve(async (req) => {
     const emailVerified = await isEmailServerVerified(supabase, data.email);
     if (!emailVerified) {
       log(requestId, "WARN", "Email not verified server-side", { email: data.email.substring(0, 3) + "***" });
-      return new Response(
-        JSON.stringify({ success: false, error: "Email address must be verified before submitting. Please verify your email first." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(403, "email_not_verified", "Email address must be verified before submitting. Please verify your email first.", "email");
     }
 
     // ===== IDEMPOTENCY CHECK =====
@@ -622,27 +623,18 @@ Deno.serve(async (req) => {
 
     if (facilityError || !facility) {
       log(requestId, "ERROR", "Facility not found", { facilityId: data.facilityId });
-      return new Response(
-        JSON.stringify({ success: false, error: "Facility not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(404, "facility_not_found", "Facility not found", "facilityId");
     }
 
     if (facility.status !== "approved" || facility.suspended) {
       log(requestId, "ERROR", "Facility not accepting inquiries", { facilityId: data.facilityId, status: facility.status });
-      return new Response(
-        JSON.stringify({ success: false, error: "This facility is not currently accepting inquiries" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "facility_not_accepting", "This facility is not currently accepting inquiries", "facilityId");
     }
 
     // ===== DUPLICATE CHECK =====
     const duplicateCheck = await checkForDuplicate(supabase, data.email, data.phone, data.facilityId, requestId);
     if (duplicateCheck.isDuplicate) {
-      return new Response(
-        JSON.stringify({ success: false, error: duplicateCheck.reason }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(429, "duplicate_inquiry", duplicateCheck.reason || "Duplicate inquiry detected");
     }
 
     // ===== GLOBAL RATE LIMITING =====
@@ -657,10 +649,7 @@ Deno.serve(async (req) => {
 
     if (globalEmailCount && globalEmailCount >= 10) {
       log(requestId, "WARN", "Global email rate limit exceeded");
-      return new Response(
-        JSON.stringify({ success: false, error: "Too many inquiries. Please wait before submitting again." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(429, "rate_limit_email", "Too many inquiries. Please wait before submitting again.");
     }
 
     // Per-facility rate limit: 5/hour (same email)
@@ -673,10 +662,7 @@ Deno.serve(async (req) => {
 
     if (facilityEmailCount && facilityEmailCount >= 5) {
       log(requestId, "WARN", "Per-facility email rate limit exceeded");
-      return new Response(
-        JSON.stringify({ success: false, error: "Too many inquiries to this facility. Please wait before submitting again." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(429, "rate_limit_facility", "Too many inquiries to this facility. Please wait before submitting again.");
     }
 
     // IP-based rate limit: 15/hour (if IP available)
@@ -692,10 +678,7 @@ Deno.serve(async (req) => {
 
       if (ipCount && ipCount >= 15) {
         log(requestId, "WARN", "IP-based rate limit exceeded", { ipHash: ipHashHex.substring(0, 8) });
-        return new Response(
-          JSON.stringify({ success: false, error: "Too many inquiries from this network. Please wait before submitting again." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return errorResponse(429, "rate_limit_ip", "Too many inquiries from this network. Please wait before submitting again.");
       }
 
       // Store hashed IP for tracking
@@ -783,10 +766,7 @@ Deno.serve(async (req) => {
       }
       
       log(requestId, "ERROR", "Failed to insert lead", { error: insertError.message, code: insertError.code });
-      return new Response(
-        JSON.stringify({ success: false, error: "Failed to submit inquiry. Please try again." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(500, "lead_insert_failed", "Failed to submit inquiry. Please try again.");
     }
 
     log(requestId, "INFO", "Lead inserted", { leadId: lead.id });
@@ -982,9 +962,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     log(requestId, "ERROR", "Unhandled error", { error: error instanceof Error ? error.message : String(error) });
-    return new Response(
-      JSON.stringify({ success: false, error: "An unexpected error occurred. Please try again." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return errorResponse(500, "internal_error", "An unexpected error occurred. Please try again.");
   }
 });
