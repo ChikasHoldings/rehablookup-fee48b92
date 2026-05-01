@@ -291,6 +291,46 @@ const NotFound = () => {
               </CardContent>
             </Card>
 
+            {/* Quick-recovery: popular cities */}
+            <div className="max-w-2xl mx-auto mb-4 text-left">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+                Popular cities
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {POPULAR_CITIES.slice(0, 10).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => goToSearch(c)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                  >
+                    <MapPin className="h-3 w-3 text-muted-foreground" />
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick-recovery: popular ZIPs */}
+            <div className="max-w-2xl mx-auto mb-8 text-left">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+                Popular ZIP codes
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {POPULAR_ZIPS.map((z) => (
+                  <button
+                    key={z.zip}
+                    type="button"
+                    onClick={() => goToSearch(z.zip)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                  >
+                    <Search className="h-3 w-3 text-muted-foreground" />
+                    {z.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Primary Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
               <Link to="/" className="w-full sm:w-auto">
