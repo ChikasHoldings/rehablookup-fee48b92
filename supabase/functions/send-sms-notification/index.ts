@@ -140,7 +140,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    let phone = profile.phone.replace(/\D/g, "");
+    // Reject obviously malformed inputs before any normalization (control chars, letters, etc.)
+    const rawPhone = typeof profile.phone === "string" ? profile.phone.trim() : "";
+    if (!rawPhone || !/^[+\d\s().\-]{7,32}$/.test(rawPhone)) {
+      logStep("Malformed recipient phone (pre-normalization)", { requestId, userId: userId.slice(0, 8) });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          sent: false,
+          error: "Malformed recipient phone number",
+          code: "phone_rejected",
+          requestId,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    let phone = rawPhone.replace(/\D/g, "");
     if (phone.length === 10) {
       phone = `+1${phone}`;
     } else if (phone.length === 11 && phone.startsWith("1")) {
@@ -149,12 +165,19 @@ Deno.serve(async (req) => {
       phone = `+${phone}`;
     }
 
+    // Strict E.164 US format check (Twilio destination)
     const phoneRegex = /^\+1\d{10}$/;
     if (!phoneRegex.test(phone)) {
       logStep("Invalid phone format after normalization", { requestId, phoneLength: phone.length });
       return new Response(
-        JSON.stringify({ success: true, sent: false, reason: "Invalid phone number format", requestId }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          success: false,
+          sent: false,
+          error: "Recipient phone number failed E.164 validation",
+          code: "phone_rejected",
+          requestId,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

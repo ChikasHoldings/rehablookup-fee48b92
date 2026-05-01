@@ -184,6 +184,15 @@ export const ERROR_CODES = {
       "send-provider-welcome-offer-email",
     ],
   },
+  phone_rejected: {
+    code: "phone_rejected",
+    httpStatus: 400,
+    category: "validation",
+    description:
+      "Recipient phone number is malformed or fails E.164 validation after normalization. The number cannot be safely passed to the SMS provider.",
+    retryable: false,
+    emittedBy: ["send-sms-notification"],
+  },
 
   // ---------- Auth / access ----------
   conflict: {

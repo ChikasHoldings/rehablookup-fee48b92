@@ -29,6 +29,7 @@
           "name_required",
           "phone_required",
           "email_rejected",
+          "phone_rejected",
           "conflict",
           "rate_limited",
           "facility_missing",
@@ -222,6 +223,16 @@
       "emittedBy": [
         "send-provider-welcome-email",
         "send-provider-welcome-offer-email"
+      ]
+    },
+    {
+      "code": "phone_rejected",
+      "httpStatus": 400,
+      "category": "validation",
+      "description": "Recipient phone number is malformed or fails E.164 validation after normalization. The number cannot be safely passed to the SMS provider.",
+      "retryable": false,
+      "emittedBy": [
+        "send-sms-notification"
       ]
     },
     {
