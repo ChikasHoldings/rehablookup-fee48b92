@@ -1,14 +1,44 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Phone, ArrowRight, Heart, Shield, Clock, HeartHandshake } from "lucide-react";
+import { CheckCircle2, Phone, ArrowRight, Heart, Shield, Clock, HeartHandshake, Mail, MessageSquare, User } from "lucide-react";
 import { useEffect, useState } from "react";
+
+interface LeadIntakeSuccessContact {
+  email?: string;
+  phone?: string;
+  preferredContact?: string;
+  bestTimeToCall?: string;
+}
 
 interface LeadIntakeSuccessProps {
   facilityName?: string | null;
   firstName?: string;
+  contact?: LeadIntakeSuccessContact;
 }
 
-export function LeadIntakeSuccess({ facilityName, firstName }: LeadIntakeSuccessProps) {
+const PREFERRED_CONTACT_LABEL: Record<string, string> = {
+  call: "Phone call",
+  phone: "Phone call",
+  text: "Text message (SMS)",
+  sms: "Text message (SMS)",
+  email: "Email",
+};
+
+const BEST_TIME_LABEL: Record<string, string> = {
+  morning: "Morning (8am–12pm)",
+  afternoon: "Afternoon (12pm–5pm)",
+  evening: "Evening (5pm–8pm)",
+  anytime: "Anytime",
+};
+
+function maskPhone(phone?: string) {
+  if (!phone) return "";
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 4) return phone;
+  return `••• ••• ${digits.slice(-4)}`;
+}
+
+export function LeadIntakeSuccess({ facilityName, firstName, contact }: LeadIntakeSuccessProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -16,6 +46,15 @@ export function LeadIntakeSuccess({ facilityName, firstName }: LeadIntakeSuccess
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  const preferredLabel = contact?.preferredContact
+    ? PREFERRED_CONTACT_LABEL[contact.preferredContact] ?? contact.preferredContact
+    : null;
+  const bestTimeLabel = contact?.bestTimeToCall
+    ? BEST_TIME_LABEL[contact.bestTimeToCall] ?? contact.bestTimeToCall
+    : null;
+
+  const hasContactRecap = !!(contact && (contact.email || contact.phone || preferredLabel));
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center py-16 px-4">
@@ -52,7 +91,56 @@ export function LeadIntakeSuccess({ facilityName, firstName }: LeadIntakeSuccess
           )}
         </p>
 
+        {/* Contact Details Recap */}
+        {hasContactRecap && (
+          <div className="bg-card border border-border/60 rounded-2xl p-5 mb-6 text-left shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-foreground text-sm">
+                Contact details we received
+              </h3>
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                Confirmed
+              </span>
+            </div>
+            <ul className="space-y-2.5 text-sm">
+              {firstName && (
+                <li className="flex items-center gap-3">
+                  <User className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-foreground font-medium">{firstName}</span>
+                </li>
+              )}
+              {contact?.email && (
+                <li className="flex items-center gap-3">
+                  <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-foreground break-all">{contact.email}</span>
+                </li>
+              )}
+              {contact?.phone && (
+                <li className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-foreground">{maskPhone(contact.phone)}</span>
+                </li>
+              )}
+              {preferredLabel && (
+                <li className="flex items-center gap-3">
+                  <MessageSquare className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-foreground">
+                    Preferred: <span className="font-medium">{preferredLabel}</span>
+                    {bestTimeLabel ? (
+                      <span className="text-muted-foreground"> · {bestTimeLabel}</span>
+                    ) : null}
+                  </span>
+                </li>
+              )}
+            </ul>
+            <p className="text-xs text-muted-foreground mt-3">
+              Something not right? Reply to the confirmation email we just sent and we'll update it.
+            </p>
+          </div>
+        )}
+
         {/* Feature Cards */}
+
         <div className="grid grid-cols-3 gap-3 mb-8">
           <div className="bg-card border border-border/50 rounded-xl p-4 hover:border-primary/30 transition-colors">
             <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
