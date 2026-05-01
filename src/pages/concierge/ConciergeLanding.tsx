@@ -108,8 +108,8 @@ export default function ConciergeLanding() {
   return (
     <>
       <SEO
-        title="Find Treatment That Fits | Concierge Placement Service"
-        description="Stop searching alone. Our specialists connect you with treatment programs that fit your needs, insurance, and location. Just $29, one-time. Get placed in 24-48 hours."
+        title="Find Treatment That Fits | Free Concierge Placement"
+        description="Stop searching alone. Our specialists connect you with treatment programs that fit your needs, insurance, and location — free for clients. Get placed in 24-48 hours."
         canonical="/concierge"
         keywords={["treatment placement", "rehab concierge", "addiction treatment placement", "personalized rehab help", "find rehab near me"]}
         structuredData={[
@@ -117,10 +117,10 @@ export default function ConciergeLanding() {
             "@context": "https://schema.org",
             "@type": "Service",
             "name": "RehabLookup Concierge Placement Service",
-            "description": "Personalized treatment placement service connecting individuals with rehab programs matching their needs, insurance, and location.",
+            "description": "Free personalized treatment placement service connecting individuals with rehab programs matching their needs, insurance, and location.",
             "url": "https://rehablookup.com/concierge",
             "provider": { "@type": "Organization", "name": "RehabLookup", "url": "https://rehablookup.com" },
-            "offers": { "@type": "Offer", "price": "29", "priceCurrency": "USD" },
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
           },
         ]}
         breadcrumbs={[
