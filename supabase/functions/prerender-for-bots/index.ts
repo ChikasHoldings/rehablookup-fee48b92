@@ -314,7 +314,9 @@ function buildFacilityHtml(
     name: f.name,
     description: baseDesc,
     url,
-    telephone: f.phone || undefined,
+    // Phone is a Pro-only contact channel — omit from JSON-LD for non-Pro
+    // listings so structured data matches the on-page UX (no leakage to bots).
+    telephone: isPro && f.phone ? f.phone : undefined,
     image: image,
     address: {
       '@type': 'PostalAddress',
