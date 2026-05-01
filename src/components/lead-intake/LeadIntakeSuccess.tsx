@@ -91,7 +91,56 @@ export function LeadIntakeSuccess({ facilityName, firstName, contact }: LeadInta
           )}
         </p>
 
+        {/* Contact Details Recap */}
+        {hasContactRecap && (
+          <div className="bg-card border border-border/60 rounded-2xl p-5 mb-6 text-left shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-foreground text-sm">
+                Contact details we received
+              </h3>
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                Confirmed
+              </span>
+            </div>
+            <ul className="space-y-2.5 text-sm">
+              {firstName && (
+                <li className="flex items-center gap-3">
+                  <User className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-foreground font-medium">{firstName}</span>
+                </li>
+              )}
+              {contact?.email && (
+                <li className="flex items-center gap-3">
+                  <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-foreground break-all">{contact.email}</span>
+                </li>
+              )}
+              {contact?.phone && (
+                <li className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-foreground">{maskPhone(contact.phone)}</span>
+                </li>
+              )}
+              {preferredLabel && (
+                <li className="flex items-center gap-3">
+                  <MessageSquare className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-foreground">
+                    Preferred: <span className="font-medium">{preferredLabel}</span>
+                    {bestTimeLabel ? (
+                      <span className="text-muted-foreground"> · {bestTimeLabel}</span>
+                    ) : null}
+                  </span>
+                </li>
+              )}
+            </ul>
+            <p className="text-xs text-muted-foreground mt-3">
+              Something not right? Reply to the confirmation email we just sent and we'll update it.
+            </p>
+          </div>
+        )}
+
         {/* Feature Cards */}
+
         <div className="grid grid-cols-3 gap-3 mb-8">
           <div className="bg-card border border-border/50 rounded-xl p-4 hover:border-primary/30 transition-colors">
             <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
