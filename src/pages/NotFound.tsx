@@ -336,9 +336,9 @@ const NotFound = () => {
 
             {/* Quick-recovery: popular cities */}
             <div className="max-w-2xl mx-auto mb-4 text-left">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+              <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
                 Popular cities
-              </p>
+              </h2>
               <div className="flex flex-wrap gap-2">
                 {POPULAR_CITIES.slice(0, 10).map((c) => (
                   <button
@@ -356,9 +356,9 @@ const NotFound = () => {
 
             {/* Quick-recovery: popular ZIPs */}
             <div className="max-w-2xl mx-auto mb-8 text-left">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+              <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
                 Popular ZIP codes
-              </p>
+              </h2>
               <div className="flex flex-wrap gap-2">
                 {POPULAR_ZIPS.map((z) => (
                   <button
