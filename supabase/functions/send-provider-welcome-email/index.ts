@@ -3,6 +3,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { createLogger } from "../_shared/structured-logger.ts";
+import { checkRecipientEmail } from "../_shared/recipient-email-guard.ts";
 
 const WelcomeEmailRequestSchema = z.object({
   facilityId: z.string().uuid({ message: "facilityId must be a valid UUID" }),
