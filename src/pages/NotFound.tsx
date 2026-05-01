@@ -143,17 +143,32 @@ const NotFound = () => {
     };
   }, [location.pathname, location.search]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const goToSearch = (locationValue: string) => {
     const params = new URLSearchParams();
-    const trimmed = searchQuery.trim();
+    const trimmed = locationValue.trim();
     if (trimmed) params.set("location", trimmed);
     if (treatment) params.set("treatment", treatment);
     if (insurance) params.set("insurance", insurance);
-    // Require at least one signal so we never send users to an empty results page.
     if ([...params.keys()].length === 0) return;
     navigate(`/search-results?${params.toString()}`);
   };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    goToSearch(searchQuery);
+  };
+
+  // Live auto-suggest: filter popular cities by what the user has typed so
+  // far. Hidden when input is empty or already an exact match.
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+  const citySuggestions =
+    trimmedQuery.length >= 2
+      ? POPULAR_CITIES.filter(
+          (c) =>
+            c.toLowerCase().includes(trimmedQuery) &&
+            c.toLowerCase() !== trimmedQuery,
+        ).slice(0, 5)
+      : [];
 
   const popularLinks = [
     { label: "Find Rehab Centers", href: "/rehab-centers", icon: Building2 },
