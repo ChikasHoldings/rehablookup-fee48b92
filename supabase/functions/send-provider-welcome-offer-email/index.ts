@@ -27,7 +27,8 @@ import {
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-request-id, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Expose-Headers": "x-request-id",
 };
 
 type WelcomeOfferRequest = z.infer<typeof WelcomeOfferRequestSchema>;
@@ -192,8 +193,10 @@ Deno.serve(async (req) => {
   }
 
 
-  const log = createLogger("send-provider-welcome-offer-email");
+  const inboundReqId = req.headers.get("x-request-id")?.trim().slice(0, 64) || undefined;
+  const log = createLogger("send-provider-welcome-offer-email", inboundReqId);
   const { shortId } = log;
+  const idHeaders = { "x-request-id": shortId };
 
   try {
     log.info("started", { code: "request_received" });
@@ -206,7 +209,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: "Email service not configured", code: "email_service_not_configured", shortId }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -219,7 +222,7 @@ Deno.serve(async (req) => {
       log.warn("invalid_json_body", { code: "invalid_json", reason: "Body is not valid JSON" });
       return new Response(
         JSON.stringify({ error: "Invalid JSON body", code: "invalid_json", shortId }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 400, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -238,7 +241,7 @@ Deno.serve(async (req) => {
           shortId,
           fieldErrors,
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 400, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -286,7 +289,7 @@ Deno.serve(async (req) => {
           reason: sendReason,
           deadLettered: result.deadLettered ?? false,
         }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -304,7 +307,7 @@ Deno.serve(async (req) => {
         code: result.deduplicated ? "email_deduplicated" : "email_sent",
         deduplicated: result.deduplicated,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -315,7 +318,7 @@ Deno.serve(async (req) => {
     });
     return new Response(
       JSON.stringify({ error: errorMessage, code: "internal_error", shortId }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } }
     );
   }
 });
