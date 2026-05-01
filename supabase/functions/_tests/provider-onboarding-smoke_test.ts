@@ -202,9 +202,14 @@ for (const fn of FUNCTIONS) {
 
   Deno.test(`[${fn.name}] facilityId is required (UUID) so the idempotency key is well-formed`, async () => {
     const src = await loadSource(fn.path);
-    // The Zod schema must enforce facilityId as a UUID. Without this, the
-    // idempotency key would silently collapse different facilities.
-    assertStringIncludes(src, "facilityId: z.string().uuid(");
+    // The function must source its request schema from the shared contract
+    // module — that's where `facilityId: z.string().uuid(...)` is enforced.
+    // Without this, the idempotency key would silently collapse different facilities.
+    assertStringIncludes(src, "_shared/contracts/welcome-email-contracts.ts");
+    const sharedSrc = await Deno.readTextFile(
+      new URL("../_shared/contracts/welcome-email-contracts.ts", import.meta.url),
+    );
+    assertStringIncludes(sharedSrc, "facilityId: z.string().uuid(");
   });
 
   Deno.test(`[${fn.name}] returns deduplicated flag when send is suppressed`, async () => {
