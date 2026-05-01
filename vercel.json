@@ -21,8 +21,9 @@
   ],
   "rewrites": [
     {
-      "source": "/:path*",
-      "destination": "/index.html"
+      "source": "/((?!.*\\.).*)",
+      "destination": "/index.html",
+      "has": [{ "type": "header", "key": "x-spa-fallback", "value": "1" }]
     }
   ],
   "headers": [
