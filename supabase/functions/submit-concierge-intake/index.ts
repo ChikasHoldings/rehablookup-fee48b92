@@ -219,7 +219,24 @@ Deno.serve(async (req) => {
     }
 
     // Sanitize user-provided data
-    const sanitizedEmail = sanitizeEmail(intakeData.email);
+    let sanitizedEmail: string;
+    try {
+      sanitizedEmail = sanitizeEmail(intakeData.email);
+    } catch {
+      const code = "invalid_email";
+      const message = "Valid email is required";
+      return new Response(
+        JSON.stringify({
+          error: { code, message },
+          code,
+          reason: message,
+          requestId,
+          _version: VERSION,
+          details: { field: "intakeData.email" },
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const sanitizedName = sanitizeString(decisionMakerName, 100);
     const sanitizedPhone = sanitizePhone(intakeData.phone);
 
