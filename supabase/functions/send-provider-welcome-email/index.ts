@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { createLogger } from "../_shared/structured-logger.ts";
 
 const WelcomeEmailRequestSchema = z.object({
   facilityId: z.string().uuid({ message: "facilityId must be a valid UUID" }),
@@ -29,10 +30,6 @@ import {
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
-const logStep = (step: string, details?: unknown) => {
-  console.log(`[SEND-PROVIDER-WELCOME-EMAIL] ${step}`, details ? JSON.stringify(details) : "");
 };
 
 type WelcomeEmailRequest = z.infer<typeof WelcomeEmailRequestSchema>;
@@ -185,14 +182,20 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const log = createLogger("send-provider-welcome-email");
+  const { shortId } = log;
+
   try {
-    logStep("Function started");
+    log.info("started", { code: "request_received" });
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
-      logStep("ERROR", "RESEND_API_KEY not configured");
+      log.error("missing_resend_key", {
+        code: "email_service_not_configured",
+        reason: "RESEND_API_KEY env var is not set",
+      });
       return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
+        JSON.stringify({ error: "Email service not configured", code: "email_service_not_configured", shortId }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -203,27 +206,40 @@ Deno.serve(async (req) => {
     try {
       rawBody = await req.json();
     } catch (_e) {
+      log.warn("invalid_json_body", { code: "invalid_json", reason: "Body is not valid JSON" });
       return new Response(
-        JSON.stringify({ error: "Invalid JSON body", code: "invalid_json" }),
+        JSON.stringify({ error: "Invalid JSON body", code: "invalid_json", shortId }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const parsed = WelcomeEmailRequestSchema.safeParse(rawBody);
     if (!parsed.success) {
-      logStep("Validation failed", parsed.error.flatten());
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      log.warn("validation_failed", {
+        code: "validation_error",
+        reason: "Request payload failed schema validation",
+        fieldErrors,
+      });
       return new Response(
         JSON.stringify({
           error: "Invalid request payload",
           code: "validation_error",
-          fieldErrors: parsed.error.flatten().fieldErrors,
+          shortId,
+          fieldErrors,
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan, idempotencyKey }: WelcomeEmailRequest = parsed.data;
-    logStep("Received request", { facilityId, facilityName, providerEmail, selectedPlan });
+    log.info("payload_validated", {
+      code: "payload_ok",
+      facilityId,
+      facilityName,
+      providerEmail,
+      selectedPlan,
+    });
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -244,26 +260,56 @@ Deno.serve(async (req) => {
     });
 
     if (result.deduplicated) {
-      logStep("Duplicate detected, skipping");
+      log.info("welcome_email_deduplicated", {
+        code: "email_deduplicated",
+        reason: "Duplicate idempotencyKey suppressed by sender",
+        facilityId,
+      });
     } else if (result.success) {
-      logStep("Welcome email sent successfully", { to: providerEmail });
+      log.info("welcome_email_sent", {
+        code: "email_sent",
+        facilityId,
+      });
     } else {
-      logStep("Failed to send welcome email", { error: result.error, deadLettered: result.deadLettered });
+      const sendReason = typeof result.error === "string"
+        ? result.error
+        : (result.error as { message?: string } | undefined)?.message ?? "Unknown send error";
+      log.error("welcome_email_send_failed", {
+        code: "email_send_failed",
+        reason: sendReason,
+        deadLettered: result.deadLettered ?? false,
+        facilityId,
+      });
       return new Response(
-        JSON.stringify({ error: "Failed to send welcome email", details: result.error }),
+        JSON.stringify({
+          error: "Failed to send welcome email",
+          code: "email_send_failed",
+          shortId,
+          reason: sendReason,
+          deadLettered: result.deadLettered ?? false,
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     return new Response(
-      JSON.stringify({ success: true, deduplicated: result.deduplicated }),
+      JSON.stringify({
+        success: true,
+        shortId,
+        code: result.deduplicated ? "email_deduplicated" : "email_sent",
+        deduplicated: result.deduplicated,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+    log.error("unhandled_exception", {
+      code: "internal_error",
+      reason: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMessage, code: "internal_error", shortId }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { createLogger } from "../_shared/structured-logger.ts";
 
 const SignupNotificationSchema = z.object({
   facilityId: z.string().uuid({ message: "facilityId must be a valid UUID" }),
@@ -16,10 +17,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const logStep = (step: string, details?: unknown) => {
-  console.log(`[NOTIFY-ADMIN-PROVIDER-SIGNUP] ${step}`, details ? JSON.stringify(details) : "");
-};
-
 type SignupNotification = z.infer<typeof SignupNotificationSchema>;
 
 Deno.serve(async (req) => {
@@ -27,8 +24,11 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const log = createLogger("notify-admin-provider-signup");
+  const { shortId } = log;
+
   try {
-    logStep("Function started");
+    log.info("started", { code: "request_received" });
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -42,27 +42,39 @@ Deno.serve(async (req) => {
     try {
       rawBody = await req.json();
     } catch (_e) {
+      log.warn("invalid_json_body", { code: "invalid_json", reason: "Body is not valid JSON" });
       return new Response(
-        JSON.stringify({ error: "Invalid JSON body", code: "invalid_json" }),
+        JSON.stringify({ error: "Invalid JSON body", code: "invalid_json", shortId }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const parsed = SignupNotificationSchema.safeParse(rawBody);
     if (!parsed.success) {
-      logStep("Validation failed", parsed.error.flatten());
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      log.warn("validation_failed", {
+        code: "validation_error",
+        reason: "Request payload failed schema validation",
+        fieldErrors,
+      });
       return new Response(
         JSON.stringify({
           error: "Invalid request payload",
           code: "validation_error",
-          fieldErrors: parsed.error.flatten().fieldErrors,
+          shortId,
+          fieldErrors,
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const { facilityId, facilityName, providerEmail, city, state }: SignupNotification = parsed.data;
-    logStep("Received notification request", { facilityId, facilityName, providerEmail });
+    log.info("payload_validated", {
+      code: "payload_ok",
+      facilityId,
+      facilityName,
+      providerEmail,
+    });
 
     const { error: notificationError } = await supabase
       .from("admin_notifications")
@@ -80,9 +92,13 @@ Deno.serve(async (req) => {
       });
 
     if (notificationError) {
-      logStep("Error creating in-app notification", notificationError);
+      log.error("admin_notification_insert_failed", {
+        code: "in_app_notification_failed",
+        reason: notificationError.message ?? "Insert into admin_notifications failed",
+        facilityId,
+      });
     } else {
-      logStep("In-app notification created successfully");
+      log.info("admin_notification_created", { code: "in_app_notification_ok", facilityId });
     }
 
     // Get admin users with notify_new_providers enabled
@@ -92,8 +108,12 @@ Deno.serve(async (req) => {
       .eq("role", "admin");
 
     if (!adminRoles || adminRoles.length === 0) {
-      logStep("No admin users found");
-      return new Response(JSON.stringify({ success: true }), {
+      log.warn("no_admin_users", {
+        code: "no_admins_found",
+        reason: "No users have role=admin",
+        facilityId,
+      });
+      return new Response(JSON.stringify({ success: true, shortId, code: "no_admins_found" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -115,8 +135,12 @@ Deno.serve(async (req) => {
       .map(r => r.user_id);
 
     if (eligibleAdminIds.length === 0) {
-      logStep("No admins have new provider notifications enabled");
-      return new Response(JSON.stringify({ success: true }), {
+      log.info("no_eligible_admins", {
+        code: "all_admins_opted_out",
+        reason: "All admins have notify_new_providers=false",
+        facilityId,
+      });
+      return new Response(JSON.stringify({ success: true, shortId, code: "all_admins_opted_out" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -132,14 +156,23 @@ Deno.serve(async (req) => {
     }
 
     if (adminEmails.length === 0) {
-      logStep("No admin emails found for eligible admins");
-      return new Response(JSON.stringify({ success: true }), {
+      log.warn("no_admin_emails_resolved", {
+        code: "admin_emails_missing",
+        reason: "Eligible admins exist but auth.users lookup returned no emails",
+        eligibleAdminCount: eligibleAdminIds.length,
+        facilityId,
+      });
+      return new Response(JSON.stringify({ success: true, shortId, code: "admin_emails_missing" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    logStep("Sending email to admins with notifications enabled", { count: adminEmails.length });
+    log.info("sending_admin_email", {
+      code: "email_dispatch_started",
+      recipientCount: adminEmails.length,
+      facilityId,
+    });
 
     const emailHtml = `
 <!DOCTYPE html>
@@ -244,21 +277,36 @@ Deno.serve(async (req) => {
     });
 
     if (!result.success && !result.deduplicated) {
-      logStep("Error sending admin email", { error: result.error });
+      log.error("admin_email_send_failed", {
+        code: "email_send_failed",
+        reason: typeof result.error === "string" ? result.error : (result.error as { message?: string } | undefined)?.message ?? "Unknown send error",
+        recipients: adminEmails.length,
+        deadLettered: result.deadLettered ?? false,
+        facilityId,
+      });
     } else {
-      logStep("Admin email sent", { recipients: adminEmails.length, deduplicated: result.deduplicated });
+      log.info("admin_email_sent", {
+        code: result.deduplicated ? "email_deduplicated" : "email_sent",
+        recipients: adminEmails.length,
+        deduplicated: result.deduplicated ?? false,
+        facilityId,
+      });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: true, shortId, code: result.deduplicated ? "email_deduplicated" : "email_sent" }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    log.error("unhandled_exception", {
+      code: "internal_error",
+      reason: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
     });
+    return new Response(
+      JSON.stringify({ error: errorMessage, code: "internal_error", shortId }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 });
