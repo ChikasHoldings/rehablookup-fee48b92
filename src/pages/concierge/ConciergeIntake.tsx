@@ -902,6 +902,7 @@ export default function ConciergeIntake() {
                 localStorage.removeItem(STORAGE_KEY);
                 localStorage.removeItem(EMAIL_VERIFICATION_KEY);
                 localStorage.removeItem(DRAFT_ID_KEY);
+                fireSubmittedEvent("sms");
                 navigate(`/concierge/thank-you?channel=sms&id=${inquiryId}`);
               }}
             />
