@@ -70,7 +70,17 @@ Deno.serve(async (req) => {
 
     const data = intakeData as Record<string, unknown>;
 
-    // Validate and sanitize required fields
+    // Validate and sanitize required fields.
+    // Pre-check: catch missing / non-string / whitespace-only BEFORE sanitizeEmail
+    // so we never rely on its thrown exception for the email_required path.
+    if (
+      typeof data.email !== "string" ||
+      data.email.trim() === ""
+    ) {
+      logStep("ERROR: Missing email");
+      return jsonError("email_required", "Email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
+    }
+
     let email: string;
     try {
       email = sanitizeEmail(data.email);
@@ -79,6 +89,7 @@ Deno.serve(async (req) => {
       return jsonError("invalid_email", "Valid email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
     }
     if (!email) {
+      // Defensive — shared sanitizeEmail returns "" on falsy/non-string input.
       return jsonError("email_required", "Email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
     }
 
