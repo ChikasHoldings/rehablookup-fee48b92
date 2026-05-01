@@ -187,9 +187,19 @@ export class ApiError extends Error {
 }
 
 /**
- * Standard JSON error envelope: `{ error: { code, message }, ...extras }`.
+ * Standard JSON error envelope.
+ *
+ * Shape (canonical, machine-readable):
+ *   {
+ *     error:   { code, message },   // legacy nested form (kept for backward compat)
+ *     code:    string,              // top-level stable identifier (e.g. "invalid_email")
+ *     reason:  string,              // human-readable explanation
+ *     details: Record<string, unknown> | undefined, // optional structured context
+ *     ...extras                     // requestId, _version, etc.
+ *   }
+ *
  * Use this for ALL error responses so smoke tests and clients can rely on
- * a consistent shape.
+ * a consistent shape across functions.
  */
 export function jsonError(
   code: string,
@@ -197,9 +207,17 @@ export function jsonError(
   status: number,
   corsHeaders: Record<string, string>,
   extras: Record<string, unknown> = {},
+  details?: Record<string, unknown>,
 ): Response {
+  const body: Record<string, unknown> = {
+    error: { code, message },
+    code,
+    reason: message,
+    ...extras,
+  };
+  if (details !== undefined) body.details = details;
   return new Response(
-    JSON.stringify({ error: { code, message }, ...extras }),
+    JSON.stringify(body),
     {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status,
