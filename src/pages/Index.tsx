@@ -621,7 +621,7 @@ const Index = () => {
               <p className="text-muted-foreground mb-6 max-w-md">
                 Our specialists personally connect you with verified treatment centers based on your insurance, location, and unique needs.
               </p>
-              <Link to="/concierge">
+              <Link to={buildConciergeHref({ location: homepageConciergeLocation, source: "homepage_placement_section" })}>
                 <Button size="lg" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20">
                   Find Treatment
                   <ArrowRight className="h-4 w-4" />
