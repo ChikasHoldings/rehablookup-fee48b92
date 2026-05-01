@@ -127,9 +127,7 @@ const pages = [
   { path: "/treatment-types/holistic-treatment", title: "Holistic Treatment Programs", desc: "Find holistic treatment programs combining traditional and complementary therapies for whole-person addiction recovery.", bc: [{ name: "Home", url: "/" }, { name: "Treatment Types", url: "/treatment-types" }, { name: "Holistic Treatment", url: "/treatment-types/holistic-treatment" }] },
   { path: "/treatment-types/luxury-rehab", title: "Luxury Rehab Programs", desc: "Explore luxury rehab programs with premium amenities, private accommodations, and world-class clinical care for addiction recovery.", bc: [{ name: "Home", url: "/" }, { name: "Treatment Types", url: "/treatment-types" }, { name: "Luxury Rehab", url: "/treatment-types/luxury-rehab" }] },
 
-  // Legacy treatment redirects (still need HTML for crawlers)
-  { path: "/treatment/detox", title: "Detox Treatment Programs", desc: "Medical detoxification programs for safe substance withdrawal. Find accredited detox centers with 24/7 medical supervision.", bc: [{ name: "Home", url: "/" }, { name: "Treatment Types", url: "/treatment-types" }, { name: "Detox", url: "/treatment/detox" }] },
-  { path: "/treatment/dual-diagnosis", title: "Dual Diagnosis Treatment", desc: "Treatment for co-occurring addiction and mental health conditions. Find integrated dual diagnosis programs at accredited facilities.", bc: [{ name: "Home", url: "/" }, { name: "Treatment Types", url: "/treatment-types" }, { name: "Dual Diagnosis", url: "/treatment/dual-diagnosis" }] },
+  // Legacy /treatment/* paths removed — handled by 301 redirects in vercel.json
 
   // Substance-specific
   { path: "/benzodiazepine-addiction-treatment", title: "Benzodiazepine Addiction Treatment", desc: "Find specialized benzodiazepine addiction treatment centers. Medical detox with tapering protocols, therapy, and long-term recovery support.", bc: [{ name: "Home", url: "/" }, { name: "Treatment Types", url: "/treatment-types" }, { name: "Benzodiazepine Treatment", url: "/benzodiazepine-addiction-treatment" }] },
@@ -191,7 +189,7 @@ const pages = [
 
   // US Rehab international pages
   { path: "/us-rehab", title: "US Rehab for International Patients", desc: "Addiction treatment in the United States for international patients. World-class rehab centers, visa guidance, and placement assistance.", bc: [{ name: "Home", url: "/" }, { name: "US Rehab", url: "/us-rehab" }] },
-  { path: "/us-rehab/best-rehab-usa", title: "Best Rehab Centers in USA", desc: "Discover the best addiction treatment centers in America. Top-rated facilities with proven outcomes and world-class clinical care.", bc: [{ name: "Home", url: "/" }, { name: "US Rehab", url: "/us-rehab" }, { name: "Best Rehab USA", url: "/us-rehab/best-rehab-usa" }] },
+  // /us-rehab/best-rehab-usa removed — 301s to /best-rehab-centers-in-usa via vercel.json
   { path: "/us-rehab/luxury-rehab-america", title: "Luxury Rehab in America", desc: "Five-star luxury addiction treatment in America. Private suites, gourmet dining, spa amenities, and world-class clinical care.", bc: [{ name: "Home", url: "/" }, { name: "US Rehab", url: "/us-rehab" }, { name: "Luxury Rehab", url: "/us-rehab/luxury-rehab-america" }] },
   { path: "/us-rehab/private-rehab-america", title: "Private Rehab in America", desc: "Maximum privacy addiction treatment in America. Anonymous intake, secluded locations, and celebrity-level confidentiality.", bc: [{ name: "Home", url: "/" }, { name: "US Rehab", url: "/us-rehab" }, { name: "Private Rehab", url: "/us-rehab/private-rehab-america" }] },
   { path: "/us-rehab/executive-rehab", title: "Executive Rehab USA", desc: "Executive addiction treatment for CEOs and professionals. Work-friendly rehab with private offices and flexible scheduling.", bc: [{ name: "Home", url: "/" }, { name: "US Rehab", url: "/us-rehab" }, { name: "Executive Rehab", url: "/us-rehab/executive-rehab" }] },
