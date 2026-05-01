@@ -17,6 +17,7 @@ import { StepLogistics } from "@/components/concierge/StepLogistics";
 import { StepPaymentInfo } from "@/components/concierge/StepPaymentInfo";
 import { StepContact } from "@/components/concierge/StepContact";
 import { StepEmailVerification } from "@/components/concierge/StepEmailVerification";
+import { SmsCallbackFallback } from "@/components/concierge/SmsCallbackFallback";
 import { StepReviewSubmit } from "@/components/concierge/StepReviewSubmit";
 import { IntakeProgress } from "@/components/concierge/IntakeProgress";
 
