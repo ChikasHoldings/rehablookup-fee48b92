@@ -167,11 +167,41 @@ function ensureExtrasInIndex() {
   writeFileSync(idxPath, xml, "utf8");
 }
 
+// ---- robots.txt parsing (lightweight, Googlebot semantics) ------------------
+function loadRobotsDisallows() {
+  const robotsPath = join(publicDir, "robots.txt");
+  if (!existsSync(robotsPath)) return [];
+  const text = readFileSync(robotsPath, "utf8");
+  const disallows = new Set();
+  let active = false;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.replace(/#.*$/, "").trim();
+    if (!line) continue;
+    const idx = line.indexOf(":");
+    if (idx === -1) continue;
+    const key = line.slice(0, idx).trim().toLowerCase();
+    const val = line.slice(idx + 1).trim();
+    if (key === "user-agent") active = val === "*" || val.toLowerCase() === "googlebot";
+    else if (key === "disallow" && active && val) disallows.add(val);
+  }
+  return [...disallows];
+}
+
+function isRobotsBlocked(route, disallows) {
+  for (const d of disallows) {
+    if (route === d || route.startsWith(d.endsWith("/") ? d : d + "/") || route.startsWith(d)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // ---- Main -------------------------------------------------------------------
 function main() {
   const sitemapRoutes = readSitemapRoutes();
   const appRoutes = readAppRoutes();
   const prerendered = discoverPrerenderedRoutes(publicDir);
+  const robotsDisallows = loadRobotsDisallows();
 
   const toDelete = []; // [{ route, paths, reason }]
   const toResitemap = []; // [{ route, paths }]
@@ -195,6 +225,14 @@ function main() {
     const noindex = head.robots && /noindex/i.test(head.robots);
     if (noindex) {
       toDelete.push({ route, paths, reason: "noindex meta" });
+      continue;
+    }
+
+    // Robots-disallowed paths (e.g. /placement-help) intentionally ship a
+    // static HTML for direct visitors but must NEVER appear in any sitemap —
+    // putting them there creates a "Sitemap-listed but blocked" Search Console
+    // error. Keep the file on disk; just skip re-sitemapping.
+    if (isRobotsBlocked(route, robotsDisallows)) {
       continue;
     }
 
