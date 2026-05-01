@@ -608,8 +608,8 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
 
       const facilityRow = facility as FacilityRow;
 
-      // Pull related metadata in parallel for richer crawlable body.
-      const [servicesRes, insuranceRes] = await Promise.all([
+      // Pull related metadata in parallel for richer crawlable body + JSON-LD.
+      const [servicesRes, insuranceRes, accreditationsRes, reviewsRes] = await Promise.all([
         supabase
           .from('facility_services')
           .select('service_name')
@@ -620,6 +620,17 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
           .select('insurance_name')
           .eq('facility_id', facilityRow.id)
           .limit(25),
+        supabase
+          .from('facility_accreditations')
+          .select('accreditation_type')
+          .eq('facility_id', facilityRow.id)
+          .limit(15),
+        // Approved-only reviews drive the AggregateRating in JSON-LD.
+        supabase
+          .from('facility_reviews')
+          .select('rating')
+          .eq('facility_id', facilityRow.id)
+          .eq('status', 'approved'),
       ]);
 
       const treatments = ((servicesRes.data as Array<{ service_name: string }> | null) ?? [])
@@ -628,6 +639,17 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
       const insurances = ((insuranceRes.data as Array<{ insurance_name: string }> | null) ?? [])
         .map((i) => i.insurance_name)
         .filter(Boolean);
+      const accreditations = ((accreditationsRes.data as Array<{ accreditation_type: string }> | null) ?? [])
+        .map((a) => a.accreditation_type)
+        .filter(Boolean);
+      const reviewRows = (reviewsRes.data as Array<{ rating: number | null }> | null) ?? [];
+      const ratingValues = reviewRows.map((r) => r.rating).filter((n): n is number => typeof n === 'number');
+      const rating = ratingValues.length > 0
+        ? {
+            value: ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length,
+            count: ratingValues.length,
+          }
+        : null;
 
       // Pro plan check — controls whether phone is exposed in prerendered HTML / JSON-LD.
       const { data: proSub } = await supabase
@@ -639,7 +661,7 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
         .maybeSingle();
       const isPro = !!proSub;
 
-      return buildFacilityHtml(path, facilityRow, treatments, insurances, isPro);
+      return buildFacilityHtml(path, facilityRow, treatments, insurances, isPro, accreditations, rating);
     } catch (err) {
       console.error('[Prerender] Facility fetch error:', err);
     }
