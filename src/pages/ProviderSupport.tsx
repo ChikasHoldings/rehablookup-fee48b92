@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getFriendlyMessageForError } from "@/lib/contracts/friendly-error-messages";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
