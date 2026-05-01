@@ -21,7 +21,7 @@
   ],
   "rewrites": [
     {
-      "source": "/:path*",
+      "source": "/((?!.*\\.[a-zA-Z0-9]+$|api/|assets/|_next/).*)",
       "destination": "/index.html"
     }
   ],
