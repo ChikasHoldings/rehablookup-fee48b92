@@ -81,11 +81,16 @@
       },
       "WelcomeEmailSuccessResponse": {
         "type": "object",
-        "required": ["success"],
+        "required": ["success", "status", "deduplicated", "code", "idempotencyKey"],
         "properties": {
-          "success":   { "type": "boolean", "enum": [true] },
-          "messageId": { "type": "string" },
-          "shortId":   { "type": "string", "description": "Correlation id, also in `x-request-id` header." }
+          "success":        { "type": "boolean", "enum": [true] },
+          "status":         { "type": "string", "enum": ["sent", "deduplicated"], "description": "`sent` = newly delivered to Resend. `deduplicated` = a prior send under the same idempotencyKey was found; no new email was dispatched." },
+          "deduplicated":   { "type": "boolean", "description": "Convenience boolean mirroring `status === \"deduplicated\"`." },
+          "code":           { "type": "string", "enum": ["email_sent", "email_deduplicated"], "description": "Stable code, kept for backwards compatibility." },
+          "idempotencyKey": { "type": "string", "description": "Idempotency key the server used (echoed even when the client omitted it)." },
+          "messageId":      { "type": "string", "description": "Resend message id on a fresh send; the idempotency key on a dedup hit." },
+          "firstSentAt":    { "type": "string", "format": "date-time", "description": "ISO timestamp of the original send when `status === \"deduplicated\"`." },
+          "shortId":        { "type": "string", "description": "Correlation id, also in `x-request-id` header." }
         }
       },
       "WelcomeEmailErrorResponse": {
