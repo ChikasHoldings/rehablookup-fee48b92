@@ -247,6 +247,28 @@ Deno.serve(async (req) => {
     }
 
     const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan, idempotencyKey }: WelcomeOfferRequest = parsed.data;
+
+    const recipientCheck = checkRecipientEmail(providerEmail);
+    if (!recipientCheck.ok) {
+      log.warn("recipient_rejected", {
+        code: "email_rejected",
+        reason: recipientCheck.detail,
+        rejectionReason: recipientCheck.reason,
+        providerEmail,
+        facilityId,
+      });
+      return new Response(
+        JSON.stringify({
+          error: recipientCheck.detail,
+          code: "email_rejected",
+          shortId,
+          fieldErrors: { providerEmail: [recipientCheck.detail] },
+          rejectionReason: recipientCheck.reason,
+        }),
+        { status: 400, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     log.info("payload_validated", {
       code: "payload_ok",
       facilityId,
