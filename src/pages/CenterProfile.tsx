@@ -633,7 +633,11 @@ const CenterProfile = () => {
   const hasValidLogo = facility.logo_url && !logoError;
   const isOwner = currentUserId === facility.user_id;
   const isPending = facility.status === "pending";
-  const showContactDetails = facilityPlan === "pro" || isOwner;
+  // Pro-only contact channels (phone, public email, website link).
+  // Strictly gated on plan — even the facility owner sees the public-facing
+  // experience while previewing their own listing, so they can verify the
+  // upgrade incentive matches what visitors see.
+  const showContactDetails = facilityPlan === "pro";
   const yearsInBusiness = getYearsInBusiness(facility.year_established);
 
   // Map gender_served to display label

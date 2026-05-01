@@ -297,6 +297,7 @@ function buildFacilityHtml(
   f: FacilityRow,
   treatments: string[],
   insurances: string[],
+  isPro: boolean = false,
 ): string {
   const url = `${BASE_URL}${path}`;
   const title = `${f.name} - ${f.city}, ${f.state} | RehabLookup`;
@@ -313,7 +314,9 @@ function buildFacilityHtml(
     name: f.name,
     description: baseDesc,
     url,
-    telephone: f.phone || undefined,
+    // Phone is a Pro-only contact channel — omit from JSON-LD for non-Pro
+    // listings so structured data matches the on-page UX (no leakage to bots).
+    telephone: isPro && f.phone ? f.phone : undefined,
     image: image,
     address: {
       '@type': 'PostalAddress',
@@ -349,7 +352,7 @@ function buildFacilityHtml(
     <address style="font-style: normal;">
       <strong>${escHtml(f.name)}</strong><br>
       ${fullAddress ? `${escHtml(fullAddress)}<br>` : ''}
-      ${f.phone ? `Phone: <a href="tel:${escHtml(f.phone)}">${escHtml(f.phone)}</a><br>` : ''}
+      ${isPro && f.phone ? `Phone: <a href="tel:${escHtml(f.phone)}">${escHtml(f.phone)}</a><br>` : ''}
       ${f.website ? `Website: <a href="${escHtml(f.website)}" rel="nofollow noopener">${escHtml(f.website)}</a>` : ''}
     </address>`;
 
@@ -511,7 +514,17 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
         .map((i) => i.insurance_name)
         .filter(Boolean);
 
-      return buildFacilityHtml(path, facilityRow, treatments, insurances);
+      // Pro plan check — controls whether phone is exposed in prerendered HTML / JSON-LD.
+      const { data: proSub } = await supabase
+        .from('pro_subscriptions')
+        .select('id')
+        .eq('facility_id', facilityRow.id)
+        .eq('status', 'active')
+        .gt('current_period_end', new Date().toISOString())
+        .maybeSingle();
+      const isPro = !!proSub;
+
+      return buildFacilityHtml(path, facilityRow, treatments, insurances, isPro);
     } catch (err) {
       console.error('[Prerender] Facility fetch error:', err);
     }
