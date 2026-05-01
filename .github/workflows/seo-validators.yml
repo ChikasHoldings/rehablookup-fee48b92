@@ -53,3 +53,17 @@ jobs:
 
       - name: Verify cross-page meta uniqueness
         run: npm run check:unique-meta
+
+      # Internal-link check on every PR/push — fast, deterministic, no network.
+      # External links are validated nightly in crawl-404.yml so upstream
+      # uptime noise can't block merges.
+      - name: Verify internal links resolve (offline)
+        run: npm run check:broken-links:internal
+
+      - name: Upload broken-links report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: broken-links-report-pr
+          path: broken-links-report.md
+          if-no-files-found: ignore
