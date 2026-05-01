@@ -192,6 +192,45 @@ const NotFound = () => {
         title="Page Not Found - RehabLookup"
         description="The page you're looking for doesn't exist. Find addiction treatment centers and get help at RehabLookup."
         noindex={true}
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Page Not Found",
+            description:
+              "The requested page could not be found. Search RehabLookup for addiction treatment centers by city, state, or ZIP code.",
+            url: "https://rehablookup.com/404",
+            isPartOf: {
+              "@type": "WebSite",
+              name: "RehabLookup",
+              url: "https://rehablookup.com",
+            },
+            mainEntity: {
+              "@type": "SearchAction",
+              target:
+                "https://rehablookup.com/search-results?location={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://rehablookup.com/",
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Page Not Found",
+                item: "https://rehablookup.com/404",
+              },
+            ],
+          },
+        ]}
       />
       <div className="min-h-[calc(100vh-200px)] bg-gradient-to-b from-primary/5 via-background to-muted/30 py-12 px-4 md:py-20">
         <div className="max-w-4xl mx-auto">
@@ -202,22 +241,26 @@ const NotFound = () => {
               <MapPin className="h-4 w-4 text-destructive" />
               <span className="text-sm font-medium text-destructive">Page Not Found</span>
             </div>
-            
-            {/* Large 404 with gradient */}
-            <h1 className="mb-4 font-display text-8xl font-bold bg-gradient-to-br from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent md:text-9xl animate-fade-in">
+
+            {/* Decorative 404 numeral (aria-hidden so the real H1 carries semantic weight) */}
+            <div
+              aria-hidden="true"
+              className="mb-4 font-display text-8xl font-bold bg-gradient-to-br from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent md:text-9xl animate-fade-in"
+            >
               404
+            </div>
+
+            {/* Real H1 — single, descriptive, crawlable */}
+            <h1 className="mb-3 font-display text-3xl font-bold text-foreground md:text-4xl">
+              Page Not Found
             </h1>
-            
-            {/* Message */}
-            <p className="mb-3 text-xl font-semibold text-foreground md:text-2xl">
-              Oops! This page doesn't exist
-            </p>
             <p className="mb-8 text-muted-foreground leading-relaxed max-w-md mx-auto">
-              The page you're looking for may have been moved or no longer exists. 
+              The page you're looking for may have been moved or no longer exists.
               Let us help you find the treatment resources you need.
             </p>
 
             {/* Search Box */}
+            <h2 className="sr-only">Search treatment centers</h2>
             <Card className="max-w-2xl mx-auto mb-8 shadow-lg border-border/50">
               <CardContent className="p-4">
                 <form onSubmit={handleSearch} className="flex flex-col gap-3">
@@ -293,9 +336,9 @@ const NotFound = () => {
 
             {/* Quick-recovery: popular cities */}
             <div className="max-w-2xl mx-auto mb-4 text-left">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+              <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
                 Popular cities
-              </p>
+              </h2>
               <div className="flex flex-wrap gap-2">
                 {POPULAR_CITIES.slice(0, 10).map((c) => (
                   <button
@@ -313,9 +356,9 @@ const NotFound = () => {
 
             {/* Quick-recovery: popular ZIPs */}
             <div className="max-w-2xl mx-auto mb-8 text-left">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+              <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
                 Popular ZIP codes
-              </p>
+              </h2>
               <div className="flex flex-wrap gap-2">
                 {POPULAR_ZIPS.map((z) => (
                   <button
@@ -340,9 +383,9 @@ const NotFound = () => {
                 </Button>
               </Link>
               <Link to="/rehab-centers" className="w-full sm:w-auto">
-                <Button variant="secondary" size="lg" className="gap-2 w-full sm:w-auto shadow-md">
+                <Button size="lg" className="gap-2 w-full sm:w-auto shadow-md">
                   <Building2 className="h-4 w-4" />
-                  Browse Rehab Centers
+                  Browse the Directory
                 </Button>
               </Link>
               <Link to="/concierge" className="w-full sm:w-auto">
@@ -417,9 +460,9 @@ const NotFound = () => {
           {/* Emergency CTA */}
           <div className="mt-10 text-center p-6 rounded-xl bg-primary/5 border border-primary/10">
             <p className="text-sm text-muted-foreground mb-2">Need immediate help?</p>
-            <p className="font-display font-semibold text-foreground mb-3">
+            <h2 className="font-display font-semibold text-foreground mb-3">
               Our support team is available 24/7 to connect you with treatment
-            </p>
+            </h2>
             <Link to="/concierge">
               <Button variant="default" className="gap-2">
                 <Phone className="h-4 w-4" />
