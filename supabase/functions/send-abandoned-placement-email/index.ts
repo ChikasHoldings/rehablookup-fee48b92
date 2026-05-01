@@ -157,9 +157,11 @@ function buildAbandonedCartEmail(data: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #EFF6FF; border: 2px solid #3B82F6; border-radius: 12px; margin-bottom: 28px;">
                 <tr>
                   <td style="padding: 24px;">
-                    <p style="margin: 0 0 12px 0; font-size: 17px; font-weight: 700; color: #1E40AF; font-family: Arial, Helvetica, sans-serif;">&#128274; 100% Refundable Guarantee</p>
+                    <p style="margin: 0 0 12px 0; font-size: 17px; font-weight: 700; color: #1E40AF; font-family: Arial, Helvetica, sans-serif;">&#128274; ${isDomestic ? 'No-Cost Placement' : '100% Refundable Guarantee'}</p>
                     <p style="margin: 0; font-size: 15px; color: #1E40AF; line-height: 1.7; font-family: Arial, Helvetica, sans-serif;">
-                      Your ${fee} placement fee is <strong>fully refundable</strong> if we are unable to connect you with a suitable treatment program. There is zero risk to you. If our advisors cannot find the right match for your needs, you get your money back. It is that simple.
+                      ${isDomestic
+                        ? `Our domestic placement service is <strong>completely free for clients</strong>. There is zero cost and zero risk — you only pay the treatment program if and when you decide to enroll.`
+                        : `Your ${fee} placement fee is <strong>fully refundable</strong> if we are unable to connect you with a suitable treatment program. There is zero risk to you. If our advisors cannot find the right match for your needs, you get your money back. It is that simple.`}
                     </p>
                   </td>
                 </tr>
@@ -170,7 +172,9 @@ function buildAbandonedCartEmail(data: {
                 <tr>
                   <td style="padding: 18px 20px;">
                     <p style="margin: 0; font-size: 15px; color: #854D0E; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
-                      <strong>Transparent Pricing:</strong> Just <strong>${fee}</strong> for our full placement service. No hidden fees, no recurring charges, no surprises. This one-time fee covers your dedicated advisor, facility matching, outreach, and coordination from start to finish.
+                      <strong>Transparent Pricing:</strong> ${isDomestic
+                        ? `Our domestic placement service is <strong>free for clients</strong>. No fees, no hidden charges. We're compensated by partner facilities only when a successful placement is made.`
+                        : `Just <strong>${fee}</strong> for our full placement service. No hidden fees, no recurring charges, no surprises. This one-time fee covers your dedicated advisor, facility matching, outreach, and coordination from start to finish.`}
                     </p>
                   </td>
                 </tr>
