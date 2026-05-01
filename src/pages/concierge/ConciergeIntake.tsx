@@ -17,6 +17,7 @@ import { StepLogistics } from "@/components/concierge/StepLogistics";
 import { StepPaymentInfo } from "@/components/concierge/StepPaymentInfo";
 import { StepContact } from "@/components/concierge/StepContact";
 import { StepEmailVerification } from "@/components/concierge/StepEmailVerification";
+import { SmsCallbackFallback } from "@/components/concierge/SmsCallbackFallback";
 import { StepReviewSubmit } from "@/components/concierge/StepReviewSubmit";
 import { IntakeProgress } from "@/components/concierge/IntakeProgress";
 
@@ -652,14 +653,33 @@ export default function ConciergeIntake() {
         );
       case 6:
         return (
-          <StepEmailVerification
-            email={formData.email}
-            firstName={formData.firstName}
-            onVerified={handleEmailVerified}
-            onEditEmail={handleEditEmail}
-            isVerified={emailVerification.verified}
-            verifiedAt={emailVerification.verifiedAt}
-          />
+          <>
+            <StepEmailVerification
+              email={formData.email}
+              firstName={formData.firstName}
+              onVerified={handleEmailVerified}
+              onEditEmail={handleEditEmail}
+              isVerified={emailVerification.verified}
+              verifiedAt={emailVerification.verifiedAt}
+            />
+            {/* Optional SMS-callback escape hatch — bypasses email verify + payment */}
+            <SmsCallbackFallback
+              draftId={draftId}
+              firstName={formData.firstName}
+              lastName={formData.lastName}
+              phone={formData.phone}
+              email={formData.email}
+              notes={formData.notes}
+              onRequested={(inquiryId) => {
+                toast.success("Got it — a specialist will text you soon.");
+                // Clear local draft state so users can't double-submit.
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+                localStorage.removeItem(DRAFT_ID_KEY);
+                navigate(`/concierge/thank-you?channel=sms&id=${inquiryId}`);
+              }}
+            />
+          </>
         );
       case 7:
         return (
