@@ -76,8 +76,8 @@ export function PlacementHero({ onGetStarted }: PlacementHeroProps) {
         >
           <div className="inline-flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-card border-2 border-border/50 shadow-sm">
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl sm:text-4xl font-bold text-foreground">$29</span>
-              <span className="text-sm text-muted-foreground">one-time</span>
+              <span className="text-3xl sm:text-4xl font-bold text-foreground">Free</span>
+              <span className="text-sm text-muted-foreground">for clients</span>
             </div>
 
             <div className="space-y-1.5 sm:space-y-2 text-left">
