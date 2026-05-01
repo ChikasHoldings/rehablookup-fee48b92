@@ -365,3 +365,128 @@ function UnlockConfirmDialog({
     </Dialog>
   );
 }
+
+interface UnlockSuccessDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  revealed: { name: string | null; email: string | null; phone: string | null } | null;
+  cityState?: string | null;
+  amountCharged: number;
+  balanceAfter: number;
+}
+
+function UnlockSuccessDialog({
+  open,
+  onOpenChange,
+  revealed,
+  cityState,
+  amountCharged,
+  balanceAfter,
+}: UnlockSuccessDialogProps) {
+  const name = revealed?.name?.trim() || "Lead";
+  const email = revealed?.email?.trim() || null;
+  const phone = revealed?.phone?.trim() || null;
+  const telHref = phone ? `tel:${phone.replace(/[^\d+]/g, "")}` : null;
+  const smsHref = phone ? `sms:${phone.replace(/[^\d+]/g, "")}` : null;
+  const mailHref = email ? `mailto:${email}` : null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </span>
+            Lead unlocked
+          </DialogTitle>
+          <DialogDescription>
+            Contact details are now revealed. Reach out within 10 minutes for the best conversion.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {/* Revealed contact card */}
+          <div className="rounded-lg border bg-card p-4 space-y-2.5">
+            <div className="flex items-center gap-2">
+              <Unlock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                Now visible
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              <div>
+                <p className="text-xs text-muted-foreground">Name</p>
+                <p className="text-sm font-medium text-foreground">{name}</p>
+              </div>
+              {cityState && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Location</p>
+                  <p className="text-sm text-foreground">{cityState}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-muted-foreground">Phone</p>
+                <p className="text-sm font-medium text-foreground">
+                  {phone || <span className="text-muted-foreground italic">Not provided</span>}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="text-sm font-medium text-foreground break-all">
+                  {email || <span className="text-muted-foreground italic">Not provided</span>}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick actions */}
+          {(telHref || smsHref || mailHref) && (
+            <div className="grid grid-cols-3 gap-2">
+              <Button asChild variant="outline" size="sm" disabled={!telHref}>
+                <a href={telHref ?? "#"} aria-disabled={!telHref}>
+                  <Phone className="h-4 w-4 mr-1.5" />
+                  Call
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="sm" disabled={!smsHref}>
+                <a href={smsHref ?? "#"} aria-disabled={!smsHref}>
+                  <MessageSquare className="h-4 w-4 mr-1.5" />
+                  Text
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="sm" disabled={!mailHref}>
+                <a href={mailHref ?? "#"} aria-disabled={!mailHref}>
+                  <Mail className="h-4 w-4 mr-1.5" />
+                  Email
+                </a>
+              </Button>
+            </div>
+          )}
+
+          {/* Receipt */}
+          <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Charged</span>
+              <span className="font-medium text-foreground">
+                ${(amountCharged / 100).toFixed(2)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Remaining balance</span>
+              <span className="font-medium text-foreground">
+                ${(balanceAfter / 100).toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+            Got it
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
