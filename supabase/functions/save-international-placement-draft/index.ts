@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       logStep("Error creating draft", { error: insertError.message });
-      throw new Error("Failed to create draft");
+      return jsonError("draft_create_failed", "Failed to create draft", 500, corsHeaders, { _version: VERSION }, { dbError: insertError.message, draftId });
     }
 
     logStep("Draft created", { draftId, caseId: newCase.id });
