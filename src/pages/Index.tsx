@@ -113,6 +113,14 @@ const Index = () => {
   // Lazy-loaded data for below-fold sections
   const [seekerTestimonials, setSeekerTestimonials] = useState<any[]>([]);
   const [homeFaqs, setHomeFaqs] = useState<any[]>([]);
+  // Geo-derived location string (e.g. "Boise, ID") forwarded to /concierge
+  // so the intake form can prefill the visitor's preferred location without
+  // asking them to retype it. Falls back gracefully when geo isn't ready.
+  const homepageGeo = useGeoLocation();
+  const homepageConciergeLocation =
+    homepageGeo.city && homepageGeo.regionCode
+      ? `${homepageGeo.city}, ${homepageGeo.regionCode}`
+      : homepageGeo.regionCode || "";
 
   useEffect(() => {
     seekerTestimonialsPromise.then(setSeekerTestimonials);
