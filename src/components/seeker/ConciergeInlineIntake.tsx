@@ -737,8 +737,8 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
                 </>
               ) : (
                 <>
-                  <CreditCard className="h-4 w-4" />
-                  Pay $29 & Submit
+                  <CheckCircle className="h-4 w-4" />
+                  Submit My Request
                 </>
               )}
             </Button>
