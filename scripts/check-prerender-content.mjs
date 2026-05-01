@@ -112,6 +112,11 @@ function validateFile(file, expectedPathname) {
   const html = readFileSync(file, "utf8");
   const head = html.slice(0, 16000);
 
+  // The homepage IS the SPA shell — its title/H1/canonical signatures match
+  // by design. Skip shell-leak checks for "/" but still require the file
+  // to exist and have a title + H1.
+  const isHomepage = expectedPathname === "/";
+
   const titleMatch = head.match(/<title[^>]*>\s*([^<]+?)\s*<\/title>/i);
   const title = titleMatch ? titleMatch[1].trim() : null;
 
