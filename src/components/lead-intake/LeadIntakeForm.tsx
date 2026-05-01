@@ -91,9 +91,31 @@ export function LeadIntakeForm({
 
   if (isSubmitted) {
     if (renderSuccess) {
-      return <>{renderSuccess({ firstName: formData.firstName, facilityName })}</>;
+      return <>{renderSuccess({
+        firstName: formData.firstName,
+        facilityName,
+        contact: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          preferredContact: formData.preferredContact,
+          bestTimeToCall: formData.bestTimeToCall,
+        },
+      })}</>;
     }
-    return <LeadIntakeSuccess facilityName={facilityName} firstName={formData.firstName} />;
+    return (
+      <LeadIntakeSuccess
+        facilityName={facilityName}
+        firstName={formData.firstName}
+        contact={{
+          email: formData.email,
+          phone: formData.phone,
+          preferredContact: formData.preferredContact,
+          bestTimeToCall: formData.bestTimeToCall,
+        }}
+      />
+    );
   }
 
   return (
