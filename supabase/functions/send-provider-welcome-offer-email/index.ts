@@ -3,6 +3,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { createLogger } from "../_shared/structured-logger.ts";
 import { checkRecipientEmail } from "../_shared/recipient-email-guard.ts";
+import { recordEmailRejection } from "../_shared/email-rejection-metrics.ts";
 import {
   WelcomeOfferRequestSchema,
   type WelcomeOfferRequest,
