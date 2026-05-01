@@ -227,19 +227,20 @@ export function jsonError(
 
 /**
  * Convert any thrown error into the standard envelope.
- * - ApiError → its declared code + httpStatus
+ * - ApiError → its declared code + httpStatus (+ optional details)
  * - everything else → INTERNAL_ERROR / 500
  */
 export function apiErrorResponse(
   err: unknown,
   corsHeaders: Record<string, string>,
   extras: Record<string, unknown> = {},
+  details?: Record<string, unknown>,
 ): Response {
   if (err instanceof ApiError) {
-    return jsonError(err.code, err.message, err.httpStatus, corsHeaders, extras);
+    return jsonError(err.code, err.message, err.httpStatus, corsHeaders, extras, details);
   }
   const message = err instanceof Error ? err.message : String(err);
-  return jsonError("INTERNAL_ERROR", message, 500, corsHeaders, extras);
+  return jsonError("INTERNAL_ERROR", message, 500, corsHeaders, extras, details);
 }
 
 /**
