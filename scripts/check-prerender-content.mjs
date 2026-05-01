@@ -91,10 +91,19 @@ function readSitemapUrls() {
 // File resolution
 // --------------------------------------------------------------------------
 function resolveLayouts(pathname) {
-  // Root maps to index.html (the SPA shell, intentionally — that IS the home).
+  // Root maps to the SPA shell. Vite serves it from the project-root
+  // `index.html`; `dist/index.html` after build. We accept either as proof
+  // that the homepage prerender exists.
   if (pathname === "/") {
-    const root = join(PUBLIC_DIR, "index.html");
-    return { flat: null, nested: existsSync(root) ? root : null };
+    const distIndex = join(ROOT, "dist", "index.html");
+    const rootIndex = join(ROOT, "index.html");
+    const publicIndex = join(PUBLIC_DIR, "index.html");
+    const found =
+      (existsSync(distIndex) && distIndex) ||
+      (existsSync(publicIndex) && publicIndex) ||
+      (existsSync(rootIndex) && rootIndex) ||
+      null;
+    return { flat: null, nested: found };
   }
   const rel = pathname.replace(/^\//, "");
   const flat = join(PUBLIC_DIR, `${rel}.html`);
