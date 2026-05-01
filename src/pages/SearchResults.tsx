@@ -8,6 +8,8 @@ import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleto
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import { SearchResultsForm } from "@/components/search/SearchResultsForm";
 import { FilterChips } from "@/components/search/FilterChips";
+import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
+import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
 import { 
   Heart, 
   MapPin, 
@@ -1200,8 +1202,24 @@ const SearchResults = () => {
                 </>
               ) : (
                 /* Empty State */
-                <div className="flex flex-col items-center justify-center py-16 px-4 animate-fade-in">
-                  <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
+                <div className="flex flex-col items-center justify-center py-12 px-4 animate-fade-in">
+                  {/* Phase 1: zero-result conversion CTA — Concierge match */}
+                  <NoResultsConciergeCTA
+                    location={location}
+                    treatmentTypes={selectedTreatmentTypes}
+                    insuranceTypes={selectedInsuranceTypes}
+                    source="search_results"
+                  />
+
+                  {/* Secondary: notify-me capture for users not ready to engage */}
+                  <div className="w-full mt-6">
+                    <AreaWaitlistCapture
+                      areaSlug={`search-${(location || "any").toLowerCase().replace(/\s+/g, "-")}`}
+                      areaLabel={location || undefined}
+                    />
+                  </div>
+
+                  <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mt-10 mb-6">
                     <Search className="h-10 w-10 text-muted-foreground" />
                   </div>
                   <h2 className="text-2xl font-bold text-foreground mb-3">No Results Found</h2>
