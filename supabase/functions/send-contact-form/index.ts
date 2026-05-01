@@ -86,6 +86,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
 
     if (!email) {
+      const diag = describeEmailInput("email", body.email);
+      console.warn(JSON.stringify({ fn: "send-contact-form", level: "warn", code: "email_required", ...diag }));
       return stdError("email_required", "Email is required", 400, "email");
     }
     if (!name) {
@@ -100,6 +102,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length < 5) {
+      const diag = describeEmailInput("email", body.email);
+      console.warn(JSON.stringify({ fn: "send-contact-form", level: "warn", code: "invalid_email", ...diag }));
       return stdError("invalid_email", "Invalid email address", 400, "email");
     }
 
