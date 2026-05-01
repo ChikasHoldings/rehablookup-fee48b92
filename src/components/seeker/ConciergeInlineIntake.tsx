@@ -702,7 +702,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
       <CardHeader>
         <CardTitle>Start Your Personalized Placement</CardTitle>
         <CardDescription>
-          Complete this quick intake and pay $29 to be placed in the right treatment center.
+          Complete this quick intake and our specialists will personally connect you with the right treatment center — free for clients.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
