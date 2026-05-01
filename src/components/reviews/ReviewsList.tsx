@@ -123,6 +123,8 @@ export function ReviewsList({
             <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
           </div>
         ) : (
+          <div className="space-y-6">
+            {visibleReviews.map((review) => {
               const response = responses.get(review.id);
               const reviewDate = new Date(review.created_at);
 
