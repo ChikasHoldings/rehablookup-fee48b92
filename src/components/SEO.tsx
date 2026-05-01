@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { resolveFacilitySlug, buildFacilityPath } from "@/lib/slugUtils";
 
 interface SEOProps {
   title: string;

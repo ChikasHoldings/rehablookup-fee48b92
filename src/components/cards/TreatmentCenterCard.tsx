@@ -6,6 +6,7 @@ import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Heart, Sparkles } from "
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
+import { buildFacilityPath } from "@/lib/slugUtils";
 import { useState, useCallback, memo, useRef, useEffect, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
