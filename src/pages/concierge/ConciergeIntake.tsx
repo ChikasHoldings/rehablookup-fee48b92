@@ -9,6 +9,12 @@ import { ArrowLeft, ArrowRight, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
+import {
+  emitConciergeFunnelEvent,
+  fnv1a32,
+  getOrCreateConciergeSessionId,
+  type ConciergePrefillContext,
+} from "@/lib/conciergeAnalytics";
 
 // Step components
 import { StepWhoNeedsHelp } from "@/components/concierge/StepWhoNeedsHelp";
@@ -288,6 +294,12 @@ export default function ConciergeIntake() {
   // Accepts ?location=Boise,ID  ?treatment=detox  ?insurance=aetna  ?from=...
   // Runs once on mount; never overwrites a value the user has already filled.
   const prefillAppliedRef = useRef(false);
+  // Funnel attribution: every concierge_intake_* event downstream attaches
+  // this context so dashboards can JOIN prefilled → started → submitted by
+  // dedup_key and segment by which fields were applied.
+  const prefillContextRef = useRef<ConciergePrefillContext | null>(null);
+  const startedFiredRef = useRef(false);
+  const submittedFiredRef = useRef(false);
   useEffect(() => {
     if (prefillAppliedRef.current) return;
     const loc = searchParams.get("location") || "";
@@ -421,106 +433,59 @@ export default function ConciergeIntake() {
       return next;
     });
 
-    // Emit attribution event AFTER state update is queued. We send raw param
-    // presence + applied-field flags so funnel dashboards can compute:
-    //   • prefill reach   = events / sessions on /concierge
-    //   • prefill quality = applied_any_field rate
-    //   • source mix      = breakdown by `source`
-    // No PII is sent — only field names + lowercased treatment/insurance hints.
+    // Build the funnel context once. Stashed in `prefillContextRef` so the
+    // _started and _submitted events further down the funnel can attach the
+    // exact same dedup_key + applied flags. Dashboards JOIN by dedup_key.
+    const appliedAny = Object.values(applied).some(Boolean);
+    const sessionId = getOrCreateConciergeSessionId();
+    const normalize = (v: string) => v.trim().toLowerCase();
+    const dedupKey = fnv1a32(
+      [
+        sessionId,
+        normalize(source),
+        normalize(loc),
+        normalize(treatment),
+        normalize(insurance),
+      ].join("|"),
+    );
+    const ctx: ConciergePrefillContext = {
+      dedup_key: dedupKey,
+      source: source || "(direct)",
+      has_location: !!loc,
+      has_treatment: !!treatment,
+      has_insurance: !!insurance,
+      treatment_hint: treatment ? treatment.toLowerCase().slice(0, 32) : undefined,
+      insurance_hint: insurance ? insurance.toLowerCase().slice(0, 32) : undefined,
+      applied_city: applied.city,
+      applied_state: applied.state,
+      applied_zip: applied.zip,
+      applied_insurance_carrier: applied.insurance_carrier,
+      applied_payment_type: applied.payment_type,
+      applied_level_of_care: applied.level_of_care,
+      applied_any_field: appliedAny,
+    };
+    prefillContextRef.current = ctx;
+
+    // Per-event sessionStorage dedup: same (session, params) tuple ⇒ no
+    // duplicate event. Catches bfcache restores, route re-mounts, and late
+    // analytics flushes beyond StrictMode's double-mount.
+    const SENT_KEY = "rl_prefill_events_sent";
+    let sentList: string[] = [];
     try {
-      const appliedAny = Object.values(applied).some(Boolean);
-
-      // Deterministic dedup key: same (session, params) ⇒ same hash ⇒ no
-      // duplicate event. Catches edge cases beyond StrictMode:
-      //   • bfcache restores re-running effects on browser back/forward
-      //   • client-side route re-mounts that don't reset module state
-      //   • analytics-script late-load that triggers a second flush
-      // Session id lives in sessionStorage so it resets per tab session,
-      // ensuring genuinely new visits still report.
-      const SESSION_KEY = "rl_session_id";
-      const SENT_KEY = "rl_prefill_events_sent";
-      let sessionId = "";
-      try {
-        sessionId = sessionStorage.getItem(SESSION_KEY) || "";
-        if (!sessionId) {
-          sessionId =
-            (crypto as any)?.randomUUID?.() ||
-            `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-          sessionStorage.setItem(SESSION_KEY, sessionId);
-        }
-      } catch {
-        // sessionStorage unavailable (privacy mode, sandboxed iframe) →
-        // fall through; useRef guard above still prevents double-fire in
-        // the current mount.
-      }
-
-      // FNV-1a 32-bit — small, deterministic, no deps, collision risk is
-      // irrelevant for analytics dedup at our volume.
-      const fnv1a = (input: string): string => {
-        let h = 0x811c9dc5;
-        for (let i = 0; i < input.length; i++) {
-          h ^= input.charCodeAt(i);
-          h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
-        }
-        return h.toString(16).padStart(8, "0");
-      };
-      const normalize = (v: string) => v.trim().toLowerCase();
-      const dedupKey = fnv1a(
-        [
-          sessionId,
-          normalize(source),
-          normalize(loc),
-          normalize(treatment),
-          normalize(insurance),
-        ].join("|"),
-      );
-
-      // Read prior sends (cap to 50 keys to bound memory growth)
-      let alreadySent = false;
-      let sentList: string[] = [];
-      try {
-        const raw = sessionStorage.getItem(SENT_KEY);
-        sentList = raw ? (JSON.parse(raw) as string[]) : [];
-        alreadySent = Array.isArray(sentList) && sentList.includes(dedupKey);
-      } catch {
-        sentList = [];
-      }
-
-      if (alreadySent) {
-        return; // exact (session, params) tuple already reported
-      }
-
-      const payload = {
-        source: source || "(direct)",
-        has_location: !!loc,
-        has_treatment: !!treatment,
-        has_insurance: !!insurance,
-        treatment_hint: treatment ? treatment.toLowerCase().slice(0, 32) : undefined,
-        insurance_hint: insurance ? insurance.toLowerCase().slice(0, 32) : undefined,
-        applied_city: applied.city,
-        applied_state: applied.state,
-        applied_zip: applied.zip,
-        applied_insurance_carrier: applied.insurance_carrier,
-        applied_payment_type: applied.payment_type,
-        applied_level_of_care: applied.level_of_care,
-        applied_any_field: appliedAny,
-        dedup_key: dedupKey, // surfaced for cross-tool reconciliation
-      };
-      // GA4
-      (window as any).gtag?.("event", "concierge_intake_prefilled", payload);
-      // Meta Pixel (custom event) — useful for retargeting prefilled visitors
-      (window as any).fbq?.("trackCustom", "ConciergeIntakePrefilled", payload);
-
-      // Persist after dispatch so a thrown analytics call doesn't permanently
-      // suppress the event for this session.
-      try {
-        const next = [...sentList, dedupKey].slice(-50);
-        sessionStorage.setItem(SENT_KEY, JSON.stringify(next));
-      } catch {
-        // best-effort; in-memory ref still prevents re-fire in this mount
-      }
+      const raw = sessionStorage.getItem(SENT_KEY);
+      sentList = raw ? (JSON.parse(raw) as string[]) : [];
+      if (sentList.includes(dedupKey)) return;
     } catch {
-      // analytics is best-effort; never block the intake flow
+      sentList = [];
+    }
+
+    emitConciergeFunnelEvent("concierge_intake_prefilled", { ...ctx });
+
+    try {
+      const next = [...sentList, dedupKey].slice(-50);
+      sessionStorage.setItem(SENT_KEY, JSON.stringify(next));
+    } catch {
+      // best-effort
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -706,8 +671,65 @@ export default function ConciergeIntake() {
     setCurrentStep(5);
   };
 
+  // Fires concierge_intake_started exactly once per mount, the first time the
+  // user successfully advances past step 1. Carries the prefill context (when
+  // present) so the funnel can be segmented by attribution source / which
+  // fields were prefilled. dedup_key joins to the _prefilled and _submitted
+  // events.
+  const fireStartedEvent = useCallback(() => {
+    if (startedFiredRef.current) return;
+    startedFiredRef.current = true;
+    const ctx = prefillContextRef.current;
+    emitConciergeFunnelEvent("concierge_intake_started", {
+      // When there's no prefill context, synthesize a session-only dedup_key
+      // so organic visits still get a stable join key on _started → _submitted.
+      dedup_key:
+        ctx?.dedup_key ||
+        fnv1a32(`${getOrCreateConciergeSessionId()}|started|(direct)`),
+      source: ctx?.source || "(direct)",
+      had_prefill: !!ctx,
+      applied_any_field: ctx?.applied_any_field ?? false,
+      applied_city: ctx?.applied_city ?? false,
+      applied_state: ctx?.applied_state ?? false,
+      applied_zip: ctx?.applied_zip ?? false,
+      applied_insurance_carrier: ctx?.applied_insurance_carrier ?? false,
+      applied_payment_type: ctx?.applied_payment_type ?? false,
+      applied_level_of_care: ctx?.applied_level_of_care ?? false,
+    });
+  }, []);
+
+  // Fires concierge_intake_submitted exactly once per mount, regardless of
+  // submission channel (Stripe checkout redirect or SMS-callback fallback).
+  // Carries channel + prefill context so funnel dashboards can compute
+  // submit-rate by source/applied-field segments.
+  const fireSubmittedEvent = useCallback(
+    (channel: "checkout" | "sms", extras?: Record<string, unknown>) => {
+      if (submittedFiredRef.current) return;
+      submittedFiredRef.current = true;
+      const ctx = prefillContextRef.current;
+      emitConciergeFunnelEvent("concierge_intake_submitted", {
+        dedup_key:
+          ctx?.dedup_key ||
+          fnv1a32(`${getOrCreateConciergeSessionId()}|submitted|(direct)`),
+        source: ctx?.source || "(direct)",
+        channel,
+        had_prefill: !!ctx,
+        applied_any_field: ctx?.applied_any_field ?? false,
+        applied_city: ctx?.applied_city ?? false,
+        applied_state: ctx?.applied_state ?? false,
+        applied_zip: ctx?.applied_zip ?? false,
+        applied_insurance_carrier: ctx?.applied_insurance_carrier ?? false,
+        applied_payment_type: ctx?.applied_payment_type ?? false,
+        applied_level_of_care: ctx?.applied_level_of_care ?? false,
+        ...extras,
+      });
+    },
+    [],
+  );
+
   const handleNext = async () => {
     if (validateStep(currentStep)) {
+      if (currentStep === 1) fireStartedEvent();
       if (currentStep < 7) {
         // Auto-save draft to DB when leaving contact step (step 5)
         // This captures leads who drop off before email verification or payment
@@ -797,6 +819,9 @@ export default function ConciergeIntake() {
       if (error) throw error;
 
       if (data?.url && (data.url.startsWith("https://checkout.stripe.com") || data.url.startsWith("https://billing.stripe.com"))) {
+        // Fire submit event before navigation — once we leave the SPA the
+        // analytics queue would otherwise be lost.
+        fireSubmittedEvent("checkout");
         window.location.href = data.url;
       } else if (data?.url) {
         throw new Error("Invalid checkout URL");
@@ -877,6 +902,7 @@ export default function ConciergeIntake() {
                 localStorage.removeItem(STORAGE_KEY);
                 localStorage.removeItem(EMAIL_VERIFICATION_KEY);
                 localStorage.removeItem(DRAFT_ID_KEY);
+                fireSubmittedEvent("sms");
                 navigate(`/concierge/thank-you?channel=sms&id=${inquiryId}`);
               }}
             />
