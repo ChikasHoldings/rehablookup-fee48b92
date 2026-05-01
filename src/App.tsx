@@ -345,6 +345,7 @@ const AdminProviders = lazy(() => import("./pages/admin/AdminProviders"));
 const AdminLeads = lazy(() => import("./pages/admin/AdminLeads"));
 const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
+const AdminNotFoundEvents = lazy(() => import("./pages/admin/AdminNotFoundEvents"));
 const AdminLeadUnlocks = lazy(() => import("./pages/admin/AdminLeadUnlocks"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
