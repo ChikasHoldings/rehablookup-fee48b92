@@ -462,9 +462,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     });
   } catch (error: unknown) {
     console.error("Tour notification error:", error);
-    return new Response(JSON.stringify({ error: String(error) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    return jsonError("internal_error", message, 500, corsHeaders);
   }
 });
