@@ -277,6 +277,8 @@ Deno.serve(async (req) => {
 
     const emailHtml = generateWelcomeOfferEmail(providerFirstName, facilityName, selectedPlan);
 
+    const effectiveIdempotencyKey = idempotencyKey || `welcome-offer-${facilityId}`;
+
     const result = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
@@ -284,7 +286,7 @@ Deno.serve(async (req) => {
       html: emailHtml,
     }, {
       emailType: "provider_welcome_offer",
-      idempotencyKey: idempotencyKey || `welcome-offer-${facilityId}`,
+      idempotencyKey: effectiveIdempotencyKey,
       metadata: { facilityId, facilityName },
     });
 
@@ -315,14 +317,22 @@ Deno.serve(async (req) => {
       {
         code: result.deduplicated ? "email_deduplicated" : "email_sent",
         facilityId,
+        idempotencyKey: effectiveIdempotencyKey,
+        firstSentAt: result.firstSentAt,
       },
     );
+
+    const status = result.deduplicated ? "deduplicated" : "sent";
     return new Response(
       JSON.stringify({
         success: true,
-        shortId,
+        status,
+        deduplicated: !!result.deduplicated,
         code: result.deduplicated ? "email_deduplicated" : "email_sent",
-        deduplicated: result.deduplicated,
+        idempotencyKey: effectiveIdempotencyKey,
+        messageId: result.emailId,
+        firstSentAt: result.firstSentAt,
+        shortId,
       }),
       { status: 200, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } }
     );

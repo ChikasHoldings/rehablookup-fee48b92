@@ -280,6 +280,8 @@ Deno.serve(async (req) => {
     const emailHtml = generateWelcomeEmail(providerFirstName, facilityName, selectedPlan);
     const isPro = selectedPlan === "pro" || selectedPlan === "professional" || selectedPlan === "featured";
 
+    const effectiveIdempotencyKey = idempotencyKey || `welcome-${facilityId}`;
+
     const result = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
       to: [providerEmail],
@@ -287,7 +289,7 @@ Deno.serve(async (req) => {
       html: emailHtml,
     }, {
       emailType: "provider_welcome",
-      idempotencyKey: idempotencyKey || `welcome-${facilityId}`,
+      idempotencyKey: effectiveIdempotencyKey,
       metadata: { facilityId, facilityName },
     });
 
@@ -296,11 +298,14 @@ Deno.serve(async (req) => {
         code: "email_deduplicated",
         reason: "Duplicate idempotencyKey suppressed by sender",
         facilityId,
+        idempotencyKey: effectiveIdempotencyKey,
+        firstSentAt: result.firstSentAt,
       });
     } else if (result.success) {
       log.info("welcome_email_sent", {
         code: "email_sent",
         facilityId,
+        idempotencyKey: effectiveIdempotencyKey,
       });
     } else {
       const sendReason = typeof result.error === "string"
@@ -324,12 +329,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    const status = result.deduplicated ? "deduplicated" : "sent";
     return new Response(
       JSON.stringify({
         success: true,
-        shortId,
+        status,
+        deduplicated: !!result.deduplicated,
         code: result.deduplicated ? "email_deduplicated" : "email_sent",
-        deduplicated: result.deduplicated,
+        idempotencyKey: effectiveIdempotencyKey,
+        messageId: result.emailId,
+        firstSentAt: result.firstSentAt,
+        shortId,
       }),
       { status: 200, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } }
     );
