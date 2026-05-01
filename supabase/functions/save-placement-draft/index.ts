@@ -79,7 +79,11 @@ Deno.serve(async (req) => {
       email = sanitizeEmail(data.email);
     } catch {
       logStep("ERROR: Invalid email");
-      return errorResponse("Valid email is required", 400, corsHeaders);
+      return jsonError("invalid_email", "Valid email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
+    }
+    if (!email) {
+      logStep("ERROR: Missing email");
+      return jsonError("email_required", "Email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
     }
 
     const firstName = sanitizeString(data.firstName, 100);
