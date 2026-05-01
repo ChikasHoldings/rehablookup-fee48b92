@@ -43,6 +43,8 @@ export function UnlockLeadButton({
 }: UnlockLeadButtonProps) {
   const navigate = useNavigate();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [revealedLead, setRevealedLead] = useState<{ name: string | null; email: string | null; phone: string | null } | null>(null);
   const unlockingRef = useRef(false); // StrictMode double-fire guard
   const { unlockLead, isUnlocking, isLeadUnlocked } = useLeadUnlocks(facilityId);
   const { balance } = useProviderCredits(facilityId);
