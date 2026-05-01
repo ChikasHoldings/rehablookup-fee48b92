@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Loader2, Mail, RefreshCw, AlertCircle, MapPin, User, Users, Clock, Heart, Shield, Calendar, UserCircle, Stethoscope, Send } from "lucide-react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -23,6 +25,37 @@ import {
   PREVIOUS_TREATMENT_OPTIONS,
   BEST_TIME_OPTIONS,
 } from "./types";
+
+// Zod schema for the contact step. Mirrors UI rules + adds length caps to
+// prevent abuse and align with backend Zod validation in the edge function.
+const contactSchema = z.object({
+  firstName: z
+    .string()
+    .trim()
+    .min(1, { message: "First name is required" })
+    .max(60, { message: "First name must be under 60 characters" })
+    .regex(/^[\p{L}\p{M}'’\-.\s]+$/u, { message: "First name contains invalid characters" }),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, { message: "Last name is required" })
+    .max(60, { message: "Last name must be under 60 characters" })
+    .regex(/^[\p{L}\p{M}'’\-.\s]+$/u, { message: "Last name contains invalid characters" }),
+  phone: z
+    .string()
+    .trim()
+    .max(32, { message: "Phone number is too long" })
+    .refine(isValidPhoneNumber, { message: "Valid phone number is required" }),
+  email: z
+    .string()
+    .trim()
+    .max(254, { message: "Email is too long" })
+    .refine(isValidEmail, { message: "Valid email is required" }),
+  consentToContact: z.literal(true, {
+    errorMap: () => ({ message: "Please agree to be contacted to continue" }),
+  }),
+});
+
 
 // Question types
 type QuestionType = "choice" | "multi-choice" | "text" | "location" | "contact" | "verify";
