@@ -86,6 +86,25 @@ export function UnlockLeadButton({
         paymentMethod: 'credits',
       });
       setShowConfirmDialog(false);
+
+      // Fetch the now-unlocked PII so the success dialog can show real contact details.
+      // RLS only returns these fields once an unlock row exists for this provider+lead.
+      try {
+        const { data } = await supabase
+          .from("leads_provider_view")
+          .select("name, email, phone")
+          .eq("id", leadId)
+          .maybeSingle();
+        setRevealedLead({
+          name: data?.name ?? null,
+          email: data?.email ?? null,
+          phone: data?.phone ?? null,
+        });
+      } catch {
+        setRevealedLead({ name: null, email: null, phone: null });
+      }
+
+      setShowSuccessDialog(true);
       onUnlockSuccess?.();
     } finally {
       unlockingRef.current = false;
