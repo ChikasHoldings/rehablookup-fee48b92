@@ -25,8 +25,9 @@
  */
 
 import { readFileSync, existsSync, readdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, resolve, basename } from "node:path";
 import { fileURLToPath } from "node:url";
+import { discoverPrerenderedFiles } from "./lib/prerender-discovery.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -232,17 +233,17 @@ function main() {
   let scanned = 0;
   let broken = 0;
   const sampleBroken = [];
-  for (const f of readdirSync(PUBLIC_DIR)) {
-    if (!f.endsWith(".html")) continue;
-    if (f === "404.html") continue;
+  // Hybrid: walk BOTH flat /public/<path>.html AND nested /public/<path>/index.html.
+  for (const { route, file } of discoverPrerenderedFiles(PUBLIC_DIR)) {
+    if (!file) continue;
     scanned++;
-    const html = readFileSync(join(PUBLIC_DIR, f), "utf8");
+    const html = readFileSync(file, "utf8");
     const blocks = extractJsonLdBlocks(html);
     for (const block of blocks) {
       const r = validateJsonLd(block);
       if (!r.ok) {
         broken++;
-        if (sampleBroken.length < 5) sampleBroken.push(`${f}: ${r.error}`);
+        if (sampleBroken.length < 5) sampleBroken.push(`${route}: ${r.error}`);
         break;
       }
     }
