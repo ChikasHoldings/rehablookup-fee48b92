@@ -229,7 +229,18 @@ export function ReviewsList({
             )}
           </div>
         )}
-      </CardContent>
+    </>
+  );
+
+  if (bare) {
+    return <div>{listBody}</div>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>{headerRow}</CardHeader>
+      <CardContent>{listBody}</CardContent>
     </Card>
   );
 }
+
