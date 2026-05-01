@@ -537,6 +537,8 @@ Deno.serve(async (req) => {
     if (!data.email || typeof data.email !== "string" || data.email.trim().length === 0) {
       const code = "email_required";
       const message = "Email is required";
+      const diag = describeEmailInput("email", data.email);
+      console.warn(JSON.stringify({ fn: "submit-qualified-lead", level: "warn", code, ...diag }));
       return new Response(
         JSON.stringify({
           error: { code, message },
@@ -553,6 +555,8 @@ Deno.serve(async (req) => {
     if (!emailRegex.test(data.email)) {
       const code = "invalid_email";
       const message = "Please provide a valid email address";
+      const diag = describeEmailInput("email", data.email);
+      console.warn(JSON.stringify({ fn: "submit-qualified-lead", level: "warn", code, ...diag }));
       return new Response(
         JSON.stringify({
           error: { code, message },
