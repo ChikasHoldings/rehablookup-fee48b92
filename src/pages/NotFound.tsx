@@ -340,9 +340,9 @@ const NotFound = () => {
                 </Button>
               </Link>
               <Link to="/rehab-centers" className="w-full sm:w-auto">
-                <Button variant="secondary" size="lg" className="gap-2 w-full sm:w-auto shadow-md">
+                <Button size="lg" className="gap-2 w-full sm:w-auto shadow-md">
                   <Building2 className="h-4 w-4" />
-                  Browse Rehab Centers
+                  Browse the Directory
                 </Button>
               </Link>
               <Link to="/concierge" className="w-full sm:w-auto">
