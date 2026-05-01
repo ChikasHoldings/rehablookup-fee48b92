@@ -538,6 +538,25 @@ export default function ConciergeIntake() {
       }
     }
 
+    // Load phone verification state
+    const savedPhoneVerification = localStorage.getItem(PHONE_VERIFICATION_KEY);
+    if (savedPhoneVerification) {
+      try {
+        const parsed = JSON.parse(savedPhoneVerification);
+        if (parsed.verifiedAt) {
+          const verifiedTime = new Date(parsed.verifiedAt).getTime();
+          const hoursElapsed = (Date.now() - verifiedTime) / (1000 * 60 * 60);
+          if (hoursElapsed < 24) {
+            setPhoneVerification(parsed);
+          } else {
+            localStorage.removeItem(PHONE_VERIFICATION_KEY);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse phone verification state", e);
+      }
+    }
+
     // Load draft ID
     const savedDraftId = localStorage.getItem(DRAFT_ID_KEY);
     if (savedDraftId) {
