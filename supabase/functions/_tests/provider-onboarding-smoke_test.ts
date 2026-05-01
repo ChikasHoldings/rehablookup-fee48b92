@@ -224,7 +224,14 @@ for (const fn of FUNCTIONS) {
   Deno.test(`[${fn.name}] uses structured logger and echoes shortId in error responses`, async () => {
     const src = await loadSource(fn.path);
 
-    assertStringIncludes(src, 'createLogger("' + fn.name + '")');
+    // Logger may be created with an optional inbound x-request-id second arg.
+    const loggerRe = new RegExp(
+      `createLogger\\("${fn.name.replace(/[-\/]/g, "\\$&")}"(?:\\s*,\\s*[^)]+)?\\)`,
+    );
+    assert(
+      loggerRe.test(src),
+      `${fn.name} must call createLogger("${fn.name}"[, reqId])`,
+    );
     assertStringIncludes(src, "const { shortId } = log;");
 
     // Every 4xx/5xx body issued AFTER the logger is created should include
