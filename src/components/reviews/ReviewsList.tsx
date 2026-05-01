@@ -90,54 +90,39 @@ export function ReviewsList({
     );
   }
 
-  const body = (
-    <>
-      {reviews.length === 0 ? (
-        <div className="text-center py-8">
-          <Star className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
+  const headerRow = (
+    <div className="flex items-center justify-between">
+      <CardTitle className="text-lg">Community Reviews</CardTitle>
+      {averageRating && (
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={cn(
+                  "h-4 w-4",
+                  star <= Math.round(averageRating)
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-muted-foreground/30"
+                )}
+              />
+            ))}
+          </div>
+          <span className="font-semibold">{averageRating}</span>
+          <span className="text-muted-foreground text-sm">({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})</span>
         </div>
-      ) : null}
-    </>
+      )}
+    </div>
   );
-  // (body placeholder above is just a no-op marker; full list rendering follows below)
 
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Community Reviews</CardTitle>
-          {averageRating && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={cn(
-                      "h-4 w-4",
-                      star <= Math.round(averageRating)
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-muted-foreground/30"
-                    )}
-                  />
-                ))}
-              </div>
-              <span className="font-semibold">{averageRating}</span>
-              <span className="text-muted-foreground text-sm">({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})</span>
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
+  const listBody = (
+    <>
         {reviews.length === 0 ? (
           <div className="text-center py-8">
             <Star className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {visibleReviews.map((review) => {
               const response = responses.get(review.id);
               const reviewDate = new Date(review.created_at);
 
