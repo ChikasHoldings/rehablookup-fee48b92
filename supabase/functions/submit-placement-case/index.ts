@@ -191,10 +191,7 @@ Deno.serve(async (req) => {
 
     if (recentCases && recentCases >= 3) {
       logStep(requestId, "Rate limit exceeded", { email: seekerEmail, count: recentCases });
-      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("rate_limited", "Too many requests. Please try again later.", 429, corsHeaders, { requestId, _version: VERSION }, { limit: 3, windowSeconds: 3600, recentCount: recentCases });
     }
 
     // Idempotency check - prevent duplicate submissions
