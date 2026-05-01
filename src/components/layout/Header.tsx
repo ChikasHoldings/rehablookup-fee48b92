@@ -377,6 +377,17 @@ export function Header({
             </button>
 
             <div className="hidden md:flex items-center gap-2 flex-shrink-0 min-w-[140px] lg:min-w-[200px] justify-end">
+              {/* Phase 2: persistent Concierge CTA — visible on every page */}
+              <PrefetchLink to={ctaLink} className="hidden lg:block">
+                <Button
+                  size="sm"
+                  variant="success"
+                  className="h-8 text-sm gap-1.5"
+                >
+                  <Heart className="h-4 w-4" />
+                  {ctaLabel}
+                </Button>
+              </PrefetchLink>
               {isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
                   <Button size="sm" variant="ghost" className="h-9 text-sm gap-0 relative px-1">
