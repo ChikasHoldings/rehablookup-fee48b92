@@ -937,7 +937,7 @@ const Index = () => {
                 Connect with verified treatment centers or list your facility in our directory.
               </p>
               <div className="mt-5 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 md:gap-3">
-                <Link to="/concierge">
+                <Link to={buildConciergeHref({ location: homepageConciergeLocation, source: "homepage_footer_cta" })}>
                   <Button size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
                     <Heart className="h-4 w-4" />
                     Find Treatment
