@@ -104,8 +104,8 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) throw new Error(extractErrorMessage(error, "Failed to submit tour request"));
+      if (data?.error) throw new Error(extractErrorMessage(data, "Failed to submit tour request"));
       return { type: "lead" };
     },
     onSuccess: () => {

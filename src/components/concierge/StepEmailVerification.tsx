@@ -59,7 +59,7 @@ export function StepEmailVerification({
         setCooldown(60); // 60 second cooldown
         toast.success("Verification code sent to your email");
       } else {
-        throw new Error(data?.error || "Failed to send code");
+        throw new Error(extractErrorMessage(data, "Failed to send code"));
       }
     } catch (err) {
       console.error("Send code error:", err);
@@ -85,7 +85,7 @@ export function StepEmailVerification({
         onVerified(verifiedAtTime);
         toast.success("Email verified successfully!");
       } else {
-        toast.error(data?.error || "Invalid code. Please try again.");
+        toast.error(extractErrorMessage(data, "Invalid code. Please try again."));
         setOtpValue("");
       }
     } catch (err) {

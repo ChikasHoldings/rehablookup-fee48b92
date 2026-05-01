@@ -14,6 +14,7 @@ import { isValidPhoneNumber } from '@/lib/phoneUtils';
 import { isValidEmail } from '@/lib/emailUtils';
 import { useZipcodeLookup } from '@/hooks/useZipcodeLookup';
 import { PasswordStrengthIndicator, calculatePasswordStrength } from '@/components/ui/password-strength-indicator';
+import { extractErrorMessage } from '@/lib/extractErrorMessage';
 
 export default function SeekerSignup() {
   const navigate = useNavigate();

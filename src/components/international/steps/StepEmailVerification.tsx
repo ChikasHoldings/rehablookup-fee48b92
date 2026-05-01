@@ -100,8 +100,8 @@ export function StepEmailVerification({
         body: { email, code, type: "international_placement" },
       });
 
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Verification failed");
+      if (error) throw new Error(extractErrorMessage(error, "Verification failed"));
+      if (!data?.success) throw new Error(extractErrorMessage(data, "Verification failed"));
 
       const verifiedTime = new Date().toISOString();
       
