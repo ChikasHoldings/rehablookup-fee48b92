@@ -329,17 +329,26 @@ export function SingleQuestionFlow({
     isContactSubmitting.current = true;
     
     try {
-    const newErrors: Record<string, string> = {};
+    const parsed = contactSchema.safeParse({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phone: formData.phone,
+      email: formData.email,
+      consentToContact,
+    });
 
-    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!isValidPhoneNumber(formData.phone)) newErrors.phone = "Valid phone number is required";
-    if (!isValidEmail(formData.email)) newErrors.email = "Valid email is required";
-    
-    if (Object.keys(newErrors).length > 0) {
+    if (!parsed.success) {
+      const newErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0];
+        if (typeof key === "string" && !newErrors[key]) {
+          newErrors[key] = issue.message;
+        }
+      }
       setErrors(newErrors);
       return;
     }
+    setErrors({});
     
     // Check if email is already verified (within 24h)
     const alreadyVerified = await checkAndAutoVerifyEmail(formData.email);
