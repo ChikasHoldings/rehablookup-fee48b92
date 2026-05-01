@@ -297,6 +297,7 @@ function buildFacilityHtml(
   f: FacilityRow,
   treatments: string[],
   insurances: string[],
+  isPro: boolean = false,
 ): string {
   const url = `${BASE_URL}${path}`;
   const title = `${f.name} - ${f.city}, ${f.state} | RehabLookup`;
