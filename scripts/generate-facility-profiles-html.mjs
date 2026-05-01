@@ -143,8 +143,8 @@ async function fetchFacilities() {
 function renderFacilityHtml(f) {
   const slug = f.slug;
   const canonical = `${BASE_URL}/center/${slug}`;
-  const stateSlug = citySlug(f.state);
-  const cityHrefSlug = citySlug(f.city);
+  const stateSlug = locationSlug(f.state);
+  const cityHrefSlug = locationSlug(f.city);
 
   const title = `${f.name} — Addiction Treatment in ${f.city}, ${f.state} | RehabLookup`;
   const baseDesc = f.description
