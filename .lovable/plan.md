@@ -1,74 +1,98 @@
-## Problem
+## Root Cause
 
-`vercel.json` has both:
-- `"cleanUrls": true` + `"trailingSlash": false` (Vercel native slash handling)
-- An explicit `redirects` rule rewriting `/:path*/` → `/:path*`
+The Provider Leads inbox (`/provider/inquiries`) and every provider dashboard widget that depends on lead data are returning **zero rows** for all providers.
 
-These two mechanisms collide and produce `ERR_TOO_MANY_REDIRECTS` at the edge, before the SPA ever loads. Vercel builds succeed ("Ready"), but every request loops.
+The page queries `public.leads_provider_view`, which was correctly designed to mask PII for *locked* leads and reveal full contact info for *unlocked* ones. The view runs with `security_invoker=on`, so when a provider queries it, RLS on the underlying `public.leads` table is enforced under their auth context.
+
+Inspecting the policies on `public.leads` (RLS enabled), the only SELECT policies are:
+
+- `Admins can view all leads` — admins only.
+- `Owners can view unlocked facility leads` — `... AND is_lead_unlocked(id, facility_id)`.
+- `Providers can view unlocked redistributed leads` — also gated on the lead being unlocked.
+
+There is **no policy that lets a facility owner SELECT their facility's *locked* leads**. So the view returns nothing for locked leads, and the inbox is empty (only previously-unlocked leads can ever appear, which defeats the entire pay-to-unlock product).
+
+This single missing policy breaks every component that reads `leads_provider_view`:
+
+- `src/pages/provider/Inquiries.tsx` (the Leads page)
+- `src/pages/provider/Dashboard.tsx` (recent leads + KPI counts)
+- `src/components/provider/DashboardKPIStrip.tsx`
+- `src/components/provider/DashboardMissedLeads.tsx`
+- `src/components/provider/DashboardFacilityPerformancePanel.tsx`
+- `src/components/provider/LeadConversionWidget.tsx`
+- `src/components/provider/ProMultiFacilityOverview.tsx`
+- `src/components/provider/ProviderPerformanceFeedback.tsx` (queries `leads` directly — same RLS gap)
+- `src/components/provider/listing/ListingCard.tsx` (queries `leads` directly)
 
 ## Fix
 
-### 1. Remove the redundant `redirects` block from `vercel.json`
+### 1. Add a SELECT policy on `public.leads` for owners of the facility
 
-`cleanUrls: true` + `trailingSlash: false` already:
-- Strips trailing slashes via 308 redirect
-- Strips `.html` extensions
-- Serves `/foo` from `/foo.html` or `/foo/index.html`
+Allow facility owners to read rows for their facility regardless of unlock state. The PII masking is already enforced at the **view layer** (`leads_provider_view` only exposes name/email/phone/message when an unlock row exists for that user's facility), so this does not leak PII as long as providers query the view, which they already do.
 
-The custom `redirects` rule duplicates this and causes the loop.
-
-### 2. Keep everything else intact
-
-- `rewrites` (SPA fallback) — keep as-is.
-- `headers` (security, caching, sitemap content-type) — keep as-is.
-- `buildCommand: npm run build:vercel` — keep.
-- `framework: vite`, `outputDirectory: dist` — keep.
-
-### 3. Client-side redirects stay
-
-`TrailingSlashRedirect` and the trailing-slash logic in `SmartCatchAll` only run client-side (after HTML is served). They don't contribute to the edge loop and are still useful for in-app navigation. No changes needed.
-
-## Updated `vercel.json` (target shape)
-
-```json
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build:vercel",
-  "outputDirectory": "dist",
-  "installCommand": "npm install",
-  "framework": "vite",
-  "trailingSlash": false,
-  "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/((?!api/|assets/|functions/).*)",
-      "destination": "/index.html"
-    }
-  ],
-  "headers": [ /* unchanged */ ],
-  "github": { "silent": true }
-}
+```sql
+CREATE POLICY "Owners can view their facility leads (masked via view)"
+ON public.leads
+FOR SELECT
+TO authenticated
+USING (
+  facility_id IN (
+    SELECT f.id FROM public.facilities f WHERE f.user_id = auth.uid()
+  )
+);
 ```
 
-Only change: delete the `"redirects": [...]` array. Everything else stays byte-identical.
+Mirror policy for redistributed leads (so a redistributed locked lead also shows up):
 
-## Validation after deploy
+```sql
+CREATE POLICY "Providers can view their redistributed leads"
+ON public.leads
+FOR SELECT
+TO authenticated
+USING (
+  id IN (
+    SELECT ld.lead_id
+    FROM public.lead_distributions ld
+    JOIN public.facilities f ON ld.facility_id = f.id
+    WHERE f.user_id = auth.uid()
+  )
+);
+```
 
-Once redeployed on Vercel:
+Both are additive — existing "unlocked" policies continue to work; admin policy is unchanged.
 
-1. `curl -I https://rehablookup.com/` → expect `200`, no `Location` header.
-2. `curl -I https://rehablookup.com/about/` → expect single `308` to `/about`, then `200`.
-3. `curl -I https://rehablookup.com/about.html` → expect `308` to `/about` (cleanUrls behavior).
-4. `curl -I https://rehablookup.com/rehab-centers/maryland/towson` → expect `200` with prerendered HTML containing `<title>` and canonical.
-5. Run `VERCEL_URL=https://rehablookup.com npm run validate:vercel-deploy` to confirm extensionless URLs serve the right HTML and that both `/path/index.html` and `/path.html` formats resolve.
+### 2. Lock down direct base-table reads
 
-## Rollback
+Two components currently `SELECT` from the base `leads` table (which would now return locked rows with raw PII):
 
-If anything breaks after the change, restore the previous `vercel.json` from git history (the `redirects` block) and redeploy. Lovable Hosting at `rehablookup.lovable.app` remains as a fallback DNS target.
+- `src/components/provider/ProviderPerformanceFeedback.tsx`
+- `src/components/provider/listing/ListingCard.tsx`
 
-## Out of scope (not changing)
+Audit and switch them to `leads_provider_view` (or restrict their selects to non-PII columns like `id`, `created_at`, `facility_id`, `status`). This preserves the "PII masked at DB level until explicitly unlocked" project rule.
 
-- No build script changes.
-- No env var changes.
-- No source code changes — `TrailingSlashRedirect`, `SmartCatchAll`, prerender scripts all unchanged.
-- No sitemap or robots.txt changes.
+### 3. Audit pass on the rest of the provider panel
+
+Quick verification (no functional changes expected, but flag any anomalies found):
+
+- `Dashboard.tsx`, `MyListings.tsx`, `Reviews.tsx`, `Settings.tsx`, `Billing.tsx`, `Analytics.tsx`, `Notifications.tsx`, `PlacementNetwork.tsx`, `Inquiries.tsx`, `ListingEditor.tsx`, `AddLocation.tsx`, `Help.tsx`, `KnowledgeBase.tsx`, `ProUpgrade.tsx`, `EmbedBadge.tsx`, `ImageGuidelines.tsx`.
+- Sidebar/bottom-nav links resolve to existing routes.
+- `useProviderFacilities` returns expected facility ids.
+- `provider_events` and `facility_reviews` queries succeed (RLS already verified to allow owner reads in earlier work — re-confirm).
+
+### 4. Verify in preview
+
+After the migration:
+
+1. Sign in as a provider with at least one facility.
+2. `/provider/inquiries` shows locked leads with masked name/email/phone (e.g., `J*** D.`, `••••@••••.•••`).
+3. Click "Unlock" — full PII appears, and unlocked-only filters work.
+4. Dashboard KPI strip, Missed Leads, Lead Conversion Widget, and Facility Performance Panel all show non-zero counts where data exists.
+5. Run the Supabase linter to confirm no new RLS warnings.
+
+## Files Touched
+
+- New migration adding the two SELECT policies on `public.leads`.
+- `src/components/provider/ProviderPerformanceFeedback.tsx` — switch reads to `leads_provider_view` or non-PII columns.
+- `src/components/provider/listing/ListingCard.tsx` — same.
+
+No view changes, no app schema changes, no changes to the unlock flow or billing.

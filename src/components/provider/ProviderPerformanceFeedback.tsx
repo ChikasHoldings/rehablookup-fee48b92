@@ -16,17 +16,17 @@ export function ProviderPerformanceFeedback({ facilityId }: ProviderPerformanceF
       const now = new Date();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-      // Leads received this week
+      // Leads received this week (use PII-masked view; non-PII count only)
       const { count: leadsThisWeek } = await supabase
-        .from("leads")
-        .select("*", { count: "exact", head: true })
+        .from("leads_provider_view")
+        .select("id", { count: "exact", head: true })
         .eq("facility_id", facilityId)
         .gte("created_at", weekAgo.toISOString());
 
       // Leads unlocked this week
       const { count: unlockedThisWeek } = await supabase
         .from("lead_unlocks")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("facility_id", facilityId)
         .gte("unlocked_at", weekAgo.toISOString());
 
@@ -42,7 +42,7 @@ export function ProviderPerformanceFeedback({ facilityId }: ProviderPerformanceF
       if (recentUnlocks && recentUnlocks.length > 0) {
         const leadIds = recentUnlocks.map(u => u.lead_id);
         const { data: leads } = await supabase
-          .from("leads")
+          .from("leads_provider_view")
           .select("id, created_at")
           .in("id", leadIds);
 

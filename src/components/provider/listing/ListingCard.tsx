@@ -105,7 +105,7 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
     queryKey: ['facility-leads-count', facility.id],
     queryFn: async () => {
       const { count, error } = await supabase
-        .from('leads')
+        .from('leads_provider_view')
         .select('id', { count: 'exact', head: true })
         .eq('facility_id', facility.id);
       
