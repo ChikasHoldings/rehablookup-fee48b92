@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { Users, Search, X, ChevronLeft } from "lucide-react";
+import { Users, Search, X, ChevronLeft, Lock, KeyRound, Inbox, ShieldCheck, MailQuestion } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -364,25 +364,93 @@ export default function ProviderInquiriesPage() {
           )}>
             <div className="flex-1 overflow-auto">
               {isLoading ? (
-                <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-                  {[1, 2, 3, 4].map(i => (
-                    <Skeleton key={i} className="h-20 sm:h-24 w-full" />
+                <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3" aria-busy="true" aria-label="Loading inquiries">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div
+                      key={i}
+                      className="rounded-lg border bg-card p-3 sm:p-4 space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                        <Skeleton className="h-3 w-40" />
+                      </div>
+                      <Skeleton className="h-3 w-24" />
+                      <div className="flex items-center justify-between pt-1">
+                        <Skeleton className="h-3 w-20" />
+                        <Skeleton className="h-3 w-12" />
+                      </div>
+                    </div>
                   ))}
+                  <p className="text-center text-xs text-muted-foreground pt-2">
+                    Loading your leads…
+                  </p>
                 </div>
               ) : filteredInquiries.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                  <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">No inquiries found</h3>
-                  <p className="text-sm text-muted-foreground max-w-sm">
-                    {hasFilters 
-                      ? "Try adjusting your filters to see more results."
-                      : "When families submit inquiries to your facility, they'll appear here."
-                    }
+                <div className="flex flex-col items-center justify-center py-10 sm:py-14 px-4 text-center">
+                  <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    {hasFilters ? (
+                      <Search className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
+                    ) : (
+                      <Inbox className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
+                    )}
+                  </div>
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1.5">
+                    {hasFilters ? "No matching inquiries" : "No leads yet"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mb-5">
+                    {hasFilters
+                      ? "Try adjusting your search or filters to see more results."
+                      : "When a family submits an inquiry to one of your listings, it will appear here. New leads arrive locked to protect family privacy until you choose to unlock them."}
                   </p>
-                  {hasFilters && (
-                    <Button variant="outline" size="sm" className="mt-4" onClick={clearFilters}>
-                      Clear Filters
+
+                  {hasFilters ? (
+                    <Button variant="outline" size="sm" onClick={clearFilters}>
+                      <X className="h-4 w-4 mr-1.5" />
+                      Clear filters
                     </Button>
+                  ) : (
+                    <div className="w-full max-w-sm rounded-lg border bg-muted/30 p-4 text-left space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        How unlocking works
+                      </p>
+                      <div className="flex items-start gap-3">
+                        <div className="h-7 w-7 rounded-full bg-background border flex items-center justify-center flex-shrink-0">
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                        <div className="text-xs sm:text-sm">
+                          <p className="font-medium text-foreground">Leads arrive locked</p>
+                          <p className="text-muted-foreground">
+                            You'll see care needs, location, and urgency — contact details stay masked.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="h-7 w-7 rounded-full bg-background border flex items-center justify-center flex-shrink-0">
+                          <KeyRound className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <div className="text-xs sm:text-sm">
+                          <p className="font-medium text-foreground">Unlock to reveal contact</p>
+                          <p className="text-muted-foreground">
+                            One click uses credits to reveal name, phone, and email instantly.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="h-7 w-7 rounded-full bg-background border flex items-center justify-center flex-shrink-0">
+                          <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <div className="text-xs sm:text-sm">
+                          <p className="font-medium text-foreground">Respond fast to win</p>
+                          <p className="text-muted-foreground">
+                            Reach out within 10 minutes for the best conversion rates.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               ) : (
@@ -409,6 +477,24 @@ export default function ProviderInquiriesPage() {
                 isUnlocked={selectedInquiry.is_unlocked === true}
                 onUnlockSuccess={handleUnlockSuccess}
               />
+            ) : isLoading ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted/20 gap-3">
+                <Skeleton className="h-16 w-16 rounded-full" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-3 w-64" />
+              </div>
+            ) : inquiries.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted/20">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <MailQuestion className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Your inbox is ready
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  New family inquiries will land here automatically. Each lead arrives locked — unlock with credits to reveal contact details and reach out.
+                </p>
+              </div>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted/20">
                 <Users className="h-16 w-16 text-muted-foreground/30 mb-4" />
