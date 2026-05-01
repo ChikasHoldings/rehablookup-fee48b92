@@ -18,6 +18,7 @@
     "check:responsive": "node scripts/check-responsive-guards.mjs",
     "patch:og-image": "node scripts/patch-og-image.mjs",
     "check:seo-meta": "node scripts/check-seo-meta.mjs",
+    "check:internal-links": "node scripts/validate-internal-links.mjs",
     "validate:vercel-deploy": "node scripts/validate-vercel-deploy.mjs",
     "cleanup:orphan-prerenders": "node scripts/cleanup-orphan-prerenders.mjs",
     "cleanup:orphan-prerenders:apply": "node scripts/cleanup-orphan-prerenders.mjs --apply",
