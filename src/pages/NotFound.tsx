@@ -192,6 +192,45 @@ const NotFound = () => {
         title="Page Not Found - RehabLookup"
         description="The page you're looking for doesn't exist. Find addiction treatment centers and get help at RehabLookup."
         noindex={true}
+        structuredData={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Page Not Found",
+            description:
+              "The requested page could not be found. Search RehabLookup for addiction treatment centers by city, state, or ZIP code.",
+            url: "https://rehablookup.com/404",
+            isPartOf: {
+              "@type": "WebSite",
+              name: "RehabLookup",
+              url: "https://rehablookup.com",
+            },
+            mainEntity: {
+              "@type": "SearchAction",
+              target:
+                "https://rehablookup.com/search-results?location={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Home",
+                item: "https://rehablookup.com/",
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Page Not Found",
+                item: "https://rehablookup.com/404",
+              },
+            ],
+          },
+        ]}
       />
       <div className="min-h-[calc(100vh-200px)] bg-gradient-to-b from-primary/5 via-background to-muted/30 py-12 px-4 md:py-20">
         <div className="max-w-4xl mx-auto">
@@ -202,18 +241,21 @@ const NotFound = () => {
               <MapPin className="h-4 w-4 text-destructive" />
               <span className="text-sm font-medium text-destructive">Page Not Found</span>
             </div>
-            
-            {/* Large 404 with gradient */}
-            <h1 className="mb-4 font-display text-8xl font-bold bg-gradient-to-br from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent md:text-9xl animate-fade-in">
+
+            {/* Decorative 404 numeral (aria-hidden so the real H1 carries semantic weight) */}
+            <div
+              aria-hidden="true"
+              className="mb-4 font-display text-8xl font-bold bg-gradient-to-br from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent md:text-9xl animate-fade-in"
+            >
               404
+            </div>
+
+            {/* Real H1 — single, descriptive, crawlable */}
+            <h1 className="mb-3 font-display text-3xl font-bold text-foreground md:text-4xl">
+              Page Not Found
             </h1>
-            
-            {/* Message */}
-            <p className="mb-3 text-xl font-semibold text-foreground md:text-2xl">
-              Oops! This page doesn't exist
-            </p>
             <p className="mb-8 text-muted-foreground leading-relaxed max-w-md mx-auto">
-              The page you're looking for may have been moved or no longer exists. 
+              The page you're looking for may have been moved or no longer exists.
               Let us help you find the treatment resources you need.
             </p>
 
