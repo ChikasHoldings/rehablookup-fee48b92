@@ -18,6 +18,7 @@
     "check:responsive": "node scripts/check-responsive-guards.mjs",
     "patch:og-image": "node scripts/patch-og-image.mjs",
     "check:seo-meta": "node scripts/check-seo-meta.mjs",
+    "validate:vercel-deploy": "node scripts/validate-vercel-deploy.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test",
