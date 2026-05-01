@@ -13,6 +13,8 @@ import {
   emitConciergeFunnelEvent,
   fnv1a32,
   getOrCreateConciergeSessionId,
+  sanitizeHint,
+  sanitizeSource,
   type ConciergePrefillContext,
 } from "@/lib/conciergeAnalytics";
 
