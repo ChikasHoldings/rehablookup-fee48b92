@@ -24,9 +24,10 @@
  * pre-build chain.
  */
 
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { discoverPrerenderedPaths } from "./lib/prerender-discovery.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -167,16 +168,10 @@ function urlPath(url) {
  * mapped to their canonical site path (filename without .html). Excludes
  * static assets (404.html, index.html) and well-known directories.
  */
-function discoverPrerenderedRoutes() {
-  const SKIP_FILES = new Set(["index.html", "404.html"]);
-  const out = [];
-  for (const entry of readdirSync(PUBLIC_DIR, { withFileTypes: true })) {
-    if (!entry.isFile()) continue;
-    if (!entry.name.endsWith(".html")) continue;
-    if (SKIP_FILES.has(entry.name)) continue;
-    out.push("/" + entry.name.replace(/\.html$/, ""));
-  }
-  return out;
+function discoverPrerenderedRoutesLocal() {
+  // Hybrid prerender layout: accept BOTH /public/<path>.html AND
+  // /public/<path>/index.html. Both are served correctly on Vercel.
+  return [...discoverPrerenderedPaths(PUBLIC_DIR)];
 }
 
 // --------------------------------------------------------------------------
@@ -270,7 +265,7 @@ function main() {
   // — UNLESS the path is explicitly Disallow'd in robots.txt (in which case
   // the .html is served for direct visitors but intentionally excluded from
   // the index, e.g. /request-help, /placement-help conversion pages).
-  const prerendered = discoverPrerenderedRoutes();
+  const prerendered = discoverPrerenderedRoutesLocal();
   const googleGroup = robots.groups.get("Googlebot");
   let missingPrerender = 0;
   const sampleMissing = [];

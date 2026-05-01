@@ -26,6 +26,7 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { discoverPrerenderedFiles } from "./lib/prerender-discovery.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -164,14 +165,9 @@ function auditHtmlHead(filePath, expectedPath) {
 }
 
 function discoverPrerendered() {
-  const SKIP = new Set(["index.html", "404.html"]);
-  const out = [];
-  for (const e of readdirSync(PUBLIC_DIR, { withFileTypes: true })) {
-    if (!e.isFile() || !e.name.endsWith(".html") || SKIP.has(e.name)) continue;
-    const route = "/" + e.name.replace(/\.html$/, "");
-    out.push({ file: join(PUBLIC_DIR, e.name), route });
-  }
-  return out;
+  // Hybrid layout: accept both flat .html and nested /index.html.
+  // Use the shared discovery so canonical/robots audits cover BOTH.
+  return discoverPrerenderedFiles(PUBLIC_DIR);
 }
 
 // --------------------------------------------------------------------------
