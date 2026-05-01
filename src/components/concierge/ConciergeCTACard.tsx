@@ -60,7 +60,7 @@ export function ConciergeCTACard({
           </div>
         )}
 
-        <Link to="/concierge">
+        <Link to={href}>
           <Button 
             size={compact ? "sm" : "default"}
             className={cn(
