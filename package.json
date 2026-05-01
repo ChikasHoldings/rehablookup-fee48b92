@@ -32,6 +32,8 @@
     "cleanup:orphan-prerenders:apply": "node scripts/cleanup-orphan-prerenders.mjs --apply",
     "check:404-sources": "node scripts/find-404-sources.mjs",
     "crawl:404": "node scripts/crawl-live-404s.mjs",
+    "check:broken-links": "node scripts/check-broken-links.mjs",
+    "check:broken-links:internal": "SKIP_EXTERNAL=1 node scripts/check-broken-links.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test",
