@@ -7,6 +7,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import { SearchResultsForm } from "@/components/search/SearchResultsForm";
+import { FilterChips } from "@/components/search/FilterChips";
 import { 
   Heart, 
   MapPin, 
