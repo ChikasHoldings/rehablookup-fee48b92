@@ -51,6 +51,39 @@ const INSURANCE_OPTIONS = [
   { value: "private-pay", label: "Self-Pay / Private Pay" },
 ] as const;
 
+// Quick-recovery suggestions: high-intent cities and ZIPs that 404 visitors
+// commonly try. Clicking sends them straight to /search-results with the
+// location pre-filled — same handler as the form, so filters apply too.
+const POPULAR_CITIES = [
+  "Los Angeles, CA",
+  "San Diego, CA",
+  "Phoenix, AZ",
+  "Houston, TX",
+  "Dallas, TX",
+  "Miami, FL",
+  "Tampa, FL",
+  "Atlanta, GA",
+  "Chicago, IL",
+  "New York, NY",
+  "Philadelphia, PA",
+  "Denver, CO",
+  "Seattle, WA",
+  "Las Vegas, NV",
+  "Boston, MA",
+  "Nashville, TN",
+] as const;
+
+const POPULAR_ZIPS = [
+  { zip: "90210", label: "90210 · Beverly Hills" },
+  { zip: "10001", label: "10001 · New York" },
+  { zip: "33139", label: "33139 · Miami Beach" },
+  { zip: "60601", label: "60601 · Chicago" },
+  { zip: "77002", label: "77002 · Houston" },
+  { zip: "85001", label: "85001 · Phoenix" },
+  { zip: "30303", label: "30303 · Atlanta" },
+  { zip: "98101", label: "98101 · Seattle" },
+] as const;
+
 const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -110,17 +143,32 @@ const NotFound = () => {
     };
   }, [location.pathname, location.search]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const goToSearch = (locationValue: string) => {
     const params = new URLSearchParams();
-    const trimmed = searchQuery.trim();
+    const trimmed = locationValue.trim();
     if (trimmed) params.set("location", trimmed);
     if (treatment) params.set("treatment", treatment);
     if (insurance) params.set("insurance", insurance);
-    // Require at least one signal so we never send users to an empty results page.
     if ([...params.keys()].length === 0) return;
     navigate(`/search-results?${params.toString()}`);
   };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    goToSearch(searchQuery);
+  };
+
+  // Live auto-suggest: filter popular cities by what the user has typed so
+  // far. Hidden when input is empty or already an exact match.
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+  const citySuggestions =
+    trimmedQuery.length >= 2
+      ? POPULAR_CITIES.filter(
+          (c) =>
+            c.toLowerCase().includes(trimmedQuery) &&
+            c.toLowerCase() !== trimmedQuery,
+        ).slice(0, 5)
+      : [];
 
   const popularLinks = [
     { label: "Find Rehab Centers", href: "/rehab-centers", icon: Building2 },
@@ -182,8 +230,33 @@ const NotFound = () => {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-9"
                       aria-label="Location"
+                      autoComplete="off"
                     />
                   </div>
+                  {citySuggestions.length > 0 && (
+                    <div
+                      className="flex flex-wrap gap-1.5 -mt-1"
+                      role="listbox"
+                      aria-label="Suggested cities"
+                    >
+                      {citySuggestions.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          role="option"
+                          aria-selected="false"
+                          onClick={() => {
+                            setSearchQuery(c);
+                            goToSearch(c);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs text-foreground hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                        >
+                          <MapPin className="h-3 w-3 text-muted-foreground" />
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <Select value={treatment} onValueChange={setTreatment}>
                       <SelectTrigger aria-label="Treatment type">
@@ -217,6 +290,46 @@ const NotFound = () => {
                 </form>
               </CardContent>
             </Card>
+
+            {/* Quick-recovery: popular cities */}
+            <div className="max-w-2xl mx-auto mb-4 text-left">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+                Popular cities
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {POPULAR_CITIES.slice(0, 10).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => goToSearch(c)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                  >
+                    <MapPin className="h-3 w-3 text-muted-foreground" />
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick-recovery: popular ZIPs */}
+            <div className="max-w-2xl mx-auto mb-8 text-left">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+                Popular ZIP codes
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {POPULAR_ZIPS.map((z) => (
+                  <button
+                    key={z.zip}
+                    type="button"
+                    onClick={() => goToSearch(z.zip)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-foreground hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                  >
+                    <Search className="h-3 w-3 text-muted-foreground" />
+                    {z.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Primary Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
