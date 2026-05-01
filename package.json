@@ -9,6 +9,7 @@
     "generate:seo-html": "node scripts/generate-seo-html.mjs",
     "generate:missing-html": "node scripts/generate-missing-html.mjs",
     "generate:gsc-recovery-html": "node scripts/generate-gsc-recovery-html.mjs",
+    "generate:facility-profiles-html": "node scripts/generate-facility-profiles-html.mjs",
     "validate:seo-schema": "node scripts/validate-seo-schema.mjs",
     "validate:sitemap-robots": "node scripts/validate-sitemap-robots.mjs",
     "check:gsc-indexing": "node scripts/check-gsc-indexing.mjs",
