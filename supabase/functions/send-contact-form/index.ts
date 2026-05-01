@@ -71,18 +71,35 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const subject = sanitizeStr(body.subject, 50);
     const message = sanitizeStr(body.message, 5000);
 
-    // Validate required fields
-    if (!name || !email || !subject || !message) {
-      return new Response(JSON.stringify({ error: "All fields are required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Validate required fields — emit field-specific standard envelopes
+    // so the frontend can render consistent messages.
+    const stdError = (code: string, message: string, status: number, field?: string) =>
+      new Response(
+        JSON.stringify({
+          error: { code, message },
+          code,
+          reason: message,
+          ...(field ? { details: { field } } : {}),
+        }),
+        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+
+    if (!email) {
+      return stdError("email_required", "Email is required", 400, "email");
+    }
+    if (!name) {
+      return stdError("name_required", "Name is required", 400, "name");
+    }
+    if (!subject) {
+      return stdError("validation_error", "Subject is required", 400, "subject");
+    }
+    if (!message) {
+      return stdError("validation_error", "Message is required", 400, "message");
     }
 
     // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length < 5) {
-      return new Response(JSON.stringify({ error: "Invalid email address" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return stdError("invalid_email", "Invalid email address", 400, "email");
     }
 
     // Validate subject against whitelist
