@@ -98,6 +98,58 @@ export default function ProviderInquiriesPage() {
     }
   }, []);
 
+  // ── M1: Stripe-paid unlock reconciliation ───────────────────────────────
+  // After Stripe Checkout redirects back with ?unlock_success=true&session_id=…
+  // call verify-unlock-payment so the UI doesn't show a still-locked card if
+  // the webhook is delayed. Idempotent: succeeds whether the webhook ran or not.
+  useEffect(() => {
+    const unlockSuccess = searchParams.get("unlock_success");
+    const sessionId = searchParams.get("session_id");
+    const leadParam = searchParams.get("lead");
+    if (unlockSuccess !== "true" || !sessionId || !leadParam) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("verify-unlock-payment", {
+          body: { sessionId, leadId: leadParam },
+        });
+        if (cancelled) return;
+        if (error) {
+          toast.error("Couldn't confirm your unlock. Please refresh in a moment.");
+          return;
+        }
+        if (data?.paid) {
+          toast.success(
+            data.reconciled
+              ? "Payment confirmed — lead unlocked."
+              : "Lead unlocked successfully.",
+          );
+          queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
+          queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
+        } else {
+          toast.message("Payment is still processing. The lead will unlock shortly.");
+        }
+      } catch {
+        if (!cancelled) toast.error("Couldn't confirm your unlock. Please refresh in a moment.");
+      } finally {
+        if (!cancelled) {
+          // Clear the redirect params so we don't re-verify on every render
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete("unlock_success");
+          newParams.delete("session_id");
+          setSearchParams(newParams, { replace: true });
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
   // Get all facility IDs
   const facilityIds = useMemo(() => facilities.map(f => f.id), [facilities]);
 
