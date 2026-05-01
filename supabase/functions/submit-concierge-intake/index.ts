@@ -361,6 +361,7 @@ Deno.serve(async (req) => {
       idempotency_key: idempotencyKey,
       intake_submitted_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      email_verified_at: emailVerifiedAt || new Date().toISOString(),
       age_range: sanitizeString(intakeData.ageRange, 50),
       gender: sanitizeString(intakeData.gender, 50),
       preferred_language: sanitizeString((intakeData as FullIntakeData).preferredLanguage, 50) || null,
