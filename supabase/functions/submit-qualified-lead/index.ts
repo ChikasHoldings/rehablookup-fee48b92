@@ -490,10 +490,7 @@ Deno.serve(async (req) => {
     try {
       rawData = await req.json();
     } catch {
-      return new Response(
-        JSON.stringify({ success: false, error: "Invalid request body" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "invalid_body", "Invalid request body");
     }
     
     // ===== INPUT SANITIZATION =====
@@ -532,25 +529,16 @@ Deno.serve(async (req) => {
 
     // ===== VALIDATION: Required fields =====
     if (!data.facilityId) {
-      return new Response(
-        JSON.stringify({ success: false, error: "facility_id is required for all inquiries" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "facility_required", "facility_id is required for all inquiries", "facilityId");
     }
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(data.facilityId)) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Invalid facility ID" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "invalid_facility_id", "Invalid facility ID", "facilityId");
     }
 
     if (!data.name || data.name.length < 2) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Name is required (minimum 2 characters)" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "name_required", "Name is required (minimum 2 characters)", "name");
     }
 
     if (!data.email || typeof data.email !== "string" || data.email.trim().length === 0) {
