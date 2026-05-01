@@ -293,8 +293,20 @@ export default function ConciergeIntake() {
     const loc = searchParams.get("location") || "";
     const treatment = searchParams.get("treatment") || "";
     const insurance = searchParams.get("insurance") || "";
+    const source = searchParams.get("from") || "";
     if (!loc && !treatment && !insurance) return;
     prefillAppliedRef.current = true;
+
+    // Track which fields were actually applied (vs. ignored because user
+    // already filled them) so analytics reflect real attribution impact.
+    const applied = {
+      city: false,
+      state: false,
+      zip: false,
+      insurance_carrier: false,
+      payment_type: false,
+      level_of_care: false,
+    };
 
     setFormData((prev) => {
       const next = { ...prev };
@@ -323,7 +335,6 @@ export default function ConciergeIntake() {
         const ZIP_RE = /\b(\d{5})(?:-\d{4})?\b/;
 
         const raw = loc.trim();
-        // Extract & strip ZIP if present
         const zipMatch = raw.match(ZIP_RE);
         const zip = zipMatch?.[1] || "";
         const withoutZip = (zipMatch ? raw.replace(zipMatch[0], "") : raw)
@@ -331,11 +342,9 @@ export default function ConciergeIntake() {
           .replace(/^[,\s]+|[,\s]+$/g, "")
           .trim();
 
-        // Helper: try to peel a trailing state token (2-letter code or full name)
         const peelState = (s: string): { city: string; state: string } => {
           if (!s) return { city: "", state: "" };
           const lower = s.toLowerCase();
-          // Full state name match (longest first, multi-word)
           const sortedNames = Object.keys(US_STATES).sort((a, b) => b.length - a.length);
           for (const name of sortedNames) {
             if (lower === name) return { city: "", state: US_STATES[name] };
@@ -344,7 +353,6 @@ export default function ConciergeIntake() {
               return { city, state: US_STATES[name] };
             }
           }
-          // Trailing 2-letter code
           const tokens = s.split(/[,\s]+/).filter(Boolean);
           if (tokens.length >= 2) {
             const last = tokens[tokens.length - 1].toUpperCase();
@@ -352,7 +360,6 @@ export default function ConciergeIntake() {
               return { city: tokens.slice(0, -1).join(" ").replace(/,$/, "").trim(), state: last };
             }
           }
-          // Single token: state code or full state name?
           if (tokens.length === 1) {
             const only = tokens[0];
             if (only.length === 2 && STATE_CODES.has(only.toUpperCase())) {
@@ -366,7 +373,6 @@ export default function ConciergeIntake() {
           return { city: s, state: "" };
         };
 
-        // Prefer comma-split when present; otherwise peel from whitespace form
         let city = "";
         let state = "";
         if (withoutZip.includes(",")) {
@@ -387,29 +393,64 @@ export default function ConciergeIntake() {
           state = peeled.state;
         }
 
-        if (city) next.desiredCity = city;
-        if (state) next.desiredState = state;
-        // Persist ZIP when provided so advisors can route precisely
+        if (city) { next.desiredCity = city; applied.city = true; }
+        if (state) { next.desiredState = state; applied.state = true; }
         if (zip && "desiredZip" in next && !(next as any).desiredZip) {
           (next as any).desiredZip = zip;
+          applied.zip = true;
         } else if (zip && !city && !state) {
-          // ZIP-only input: surface it in city field as a fallback so it isn't lost
           next.desiredCity = zip;
+          applied.zip = true;
+          applied.city = true;
         }
       }
       if (insurance && !next.insuranceCarrier) {
         next.insuranceCarrier = insurance;
-        if (!next.paymentType) next.paymentType = "insurance";
+        applied.insurance_carrier = true;
+        if (!next.paymentType) {
+          next.paymentType = "insurance";
+          applied.payment_type = true;
+        }
       }
-      // Treatment hint maps loosely to levelOfCare when terms align.
       if (treatment && !next.levelOfCare) {
         const t = treatment.toLowerCase();
-        if (t.includes("detox")) next.levelOfCare = "detox";
-        else if (t.includes("inpatient") || t.includes("residential")) next.levelOfCare = "residential";
-        else if (t.includes("outpatient") || t.includes("iop") || t.includes("php")) next.levelOfCare = "outpatient";
+        if (t.includes("detox")) { next.levelOfCare = "detox"; applied.level_of_care = true; }
+        else if (t.includes("inpatient") || t.includes("residential")) { next.levelOfCare = "residential"; applied.level_of_care = true; }
+        else if (t.includes("outpatient") || t.includes("iop") || t.includes("php")) { next.levelOfCare = "outpatient"; applied.level_of_care = true; }
       }
       return next;
     });
+
+    // Emit attribution event AFTER state update is queued. We send raw param
+    // presence + applied-field flags so funnel dashboards can compute:
+    //   • prefill reach   = events / sessions on /concierge
+    //   • prefill quality = applied_any_field rate
+    //   • source mix      = breakdown by `source`
+    // No PII is sent — only field names + lowercased treatment/insurance hints.
+    try {
+      const appliedAny = Object.values(applied).some(Boolean);
+      const payload = {
+        source: source || "(direct)",
+        has_location: !!loc,
+        has_treatment: !!treatment,
+        has_insurance: !!insurance,
+        treatment_hint: treatment ? treatment.toLowerCase().slice(0, 32) : undefined,
+        insurance_hint: insurance ? insurance.toLowerCase().slice(0, 32) : undefined,
+        applied_city: applied.city,
+        applied_state: applied.state,
+        applied_zip: applied.zip,
+        applied_insurance_carrier: applied.insurance_carrier,
+        applied_payment_type: applied.payment_type,
+        applied_level_of_care: applied.level_of_care,
+        applied_any_field: appliedAny,
+      };
+      // GA4
+      (window as any).gtag?.("event", "concierge_intake_prefilled", payload);
+      // Meta Pixel (custom event) — useful for retargeting prefilled visitors
+      (window as any).fbq?.("trackCustom", "ConciergeIntakePrefilled", payload);
+    } catch {
+      // analytics is best-effort; never block the intake flow
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
