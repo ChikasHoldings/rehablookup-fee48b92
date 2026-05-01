@@ -30,6 +30,8 @@
     "validate:vercel-deploy": "node scripts/validate-vercel-deploy.mjs",
     "cleanup:orphan-prerenders": "node scripts/cleanup-orphan-prerenders.mjs",
     "cleanup:orphan-prerenders:apply": "node scripts/cleanup-orphan-prerenders.mjs --apply",
+    "check:404-sources": "node scripts/find-404-sources.mjs",
+    "crawl:404": "node scripts/crawl-live-404s.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test",

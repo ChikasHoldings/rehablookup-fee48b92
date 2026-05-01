@@ -1,0 +1,98 @@
+name: 404 / Broken Route Crawler
+
+# Catches new 404s and missing-route regressions.
+#
+# Two modes:
+#   • PR + push to main: STATIC mode — runs the offline sitemap/HTML/Route
+#     parity validators (find-404-sources.mjs + validate-internal-links.mjs).
+#     Fast, deterministic, blocks merges on regressions.
+#
+#   • Nightly schedule + manual dispatch: LIVE mode — actually HTTP-fetches
+#     every sitemap URL against the deployed production origin, surfaces real
+#     4xx/5xx responses, uploads a markdown report, and fails the run if any
+#     URL is broken (so the user sees a red status on the schedule run).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # 04:17 UTC every day — off the hour to avoid GitHub's cron stampede.
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Origin to crawl (e.g. https://rehablookup.com)"
+        required: false
+        default: "https://rehablookup.com"
+      concurrency:
+        description: "Parallel requests"
+        required: false
+        default: "16"
+      max_urls:
+        description: "Cap on URLs crawled (blank = all)"
+        required: false
+        default: ""
+
+concurrency:
+  group: crawl-404-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-route-audit:
+    name: Static route / sitemap parity (PR gate)
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci --no-audit --no-fund
+      - name: Regenerate sitemaps & static facility profiles
+        run: |
+          npm run generate:facility-profiles-html
+          npm run generate:sitemaps
+      - name: Find unresolved internal URLs (offline)
+        run: node scripts/find-404-sources.mjs
+      - name: Validate internal links match Routes
+        run: npm run check:internal-links
+
+  live-crawl:
+    name: Live 404 crawl (scheduled)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci --no-audit --no-fund
+
+      - name: Crawl deployed origin
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url || 'https://rehablookup.com' }}
+          CONCURRENCY: ${{ github.event.inputs.concurrency || '16' }}
+          MAX_URLS: ${{ github.event.inputs.max_urls }}
+          REPORT_PATH: ${{ github.workspace }}/crawl-404-report.md
+        run: node scripts/crawl-live-404s.mjs
+
+      - name: Upload crawl report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crawl-404-report
+          path: crawl-404-report.md
+          if-no-files-found: warn
+
+      - name: Append report to job summary
+        if: always()
+        run: |
+          if [ -f crawl-404-report.md ]; then
+            cat crawl-404-report.md >> "$GITHUB_STEP_SUMMARY"
+          fi
