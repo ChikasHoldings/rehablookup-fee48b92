@@ -65,9 +65,25 @@ export const WelcomeEmailErrorResponseSchema = z.object({
 });
 export type WelcomeEmailErrorResponse = z.infer<typeof WelcomeEmailErrorResponseSchema>;
 
+/** Machine-readable status of the send call. */
+export const WelcomeEmailSendStatus = z.enum(["sent", "deduplicated"]);
+export type WelcomeEmailSendStatus = z.infer<typeof WelcomeEmailSendStatus>;
+
 export const WelcomeEmailSuccessResponseSchema = z.object({
   success: z.literal(true),
+  /** "sent" = newly delivered, "deduplicated" = collapsed to a prior send. */
+  status: WelcomeEmailSendStatus,
+  /** Convenience boolean mirroring `status === "deduplicated"`. */
+  deduplicated: z.boolean(),
+  /** Stable string code (kept for backwards compatibility with old clients). */
+  code: z.enum(["email_sent", "email_deduplicated"]),
+  /** The idempotency key the server used (echoed even when client omitted it). */
+  idempotencyKey: z.string(),
+  /** Resend message id on a fresh send; the idempotency key on a dedup hit. */
   messageId: z.string().optional(),
+  /** ISO timestamp of the original send when `status === "deduplicated"`. */
+  firstSentAt: z.string().optional(),
+  /** Correlation id (also returned in `x-request-id` header). */
   shortId: z.string().optional(),
 });
 export type WelcomeEmailSuccessResponse = z.infer<typeof WelcomeEmailSuccessResponseSchema>;

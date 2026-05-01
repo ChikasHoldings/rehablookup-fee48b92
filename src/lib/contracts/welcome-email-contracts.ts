@@ -53,9 +53,17 @@ export const WelcomeEmailErrorResponseSchema = z.object({
 });
 export type WelcomeEmailErrorResponse = z.infer<typeof WelcomeEmailErrorResponseSchema>;
 
+export const WelcomeEmailSendStatus = z.enum(["sent", "deduplicated"]);
+export type WelcomeEmailSendStatus = z.infer<typeof WelcomeEmailSendStatus>;
+
 export const WelcomeEmailSuccessResponseSchema = z.object({
   success: z.literal(true),
+  status: WelcomeEmailSendStatus,
+  deduplicated: z.boolean(),
+  code: z.enum(["email_sent", "email_deduplicated"]),
+  idempotencyKey: z.string(),
   messageId: z.string().optional(),
+  firstSentAt: z.string().optional(),
   shortId: z.string().optional(),
 });
 export type WelcomeEmailSuccessResponse = z.infer<typeof WelcomeEmailSuccessResponseSchema>;

@@ -60,6 +60,8 @@ interface SendResult {
   attempts: number;
   /** Whether the email was sent to dead-letter after all retries */
   deadLettered?: boolean;
+  /** ISO timestamp of the original "sent" event when deduplicated. */
+  firstSentAt?: string;
 }
 
 // SupabaseClient generic enough for service role usage
@@ -101,16 +103,23 @@ export async function sendEmailWithRetry(
   if (idempotencyKey) {
     const { data: existing } = await supabase
       .from("email_tracking_events")
-      .select("id")
+      .select("id, created_at")
       .eq("email_id", idempotencyKey)
       .eq("email_type", emailType)
       .eq("event_type", "sent")
+      .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
 
     if (existing) {
       console.log(`${LOG_PREFIX} Dedup hit: ${idempotencyKey}`);
-      return { success: true, deduplicated: true, attempts: 0 };
+      return {
+        success: true,
+        deduplicated: true,
+        attempts: 0,
+        emailId: idempotencyKey,
+        firstSentAt: existing.created_at ?? undefined,
+      };
     }
   }
 
