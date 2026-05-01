@@ -10,6 +10,7 @@ import {
   TourEmailData,
 } from "../_shared/tour-email-templates.ts";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { jsonError } from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
