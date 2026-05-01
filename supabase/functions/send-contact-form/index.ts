@@ -104,9 +104,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Validate subject against whitelist
     if (!subjectLabels[subject]) {
-      return new Response(JSON.stringify({ error: "Invalid subject category" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return stdError("validation_error", "Invalid subject category", 400, "subject");
     }
 
     console.log("[SEND-CONTACT-FORM] Processing:", { name: name.slice(0, 20), subject });
