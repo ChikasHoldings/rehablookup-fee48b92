@@ -595,9 +595,69 @@ export function SingleQuestionFlow({
               {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
             </div>
             
-            <Button 
+            {/* Explicit consent — required before submit */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="consent-to-contact"
+                className={cn(
+                  "flex items-start gap-3 rounded-xl border bg-muted/30 p-3 sm:p-3.5 cursor-pointer transition-colors hover:bg-muted/50",
+                  errors.consentToContact ? "border-destructive" : "border-border"
+                )}
+              >
+                <Checkbox
+                  id="consent-to-contact"
+                  checked={consentToContact}
+                  onCheckedChange={(checked) => {
+                    setConsentToContact(checked === true);
+                    if (checked) {
+                      setErrors((prev) => ({ ...prev, consentToContact: "" }));
+                    }
+                  }}
+                  className="mt-0.5"
+                  aria-describedby="consent-description"
+                  aria-invalid={!!errors.consentToContact}
+                />
+                <span
+                  id="consent-description"
+                  className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed select-none"
+                >
+                  I agree to be contacted by
+                  {facilityName ? ` ${facilityName}` : " the selected treatment center"}{" "}
+                  via phone, SMS, or email about treatment options. Message &amp; data
+                  rates may apply. My information is confidential — see the{" "}
+                  <a
+                    href="/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Privacy Policy
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    href="/terms-of-service"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Terms
+                  </a>
+                  .
+                </span>
+              </label>
+              {errors.consentToContact && (
+                <p className="text-xs text-destructive flex items-center gap-1.5">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {errors.consentToContact}
+                </p>
+              )}
+            </div>
+
+            <Button
               onClick={handleContactSubmit}
-              disabled={isSendingCode || isSubmitting}
+              disabled={isSendingCode || isSubmitting || !consentToContact}
               className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
               size="lg"
             >
@@ -618,12 +678,6 @@ export function SingleQuestionFlow({
                 </>
               )}
             </Button>
-            
-            <p className="text-[11px] sm:text-xs text-muted-foreground text-center leading-relaxed px-1">
-              By submitting, you agree to be contacted by{facilityName ? ` ${facilityName}` : " the selected treatment center"} via phone, SMS, or email about treatment options. Message &amp; data rates may apply. Your information is confidential — see our{" "}
-              <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Privacy Policy</a>{" "}and{" "}
-              <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Terms</a>.
-            </p>
           </div>
         );
         
