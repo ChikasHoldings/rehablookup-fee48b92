@@ -1,0 +1,140 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Provider Welcome Email Edge Functions",
+    "version": "1.0.0",
+    "description": "Request/response contracts for the `send-provider-welcome-email` and `send-provider-welcome-offer-email` Supabase Edge Functions. The canonical Zod schemas live in `supabase/functions/_shared/contracts/welcome-email-contracts.ts` and are mirrored for the frontend at `src/lib/contracts/welcome-email-contracts.ts`."
+  },
+  "servers": [
+    {
+      "url": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1",
+      "description": "Lovable Cloud edge functions"
+    }
+  ],
+  "paths": {
+    "/send-provider-welcome-email": {
+      "post": {
+        "summary": "Send the standard provider welcome email.",
+        "operationId": "sendProviderWelcomeEmail",
+        "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WelcomeEmailRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/WelcomeEmailSuccess" },
+          "400": { "$ref": "#/components/responses/WelcomeEmailError" },
+          "405": { "$ref": "#/components/responses/WelcomeEmailError" },
+          "500": { "$ref": "#/components/responses/WelcomeEmailError" }
+        }
+      }
+    },
+    "/send-provider-welcome-offer-email": {
+      "post": {
+        "summary": "Send the provider welcome offer (discount) email.",
+        "operationId": "sendProviderWelcomeOfferEmail",
+        "parameters": [{ "$ref": "#/components/parameters/RequestId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WelcomeEmailRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/WelcomeEmailSuccess" },
+          "400": { "$ref": "#/components/responses/WelcomeEmailError" },
+          "405": { "$ref": "#/components/responses/WelcomeEmailError" },
+          "500": { "$ref": "#/components/responses/WelcomeEmailError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "RequestId": {
+        "in": "header",
+        "name": "x-request-id",
+        "required": false,
+        "description": "Optional client-supplied correlation id (max 64 chars). When present, the server logs and echoes it back as `shortId` and the `x-request-id` response header.",
+        "schema": { "type": "string", "maxLength": 64 }
+      }
+    },
+    "schemas": {
+      "WelcomeEmailRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["facilityId", "facilityName", "providerEmail", "providerFirstName", "selectedPlan"],
+        "properties": {
+          "facilityId":        { "type": "string", "format": "uuid" },
+          "facilityName":      { "type": "string", "minLength": 1, "maxLength": 255 },
+          "providerEmail":     { "type": "string", "format": "email", "maxLength": 255 },
+          "providerFirstName": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "selectedPlan":      { "type": "string", "minLength": 1, "maxLength": 50 },
+          "idempotencyKey":    { "type": "string", "minLength": 1, "maxLength": 255 }
+        }
+      },
+      "WelcomeEmailSuccessResponse": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success":   { "type": "boolean", "enum": [true] },
+          "messageId": { "type": "string" },
+          "shortId":   { "type": "string", "description": "Correlation id, also in `x-request-id` header." }
+        }
+      },
+      "WelcomeEmailErrorResponse": {
+        "type": "object",
+        "required": ["error", "code"],
+        "properties": {
+          "error":   { "type": "string" },
+          "code":    { "$ref": "#/components/schemas/WelcomeEmailErrorCode" },
+          "shortId": { "type": "string" },
+          "fieldErrors": {
+            "type": "object",
+            "description": "Per-field validation errors. Present for `validation_error` and `email_rejected`.",
+            "additionalProperties": { "type": "array", "items": { "type": "string" } }
+          },
+          "rejectionReason": { "$ref": "#/components/schemas/RecipientRejectionReason" }
+        }
+      },
+      "WelcomeEmailErrorCode": {
+        "type": "string",
+        "enum": ["invalid_json", "validation_error", "email_rejected", "method_not_allowed", "internal_error"]
+      },
+      "RecipientRejectionReason": {
+        "type": "string",
+        "enum": ["malformed", "disposable_domain", "role_address"]
+      }
+    },
+    "responses": {
+      "WelcomeEmailSuccess": {
+        "description": "Email accepted by Resend.",
+        "headers": {
+          "x-request-id": { "schema": { "type": "string" }, "description": "Correlation id." }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/WelcomeEmailSuccessResponse" }
+          }
+        }
+      },
+      "WelcomeEmailError": {
+        "description": "Stable error envelope. Status reflects the failure class (400 for invalid_json/validation_error/email_rejected, 405 for method_not_allowed, 500 for internal_error).",
+        "headers": {
+          "x-request-id": { "schema": { "type": "string" } }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/WelcomeEmailErrorResponse" }
+          }
+        }
+      }
+    }
+  }
+}
