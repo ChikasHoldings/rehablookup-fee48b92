@@ -352,7 +352,7 @@ function buildFacilityHtml(
     <address style="font-style: normal;">
       <strong>${escHtml(f.name)}</strong><br>
       ${fullAddress ? `${escHtml(fullAddress)}<br>` : ''}
-      ${f.phone ? `Phone: <a href="tel:${escHtml(f.phone)}">${escHtml(f.phone)}</a><br>` : ''}
+      ${isPro && f.phone ? `Phone: <a href="tel:${escHtml(f.phone)}">${escHtml(f.phone)}</a><br>` : ''}
       ${f.website ? `Website: <a href="${escHtml(f.website)}" rel="nofollow noopener">${escHtml(f.website)}</a>` : ''}
     </address>`;
 
