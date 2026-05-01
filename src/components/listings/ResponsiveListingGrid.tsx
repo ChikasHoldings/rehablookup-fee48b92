@@ -4,13 +4,26 @@ import { Link } from "react-router-dom";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
+import { buildConciergeHref } from "@/lib/conciergeHref";
 
 interface ResponsiveListingGridProps {
   facilities: any[];
   maxItems?: number;
+  /** Forwarded to /concierge as prefill / attribution. */
+  conciergeLocation?: string;
+  conciergeTreatment?: string;
+  conciergeInsurance?: string;
+  conciergeSource?: string;
 }
 
-export function ResponsiveListingGrid({ facilities, maxItems = 12 }: ResponsiveListingGridProps) {
+export function ResponsiveListingGrid({
+  facilities,
+  maxItems = 12,
+  conciergeLocation,
+  conciergeTreatment,
+  conciergeInsurance,
+  conciergeSource = "responsive_listing_grid_empty",
+}: ResponsiveListingGridProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
