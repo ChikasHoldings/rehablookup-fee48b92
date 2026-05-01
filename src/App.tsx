@@ -376,6 +376,34 @@ function BlogRedirect() {
   return <Navigate to={`/resources/${id}`} replace />;
 }
 
+// ============================================================
+// Legacy slug redirects — backlink rescue
+// ============================================================
+// Preserve full sub-path on rename. Example: /seeker/dashboard → /client/dashboard
+function SeekerToClientRedirect() {
+  const { "*": rest } = useParams();
+  const tail = rest ? `/${rest}` : "";
+  return <Navigate to={`/client${tail}`} replace />;
+}
+
+// /facility/:slug and /profile/:slug → canonical /center/:slug
+function FacilityToCenterRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/center/${slug}`} replace />;
+}
+
+// /state/:stateSlug → canonical /rehab-centers/:stateSlug
+function StateToRehabCentersRedirect() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/rehab-centers/${stateSlug}`} replace />;
+}
+
+// /location/:stateSlug/:citySlug → canonical /rehab-centers/:stateSlug/:citySlug
+function LocationToRehabCentersRedirect() {
+  const { stateSlug, citySlug } = useParams();
+  return <Navigate to={`/rehab-centers/${stateSlug}/${citySlug}`} replace />;
+}
+
 // Some tooling injects `ref` into top-level elements; these wrappers safely absorb refs
 // so we don't get noisy "Function components cannot be given refs" warnings.
 //
