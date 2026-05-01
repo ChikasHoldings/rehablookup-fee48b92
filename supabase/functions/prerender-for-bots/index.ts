@@ -298,6 +298,8 @@ function buildFacilityHtml(
   treatments: string[],
   insurances: string[],
   isPro: boolean = false,
+  accreditations: string[] = [],
+  rating: { value: number; count: number } | null = null,
 ): string {
   const url = `${BASE_URL}${path}`;
   const title = `${f.name} - ${f.city}, ${f.state} | RehabLookup`;
@@ -307,31 +309,136 @@ function buildFacilityHtml(
   const description = baseDesc.slice(0, 200);
   const image = f.logo_url || (f.gallery_urls && f.gallery_urls[0]) || DEFAULT_OG_IMAGE;
 
-  // JSON-LD: MedicalBusiness is the most accurate type for a treatment center.
-  const jsonLd = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'MedicalBusiness',
-    name: f.name,
-    description: baseDesc,
-    url,
-    // Phone is a Pro-only contact channel — omit from JSON-LD for non-Pro
-    // listings so structured data matches the on-page UX (no leakage to bots).
-    telephone: isPro && f.phone ? f.phone : undefined,
-    image: image,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: f.address || undefined,
-      addressLocality: f.city,
-      addressRegion: f.state,
-      postalCode: f.zip_code || undefined,
-      addressCountry: 'US',
-    },
-    medicalSpecialty: 'Addiction Medicine',
-    availableService: treatments.map((t) => ({
-      '@type': 'MedicalProcedure',
-      name: t,
-    })),
-  });
+  // Build a richer image array (logo first, then gallery) for image-rich SERP.
+  const images = [f.logo_url, ...((f.gallery_urls ?? []) as string[])]
+    .filter((u): u is string => Boolean(u));
+
+  // Parse bed_count to a positive integer when possible (e.g. "50", "50 beds", "50-75").
+  const bedCountNum = (() => {
+    if (!f.bed_count) return undefined;
+    const m = String(f.bed_count).match(/\d+/);
+    if (!m) return undefined;
+    const n = parseInt(m[0], 10);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  })();
+
+  // Audience derived from gender_served.
+  const gender = f.gender_served?.toLowerCase();
+  const audience = gender
+    ? {
+        '@type': 'PeopleAudience',
+        ...(gender === 'men' || gender === 'male'
+          ? { suggestedGender: 'Male' }
+          : gender === 'women' || gender === 'female'
+          ? { suggestedGender: 'Female' }
+          : {}),
+      }
+    : undefined;
+
+  const fullAddress = [f.address, f.city, f.state, f.zip_code].filter(Boolean).join(', ');
+  const hasMap = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    `${f.name}, ${fullAddress}`,
+  )}`;
+
+  // JSON-LD: multi-typed for max coverage. MedicalOrganization is Google's
+  // preferred healthcare type; MedicalClinic/MedicalBusiness/LocalBusiness
+  // broaden eligibility for local + rich result features.
+  const jsonLd = JSON.stringify(
+    Object.fromEntries(
+      Object.entries({
+        '@context': 'https://schema.org',
+        '@type': ['MedicalOrganization', 'MedicalClinic', 'MedicalBusiness', 'LocalBusiness'],
+        '@id': url,
+        name: f.name,
+        legalName: f.name,
+        description: baseDesc,
+        url,
+        // Phone is a Pro-only contact channel — omit from JSON-LD for non-Pro
+        // listings so structured data matches the on-page UX (no leakage to bots).
+        telephone: isPro && f.phone ? f.phone : undefined,
+        image: images.length > 0 ? images : image,
+        logo: f.logo_url
+          ? { '@type': 'ImageObject', url: f.logo_url, caption: `${f.name} logo` }
+          : undefined,
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: f.address || undefined,
+          addressLocality: f.city,
+          addressRegion: f.state,
+          postalCode: f.zip_code || undefined,
+          addressCountry: 'US',
+        },
+        areaServed: [
+          { '@type': 'City', name: f.city },
+          { '@type': 'State', name: f.state },
+        ],
+        hasMap,
+        // Treatment facilities are typically reachable 24/7.
+        openingHoursSpecification: {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+          opens: '00:00',
+          closes: '23:59',
+        },
+        medicalSpecialty: ['Addiction Medicine', 'Psychiatry', 'Behavioral Health'],
+        availableService: treatments.length
+          ? treatments.map((t) => ({
+              '@type': 'MedicalTherapy',
+              name: t,
+              serviceType: 'Addiction Treatment',
+              provider: { '@id': url },
+            }))
+          : undefined,
+        makesOffer: treatments.length
+          ? treatments.map((t) => ({
+              '@type': 'Offer',
+              itemOffered: {
+                '@type': 'Service',
+                name: t,
+                serviceType: 'Addiction Treatment',
+                category: 'Healthcare',
+              },
+              availability: 'https://schema.org/InStock',
+            }))
+          : undefined,
+        hasCredential: accreditations.length
+          ? accreditations.map((a) => ({
+              '@type': 'EducationalOccupationalCredential',
+              credentialCategory: 'Accreditation',
+              name: a,
+            }))
+          : undefined,
+        paymentAccepted: ['Cash', 'Credit Card', 'Insurance', ...insurances],
+        currenciesAccepted: 'USD',
+        priceRange: '$$-$$$$',
+        isAccessibleForFree: false,
+        foundingDate: f.year_established ? String(f.year_established) : undefined,
+        sameAs: f.website ? [f.website] : undefined,
+        numberOfRooms: bedCountNum,
+        audience,
+        knowsAbout: [
+          'Drug Addiction Treatment',
+          'Alcohol Rehabilitation',
+          'Mental Health Services',
+          'Detoxification Programs',
+          'Outpatient Treatment',
+          'Inpatient Rehabilitation',
+        ],
+        ...(f.verified ? { award: 'RehabLookup Verified Facility' } : {}),
+        ...(rating && rating.count > 0
+          ? {
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: Number(rating.value.toFixed(2)),
+                reviewCount: rating.count,
+                bestRating: 5,
+                worstRating: 1,
+              },
+            }
+          : {}),
+      }).filter(([, v]) => v !== undefined && v !== null),
+    ),
+  );
 
   const treatmentsList = treatments.length
     ? `<h2>Treatment Programs</h2><ul>${treatments.map((t) => `<li>${escHtml(t)}</li>`).join('')}</ul>`
