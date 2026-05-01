@@ -514,7 +514,17 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
         .map((i) => i.insurance_name)
         .filter(Boolean);
 
-      return buildFacilityHtml(path, facilityRow, treatments, insurances);
+      // Pro plan check — controls whether phone is exposed in prerendered HTML / JSON-LD.
+      const { data: proSub } = await supabase
+        .from('pro_subscriptions')
+        .select('id')
+        .eq('facility_id', facilityRow.id)
+        .eq('status', 'active')
+        .gt('current_period_end', new Date().toISOString())
+        .maybeSingle();
+      const isPro = !!proSub;
+
+      return buildFacilityHtml(path, facilityRow, treatments, insurances, isPro);
     } catch (err) {
       console.error('[Prerender] Facility fetch error:', err);
     }
