@@ -78,16 +78,30 @@ export function ReviewsList({
   const hasMore = visibleCount < reviews.length;
 
   if (isLoading) {
-    return (
+    const loadingInner = (
+      <div className="flex justify-center py-8">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+      </div>
+    );
+    return bare ? loadingInner : (
       <Card>
-        <CardContent className="py-8">
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-          </div>
-        </CardContent>
+        <CardContent className="py-8">{loadingInner}</CardContent>
       </Card>
     );
   }
+
+  const body = (
+    <>
+      {reviews.length === 0 ? (
+        <div className="text-center py-8">
+          <Star className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="text-muted-foreground">No reviews yet. Be the first to share your experience!</p>
+        </div>
+      ) : null}
+    </>
+  );
+  // (body placeholder above is just a no-op marker; full list rendering follows below)
+
 
   return (
     <Card>
