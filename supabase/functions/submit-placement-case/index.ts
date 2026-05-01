@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error("Supabase configuration missing");
+      return jsonError("server_misconfigured", "Supabase configuration missing", 500, corsHeaders, { requestId, _version: VERSION });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -113,10 +113,7 @@ Deno.serve(async (req) => {
     const contentLength = req.headers.get("content-length");
     if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
       logStep(requestId, "Request too large", { size: contentLength });
-      return new Response(JSON.stringify({ error: "Request too large" }), {
-        status: 413,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("payload_too_large", "Request too large", 413, corsHeaders, { requestId, _version: VERSION }, { maxBytes: MAX_BODY_SIZE, receivedBytes: parseInt(contentLength) });
     }
 
     // Parse body with size guard
@@ -124,26 +121,17 @@ Deno.serve(async (req) => {
     try {
       rawBody = await req.text();
       if (rawBody.length > MAX_BODY_SIZE) {
-        return new Response(JSON.stringify({ error: "Request too large" }), {
-          status: 413,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonError("payload_too_large", "Request too large", 413, corsHeaders, { requestId, _version: VERSION }, { maxBytes: MAX_BODY_SIZE, receivedBytes: rawBody.length });
       }
     } catch {
-      return new Response(JSON.stringify({ error: "Failed to read request body" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("body_read_failed", "Failed to read request body", 400, corsHeaders, { requestId, _version: VERSION });
     }
 
     let body: PlacementCaseRequest;
     try {
       body = JSON.parse(rawBody);
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("invalid_json", "Request body is not valid JSON", 400, corsHeaders, { requestId, _version: VERSION });
     }
 
     // Sanitize and validate all inputs
@@ -155,22 +143,15 @@ Deno.serve(async (req) => {
       const message = emailErr instanceof Error ? emailErr.message : "Invalid email";
       const code = message === "Email is required" ? "email_required" : "invalid_email";
       logStep(requestId, "Email validation failed", { code, reason: message });
-      return new Response(
-        JSON.stringify({ error: message, code, field: "seekerEmail", requestId, _version: VERSION }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonError(code, message, 400, corsHeaders, { requestId, _version: VERSION }, { field: "seekerEmail" });
     }
     const seekerPhone = sanitizePhone(body.seekerPhone);
 
     if (!seekerName) {
-      return new Response(JSON.stringify({ error: "Name is required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("name_required", "Name is required", 400, corsHeaders, { requestId, _version: VERSION }, { field: "seekerName" });
     }
     if (!seekerPhone) {
-      return new Response(JSON.stringify({ error: "Phone is required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("phone_required", "Phone is required", 400, corsHeaders, { requestId, _version: VERSION }, { field: "seekerPhone" });
     }
 
     // Validate enums
