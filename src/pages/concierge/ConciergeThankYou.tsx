@@ -202,7 +202,8 @@ export default function ConciergeThankYou() {
     };
 
     verifyAndSubmit();
-  }, [sessionId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, isFreeFlow, idParam]);
 
   // Check auth status and listen for changes (e.g. user logs in from another tab)
   useEffect(() => {
