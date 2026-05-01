@@ -3525,10 +3525,16 @@ export type Database = {
       }
       not_found_events: {
         Row: {
+          asset_extension: string | null
           created_at: string
+          full_url: string | null
+          hash: string | null
+          http_method: string | null
           id: string
           path: string
+          query_string: string | null
           referrer: string | null
+          request_kind: string | null
           search: string | null
           session_id: string | null
           user_agent: string | null
@@ -3536,10 +3542,16 @@ export type Database = {
           viewport: string | null
         }
         Insert: {
+          asset_extension?: string | null
           created_at?: string
+          full_url?: string | null
+          hash?: string | null
+          http_method?: string | null
           id?: string
           path: string
+          query_string?: string | null
           referrer?: string | null
+          request_kind?: string | null
           search?: string | null
           session_id?: string | null
           user_agent?: string | null
@@ -3547,10 +3559,16 @@ export type Database = {
           viewport?: string | null
         }
         Update: {
+          asset_extension?: string | null
           created_at?: string
+          full_url?: string | null
+          hash?: string | null
+          http_method?: string | null
           id?: string
           path?: string
+          query_string?: string | null
           referrer?: string | null
+          request_kind?: string | null
           search?: string | null
           session_id?: string | null
           user_agent?: string | null
