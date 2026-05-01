@@ -151,13 +151,19 @@ const NotFound = () => {
 
             {/* Primary Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
-              <Link to="/">
+              <Link to="/" className="w-full sm:w-auto">
                 <Button size="lg" className="gap-2 w-full sm:w-auto shadow-md">
                   <Home className="h-4 w-4" />
                   Go Home
                 </Button>
               </Link>
-              <Link to="/concierge">
+              <Link to="/rehab-centers" className="w-full sm:w-auto">
+                <Button variant="secondary" size="lg" className="gap-2 w-full sm:w-auto shadow-md">
+                  <Building2 className="h-4 w-4" />
+                  Browse Rehab Centers
+                </Button>
+              </Link>
+              <Link to="/concierge" className="w-full sm:w-auto">
                 <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto border-primary/30 hover:bg-primary/5">
                   <Phone className="h-4 w-4" />
                   Find Treatment
