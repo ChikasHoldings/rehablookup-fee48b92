@@ -7,6 +7,13 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Home, 
   Search, 
@@ -20,10 +27,36 @@ import {
   Shield
 } from "lucide-react";
 
+// Mirror the canonical filter values accepted by /search-results
+// (see src/pages/SearchResults.tsx — `treatment` and `insurance` query params).
+const TREATMENT_OPTIONS = [
+  { value: "detox", label: "Detox" },
+  { value: "inpatient", label: "Inpatient" },
+  { value: "outpatient", label: "Outpatient" },
+  { value: "dual-diagnosis", label: "Dual Diagnosis" },
+  { value: "holistic", label: "Holistic" },
+] as const;
+
+const INSURANCE_OPTIONS = [
+  { value: "aetna", label: "Aetna" },
+  { value: "bcbs", label: "Blue Cross Blue Shield" },
+  { value: "cigna", label: "Cigna" },
+  { value: "united", label: "United Healthcare" },
+  { value: "kaiser", label: "Kaiser Permanente" },
+  { value: "humana", label: "Humana" },
+  { value: "anthem", label: "Anthem" },
+  { value: "medicare", label: "Medicare" },
+  { value: "medicaid", label: "Medicaid" },
+  { value: "tricare", label: "TRICARE" },
+  { value: "private-pay", label: "Self-Pay / Private Pay" },
+] as const;
+
 const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [treatment, setTreatment] = useState("");
+  const [insurance, setInsurance] = useState("");
   const reportedRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -79,9 +112,14 @@ const NotFound = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search-results?location=${encodeURIComponent(searchQuery.trim())}`);
-    }
+    const params = new URLSearchParams();
+    const trimmed = searchQuery.trim();
+    if (trimmed) params.set("location", trimmed);
+    if (treatment) params.set("treatment", treatment);
+    if (insurance) params.set("insurance", insurance);
+    // Require at least one signal so we never send users to an empty results page.
+    if ([...params.keys()].length === 0) return;
+    navigate(`/search-results?${params.toString()}`);
   };
 
   const popularLinks = [
