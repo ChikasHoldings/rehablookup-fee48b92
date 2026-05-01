@@ -1112,6 +1112,8 @@ const AppInner = () => {
             {/* Provider Routes */}
             <Route path="/for-providers" element={<PublicRouteGuard><ForProviders /></PublicRouteGuard>} />
             <Route path="/provider-resources" element={<PublicRouteGuard><ProviderResources /></PublicRouteGuard>} />
+            {/* /provider-guides hub — canonical redirect to /provider-resources (which lists all guides) */}
+            <Route path="/provider-guides" element={<Navigate to="/provider-resources" replace />} />
             <Route path="/provider-signup" element={<ProviderSignup />} />
             <Route path="/provider-roi-calculator" element={<PublicRouteGuard><ProviderROICalculator /></PublicRouteGuard>} />
             <Route path="/provider-login" element={<Navigate to="/login" replace />} />
