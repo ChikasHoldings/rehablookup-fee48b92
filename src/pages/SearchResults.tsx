@@ -1059,6 +1059,38 @@ const SearchResults = () => {
                       </div>
                     </div>
                   )}
+                  {/* Quick filter chips — mirror sidebar filters for one-tap refinement */}
+                  <FilterChips
+                    className="mb-4"
+                    treatmentOptions={treatmentTypeFilters.map(({ value, label }) => ({ value, label }))}
+                    insuranceOptions={insuranceFilters.map(({ value, label }) => ({ value, label }))}
+                    distanceOptions={distanceFilters
+                      .filter((d) => d.value !== "any")
+                      .map(({ value, label }) => ({ value, label }))}
+                    selectedTreatments={selectedTreatmentTypes}
+                    selectedInsurance={selectedInsuranceTypes}
+                    selectedDistance={selectedDistance}
+                    onToggleTreatment={(v) =>
+                      toggleFilter("treatmentTypes", v, selectedTreatmentTypes)
+                    }
+                    onToggleInsurance={(v) =>
+                      toggleFilter("insuranceTypes", v, selectedInsuranceTypes)
+                    }
+                    onSetDistance={(v) => setSingleFilter("distance", v)}
+                    onClearAll={
+                      activeFiltersCount > 0
+                        ? () => {
+                            const newParams = new URLSearchParams(searchParams);
+                            newParams.delete("treatmentTypes");
+                            newParams.delete("insuranceTypes");
+                            newParams.delete("distance");
+                            newParams.delete("page");
+                            setSearchParams(newParams);
+                          }
+                        : undefined
+                    }
+                  />
+
                   {/* Results Summary */}
                   <div className="flex items-center justify-between mb-5">
                     <div className="flex flex-col gap-0.5">
