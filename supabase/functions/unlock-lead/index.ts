@@ -495,6 +495,9 @@ Deno.serve(async (req) => {
             logStep(requestId, "ALSO FAILED - Could not insert admin_notifications row", { error: String(alertErr) });
           }
         }
+        // Disarm outer-catch safety net regardless of rollback outcome —
+        // we've already attempted refund (and notified admins on failure).
+        creditsDeducted = false;
       }
 
       return new Response(JSON.stringify({ error: "Failed to unlock lead", requestId }), {
