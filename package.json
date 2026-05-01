@@ -19,6 +19,8 @@
     "patch:og-image": "node scripts/patch-og-image.mjs",
     "check:seo-meta": "node scripts/check-seo-meta.mjs",
     "validate:vercel-deploy": "node scripts/validate-vercel-deploy.mjs",
+    "cleanup:orphan-prerenders": "node scripts/cleanup-orphan-prerenders.mjs",
+    "cleanup:orphan-prerenders:apply": "node scripts/cleanup-orphan-prerenders.mjs --apply",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test",

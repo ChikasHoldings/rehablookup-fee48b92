@@ -8,6 +8,7 @@ import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TrustBar } from "@/components/seo/TrustBar";
 import { ConversionSection } from "@/components/seo/ConversionSection";
 import { ComparisonSection } from "@/components/seo/ComparisonSection";
+import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
 import {
   InternalLinkingSection,
   treatmentTypeLinks,
@@ -84,6 +85,13 @@ interface SEOLandingTemplateProps {
   ctaButtonText?: string;
   ctaButtonLink?: string;
 
+  // Waitlist (shown only when there are zero facilities)
+  waitlistAreaSlug?: string;
+  waitlistAreaLabel?: string;
+  waitlistCity?: string;
+  waitlistState?: string;
+  waitlistTreatmentType?: string;
+
   // Extra content (e.g. SmartInternalLinks) rendered before internal linking
   children?: React.ReactNode;
 }
@@ -120,6 +128,11 @@ export function SEOLandingTemplate({
   ctaSubtitle = "Connect with accredited treatment facilities that match your needs. Our team is available 24/7.",
   ctaButtonText = "Get Help Now",
   ctaButtonLink = "/concierge",
+  waitlistAreaSlug,
+  waitlistAreaLabel,
+  waitlistCity,
+  waitlistState,
+  waitlistTreatmentType,
   children,
 }: SEOLandingTemplateProps) {
   const displayFacilities = facilities.slice(0, 12);
@@ -352,25 +365,37 @@ export function SEOLandingTemplate({
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 rounded-2xl border bg-card max-w-2xl mx-auto">
-              <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                Talk to a Placement Advisor
-              </h3>
-              <p className="text-muted-foreground mb-2">
-                Our licensed placement advisors will personally match you with verified treatment centers — typically within 24 hours.
-              </p>
-              <p className="text-sm text-muted-foreground mb-6">
-                Over 16,000 treatment centers are available nationwide through our network.
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <Button asChild variant="default">
-                  <Link to="/concierge">Get Matched Now</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link to="/rehab-centers">Browse Nationwide</Link>
-                </Button>
+            <div className="space-y-6 max-w-2xl mx-auto">
+              <div className="text-center py-12 rounded-2xl border bg-card">
+                <Building2 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Talk to a Placement Advisor
+                </h3>
+                <p className="text-muted-foreground mb-2">
+                  Our licensed placement advisors will personally match you with verified treatment centers — typically within 24 hours.
+                </p>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Over 16,000 treatment centers are available nationwide through our network.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <Button asChild variant="default">
+                    <Link to="/concierge">Get Matched Now</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to="/rehab-centers">Browse Nationwide</Link>
+                  </Button>
+                </div>
               </div>
+
+              {waitlistAreaSlug && (
+                <AreaWaitlistCapture
+                  areaSlug={waitlistAreaSlug}
+                  areaLabel={waitlistAreaLabel}
+                  city={waitlistCity}
+                  state={waitlistState}
+                  treatmentType={waitlistTreatmentType}
+                />
+              )}
             </div>
           )}
 
