@@ -5,25 +5,19 @@
   "installCommand": "npm install",
   "framework": "vite",
   "trailingSlash": false,
-  "cleanUrls": false,
+  "cleanUrls": true,
   "redirects": [
     {
-      "source": "/(.*)/",
-      "destination": "/$1",
-      "permanent": true
-    },
-    {
-      "source": "/:path*\\.html",
-      "has": [{ "type": "header", "key": "user-agent", "value": "(?!.*(Googlebot|bingbot|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot|WhatsApp|TelegramBot|DiscordBot)).*" }],
+      "source": "/:path*/",
       "destination": "/:path*",
       "permanent": true
     }
   ],
   "rewrites": [
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/:path((?!api/).*)/index.html", "destination": "/:path/index.html" },
-    { "source": "/:path((?!api/).*)\\.html", "destination": "/:path.html" },
-    { "source": "/:path((?!api/|assets/|.*\\.[a-zA-Z0-9]+$).*)", "destination": "/:path/index.html" }
+    {
+      "source": "/((?!api/|assets/|functions/).*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
@@ -59,7 +53,5 @@
       ]
     }
   ],
-  "github": {
-    "silent": true
-  }
+  "github": { "silent": true }
 }
