@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Lock, Zap, CreditCard, Loader2 } from "lucide-react";
+import { Lock, Zap, CreditCard, Loader2, CheckCircle2, Phone, Mail, MessageSquare, Unlock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { 
   Dialog, 
@@ -42,6 +43,8 @@ export function UnlockLeadButton({
 }: UnlockLeadButtonProps) {
   const navigate = useNavigate();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [revealedLead, setRevealedLead] = useState<{ name: string | null; email: string | null; phone: string | null } | null>(null);
   const unlockingRef = useRef(false); // StrictMode double-fire guard
   const { unlockLead, isUnlocking, isLeadUnlocked } = useLeadUnlocks(facilityId);
   const { balance } = useProviderCredits(facilityId);
@@ -83,6 +86,25 @@ export function UnlockLeadButton({
         paymentMethod: 'credits',
       });
       setShowConfirmDialog(false);
+
+      // Fetch the now-unlocked PII so the success dialog can show real contact details.
+      // RLS only returns these fields once an unlock row exists for this provider+lead.
+      try {
+        const { data } = await supabase
+          .from("leads_provider_view")
+          .select("name, email, phone")
+          .eq("id", leadId)
+          .maybeSingle();
+        setRevealedLead({
+          name: data?.name ?? null,
+          email: data?.email ?? null,
+          phone: data?.phone ?? null,
+        });
+      } catch {
+        setRevealedLead({ name: null, email: null, phone: null });
+      }
+
+      setShowSuccessDialog(true);
       onUnlockSuccess?.();
     } finally {
       unlockingRef.current = false;
@@ -98,29 +120,59 @@ export function UnlockLeadButton({
   // Only show original price strikethrough for non-redistributed leads with Pro discount
   const originalPriceDisplay = (!isRedistributed && isPro) ? formatPrice(basePrice) : null;
 
+  const sharedDialogs = (
+    <>
+      <UnlockConfirmDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        leadName={leadName}
+        inquiryType={type}
+        cityState={cityState}
+        finalPrice={finalPrice}
+        originalPrice={(!isRedistributed && isPro) ? basePrice : null}
+        discountPercent={effectiveDiscountPercent}
+        hasEnoughCredits={hasEnoughCredits}
+        currentBalance={balance}
+        onConfirm={handleUnlock}
+        isLoading={isUnlocking}
+      />
+      <UnlockSuccessDialog
+        open={showSuccessDialog}
+        onOpenChange={setShowSuccessDialog}
+        revealed={revealedLead}
+        cityState={cityState}
+        amountCharged={finalPrice}
+        balanceAfter={Math.max(0, balance - finalPrice)}
+      />
+    </>
+  );
+
   if (variant === "compact") {
     return (
-      <Button
-        size="sm"
-        variant="secondary"
-        className={cn("gap-1.5", className)}
-        onClick={handleClick}
-        disabled={isUnlocking}
-      >
-        {isUnlocking ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <Lock className="h-3.5 w-3.5" />
-        )}
-        Unlock {priceDisplay}
-      </Button>
+      <>
+        <Button
+          size="sm"
+          variant="secondary"
+          className={cn("gap-1.5", className)}
+          onClick={handleClick}
+          disabled={isUnlocking}
+        >
+          {isUnlocking ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Lock className="h-3.5 w-3.5" />
+          )}
+          Unlock {priceDisplay}
+        </Button>
+        {sharedDialogs}
+      </>
     );
   }
 
   if (variant === "card") {
     return (
       <>
-        <div 
+        <div
           onClick={handleClick}
           className={cn(
             "absolute inset-0 flex items-center justify-center bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg cursor-pointer",
@@ -136,21 +188,7 @@ export function UnlockLeadButton({
             Unlock for {priceDisplay}
           </Button>
         </div>
-
-        <UnlockConfirmDialog
-          open={showConfirmDialog}
-          onOpenChange={setShowConfirmDialog}
-          leadName={leadName}
-          inquiryType={type}
-          cityState={cityState}
-          finalPrice={finalPrice}
-          originalPrice={(!isRedistributed && isPro) ? basePrice : null}
-          discountPercent={effectiveDiscountPercent}
-          hasEnoughCredits={hasEnoughCredits}
-          currentBalance={balance}
-          onConfirm={handleUnlock}
-          isLoading={isUnlocking}
-        />
+        {sharedDialogs}
       </>
     );
   }
@@ -178,21 +216,7 @@ export function UnlockLeadButton({
           </>
         )}
       </Button>
-
-        <UnlockConfirmDialog
-          open={showConfirmDialog}
-          onOpenChange={setShowConfirmDialog}
-          leadName={leadName}
-          inquiryType={type}
-          cityState={cityState}
-          finalPrice={finalPrice}
-          originalPrice={(!isRedistributed && isPro) ? basePrice : null}
-          discountPercent={effectiveDiscountPercent}
-          hasEnoughCredits={hasEnoughCredits}
-          currentBalance={balance}
-          onConfirm={handleUnlock}
-          isLoading={isUnlocking}
-        />
+      {sharedDialogs}
     </>
   );
 }
@@ -335,6 +359,131 @@ function UnlockConfirmDialog({
               <CreditCard className="h-4 w-4 mr-2" />
             )}
             {hasEnoughCredits ? `Unlock for $${(finalPrice / 100).toFixed(2)}` : "Buy Credits"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface UnlockSuccessDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  revealed: { name: string | null; email: string | null; phone: string | null } | null;
+  cityState?: string | null;
+  amountCharged: number;
+  balanceAfter: number;
+}
+
+function UnlockSuccessDialog({
+  open,
+  onOpenChange,
+  revealed,
+  cityState,
+  amountCharged,
+  balanceAfter,
+}: UnlockSuccessDialogProps) {
+  const name = revealed?.name?.trim() || "Lead";
+  const email = revealed?.email?.trim() || null;
+  const phone = revealed?.phone?.trim() || null;
+  const telHref = phone ? `tel:${phone.replace(/[^\d+]/g, "")}` : null;
+  const smsHref = phone ? `sms:${phone.replace(/[^\d+]/g, "")}` : null;
+  const mailHref = email ? `mailto:${email}` : null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </span>
+            Lead unlocked
+          </DialogTitle>
+          <DialogDescription>
+            Contact details are now revealed. Reach out within 10 minutes for the best conversion.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {/* Revealed contact card */}
+          <div className="rounded-lg border bg-card p-4 space-y-2.5">
+            <div className="flex items-center gap-2">
+              <Unlock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                Now visible
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              <div>
+                <p className="text-xs text-muted-foreground">Name</p>
+                <p className="text-sm font-medium text-foreground">{name}</p>
+              </div>
+              {cityState && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Location</p>
+                  <p className="text-sm text-foreground">{cityState}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-muted-foreground">Phone</p>
+                <p className="text-sm font-medium text-foreground">
+                  {phone || <span className="text-muted-foreground italic">Not provided</span>}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="text-sm font-medium text-foreground break-all">
+                  {email || <span className="text-muted-foreground italic">Not provided</span>}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick actions */}
+          {(telHref || smsHref || mailHref) && (
+            <div className="grid grid-cols-3 gap-2">
+              <Button asChild variant="outline" size="sm" disabled={!telHref}>
+                <a href={telHref ?? "#"} aria-disabled={!telHref}>
+                  <Phone className="h-4 w-4 mr-1.5" />
+                  Call
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="sm" disabled={!smsHref}>
+                <a href={smsHref ?? "#"} aria-disabled={!smsHref}>
+                  <MessageSquare className="h-4 w-4 mr-1.5" />
+                  Text
+                </a>
+              </Button>
+              <Button asChild variant="outline" size="sm" disabled={!mailHref}>
+                <a href={mailHref ?? "#"} aria-disabled={!mailHref}>
+                  <Mail className="h-4 w-4 mr-1.5" />
+                  Email
+                </a>
+              </Button>
+            </div>
+          )}
+
+          {/* Receipt */}
+          <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Charged</span>
+              <span className="font-medium text-foreground">
+                ${(amountCharged / 100).toFixed(2)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Remaining balance</span>
+              <span className="font-medium text-foreground">
+                ${(balanceAfter / 100).toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+            Got it
           </Button>
         </DialogFooter>
       </DialogContent>
