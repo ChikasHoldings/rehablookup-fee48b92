@@ -13,6 +13,8 @@ import {
   emitConciergeFunnelEvent,
   fnv1a32,
   getOrCreateConciergeSessionId,
+  sanitizeHint,
+  sanitizeSource,
   type ConciergePrefillContext,
 } from "@/lib/conciergeAnalytics";
 
@@ -448,14 +450,19 @@ export default function ConciergeIntake() {
         normalize(insurance),
       ].join("|"),
     );
+    // PII-safe sanitization: hints are stripped to an allow-listed character
+    // set, length-capped, and rejected outright if they look like email /
+    // phone / SSN / address / long-digit-run patterns. `source` is similarly
+    // hardened. The final `emitConciergeFunnelEvent` scrubber adds a second
+    // layer of defense before any payload leaves the page.
     const ctx: ConciergePrefillContext = {
       dedup_key: dedupKey,
-      source: source || "(direct)",
+      source: sanitizeSource(source),
       has_location: !!loc,
       has_treatment: !!treatment,
       has_insurance: !!insurance,
-      treatment_hint: treatment ? treatment.toLowerCase().slice(0, 32) : undefined,
-      insurance_hint: insurance ? insurance.toLowerCase().slice(0, 32) : undefined,
+      treatment_hint: sanitizeHint(treatment),
+      insurance_hint: sanitizeHint(insurance),
       applied_city: applied.city,
       applied_state: applied.state,
       applied_zip: applied.zip,
