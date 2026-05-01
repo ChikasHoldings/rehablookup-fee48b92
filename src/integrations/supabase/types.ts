@@ -3577,6 +3577,54 @@ export type Database = {
         }
         Relationships: []
       }
+      not_found_searches: {
+        Row: {
+          created_at: string
+          event_kind: string
+          id: string
+          insurance: string | null
+          location: string | null
+          referrer: string | null
+          results_count: number | null
+          session_id: string | null
+          source_path: string | null
+          treatment: string | null
+          user_agent: string | null
+          user_id: string | null
+          viewport: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_kind: string
+          id?: string
+          insurance?: string | null
+          location?: string | null
+          referrer?: string | null
+          results_count?: number | null
+          session_id?: string | null
+          source_path?: string | null
+          treatment?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewport?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_kind?: string
+          id?: string
+          insurance?: string | null
+          location?: string | null
+          referrer?: string | null
+          results_count?: number | null
+          session_id?: string | null
+          source_path?: string | null
+          treatment?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewport?: string | null
+        }
+        Relationships: []
+      }
       notification_events: {
         Row: {
           channel: string
