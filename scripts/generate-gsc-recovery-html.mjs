@@ -542,7 +542,7 @@ function buildHubPage(urlPath, slug) {
     "luxury-rehab-centers": ["Luxury Rehab Centers", "Find luxury rehab centers with premium amenities, private accommodations, and world-class addiction treatment."],
     "fentanyl-rehab-centers": ["Fentanyl Rehab Centers", "Find specialized fentanyl addiction treatment with medical detox, MAT, and long-term recovery programs."],
     "inpatient-rehab-centers": ["Inpatient Rehab Centers", "Find residential inpatient rehab programs with 24/7 care and structured treatment environments."],
-    "detox-centers-centers": ["Medical Detox Centers", "Find medically supervised detox centers with 24/7 care for safe withdrawal management."],
+    // "detox-centers-centers" removed — duplicate of /detox-centers, 301 redirected via vercel.json
   };
   const m = map[slug];
   if (!m) return null;
@@ -848,7 +848,7 @@ const URLS = [
   "/inpatient-rehab-in-st-petersburg",
   "/faith-based-rehab-in-roanoke",
   "/inpatient-rehab-centers",
-  "/detox-centers-centers",
+  // "/detox-centers-centers" removed — 301s to /detox-centers
   "/mens-rehab-centers",
   "/list-your-facility-in-indianapolis-indiana",
   "/womens-rehab-centers",
