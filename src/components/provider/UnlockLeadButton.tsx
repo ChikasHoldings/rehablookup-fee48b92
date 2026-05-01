@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Lock, Zap, CreditCard, Loader2, CheckCircle2, Phone, Mail, MessageSquare, Unlock } from "lucide-react";
+import { Lock, Zap, CreditCard, Loader2, CheckCircle2, Phone, Mail, MessageSquare, Unlock, AlertTriangle, RefreshCw, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Dialog, 
   DialogContent, 
@@ -45,6 +46,8 @@ export function UnlockLeadButton({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [revealedLead, setRevealedLead] = useState<{ name: string | null; email: string | null; phone: string | null } | null>(null);
+  const [revealLoading, setRevealLoading] = useState(false);
+  const [revealError, setRevealError] = useState<string | null>(null);
   const unlockingRef = useRef(false); // StrictMode double-fire guard
   const { unlockLead, isUnlocking, isLeadUnlocked } = useLeadUnlocks(facilityId);
   const { balance } = useProviderCredits(facilityId);
@@ -67,6 +70,77 @@ export function UnlockLeadButton({
     return null;
   }
 
+  /**
+   * Fetch the now-unlocked PII for `leadId` from the masked view, with
+   * bounded exponential-backoff retry. RLS may briefly return masked
+   * (all-null) values immediately after the unlock row is committed,
+   * so an "all PII fields null" response is treated as a transient
+   * failure worth retrying.
+   */
+  type RevealedFields = { name: string | null; email: string | null; phone: string | null };
+  type RevealResult =
+    | { ok: true; data: RevealedFields }
+    | { ok: false; error: string };
+  const fetchRevealedLead = async (targetLeadId: string): Promise<RevealResult> => {
+    const delays = [300, 800, 1500];
+    let lastError = "Unable to load contact details.";
+
+    for (let attempt = 0; attempt < delays.length + 1; attempt++) {
+      try {
+        const { data, error } = await supabase
+          .from("leads_provider_view")
+          .select("name, email, phone")
+          .eq("id", targetLeadId)
+          .maybeSingle();
+
+        if (error) {
+          lastError = error.message || lastError;
+        } else if (data) {
+          const hasAnyPII =
+            (data.name && data.name.trim()) ||
+            (data.email && data.email.trim()) ||
+            (data.phone && data.phone.trim());
+          if (hasAnyPII) {
+            return {
+              ok: true,
+              data: {
+                name: data.name ?? null,
+                email: data.email ?? null,
+                phone: data.phone ?? null,
+              },
+            };
+          }
+          lastError =
+            "Contact details aren't visible yet. This usually clears up in a moment.";
+        } else {
+          lastError = "Lead not found.";
+        }
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : lastError;
+      }
+
+      const delay = delays[attempt];
+      if (delay !== undefined) {
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+
+    return { ok: false, error: lastError };
+  };
+
+  const loadRevealed = async () => {
+    setRevealLoading(true);
+    setRevealError(null);
+    const result = await fetchRevealedLead(leadId);
+    if (result.ok === true) {
+      setRevealedLead(result.data);
+      setRevealError(null);
+    } else {
+      setRevealError((result as { ok: false; error: string }).error);
+    }
+    setRevealLoading(false);
+  };
+
   const handleUnlock = async () => {
     // Prevent double-fire from React StrictMode or rapid clicks
     if (unlockingRef.current) return;
@@ -87,25 +161,14 @@ export function UnlockLeadButton({
       });
       setShowConfirmDialog(false);
 
-      // Fetch the now-unlocked PII so the success dialog can show real contact details.
-      // RLS only returns these fields once an unlock row exists for this provider+lead.
-      try {
-        const { data } = await supabase
-          .from("leads_provider_view")
-          .select("name, email, phone")
-          .eq("id", leadId)
-          .maybeSingle();
-        setRevealedLead({
-          name: data?.name ?? null,
-          email: data?.email ?? null,
-          phone: data?.phone ?? null,
-        });
-      } catch {
-        setRevealedLead({ name: null, email: null, phone: null });
-      }
-
+      // Open the success dialog immediately — the unlock itself is already
+      // confirmed by the server. Reveal fetch runs in the background with
+      // retry; failures surface as an in-dialog error + Retry button.
+      setRevealedLead(null);
+      setRevealError(null);
       setShowSuccessDialog(true);
       onUnlockSuccess?.();
+      void loadRevealed();
     } finally {
       unlockingRef.current = false;
     }
@@ -139,7 +202,11 @@ export function UnlockLeadButton({
       <UnlockSuccessDialog
         open={showSuccessDialog}
         onOpenChange={setShowSuccessDialog}
+        leadId={leadId}
         revealed={revealedLead}
+        loading={revealLoading}
+        error={revealError}
+        onRetry={loadRevealed}
         cityState={cityState}
         amountCharged={finalPrice}
         balanceAfter={Math.max(0, balance - finalPrice)}
@@ -369,7 +436,11 @@ function UnlockConfirmDialog({
 interface UnlockSuccessDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  leadId: string;
   revealed: { name: string | null; email: string | null; phone: string | null } | null;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
   cityState?: string | null;
   amountCharged: number;
   balanceAfter: number;
@@ -378,7 +449,11 @@ interface UnlockSuccessDialogProps {
 function UnlockSuccessDialog({
   open,
   onOpenChange,
+  leadId,
   revealed,
+  loading,
+  error,
+  onRetry,
   cityState,
   amountCharged,
   balanceAfter,
@@ -389,6 +464,10 @@ function UnlockSuccessDialog({
   const telHref = phone ? `tel:${phone.replace(/[^\d+]/g, "")}` : null;
   const smsHref = phone ? `sms:${phone.replace(/[^\d+]/g, "")}` : null;
   const mailHref = email ? `mailto:${email}` : null;
+
+  const showLoading = loading;
+  const showError = !loading && !!error;
+  const showLoaded = !loading && !error;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -401,70 +480,137 @@ function UnlockSuccessDialog({
             Lead unlocked
           </DialogTitle>
           <DialogDescription>
-            Contact details are now revealed. Reach out within 10 minutes for the best conversion.
+            {showError
+              ? "The unlock succeeded — we just couldn't load the contact details."
+              : "Contact details are now revealed. Reach out within 10 minutes for the best conversion."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Revealed contact card */}
-          <div className="rounded-lg border bg-card p-4 space-y-2.5">
-            <div className="flex items-center gap-2">
-              <Unlock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
-                Now visible
-              </span>
-            </div>
-            <div className="space-y-1.5">
-              <div>
-                <p className="text-xs text-muted-foreground">Name</p>
-                <p className="text-sm font-medium text-foreground">{name}</p>
+          {/* Loading state */}
+          {showLoading && (
+            <div className="rounded-lg border bg-card p-4 space-y-2.5" aria-busy="true">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Loading contact details…
+                </span>
               </div>
-              {cityState && (
+              <div className="space-y-2.5">
                 <div>
-                  <p className="text-xs text-muted-foreground">Location</p>
-                  <p className="text-sm text-foreground">{cityState}</p>
+                  <p className="text-xs text-muted-foreground mb-1">Name</p>
+                  <Skeleton className="h-4 w-32" />
                 </div>
-              )}
-              <div>
-                <p className="text-xs text-muted-foreground">Phone</p>
-                <p className="text-sm font-medium text-foreground">
-                  {phone || <span className="text-muted-foreground italic">Not provided</span>}
-                </p>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Phone</p>
+                  <Skeleton className="h-4 w-40" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Email</p>
+                  <Skeleton className="h-4 w-48" />
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Email</p>
-                <p className="text-sm font-medium text-foreground break-all">
-                  {email || <span className="text-muted-foreground italic">Not provided</span>}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick actions */}
-          {(telHref || smsHref || mailHref) && (
-            <div className="grid grid-cols-3 gap-2">
-              <Button asChild variant="outline" size="sm" disabled={!telHref}>
-                <a href={telHref ?? "#"} aria-disabled={!telHref}>
-                  <Phone className="h-4 w-4 mr-1.5" />
-                  Call
-                </a>
-              </Button>
-              <Button asChild variant="outline" size="sm" disabled={!smsHref}>
-                <a href={smsHref ?? "#"} aria-disabled={!smsHref}>
-                  <MessageSquare className="h-4 w-4 mr-1.5" />
-                  Text
-                </a>
-              </Button>
-              <Button asChild variant="outline" size="sm" disabled={!mailHref}>
-                <a href={mailHref ?? "#"} aria-disabled={!mailHref}>
-                  <Mail className="h-4 w-4 mr-1.5" />
-                  Email
-                </a>
-              </Button>
             </div>
           )}
 
-          {/* Receipt */}
+          {/* Error state */}
+          {showError && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 space-y-3">
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-destructive">
+                    Couldn't load contact details
+                  </p>
+                  <p className="text-xs text-destructive/90">
+                    The unlock succeeded and you've been charged. We just couldn't fetch the
+                    revealed details. {error}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <Button size="sm" onClick={onRetry} disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                  )}
+                  Retry
+                </Button>
+                <Link
+                  to={`/provider/inquiries?lead=${leadId}`}
+                  onClick={() => onOpenChange(false)}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-foreground/80 hover:text-foreground transition-colors"
+                >
+                  Open in inbox
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Loaded state */}
+          {showLoaded && (
+            <>
+              <div className="rounded-lg border bg-card p-4 space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <Unlock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+                    Now visible
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Name</p>
+                    <p className="text-sm font-medium text-foreground">{name}</p>
+                  </div>
+                  {cityState && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Location</p>
+                      <p className="text-sm text-foreground">{cityState}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {phone || <span className="text-muted-foreground italic">Not provided</span>}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <p className="text-sm font-medium text-foreground break-all">
+                      {email || <span className="text-muted-foreground italic">Not provided</span>}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {(telHref || smsHref || mailHref) && (
+                <div className="grid grid-cols-3 gap-2">
+                  <Button asChild variant="outline" size="sm" disabled={!telHref}>
+                    <a href={telHref ?? "#"} aria-disabled={!telHref}>
+                      <Phone className="h-4 w-4 mr-1.5" />
+                      Call
+                    </a>
+                  </Button>
+                  <Button asChild variant="outline" size="sm" disabled={!smsHref}>
+                    <a href={smsHref ?? "#"} aria-disabled={!smsHref}>
+                      <MessageSquare className="h-4 w-4 mr-1.5" />
+                      Text
+                    </a>
+                  </Button>
+                  <Button asChild variant="outline" size="sm" disabled={!mailHref}>
+                    <a href={mailHref ?? "#"} aria-disabled={!mailHref}>
+                      <Mail className="h-4 w-4 mr-1.5" />
+                      Email
+                    </a>
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Receipt — always visible */}
           <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Charged</span>
