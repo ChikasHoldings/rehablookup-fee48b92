@@ -1372,7 +1372,7 @@ const SearchResults = () => {
                     <Link to="/rehab-centers">
                       <Button className="gap-2">Browse All Centers</Button>
                     </Link>
-                    <Link to="/account/concierge">
+                    <Link to="/concierge">
                       <Button variant="secondary" className="gap-2">
                         <Heart className="h-4 w-4" />
                         Get Personalized Help
