@@ -23,29 +23,76 @@ const DEFAULT_IMAGE = "/og-image.jpg";
 const TWITTER_HANDLE = "@rehablookup";
 
 /**
- * Normalizes a URL path for canonical use:
+ * Normalizes a URL path or absolute URL into a canonical path on SITE_URL:
+ * - Strips an absolute origin if it points to our site (or a www/preview/lovable host)
+ * - Rejects foreign absolute URLs by falling back to "/"
+ * - Removes query parameters and hash fragments
+ * - Trims whitespace
+ * - Forces a single leading "/"
+ * - Collapses repeated internal slashes
+ * - Lowercases the path (canonical URLs are lowercase per project policy)
  * - Removes trailing slashes (except for root "/")
- * - Removes query parameters
- * - Removes hash fragments
+ * - Decodes safe percent-encoding so we don't emit "%20" etc. in canonicals
  */
-function normalizeCanonicalPath(path: string): string {
-  // Remove query parameters and hash
-  let normalized = path.split('?')[0].split('#')[0];
-  // Remove trailing slash (except for root)
-  if (normalized.length > 1 && normalized.endsWith('/')) {
-    normalized = normalized.slice(0, -1);
+function normalizeCanonicalPath(input: string | undefined | null): string {
+  if (!input || typeof input !== "string") return "/";
+
+  let path = input.trim();
+  if (!path) return "/";
+
+  // If an absolute URL is passed, extract just the pathname when it points at
+  // our own host; otherwise fall back to root to avoid emitting bad canonicals.
+  if (/^https?:\/\//i.test(path)) {
+    try {
+      const u = new URL(path);
+      const host = u.hostname.toLowerCase();
+      const isOurs =
+        host === "rehablookup.com" ||
+        host === "www.rehablookup.com" ||
+        host.endsWith(".rehablookup.com") ||
+        host.endsWith(".lovable.app") ||
+        host.endsWith(".lovable.dev");
+      path = isOurs ? u.pathname + u.search + u.hash : "/";
+    } catch {
+      return "/";
+    }
   }
-  return normalized;
+
+  // Strip query + hash
+  path = path.split("?")[0].split("#")[0];
+
+  // Decode common safe escapes (best-effort; ignore malformed sequences)
+  try {
+    path = decodeURI(path);
+  } catch {
+    /* keep as-is */
+  }
+
+  // Force leading slash
+  if (!path.startsWith("/")) path = "/" + path;
+
+  // Collapse any run of "/" into a single "/"
+  path = path.replace(/\/{2,}/g, "/");
+
+  // Lowercase (project policy: canonical URLs are lowercase)
+  path = path.toLowerCase();
+
+  // Remove trailing slash (except for root)
+  if (path.length > 1 && path.endsWith("/")) {
+    path = path.replace(/\/+$/, "");
+  }
+
+  return path || "/";
 }
 
 /**
  * Gets the current path from window.location for auto-canonical
  */
 function getCurrentPath(): string {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     return normalizeCanonicalPath(window.location.pathname);
   }
-  return '/';
+  return "/";
 }
 
 export function SEO({
