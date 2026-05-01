@@ -78,6 +78,15 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Track whether credits were deducted so the outer catch can roll back on
+  // any uncaught exception that fires AFTER deduction but BEFORE the unlock
+  // row is committed (H1).
+  let creditsDeducted = false;
+  let deductedAmount = 0;
+  let deductedProviderId: string | null = null;
+  let deductedFacilityId: string | null = null;
+  let deductedLeadId: string | null = null;
+
   try {
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -344,6 +353,13 @@ Deno.serve(async (req) => {
         deducted: unlockPrice 
       });
 
+      // Mark for outer-catch rollback safety net (H1)
+      creditsDeducted = true;
+      deductedAmount = unlockPrice;
+      deductedProviderId = user.id;
+      deductedFacilityId = facilityId;
+      deductedLeadId = leadId;
+
       // Log the credit transaction with enhanced details
       const { error: txError } = await supabaseAdmin.from("credit_transactions").insert({
         provider_id: user.id,
@@ -479,6 +495,9 @@ Deno.serve(async (req) => {
             logStep(requestId, "ALSO FAILED - Could not insert admin_notifications row", { error: String(alertErr) });
           }
         }
+        // Disarm outer-catch safety net regardless of rollback outcome —
+        // we've already attempted refund (and notified admins on failure).
+        creditsDeducted = false;
       }
 
       return new Response(JSON.stringify({ error: "Failed to unlock lead", requestId }), {
@@ -486,6 +505,10 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Unlock row is committed — credits are now correctly attributed.
+    // Disarm the outer-catch rollback safety net (H1).
+    creditsDeducted = false;
 
     // Update lead status to 'unlocked' — only valid from 'new' or 'expired' (redistributed leads may be expired)
     const unlockTimestamp = new Date().toISOString();
@@ -719,6 +742,54 @@ Deno.serve(async (req) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     logStep(requestId, "ERROR - Unhandled exception", { error: message });
+
+    // H1 SAFETY NET: if credits were deducted but the unlock row was never
+    // committed (any throw between deduction and the lead_unlocks insert),
+    // refund the credits before returning so the provider isn't silently charged.
+    if (creditsDeducted && deductedProviderId && deductedFacilityId && deductedLeadId && deductedAmount > 0) {
+      try {
+        const supabaseAdmin = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+        );
+        const { error: rollbackError } = await supabaseAdmin.rpc("increment_provider_credits", {
+          p_provider_id: deductedProviderId,
+          p_facility_id: deductedFacilityId,
+          p_amount_cents: deductedAmount,
+        });
+
+        if (!rollbackError) {
+          await supabaseAdmin.from("credit_transactions").insert({
+            provider_id: deductedProviderId,
+            facility_id: deductedFacilityId,
+            amount_cents: deductedAmount,
+            transaction_type: "refund",
+            reference_id: deductedLeadId,
+            description: "Automatic refund - unlock failed (uncaught exception)",
+          });
+          logStep(requestId, "H1 rollback - credits refunded after unhandled exception", { refunded: deductedAmount });
+        } else {
+          logStep(requestId, "CRITICAL - H1 rollback failed", { error: rollbackError.message });
+          await supabaseAdmin.from("admin_notifications").insert({
+            type: "unlock_rollback_failed",
+            title: "Unlock rollback failed — credits stuck (exception path)",
+            message: `Provider ${deductedProviderId} was charged ${deductedAmount} cents for lead ${deductedLeadId} but the unlock failed via exception AND the refund RPC also failed. Manual reconciliation required.`,
+            metadata: {
+              provider_id: deductedProviderId,
+              facility_id: deductedFacilityId,
+              lead_id: deductedLeadId,
+              amount_cents: deductedAmount,
+              rollback_error: rollbackError.message,
+              original_error: message,
+              request_id: requestId,
+            },
+          }).then(() => {}, () => {});
+        }
+      } catch (rollbackErr) {
+        logStep(requestId, "CRITICAL - H1 rollback path threw", { error: String(rollbackErr) });
+      }
+    }
+
     return new Response(JSON.stringify({ 
       error: "Failed to unlock lead", 
       requestId,
