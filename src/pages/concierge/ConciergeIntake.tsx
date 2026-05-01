@@ -208,7 +208,7 @@ const initialData: ConciergeIntakeData = {
   hipaaConsent: false,
 };
 
-// NEW: 7 steps with email verification as step 6
+// 8 steps: Who → Care → Logistics → Payment Info → Contact → Verify Email → Verify Phone → Review & Submit
 const STEP_CONFIG = [
   { 
     title: "Who Needs Help", 
@@ -237,15 +237,22 @@ const STEP_CONFIG = [
   },
   { 
     title: "Verify Email", 
-    description: "Confirm your email to proceed to payment",
+    description: "Confirm your email so we can send updates",
     icon: "✉️"
   },
   { 
-    title: "Review & Pay", 
-    description: "Review your information and complete payment",
+    title: "Verify Phone", 
+    description: "Confirm your phone so a specialist can reach you",
+    icon: "📱"
+  },
+  { 
+    title: "Review & Submit", 
+    description: "Review your information and submit your free request",
     icon: "✅"
   },
 ];
+
+const TOTAL_STEPS = STEP_CONFIG.length;
 
 export default function ConciergeIntake() {
   const navigate = useNavigate();
