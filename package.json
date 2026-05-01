@@ -19,6 +19,7 @@
     "patch:og-image": "node scripts/patch-og-image.mjs",
     "check:seo-meta": "node scripts/check-seo-meta.mjs",
     "check:internal-links": "node scripts/validate-internal-links.mjs",
+    "check:leads-view-rls": "node scripts/check-leads-view-rls.mjs",
     "validate:vercel-deploy": "node scripts/validate-vercel-deploy.mjs",
     "cleanup:orphan-prerenders": "node scripts/cleanup-orphan-prerenders.mjs",
     "cleanup:orphan-prerenders:apply": "node scripts/cleanup-orphan-prerenders.mjs --apply",
@@ -28,8 +29,8 @@
     "test:visual:update": "playwright test --update-snapshots",
     "clean": "rm -rf node_modules/.vite node_modules/.cache dist .tsbuildinfo",
     "typecheck": "npm run clean && tsc --noEmit",
-    "build": "npm run clean && npm run validate:seo-schema && npm run generate:seo-html && npm run generate:missing-html && npm run generate:gsc-recovery-html && npm run patch:og-image && npm run generate:sitemaps && npm run validate:sitemap-robots && npm run check:gsc-indexing && npm run check:structured-data && npm run check:faq-jsonld && npm run check:aggregate-rating && npm run check:responsive && npm run check:seo-meta && npm run check:internal-links && npm run test && vite build",
-    "build:dev": "npm run clean && npm run validate:seo-schema && npm run generate:seo-html && npm run generate:missing-html && npm run generate:gsc-recovery-html && npm run patch:og-image && npm run generate:sitemaps && npm run validate:sitemap-robots && npm run check:gsc-indexing && npm run check:structured-data && npm run check:faq-jsonld && npm run check:aggregate-rating && npm run check:responsive && npm run check:seo-meta && npm run test && vite build --mode development",
+    "build": "npm run clean && npm run validate:seo-schema && npm run generate:seo-html && npm run generate:missing-html && npm run generate:gsc-recovery-html && npm run patch:og-image && npm run generate:sitemaps && npm run validate:sitemap-robots && npm run check:gsc-indexing && npm run check:structured-data && npm run check:faq-jsonld && npm run check:aggregate-rating && npm run check:responsive && npm run check:seo-meta && npm run check:internal-links && npm run check:leads-view-rls && npm run test && vite build",
+    "build:dev": "npm run clean && npm run validate:seo-schema && npm run generate:seo-html && npm run generate:missing-html && npm run generate:gsc-recovery-html && npm run patch:og-image && npm run generate:sitemaps && npm run validate:sitemap-robots && npm run check:gsc-indexing && npm run check:structured-data && npm run check:faq-jsonld && npm run check:aggregate-rating && npm run check:responsive && npm run check:seo-meta && npm run check:leads-view-rls && npm run test && vite build --mode development",
     "build:vercel": "npm run generate:seo-html && npm run generate:missing-html && npm run generate:gsc-recovery-html && npm run patch:og-image && npm run generate:sitemaps && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
