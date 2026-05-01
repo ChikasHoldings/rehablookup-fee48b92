@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Lock, Zap, CreditCard, Loader2 } from "lucide-react";
+import { Lock, Zap, CreditCard, Loader2, CheckCircle2, Phone, Mail, MessageSquare, Unlock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { 
   Dialog, 
