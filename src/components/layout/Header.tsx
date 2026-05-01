@@ -474,6 +474,19 @@ export function Header({
           {/* Scrollable Menu Content */}
           <div className="flex-1 overflow-y-auto overscroll-contain">
             <div className="px-4 py-3">
+              {/* Phase 2: prominent Concierge CTA at the top of the mobile sheet */}
+              <PrefetchLink
+                to={ctaLink}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block mb-3"
+              >
+                <Button variant="success" size="lg" className="w-full gap-2">
+                  <Heart className="h-4 w-4" />
+                  {ctaLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </PrefetchLink>
+
               {/* Navigation Items */}
               <div className="space-y-1">
                 {megaMenuItems.map((item) => {
