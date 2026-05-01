@@ -230,8 +230,33 @@ const NotFound = () => {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-9"
                       aria-label="Location"
+                      autoComplete="off"
                     />
                   </div>
+                  {citySuggestions.length > 0 && (
+                    <div
+                      className="flex flex-wrap gap-1.5 -mt-1"
+                      role="listbox"
+                      aria-label="Suggested cities"
+                    >
+                      {citySuggestions.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          role="option"
+                          aria-selected="false"
+                          onClick={() => {
+                            setSearchQuery(c);
+                            goToSearch(c);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs text-foreground hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                        >
+                          <MapPin className="h-3 w-3 text-muted-foreground" />
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <Select value={treatment} onValueChange={setTreatment}>
                       <SelectTrigger aria-label="Treatment type">
