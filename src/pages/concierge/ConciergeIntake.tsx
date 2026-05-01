@@ -935,7 +935,7 @@ export default function ConciergeIntake() {
               isVerified={emailVerification.verified}
               verifiedAt={emailVerification.verifiedAt}
             />
-            {/* Optional SMS-callback escape hatch — bypasses email verify + payment */}
+            {/* Optional SMS-callback escape hatch — bypasses email verify */}
             <SmsCallbackFallback
               draftId={draftId}
               firstName={formData.firstName}
@@ -945,9 +945,9 @@ export default function ConciergeIntake() {
               notes={formData.notes}
               onRequested={(inquiryId) => {
                 toast.success("Got it — a specialist will text you soon.");
-                // Clear local draft state so users can't double-submit.
                 localStorage.removeItem(STORAGE_KEY);
                 localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+                localStorage.removeItem(PHONE_VERIFICATION_KEY);
                 localStorage.removeItem(DRAFT_ID_KEY);
                 fireSubmittedEvent("sms");
                 navigate(`/concierge/thank-you?channel=sms&id=${inquiryId}`);
@@ -957,13 +957,24 @@ export default function ConciergeIntake() {
         );
       case 7:
         return (
+          <StepPhoneVerification
+            phone={formData.phone}
+            firstName={formData.firstName}
+            onVerified={handlePhoneVerified}
+            onEditPhone={handleEditPhone}
+            isVerified={phoneVerification.verified}
+            verifiedAt={phoneVerification.verifiedAt}
+          />
+        );
+      case 8:
+        return (
           <StepReviewSubmit
             data={formData}
             paymentState={{ sessionId: null, paid: false, verifiedAt: null }}
             onEdit={handleEditStep}
-            onPay={handleProceedToPayment}
+            onPay={handleSubmitFree}
             isSubmitting={false}
-            isProcessingPayment={isProcessingPayment}
+            isProcessingPayment={isSubmitting}
           />
         );
       default:
@@ -973,9 +984,8 @@ export default function ConciergeIntake() {
 
   // Determine if we can proceed from current step
   const canProceed = () => {
-    if (currentStep === 6) {
-      return emailVerification.verified;
-    }
+    if (currentStep === 6) return emailVerification.verified;
+    if (currentStep === 7) return phoneVerification.verified;
     return true;
   };
 
