@@ -19,6 +19,7 @@ import {
   Landmark,
   Bell,
   Mail,
+  KeyRound,
 } from "lucide-react";
 import type { AdminSidebarCounts } from "@/hooks/useAdminSidebarCounts";
 import type { AdminRoleType } from "@/hooks/useAdminAuth";
