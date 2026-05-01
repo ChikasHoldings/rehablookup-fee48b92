@@ -30,7 +30,8 @@ function buildAbandonedCartEmail(data: {
   const { userName, caseType, intakeSummary, resumeUrl } = data;
   const firstName = userName.split(' ')[0] || 'there';
   
-  const fee = caseType === 'domestic' ? '$29' : '$299';
+  const isDomestic = caseType === 'domestic';
+  const fee = isDomestic ? 'free' : '$299';
   
   const subject = `${firstName}, complete your placement request – expert advisors are ready to help`;
   
