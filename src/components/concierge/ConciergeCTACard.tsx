@@ -2,13 +2,22 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Users, Sparkles, ArrowRight, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { buildConciergeHref, type ConciergeHrefOptions } from "@/lib/conciergeHref";
 
-interface ConciergeCTACardProps {
+interface ConciergeCTACardProps extends ConciergeHrefOptions {
   className?: string;
   compact?: boolean;
 }
 
-export function ConciergeCTACard({ className, compact = false }: ConciergeCTACardProps) {
+export function ConciergeCTACard({
+  className,
+  compact = false,
+  location,
+  treatment,
+  insurance,
+  source = "concierge_cta_card",
+}: ConciergeCTACardProps) {
+  const href = buildConciergeHref({ location, treatment, insurance, source });
   return (
     <div 
       className={cn(
@@ -51,7 +60,7 @@ export function ConciergeCTACard({ className, compact = false }: ConciergeCTACar
           </div>
         )}
 
-        <Link to="/concierge">
+        <Link to={href}>
           <Button 
             size={compact ? "sm" : "default"}
             className={cn(

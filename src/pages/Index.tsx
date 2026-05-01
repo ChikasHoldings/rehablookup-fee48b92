@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
 import { TrustStrip } from "@/components/home/TrustStrip";
 import { LazySection } from "@/components/ui/lazy-section";
+import { useGeoLocation } from "@/hooks/useGeoLocation";
+import { buildConciergeHref } from "@/lib/conciergeHref";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
@@ -113,6 +115,14 @@ const Index = () => {
   // Lazy-loaded data for below-fold sections
   const [seekerTestimonials, setSeekerTestimonials] = useState<any[]>([]);
   const [homeFaqs, setHomeFaqs] = useState<any[]>([]);
+  // Geo-derived location string (e.g. "Boise, ID") forwarded to /concierge
+  // so the intake form can prefill the visitor's preferred location without
+  // asking them to retype it. Falls back gracefully when geo isn't ready.
+  const homepageGeo = useGeoLocation();
+  const homepageConciergeLocation =
+    homepageGeo.city && homepageGeo.regionCode
+      ? `${homepageGeo.city}, ${homepageGeo.regionCode}`
+      : homepageGeo.regionCode || "";
 
   useEffect(() => {
     seekerTestimonialsPromise.then(setSeekerTestimonials);
@@ -611,7 +621,7 @@ const Index = () => {
               <p className="text-muted-foreground mb-6 max-w-md">
                 Our specialists personally connect you with verified treatment centers based on your insurance, location, and unique needs.
               </p>
-              <Link to="/concierge">
+              <Link to={buildConciergeHref({ location: homepageConciergeLocation, source: "homepage_placement_section" })}>
                 <Button size="lg" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20">
                   Find Treatment
                   <ArrowRight className="h-4 w-4" />
@@ -927,7 +937,7 @@ const Index = () => {
                 Connect with verified treatment centers or list your facility in our directory.
               </p>
               <div className="mt-5 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 md:gap-3">
-                <Link to="/concierge">
+                <Link to={buildConciergeHref({ location: homepageConciergeLocation, source: "homepage_footer_cta" })}>
                   <Button size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
                     <Heart className="h-4 w-4" />
                     Find Treatment
