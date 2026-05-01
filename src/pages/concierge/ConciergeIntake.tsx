@@ -308,12 +308,6 @@ export default function ConciergeIntake() {
     const source = searchParams.get("from") || "";
     if (!loc && !treatment && !insurance) return;
     prefillAppliedRef.current = true;
-    const loc = searchParams.get("location") || "";
-    const treatment = searchParams.get("treatment") || "";
-    const insurance = searchParams.get("insurance") || "";
-    const source = searchParams.get("from") || "";
-    if (!loc && !treatment && !insurance) return;
-    prefillAppliedRef.current = true;
 
     // Track which fields were actually applied (vs. ignored because user
     // already filled them) so analytics reflect real attribution impact.
