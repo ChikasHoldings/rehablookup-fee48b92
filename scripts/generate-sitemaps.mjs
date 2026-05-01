@@ -204,6 +204,28 @@ async function updateRobotsHeader(stats) {
   }
 }
 
+async function ensureExtrasInIndex() {
+  // sitemap-extras.xml is built/maintained by scripts/cleanup-orphan-sitemaps.mjs
+  // and lists prerendered HTML pages that aren't in the upstream main sitemap
+  // (e.g. inventory-gated near-me / treatment-geo combos that nonetheless ship
+  // a static .html). The main `generate-sitemaps.mjs` flow rebuilds
+  // sitemap-index.xml from the edge function each run, which would otherwise
+  // drop the extras reference. Re-merge it here so robots → index → extras
+  // discovery stays intact.
+  const extrasPath = path.join(publicDir, "sitemap-extras.xml");
+  const indexPath = path.join(publicDir, "sitemap-index.xml");
+  if (!(await fileExists(extrasPath)) || !(await fileExists(indexPath))) return;
+
+  let xml = await readFile(indexPath, "utf8");
+  if (xml.includes("sitemap-extras.xml")) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const entry = `  <sitemap>\n    <loc>${CANONICAL_HOST}/sitemap-extras.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+  xml = xml.replace(/<\/sitemapindex>/, `${entry}</sitemapindex>`);
+  await writeFile(indexPath, xml, "utf8");
+  console.log("[sitemap] merged sitemap-extras.xml into sitemap-index.xml");
+}
+
 async function main() {
   await mkdir(publicDir, { recursive: true });
 
@@ -214,6 +236,8 @@ async function main() {
   for (const target of targets) {
     await generateSitemapFile(target, prerenderedPaths, stats);
   }
+
+  await ensureExtrasInIndex();
 
   console.log("──────────────────────────────────────────────");
   console.log(" Sitemap filter summary");
