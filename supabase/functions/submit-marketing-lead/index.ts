@@ -145,6 +145,8 @@ Deno.serve(async (req) => {
       );
 
     if (!body.email || typeof body.email !== "string" || body.email.trim().length === 0) {
+      const diag = describeEmailInput("email", body.email);
+      log(requestId, "WARN", "email_required", { code: "email_required", ...diag });
       return stdError("email_required", "Email is required", 400, "email");
     }
 
@@ -152,9 +154,13 @@ Deno.serve(async (req) => {
     try {
       sanitizedEmail = sanitizeEmail(body.email);
     } catch {
+      const diag = describeEmailInput("email", body.email);
+      log(requestId, "WARN", "invalid_email", { code: "invalid_email", ...diag });
       return stdError("invalid_email", "Valid email address is required", 400, "email");
     }
     if (!sanitizedEmail) {
+      const diag = describeEmailInput("email", body.email);
+      log(requestId, "WARN", "email_required (post-sanitize)", { code: "email_required", ...diag });
       return stdError("email_required", "Email is required", 400, "email");
     }
 
