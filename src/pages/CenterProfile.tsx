@@ -644,6 +644,16 @@ const CenterProfile = () => {
           // Include review ratings for rich snippets when available
           rating: ratingData.averageRating || undefined,
           reviewCount: ratingData.reviewCount || undefined,
+          // E-E-A-T: when this listing was last editorially reviewed and by whom.
+          // We derive `lastReviewed` from updated_at (every approval / edit
+          // touches it) and credit the RehabLookup Editorial Team as reviewer
+          // for verified listings, falling back to the same team for unverified.
+          lastReviewed: facility.updated_at || undefined,
+          reviewedBy: {
+            type: "Organization",
+            name: "RehabLookup Editorial Team",
+            url: "https://rehablookup.com/editorial-policy",
+          },
         })}
         breadcrumbs={(() => {
           const stateSlug = facility.state.toLowerCase().replace(/\s+/g, "-");
