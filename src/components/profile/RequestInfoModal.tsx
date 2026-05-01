@@ -180,6 +180,33 @@ const trackAnalyticsEvent = async (
 };
 
 // Custom success component for modal context
+const PREFERRED_CONTACT_LABEL: Record<string, string> = {
+  call: "Phone call",
+  phone: "Phone call",
+  text: "Text message (SMS)",
+  sms: "Text message (SMS)",
+  email: "Email",
+};
+const BEST_TIME_LABEL: Record<string, string> = {
+  morning: "Morning (8am–12pm)",
+  afternoon: "Afternoon (12pm–5pm)",
+  evening: "Evening (5pm–8pm)",
+  anytime: "Anytime",
+};
+function maskPhoneDisplay(phone?: string) {
+  if (!phone) return "";
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 4) return phone;
+  return `••• ••• ${digits.slice(-4)}`;
+}
+
+interface ModalContactRecap {
+  email?: string;
+  phone?: string;
+  preferredContact?: string;
+  bestTimeToCall?: string;
+}
+
 function ModalSuccessView({ 
   firstName, 
   facilityName,
@@ -190,6 +217,7 @@ function ModalSuccessView({
   onNearbyRequest,
   onConcierge,
   isPro,
+  contact,
 }: { 
   firstName: string;
   facilityName?: string | null;
@@ -200,22 +228,94 @@ function ModalSuccessView({
   onNearbyRequest: (facility: NearbyFacility) => void;
   onConcierge: () => void;
   isPro: boolean;
+  contact?: ModalContactRecap;
 }) {
+  const preferredLabel = contact?.preferredContact
+    ? PREFERRED_CONTACT_LABEL[contact.preferredContact] ?? contact.preferredContact
+    : null;
+  const bestTimeLabel = contact?.bestTimeToCall
+    ? BEST_TIME_LABEL[contact.bestTimeToCall] ?? contact.bestTimeToCall
+    : null;
+  const hasContactRecap = !!(contact && (contact.email || contact.phone || preferredLabel));
+
   return (
-    <div className="py-4 text-center space-y-6">
-      <div className="mx-auto w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-        <CheckCircle className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+    <div className="px-6 pb-6 pt-2 space-y-5">
+      <div className="text-center space-y-3">
+        <div className="mx-auto w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+          <CheckCircle className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">
+            Request Sent, {firstName}!
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            {facilityName || facility.name} has received your information and will be in touch.
+          </p>
+        </div>
       </div>
-      
-      <div>
-        <h3 className="text-xl font-semibold text-foreground mb-2">
-          Request Sent, {firstName}!
-        </h3>
-        <p className="text-muted-foreground">
-          {facilityName || facility.name} will be in touch with you soon.
-        </p>
+
+      {/* Contact recap */}
+      {hasContactRecap && (
+        <div className="rounded-xl border border-border/60 bg-card p-4 text-left">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-semibold text-foreground">
+              Contact details we received
+            </h4>
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Confirmed
+            </span>
+          </div>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-center gap-2.5">
+              <User className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="text-foreground font-medium">{firstName}</span>
+            </li>
+            {contact?.email && (
+              <li className="flex items-center gap-2.5">
+                <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="text-foreground break-all">{contact.email}</span>
+              </li>
+            )}
+            {contact?.phone && (
+              <li className="flex items-center gap-2.5">
+                <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="text-foreground">{maskPhoneDisplay(contact.phone)}</span>
+              </li>
+            )}
+            {preferredLabel && (
+              <li className="flex items-center gap-2.5">
+                <MessageSquare className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="text-foreground">
+                  Preferred: <span className="font-medium">{preferredLabel}</span>
+                  {bestTimeLabel ? (
+                    <span className="text-muted-foreground"> · {bestTimeLabel}</span>
+                  ) : null}
+                </span>
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {/* Clear next step */}
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-left">
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+            <Clock className="h-4 w-4 text-primary" />
+          </div>
+          <div className="text-sm">
+            <div className="font-semibold text-foreground mb-0.5">
+              What happens next
+            </div>
+            <p className="text-muted-foreground leading-relaxed">
+              An admissions specialist from {facilityName || facility.name} will reach out
+              {preferredLabel ? <> by <span className="font-medium text-foreground">{preferredLabel.toLowerCase()}</span></> : null}
+              {" "}within 24 hours. Keep an eye on your inbox — a confirmation email is on its way.
+            </p>
+          </div>
+        </div>
       </div>
-      
+
       {/* Nearby Facilities - Only for Free tier */}
       {!isPro && nearbyFacilities.length > 0 && (
         <div className="pt-4 border-t">
@@ -261,27 +361,25 @@ function ModalSuccessView({
       )}
       
       {/* Concierge CTA */}
-      <div className="pt-4 border-t">
-        <button
-          onClick={onConcierge}
-          className="w-full p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition-all text-left group"
-        >
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Sparkles className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-foreground mb-1">
-                Want help finding the best fit?
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Our Concierge service matches you with verified treatment centers based on your unique needs.
-              </p>
-            </div>
-            <ArrowRight className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity mt-2" />
+      <button
+        onClick={onConcierge}
+        className="w-full p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition-all text-left group"
+      >
+        <div className="flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Sparkles className="h-5 w-5 text-primary" />
           </div>
-        </button>
-      </div>
+          <div className="flex-1">
+            <div className="font-semibold text-foreground mb-1">
+              Want help finding the best fit?
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Our Placement Service matches you with verified treatment centers based on your unique needs.
+            </p>
+          </div>
+          <ArrowRight className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity mt-2" />
+        </div>
+      </button>
       
       <Button variant="outline" onClick={onClose} className="w-full">
         Done
