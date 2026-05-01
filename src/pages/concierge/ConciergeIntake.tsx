@@ -603,6 +603,11 @@ export default function ConciergeIntake() {
       setEmailVerification({ verified: false, verifiedAt: null });
       localStorage.removeItem(EMAIL_VERIFICATION_KEY);
     }
+    // If phone changed, invalidate stale phone verification
+    if ('phone' in updates && updates.phone !== formData.phone) {
+      setPhoneVerification({ verified: false, verifiedAt: null });
+      localStorage.removeItem(PHONE_VERIFICATION_KEY);
+    }
   };
 
   const validateStep = (step: number): boolean => {
