@@ -17,6 +17,26 @@
       "source": "/:path+/",
       "destination": "/:path+",
       "permanent": true
+    },
+    {
+      "source": "/request-help",
+      "destination": "/concierge",
+      "permanent": true
+    },
+    {
+      "source": "/request-help/intake",
+      "destination": "/concierge/intake",
+      "permanent": true
+    },
+    {
+      "source": "/request-help/thank-you",
+      "destination": "/concierge/thank-you",
+      "permanent": true
+    },
+    {
+      "source": "/request-help/create-password",
+      "destination": "/concierge/thank-you",
+      "permanent": true
     }
   ],
   "rewrites": [
