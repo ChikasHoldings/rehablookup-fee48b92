@@ -233,6 +233,104 @@ export const analytics = {
       });
   },
 
+  // ========== NOTFOUND SEARCH RECOVERY TRACKING ==========
+  //
+  // Fires when a visitor uses the recovery search box on the 404 page.
+  // We log to GA *and* persist via the log-not-found-search edge function
+  // so admins can see what users typed and add redirects or content for
+  // the top queries — even when GA is blocked.
+  notFoundSearchSubmit: (params: {
+    location?: string;
+    treatment?: string;
+    insurance?: string;
+    sourcePath?: string;
+    referrer?: string;
+    viewport?: string;
+    sessionId?: string | null;
+    userId?: string | null;
+  }) => {
+    trackEvent('not_found_search_submit', {
+      event_category: 'NotFoundRecovery',
+      event_label: params.location || params.treatment || params.insurance || '(empty)',
+      search_location: params.location,
+      search_treatment: params.treatment,
+      search_insurance: params.insurance,
+      source_path: params.sourcePath,
+    });
+    if (typeof window === 'undefined') return;
+    import('@/integrations/supabase/client')
+      .then(({ supabase }) => {
+        supabase.functions
+          .invoke('log-not-found-search', {
+            body: {
+              eventKind: 'submit',
+              location: params.location || null,
+              treatment: params.treatment || null,
+              insurance: params.insurance || null,
+              sourcePath: params.sourcePath || null,
+              referrer: params.referrer || null,
+              viewport: params.viewport || null,
+              sessionId: params.sessionId || null,
+              userId: params.userId || null,
+            },
+          })
+          .catch(() => {
+            /* fire-and-forget */
+          });
+      })
+      .catch(() => {
+        /* ignore */
+      });
+  },
+
+  // Fires after /search-results reports zero matches for a query that
+  // originated from the 404 recovery box (?from=404).
+  notFoundSearchZeroResults: (params: {
+    location?: string;
+    treatment?: string;
+    insurance?: string;
+    resultsCount: number;
+    sourcePath?: string;
+    referrer?: string;
+    viewport?: string;
+    sessionId?: string | null;
+    userId?: string | null;
+  }) => {
+    trackEvent('not_found_search_zero_results', {
+      event_category: 'NotFoundRecovery',
+      event_label: params.location || params.treatment || params.insurance || '(empty)',
+      search_location: params.location,
+      search_treatment: params.treatment,
+      search_insurance: params.insurance,
+      results_count: params.resultsCount,
+    });
+    if (typeof window === 'undefined') return;
+    import('@/integrations/supabase/client')
+      .then(({ supabase }) => {
+        supabase.functions
+          .invoke('log-not-found-search', {
+            body: {
+              eventKind: 'zero_results',
+              location: params.location || null,
+              treatment: params.treatment || null,
+              insurance: params.insurance || null,
+              resultsCount: params.resultsCount,
+              sourcePath: params.sourcePath || null,
+              referrer: params.referrer || null,
+              viewport: params.viewport || null,
+              sessionId: params.sessionId || null,
+              userId: params.userId || null,
+            },
+          })
+          .catch(() => {
+            /* fire-and-forget */
+          });
+      })
+      .catch(() => {
+        /* ignore */
+      });
+  },
+
   // ========== ENHANCED ECOMMERCE TRACKING ==========
   
   // View subscription plan (view_item)
