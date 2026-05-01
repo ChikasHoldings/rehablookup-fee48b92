@@ -244,7 +244,15 @@ for (const fn of FUNCTIONS) {
       assertStringIncludes(src, "firstSentAt: result.firstSentAt");
     }
   });
-}
+
+  Deno.test(`[${fn.name}] propagates shortId into outbound email headers + tracking metadata`, async () => {
+    if (fn.name === "notify-admin-provider-signup") return; // covered separately
+    const src = await loadSource(fn.path);
+    // shortId must travel with the message so bounce/complaint webhooks
+    // and recipient-side trace tooling can correlate back to the request.
+    assertStringIncludes(src, '"X-Request-Id": shortId');
+    assertStringIncludes(src, "shortId },"); // metadata: { facilityId, facilityName, shortId },
+  });
 
 // ---------------------------------------------------------------------------
 // 4. Cross-cutting: structured logger + shortId echoed on errors
