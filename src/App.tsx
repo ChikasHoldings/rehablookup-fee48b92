@@ -345,6 +345,7 @@ const AdminProviders = lazy(() => import("./pages/admin/AdminProviders"));
 const AdminLeads = lazy(() => import("./pages/admin/AdminLeads"));
 const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
+const AdminNotFoundEvents = lazy(() => import("./pages/admin/AdminNotFoundEvents"));
 const AdminLeadUnlocks = lazy(() => import("./pages/admin/AdminLeadUnlocks"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
@@ -374,6 +375,34 @@ function LegacyCenterRedirect() {
 function BlogRedirect() {
   const { id } = useParams();
   return <Navigate to={`/resources/${id}`} replace />;
+}
+
+// ============================================================
+// Legacy slug redirects — backlink rescue
+// ============================================================
+// Preserve full sub-path on rename. Example: /seeker/dashboard → /client/dashboard
+function SeekerToClientRedirect() {
+  const { "*": rest } = useParams();
+  const tail = rest ? `/${rest}` : "";
+  return <Navigate to={`/client${tail}`} replace />;
+}
+
+// /facility/:slug and /profile/:slug → canonical /center/:slug
+function FacilityToCenterRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/center/${slug}`} replace />;
+}
+
+// /state/:stateSlug → canonical /rehab-centers/:stateSlug
+function StateToRehabCentersRedirect() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/rehab-centers/${stateSlug}`} replace />;
+}
+
+// /location/:stateSlug/:citySlug → canonical /rehab-centers/:stateSlug/:citySlug
+function LocationToRehabCentersRedirect() {
+  const { stateSlug, citySlug } = useParams();
+  return <Navigate to={`/rehab-centers/${stateSlug}/${citySlug}`} replace />;
 }
 
 // Some tooling injects `ref` into top-level elements; these wrappers safely absorb refs
@@ -1043,7 +1072,25 @@ const AppInner = () => {
             
             {/* Legacy center URLs redirect */}
             <Route path="/centers/:slug" element={<LegacyCenterRedirect />} />
-            
+            <Route path="/centers" element={<Navigate to="/rehab-centers" replace />} />
+
+            {/* Legacy slug rescue — common backlink patterns */}
+            {/* "Seeker" → "Client" terminology rename (preserves sub-path) */}
+            <Route path="/seeker" element={<Navigate to="/client" replace />} />
+            <Route path="/seeker/*" element={<SeekerToClientRedirect />} />
+            {/* Profile/facility shorthand → canonical /center/:slug */}
+            <Route path="/facility/:slug" element={<FacilityToCenterRedirect />} />
+            <Route path="/profile/:slug" element={<FacilityToCenterRedirect />} />
+            {/* State/location shorthand → canonical /rehab-centers */}
+            <Route path="/state/:stateSlug" element={<StateToRehabCentersRedirect />} />
+            <Route path="/location/:stateSlug/:citySlug" element={<LocationToRehabCentersRedirect />} />
+            {/* Common search shorthand */}
+            <Route path="/find-rehab" element={<Navigate to="/rehab-centers" replace />} />
+            <Route path="/find-treatment" element={<Navigate to="/rehab-centers" replace />} />
+            <Route path="/rehab" element={<Navigate to="/rehab-centers" replace />} />
+            <Route path="/treatment" element={<Navigate to="/treatment-types" replace />} />
+            <Route path="/directory" element={<Navigate to="/rehab-centers" replace />} />
+
             {/* Ad Landing Pages */}
             <Route path="/ads/:slug" element={<PublicRouteGuard><AdLanding /></PublicRouteGuard>} />
             <Route path="/go/:slug" element={<PublicRouteGuard><SocialLanding /></PublicRouteGuard>} />
@@ -1548,6 +1595,7 @@ const AppInner = () => {
               <Route path="back-office" element={<AdminBackOffice />} />
               <Route path="provider-directory" element={<AdvisorProviderDirectory />} />
               <Route path="email-logs" element={<AdminEmailLogs />} />
+              <Route path="not-found-events" element={<AdminNotFoundEvents />} />
             </Route>
             
             {/* Marketing Landing Page (Ad Traffic) */}
