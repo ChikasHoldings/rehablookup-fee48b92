@@ -6113,6 +6113,37 @@ export type Database = {
           suicide_history: string
         }[]
       }
+      admin_get_lead_unlock_audit: {
+        Args: {
+          p_facility_id?: string
+          p_from?: string
+          p_limit?: number
+          p_offset?: number
+          p_provider_id?: string
+          p_to?: string
+        }
+        Returns: {
+          facility_city: string
+          facility_id: string
+          facility_name: string
+          facility_state: string
+          lead_created_at: string
+          lead_id: string
+          lead_level_of_care: string
+          lead_location: string
+          lead_source: string
+          payment_method: string
+          provider_email: string
+          provider_first_name: string
+          provider_id: string
+          provider_last_name: string
+          stripe_payment_intent_id: string
+          total_count: number
+          unlock_id: string
+          unlock_price_cents: number
+          unlocked_at: string
+        }[]
+      }
       assess_login_risk: {
         Args: {
           p_browser?: string
