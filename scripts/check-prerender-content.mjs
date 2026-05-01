@@ -141,20 +141,24 @@ function validateFile(file, expectedPathname) {
 
   const errors = [];
 
-  // 1) Shell-leak detection
-  if (title && title === SHELL_TITLE) {
-    errors.push("Title equals SPA shell title — page leaked the shell.");
-  }
-  if (h1Text && h1Text === SHELL_H1) {
-    errors.push("H1 text equals SPA shell H1 — page leaked the shell.");
-  }
-  if (h1HasShellClass) {
-    errors.push("H1 carries the shell-only `.ns-h1` class.");
+  // 1) Shell-leak detection (skip for the homepage — it IS the shell).
+  if (!isHomepage) {
+    if (title && title === SHELL_TITLE) {
+      errors.push("Title equals SPA shell title — page leaked the shell.");
+    }
+    if (h1Text && h1Text === SHELL_H1) {
+      errors.push("H1 text equals SPA shell H1 — page leaked the shell.");
+    }
+    if (h1HasShellClass) {
+      errors.push("H1 carries the shell-only `.ns-h1` class.");
+    }
   }
 
-  // 2) Canonical present + matches expected URL
+  // 2) Canonical present + matches expected URL.
+  // The homepage canonical is injected client-side by <SEO />, so we don't
+  // require it in the static shell — but if one is hardcoded, it must match.
   if (!canonical) {
-    errors.push("Missing <link rel=\"canonical\"> in <head>.");
+    if (!isHomepage) errors.push("Missing <link rel=\"canonical\"> in <head>.");
   } else {
     let canonicalPath;
     try {
