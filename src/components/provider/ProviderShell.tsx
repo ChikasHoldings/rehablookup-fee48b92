@@ -71,7 +71,9 @@ function ProviderShellContent() {
     
     // If authenticated but not a provider (null role), redirect to login
     if (role === null && isAuthenticated) {
-      // User might be signing up - check if they have a provider profile
+      // User might be signing up — the post-signup `profiles` trigger
+      // can lag behind the auth session by 100–500ms. Poll up to 3 times
+      // (≈1.5s total) before bouncing to login. (Audit fix M2)
       const checkProvider = async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
@@ -79,18 +81,24 @@ function ProviderShellContent() {
           navigate("/login?type=provider", { replace: true });
           return;
         }
-        
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-        
-        if (!profile) {
-          // Not a provider - redirect
-          hasRedirected.current = true;
-          navigate("/login?type=provider", { replace: true });
+
+        const delays = [0, 500, 1000];
+        for (let i = 0; i < delays.length; i++) {
+          if (delays[i] > 0) {
+            await new Promise((r) => setTimeout(r, delays[i]));
+          }
+          if (hasRedirected.current) return; // role resolved while we waited
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("user_id", session.user.id)
+            .maybeSingle();
+          if (profile) return; // profile exists — let role hook re-resolve
         }
+
+        // After retries, still no profile — bounce to login
+        hasRedirected.current = true;
+        navigate("/login?type=provider", { replace: true });
       };
       checkProvider();
     }
