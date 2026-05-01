@@ -5,7 +5,7 @@
 #   states render in-place via CenterNotFound (noindex). Added explicit
 #   Disallow for /report-issue (UI-only utility route) and confirmed
 #   /functions/* covers the new submit-page-issue-report endpoint.
-# Last updated: 2026-04-24 — v7.13.0 GSC reindex push: 31,995 sitemap URLs now have static self-canonical HTML
+# Last updated: 2026-05-01 — sitemap regenerated; 2055 URLs included (filtered from 31998). Prerender coverage: hybrid <path>.html + <path>/index.html.
 # Last updated: 2026-04-24 — v7.12.0 Block /resources?category=* query variants (canonical is bare /resources)
 # Last updated: 2026-04-24 — v7.11.0 Unblock /request-help (it 301s to /concierge); blocking source path causes "Page with redirect" GSC errors
 # Last updated: 2026-04-24 — v7.10.0 Force recrawl: confirm /treatment-types/* and /treatment/* are unblocked
