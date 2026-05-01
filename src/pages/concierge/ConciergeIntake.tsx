@@ -671,8 +671,36 @@ export default function ConciergeIntake() {
     setCurrentStep(5);
   };
 
+  // Fires concierge_intake_started exactly once per mount, the first time the
+  // user successfully advances past step 1. Carries the prefill context (when
+  // present) so the funnel can be segmented by attribution source / which
+  // fields were prefilled. dedup_key joins to the _prefilled and _submitted
+  // events.
+  const fireStartedEvent = useCallback(() => {
+    if (startedFiredRef.current) return;
+    startedFiredRef.current = true;
+    const ctx = prefillContextRef.current;
+    emitConciergeFunnelEvent("concierge_intake_started", {
+      // When there's no prefill context, synthesize a session-only dedup_key
+      // so organic visits still get a stable join key on _started → _submitted.
+      dedup_key:
+        ctx?.dedup_key ||
+        fnv1a32(`${getOrCreateConciergeSessionId()}|started|(direct)`),
+      source: ctx?.source || "(direct)",
+      had_prefill: !!ctx,
+      applied_any_field: ctx?.applied_any_field ?? false,
+      applied_city: ctx?.applied_city ?? false,
+      applied_state: ctx?.applied_state ?? false,
+      applied_zip: ctx?.applied_zip ?? false,
+      applied_insurance_carrier: ctx?.applied_insurance_carrier ?? false,
+      applied_payment_type: ctx?.applied_payment_type ?? false,
+      applied_level_of_care: ctx?.applied_level_of_care ?? false,
+    });
+  }, []);
+
   const handleNext = async () => {
     if (validateStep(currentStep)) {
+      if (currentStep === 1) fireStartedEvent();
       if (currentStep < 7) {
         // Auto-save draft to DB when leaving contact step (step 5)
         // This captures leads who drop off before email verification or payment
