@@ -1062,7 +1062,8 @@ const AppInner = () => {
             <Route path="/rehab-in-usa-for-uk-patients" element={<Navigate to="/us-rehab/uk-patients" replace />} />
             <Route path="/rehab-in-usa-for-international-patients" element={<Navigate to="/international" replace />} />
             <Route path="/best-rehab-centers-in-usa-for-foreigners" element={<Navigate to="/can-foreigners-go-to-rehab-in-usa" replace />} />
-            <Route path="/best-rehab-centers-in-usa" element={<Navigate to="/us-rehab/best-rehab-usa" replace />} />
+            {/* /best-rehab-centers-in-usa is the canonical (prerendered HTML + sitemap target).
+                /us-rehab/best-rehab-usa 301s here via vercel.json — no inverse SPA Navigate. */}
             <Route path="/luxury-rehab-centers-usa" element={<Navigate to="/us-rehab/luxury-rehab-america" replace />} />
             <Route path="/private-rehab-usa" element={<Navigate to="/us-rehab/private-rehab-america" replace />} />
             <Route path="/confidential-rehab-usa" element={<Navigate to="/us-rehab/private-rehab-america" replace />} />
