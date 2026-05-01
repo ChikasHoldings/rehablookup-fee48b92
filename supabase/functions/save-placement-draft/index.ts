@@ -10,6 +10,7 @@ import {
   successResponse,
   sanitizeIntakeData,
 } from "../_shared/validation.ts";
+import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
 
 const VERSION = "2.0.0";
 
@@ -77,7 +78,8 @@ Deno.serve(async (req) => {
     // Pre-check: catch missing / non-string / whitespace-only BEFORE sanitizeEmail
     // so we never rely on its thrown exception for the email_required path.
     if (typeof data.email !== "string" || data.email.trim() === "") {
-      logStep("ERROR: Missing email");
+      const diag = describeEmailInput("intakeData.email", data.email);
+      logStep("ERROR: email_required", { code: "email_required", ...diag });
       return jsonError("email_required", "Email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
     }
 
@@ -85,12 +87,14 @@ Deno.serve(async (req) => {
     try {
       email = sanitizeEmail(data.email);
     } catch {
-      logStep("ERROR: Invalid email");
+      const diag = describeEmailInput("intakeData.email", data.email);
+      logStep("ERROR: invalid_email", { code: "invalid_email", ...diag });
       return jsonError("invalid_email", "Valid email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
     }
     if (!email) {
       // Defensive — shared sanitizeEmail returns "" on falsy/non-string input.
-      logStep("ERROR: Missing email");
+      const diag = describeEmailInput("intakeData.email", data.email);
+      logStep("ERROR: email_required (post-sanitize)", { code: "email_required", ...diag });
       return jsonError("email_required", "Email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
     }
 

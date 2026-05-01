@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
 
 const VERSION = "2.0.0";
 
@@ -83,6 +84,8 @@ Deno.serve(async (req) => {
     if (!body.email || typeof body.email !== "string" || email.length === 0) {
       const code = "email_required";
       const message = "Email is required";
+      const diag = describeEmailInput("email", body.email);
+      console.warn(JSON.stringify({ fn: "submit-exit-intent-lead", level: "warn", code, ...diag }));
       return new Response(
         JSON.stringify({
           error: { code, message },
@@ -98,6 +101,8 @@ Deno.serve(async (req) => {
     if (!isValidEmail(email)) {
       const code = "invalid_email";
       const message = "Valid email is required";
+      const diag = describeEmailInput("email", body.email);
+      console.warn(JSON.stringify({ fn: "submit-exit-intent-lead", level: "warn", code, ...diag }));
       return new Response(
         JSON.stringify({
           error: { code, message },

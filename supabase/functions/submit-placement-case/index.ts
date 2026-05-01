@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { jsonError } from "../_shared/validation.ts";
+import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
 
 const VERSION = "2.0.0";
 
@@ -140,7 +141,8 @@ Deno.serve(async (req) => {
     // Pre-check: avoid relying on sanitizeEmail throwing for missing/non-string input.
     // sanitizeEmail still throws on malformed addresses, which the try/catch below handles.
     if (typeof body.seekerEmail !== "string" || body.seekerEmail.trim() === "") {
-      logStep(requestId, "Email validation failed", { code: "email_required", reason: "Email is required" });
+      const diag = describeEmailInput("seekerEmail", body.seekerEmail);
+      logStep(requestId, "Email validation failed", { code: "email_required", reason: "Email is required", ...diag });
       return jsonError("email_required", "Email is required", 400, corsHeaders, { requestId, _version: VERSION }, { field: "seekerEmail" });
     }
 
@@ -150,7 +152,8 @@ Deno.serve(async (req) => {
     } catch (emailErr) {
       const message = emailErr instanceof Error ? emailErr.message : "Invalid email";
       const code = message === "Email is required" ? "email_required" : "invalid_email";
-      logStep(requestId, "Email validation failed", { code, reason: message });
+      const diag = describeEmailInput("seekerEmail", body.seekerEmail);
+      logStep(requestId, "Email validation failed", { code, reason: message, ...diag });
       return jsonError(code, message, 400, corsHeaders, { requestId, _version: VERSION }, { field: "seekerEmail" });
     }
     const seekerPhone = sanitizePhone(body.seekerPhone);

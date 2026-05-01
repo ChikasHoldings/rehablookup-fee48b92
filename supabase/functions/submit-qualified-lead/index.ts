@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
 
 const VERSION = "2.1.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -536,6 +537,8 @@ Deno.serve(async (req) => {
     if (!data.email || typeof data.email !== "string" || data.email.trim().length === 0) {
       const code = "email_required";
       const message = "Email is required";
+      const diag = describeEmailInput("email", data.email);
+      console.warn(JSON.stringify({ fn: "submit-qualified-lead", level: "warn", code, ...diag }));
       return new Response(
         JSON.stringify({
           error: { code, message },
@@ -552,6 +555,8 @@ Deno.serve(async (req) => {
     if (!emailRegex.test(data.email)) {
       const code = "invalid_email";
       const message = "Please provide a valid email address";
+      const diag = describeEmailInput("email", data.email);
+      console.warn(JSON.stringify({ fn: "submit-qualified-lead", level: "warn", code, ...diag }));
       return new Response(
         JSON.stringify({
           error: { code, message },

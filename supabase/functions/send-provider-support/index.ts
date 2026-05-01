@@ -1,6 +1,7 @@
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -87,12 +88,18 @@ Deno.serve(async (req) => {
         { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
 
-    if (!email) return stdError("email_required", "Email is required", 400, "email");
+    if (!email) {
+      const diag = describeEmailInput("email", body.email);
+      console.warn(JSON.stringify({ fn: "send-provider-support", level: "warn", code: "email_required", ...diag }));
+      return stdError("email_required", "Email is required", 400, "email");
+    }
     if (!name) return stdError("name_required", "Name is required", 400, "name");
     if (!topic) return stdError("validation_error", "Topic is required", 400, "topic");
     if (!message) return stdError("validation_error", "Message is required", 400, "message");
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length < 5) {
+      const diag = describeEmailInput("email", body.email);
+      console.warn(JSON.stringify({ fn: "send-provider-support", level: "warn", code: "invalid_email", ...diag }));
       return stdError("invalid_email", "Invalid email address", 400, "email");
     }
 

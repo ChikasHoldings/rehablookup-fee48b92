@@ -1,5 +1,6 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
 
 const VERSION = "2.0.0";
 
@@ -192,6 +193,8 @@ Deno.serve(async (req) => {
     if (!intakeData.email || typeof intakeData.email !== "string" || intakeData.email.trim().length === 0) {
       const code = "email_required";
       const message = "Email is required";
+      const diag = describeEmailInput("intakeData.email", intakeData.email);
+      logStep(requestId, "email_required", { code, ...diag });
       return new Response(
         JSON.stringify({
           error: { code, message },
@@ -225,6 +228,8 @@ Deno.serve(async (req) => {
     } catch {
       const code = "invalid_email";
       const message = "Valid email is required";
+      const diag = describeEmailInput("intakeData.email", intakeData.email);
+      logStep(requestId, "invalid_email", { code, ...diag });
       return new Response(
         JSON.stringify({
           error: { code, message },
