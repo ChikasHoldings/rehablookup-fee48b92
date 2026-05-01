@@ -257,7 +257,18 @@ a:hover{text-decoration:underline}
 .breadcrumbs ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px}
 .meta{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin-top:18px}
 .meta p{margin:6px 0}
-.cta{margin-top:28px;padding:18px 20px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px}
+.cta{margin-top:28px;padding:20px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px}
+.cta h2{margin-top:0}
+.cta-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.btn{display:inline-block;padding:10px 18px;border-radius:6px;font-weight:600;border:1px solid transparent}
+.btn-primary{background:#1B365D;color:#fff !important;border-color:#1B365D}
+.btn-primary:hover{background:#15294a;text-decoration:none}
+.btn-secondary{background:#fff;color:#1B365D !important;border-color:#1B365D}
+.btn-secondary:hover{background:#f1f5f9;text-decoration:none}
+.related{margin-top:32px}
+.related h2{font-size:1.2rem}
+.related ul{padding-left:20px}
+.related li{margin:6px 0}
 footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
 </style>
 </head>
