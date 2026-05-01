@@ -69,6 +69,78 @@ export function UnlockLeadButton({
     return null;
   }
 
+  /**
+   * Fetch the now-unlocked PII for `leadId` from the masked view, with
+   * bounded exponential-backoff retry. RLS may briefly return masked
+   * (all-null) values immediately after the unlock row is committed,
+   * so an "all PII fields null" response is treated as a transient
+   * failure worth retrying.
+   */
+  const fetchRevealedLead = async (
+    targetLeadId: string,
+  ): Promise<
+    | { ok: true; data: { name: string | null; email: string | null; phone: string | null } }
+    | { ok: false; error: string }
+  > => {
+    const delays = [300, 800, 1500];
+    let lastError = "Unable to load contact details.";
+
+    for (let attempt = 0; attempt < delays.length + 1; attempt++) {
+      try {
+        const { data, error } = await supabase
+          .from("leads_provider_view")
+          .select("name, email, phone")
+          .eq("id", targetLeadId)
+          .maybeSingle();
+
+        if (error) {
+          lastError = error.message || lastError;
+        } else if (data) {
+          const hasAnyPII =
+            (data.name && data.name.trim()) ||
+            (data.email && data.email.trim()) ||
+            (data.phone && data.phone.trim());
+          if (hasAnyPII) {
+            return {
+              ok: true,
+              data: {
+                name: data.name ?? null,
+                email: data.email ?? null,
+                phone: data.phone ?? null,
+              },
+            };
+          }
+          lastError =
+            "Contact details aren't visible yet. This usually clears up in a moment.";
+        } else {
+          lastError = "Lead not found.";
+        }
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : lastError;
+      }
+
+      const delay = delays[attempt];
+      if (delay !== undefined) {
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+
+    return { ok: false, error: lastError };
+  };
+
+  const loadRevealed = async () => {
+    setRevealLoading(true);
+    setRevealError(null);
+    const result = await fetchRevealedLead(leadId);
+    if (result.ok) {
+      setRevealedLead(result.data);
+      setRevealError(null);
+    } else {
+      setRevealError(result.error);
+    }
+    setRevealLoading(false);
+  };
+
   const handleUnlock = async () => {
     // Prevent double-fire from React StrictMode or rapid clicks
     if (unlockingRef.current) return;
@@ -89,25 +161,14 @@ export function UnlockLeadButton({
       });
       setShowConfirmDialog(false);
 
-      // Fetch the now-unlocked PII so the success dialog can show real contact details.
-      // RLS only returns these fields once an unlock row exists for this provider+lead.
-      try {
-        const { data } = await supabase
-          .from("leads_provider_view")
-          .select("name, email, phone")
-          .eq("id", leadId)
-          .maybeSingle();
-        setRevealedLead({
-          name: data?.name ?? null,
-          email: data?.email ?? null,
-          phone: data?.phone ?? null,
-        });
-      } catch {
-        setRevealedLead({ name: null, email: null, phone: null });
-      }
-
+      // Open the success dialog immediately — the unlock itself is already
+      // confirmed by the server. Reveal fetch runs in the background with
+      // retry; failures surface as an in-dialog error + Retry button.
+      setRevealedLead(null);
+      setRevealError(null);
       setShowSuccessDialog(true);
       onUnlockSuccess?.();
+      void loadRevealed();
     } finally {
       unlockingRef.current = false;
     }
