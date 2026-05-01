@@ -69,24 +69,49 @@ function main() {
 
   let errors = 0;
 
+  // ── Debug mapping: every static HTML missing from the sitemap ──
   if (missingFromSitemap.length) {
     fail(
       `${missingFromSitemap.length} static /center/*.html file(s) have no sitemap-facilities entry:`,
     );
-    for (const s of missingFromSitemap) console.error(`    • /center/${s}.html`);
+    console.error(
+      `${DIM}    ${"slug".padEnd(60)}  static file                                expected sitemap <loc>${RESET}`,
+    );
+    for (const s of missingFromSitemap) {
+      const staticPath = `public/center/${s}.html`;
+      const expectedLoc = `https://rehablookup.com/center/${s}`;
+      const onDisk = existsSync(resolve(ROOT, staticPath)) ? "✓" : "✗";
+      console.error(
+        `    • ${s.padEnd(60)}  [${onDisk}] /${staticPath.replace(/^public\//, "")}  →  ${expectedLoc}`,
+      );
+    }
     errors += missingFromSitemap.length;
   } else {
     ok(`All ${htmlSlugs.size} static center profiles are listed in sitemap-facilities.xml.`);
   }
 
+  // ── Debug mapping: every sitemap <loc> missing a static mirror ──
   if (missingHtml.length) {
     // Sitemap entries without a static mirror are tolerated (the SPA still
-    // serves them), but we surface them as warnings so they can be regenerated.
+    // serves them), but we surface them as warnings + the exact file path
+    // that needs to be regenerated so the fix is one copy-paste away.
     warn(
       `${missingHtml.length} sitemap entr${missingHtml.length === 1 ? "y has" : "ies have"} no static HTML mirror (SPA fallback only):`,
     );
-    for (const s of missingHtml.slice(0, 10)) console.warn(`    • /center/${s}`);
-    if (missingHtml.length > 10) console.warn(`    … and ${missingHtml.length - 10} more`);
+    console.warn(
+      `${DIM}    ${"slug".padEnd(60)}  sitemap <loc>                              expected static file${RESET}`,
+    );
+    const preview = missingHtml.slice(0, 10);
+    for (const s of preview) {
+      const expectedLoc = `https://rehablookup.com/center/${s}`;
+      const expectedFile = `public/center/${s}.html`;
+      console.warn(
+        `    • ${s.padEnd(60)}  ${expectedLoc}  →  /${expectedFile.replace(/^public\//, "")}`,
+      );
+    }
+    if (missingHtml.length > preview.length) {
+      console.warn(`    … and ${missingHtml.length - preview.length} more`);
+    }
   } else {
     ok(`Every sitemap entry has a corresponding static HTML mirror.`);
   }
