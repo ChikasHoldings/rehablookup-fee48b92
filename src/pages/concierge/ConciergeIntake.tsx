@@ -294,8 +294,20 @@ export default function ConciergeIntake() {
   // Accepts ?location=Boise,ID  ?treatment=detox  ?insurance=aetna  ?from=...
   // Runs once on mount; never overwrites a value the user has already filled.
   const prefillAppliedRef = useRef(false);
+  // Funnel attribution: every concierge_intake_* event downstream attaches
+  // this context so dashboards can JOIN prefilled → started → submitted by
+  // dedup_key and segment by which fields were applied.
+  const prefillContextRef = useRef<ConciergePrefillContext | null>(null);
+  const startedFiredRef = useRef(false);
+  const submittedFiredRef = useRef(false);
   useEffect(() => {
     if (prefillAppliedRef.current) return;
+    const loc = searchParams.get("location") || "";
+    const treatment = searchParams.get("treatment") || "";
+    const insurance = searchParams.get("insurance") || "";
+    const source = searchParams.get("from") || "";
+    if (!loc && !treatment && !insurance) return;
+    prefillAppliedRef.current = true;
     const loc = searchParams.get("location") || "";
     const treatment = searchParams.get("treatment") || "";
     const insurance = searchParams.get("insurance") || "";
