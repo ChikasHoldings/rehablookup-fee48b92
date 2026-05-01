@@ -1,161 +1,87 @@
 
-# User Panel — Full Deep Audit
+# Conversion Recovery Plan — Fix Zero Leads from 5K Daily Visitors
 
-## Why a plan (read this first)
+## Root Cause Recap
 
-The User Panel is the largest surface in the codebase: the public marketing site, hundreds of SEO pages (state/city/county/treatment/insurance/near-me/US-rehab/comparison/demographic/duration/cost/co-occurring/educational/seeker-guides), the facility profile, search + filters, lead intake, concierge multi-step intake, exit-intent + qualified + marketing leads, contact + provider-support forms, seeker auth + dashboard, notifications, plus the edge functions and DB views behind all of it.
+Funnel analysis showed the platform has only 3 approved facilities across 3 states. 47 states return zero results, the Concierge fallback is buried (8 views / 6,400 sessions), and there is no "no inventory" lead capture. The fix is to make sure **every visitor — even when no facility matches — has a clear, frictionless path to becoming a lead** via the Concierge service, and to instrument the funnel so we can see where users drop.
 
-A single reply that "audits everything" honestly cannot read every file, trace every flow, simulate every failure, run smoke tests, and write a per-issue report without either taking many tool-call hours or fabricating findings. So this is phased, each phase produces a real artifact in the repo, and you approve before any fixes happen.
+The plan is split into 4 phases, smallest-impact-first. Each phase is independently shippable.
 
-This mirrors the structure of the already-approved Provider Panel audit (`.lovable/plan.md`) so the two reports are directly comparable.
+---
 
-## Scope (in)
+## Phase 1 — Zero-Result Lead Capture (P0, biggest single lift)
 
-- Public shell (`Layout`, `Header`, `Footer`, banners, sticky CTA, floating help)
-- Homepage + all hub pages
-- SEO pages: state, city, county, treatment, insurance, near-me, us-rehab, comparison, demographic, duration, cost, co-occurring, educational, seeker-guide, treatment-types, blog
-- Search, filters, sorting, proximity ranking, results layout
-- Facility profile (`/center/:slug`) — data load, gallery, services, insurance, reviews, schema, share bar
-- Inquiry flow: `LeadIntakeForm` → `useLeadIntakeForm` → `submit-qualified-lead` / `submit-exit-intent-lead` / `submit-marketing-lead`
-- Concierge flow: 11-step intake → `submit-concierge-intake` → Stripe checkout → `stripe-webhook` → drafts (`save-placement-draft`, `save-international-placement-draft`)
-- Contact + provider-support forms
-- Email verification flow (`is_email_verified`, verification codes)
-- Seeker auth: signup/login/forgot/reset, `SeekerShell`, `SeekerMobileNav`, `seeker_profiles`
-- Seeker dashboard pages: saved, notification preferences, settings
-- Email/SMS notifications triggered by user actions
-- Error/empty states on every page
-- Mobile (≤640), tablet (641–1024), desktop (≥1025) layouts at the configured viewport breakpoints
-- Edge functions touched by the panel + their RLS dependencies
+**Goal:** When a search returns 0 facilities, show a high-intent "Match Me with a Verified Center" card that routes to `/concierge` with the user's search context pre-filled.
 
-## Scope (out, with reasons)
+Files:
+- `src/pages/SearchResults.tsx` — replace the existing empty-results block with a new `<NoResultsConciergeCTA />` component when `filteredCenters.length === 0`. Pass `location`, `treatmentType`, `insurance` from URL params so they pre-populate the concierge intake.
+- `src/components/search/NoResultsConciergeCTA.tsx` (new) — full-width card: headline ("No verified centers match yet — let our team find one for you"), trust badges (HIPAA, no obligation, free), single primary CTA → `/concierge?from=search&location=...&treatment=...`, plus secondary `<AreaWaitlistCapture />` (already exists) for users who only want notifications.
+- `src/pages/Concierge.tsx` — read incoming query params and prefill step 1 (location) and treatment preference.
+- `src/components/seo/StateLandingPage.tsx`, near-me pages, treatment hub pages — same fallback when their facility list is empty (reuse the new component).
 
-- Provider/Admin panels — already covered by the separate Provider Panel audit
-- Live Stripe charges — trace code paths and idempotency only
-- Real SMS deliverability — verify trigger code + templates only
-- Pen-testing production — sandbox-side authz probing only
-- Load/perf benchmarking under real traffic — flag obvious issues only, real perf needs APM
-- Re-auditing things the existing scripts already cover unless they fail (`npm run check:structured-data`, `check:faq-jsonld`, `check:aggregate-rating`, `check:internal-links`, `validate:sitemap-robots`, `validate:seo-schema`, `check:gsc-indexing`, `check:provider-leads-masking`)
+Tracking: fire `analytics.event('zero_results_cta_view')` on render and `'zero_results_cta_click'` on click.
 
-## Phases
+---
 
-### Phase 1 — Surface map & contract inventory
-Produce `docs/audit/user-panel/01-surface-map.md` listing:
-- Every public route + its data hook + tables/RPCs/edge functions touched
-- Every SEO page template + the data it depends on (static config vs DB vs hybrid)
-- Every form component + its submit target + validation schema
-- Every edge function reachable from the user panel (and `verify_jwt` setting)
-- All Supabase tables/views/RPCs/RLS policies on the user-facing path
-- Notification touchpoints (which actions trigger which emails/SMS)
+## Phase 2 — Surface the Concierge Service Globally (P0)
 
-This becomes the source of truth the rest of the audit references.
+**Goal:** Move Concierge from a buried link to a primary CTA visible on every page.
 
-### Phase 2 — Static & contract checks (no fabrication)
-Run and capture results from:
-- `npm run validate:seo-schema`
-- `npm run validate:sitemap-robots`
-- `npm run check:gsc-indexing`
-- `npm run check:structured-data`
-- `npm run check:faq-jsonld`
-- `npm run check:aggregate-rating`
-- `npm run check:internal-links`
-- `npm run check:responsive-guards`
-- `npm run check:seo-meta`
-- `vitest run` for `layout-shell`, `responsive-snapshots`, lead-intake unit tests
-- `supabase--linter` (security + performance)
-- New scans:
-  - User-panel hooks/components for `select(*)` (excluding the existing baseline)
-  - Forms missing Zod validation
-  - Edge functions reachable from public flows that lack the standardized error envelope
-  - CTAs with empty/missing `to`/`href`/`onClick`
-  - Pages missing loading/empty/error states (heuristic)
-  - `window.confirm` usage (banned by memory)
+Files:
+- `src/components/layout/Header.tsx` — add a primary "Get Matched" button (variant `success`) next to the existing nav, visible on desktop and inside the mobile sheet menu.
+- `src/components/layout/Footer.tsx` — add a "Need help choosing? Talk to our team" block above the link columns, linking to `/concierge`.
+- `src/components/seo/StickyConversionBar.tsx` — already exists and routes to `/concierge`; verify it isn't suppressed on SEO pages (currently hidden on `/concierge`, `/provider`, `/admin`, `/lp/`, `/account` — that is correct, no change needed beyond confirming).
+- `src/pages/Index.tsx` (homepage) — add a hero-adjacent "Or let us match you in 60 seconds" secondary CTA → `/concierge`.
 
-Output: `docs/audit/user-panel/02-static-checks.md` with raw outputs + pass/fail per check.
+---
 
-### Phase 3 — Flow-by-flow trace (the real audit)
-For each of these 14 flows, write a trace listing exact files, hooks, RPCs, edge functions, tables, and emails touched, plus success / failure / edge-case behavior observed in code:
+## Phase 3 — Inquiry Form Friction Reduction (P1)
 
-1. Homepage → category browse → results
-2. State → city → facility navigation (incl. fallback when no facilities match)
-3. Treatment / insurance / near-me hub → results (proximity ranking)
-4. Filters + sorting + pagination + URL state preservation
-5. Facility profile load (incl. unclaimed-listing protection, schema, gallery, share bar)
-6. Inquiry flow — qualified lead (default form path)
-7. Inquiry flow — exit-intent lead
-8. Inquiry flow — marketing lead
-9. Email verification path (send code → verify → continue)
-10. Concierge intake — domestic (11 steps, draft persistence at step 5, Stripe checkout, webhook completion, idempotency, abandoned-cart email)
-11. Concierge intake — international variant
-12. Contact + provider-support forms (now with field-specific `*_required` errors)
-13. Seeker auth: signup → email verify → login → session expiration → logout → password reset
-14. Seeker dashboard: profile load, saved facilities, notification prefs, account deletion
+**Goal:** The qualified-lead form on facility pages currently requires email verification before submit. For the 3 live facilities this is fine, but for Concierge intake we should not block step 1 on email verification — verification should happen after the user has invested 2-3 steps.
 
-For each flow: ✅ success path, documented failure paths, and unanswered questions (which Phase 4 turns into reproductions). Concierge intake gets extra attention because of the placement-intake-idempotency memory and its triple-creation history.
+Files:
+- `src/components/lead-intake/SingleQuestionFlow.tsx` — already has email verification gating; add a "Skip for now, send me details by SMS" branch when the user supplies a phone number, mirroring existing logic.
+- `src/components/lead-intake/useLeadIntakeForm.ts` — accept a `requireEmailVerification` flag (default `true` on facility pages, `false` for the lightweight homepage capture).
+- New homepage capture: 2-field form (location + phone OR email) that creates a `marketing_lead` row and routes into Concierge intake.
 
-Output: `docs/audit/user-panel/03-flow-traces.md`.
+---
 
-### Phase 4 — Targeted reproductions (live preview)
-Use browser tools against the preview to reproduce the highest-risk items from Phase 3. Not "test every page" — that's not realistic in one pass. Specifically:
-- Submit qualified lead with: missing email, whitespace email, non-string email, valid email (already partly covered by recent integration tests — verify against live edge functions)
-- Submit concierge intake and confirm exactly one row is created (no triple-creation regression)
-- Hit `/center/<unknown-slug>` → expect graceful 404, not blank
-- Hit `/state/<unknown>`, `/city/<unknown>`, `/treatment/<unknown>` → expect fallback content + correct canonical, not soft-404
-- Mobile (375px) walkthrough: home → search → facility → inquiry → success
-- Tablet (768px) + desktop (1280px) parity check on the same flow
-- Network offline mid-submission → expect retry/error, not dangling state
-- Expired session on `/account/*` → expect clean redirect to `/login?redirect=...`
-- Direct-URL access from a logged-in admin/provider to `/account/settings` → expect redirect away from seeker shell (already coded in `SeekerShell`, verify in DOM)
-- Empty states: no saved facilities, no notifications, profile null
+## Phase 4 — Funnel Instrumentation (P1)
 
-Output: `docs/audit/user-panel/04-repro-log.md` with screenshots + console/network excerpts.
+**Goal:** Make drop-off measurable so the next iteration is data-driven.
 
-### Phase 5 — Final report (the format you specified)
-`docs/audit/user-panel/REPORT.md` containing every issue in this exact format:
+Files:
+- `src/lib/analytics.ts` — add named events: `search_performed`, `search_zero_results`, `facility_card_click`, `inquiry_form_view`, `inquiry_step_{1..N}_complete`, `inquiry_submit_success`, `concierge_step_{1..11}_complete`, `concierge_checkout_initiated`, `concierge_checkout_completed`.
+- `src/components/lead-intake/SingleQuestionFlow.tsx` — emit step events as user advances.
+- `src/pages/Concierge.tsx` and concierge step components — emit step events.
+- `src/pages/SearchResults.tsx` — emit `search_performed` and `search_zero_results` with `{ location, treatmentType, insurance, resultsCount }`.
+- Backend: no schema changes — events flow through the existing analytics pipeline.
 
-- **Title**
-- **Severity** (Critical | High | Medium | Low)
-- **Affected Page / Flow**
-- **Steps to Reproduce**
-- **Expected Behavior**
-- **Actual Behavior**
-- **Root Cause**
-- **Required Fix**
+---
 
-Plus:
-- Totals by severity
-- Critical blockers affecting lead generation
-- Conversion-killing issues
-- Quick wins (high impact / low effort)
-- Performance flags
-- Explicit "did not test" list — what was out of scope and why, so nothing is silently skipped
+## Phase 5 — Inventory & Trust Signals (P2, parallel work)
 
-### Phase 6 — Fixes (separate, opt-in)
-After you read the report, you pick which issues to fix. I implement them in default mode, one PR-sized batch per severity tier (Critical → High → Medium → Low). No fixes happen during the audit phases.
+This is the only phase that needs sustained effort outside code:
+- Admin imports / outreach to reach ≥25 verified facilities concentrated in top metros (NY, LA, Chicago, Houston, Phoenix, Miami).
+- Homepage social proof: "X verified centers, Y successful placements" — reads from a real DB count via existing `useApprovedFacilities` so it never lies.
+- File: `src/components/home/TrustStrip.tsx` (new) on `src/pages/Index.tsx`.
 
-## What I will NOT do (and why)
+---
 
-- Charge real cards through Stripe — trace webhook + idempotency code instead
-- Send real marketing emails to inboxes — verify templates + trigger conditions
-- Run automated scanners against production — sandbox browser probes only
-- Re-test things already protected by passing pre-build validators unless I find evidence they regressed
+## Out of Scope (explicit)
 
-## Estimated tool-call budget
+- No paid ad changes, no SEO content rewrites — those are separate workstreams.
+- No Stripe price changes.
+- No new tables or RLS policies — Phase 1–4 reuse `marketing_leads`, `area_waitlist`, and existing concierge tables.
 
-Phase 1: ~20 reads. Phase 2: ~12 commands. Phase 3: ~70 reads (the bulk). Phase 4: ~25 browser actions. Phase 5: writing. Phase 6: separate, opt-in.
+---
 
-## Deliverables
+## Suggested Execution Order
 
-```text
-docs/audit/user-panel/
-  01-surface-map.md
-  02-static-checks.md
-  03-flow-traces.md
-  04-repro-log.md
-  REPORT.md
-```
+1. Phase 1 (1 PR) — biggest single conversion lift, ~1 day.
+2. Phase 2 (1 PR) — header/footer/home CTA, ~half day.
+3. Phase 4 (1 PR) — instrumentation, ~half day; lets us measure Phase 1 + 2.
+4. Phase 3 (1 PR) — friction reduction once data shows where people drop.
+5. Phase 5 — ongoing inventory + trust strip.
 
-## How to approve
-
-- "Approve" → I switch to default mode and start Phase 1.
-- "Narrower first pass: <X>" (e.g. "just inquiry + concierge + facility profile") → I trim Phase 3 to those flows only and skip the rest until you ask.
-- "Skip Phase 4 reproductions" → static + trace audit only, faster but lower confidence.
+Approve this plan and I will start with Phase 1.
