@@ -150,6 +150,30 @@ const NotFound = () => {
     if (treatment) params.set("treatment", treatment);
     if (insurance) params.set("insurance", insurance);
     if ([...params.keys()].length === 0) return;
+    // Tag the navigation so SearchResults knows this query came from the
+    // 404 recovery box and can fire the zero-results follow-up event.
+    params.set("from", "404");
+
+    // Fire-and-forget: log what the user typed before we leave the page.
+    void supabase.auth.getUser().then(({ data }) => {
+      analytics.notFoundSearchSubmit({
+        location: trimmed || undefined,
+        treatment: treatment || undefined,
+        insurance: insurance || undefined,
+        sourcePath: location.pathname,
+        referrer: typeof document !== "undefined" ? document.referrer : undefined,
+        viewport:
+          typeof window !== "undefined"
+            ? `${window.innerWidth}x${window.innerHeight}`
+            : undefined,
+        sessionId:
+          typeof window !== "undefined"
+            ? window.sessionStorage?.getItem("rl_session_id") ?? null
+            : null,
+        userId: data.user?.id ?? null,
+      });
+    });
+
     navigate(`/search-results?${params.toString()}`);
   };
 
