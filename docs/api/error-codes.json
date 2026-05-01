@@ -29,6 +29,7 @@
           "name_required",
           "phone_required",
           "email_rejected",
+          "phone_rejected",
           "conflict",
           "rate_limited",
           "facility_missing",
