@@ -136,6 +136,14 @@ Deno.serve(async (req) => {
 
     // Sanitize and validate all inputs
     const seekerName = sanitizeString(body.seekerName, 100);
+
+    // Pre-check: avoid relying on sanitizeEmail throwing for missing/non-string input.
+    // sanitizeEmail still throws on malformed addresses, which the try/catch below handles.
+    if (typeof body.seekerEmail !== "string" || body.seekerEmail.trim() === "") {
+      logStep(requestId, "Email validation failed", { code: "email_required", reason: "Email is required" });
+      return jsonError("email_required", "Email is required", 400, corsHeaders, { requestId, _version: VERSION }, { field: "seekerEmail" });
+    }
+
     let seekerEmail: string;
     try {
       seekerEmail = sanitizeEmail(body.seekerEmail);
