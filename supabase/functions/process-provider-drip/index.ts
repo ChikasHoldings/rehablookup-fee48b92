@@ -410,7 +410,7 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString();
     const { data: pendingDrips, error: fetchError } = await supabase
       .from("provider_onboarding_drip")
-      .select("*")
+      .select("id, day_number, provider_name, provider_email")
       .eq("completed", false)
       .eq("unsubscribed", false)
       .lte("next_send_at", now)
