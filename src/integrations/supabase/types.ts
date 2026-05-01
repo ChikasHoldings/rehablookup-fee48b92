@@ -778,6 +778,7 @@ export type Database = {
           checkout_session_id: string | null
           closed_at: string | null
           co_occurring_concerns: Json | null
+          contact_channel: string
           created_at: string
           current_living_situation: string | null
           current_medications: string | null
@@ -841,6 +842,8 @@ export type Database = {
           seeker_confirmed_at: string | null
           seeker_feedback: string | null
           seeker_rating: number | null
+          sms_callback_requested_at: string | null
+          sms_consent: boolean
           status: string
           stripe_customer_id: string | null
           stripe_payment_intent_id: string | null
@@ -875,6 +878,7 @@ export type Database = {
           checkout_session_id?: string | null
           closed_at?: string | null
           co_occurring_concerns?: Json | null
+          contact_channel?: string
           created_at?: string
           current_living_situation?: string | null
           current_medications?: string | null
@@ -938,6 +942,8 @@ export type Database = {
           seeker_confirmed_at?: string | null
           seeker_feedback?: string | null
           seeker_rating?: number | null
+          sms_callback_requested_at?: string | null
+          sms_consent?: boolean
           status?: string
           stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -972,6 +978,7 @@ export type Database = {
           checkout_session_id?: string | null
           closed_at?: string | null
           co_occurring_concerns?: Json | null
+          contact_channel?: string
           created_at?: string
           current_living_situation?: string | null
           current_medications?: string | null
@@ -1035,6 +1042,8 @@ export type Database = {
           seeker_confirmed_at?: string | null
           seeker_feedback?: string | null
           seeker_rating?: number | null
+          sms_callback_requested_at?: string | null
+          sms_consent?: boolean
           status?: string
           stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
