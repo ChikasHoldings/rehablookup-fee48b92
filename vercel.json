@@ -21,9 +21,8 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!.*\\.).*)",
-      "destination": "/index.html",
-      "has": [{ "type": "header", "key": "x-spa-fallback", "value": "1" }]
+      "source": "/((?!.*\\.[a-zA-Z0-9]+$|api/|assets/|_next/).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
