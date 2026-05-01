@@ -1,18 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-import { z } from "https://esm.sh/zod@3.23.8";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { createLogger } from "../_shared/structured-logger.ts";
 import { checkRecipientEmail } from "../_shared/recipient-email-guard.ts";
-
-const WelcomeEmailRequestSchema = z.object({
-  facilityId: z.string().uuid({ message: "facilityId must be a valid UUID" }),
-  facilityName: z.string().trim().min(1).max(255),
-  providerEmail: z.string().trim().email().max(255),
-  providerFirstName: z.string().trim().min(1).max(120),
-  selectedPlan: z.string().trim().min(1).max(50),
-  idempotencyKey: z.string().trim().min(1).max(255).optional(),
-});
+import {
+  WelcomeEmailRequestSchema,
+  type WelcomeEmailRequest,
+} from "../_shared/contracts/welcome-email-contracts.ts";
 import {
   emailStart,
   emailHeader,
@@ -34,7 +28,7 @@ const corsHeaders = {
   "Access-Control-Expose-Headers": "x-request-id",
 };
 
-type WelcomeEmailRequest = z.infer<typeof WelcomeEmailRequestSchema>;
+// WelcomeEmailRequest type imported from shared contracts.
 
 const P = "#1B365D";
 const GOLD = "#CDA223";
