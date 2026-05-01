@@ -259,11 +259,11 @@ export function MarketingLeadSuccess({ leadId, matchedFacilities }: MarketingLea
               className="bg-violet-600 hover:bg-violet-700 text-white shadow-lg hover:shadow-xl transition-all"
             >
               <Link to="/concierge">
-                Get Expert Help — $29
+                Get Expert Help — Free
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Link>
             </Button>
-            <span className="text-xs text-violet-600">One-time fee • Full refund if not matched</span>
+            <span className="text-xs text-violet-600">No fee for clients • Personalized placement</span>
           </div>
         </motion.div>
 
