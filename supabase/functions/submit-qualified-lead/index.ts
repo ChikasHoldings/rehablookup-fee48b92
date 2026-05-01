@@ -800,6 +800,26 @@ Deno.serve(async (req) => {
       log(requestId, "WARN", "Failed to send seeker email", { error: String(e) });
     }
 
+    // ── Channel-aware fan-out (audit fix M3) ────────────────────────────
+    // Single read of provider notification preferences gates all 3 channels
+    // (email, SMS, in-app). Master switch is `notify_new_leads`. Per-channel
+    // toggles: `email_lead_alerts`, `sms_lead_alerts`, `browser_notifications`
+    // (re-used as the in-app toggle until a dedicated `inapp_lead_alerts`
+    // column exists). Default-on for any pref that is null/undefined so an
+    // unmigrated row keeps existing behaviour.
+    const { data: notifPrefs } = await supabase
+      .from("notification_preferences")
+      .select("notify_new_leads, email_lead_alerts, sms_lead_alerts, browser_notifications")
+      .eq("user_id", facility.user_id)
+      .maybeSingle();
+
+    const masterEnabled = notifPrefs?.notify_new_leads ?? true;
+    const emailEnabled = masterEnabled && (notifPrefs?.email_lead_alerts ?? true);
+    const smsEnabled = masterEnabled && (notifPrefs?.sms_lead_alerts ?? false);
+    const inAppEnabled = masterEnabled && (notifPrefs?.browser_notifications ?? true);
+
+    log(requestId, "INFO", "Channel fan-out plan", { masterEnabled, emailEnabled, smsEnabled, inAppEnabled });
+
     // Send facility notification email — idempotency keyed to lead ID
     const { data: profile } = await supabase
       .from("profiles")
@@ -811,7 +831,7 @@ Deno.serve(async (req) => {
       ? facility.reply_email 
       : (profile?.email || facility.email);
 
-    if (notificationEmail) {
+    if (emailEnabled && notificationEmail) {
       try {
         await sendEmailWithRetry(supabase, resend, {
           from: "RehabLookup <no-reply@rehablookup.com>",
@@ -832,17 +852,13 @@ Deno.serve(async (req) => {
       } catch (e) {
         log(requestId, "WARN", "Failed to send facility email", { error: String(e) });
       }
+    } else if (!emailEnabled) {
+      log(requestId, "INFO", "Email channel disabled by preference; skipping");
     }
 
-    // SMS notification (non-blocking)
+    // SMS notification (non-blocking) — gated by smsEnabled (master + sms_lead_alerts)
     try {
-      const { data: notifPrefs } = await supabase
-        .from("notification_preferences")
-        .select("sms_lead_alerts")
-        .eq("user_id", facility.user_id)
-        .maybeSingle();
-
-      if (notifPrefs?.sms_lead_alerts) {
+      if (smsEnabled) {
         const { data: providerProfile } = await supabase
           .from("profiles")
           .select("phone, phone_verified")
@@ -852,7 +868,7 @@ Deno.serve(async (req) => {
         if (providerProfile?.phone && providerProfile.phone_verified) {
           const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
           const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-          
+
           await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
             method: "POST",
             headers: {
@@ -872,6 +888,8 @@ Deno.serve(async (req) => {
             }),
           });
         }
+      } else {
+        log(requestId, "INFO", "SMS channel disabled by preference; skipping");
       }
     } catch (smsError) {
       log(requestId, "WARN", "Failed to send SMS notification", { error: String(smsError) });
@@ -883,30 +901,35 @@ Deno.serve(async (req) => {
     const notificationTitle = isHighIntent ? "🔥 High-Intent Inquiry Received" : "New Inquiry Received";
     const notificationMessage = `${maskLeadName(data.name)} submitted an inquiry${data.levelOfCare ? ` for ${data.levelOfCare.replace(/_/g, ' ')}` : ''}${urgencyLabel}`;
 
-    try {
-      await supabase.from("provider_notifications").insert({
-        user_id: facility.user_id,
-        facility_id: facility.id,
-        type: isHighIntent ? "high_intent_lead" : "new_lead",
-        title: notificationTitle,
-        message: notificationMessage,
-        metadata: {
-          lead_id: lead.id,
-          urgency: data.urgency,
-          level_of_care: data.levelOfCare,
-          location_city_state: data.locationCityState,
-          source: validatedSource,
-          high_intent: isHighIntent,
-          credit_cost: lead.credit_cost,
-          lead_score_label: lead.lead_score_label,
-          inquiry_type: inquiryType,
-          link: `/provider/inquiries?lead=${lead.id}`,
-        },
-        read: false,
-      });
-    } catch (notifError) {
-      log(requestId, "WARN", "Failed to create in-app notification", { error: String(notifError) });
+    if (inAppEnabled) {
+      try {
+        await supabase.from("provider_notifications").insert({
+          user_id: facility.user_id,
+          facility_id: facility.id,
+          type: isHighIntent ? "high_intent_lead" : "new_lead",
+          title: notificationTitle,
+          message: notificationMessage,
+          metadata: {
+            lead_id: lead.id,
+            urgency: data.urgency,
+            level_of_care: data.levelOfCare,
+            location_city_state: data.locationCityState,
+            source: validatedSource,
+            high_intent: isHighIntent,
+            credit_cost: lead.credit_cost,
+            lead_score_label: lead.lead_score_label,
+            inquiry_type: inquiryType,
+            link: `/provider/inquiries?lead=${lead.id}`,
+          },
+          read: false,
+        });
+      } catch (notifError) {
+        log(requestId, "WARN", "Failed to create in-app notification", { error: String(notifError) });
+      }
+    } else {
+      log(requestId, "INFO", "In-app channel disabled by preference; skipping");
     }
+
 
     // Track instant notification event
     try {
