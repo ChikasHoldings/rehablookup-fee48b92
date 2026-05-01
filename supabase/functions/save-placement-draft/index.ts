@@ -6,6 +6,7 @@ import {
   sanitizeStringArray,
   isValidEmail,
   errorResponse,
+  jsonError,
   successResponse,
   sanitizeIntakeData,
 } from "../_shared/validation.ts";
