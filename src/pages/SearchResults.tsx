@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect, type ReactNode } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateSearchResultsSchema } from "@/components/SEO";
@@ -66,6 +66,7 @@ import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { getPlanPriority } from "@/lib/facilityPlanSort";
+import { analytics } from "@/lib/analytics";
 
 // Restore user ID from localStorage to avoid getSession/getUser deadlocks
 function getStoredUserId(): string | null {
