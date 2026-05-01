@@ -366,6 +366,18 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // POST-only enforcement
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Method not allowed", code: "method_not_allowed", allowed: ["POST"] }),
+      {
+        status: 405,
+        headers: { ...corsHeaders, "Content-Type": "application/json", Allow: "POST, OPTIONS" },
+      },
+    );
+  }
+
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
