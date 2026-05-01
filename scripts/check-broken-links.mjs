@@ -51,7 +51,7 @@ const USER_AGENT = "RehabLookupLinkBot/1.0 (+https://rehablookup.com)";
 
 const PROD_HOSTS = new Set(["rehablookup.com", "www.rehablookup.com"]);
 
-// Stable hosts that frequently reject CI HEAD requests with 403/429 — skip
+// Stable hosts that frequently reject CI HEAD requests with 403/429 - skip
 // to keep the check signal-rich rather than flaky.
 const EXTERNAL_ALLOW_LIST = new Set([
   "schema.org",
