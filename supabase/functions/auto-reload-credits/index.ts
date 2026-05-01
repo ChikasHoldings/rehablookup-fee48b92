@@ -358,26 +358,37 @@ serve(async (req) => {
         });
       }
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          amountCharged: amountCents,
-          creditsAdded: totalCreditsCents,
-          paymentIntentId: paymentIntent.id,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(200, {
+        success: true,
+        code: "AUTO_RELOAD_CHARGED",
+        amountCharged: amountCents,
+        bonusCents,
+        creditsAdded: totalCreditsCents,
+        paymentIntentId: paymentIntent.id,
+      });
     }
 
-    return new Response(
-      JSON.stringify({ skipped: true, reason: "Payment not immediately succeeded", status: paymentIntent.status }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json(200, {
+      skipped: true,
+      code: "PAYMENT_NOT_SUCCEEDED",
+      reason:
+        "Stripe PaymentIntent did not reach `succeeded` status on the synchronous off-session attempt",
+      details: {
+        paymentIntentStatus: paymentIntent.status,
+        paymentIntentId: paymentIntent.id,
+      },
+    });
   } catch (error) {
-    console.error("[auto-reload-credits] Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Auto-reload failed" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const err = error as { message?: string; code?: string; type?: string };
+    console.error("[auto-reload-credits] Error:", err?.message ?? err);
+    return json(500, {
+      error: "Auto-reload failed",
+      code: "UNHANDLED_EXCEPTION",
+      reason: err?.message ?? "Unknown error",
+      details: {
+        errorCode: err?.code ?? null,
+        errorType: err?.type ?? null,
+      },
+    });
   }
 });
