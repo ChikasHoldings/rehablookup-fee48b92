@@ -205,11 +205,12 @@ export function StepReviewSubmit({
         )}
       </div>
 
-      {/* Payment Section */}
+      {/* Submit Section */}
       <div className="pt-6 border-t">
         <div className="text-center mb-4">
           <p className="text-sm text-muted-foreground mb-4">
-            A one-time <strong>$29</strong> placement fee is required to process your request. After payment, our team will begin reviewing your intake within 24-48 hours.
+            Your placement request is <strong>free</strong>. After you submit, our team will begin
+            reviewing your intake and reach out within 24–48 hours.
           </p>
           <Button
             onClick={onPay}
@@ -220,12 +221,12 @@ export function StepReviewSubmit({
             {isProcessingPayment ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Processing...
+                Submitting...
               </>
             ) : (
               <>
-                <Lock className="mr-2 h-5 w-5" />
-                Complete Payment – $29
+                <CheckCircle className="mr-2 h-5 w-5" />
+                Submit My Request
               </>
             )}
           </Button>
