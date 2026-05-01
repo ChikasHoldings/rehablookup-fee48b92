@@ -608,7 +608,7 @@ const CenterProfile = () => {
           ? facility.description.slice(0, 155) + (facility.description.length > 155 ? '...' : '')
           : `${facility.name} offers comprehensive addiction treatment services in ${facility.city}, ${facility.state}. Verify insurance coverage and start your recovery journey today.`
         }
-        canonical={`/center/${facility.slug}`}
+        canonical={`/center/${(facility.slug || "").trim().toLowerCase()}`}
         keywords={[
           `${facility.name}`,
           `addiction treatment ${facility.city}`,
