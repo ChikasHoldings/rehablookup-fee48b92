@@ -1512,6 +1512,7 @@ const AppInner = () => {
               <Route path="subscriptions" element={<AdminSubscriptions />} />
               <Route path="featured" element={<Navigate to="/admin/subscriptions?tab=featured" replace />} />
               <Route path="audit-log" element={<AdminAuditLog />} />
+              <Route path="lead-unlocks" element={<AdminLeadUnlocks />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="users" element={<AdminUsers />} />
