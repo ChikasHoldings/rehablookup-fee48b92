@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/extractErrorMessage";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CheckCircle, Mail, Shield, ArrowLeft, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
