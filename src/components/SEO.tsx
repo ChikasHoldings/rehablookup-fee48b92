@@ -437,6 +437,15 @@ export function generateLocalBusinessSchema(facility: {
   bedCount?: string | number | null;
   genderServed?: string | null;
   ageGroups?: string[];
+  /** ISO date string for the last editorial review of this listing (E-E-A-T). */
+  lastReviewed?: string;
+  /** Person or Organization that reviewed/verified the listing (E-E-A-T). */
+  reviewedBy?: {
+    name: string;
+    type?: "Person" | "Organization";
+    jobTitle?: string;
+    url?: string;
+  };
 }) {
   const SITE_URL = "https://rehablookup.com";
   const slug = facility.slug || facility.name.toLowerCase().replace(/\s+/g, "-");
