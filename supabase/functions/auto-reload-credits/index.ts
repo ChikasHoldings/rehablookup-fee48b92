@@ -22,6 +22,23 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Helper: build a uniform JSON response. Every rejection path returns
+  // { error|skipped, code, reason, details? } so log scraping and dashboards
+  // can pivot on a stable machine-readable `code` instead of fuzzy strings.
+  // We deliberately never echo the HMAC, service-role key, full provider IDs
+  // (only an 8-char prefix), or Stripe customer IDs.
+  const json = (
+    status: number,
+    body: Record<string, unknown>,
+  ) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  const shortId = (id: string | null | undefined) =>
+    typeof id === "string" && id.length >= 8 ? `${id.slice(0, 8)}…` : null;
+
   try {
     // This function is called internally after a lead unlock.
     // H5: require an HMAC signature derived from SUPABASE_SERVICE_ROLE_KEY so a leaked
@@ -30,26 +47,54 @@ serve(async (req) => {
     const sigHeader = req.headers.get("X-Internal-Trigger-Sig");
     const tsHeader = req.headers.get("X-Internal-Trigger-Ts");
     if (!sigHeader || !tsHeader) {
-      return new Response(
-        JSON.stringify({ error: "Missing internal trigger signature" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(401, {
+        error: "Missing internal trigger signature",
+        code: "AUTH_MISSING_SIGNATURE",
+        reason:
+          "auto-reload-credits requires both X-Internal-Trigger-Sig and X-Internal-Trigger-Ts headers",
+        details: {
+          hasSigHeader: Boolean(sigHeader),
+          hasTsHeader: Boolean(tsHeader),
+          expectedHeaders: ["X-Internal-Trigger-Sig", "X-Internal-Trigger-Ts"],
+        },
+      });
     }
     const tsNum = Number(tsHeader);
-    if (!Number.isFinite(tsNum) || Math.abs(Date.now() - tsNum) > 5 * 60 * 1000) {
-      return new Response(
-        JSON.stringify({ error: "Stale or invalid trigger timestamp" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const nowMs = Date.now();
+    const skewMs = Number.isFinite(tsNum) ? nowMs - tsNum : null;
+    const MAX_SKEW_MS = 5 * 60 * 1000;
+    if (!Number.isFinite(tsNum) || Math.abs(skewMs ?? Infinity) > MAX_SKEW_MS) {
+      return json(401, {
+        error: "Stale or invalid trigger timestamp",
+        code: !Number.isFinite(tsNum)
+          ? "AUTH_TS_NOT_NUMERIC"
+          : "AUTH_TS_OUT_OF_WINDOW",
+        reason: !Number.isFinite(tsNum)
+          ? "X-Internal-Trigger-Ts must be a unix-millis number"
+          : `Trigger timestamp must be within ±${MAX_SKEW_MS / 1000}s of server time`,
+        details: {
+          serverNowMs: nowMs,
+          receivedTs: tsHeader,
+          skewMs,
+          maxSkewMs: MAX_SKEW_MS,
+        },
+      });
     }
 
     const { providerId, currentBalanceCents } = await req.json();
 
     if (!providerId || typeof currentBalanceCents !== "number") {
-      return new Response(
-        JSON.stringify({ error: "Missing providerId or currentBalanceCents" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(400, {
+        error: "Missing providerId or currentBalanceCents",
+        code: "BAD_REQUEST_BODY",
+        reason:
+          "Body must include a non-empty `providerId` (uuid) and numeric `currentBalanceCents`",
+        details: {
+          hasProviderId: Boolean(providerId),
+          providerIdType: typeof providerId,
+          currentBalanceCentsType: typeof currentBalanceCents,
+        },
+      });
     }
 
     // Verify HMAC over `${providerId}|${ts}` using the service-role key.
@@ -76,10 +121,24 @@ serve(async (req) => {
         expected.length !== sigHeader.length ||
         !expected.split("").every((c, i) => c === sigHeader[i])
       ) {
-        return new Response(
-          JSON.stringify({ error: "Invalid internal trigger signature" }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        // SECURITY: never echo `expected` — that would let any caller mint a
+        // valid signature. We only return shape diagnostics (lengths) so
+        // operators can spot encoding issues (e.g. base64 vs hex) without
+        // recovering the secret.
+        return json(401, {
+          error: "Invalid internal trigger signature",
+          code: "AUTH_SIGNATURE_MISMATCH",
+          reason:
+            "HMAC-SHA256 over `${providerId}|${X-Internal-Trigger-Ts}` did not match X-Internal-Trigger-Sig",
+          details: {
+            providerIdPrefix: shortId(providerId),
+            receivedSigLength: sigHeader.length,
+            expectedSigLength: expected.length,
+            hexCharsetOk: /^[0-9a-f]+$/i.test(sigHeader),
+            algorithm: "HMAC-SHA256",
+            payloadFormat: "${providerId}|${ts}",
+          },
+        });
       }
     }
 
@@ -97,35 +156,59 @@ serve(async (req) => {
       .maybeSingle();
 
     if (settingsError || !settings) {
-      return new Response(
-        JSON.stringify({ skipped: true, reason: "No auto-reload settings or disabled" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(200, {
+        skipped: true,
+        code: settingsError ? "SETTINGS_QUERY_FAILED" : "SETTINGS_NOT_FOUND_OR_DISABLED",
+        reason: settingsError
+          ? "Failed to load provider_auto_reload_settings row"
+          : "No row matched provider_id with enabled=true (either not configured or auto-reload turned off)",
+        details: {
+          providerIdPrefix: shortId(providerId),
+          dbErrorCode: settingsError?.code ?? null,
+          dbErrorMessage: settingsError?.message ?? null,
+        },
+      });
     }
 
     // Check if balance is below threshold
     if (currentBalanceCents >= settings.threshold_cents) {
-      return new Response(
-        JSON.stringify({ skipped: true, reason: "Balance above threshold" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(200, {
+        skipped: true,
+        code: "BALANCE_ABOVE_THRESHOLD",
+        reason:
+          "Current balance is at or above the configured auto-reload threshold; nothing to do",
+        details: {
+          currentBalanceCents,
+          thresholdCents: settings.threshold_cents,
+          differenceCents: currentBalanceCents - settings.threshold_cents,
+        },
+      });
     }
 
     // Validate reload amount
     if (!VALID_RELOAD_AMOUNTS.has(settings.reload_amount_cents)) {
-      return new Response(
-        JSON.stringify({ error: "Invalid reload amount in settings" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(400, {
+        error: "Invalid reload amount in settings",
+        code: "INVALID_RELOAD_AMOUNT",
+        reason:
+          "provider_auto_reload_settings.reload_amount_cents is not one of the supported tiers",
+        details: {
+          configuredAmountCents: settings.reload_amount_cents,
+          allowedAmountsCents: [...VALID_RELOAD_AMOUNTS],
+        },
+      });
     }
 
     // Get user email for Stripe customer lookup
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(providerId);
     if (!userData?.user?.email) {
-      return new Response(
-        JSON.stringify({ error: "User not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(404, {
+        error: "User not found",
+        code: "USER_NOT_FOUND",
+        reason:
+          "supabase.auth.admin.getUserById returned no user (or no email) for this provider",
+        details: { providerIdPrefix: shortId(providerId) },
+      });
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -140,10 +223,13 @@ serve(async (req) => {
 
     if (customers.data.length === 0) {
       // No Stripe customer = no saved payment method, can't auto-charge
-      return new Response(
-        JSON.stringify({ skipped: true, reason: "No Stripe customer found for auto-reload" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(200, {
+        skipped: true,
+        code: "NO_STRIPE_CUSTOMER",
+        reason:
+          "No Stripe customer exists for this provider's email — cannot off-session charge",
+        details: { providerIdPrefix: shortId(providerId) },
+      });
     }
 
     const customer = customers.data[0];
@@ -156,10 +242,13 @@ serve(async (req) => {
     });
 
     if (paymentMethods.data.length === 0) {
-      return new Response(
-        JSON.stringify({ skipped: true, reason: "No payment method on file" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(200, {
+        skipped: true,
+        code: "NO_PAYMENT_METHOD",
+        reason:
+          "Stripe customer exists but has no card on file — cannot off-session charge",
+        details: { providerIdPrefix: shortId(providerId) },
+      });
     }
 
     const paymentMethodId = paymentMethods.data[0].id;
@@ -178,10 +267,16 @@ serve(async (req) => {
     );
 
     if (lockAcquired === false) {
-      return new Response(
-        JSON.stringify({ skipped: true, reason: "Auto-reload already in flight for this provider" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(200, {
+        skipped: true,
+        code: "AUTO_RELOAD_LOCK_HELD",
+        reason:
+          "Another auto-reload attempt is already in flight for this provider (advisory lock held)",
+        details: {
+          providerIdPrefix: shortId(providerId),
+          lockSource: "try_acquire_auto_reload_lock",
+        },
+      });
     }
 
     // Idempotency layer 2: 5-minute window check (catches retries across requests)
@@ -196,11 +291,19 @@ serve(async (req) => {
       .limit(1);
 
     if (recentAutoReload && recentAutoReload.length > 0) {
-      return new Response(
-        JSON.stringify({ skipped: true, reason: "Auto-reload already triggered recently" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json(200, {
+        skipped: true,
+        code: "RECENT_AUTO_RELOAD_FOUND",
+        reason:
+          "An auto-reload purchase was already recorded for this provider in the last 5 minutes",
+        details: {
+          providerIdPrefix: shortId(providerId),
+          windowMinutes: 5,
+          windowStart: fiveMinAgo,
+        },
+      });
     }
+
 
     // Create PaymentIntent and confirm immediately (off-session)
     const paymentIntent = await stripe.paymentIntents.create({
