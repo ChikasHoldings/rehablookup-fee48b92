@@ -327,7 +327,18 @@ function generatePage({ urlPath, title, metaTitle, metaDescription, h1, content,
 async function writePage(filePath, html) {
   const dir = path.dirname(filePath);
   await mkdir(dir, { recursive: true });
+  // Hybrid layout: write both /path.html (flat) AND /path/index.html (nested).
+  // Vercel's filesystem step serves /path/index.html for clean-URL requests
+  // (e.g. GET /foo) BEFORE any user-defined SPA rewrite fires, eliminating
+  // soft-404s where /foo would otherwise fall through to index.html and be
+  // routed client-side. The flat /path.html copy stays for crawlers that
+  // request the explicit .html and for tooling that walks public/.
   await writeFile(filePath, html, "utf8");
+  if (filePath.endsWith(".html") && !filePath.endsWith("/index.html")) {
+    const nestedDir = filePath.slice(0, -".html".length);
+    await mkdir(nestedDir, { recursive: true });
+    await writeFile(path.join(nestedDir, "index.html"), html, "utf8");
+  }
   pagesGenerated++;
 }
 
