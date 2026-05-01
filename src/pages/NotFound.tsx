@@ -51,6 +51,39 @@ const INSURANCE_OPTIONS = [
   { value: "private-pay", label: "Self-Pay / Private Pay" },
 ] as const;
 
+// Quick-recovery suggestions: high-intent cities and ZIPs that 404 visitors
+// commonly try. Clicking sends them straight to /search-results with the
+// location pre-filled — same handler as the form, so filters apply too.
+const POPULAR_CITIES = [
+  "Los Angeles, CA",
+  "San Diego, CA",
+  "Phoenix, AZ",
+  "Houston, TX",
+  "Dallas, TX",
+  "Miami, FL",
+  "Tampa, FL",
+  "Atlanta, GA",
+  "Chicago, IL",
+  "New York, NY",
+  "Philadelphia, PA",
+  "Denver, CO",
+  "Seattle, WA",
+  "Las Vegas, NV",
+  "Boston, MA",
+  "Nashville, TN",
+] as const;
+
+const POPULAR_ZIPS = [
+  { zip: "90210", label: "90210 · Beverly Hills" },
+  { zip: "10001", label: "10001 · New York" },
+  { zip: "33139", label: "33139 · Miami Beach" },
+  { zip: "60601", label: "60601 · Chicago" },
+  { zip: "77002", label: "77002 · Houston" },
+  { zip: "85001", label: "85001 · Phoenix" },
+  { zip: "30303", label: "30303 · Atlanta" },
+  { zip: "98101", label: "98101 · Seattle" },
+] as const;
+
 const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
