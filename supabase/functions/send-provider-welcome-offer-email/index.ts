@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({ error: "Email service not configured", code: "email_service_not_configured", shortId }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
       log.warn("invalid_json_body", { code: "invalid_json", reason: "Body is not valid JSON" });
       return new Response(
         JSON.stringify({ error: "Invalid JSON body", code: "invalid_json", shortId }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 400, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
           shortId,
           fieldErrors,
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 400, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -289,7 +289,7 @@ Deno.serve(async (req) => {
           reason: sendReason,
           deadLettered: result.deadLettered ?? false,
         }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 500, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -307,7 +307,7 @@ Deno.serve(async (req) => {
         code: result.deduplicated ? "email_deduplicated" : "email_sent",
         deduplicated: result.deduplicated,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -318,7 +318,7 @@ Deno.serve(async (req) => {
     });
     return new Response(
       JSON.stringify({ error: errorMessage, code: "internal_error", shortId }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, ...idHeaders, "Content-Type": "application/json" } }
     );
   }
 });
