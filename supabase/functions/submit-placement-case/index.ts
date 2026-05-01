@@ -93,10 +93,7 @@ Deno.serve(async (req) => {
 
   // POST only
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonError("method_not_allowed", "Method not allowed", 405, corsHeaders, { _version: VERSION }, { allowed: ["POST", "OPTIONS"] });
   }
 
   try {
