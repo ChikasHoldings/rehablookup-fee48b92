@@ -247,6 +247,7 @@ export function SingleQuestionFlow({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [consentToContact, setConsentToContact] = useState(false);
   const isSubmittingRef = useRef(false);
   
   // Filter questions based on skip conditions
