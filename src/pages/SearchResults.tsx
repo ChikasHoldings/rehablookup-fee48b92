@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect, type ReactNode } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateSearchResultsSchema } from "@/components/SEO";
@@ -66,6 +66,7 @@ import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { getPlanPriority } from "@/lib/facilityPlanSort";
+import { analytics } from "@/lib/analytics";
 
 // Restore user ID from localStorage to avoid getSession/getUser deadlocks
 function getStoredUserId(): string | null {
@@ -620,6 +621,38 @@ const SearchResults = () => {
   // Determine if this is a search with query params (should be noindexed)
   const hasSearchParams = !!(location || treatment || insurance || type || stateParam || queryParam || treatmentTypesParam || amenitiesParam || insuranceTypesParam);
   const shouldNoindex = hasSearchParams || filteredCenters.length === 0;
+
+  // Zero-result tracking for queries that originated on the 404 page
+  // (NotFound submits with ?from=404). Captures intent we couldn't fulfill
+  // so admins can add redirects or content for the top dead-end queries.
+  const fromParam = searchParams.get("from") || "";
+  const reportedZeroQueryRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (fromParam !== "404") return;
+    if (isLoading) return;
+    if (filteredCenters.length !== 0) return;
+    // Build a stable key per query so we only fire once per unique search.
+    const key = `${location}|${treatment}|${insurance}`;
+    if (reportedZeroQueryRef.current === key) return;
+    reportedZeroQueryRef.current = key;
+
+    analytics.notFoundSearchZeroResults({
+      location: location || undefined,
+      treatment: treatment || undefined,
+      insurance: insurance || undefined,
+      resultsCount: 0,
+      sourcePath: "/search-results",
+      referrer: typeof document !== "undefined" ? document.referrer : undefined,
+      viewport:
+        typeof window !== "undefined"
+          ? `${window.innerWidth}x${window.innerHeight}`
+          : undefined,
+      sessionId:
+        typeof window !== "undefined"
+          ? window.sessionStorage?.getItem("rl_session_id") ?? null
+          : null,
+    });
+  }, [fromParam, isLoading, filteredCenters.length, location, treatment, insurance]);
 
   // Determine display title
   const searchDisplayTitle = queryParam
