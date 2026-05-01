@@ -670,6 +670,11 @@ export default function ConciergeIntake() {
           errors.email = "Please verify your email to continue";
         }
         break;
+      case 7: // Phone verification
+        if (!phoneVerification.verified) {
+          errors.phone = "Please verify your phone number to continue";
+        }
+        break;
     }
 
     setStepErrors(errors);
@@ -680,7 +685,7 @@ export default function ConciergeIntake() {
     const newState = { verified: true, verifiedAt };
     setEmailVerification(newState);
     localStorage.setItem(EMAIL_VERIFICATION_KEY, JSON.stringify(newState));
-    // Auto-advance to review step after email verification
+    // Auto-advance to phone verification step
     setTimeout(() => {
       setDirection(1);
       setCurrentStep(7);
@@ -689,9 +694,28 @@ export default function ConciergeIntake() {
   };
 
   const handleEditEmail = () => {
-    // Clear email verification and go back to step 5
+    // Clear email verification and go back to contact step
     setEmailVerification({ verified: false, verifiedAt: null });
     localStorage.removeItem(EMAIL_VERIFICATION_KEY);
+    setDirection(-1);
+    setCurrentStep(5);
+  };
+
+  const handlePhoneVerified = (verifiedAt: string) => {
+    const newState = { verified: true, verifiedAt };
+    setPhoneVerification(newState);
+    localStorage.setItem(PHONE_VERIFICATION_KEY, JSON.stringify(newState));
+    // Auto-advance to review step
+    setTimeout(() => {
+      setDirection(1);
+      setCurrentStep(8);
+      scrollToTopSmooth();
+    }, 800);
+  };
+
+  const handleEditPhone = () => {
+    setPhoneVerification({ verified: false, verifiedAt: null });
+    localStorage.removeItem(PHONE_VERIFICATION_KEY);
     setDirection(-1);
     setCurrentStep(5);
   };
