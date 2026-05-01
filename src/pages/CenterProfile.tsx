@@ -272,6 +272,21 @@ const CenterProfile = () => {
     }
   }, [openModalFromNav]);
 
+  // Deep-link support for static prerendered CTAs (e.g. /center/<slug>?action=request-info).
+  // The static HTML mirrors served to bots / no-JS users link here so JS-enabled
+  // visitors immediately land on the Request Info form. We strip the query param
+  // after handling so the canonical URL stays clean for analytics + sharing.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("action") === "request-info") {
+      setRequestModalOpen(true);
+      params.delete("action");
+      const cleanSearch = params.toString();
+      const cleanUrl = location.pathname + (cleanSearch ? `?${cleanSearch}` : "");
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, [location.pathname, location.search]);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setCurrentUserId(session?.user?.id ?? null);

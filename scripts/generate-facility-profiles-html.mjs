@@ -73,8 +73,11 @@ function truncate(text, max) {
   return clean.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
 }
 
-function citySlug(s) {
-  return String(s ?? "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+// Mirror the live CenterProfile slug logic exactly so internal links resolve
+// to the same routes the SPA produces (lowercase, spaces → hyphens, keep dots).
+// Diverging from this would break "St. Louis" → /rehab-centers/missouri/st.-louis.
+function locationSlug(s) {
+  return String(s ?? "").toLowerCase().replace(/\s+/g, "-");
 }
 
 // ---------------------------------------------------------------------------
@@ -140,8 +143,8 @@ async function fetchFacilities() {
 function renderFacilityHtml(f) {
   const slug = f.slug;
   const canonical = `${BASE_URL}/center/${slug}`;
-  const stateSlug = citySlug(f.state);
-  const cityHrefSlug = citySlug(f.city);
+  const stateSlug = locationSlug(f.state);
+  const cityHrefSlug = locationSlug(f.city);
 
   const title = `${f.name} — Addiction Treatment in ${f.city}, ${f.state} | RehabLookup`;
   const baseDesc = f.description
@@ -254,7 +257,18 @@ a:hover{text-decoration:underline}
 .breadcrumbs ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px}
 .meta{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin-top:18px}
 .meta p{margin:6px 0}
-.cta{margin-top:28px;padding:18px 20px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px}
+.cta{margin-top:28px;padding:20px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px}
+.cta h2{margin-top:0}
+.cta-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.btn{display:inline-block;padding:10px 18px;border-radius:6px;font-weight:600;border:1px solid transparent}
+.btn-primary{background:#1B365D;color:#fff !important;border-color:#1B365D}
+.btn-primary:hover{background:#15294a;text-decoration:none}
+.btn-secondary{background:#fff;color:#1B365D !important;border-color:#1B365D}
+.btn-secondary:hover{background:#f1f5f9;text-decoration:none}
+.related{margin-top:32px}
+.related h2{font-size:1.2rem}
+.related ul{padding-left:20px}
+.related li{margin:6px 0}
 footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
 </style>
 </head>
@@ -278,9 +292,23 @@ ${websiteLine}
 </div>
 ${descBlock}
 <div class="cta">
-<p><strong>View the full profile</strong> for verified programs, insurance accepted, amenities, photos, and admissions information.</p>
-<p><a href="/center/${escapeAttr(slug)}">Open ${escapeHtml(f.name)} profile</a> &middot; <a href="/rehab-centers/${stateSlug}">More rehabs in ${escapeHtml(f.state)}</a> &middot; <a href="/concierge">Get Personalized Help</a></p>
+<h2>Request Information from ${escapeHtml(f.name)}</h2>
+<p>Get verified program details, insurance verification, and admissions information directly from this facility. Confidential — no obligation.</p>
+<div class="cta-actions">
+<a class="btn btn-primary" href="/center/${escapeAttr(slug)}?action=request-info">Request Information</a>
+<a class="btn btn-secondary" href="/center/${escapeAttr(slug)}">View Full Profile</a>
+${f.phone ? `<a class="btn btn-secondary" href="tel:${escapeAttr(f.phone)}">Call ${escapeHtml(f.phone)}</a>` : ""}
 </div>
+</div>
+<section class="related">
+<h2>Search Other Rehab Centers</h2>
+<ul>
+<li><a href="/rehab-centers/${stateSlug}/${cityHrefSlug}">Rehab centers in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}</a></li>
+<li><a href="/rehab-centers/${stateSlug}">All rehab centers in ${escapeHtml(f.state)}</a></li>
+<li><a href="/rehab-centers">Browse the full RehabLookup directory</a></li>
+<li><a href="/concierge">Get a free personalized placement match</a></li>
+</ul>
+</section>
 </main>
 <footer><p>&copy; ${new Date().getFullYear()} RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy</a> &middot; <a href="/terms-of-service">Terms</a> &middot; <a href="/editorial-policy">Editorial Policy</a></p></footer>
 </body>
