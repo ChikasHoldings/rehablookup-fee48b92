@@ -333,6 +333,7 @@ ${faqs
 <link rel="icon" type="image/png" href="/favicon.png">
 <script type="application/ld+json">${jsonLd(breadcrumbLd)}</script>
 <script type="application/ld+json">${jsonLd(medicalClinicLd)}</script>
+<script type="application/ld+json">${jsonLd(faqLd)}</script>
 <style>
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:32px 20px;color:#1a2b4a;line-height:1.7}
 h1{font-size:2rem;color:#1B365D;margin-bottom:8px}
