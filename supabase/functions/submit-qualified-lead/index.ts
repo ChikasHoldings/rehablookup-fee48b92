@@ -577,10 +577,7 @@ Deno.serve(async (req) => {
     }
 
     if (!data.phone || data.phone.length < 10) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Please provide a valid phone number (minimum 10 digits)" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "phone_invalid", "Please provide a valid phone number (minimum 10 digits)", "phone");
     }
 
     // ===== ENUM VALIDATION (reject invalid values) =====
@@ -603,10 +600,7 @@ Deno.serve(async (req) => {
     const emailVerified = await isEmailServerVerified(supabase, data.email);
     if (!emailVerified) {
       log(requestId, "WARN", "Email not verified server-side", { email: data.email.substring(0, 3) + "***" });
-      return new Response(
-        JSON.stringify({ success: false, error: "Email address must be verified before submitting. Please verify your email first." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(403, "email_not_verified", "Email address must be verified before submitting. Please verify your email first.", "email");
     }
 
     // ===== IDEMPOTENCY CHECK =====
@@ -629,27 +623,18 @@ Deno.serve(async (req) => {
 
     if (facilityError || !facility) {
       log(requestId, "ERROR", "Facility not found", { facilityId: data.facilityId });
-      return new Response(
-        JSON.stringify({ success: false, error: "Facility not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(404, "facility_not_found", "Facility not found", "facilityId");
     }
 
     if (facility.status !== "approved" || facility.suspended) {
       log(requestId, "ERROR", "Facility not accepting inquiries", { facilityId: data.facilityId, status: facility.status });
-      return new Response(
-        JSON.stringify({ success: false, error: "This facility is not currently accepting inquiries" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(400, "facility_not_accepting", "This facility is not currently accepting inquiries", "facilityId");
     }
 
     // ===== DUPLICATE CHECK =====
     const duplicateCheck = await checkForDuplicate(supabase, data.email, data.phone, data.facilityId, requestId);
     if (duplicateCheck.isDuplicate) {
-      return new Response(
-        JSON.stringify({ success: false, error: duplicateCheck.reason }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(429, "duplicate_inquiry", duplicateCheck.reason || "Duplicate inquiry detected");
     }
 
     // ===== GLOBAL RATE LIMITING =====
@@ -664,10 +649,7 @@ Deno.serve(async (req) => {
 
     if (globalEmailCount && globalEmailCount >= 10) {
       log(requestId, "WARN", "Global email rate limit exceeded");
-      return new Response(
-        JSON.stringify({ success: false, error: "Too many inquiries. Please wait before submitting again." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(429, "rate_limit_email", "Too many inquiries. Please wait before submitting again.");
     }
 
     // Per-facility rate limit: 5/hour (same email)
@@ -680,10 +662,7 @@ Deno.serve(async (req) => {
 
     if (facilityEmailCount && facilityEmailCount >= 5) {
       log(requestId, "WARN", "Per-facility email rate limit exceeded");
-      return new Response(
-        JSON.stringify({ success: false, error: "Too many inquiries to this facility. Please wait before submitting again." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return errorResponse(429, "rate_limit_facility", "Too many inquiries to this facility. Please wait before submitting again.");
     }
 
     // IP-based rate limit: 15/hour (if IP available)
@@ -699,10 +678,7 @@ Deno.serve(async (req) => {
 
       if (ipCount && ipCount >= 15) {
         log(requestId, "WARN", "IP-based rate limit exceeded", { ipHash: ipHashHex.substring(0, 8) });
-        return new Response(
-          JSON.stringify({ success: false, error: "Too many inquiries from this network. Please wait before submitting again." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return errorResponse(429, "rate_limit_ip", "Too many inquiries from this network. Please wait before submitting again.");
       }
 
       // Store hashed IP for tracking
