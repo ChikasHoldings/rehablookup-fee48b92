@@ -1693,8 +1693,17 @@ function generateUrlEntry(
   lastmod: string,
   images?: { loc: string; title?: string }[]
 ): string {
-  // Strip trailing slash (except root "/")
-  const cleanPath = path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
+  // Canonical path normalization (matches `src/components/SEO.tsx` and the
+  // `/center/:slug` runtime guard):
+  //   - lowercase
+  //   - strip trailing slash (except root "/")
+  //   - collapse accidental double slashes
+  // Belt-and-suspenders: even if a route was emitted in mixed case
+  // upstream, the sitemap will only ever publish the canonical form.
+  let cleanPath = (path || "/").toLowerCase().replace(/\/{2,}/g, "/");
+  if (cleanPath.length > 1 && cleanPath.endsWith("/")) {
+    cleanPath = cleanPath.slice(0, -1);
+  }
   const safePriority = typeof priority === "number" && !isNaN(priority) ? priority : 0.5;
   let entry = `  <url>
     <loc>${BASE_URL}${cleanPath}</loc>
