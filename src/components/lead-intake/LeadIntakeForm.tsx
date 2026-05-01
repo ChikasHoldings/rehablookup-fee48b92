@@ -12,7 +12,18 @@ interface LeadIntakeFormProps {
   /** Facility name - when provided, overrides URL param */
   facilityName?: string;
   /** Custom success component to render after form submission */
-  renderSuccess?: (props: { firstName: string; facilityName?: string | null }) => React.ReactNode;
+  renderSuccess?: (props: {
+    firstName: string;
+    facilityName?: string | null;
+    contact: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      preferredContact: string;
+      bestTimeToCall: string;
+    };
+  }) => React.ReactNode;
   /** Custom submit handler - when provided, replaces the default submission logic */
   onCustomSubmit?: (formData: LeadIntakeFormData) => Promise<void>;
 }
