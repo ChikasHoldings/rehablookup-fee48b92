@@ -448,7 +448,7 @@ export function generateLocalBusinessSchema(facility: {
   };
 }) {
   const SITE_URL = "https://rehablookup.com";
-  const slug = facility.slug || facility.name.toLowerCase().replace(/\s+/g, "-");
+  const slug = resolveFacilitySlug(facility);
   const facilityUrl = `${SITE_URL}/center/${slug}`;
 
   // Build image array (logo first, then gallery photos) for image-rich SERP results
@@ -1336,9 +1336,10 @@ export function generateSearchResultsSchema(params: {
               addressRegion: facility.state,
               addressCountry: "US",
             },
-            url: facility.slug 
-              ? `https://rehablookup.com/center/${facility.slug}`
-              : undefined,
+            url: (() => {
+              const path = buildFacilityPath(facility);
+              return path ? `https://rehablookup.com${path}` : undefined;
+            })(),
             medicalSpecialty: "Addiction Medicine",
           },
         })) || [],
