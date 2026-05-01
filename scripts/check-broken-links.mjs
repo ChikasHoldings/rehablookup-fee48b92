@@ -2,7 +2,8 @@
 /**
  * Automated link checker for every prerendered public page.
  *
- * Scans `public/**/*.html` and validates every <a href> and <link href>:
+ * Scans every prerendered HTML file under public/ and validates every
+ * <a href> and <link href>:
  *
  *   • INTERNAL links  — must resolve to a literal Route in src/App.tsx, a
  *                       SmartCatchAll prefix, a vercel.json redirect, or a
