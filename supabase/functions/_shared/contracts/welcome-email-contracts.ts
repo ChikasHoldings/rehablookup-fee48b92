@@ -13,7 +13,7 @@
 // Keep the schema definitions framework-agnostic. Do not import
 // edge-only or browser-only code here.
 
-import { z } from "https://esm.sh/zod@3.23.8";
+import { z } from "https://esm.sh/zod@3.23.8?target=denonext";
 
 // ---------- Request ----------
 

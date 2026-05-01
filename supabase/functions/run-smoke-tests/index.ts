@@ -8,7 +8,7 @@
 //     (SMOKE_ADMIN_EMAIL / SMOKE_ADMIN_PASSWORD), so RLS + trigger
 //     validators are exercised exactly as in production.
 
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

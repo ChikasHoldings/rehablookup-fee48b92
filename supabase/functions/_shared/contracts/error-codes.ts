@@ -19,7 +19,7 @@
 //      to verify every code emitted by the listed functions is registered.
 //   3. Update the frontend mirror, JSON, and markdown files accordingly.
 
-import { z } from "https://esm.sh/zod@3.23.8";
+import { z } from "https://esm.sh/zod@3.23.8?target=denonext";
 
 export type ErrorCategory =
   | "transport"

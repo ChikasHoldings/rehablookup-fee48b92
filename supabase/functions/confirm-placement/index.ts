@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { getCaseEventActorType } from "../_shared/case-event-actor.ts";
 
 const VERSION = "3.1.0";

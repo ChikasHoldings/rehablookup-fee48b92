@@ -1,5 +1,5 @@
-import { Resend } from "https://esm.sh/resend@2.0.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { ApiError, apiErrorResponse } from "../_shared/validation.ts";
 import { getCaseEventActorType } from "../_shared/case-event-actor.ts";

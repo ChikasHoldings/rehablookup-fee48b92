@@ -18,7 +18,7 @@
  * identity from the verified JWT.
  */
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

@@ -1,6 +1,6 @@
-import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import {
   PLAN_CONFIG,
   PRO_PRODUCT_IDS,

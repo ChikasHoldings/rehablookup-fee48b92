@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import {
   getProviderPlan,
   emailStart,
@@ -16,7 +16,7 @@ import {
   getPlanStyles,
   type PlanType,
 } from "../_shared/email-templates.ts";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry, sleep, BULK_SEND_DELAY_MS } from "../_shared/resilient-email-sender.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");

@@ -1,5 +1,5 @@
-import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { ApiError, apiErrorResponse } from "../_shared/validation.ts";
 import { getCaseEventActorType, type CaseEventActorType } from "../_shared/case-event-actor.ts";
 
