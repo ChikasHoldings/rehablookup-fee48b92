@@ -43,6 +43,7 @@ The 2xx success envelope additionally uses two informational codes (`email_sent`
 | `name_required` | 400 | no | Required name field is missing or empty. |
 | `phone_required` | 400 | no | Required phone field is missing or empty. |
 | `email_rejected` | 400 | no | Recipient email failed the recipient guard (disposable domain, role address, malformed). The response includes a `reason` field. |
+| `phone_rejected` | 400 | no | Recipient phone number is malformed or fails E.164 validation after normalization. |
 
 ## Auth
 
