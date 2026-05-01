@@ -42,7 +42,7 @@ export function ProviderPerformanceFeedback({ facilityId }: ProviderPerformanceF
       if (recentUnlocks && recentUnlocks.length > 0) {
         const leadIds = recentUnlocks.map(u => u.lead_id);
         const { data: leads } = await supabase
-          .from("leads")
+          .from("leads_provider_view")
           .select("id, created_at")
           .in("id", leadIds);
 
