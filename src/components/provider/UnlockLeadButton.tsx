@@ -201,7 +201,11 @@ export function UnlockLeadButton({
       <UnlockSuccessDialog
         open={showSuccessDialog}
         onOpenChange={setShowSuccessDialog}
+        leadId={leadId}
         revealed={revealedLead}
+        loading={revealLoading}
+        error={revealError}
+        onRetry={loadRevealed}
         cityState={cityState}
         amountCharged={finalPrice}
         balanceAfter={Math.max(0, balance - finalPrice)}
