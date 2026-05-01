@@ -292,9 +292,23 @@ ${websiteLine}
 </div>
 ${descBlock}
 <div class="cta">
-<p><strong>View the full profile</strong> for verified programs, insurance accepted, amenities, photos, and admissions information.</p>
-<p><a href="/center/${escapeAttr(slug)}">Open ${escapeHtml(f.name)} profile</a> &middot; <a href="/rehab-centers/${stateSlug}">More rehabs in ${escapeHtml(f.state)}</a> &middot; <a href="/concierge">Get Personalized Help</a></p>
+<h2>Request Information from ${escapeHtml(f.name)}</h2>
+<p>Get verified program details, insurance verification, and admissions information directly from this facility. Confidential — no obligation.</p>
+<div class="cta-actions">
+<a class="btn btn-primary" href="/center/${escapeAttr(slug)}?action=request-info">Request Information</a>
+<a class="btn btn-secondary" href="/center/${escapeAttr(slug)}">View Full Profile</a>
+${f.phone ? `<a class="btn btn-secondary" href="tel:${escapeAttr(f.phone)}">Call ${escapeHtml(f.phone)}</a>` : ""}
 </div>
+</div>
+<section class="related">
+<h2>Search Other Rehab Centers</h2>
+<ul>
+<li><a href="/rehab-centers/${stateSlug}/${cityHrefSlug}">Rehab centers in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}</a></li>
+<li><a href="/rehab-centers/${stateSlug}">All rehab centers in ${escapeHtml(f.state)}</a></li>
+<li><a href="/rehab-centers">Browse the full RehabLookup directory</a></li>
+<li><a href="/concierge">Get a free personalized placement match</a></li>
+</ul>
+</section>
 </main>
 <footer><p>&copy; ${new Date().getFullYear()} RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy</a> &middot; <a href="/terms-of-service">Terms</a> &middot; <a href="/editorial-policy">Editorial Policy</a></p></footer>
 </body>
