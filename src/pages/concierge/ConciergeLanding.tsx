@@ -42,8 +42,8 @@ const STATS = [
 
 const FAQ_ITEMS = [
   {
-    question: "What does the $29 fee cover?",
-    answer: "The one-time fee covers personalized placement by our specialists, insurance verification assistance, direct introductions to recommended programs, and ongoing support throughout your search.",
+    question: "Is the placement service really free?",
+    answer: "Yes — there is no fee for clients. Our placement specialists provide personalized recommendations, insurance verification assistance, and direct introductions to vetted programs at no cost to you. We're compensated by partner facilities only when a successful placement is made.",
   },
   {
     question: "How quickly will I hear back?",
