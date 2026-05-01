@@ -698,6 +698,35 @@ export default function ConciergeIntake() {
     });
   }, []);
 
+  // Fires concierge_intake_submitted exactly once per mount, regardless of
+  // submission channel (Stripe checkout redirect or SMS-callback fallback).
+  // Carries channel + prefill context so funnel dashboards can compute
+  // submit-rate by source/applied-field segments.
+  const fireSubmittedEvent = useCallback(
+    (channel: "checkout" | "sms", extras?: Record<string, unknown>) => {
+      if (submittedFiredRef.current) return;
+      submittedFiredRef.current = true;
+      const ctx = prefillContextRef.current;
+      emitConciergeFunnelEvent("concierge_intake_submitted", {
+        dedup_key:
+          ctx?.dedup_key ||
+          fnv1a32(`${getOrCreateConciergeSessionId()}|submitted|(direct)`),
+        source: ctx?.source || "(direct)",
+        channel,
+        had_prefill: !!ctx,
+        applied_any_field: ctx?.applied_any_field ?? false,
+        applied_city: ctx?.applied_city ?? false,
+        applied_state: ctx?.applied_state ?? false,
+        applied_zip: ctx?.applied_zip ?? false,
+        applied_insurance_carrier: ctx?.applied_insurance_carrier ?? false,
+        applied_payment_type: ctx?.applied_payment_type ?? false,
+        applied_level_of_care: ctx?.applied_level_of_care ?? false,
+        ...extras,
+      });
+    },
+    [],
+  );
+
   const handleNext = async () => {
     if (validateStep(currentStep)) {
       if (currentStep === 1) fireStartedEvent();
