@@ -252,6 +252,7 @@ for (const fn of FUNCTIONS) {
     // and recipient-side trace tooling can correlate back to the request.
     assertStringIncludes(src, '"X-Request-Id": shortId');
     assertStringIncludes(src, "shortId },"); // metadata: { facilityId, facilityName, shortId },
+}
   });
 
 // ---------------------------------------------------------------------------
