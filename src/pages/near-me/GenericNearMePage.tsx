@@ -375,12 +375,20 @@ export default function GenericNearMePage({ configSlug }: GenericNearMePageProps
     });
   }
 
+  // Thin-content protection: only index pages with at least 3 verified listings.
+  // Pages auto-flip back to indexable as facilities populate the area — no code
+  // change needed when the directory grows. This addresses GSC's "Duplicate
+  // without user-selected canonical" report for thin /<service>-near-me/<state>
+  // pages competing with /rehab-centers/<state>.
+  const shouldNoindex = !isLoading && facilities.length < 3;
+
   return (
     <Layout>
       <SEO
         title={`${config.label} Near Me ${stateData ? `in ${stateData.state}` : ""} | Find Treatment Centers`}
         description={`Find ${config.label.toLowerCase()} centers${stateData ? ` in ${stateData.state}` : " near you"}. Compare verified treatment programs, check insurance coverage, and get help today.`}
         canonical={stateSlug ? `/${config.slug}/${stateSlug}` : `/${config.slug}`}
+        noindex={shouldNoindex}
         keywords={[
           ...config.keywords,
           ...(stateData
