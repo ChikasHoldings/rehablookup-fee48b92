@@ -67,12 +67,44 @@ function urlPath(url) {
 }
 
 /**
+ * Canonicalize a URL path the same way `src/components/SEO.tsx` and the
+ * runtime `/center/:slug` guard do:
+ *   - lowercase
+ *   - collapse repeated slashes
+ *   - strip trailing slash (except root "/")
+ *   - for `/center/<slug>`: also trim whitespace, collapse hyphens, strip
+ *     leading/trailing hyphens (mirrors `normalizeSlug` in slugUtils.ts)
+ *
+ * Returns null if the path can't be canonicalized into a valid form.
+ */
+function canonicalizePath(p) {
+  if (!p) return null;
+  let out = p.toLowerCase().replace(/\/{2,}/g, "/");
+  if (out.length > 1 && out.endsWith("/")) out = out.slice(0, -1);
+  if (out.startsWith("/center/")) {
+    const raw = out.slice("/center/".length);
+    let decoded = raw;
+    try { decoded = decodeURIComponent(raw); } catch { /* keep raw */ }
+    const slug = decoded
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return null;
+    out = `/center/${slug}`;
+  }
+  return out;
+}
+
+/**
  * Filter sitemap XML to keep only URLs that have:
  *   - a prerendered HTML file (flat or nested), OR
  *   - are in the runtime allowlist (SPA-rendered hubs), OR
  *   - match a dynamic prefix allowlist (e.g. /center/).
  *
- * Also strips any URLs ending in .html (canonical is extensionless).
+ * Also strips any URLs ending in .html (canonical is extensionless) and
+ * rewrites every `<loc>` to its canonical lowercase / no-trailing-slash
+ * form so we never publish inconsistent URLs to Search Console.
  */
 function filterSitemapXml(xml, prerenderedPaths, stats) {
   const before = (xml.match(/<url>/g) || []).length;
@@ -90,13 +122,28 @@ function filterSitemapXml(xml, prerenderedPaths, stats) {
       if (droppedSamples.length < 5) droppedSamples.push(`${loc} (.html)`);
       return "";
     }
-    const norm = p.toLowerCase().replace(/\/$/, "") || "/";
+    const canonical = canonicalizePath(p);
+    if (!canonical) {
+      if (droppedSamples.length < 5) droppedSamples.push(`${loc} (non-canonical slug)`);
+      return "";
+    }
+    const norm = canonical.toLowerCase().replace(/\/$/, "") || "/";
     const hasPrerender = prerenderedPaths.has(norm);
     const inAllowlist = RUNTIME_ALLOWLIST.has(norm);
     const inDynamic = DYNAMIC_PREFIX_ALLOWLIST.some((pref) => norm.startsWith(pref));
     if (hasPrerender || inAllowlist || inDynamic) {
       kept++;
-      return block;
+      // Rewrite <loc> to canonical form. Build absolute URL using the
+      // original origin so we don't accidentally swap hosts.
+      let canonicalLoc = loc;
+      try {
+        const u = new URL(loc);
+        canonicalLoc = `${u.origin}${canonical}`;
+      } catch {
+        canonicalLoc = canonical;
+      }
+      const rewritten = block.replace(/<loc>\s*[^<\s]+\s*<\/loc>/, `<loc>${canonicalLoc}</loc>`);
+      return rewritten;
     }
     if (droppedSamples.length < 5) droppedSamples.push(`${loc} (no prerender)`);
     return "";
