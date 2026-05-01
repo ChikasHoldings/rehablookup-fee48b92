@@ -180,14 +180,20 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const log = createLogger("send-provider-welcome-offer-email");
+  const { shortId } = log;
+
   try {
-    logStep("Function started");
+    log.info("started", { code: "request_received" });
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
-      logStep("ERROR", "RESEND_API_KEY not configured");
+      log.error("missing_resend_key", {
+        code: "email_service_not_configured",
+        reason: "RESEND_API_KEY env var is not set",
+      });
       return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
+        JSON.stringify({ error: "Email service not configured", code: "email_service_not_configured", shortId }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -198,27 +204,40 @@ Deno.serve(async (req) => {
     try {
       rawBody = await req.json();
     } catch (_e) {
+      log.warn("invalid_json_body", { code: "invalid_json", reason: "Body is not valid JSON" });
       return new Response(
-        JSON.stringify({ error: "Invalid JSON body", code: "invalid_json" }),
+        JSON.stringify({ error: "Invalid JSON body", code: "invalid_json", shortId }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const parsed = WelcomeOfferRequestSchema.safeParse(rawBody);
     if (!parsed.success) {
-      logStep("Validation failed", parsed.error.flatten());
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      log.warn("validation_failed", {
+        code: "validation_error",
+        reason: "Request payload failed schema validation",
+        fieldErrors,
+      });
       return new Response(
         JSON.stringify({
           error: "Invalid request payload",
           code: "validation_error",
-          fieldErrors: parsed.error.flatten().fieldErrors,
+          shortId,
+          fieldErrors,
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const { facilityId, facilityName, providerEmail, providerFirstName, selectedPlan, idempotencyKey }: WelcomeOfferRequest = parsed.data;
-    logStep("Received request", { facilityId, facilityName, providerEmail, selectedPlan });
+    log.info("payload_validated", {
+      code: "payload_ok",
+      facilityId,
+      facilityName,
+      providerEmail,
+      selectedPlan,
+    });
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -238,23 +257,52 @@ Deno.serve(async (req) => {
     });
 
     if (!result.success && !result.deduplicated) {
-      logStep("Failed to send welcome offer email", { error: result.error, deadLettered: result.deadLettered });
+      const sendReason = typeof result.error === "string"
+        ? result.error
+        : (result.error as { message?: string } | undefined)?.message ?? "Unknown send error";
+      log.error("welcome_offer_email_send_failed", {
+        code: "email_send_failed",
+        reason: sendReason,
+        deadLettered: result.deadLettered ?? false,
+        facilityId,
+      });
       return new Response(
-        JSON.stringify({ error: "Failed to send welcome offer email", details: result.error }),
+        JSON.stringify({
+          error: "Failed to send welcome offer email",
+          code: "email_send_failed",
+          shortId,
+          reason: sendReason,
+          deadLettered: result.deadLettered ?? false,
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    logStep(result.deduplicated ? "Duplicate detected" : "Welcome offer email sent", { to: providerEmail });
+    log.info(
+      result.deduplicated ? "welcome_offer_email_deduplicated" : "welcome_offer_email_sent",
+      {
+        code: result.deduplicated ? "email_deduplicated" : "email_sent",
+        facilityId,
+      },
+    );
     return new Response(
-      JSON.stringify({ success: true, deduplicated: result.deduplicated }),
+      JSON.stringify({
+        success: true,
+        shortId,
+        code: result.deduplicated ? "email_deduplicated" : "email_sent",
+        deduplicated: result.deduplicated,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+    log.error("unhandled_exception", {
+      code: "internal_error",
+      reason: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMessage, code: "internal_error", shortId }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
