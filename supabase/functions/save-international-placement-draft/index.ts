@@ -4,7 +4,7 @@ import {
   sanitizePhone,
   sanitizeEmail,
   sanitizeStringArray,
-  errorResponse,
+  jsonError,
   successResponse,
   sanitizeIntakeData,
 } from "../_shared/validation.ts";
