@@ -1,10 +1,10 @@
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, Navigate } from "react-router-dom";
 import CenterNotFound from "@/pages/CenterNotFound";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateLocalBusinessSchema } from "@/components/SEO";
-import { resolveFacilitySlug } from "@/lib/slugUtils";
+import { normalizeSlug, resolveFacilitySlug } from "@/lib/slugUtils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/ui/RatingBadge";
@@ -229,19 +229,38 @@ const CenterProfile = () => {
   // as an invalid route and redirected to the directory rather than
   // attempting a DB lookup that will always miss.
   const SLUG_FORMAT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-  const normalisedSlug = slug?.toLowerCase() ?? "";
+
+  // Runtime route validation:
+  //   1. Decode any percent-encoded segment (so `/center/Foo%20Bar` becomes
+  //      `Foo Bar` and can be normalized).
+  //   2. Run through `normalizeSlug` — trims whitespace, lowercases,
+  //      collapses internal whitespace runs into single hyphens, strips
+  //      leading/trailing hyphens.
+  //   3. If the normalized form differs from the raw param AND is valid,
+  //      we redirect (replace) to the canonical lowercase URL. This covers
+  //      mixed-case, whitespace, and accidental double-hyphens.
+  //   4. If even the normalized form fails `SLUG_FORMAT`, the slug
+  //      contains illegal characters (punctuation, unicode, traversal
+  //      attempts, etc.) and we fall through to the CenterNotFound
+  //      "invalid" branch below.
+  let decodedSlug = slug ?? "";
+  try {
+    decodedSlug = slug ? decodeURIComponent(slug) : "";
+  } catch {
+    // Malformed percent-encoding — treat as invalid.
+    decodedSlug = slug ?? "";
+  }
+  const normalisedSlug = normalizeSlug(decodedSlug);
   const isSlugFormatValid =
     !!normalisedSlug &&
     normalisedSlug.length >= 3 &&
     normalisedSlug.length <= 200 &&
     SLUG_FORMAT.test(normalisedSlug);
+  const slugNeedsCanonicalRedirect =
+    !!slug && isSlugFormatValid && slug !== normalisedSlug;
 
-  // Redirect mixed-case slugs to lowercase canonical URL
+  // Reset gallery state when slug changes.
   useEffect(() => {
-    if (slug && slug !== slug.toLowerCase()) {
-      window.location.replace(`/center/${slug.toLowerCase()}`);
-    }
-    // Reset gallery index on slug change
     setActiveGalleryIndex(0);
     setLogoError(false);
   }, [slug]);
@@ -515,6 +534,13 @@ const CenterProfile = () => {
   // query has had a chance to verify the slug against the database.
   // Hard-redirect malformed slugs straight to the directory rather than
   // attempting a DB lookup that will always miss.
+  // Canonical redirect: the slug normalizes to a valid form that differs
+  // from what's in the URL (e.g. mixed-case, whitespace, percent-encoded
+  // spaces, doubled hyphens). Replace in-place so back-button still works.
+  if (slugNeedsCanonicalRedirect) {
+    return <Navigate to={`/center/${normalisedSlug}${location.search}`} replace />;
+  }
+
   if (slug && !isSlugFormatValid) {
     return <CenterNotFound attemptedSlug={slug} reason="invalid" />;
   }
