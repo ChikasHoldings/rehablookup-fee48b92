@@ -7,6 +7,13 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Home, 
   Search, 
@@ -20,10 +27,36 @@ import {
   Shield
 } from "lucide-react";
 
+// Mirror the canonical filter values accepted by /search-results
+// (see src/pages/SearchResults.tsx — `treatment` and `insurance` query params).
+const TREATMENT_OPTIONS = [
+  { value: "detox", label: "Detox" },
+  { value: "inpatient", label: "Inpatient" },
+  { value: "outpatient", label: "Outpatient" },
+  { value: "dual-diagnosis", label: "Dual Diagnosis" },
+  { value: "holistic", label: "Holistic" },
+] as const;
+
+const INSURANCE_OPTIONS = [
+  { value: "aetna", label: "Aetna" },
+  { value: "bcbs", label: "Blue Cross Blue Shield" },
+  { value: "cigna", label: "Cigna" },
+  { value: "united", label: "United Healthcare" },
+  { value: "kaiser", label: "Kaiser Permanente" },
+  { value: "humana", label: "Humana" },
+  { value: "anthem", label: "Anthem" },
+  { value: "medicare", label: "Medicare" },
+  { value: "medicaid", label: "Medicaid" },
+  { value: "tricare", label: "TRICARE" },
+  { value: "private-pay", label: "Self-Pay / Private Pay" },
+] as const;
+
 const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [treatment, setTreatment] = useState("");
+  const [insurance, setInsurance] = useState("");
   const reportedRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -79,9 +112,14 @@ const NotFound = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search-results?location=${encodeURIComponent(searchQuery.trim())}`);
-    }
+    const params = new URLSearchParams();
+    const trimmed = searchQuery.trim();
+    if (trimmed) params.set("location", trimmed);
+    if (treatment) params.set("treatment", treatment);
+    if (insurance) params.set("insurance", insurance);
+    // Require at least one signal so we never send users to an empty results page.
+    if ([...params.keys()].length === 0) return;
+    navigate(`/search-results?${params.toString()}`);
   };
 
   const popularLinks = [
@@ -132,22 +170,49 @@ const NotFound = () => {
             </p>
 
             {/* Search Box */}
-            <Card className="max-w-lg mx-auto mb-8 shadow-lg border-border/50">
+            <Card className="max-w-2xl mx-auto mb-8 shadow-lg border-border/50">
               <CardContent className="p-4">
-                <form onSubmit={handleSearch} className="flex gap-2">
-                  <div className="relative flex-1">
+                <form onSubmit={handleSearch} className="flex flex-col gap-3">
+                  <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="text"
-                      placeholder="Search by city, state, or zip code..."
+                      placeholder="City, state, or ZIP code"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-9"
+                      aria-label="Location"
                     />
                   </div>
-                  <Button type="submit" className="gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Select value={treatment} onValueChange={setTreatment}>
+                      <SelectTrigger aria-label="Treatment type">
+                        <SelectValue placeholder="Treatment type (any)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TREATMENT_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={insurance} onValueChange={setInsurance}>
+                      <SelectTrigger aria-label="Insurance">
+                        <SelectValue placeholder="Insurance (any)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INSURANCE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit" className="gap-2 w-full sm:w-auto sm:self-end">
                     <Search className="h-4 w-4" />
-                    <span className="hidden sm:inline">Search</span>
+                    Search Treatment Centers
                   </Button>
                 </form>
               </CardContent>
