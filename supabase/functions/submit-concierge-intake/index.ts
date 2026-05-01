@@ -175,18 +175,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { sessionId, intakeData, userId: passedUserId } = await req.json() as { 
-      sessionId: string; 
+    const { sessionId, intakeData, userId: passedUserId, skipPayment, emailVerifiedAt, phoneVerifiedAt } = await req.json() as { 
+      sessionId?: string; 
       intakeData: IntakeData;
       userId?: string;
+      skipPayment?: boolean;
+      emailVerifiedAt?: string | null;
+      phoneVerifiedAt?: string | null;
     };
     
     // Validate required fields
-    if (!sessionId) {
-      throw new Error("Session ID is required");
-    }
     if (!intakeData) {
       throw new Error("Intake data is required");
+    }
+    // sessionId only required when NOT skipping payment (legacy paid flow)
+    if (!skipPayment && !sessionId) {
+      throw new Error("Session ID is required");
     }
 
     // Validate and sanitize critical intake fields
