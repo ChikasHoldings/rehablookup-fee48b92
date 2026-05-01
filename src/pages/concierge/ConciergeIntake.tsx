@@ -299,13 +299,102 @@ export default function ConciergeIntake() {
     setFormData((prev) => {
       const next = { ...prev };
       if (loc && !next.desiredCity && !next.desiredState) {
-        // "Boise, ID" → city="Boise", state="ID". Bare ZIP / single token → city.
-        const parts = loc.split(",").map((s) => s.trim()).filter(Boolean);
-        if (parts.length >= 2) {
-          next.desiredCity = parts[0];
-          next.desiredState = parts[1].toUpperCase().slice(0, 2);
+        // Supported inputs:
+        //   "Boise, ID"        → city="Boise", state="ID"
+        //   "Boise ID"         → city="Boise", state="ID"
+        //   "83702"            → ZIP only → desiredZip
+        //   "Boise, ID 83702"  → city + state + zip
+        //   "California" / "CA"→ state only (2-letter or full name match)
+        //   "Boise"            → bare city
+        const US_STATES: Record<string, string> = {
+          alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA",
+          colorado: "CO", connecticut: "CT", delaware: "DE", florida: "FL", georgia: "GA",
+          hawaii: "HI", idaho: "ID", illinois: "IL", indiana: "IN", iowa: "IA",
+          kansas: "KS", kentucky: "KY", louisiana: "LA", maine: "ME", maryland: "MD",
+          massachusetts: "MA", michigan: "MI", minnesota: "MN", mississippi: "MS", missouri: "MO",
+          montana: "MT", nebraska: "NE", nevada: "NV", "new hampshire": "NH", "new jersey": "NJ",
+          "new mexico": "NM", "new york": "NY", "north carolina": "NC", "north dakota": "ND",
+          ohio: "OH", oklahoma: "OK", oregon: "OR", pennsylvania: "PA", "rhode island": "RI",
+          "south carolina": "SC", "south dakota": "SD", tennessee: "TN", texas: "TX", utah: "UT",
+          vermont: "VT", virginia: "VA", washington: "WA", "west virginia": "WV",
+          wisconsin: "WI", wyoming: "WY", "district of columbia": "DC",
+        };
+        const STATE_CODES = new Set(Object.values(US_STATES));
+        const ZIP_RE = /\b(\d{5})(?:-\d{4})?\b/;
+
+        const raw = loc.trim();
+        // Extract & strip ZIP if present
+        const zipMatch = raw.match(ZIP_RE);
+        const zip = zipMatch?.[1] || "";
+        const withoutZip = (zipMatch ? raw.replace(zipMatch[0], "") : raw)
+          .replace(/,\s*,/g, ",")
+          .replace(/^[,\s]+|[,\s]+$/g, "")
+          .trim();
+
+        // Helper: try to peel a trailing state token (2-letter code or full name)
+        const peelState = (s: string): { city: string; state: string } => {
+          if (!s) return { city: "", state: "" };
+          const lower = s.toLowerCase();
+          // Full state name match (longest first, multi-word)
+          const sortedNames = Object.keys(US_STATES).sort((a, b) => b.length - a.length);
+          for (const name of sortedNames) {
+            if (lower === name) return { city: "", state: US_STATES[name] };
+            if (lower.endsWith(" " + name) || lower.endsWith("," + name) || lower.endsWith(", " + name)) {
+              const city = s.slice(0, s.length - name.length).replace(/[,\s]+$/, "").trim();
+              return { city, state: US_STATES[name] };
+            }
+          }
+          // Trailing 2-letter code
+          const tokens = s.split(/[,\s]+/).filter(Boolean);
+          if (tokens.length >= 2) {
+            const last = tokens[tokens.length - 1].toUpperCase();
+            if (last.length === 2 && STATE_CODES.has(last)) {
+              return { city: tokens.slice(0, -1).join(" ").replace(/,$/, "").trim(), state: last };
+            }
+          }
+          // Single token: state code or full state name?
+          if (tokens.length === 1) {
+            const only = tokens[0];
+            if (only.length === 2 && STATE_CODES.has(only.toUpperCase())) {
+              return { city: "", state: only.toUpperCase() };
+            }
+            if (US_STATES[only.toLowerCase()]) {
+              return { city: "", state: US_STATES[only.toLowerCase()] };
+            }
+            return { city: only, state: "" };
+          }
+          return { city: s, state: "" };
+        };
+
+        // Prefer comma-split when present; otherwise peel from whitespace form
+        let city = "";
+        let state = "";
+        if (withoutZip.includes(",")) {
+          const parts = withoutZip.split(",").map((s) => s.trim()).filter(Boolean);
+          if (parts.length >= 2) {
+            city = parts[0];
+            const tail = parts.slice(1).join(" ").trim();
+            const peeled = peelState(tail);
+            state = peeled.state || tail.toUpperCase().slice(0, 2);
+          } else {
+            const peeled = peelState(parts[0] || "");
+            city = peeled.city;
+            state = peeled.state;
+          }
         } else {
-          next.desiredCity = parts[0] || "";
+          const peeled = peelState(withoutZip);
+          city = peeled.city;
+          state = peeled.state;
+        }
+
+        if (city) next.desiredCity = city;
+        if (state) next.desiredState = state;
+        // Persist ZIP when provided so advisors can route precisely
+        if (zip && "desiredZip" in next && !(next as any).desiredZip) {
+          (next as any).desiredZip = zip;
+        } else if (zip && !city && !state) {
+          // ZIP-only input: surface it in city field as a fallback so it isn't lost
+          next.desiredCity = zip;
         }
       }
       if (insurance && !next.insuranceCarrier) {
