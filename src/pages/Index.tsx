@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
 import { TrustStrip } from "@/components/home/TrustStrip";
 import { LazySection } from "@/components/ui/lazy-section";
+import { useGeoLocation } from "@/hooks/useGeoLocation";
+import { buildConciergeHref } from "@/lib/conciergeHref";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
