@@ -312,6 +312,9 @@ describe("Request Information form — email notification trigger", () => {
       "test.seeker@example.com"
     );
 
+    // Tick the required consent checkbox before submitting.
+    await user.click(screen.getByRole("checkbox", { name: /i agree to be contacted/i }));
+
     // Submit.
     const submitBtn = screen.getByRole("button", { name: /^submit$/i });
     await user.click(submitBtn);
