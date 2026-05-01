@@ -1,6 +1,15 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { z } from "https://esm.sh/zod@3.23.8";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+
+const SignupNotificationSchema = z.object({
+  facilityId: z.string().uuid({ message: "facilityId must be a valid UUID" }),
+  facilityName: z.string().trim().min(1).max(255),
+  providerEmail: z.string().trim().email().max(255),
+  city: z.string().trim().min(1).max(120),
+  state: z.string().trim().min(1).max(120),
+});
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
