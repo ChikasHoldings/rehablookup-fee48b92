@@ -819,6 +819,9 @@ export default function ConciergeIntake() {
       if (error) throw error;
 
       if (data?.url && (data.url.startsWith("https://checkout.stripe.com") || data.url.startsWith("https://billing.stripe.com"))) {
+        // Fire submit event before navigation — once we leave the SPA the
+        // analytics queue would otherwise be lost.
+        fireSubmittedEvent("checkout");
         window.location.href = data.url;
       } else if (data?.url) {
         throw new Error("Invalid checkout URL");
