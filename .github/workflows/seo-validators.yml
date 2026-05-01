@@ -1,0 +1,49 @@
+name: SEO Validators
+
+# Runs SEO/sitemap pre-deploy validators on every push and PR so static-vs-sitemap
+# mismatches block the change before it reaches Vercel.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-flight runs for the same ref so a force-push doesn't double-spend CI.
+concurrency:
+  group: seo-validators-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  facility-sitemap-sync:
+    name: Facility profile ↔ sitemap sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      # Regenerate the static /center/*.html mirrors and sitemap from the live
+      # database so the validator catches drift between code and what would
+      # actually deploy. Both scripts no-op gracefully when DB creds are absent.
+      - name: Generate facility profiles HTML
+        run: npm run generate:facility-profiles-html
+
+      - name: Generate sitemaps
+        run: npm run generate:sitemaps
+
+      - name: Verify /center/*.html ↔ sitemap-facilities sync
+        run: npm run check:facility-sitemap-sync
+
+      - name: Validate sitemap & robots
+        run: npm run validate:sitemap-robots
