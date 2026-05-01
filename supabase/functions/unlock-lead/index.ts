@@ -78,6 +78,15 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Track whether credits were deducted so the outer catch can roll back on
+  // any uncaught exception that fires AFTER deduction but BEFORE the unlock
+  // row is committed (H1).
+  let creditsDeducted = false;
+  let deductedAmount = 0;
+  let deductedProviderId: string | null = null;
+  let deductedFacilityId: string | null = null;
+  let deductedLeadId: string | null = null;
+
   try {
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
