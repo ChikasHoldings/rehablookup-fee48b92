@@ -107,3 +107,26 @@ I have not made any code changes. To proceed:
 - "Fix H1 and H2" → I'll patch both.
 - "Fix all High + Medium" → I'll batch H1, H2, M1, M2, M3.
 - "Run Phase 4 on items 1, 6, 7" → I'll reproduce in the preview and add findings.
+
+---
+
+## Phase 6 — Fixes applied (2026-05-01)
+
+| ID | Status | Files |
+| --- | --- | --- |
+| **H1** — credit rollback on uncaught exception | ✅ Fixed | `supabase/functions/unlock-lead/index.ts` (try/catch safety net armed at deduction, disarmed only after `lead_unlocks` insert; falls back to atomic `increment_provider_credits` + refund txn + admin alert) |
+| **H2** — `select("*")` in auto-reload-credits | ✅ Fixed | `supabase/functions/auto-reload-credits/index.ts` — explicit columns |
+| **M1** — Stripe-paid unlock has no client reconciliation | ✅ Fixed | New `supabase/functions/verify-unlock-payment/index.ts`; `unlock-lead` Stripe `success_url` now includes `session_id={CHECKOUT_SESSION_ID}`; `src/pages/provider/Inquiries.tsx` calls verify on return |
+| **M2** — post-signup race in ProviderShell | ✅ Fixed | `src/components/provider/ProviderShell.tsx` — 3-attempt poll (0/500/1000ms) before redirect |
+| **M3** — fan-out ignores channel preferences | ✅ Fixed | `supabase/functions/submit-qualified-lead/index.ts` — single `notification_preferences` read gates email + SMS + in-app via `notify_new_leads`, `email_lead_alerts`, `sms_lead_alerts`, `browser_notifications` |
+| **L3** — CI scanner for `select("*")` in edge fns | ✅ Added | `scripts/audit/check-edge-functions-no-star-select.mjs` + baseline JSON; wired into `npm run build` and `build:dev` as `check:edge-fn-no-star`. Scanner blocks **new** violations; 14 pre-existing call sites are grandfathered in `scripts/audit/no-star-select-baseline.json` and should be migrated incrementally. |
+| **L1** — verify_jwt defense-in-depth | ⏳ Tracked | Existing scanner (`scan-provider-edge-functions.mjs`) already flags missing `auth.getUser` in HIGH severity. No action this cycle. |
+| **L2** — Supabase advisor noise (180 WARN) | ⏳ Tracked | Triaged in `02-static-checks.md`. No action this cycle. |
+
+### Verification
+- `npm run check:edge-fn-no-star` — ✅ pass (0 new, 14 grandfathered)
+- `bunx vitest run src/test/provider-leads-masking.test.ts` — ✅ 17/17 pass
+- `node scripts/audit/scan-provider-edge-functions.mjs` — ⚠ remaining HIGH items are unchanged from the original report (auth-less webhook-style functions: `validate-promo-code`, `track-provider-event`, `send-provider-support`, `notify-payment-failed`, `retry-failed-payments`, plus `auto-reload-credits` which validates via HMAC instead of JWT). These are out-of-scope for this round.
+
+### Phase 4 (runtime reproductions) — still not run
+Items 1–10 in "Did not test" remain unverified. Surface specific items if you want me to reproduce them.
