@@ -1071,7 +1071,26 @@ const AppInner = () => {
             
             {/* Legacy center URLs redirect */}
             <Route path="/centers/:slug" element={<LegacyCenterRedirect />} />
-            
+            <Route path="/centers" element={<Navigate to="/rehab-centers" replace />} />
+
+            {/* Legacy slug rescue — common backlink patterns */}
+            {/* "Seeker" → "Client" terminology rename (preserves sub-path) */}
+            <Route path="/seeker" element={<Navigate to="/client" replace />} />
+            <Route path="/seeker/*" element={<SeekerToClientRedirect />} />
+            {/* Profile/facility shorthand → canonical /center/:slug */}
+            <Route path="/facility/:slug" element={<FacilityToCenterRedirect />} />
+            <Route path="/profile/:slug" element={<FacilityToCenterRedirect />} />
+            {/* State/location shorthand → canonical /rehab-centers */}
+            <Route path="/state/:stateSlug" element={<StateToRehabCentersRedirect />} />
+            <Route path="/location/:stateSlug/:citySlug" element={<LocationToRehabCentersRedirect />} />
+            {/* Common search shorthand */}
+            <Route path="/find-rehab" element={<Navigate to="/rehab-centers" replace />} />
+            <Route path="/find-treatment" element={<Navigate to="/rehab-centers" replace />} />
+            <Route path="/rehab" element={<Navigate to="/rehab-centers" replace />} />
+            <Route path="/treatment" element={<Navigate to="/treatment-types" replace />} />
+            <Route path="/directory" element={<Navigate to="/rehab-centers" replace />} />
+            <Route path="/search" element={<Navigate to="/rehab-centers" replace />} />
+
             {/* Ad Landing Pages */}
             <Route path="/ads/:slug" element={<PublicRouteGuard><AdLanding /></PublicRouteGuard>} />
             <Route path="/go/:slug" element={<PublicRouteGuard><SocialLanding /></PublicRouteGuard>} />
