@@ -4,7 +4,7 @@ import { seekerTestimonials } from "@/data/testimonials";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { conciergeFaqs } from "@/data/pageFaqs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { Header as PublicHeader } from "@/components/layout/Header";
