@@ -207,16 +207,26 @@ export default function AdminNotFoundEvents() {
       </div>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex-row items-center justify-between gap-3 flex-wrap">
           <CardTitle>Top missing paths</CardTitle>
-          <div className="relative w-72">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Filter paths…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex items-center gap-2">
+            <Select value={kindFilter} onValueChange={(v) => setKindFilter(v as KindFilter)}>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All requests</SelectItem>
+                <SelectItem value="spa_route">SPA routes</SelectItem>
+                <SelectItem value="static_asset">Static assets</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="relative w-72">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Filter paths…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -231,6 +241,8 @@ export default function AdminNotFoundEvents() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Path</TableHead>
+                  <TableHead className="w-20">Method</TableHead>
+                  <TableHead className="w-24">Kind</TableHead>
                   <TableHead className="w-24 text-right">Hits</TableHead>
                   <TableHead>Top referrer</TableHead>
                   <TableHead className="w-32">Last seen</TableHead>
@@ -240,7 +252,30 @@ export default function AdminNotFoundEvents() {
               <TableBody>
                 {filtered.slice(0, 200).map((s) => (
                   <TableRow key={s.path}>
-                    <TableCell className="font-mono text-xs break-all">{s.path}</TableCell>
+                    <TableCell className="font-mono text-xs break-all">
+                      <div>{s.path}</div>
+                      {s.sampleQuery && (
+                        <div className="text-[10px] text-muted-foreground truncate max-w-md">
+                          query: {s.sampleQuery}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px] font-mono">
+                        {s.topMethod}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {s.requestKind === "static_asset" ? (
+                        <Badge variant="secondary" className="text-[10px]">
+                          asset{s.assetExtension ? ` ${s.assetExtension}` : ""}
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px]">
+                          SPA
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right font-semibold">{s.hits}</TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-xs truncate">
                       {s.topReferrer === "(direct)" ? (
