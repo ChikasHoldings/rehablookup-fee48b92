@@ -14,7 +14,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MAX_BODY_SIZE = 4096;
+const MAX_BODY_SIZE = 8192;
+
+const ALLOWED_METHODS = new Set([
+  "GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS",
+]);
+const ALLOWED_REQUEST_KINDS = new Set(["spa_route", "static_asset"]);
 
 function clean(value: unknown, maxLen: number): string | null {
   if (typeof value !== "string") return null;
@@ -81,6 +86,41 @@ Deno.serve(async (req) => {
     const sessionId = clean(body.sessionId, 64);
     const userId = isUuid(body.userId) ? (body.userId as string) : null;
 
+    // ---- New request-context fields -------------------------------------
+    const rawMethod = clean(body.httpMethod, 16);
+    const httpMethod =
+      rawMethod && ALLOWED_METHODS.has(rawMethod.toUpperCase())
+        ? rawMethod.toUpperCase()
+        : "GET";
+
+    // Full query string (raw, e.g. "?foo=bar&baz=qux"). We already store the
+    // shorter `search` field for legacy callers; `query_string` is the
+    // canonical, unmodified value for new analytics.
+    const queryString = search;
+
+    const hash = clean(body.hash, 256);
+    const fullUrl = clean(body.fullUrl, 2048);
+
+    // Server-side authoritative classification — never trust the client.
+    const lastSegment = path.split("/").pop() || "";
+    const extMatch = lastSegment.match(/\.([a-zA-Z0-9]{2,5})$/);
+    const detectedExtension = extMatch ? `.${extMatch[1].toLowerCase()}` : null;
+    const detectedKind: "spa_route" | "static_asset" =
+      detectedExtension && detectedExtension !== ".html"
+        ? "static_asset"
+        : "spa_route";
+
+    // Honor a client hint only if it agrees with the server detection or is
+    // a recognized value; otherwise fall back to server detection.
+    const clientKind = clean(body.requestKind, 32);
+    const requestKind =
+      clientKind && ALLOWED_REQUEST_KINDS.has(clientKind)
+        ? clientKind
+        : detectedKind;
+
+    const assetExtension = detectedExtension;
+    // ---------------------------------------------------------------------
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -95,6 +135,12 @@ Deno.serve(async (req) => {
       viewport,
       user_id: userId,
       session_id: sessionId,
+      http_method: httpMethod,
+      query_string: queryString,
+      hash,
+      request_kind: requestKind,
+      asset_extension: assetExtension,
+      full_url: fullUrl,
     });
 
     if (error) {

@@ -36,37 +36,41 @@ const NotFound = () => {
     }
 
     // Best-effort: pull the current user id (may be null for anon traffic)
-    // and forward path + referrer + viewport to GA + the backend log.
+    // and forward path + referrer + viewport + extra request context to GA
+    // and the backend log.
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    const fullUrl = typeof window !== "undefined" ? window.location.href : "";
+    // Browser SPA navigation is always a GET. We still capture it explicitly
+    // so future server-side / edge logging can populate non-GET methods.
+    const httpMethod = "GET";
+
+    const buildPayload = (userId: string | null) => ({
+      path: location.pathname,
+      search: location.search,
+      referrer: typeof document !== "undefined" ? document.referrer : "",
+      viewport:
+        typeof window !== "undefined"
+          ? `${window.innerWidth}x${window.innerHeight}`
+          : undefined,
+      userId,
+      sessionId:
+        typeof window !== "undefined"
+          ? window.sessionStorage?.getItem("rl_session_id") ?? null
+          : null,
+      httpMethod,
+      hash,
+      fullUrl,
+    });
+
     let cancelled = false;
     supabase.auth.getUser()
       .then(({ data }) => {
         if (cancelled) return;
-        analytics.pageNotFound({
-          path: location.pathname,
-          search: location.search,
-          referrer: typeof document !== "undefined" ? document.referrer : "",
-          viewport:
-            typeof window !== "undefined"
-              ? `${window.innerWidth}x${window.innerHeight}`
-              : undefined,
-          userId: data.user?.id ?? null,
-          sessionId:
-            typeof window !== "undefined"
-              ? window.sessionStorage?.getItem("rl_session_id") ?? null
-              : null,
-        });
+        analytics.pageNotFound(buildPayload(data.user?.id ?? null));
       })
       .catch(() => {
         if (cancelled) return;
-        analytics.pageNotFound({
-          path: location.pathname,
-          search: location.search,
-          referrer: typeof document !== "undefined" ? document.referrer : "",
-          viewport:
-            typeof window !== "undefined"
-              ? `${window.innerWidth}x${window.innerHeight}`
-              : undefined,
-        });
+        analytics.pageNotFound(buildPayload(null));
       });
     return () => {
       cancelled = true;

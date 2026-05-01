@@ -156,8 +156,38 @@ export const analytics = {
     viewport?: string;
     userId?: string | null;
     sessionId?: string | null;
+    /** HTTP method used for the navigation. Browser SPA nav is always GET. */
+    httpMethod?: string;
+    /** URL hash fragment (including the leading "#"), if any. */
+    hash?: string;
+    /** Full original URL (origin + path + search + hash). */
+    fullUrl?: string;
   }) => {
-    const { path, search, referrer, viewport, userId, sessionId } = params;
+    const {
+      path,
+      search,
+      referrer,
+      viewport,
+      userId,
+      sessionId,
+      httpMethod,
+      hash,
+      fullUrl,
+    } = params;
+
+    // Classify the request: SPA route vs. static asset (image, pdf, json,
+    // etc.). Asset 404s usually indicate broken <img> src or stale CDN
+    // references and are triaged differently from real navigation 404s.
+    // We look at the LAST segment only so paths like
+    //   /rehab-centers/california         -> spa_route
+    //   /og/center-foo.png                -> static_asset (.png)
+    //   /sitemap-extras.xml               -> static_asset (.xml)
+    const lastSegment = path.split('/').pop() || '';
+    const extMatch = lastSegment.match(/\.([a-zA-Z0-9]{2,5})$/);
+    const assetExtension = extMatch ? `.${extMatch[1].toLowerCase()}` : null;
+    // Treat .html specially — those are pre-rendered SPA routes, not assets.
+    const requestKind =
+      assetExtension && assetExtension !== '.html' ? 'static_asset' : 'spa_route';
 
     // 1) GA event (page_not_found is a custom event; page_location is the
     // standard GA dimension so it shows up in the event report without
@@ -165,9 +195,12 @@ export const analytics = {
     trackEvent('page_not_found', {
       event_category: 'Error',
       event_label: path,
-      page_location: path + (search || ''),
+      page_location: path + (search || '') + (hash || ''),
       page_referrer: referrer || '(direct)',
       viewport: viewport,
+      http_method: httpMethod || 'GET',
+      request_kind: requestKind,
+      asset_extension: assetExtension || undefined,
     });
 
     // 2) Backend insert (fire-and-forget). We import lazily to avoid pulling
@@ -184,6 +217,11 @@ export const analytics = {
               viewport: viewport || null,
               userId: userId || null,
               sessionId: sessionId || null,
+              httpMethod: httpMethod || 'GET',
+              hash: hash || null,
+              fullUrl: fullUrl || null,
+              requestKind,
+              assetExtension,
             },
           })
           .catch(() => {
