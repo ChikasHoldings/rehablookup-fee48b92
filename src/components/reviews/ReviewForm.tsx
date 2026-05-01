@@ -28,6 +28,11 @@ interface ReviewFormProps {
   onUpdate: (rating: number, reviewText: string) => Promise<{ error: Error | null }>;
   onDelete: () => Promise<{ error: Error | null }>;
   onResendVerification?: () => Promise<{ error: Error | null }>;
+  /**
+   * When true, render without an outer Card wrapper (used when the parent
+   * already provides a unified section heading + container).
+   */
+  bare?: boolean;
 }
 
 export function ReviewForm({ 
@@ -39,7 +44,8 @@ export function ReviewForm({
   onSubmit,
   onUpdate,
   onDelete,
-  onResendVerification
+  onResendVerification,
+  bare = false,
 }: ReviewFormProps) {
   const [rating, setRating] = useState(userReview?.rating || 0);
   const [hoverRating, setHoverRating] = useState(0);
