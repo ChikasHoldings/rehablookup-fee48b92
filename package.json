@@ -19,6 +19,7 @@
     "patch:og-image": "node scripts/patch-og-image.mjs",
     "check:seo-meta": "node scripts/check-seo-meta.mjs",
     "check:internal-links": "node scripts/validate-internal-links.mjs",
+    "check:prerender-content": "node scripts/check-prerender-content.mjs",
     "check:leads-view-rls": "node scripts/check-leads-view-rls.mjs",
     "check:provider-leads-masking": "node scripts/check-provider-leads-masking.mjs",
     "check:edge-fn-no-star": "node scripts/audit/check-edge-functions-no-star-select.mjs",
