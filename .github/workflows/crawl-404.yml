@@ -96,3 +96,42 @@ jobs:
           if [ -f crawl-404-report.md ]; then
             cat crawl-404-report.md >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  link-checker:
+    # Full link checker (internal + external HEAD requests). Nightly only —
+    # external uptime noise must not block PRs. Sets FAIL_ON_EXTERNAL=1 so
+    # broken external links go red here (visible on the schedule run) while
+    # PRs only enforce internal-link integrity via seo-validators.yml.
+    name: Link checker (internal + external)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci --no-audit --no-fund
+
+      - name: Run link checker
+        env:
+          FAIL_ON_EXTERNAL: "1"
+          REPORT_PATH: ${{ github.workspace }}/broken-links-report.md
+        run: node scripts/check-broken-links.mjs
+
+      - name: Upload broken-links report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: broken-links-report
+          path: broken-links-report.md
+          if-no-files-found: warn
+
+      - name: Append report to job summary
+        if: always()
+        run: |
+          if [ -f broken-links-report.md ]; then
+            cat broken-links-report.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
