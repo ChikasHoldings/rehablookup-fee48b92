@@ -1,98 +1,78 @@
-## Root Cause
+# Resilient Reveal in Unlock Success Dialog
 
-The Provider Leads inbox (`/provider/inquiries`) and every provider dashboard widget that depends on lead data are returning **zero rows** for all providers.
+After a provider successfully unlocks a lead, `UnlockLeadButton.tsx` fetches the now-revealed `name`, `email`, `phone` from `leads_provider_view` to populate the success dialog. Today this fetch:
 
-The page queries `public.leads_provider_view`, which was correctly designed to mask PII for *locked* leads and reveal full contact info for *unlocked* ones. The view runs with `security_invoker=on`, so when a provider queries it, RLS on the underlying `public.leads` table is enforced under their auth context.
+- has no retry,
+- silently swallows failures (`catch {}`),
+- shows the dialog with empty fields and no indication anything went wrong,
+- and offers no way to recover without closing and re-finding the lead.
 
-Inspecting the policies on `public.leads` (RLS enabled), the only SELECT policies are:
+This plan adds bounded retry, a visible error state, and a manual retry button.
 
-- `Admins can view all leads` — admins only.
-- `Owners can view unlocked facility leads` — `... AND is_lead_unlocked(id, facility_id)`.
-- `Providers can view unlocked redistributed leads` — also gated on the lead being unlocked.
+## What changes
 
-There is **no policy that lets a facility owner SELECT their facility's *locked* leads**. So the view returns nothing for locked leads, and the inbox is empty (only previously-unlocked leads can ever appear, which defeats the entire pay-to-unlock product).
+### 1. Extract the reveal fetch into a helper with retry
 
-This single missing policy breaks every component that reads `leads_provider_view`:
+In `src/components/provider/UnlockLeadButton.tsx`:
 
-- `src/pages/provider/Inquiries.tsx` (the Leads page)
-- `src/pages/provider/Dashboard.tsx` (recent leads + KPI counts)
-- `src/components/provider/DashboardKPIStrip.tsx`
-- `src/components/provider/DashboardMissedLeads.tsx`
-- `src/components/provider/DashboardFacilityPerformancePanel.tsx`
-- `src/components/provider/LeadConversionWidget.tsx`
-- `src/components/provider/ProMultiFacilityOverview.tsx`
-- `src/components/provider/ProviderPerformanceFeedback.tsx` (queries `leads` directly — same RLS gap)
-- `src/components/provider/listing/ListingCard.tsx` (queries `leads` directly)
+- New helper `fetchRevealedLead(leadId)` that wraps the existing `supabase.from("leads_provider_view").select("name, email, phone").eq("id", leadId).maybeSingle()` call.
+- Auto-retry up to 3 attempts with exponential backoff (300ms, 800ms, 1500ms) on:
+  - network/transport error,
+  - Supabase error response,
+  - row returned but all of `name`, `email`, `phone` are still `null` (RLS lag after unlock — replication can briefly trail the `lead_unlocks` insert).
+- After auto-retries are exhausted, surface a structured error to the caller (does not throw — returns `{ data, error }`).
 
-## Fix
+### 2. Track reveal loading + error state
 
-### 1. Add a SELECT policy on `public.leads` for owners of the facility
+Add three new pieces of component state next to the existing `revealedLead`:
 
-Allow facility owners to read rows for their facility regardless of unlock state. The PII masking is already enforced at the **view layer** (`leads_provider_view` only exposes name/email/phone/message when an unlock row exists for that user's facility), so this does not leak PII as long as providers query the view, which they already do.
+- `revealLoading: boolean` — true while fetching/retrying.
+- `revealError: string | null` — friendly message when all retries fail.
+- A stable `loadRevealed(leadId)` callback used by both the post-unlock flow and the manual retry button.
 
-```sql
-CREATE POLICY "Owners can view their facility leads (masked via view)"
-ON public.leads
-FOR SELECT
-TO authenticated
-USING (
-  facility_id IN (
-    SELECT f.id FROM public.facilities f WHERE f.user_id = auth.uid()
-  )
-);
-```
+The post-unlock flow becomes:
 
-Mirror policy for redistributed leads (so a redistributed locked lead also shows up):
+1. Open success dialog immediately with `revealLoading = true` (so the user sees confirmation that the unlock itself succeeded).
+2. Call `loadRevealed(leadId)`. On success → populate `revealedLead`. On failure → set `revealError`.
 
-```sql
-CREATE POLICY "Providers can view their redistributed leads"
-ON public.leads
-FOR SELECT
-TO authenticated
-USING (
-  id IN (
-    SELECT ld.lead_id
-    FROM public.lead_distributions ld
-    JOIN public.facilities f ON ld.facility_id = f.id
-    WHERE f.user_id = auth.uid()
-  )
-);
-```
+This decouples "unlock succeeded" (which the server already confirmed via `unlockLead.mutateAsync`) from "we managed to fetch the freshly-readable PII".
 
-Both are additive — existing "unlocked" policies continue to work; admin policy is unchanged.
+### 3. Update `UnlockSuccessDialog` UI
 
-### 2. Lock down direct base-table reads
+Three visual states inside the existing revealed-contact card:
 
-Two components currently `SELECT` from the base `leads` table (which would now return locked rows with raw PII):
+- **Loading**: 3 short skeleton rows in place of name / phone / email, with the heading "Loading contact details…".
+- **Error**: replace the contact card with an inline error block (semantic `bg-destructive/10` / `text-destructive`), showing:
+  - icon + heading "Couldn't load contact details"
+  - body: "The unlock succeeded and you've been charged. We just couldn't fetch the revealed details. Try again in a moment."
+  - **Retry** button (primary, with spinner while retrying) calling `loadRevealed(leadId)` again.
+  - Secondary text link "Open in inbox" → `/provider/inquiries?lead=<id>` as a Zero-Dead-End fallback.
+- **Loaded**: existing layout with name / phone / email + Call / Text / Email action row (unchanged).
 
-- `src/components/provider/ProviderPerformanceFeedback.tsx`
-- `src/components/provider/listing/ListingCard.tsx`
+The receipt block (Charged / Remaining balance) and the "Got it" footer button stay visible in all three states.
 
-Audit and switch them to `leads_provider_view` (or restrict their selects to non-PII columns like `id`, `created_at`, `facility_id`, `status`). This preserves the "PII masked at DB level until explicitly unlocked" project rule.
+### 4. Props
 
-### 3. Audit pass on the rest of the provider panel
+Extend `UnlockSuccessDialogProps`:
 
-Quick verification (no functional changes expected, but flag any anomalies found):
+- `loading: boolean`
+- `error: string | null`
+- `onRetry: () => void`
+- `leadId: string` (used for the "Open in inbox" link)
 
-- `Dashboard.tsx`, `MyListings.tsx`, `Reviews.tsx`, `Settings.tsx`, `Billing.tsx`, `Analytics.tsx`, `Notifications.tsx`, `PlacementNetwork.tsx`, `Inquiries.tsx`, `ListingEditor.tsx`, `AddLocation.tsx`, `Help.tsx`, `KnowledgeBase.tsx`, `ProUpgrade.tsx`, `EmbedBadge.tsx`, `ImageGuidelines.tsx`.
-- Sidebar/bottom-nav links resolve to existing routes.
-- `useProviderFacilities` returns expected facility ids.
-- `provider_events` and `facility_reviews` queries succeed (RLS already verified to allow owner reads in earlier work — re-confirm).
+No other call sites change — the dialog is internal to `UnlockLeadButton`.
 
-### 4. Verify in preview
+## Out of scope
 
-After the migration:
+- No DB or RPC changes. The reveal still goes through `leads_provider_view` (masked view, RLS-enforced).
+- No change to the `unlock-lead` edge function or to credit accounting — those are already authoritative on the server and unaffected by reveal-fetch failure.
+- No new toasts (the existing success toast from `useLeadUnlocks` already fires).
 
-1. Sign in as a provider with at least one facility.
-2. `/provider/inquiries` shows locked leads with masked name/email/phone (e.g., `J*** D.`, `••••@••••.•••`).
-3. Click "Unlock" — full PII appears, and unlocked-only filters work.
-4. Dashboard KPI strip, Missed Leads, Lead Conversion Widget, and Facility Performance Panel all show non-zero counts where data exists.
-5. Run the Supabase linter to confirm no new RLS warnings.
+## Files touched
 
-## Files Touched
+- `src/components/provider/UnlockLeadButton.tsx` — add retry helper, reveal state, updated `handleUnlock`, updated `UnlockSuccessDialog` with loading / error / retry rendering.
 
-- New migration adding the two SELECT policies on `public.leads`.
-- `src/components/provider/ProviderPerformanceFeedback.tsx` — switch reads to `leads_provider_view` or non-PII columns.
-- `src/components/provider/listing/ListingCard.tsx` — same.
+## Verification
 
-No view changes, no app schema changes, no changes to the unlock flow or billing.
+- Manual: temporarily force the reveal fetch to fail (e.g. wrong column) → confirm error state + Retry button appears, retrying restores normal state.
+- Existing tests: `npm run test` (the provider masking contract test still passes — we keep using `leads_provider_view` with explicit columns).
