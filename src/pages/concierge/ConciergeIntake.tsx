@@ -99,6 +99,7 @@ interface EmailVerificationState {
 
 const STORAGE_KEY = "concierge_intake_draft";
 const EMAIL_VERIFICATION_KEY = "concierge_email_verified";
+const PHONE_VERIFICATION_KEY = "concierge_phone_verified";
 const DRAFT_ID_KEY = "concierge_draft_id";
 
 // 30-minute TTL for the locally cached non-PII draft
