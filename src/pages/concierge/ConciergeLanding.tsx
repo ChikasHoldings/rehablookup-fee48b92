@@ -4,7 +4,7 @@ import { seekerTestimonials } from "@/data/testimonials";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { conciergeFaqs } from "@/data/pageFaqs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { Header as PublicHeader } from "@/components/layout/Header";
@@ -60,6 +60,10 @@ const FAQ_ITEMS = [
 ];
 
 export default function ConciergeLanding() {
+  // Phase 3: forward incoming search params (?location=...&treatment=...&insurance=...&from=...)
+  // from search-results / SEO pages into the intake flow so step 1 is pre-filled.
+  const { search } = useLocation();
+  const intakeHref = search ? `/concierge/intake${search}` : "/concierge/intake";
   const steps = [
     {
       icon: Sparkles,

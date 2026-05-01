@@ -5,6 +5,7 @@ import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Button } from "@/components/ui/button";
 import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
+import { TrustStrip } from "@/components/home/TrustStrip";
 import { LazySection } from "@/components/ui/lazy-section";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
@@ -298,6 +299,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Phase 5: live trust signals — verified-facility count from DB */}
+      <TrustStrip />
 
       {/* Featured Centers - Premium Horizontal Scroll */}
       <HomepageFeaturedSection />
