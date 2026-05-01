@@ -8,6 +8,7 @@ import {
   successResponse,
   sanitizeIntakeData,
 } from "../_shared/validation.ts";
+import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
 
 const VERSION = "2.0.0";
 
