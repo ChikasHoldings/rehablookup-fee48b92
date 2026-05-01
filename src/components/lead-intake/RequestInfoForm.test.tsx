@@ -241,7 +241,7 @@ describe("Request Information form — consent notice", () => {
       (_content, node) => {
         if (!node) return false;
         const text = node.textContent || "";
-        return /By submitting, you agree to be contacted by/i.test(text)
+        return /I agree to be contacted by/i.test(text)
           && text.includes(FACILITY.name)
           && /phone, SMS, or email/i.test(text);
       }
@@ -256,6 +256,12 @@ describe("Request Information form — consent notice", () => {
 
     // Confidentiality assurance.
     expect(consentMatches[0].textContent).toMatch(/confidential/i);
+
+    // Submit must be disabled until consent is ticked.
+    expect(submitBtn).toBeDisabled();
+    const consentCheckbox = screen.getByRole("checkbox", { name: /i agree to be contacted/i });
+    await user.click(consentCheckbox);
+    expect(submitBtn).not.toBeDisabled();
   }, 30000);
 
   it("falls back to a generic 'selected treatment center' wording when no facility name is provided", async () => {
@@ -305,6 +311,9 @@ describe("Request Information form — email notification trigger", () => {
       screen.getByPlaceholderText(/you@example\.com/i),
       "test.seeker@example.com"
     );
+
+    // Tick the required consent checkbox before submitting.
+    await user.click(screen.getByRole("checkbox", { name: /i agree to be contacted/i }));
 
     // Submit.
     const submitBtn = screen.getByRole("button", { name: /^submit$/i });
@@ -401,6 +410,8 @@ describe("Request Information form — submit-qualified-lead payload contract", 
       SEEKER.email
     );
 
+    // Tick the required consent checkbox, then submit.
+    await user.click(screen.getByRole("checkbox", { name: /i agree to be contacted/i }));
     await user.click(screen.getByRole("button", { name: /^submit$/i }));
 
     // Wait for the submit-qualified-lead invocation, then return its body.

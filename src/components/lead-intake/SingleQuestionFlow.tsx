@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, CheckCircle2, Loader2, Mail, RefreshCw, AlertCircle, MapPin, User, Users, Clock, Heart, Shield, Calendar, UserCircle, Stethoscope, Send } from "lucide-react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -23,6 +25,37 @@ import {
   PREVIOUS_TREATMENT_OPTIONS,
   BEST_TIME_OPTIONS,
 } from "./types";
+
+// Zod schema for the contact step. Mirrors UI rules + adds length caps to
+// prevent abuse and align with backend Zod validation in the edge function.
+const contactSchema = z.object({
+  firstName: z
+    .string()
+    .trim()
+    .min(1, { message: "First name is required" })
+    .max(60, { message: "First name must be under 60 characters" })
+    .regex(/^[\p{L}\p{M}'’\-.\s]+$/u, { message: "First name contains invalid characters" }),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, { message: "Last name is required" })
+    .max(60, { message: "Last name must be under 60 characters" })
+    .regex(/^[\p{L}\p{M}'’\-.\s]+$/u, { message: "Last name contains invalid characters" }),
+  phone: z
+    .string()
+    .trim()
+    .max(32, { message: "Phone number is too long" })
+    .refine(isValidPhoneNumber, { message: "Valid phone number is required" }),
+  email: z
+    .string()
+    .trim()
+    .max(254, { message: "Email is too long" })
+    .refine(isValidEmail, { message: "Valid email is required" }),
+  consentToContact: z.literal(true, {
+    errorMap: () => ({ message: "Please agree to be contacted to continue" }),
+  }),
+});
+
 
 // Question types
 type QuestionType = "choice" | "multi-choice" | "text" | "location" | "contact" | "verify";
@@ -214,6 +247,7 @@ export function SingleQuestionFlow({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [consentToContact, setConsentToContact] = useState(false);
   const isSubmittingRef = useRef(false);
   
   // Filter questions based on skip conditions
@@ -295,17 +329,26 @@ export function SingleQuestionFlow({
     isContactSubmitting.current = true;
     
     try {
-    const newErrors: Record<string, string> = {};
+    const parsed = contactSchema.safeParse({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phone: formData.phone,
+      email: formData.email,
+      consentToContact,
+    });
 
-    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!isValidPhoneNumber(formData.phone)) newErrors.phone = "Valid phone number is required";
-    if (!isValidEmail(formData.email)) newErrors.email = "Valid email is required";
-    
-    if (Object.keys(newErrors).length > 0) {
+    if (!parsed.success) {
+      const newErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0];
+        if (typeof key === "string" && !newErrors[key]) {
+          newErrors[key] = issue.message;
+        }
+      }
       setErrors(newErrors);
       return;
     }
+    setErrors({});
     
     // Check if email is already verified (within 24h)
     const alreadyVerified = await checkAndAutoVerifyEmail(formData.email);
@@ -552,9 +595,69 @@ export function SingleQuestionFlow({
               {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
             </div>
             
-            <Button 
+            {/* Explicit consent — required before submit */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="consent-to-contact"
+                className={cn(
+                  "flex items-start gap-3 rounded-xl border bg-muted/30 p-3 sm:p-3.5 cursor-pointer transition-colors hover:bg-muted/50",
+                  errors.consentToContact ? "border-destructive" : "border-border"
+                )}
+              >
+                <Checkbox
+                  id="consent-to-contact"
+                  checked={consentToContact}
+                  onCheckedChange={(checked) => {
+                    setConsentToContact(checked === true);
+                    if (checked) {
+                      setErrors((prev) => ({ ...prev, consentToContact: "" }));
+                    }
+                  }}
+                  className="mt-0.5"
+                  aria-describedby="consent-description"
+                  aria-invalid={!!errors.consentToContact}
+                />
+                <span
+                  id="consent-description"
+                  className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed select-none"
+                >
+                  I agree to be contacted by
+                  {facilityName ? ` ${facilityName}` : " the selected treatment center"}{" "}
+                  via phone, SMS, or email about treatment options. Message &amp; data
+                  rates may apply. My information is confidential — see the{" "}
+                  <a
+                    href="/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Privacy Policy
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    href="/terms-of-service"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Terms
+                  </a>
+                  .
+                </span>
+              </label>
+              {errors.consentToContact && (
+                <p className="text-xs text-destructive flex items-center gap-1.5">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {errors.consentToContact}
+                </p>
+              )}
+            </div>
+
+            <Button
               onClick={handleContactSubmit}
-              disabled={isSendingCode || isSubmitting}
+              disabled={isSendingCode || isSubmitting || !consentToContact}
               className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
               size="lg"
             >
@@ -575,12 +678,6 @@ export function SingleQuestionFlow({
                 </>
               )}
             </Button>
-            
-            <p className="text-[11px] sm:text-xs text-muted-foreground text-center leading-relaxed px-1">
-              By submitting, you agree to be contacted by{facilityName ? ` ${facilityName}` : " the selected treatment center"} via phone, SMS, or email about treatment options. Message &amp; data rates may apply. Your information is confidential — see our{" "}
-              <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Privacy Policy</a>{" "}and{" "}
-              <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">Terms</a>.
-            </p>
           </div>
         );
         
