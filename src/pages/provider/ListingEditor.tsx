@@ -741,78 +741,124 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     return isValid;
   };
 
+  // Helper: assert all Supabase batch ops succeeded; throw on first DB/RLS error.
+  const assertAllOk = (
+    results: Array<{ error: { message: string } | null }>,
+    label: string,
+  ) => {
+    const failed = results.find((r) => r?.error);
+    if (failed?.error) {
+      throw new Error(`${label}: ${failed.error.message}`);
+    }
+  };
+
   const handleServicesChange = async (selectedServices: string[]) => {
     if (!facility) return;
-    
+
     const currentServiceNames = services.map(s => s.service_name);
     const toAdd = selectedServices.filter(s => !currentServiceNames.includes(s));
     const toRemove = services.filter(s => !selectedServices.includes(s.service_name));
-    
-    // Batch operations in parallel
-    const ops: PromiseLike<unknown>[] = [];
-    if (toAdd.length > 0) {
-      ops.push(supabase.from("facility_services").insert(toAdd.map(s => ({ facility_id: facility.id, service_name: s }))).then());
-    }
-    for (const service of toRemove) {
-      ops.push(supabase.from("facility_services").delete().eq("id", service.id).then());
-    }
-    
-    if (ops.length > 0) {
-      await Promise.all(ops);
+
+    if (toAdd.length === 0 && toRemove.length === 0) return;
+
+    try {
+      const ops: Array<Promise<{ error: { message: string } | null }>> = [];
+      if (toAdd.length > 0) {
+        ops.push(
+          supabase
+            .from("facility_services")
+            .insert(toAdd.map(s => ({ facility_id: facility.id, service_name: s }))) as unknown as Promise<{ error: { message: string } | null }>
+        );
+      }
+      for (const service of toRemove) {
+        ops.push(
+          supabase.from("facility_services").delete().eq("id", service.id) as unknown as Promise<{ error: { message: string } | null }>
+        );
+      }
+      const results = await Promise.all(ops);
+      assertAllOk(results, "Failed to update services");
+
       refetchServices();
       queryClient.invalidateQueries({ queryKey: ["facility-services-count", facility.id] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       toast({ title: toAdd.length > 0 ? "Services updated" : "Service removed" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to update services";
+      toast({ title: "Could not update services", description: message, variant: "destructive" });
     }
   };
 
   const handleInsuranceChange = async (selectedInsurance: string[]) => {
     if (!facility) return;
-    
+
     const currentInsuranceNames = insurance.map(i => i.insurance_name);
     const toAdd = selectedInsurance.filter(i => !currentInsuranceNames.includes(i));
     const toRemove = insurance.filter(i => !selectedInsurance.includes(i.insurance_name));
-    
-    const ops: PromiseLike<unknown>[] = [];
-    if (toAdd.length > 0) {
-      ops.push(supabase.from("facility_insurance").insert(toAdd.map(i => ({ facility_id: facility.id, insurance_name: i }))).then());
-    }
-    for (const ins of toRemove) {
-      ops.push(supabase.from("facility_insurance").delete().eq("id", ins.id).then());
-    }
-    
-    if (ops.length > 0) {
-      await Promise.all(ops);
+
+    if (toAdd.length === 0 && toRemove.length === 0) return;
+
+    try {
+      const ops: Array<Promise<{ error: { message: string } | null }>> = [];
+      if (toAdd.length > 0) {
+        ops.push(
+          supabase
+            .from("facility_insurance")
+            .insert(toAdd.map(i => ({ facility_id: facility.id, insurance_name: i }))) as unknown as Promise<{ error: { message: string } | null }>
+        );
+      }
+      for (const ins of toRemove) {
+        ops.push(
+          supabase.from("facility_insurance").delete().eq("id", ins.id) as unknown as Promise<{ error: { message: string } | null }>
+        );
+      }
+      const results = await Promise.all(ops);
+      assertAllOk(results, "Failed to update insurance");
+
       refetchInsurance();
       queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       toast({ title: toAdd.length > 0 ? "Insurance updated" : "Insurance removed" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to update insurance";
+      toast({ title: "Could not update insurance", description: message, variant: "destructive" });
     }
   };
 
   const handleAgeGroupsChange = async (selectedAgeGroups: string[]) => {
     if (!facility) return;
-    
+
     const currentAgeGroupNames = ageGroups.map(ag => ag.age_group);
     const toAdd = selectedAgeGroups.filter(ag => !currentAgeGroupNames.includes(ag));
     const toRemove = ageGroups.filter(ag => !selectedAgeGroups.includes(ag.age_group));
-    
-    const ops: PromiseLike<unknown>[] = [];
-    if (toAdd.length > 0) {
-      ops.push(supabase.from("facility_age_groups").insert(toAdd.map(ag => ({ facility_id: facility.id, age_group: ag }))).then());
-    }
-    for (const ag of toRemove) {
-      ops.push(supabase.from("facility_age_groups").delete().eq("id", ag.id).then());
-    }
-    
-    if (ops.length > 0) {
-      await Promise.all(ops);
+
+    if (toAdd.length === 0 && toRemove.length === 0) return;
+
+    try {
+      const ops: Array<Promise<{ error: { message: string } | null }>> = [];
+      if (toAdd.length > 0) {
+        ops.push(
+          supabase
+            .from("facility_age_groups")
+            .insert(toAdd.map(ag => ({ facility_id: facility.id, age_group: ag }))) as unknown as Promise<{ error: { message: string } | null }>
+        );
+      }
+      for (const ag of toRemove) {
+        ops.push(
+          supabase.from("facility_age_groups").delete().eq("id", ag.id) as unknown as Promise<{ error: { message: string } | null }>
+        );
+      }
+      const results = await Promise.all(ops);
+      assertAllOk(results, "Failed to update age groups");
+
       refetchAgeGroups();
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       toast({ title: toAdd.length > 0 ? "Age groups updated" : "Age group removed" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to update age groups";
+      toast({ title: "Could not update age groups", description: message, variant: "destructive" });
     }
   };
 

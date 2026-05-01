@@ -130,3 +130,37 @@ I have not made any code changes. To proceed:
 
 ### Phase 4 (runtime reproductions) — still not run
 Items 1–10 in "Did not test" remain unverified. Surface specific items if you want me to reproduce them.
+
+---
+
+## Phase 7 — Smoke test (2026-05-01)
+
+Re-ran static scanners + targeted deep-dive on `pages/provider/*`, `components/provider/*`, real-time wiring, and edge-function auth posture.
+
+### New findings
+
+| ID | Severity | Status | Details |
+| --- | --- | --- | --- |
+| **H3** — Silent DB failures in `ListingEditor` services / insurance / age-groups | High | ✅ Fixed | `src/pages/provider/ListingEditor.tsx` — three handlers (`handleServicesChange`, `handleInsuranceChange`, `handleAgeGroupsChange`) collected Supabase builders into `Promise.all(...).then())` and never inspected the resolved `{ error }` payload. Result: provider saw "Updated" toast even when an RLS denial or DB error blocked the write. **Fix:** new `assertAllOk` helper inspects every result and throws on the first error; handlers wrap the batch in `try/catch` and surface a destructive toast with the underlying message. |
+| **Scanner blind spots** in `scan-provider-edge-functions.mjs` | n/a (tooling) | ✅ Fixed | Scanner only matched `auth.getUser(` and read the first 50 lines, so it falsely flagged `subscribe-pro` (auth at line 95) and `purchase-listing-slot` (uses `auth.getClaims`). Also flagged cron / public functions (`auto-reload-credits`, `retry-failed-payments`, `notify-payment-failed`, `track-provider-event`, `validate-promo-code`, `send-provider-support`) that intentionally do not require an end-user JWT. **Fix:** scanner now (a) recognises `getClaims`, (b) accepts a documented `AUTH_ALLOWLIST` for cron/HMAC/public callers (each with a justification string), (c) recognises `try_acquire_*_lock` RPCs as idempotency markers, and (d) excludes Checkout-Session-only Stripe handlers from the idempotency requirement. CI now exits non-zero on real HIGH findings. |
+
+### Verified clean (no action needed)
+
+- **Real-time fan-out**: `useProviderNotifications`, `useProviderCredits`, `useProviderFacilities`, `useProviderData`, and `useApprovedFacilities` all use `postgres_changes` channels. Cleanup is via `useRef`-stored channels in `useAdminUserNotifications`/`useProviderNotifications`. No leak signatures.
+- **Direct-URL authz on `/provider/inquiries?lead=…`**: gated server-side by `leads_provider_view` (security_invoker on `public.leads`) and client-side by `ProviderShell` role check. No client-side bypass found.
+- **Account deletion cascade** (`delete-provider-account/index.ts`): explicit ordered deletes for `leads`, facility reviews, and `facilities` themselves. Service-role.
+- **`subscribe-pro` Stripe idempotency**: only creates a Checkout Session URL — actual charge happens on Stripe-hosted pages with their own retry semantics. Not a charge endpoint.
+- **`auto-reload-credits` JWT**: validates via HMAC of `(providerId|ts)` signed with `SUPABASE_SERVICE_ROLE_KEY` instead of an end-user JWT. Internal-only call site.
+- **TypeScript / vitest**: all 41 frontend tests pass.
+
+### Updated totals (cumulative)
+
+| Severity | Pending |
+| --- | --- |
+| Critical | 0 |
+| High | 0 |
+| Medium | 0 |
+| Low | 3 (POST enforcement on read-only endpoints; advisor noise; explicit-columns migration of 14 grandfathered `select("*")` call sites) |
+
+### Phase 4 (runtime reproductions) — still not run
+Items 1–10 in "Did not test" remain unverified. Ask explicitly to reproduce specific items in the preview.
