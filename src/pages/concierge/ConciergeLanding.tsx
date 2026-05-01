@@ -60,6 +60,10 @@ const FAQ_ITEMS = [
 ];
 
 export default function ConciergeLanding() {
+  // Phase 3: forward incoming search params (?location=...&treatment=...&insurance=...&from=...)
+  // from search-results / SEO pages into the intake flow so step 1 is pre-filled.
+  const { search } = useLocation();
+  const intakeHref = search ? `/concierge/intake${search}` : "/concierge/intake";
   const steps = [
     {
       icon: Sparkles,
