@@ -4,7 +4,7 @@ import {
   sanitizePhone,
   sanitizeEmail,
   sanitizeStringArray,
-  errorResponse,
+  jsonError,
   successResponse,
   sanitizeIntakeData,
 } from "../_shared/validation.ts";
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error("Missing required environment variables");
+      return jsonError("server_misconfigured", "Missing required environment variables", 500, corsHeaders, { _version: VERSION });
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const contentLength = req.headers.get("content-length");
     if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
       logStep("ERROR: Request too large", { size: contentLength });
-      return errorResponse("Request body too large", 413, corsHeaders);
+      return jsonError("payload_too_large", "Request body too large", 413, corsHeaders, { _version: VERSION }, { maxBytes: MAX_BODY_SIZE, receivedBytes: parseInt(contentLength) });
     }
 
     // Parse and validate request body
@@ -53,19 +53,19 @@ Deno.serve(async (req) => {
     try {
       const rawBody = await req.text();
       if (rawBody.length > MAX_BODY_SIZE) {
-        return errorResponse("Request body too large", 413, corsHeaders);
+        return jsonError("payload_too_large", "Request body too large", 413, corsHeaders, { _version: VERSION }, { maxBytes: MAX_BODY_SIZE, receivedBytes: rawBody.length });
       }
       body = JSON.parse(rawBody);
     } catch {
       logStep("ERROR: Invalid JSON body");
-      return errorResponse("Invalid request body", 400, corsHeaders);
+      return jsonError("invalid_json", "Request body is not valid JSON", 400, corsHeaders, { _version: VERSION });
     }
 
     const { intakeData, emailVerifiedAt, draftId: existingDraftId } = body;
 
     if (!intakeData || typeof intakeData !== "object") {
       logStep("ERROR: Missing intake data");
-      return errorResponse("Intake data is required", 400, corsHeaders);
+      return jsonError("validation_error", "Intake data is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData" });
     }
 
     const data = intakeData as Record<string, unknown>;
@@ -76,7 +76,10 @@ Deno.serve(async (req) => {
       email = sanitizeEmail(data.email);
     } catch {
       logStep("ERROR: Invalid email");
-      return errorResponse("Valid email is required", 400, corsHeaders);
+      return jsonError("invalid_email", "Valid email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
+    }
+    if (!email) {
+      return jsonError("email_required", "Email is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.email" });
     }
 
     const firstName = sanitizeString(data.first_name, 100);
@@ -87,12 +90,12 @@ Deno.serve(async (req) => {
 
     if (!firstName || !lastName) {
       logStep("ERROR: Missing required name fields");
-      return errorResponse("First name and last name are required", 400, corsHeaders);
+      return jsonError("validation_error", "First name and last name are required", 400, corsHeaders, { _version: VERSION }, { fields: ["intakeData.first_name", "intakeData.last_name"] });
     }
 
     if (!country) {
       logStep("ERROR: Missing country");
-      return errorResponse("Country is required", 400, corsHeaders);
+      return jsonError("validation_error", "Country is required", 400, corsHeaders, { _version: VERSION }, { field: "intakeData.country" });
     }
 
     // Validate draft ID format if provided
@@ -113,7 +116,7 @@ Deno.serve(async (req) => {
 
     if (recentDrafts && recentDrafts >= 3 && !validatedDraftId) {
       logStep("Rate limit exceeded", { email, count: recentDrafts });
-      return errorResponse("Too many requests. Please try again later.", 429, corsHeaders);
+      return jsonError("rate_limited", "Too many requests. Please try again later.", 429, corsHeaders, { _version: VERSION }, { limit: 3, windowSeconds: 3600, recentCount: recentDrafts });
     }
 
     // Sanitize all intake data
@@ -204,7 +207,7 @@ Deno.serve(async (req) => {
 
         if (updateError) {
           logStep("Error updating draft", { error: updateError.message });
-          throw new Error("Failed to update draft");
+          return jsonError("draft_update_failed", "Failed to update draft", 500, corsHeaders, { _version: VERSION }, { dbError: updateError.message, draftId, caseId: existingDraft.id });
         }
 
         logStep("Draft updated", { draftId, caseId: existingDraft.id });
@@ -246,7 +249,7 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       logStep("Error creating draft", { error: insertError.message });
-      throw new Error("Failed to create draft");
+      return jsonError("draft_create_failed", "Failed to create draft", 500, corsHeaders, { _version: VERSION }, { dbError: insertError.message, draftId });
     }
 
     logStep("Draft created", { draftId, caseId: newCase.id });
@@ -261,6 +264,6 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return errorResponse(errorMessage, 500, corsHeaders, { _version: VERSION });
+    return jsonError("internal_error", errorMessage, 500, corsHeaders, { _version: VERSION });
   }
 });

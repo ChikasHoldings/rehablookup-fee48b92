@@ -10,6 +10,7 @@ import {
   TourEmailData,
 } from "../_shared/tour-email-templates.ts";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { jsonError } from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -80,15 +81,29 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return jsonError("method_not_allowed", "Method not allowed", 405, corsHeaders, {}, { allowed: ["POST", "OPTIONS"] });
+  }
+
   try {
-    const { type, tourId, metadata }: TourNotificationRequest = await req.json();
+    let parsed: TourNotificationRequest;
+    try {
+      parsed = await req.json();
+    } catch {
+      return jsonError("invalid_json", "Request body is not valid JSON", 400, corsHeaders);
+    }
+
+    const { type, tourId, metadata } = parsed;
     console.log("Tour notification request:", { type, tourId });
 
     if (!type || !tourId) {
-      return new Response(JSON.stringify({ error: "Missing type or tourId" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const missing = [!type && "type", !tourId && "tourId"].filter(Boolean);
+      return jsonError("validation_error", "Missing type or tourId", 400, corsHeaders, {}, { missing });
+    }
+
+    const ALLOWED_TYPES = ["tour_requested", "tour_proposed", "tour_confirmed", "tour_cancelled"] as const;
+    if (!(ALLOWED_TYPES as readonly string[]).includes(type)) {
+      return jsonError("invalid_type", "Unsupported notification type", 400, corsHeaders, {}, { field: "type", allowed: ALLOWED_TYPES });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -108,10 +123,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (tourError || !tour) {
       console.error("Tour not found:", tourError);
-      return new Response(JSON.stringify({ error: "Tour not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("tour_not_found", "Tour not found", 404, corsHeaders, {}, { tourId, dbError: tourError?.message });
     }
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -450,9 +462,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     });
   } catch (error: unknown) {
     console.error("Tour notification error:", error);
-    return new Response(JSON.stringify({ error: String(error) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    return jsonError("internal_error", message, 500, corsHeaders);
   }
 });

@@ -50,7 +50,8 @@ Deno.test("[submit-placement-case] missing seekerEmail -> 400 + code:'email_requ
   assertStringIncludes(src, '"email_required"');
 
   // The translation must live alongside sanitizeEmail and produce a 400.
-  const re = /sanitizeEmail\(body\.seekerEmail\)[\s\S]{0,800}?email_required[\s\S]{0,400}?status:\s*400/;
+  // Match either explicit `status: 400` or the positional `400` arg in jsonError(code, message, 400, ...).
+  const re = /sanitizeEmail\(body\.seekerEmail\)[\s\S]{0,800}?email_required[\s\S]{0,400}?(?:status:\s*400|,\s*400\s*,)/;
   assert(
     re.test(src),
     "missing email must return 400 with code:'email_required'",

@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { jsonError } from "../_shared/validation.ts";
 
 const VERSION = "2.0.0";
 
@@ -92,10 +93,7 @@ Deno.serve(async (req) => {
 
   // POST only
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonError("method_not_allowed", "Method not allowed", 405, corsHeaders, { _version: VERSION }, { allowed: ["POST", "OPTIONS"] });
   }
 
   try {
@@ -106,7 +104,7 @@ Deno.serve(async (req) => {
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error("Supabase configuration missing");
+      return jsonError("server_misconfigured", "Supabase configuration missing", 500, corsHeaders, { requestId, _version: VERSION });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -115,10 +113,7 @@ Deno.serve(async (req) => {
     const contentLength = req.headers.get("content-length");
     if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
       logStep(requestId, "Request too large", { size: contentLength });
-      return new Response(JSON.stringify({ error: "Request too large" }), {
-        status: 413,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("payload_too_large", "Request too large", 413, corsHeaders, { requestId, _version: VERSION }, { maxBytes: MAX_BODY_SIZE, receivedBytes: parseInt(contentLength) });
     }
 
     // Parse body with size guard
@@ -126,26 +121,17 @@ Deno.serve(async (req) => {
     try {
       rawBody = await req.text();
       if (rawBody.length > MAX_BODY_SIZE) {
-        return new Response(JSON.stringify({ error: "Request too large" }), {
-          status: 413,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonError("payload_too_large", "Request too large", 413, corsHeaders, { requestId, _version: VERSION }, { maxBytes: MAX_BODY_SIZE, receivedBytes: rawBody.length });
       }
     } catch {
-      return new Response(JSON.stringify({ error: "Failed to read request body" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("body_read_failed", "Failed to read request body", 400, corsHeaders, { requestId, _version: VERSION });
     }
 
     let body: PlacementCaseRequest;
     try {
       body = JSON.parse(rawBody);
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("invalid_json", "Request body is not valid JSON", 400, corsHeaders, { requestId, _version: VERSION });
     }
 
     // Sanitize and validate all inputs
@@ -157,22 +143,15 @@ Deno.serve(async (req) => {
       const message = emailErr instanceof Error ? emailErr.message : "Invalid email";
       const code = message === "Email is required" ? "email_required" : "invalid_email";
       logStep(requestId, "Email validation failed", { code, reason: message });
-      return new Response(
-        JSON.stringify({ error: message, code, field: "seekerEmail", requestId, _version: VERSION }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonError(code, message, 400, corsHeaders, { requestId, _version: VERSION }, { field: "seekerEmail" });
     }
     const seekerPhone = sanitizePhone(body.seekerPhone);
 
     if (!seekerName) {
-      return new Response(JSON.stringify({ error: "Name is required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("name_required", "Name is required", 400, corsHeaders, { requestId, _version: VERSION }, { field: "seekerName" });
     }
     if (!seekerPhone) {
-      return new Response(JSON.stringify({ error: "Phone is required" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("phone_required", "Phone is required", 400, corsHeaders, { requestId, _version: VERSION }, { field: "seekerPhone" });
     }
 
     // Validate enums
@@ -212,10 +191,7 @@ Deno.serve(async (req) => {
 
     if (recentCases && recentCases >= 3) {
       logStep(requestId, "Rate limit exceeded", { email: seekerEmail, count: recentCases });
-      return new Response(JSON.stringify({ error: "Too many requests. Please try again later." }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonError("rate_limited", "Too many requests. Please try again later.", 429, corsHeaders, { requestId, _version: VERSION }, { limit: 3, windowSeconds: 3600, recentCount: recentCases });
     }
 
     // Idempotency check - prevent duplicate submissions
@@ -271,10 +247,7 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       logStep(requestId, "Insert error", { error: insertError.message });
-      return new Response(
-        JSON.stringify({ error: "Failed to create placement case" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return jsonError("case_create_failed", "Failed to create placement case", 500, corsHeaders, { requestId, _version: VERSION }, { dbError: insertError.message });
     }
 
     const caseNumber = caseData.id.slice(0, 8).toUpperCase();
@@ -442,9 +415,6 @@ Deno.serve(async (req) => {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     logStep(requestId, "ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage, requestId, _version: VERSION }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return jsonError("internal_error", errorMessage, 500, corsHeaders, { requestId, _version: VERSION });
   }
 });
