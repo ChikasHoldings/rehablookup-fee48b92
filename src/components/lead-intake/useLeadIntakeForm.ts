@@ -395,7 +395,18 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       return;
     }
     
-    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+    // Require seeker email as a non-empty string before any further checks.
+    const seekerEmail = formData.email;
+    if (typeof seekerEmail !== "string" || seekerEmail.trim().length === 0) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address to submit this request.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(seekerEmail.trim())) {
       toast({
         title: "Invalid email",
         description: "Please provide a valid email address",
