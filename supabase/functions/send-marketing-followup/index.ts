@@ -250,7 +250,7 @@ function getFollowUpEmail(firstName: string, unsubToken: string): string {
                     </table>
                     <p style="margin: 20px 0 0 0; text-align: center;">
                       <span style="background: #22c55e; color: #ffffff; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;">
-                        Just $29 — One-time fee
+                        Free for clients
                       </span>
                     </p>
                   </td>

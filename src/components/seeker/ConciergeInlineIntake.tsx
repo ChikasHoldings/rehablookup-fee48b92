@@ -22,7 +22,8 @@ import {
   MapPin,
   Heart,
   ClipboardList,
-  Phone
+  Phone,
+  CheckCircle
 } from "lucide-react";
 
 // US States
@@ -686,11 +687,11 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
             <div className="flex items-center gap-3">
               <CreditCard className="h-5 w-5 text-primary" />
               <div>
-                <p className="font-semibold">Concierge Fee</p>
-                <p className="text-sm text-muted-foreground">One-time placement assistance</p>
+                <p className="font-semibold">Concierge Placement</p>
+                <p className="text-sm text-muted-foreground">Personalized placement assistance</p>
               </div>
             </div>
-            <p className="text-2xl font-bold text-primary">$29</p>
+            <p className="text-2xl font-bold text-primary">Free</p>
           </div>
         </CardContent>
       </Card>
@@ -702,7 +703,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
       <CardHeader>
         <CardTitle>Start Your Personalized Placement</CardTitle>
         <CardDescription>
-          Complete this quick intake and pay $29 to be placed in the right treatment center.
+          Complete this quick intake and our specialists will personally connect you with the right treatment center — free for clients.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -737,8 +738,8 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
                 </>
               ) : (
                 <>
-                  <CreditCard className="h-4 w-4" />
-                  Pay $29 & Submit
+                  <CheckCircle className="h-4 w-4" />
+                  Submit My Request
                 </>
               )}
             </Button>

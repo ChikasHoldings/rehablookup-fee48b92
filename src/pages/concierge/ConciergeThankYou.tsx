@@ -52,14 +52,50 @@ export default function ConciergeThankYou() {
   const [accountCreated, setAccountCreated] = useState(false);
 
   const sessionId = searchParams.get("session_id");
+  const channel = searchParams.get("channel");
+  const idParam = searchParams.get("id");
+  const isFreeFlow = channel === "free" || channel === "sms";
 
   // Guard against React strict mode double-fire
   const submissionInFlight = useRef(false);
 
   useEffect(() => {
     const verifyAndSubmit = async () => {
+      // Free / SMS flow — intake already submitted by the intake page.
+      // Skip Stripe verification entirely.
+      if (isFreeFlow) {
+        if (submissionInFlight.current) return;
+        submissionInFlight.current = true;
+
+        if (idParam) setInquiryId(idParam);
+
+        // Load saved data from localStorage for personalization
+        const savedIntake = localStorage.getItem(STORAGE_KEY);
+        if (savedIntake) {
+          try {
+            const data = JSON.parse(savedIntake)?.data || JSON.parse(savedIntake);
+            setFirstName(data.firstName || null);
+            setLastName(data.lastName || null);
+            setUserEmail(data.email || null);
+          } catch (e) {
+            console.error("Failed to parse saved intake", e);
+          }
+        }
+
+        // Clear draft so refresh doesn't replay it
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem("concierge_email_verified");
+        localStorage.removeItem("concierge_phone_verified");
+        localStorage.removeItem("concierge_draft_id");
+
+        setPaymentVerified(true);
+        setIsVerifying(false);
+        submissionInFlight.current = false;
+        return;
+      }
+
       if (!sessionId) {
-        setError("No payment session found");
+        setError("No request found");
         setIsVerifying(false);
         return;
       }
@@ -166,7 +202,8 @@ export default function ConciergeThankYou() {
     };
 
     verifyAndSubmit();
-  }, [sessionId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, isFreeFlow, idParam]);
 
   // Check auth status and listen for changes (e.g. user logs in from another tab)
   useEffect(() => {
