@@ -402,12 +402,33 @@ const ArticleDetail = () => {
     });
   };
 
+  // ----- SEO landing overlap guard --------------------------------------
+  // A handful of `/resources/:slug` articles cover the same topic as a
+  // pre-rendered SEO landing page at the site root (e.g.
+  //   /resources/xanax-addiction-treatment   ↔  /xanax-addiction-treatment
+  //   /resources/alcohol-addiction-guide     ↔  /alcohol-addiction-treatment
+  //   /resources/overdose-prevention-naloxone↔  /overdose-prevention
+  // ).
+  // Google was de-duping these and picking the landing as canonical anyway.
+  // We make the choice explicit: point the article canonical at the landing
+  // and noindex the article so all ranking signals consolidate on the
+  // pre-rendered hub.
+  const SEO_LANDING_OVERLAPS: Record<string, string> = {
+    "xanax-addiction-treatment": "/xanax-addiction-treatment",
+    "alcohol-addiction-guide": "/alcohol-addiction-treatment",
+    "overdose-prevention-naloxone": "/overdose-prevention",
+  };
+  const overlapCanonical = SEO_LANDING_OVERLAPS[article.slug] ?? null;
+  const articleCanonical = overlapCanonical ?? `/resources/${article.slug}`;
+  const isOverlapDuplicate = Boolean(overlapCanonical);
+
   return (
     <Layout>
       <SEO
         title={article.meta_title || `${article.title} | RehabLookup`}
         description={article.meta_description || article.excerpt}
-        canonical={`/resources/${article.slug}`}
+        canonical={articleCanonical}
+        noindex={isOverlapDuplicate}
         type="article"
         image={articleImage}
         structuredData={generateArticleSchema({
