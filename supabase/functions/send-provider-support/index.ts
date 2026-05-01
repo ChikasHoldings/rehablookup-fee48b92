@@ -76,23 +76,29 @@ Deno.serve(async (req) => {
     const message = sanitizeStr(body.message, 5000);
     const userId = typeof body.userId === "string" && isValidUUID(body.userId) ? body.userId : null;
 
-    if (!name || !email || !topic || !message) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const stdError = (code: string, message: string, status: number, field?: string) =>
+      new Response(
+        JSON.stringify({
+          error: { code, message },
+          code,
+          reason: message,
+          ...(field ? { details: { field } } : {}),
+        }),
+        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+
+    if (!email) return stdError("email_required", "Email is required", 400, "email");
+    if (!name) return stdError("name_required", "Name is required", 400, "name");
+    if (!topic) return stdError("validation_error", "Topic is required", 400, "topic");
+    if (!message) return stdError("validation_error", "Message is required", 400, "message");
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length < 5) {
-      return new Response(JSON.stringify({ error: "Invalid email address" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return stdError("invalid_email", "Invalid email address", 400, "email");
     }
 
     // Validate topic against whitelist
     if (!topicLabels[topic]) {
-      return new Response(JSON.stringify({ error: "Invalid topic category" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return stdError("validation_error", "Invalid topic category", 400, "topic");
     }
 
     console.log("[SEND-PROVIDER-SUPPORT] Processing request:", { name: name.slice(0, 20), topic });
