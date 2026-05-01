@@ -60,7 +60,7 @@ for (const fn of PROVIDER_FNS) {
   const hasCors = /Access-Control-Allow-Origin/.test(src) || /corsHeaders/.test(src);
   const hasSelectStar = /\.select\(\s*['"]\*['"]\s*\)/.test(src);
   const hasIdempotency =
-    /idempotencyKey|claim_stripe_webhook_event|mark_stripe_webhook_event_processed|advisory_xact_lock|advisory_lock/.test(
+    /idempotencyKey|claim_stripe_webhook_event|mark_stripe_webhook_event_processed|advisory_xact_lock|advisory_lock|try_acquire_[a-z_]*_lock|Idempotency layer/i.test(
       src,
     );
   const isStripe = /Stripe\(/.test(src);
