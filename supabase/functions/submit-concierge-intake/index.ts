@@ -315,7 +315,7 @@ Deno.serve(async (req) => {
     // Priority: 1) by checkout_session_id, 2) by idempotency_key (without intake), 3) by draft_id from metadata
     let existingRecordId: string | null = existingByKey?.id || null;
 
-    if (!existingRecordId) {
+    if (!existingRecordId && sessionId) {
       const { data: bySession } = await supabase
         .from('concierge_inquiries')
         .select('id, payment_status')
@@ -327,8 +327,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Also check by draft_id from Stripe metadata
-    if (!existingRecordId && session.metadata?.draft_id) {
+    // Also check by draft_id from Stripe metadata (paid path only)
+    if (!existingRecordId && session?.metadata?.draft_id) {
       const { data: byDraft } = await supabase
         .from('concierge_inquiries')
         .select('id, payment_status')
