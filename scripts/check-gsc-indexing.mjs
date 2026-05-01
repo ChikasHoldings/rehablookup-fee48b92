@@ -164,14 +164,9 @@ function auditHtmlHead(filePath, expectedPath) {
 }
 
 function discoverPrerendered() {
-  const SKIP = new Set(["index.html", "404.html"]);
-  const out = [];
-  for (const e of readdirSync(PUBLIC_DIR, { withFileTypes: true })) {
-    if (!e.isFile() || !e.name.endsWith(".html") || SKIP.has(e.name)) continue;
-    const route = "/" + e.name.replace(/\.html$/, "");
-    out.push({ file: join(PUBLIC_DIR, e.name), route });
-  }
-  return out;
+  // Hybrid layout: accept both flat .html and nested /index.html.
+  // Use the shared discovery so canonical/robots audits cover BOTH.
+  return discoverPrerenderedFiles(PUBLIC_DIR);
 }
 
 // --------------------------------------------------------------------------
