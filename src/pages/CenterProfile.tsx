@@ -4,6 +4,7 @@ import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateLocalBusinessSchema } from "@/components/SEO";
+import { resolveFacilitySlug } from "@/lib/slugUtils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/ui/RatingBadge";
@@ -604,11 +605,21 @@ const CenterProfile = () => {
     <Layout>
       <SEO
         title={`${facility.name} - Addiction Treatment in ${facility.city}, ${facility.state}`}
-        description={facility.description 
+        description={facility.description
           ? facility.description.slice(0, 155) + (facility.description.length > 155 ? '...' : '')
           : `${facility.name} offers comprehensive addiction treatment services in ${facility.city}, ${facility.state}. Verify insurance coverage and start your recovery journey today.`
         }
-        canonical={`/center/${(facility.slug || "").trim().toLowerCase()}`}
+        canonical={`/center/${resolveFacilitySlug(facility)}`}
+        // Center profiles render as a local business — surface the right OG
+        // type so social cards and link unfurlers treat them as a place,
+        // not a generic article. The image priority below mirrors what
+        // users see in the hero, so social previews match the page.
+        type="local_business"
+        image={
+          facility.gallery_urls?.[0] ||
+          facility.logo_url ||
+          undefined
+        }
         keywords={[
           `${facility.name}`,
           `addiction treatment ${facility.city}`,
