@@ -58,9 +58,10 @@ Deno.test("balance branch: skips when currentBalanceCents >= threshold_cents", (
     guard,
     "Threshold guard `currentBalanceCents >= settings.threshold_cents` missing",
   );
-  // And that the branch returns a 'skipped' response.
-  const branchIdx = SOURCE.indexOf("Balance above threshold");
-  assert(branchIdx > -1, "Skip-reason 'Balance above threshold' missing");
+  // And that the branch returns a 'skipped' response with the stable code.
+  // We pivot on the machine-readable `code` rather than free-text reason so
+  // ops dashboards/log filters keep working when wording is improved.
+  assertStringIncludes(SOURCE, "BALANCE_ABOVE_THRESHOLD");
 });
 
 Deno.test("reload amount whitelist: only $200 / $500 / $1000 tiers accepted", () => {
