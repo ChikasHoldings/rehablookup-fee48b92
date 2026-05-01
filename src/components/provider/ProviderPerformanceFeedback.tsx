@@ -26,7 +26,7 @@ export function ProviderPerformanceFeedback({ facilityId }: ProviderPerformanceF
       // Leads unlocked this week
       const { count: unlockedThisWeek } = await supabase
         .from("lead_unlocks")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("facility_id", facilityId)
         .gte("unlocked_at", weekAgo.toISOString());
 
