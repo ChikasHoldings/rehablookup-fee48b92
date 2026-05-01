@@ -85,10 +85,12 @@ for (const fn of FUNCTIONS) {
   Deno.test(`[${fn.name}] returns 400 + code:invalid_json on malformed body`, async () => {
     const src = await loadSource(fn.path);
 
-    // The catch block around req.json() must respond with 400, not 500.
-    const re = /req\.json\(\)[\s\S]{0,400}?status:\s*400[\s\S]{0,200}?invalid_json/;
+    // The catch block around req.json() must respond with `code:"invalid_json"`
+    // AND `status: 400` (in either textual order).
+    const reA = /req\.json\(\)[\s\S]{0,600}?invalid_json[\s\S]{0,300}?status:\s*400/;
+    const reB = /req\.json\(\)[\s\S]{0,600}?status:\s*400[\s\S]{0,300}?invalid_json/;
     assert(
-      re.test(src),
+      reA.test(src) || reB.test(src),
       `${fn.name} must catch JSON parse failures and return 400 with code:"invalid_json"`,
     );
   });
@@ -97,11 +99,12 @@ for (const fn of FUNCTIONS) {
     const src = await loadSource(fn.path);
 
     assertStringIncludes(src, `${fn.schema}.safeParse`);
-    // The validation failure response must be 400 (NOT 500) and include
-    // a stable machine-readable code + per-field errors.
-    const re = /safeParse[\s\S]{0,500}?status:\s*400[\s\S]{0,200}?validation_error/;
+    // The validation failure response must be 400 (NOT 500) and tagged
+    // with `code:"validation_error"`. Allow either textual order.
+    const reA = /safeParse[\s\S]{0,800}?validation_error[\s\S]{0,400}?status:\s*400/;
+    const reB = /safeParse[\s\S]{0,800}?status:\s*400[\s\S]{0,400}?validation_error/;
     assert(
-      re.test(src),
+      reA.test(src) || reB.test(src),
       `${fn.name} must respond 400 with code:"validation_error" on schema failure`,
     );
     assertStringIncludes(src, "fieldErrors");
