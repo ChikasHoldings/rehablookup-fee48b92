@@ -460,9 +460,9 @@ const NotFound = () => {
           {/* Emergency CTA */}
           <div className="mt-10 text-center p-6 rounded-xl bg-primary/5 border border-primary/10">
             <p className="text-sm text-muted-foreground mb-2">Need immediate help?</p>
-            <p className="font-display font-semibold text-foreground mb-3">
+            <h2 className="font-display font-semibold text-foreground mb-3">
               Our support team is available 24/7 to connect you with treatment
-            </p>
+            </h2>
             <Link to="/concierge">
               <Button variant="default" className="gap-2">
                 <Phone className="h-4 w-4" />
