@@ -180,12 +180,19 @@ for (const fn of FUNCTIONS) {
     // The key must be derived from facilityId so a duplicate POST for the
     // same facility collapses to one send.
     if (fn.acceptsClientIdempotencyKey) {
-      // Pattern: idempotencyKey || `<prefix>${facilityId}`
-      const re = new RegExp(
+      // The key must fall back to `<prefix>${facilityId}` when the client
+      // omits it. Accept either form:
+      //   - inline: `idempotencyKey: idempotencyKey || \`<prefix>${facilityId}\``
+      //   - hoisted: `const effectiveIdempotencyKey = idempotencyKey || \`<prefix>${facilityId}\``
+      //              followed by `idempotencyKey: effectiveIdempotencyKey`
+      const inlineRe = new RegExp(
         `idempotencyKey:\\s*idempotencyKey\\s*\\|\\|\\s*\`${fn.idempotencyPrefix}\\$\\{facilityId\\}\``,
       );
+      const hoistedRe = new RegExp(
+        `const\\s+effectiveIdempotencyKey\\s*=\\s*idempotencyKey\\s*\\|\\|\\s*\`${fn.idempotencyPrefix}\\$\\{facilityId\\}\``,
+      );
       assert(
-        re.test(src),
+        inlineRe.test(src) || (hoistedRe.test(src) && src.includes("idempotencyKey: effectiveIdempotencyKey")),
         `${fn.name} must build idempotencyKey as idempotencyKey || \`${fn.idempotencyPrefix}\${facilityId}\``,
       );
     } else {
