@@ -264,6 +264,6 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return errorResponse(errorMessage, 500, corsHeaders, { _version: VERSION });
+    return jsonError("internal_error", errorMessage, 500, corsHeaders, { _version: VERSION });
   }
 });
