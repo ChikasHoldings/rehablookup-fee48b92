@@ -193,6 +193,8 @@ Deno.serve(async (req) => {
     if (!intakeData.email || typeof intakeData.email !== "string" || intakeData.email.trim().length === 0) {
       const code = "email_required";
       const message = "Email is required";
+      const diag = describeEmailInput("intakeData.email", intakeData.email);
+      logStep(requestId, "email_required", { code, ...diag });
       return new Response(
         JSON.stringify({
           error: { code, message },
