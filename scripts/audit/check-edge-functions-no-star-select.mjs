@@ -21,11 +21,26 @@
  * row data — it is shape-equivalent to selecting nothing.
  */
 
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
+import { join, relative, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const FUNCTIONS_DIR = "supabase/functions";
 const ROOT = process.cwd();
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const BASELINE_PATH = join(__dirname, "no-star-select-baseline.json");
+
+// Pre-existing violations we tolerate (audit M-tier debt). New violations
+// must be fixed at write-time. Match key is "file:line".
+let baseline = new Set();
+if (existsSync(BASELINE_PATH)) {
+  try {
+    const raw = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+    if (Array.isArray(raw)) baseline = new Set(raw);
+  } catch (e) {
+    console.error(`WARN: could not parse ${BASELINE_PATH}: ${e.message}`);
+  }
+}
 
 // Bare star: .select("*") or .select('*') with optional whitespace, no extra args
 const BARE_STAR = /\.select\(\s*(['"])\*\1\s*\)/;
@@ -50,6 +65,7 @@ function* walk(dir) {
 }
 
 const violations = [];
+const grandfathered = [];
 
 for (const file of walk(FUNCTIONS_DIR)) {
   const lines = readFileSync(file, "utf8").split("\n");
@@ -58,23 +74,30 @@ for (const file of walk(FUNCTIONS_DIR)) {
     if (!BARE_STAR.test(line)) continue;
     if (COUNT_HEAD.test(line)) continue; // safe count-only
     if (line.includes(ALLOW)) continue;
-    violations.push({
-      file: relative(ROOT, file),
-      line: i + 1,
-      text: line.trim(),
-    });
+    const rel = relative(ROOT, file);
+    const key = `${rel}:${i + 1}`;
+    const entry = { file: rel, line: i + 1, text: line.trim(), key };
+    if (baseline.has(key)) {
+      grandfathered.push(entry);
+    } else {
+      violations.push(entry);
+    }
   }
 }
 
 if (violations.length === 0) {
+  const msg =
+    grandfathered.length > 0
+      ? ` — ${grandfathered.length} pre-existing violations grandfathered via baseline.json`
+      : "";
   console.log(
-    `✅ no-star-select: scanned ${FUNCTIONS_DIR} — no .select("*") found.`
+    `✅ no-star-select: scanned ${FUNCTIONS_DIR} — no NEW .select("*") found${msg}.`
   );
   process.exit(0);
 }
 
 console.error(
-  `❌ no-star-select: found ${violations.length} forbidden .select("*") call(s) in edge functions.\n`
+  `❌ no-star-select: found ${violations.length} NEW forbidden .select("*") call(s) in edge functions.\n`
 );
 for (const v of violations) {
   console.error(`  ${v.file}:${v.line}`);
@@ -82,6 +105,8 @@ for (const v of violations) {
 }
 console.error(
   `\nFix: replace .select("*") with explicit columns, or annotate the line with` +
-    ` "// ${ALLOW} <justification>" if it's truly safe (e.g. count/head).\n`
+    ` "// ${ALLOW} <justification>" if it's truly safe (e.g. count/head).\n` +
+    `(Pre-existing violations are tracked in scripts/audit/no-star-select-baseline.json` +
+    ` — do NOT add new entries; fix the call instead.)\n`
 );
 process.exit(1);
