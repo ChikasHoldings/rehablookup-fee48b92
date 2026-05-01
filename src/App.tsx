@@ -1090,7 +1090,6 @@ const AppInner = () => {
             <Route path="/rehab" element={<Navigate to="/rehab-centers" replace />} />
             <Route path="/treatment" element={<Navigate to="/treatment-types" replace />} />
             <Route path="/directory" element={<Navigate to="/rehab-centers" replace />} />
-            <Route path="/search" element={<Navigate to="/rehab-centers" replace />} />
 
             {/* Ad Landing Pages */}
             <Route path="/ads/:slug" element={<PublicRouteGuard><AdLanding /></PublicRouteGuard>} />
