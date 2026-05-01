@@ -283,6 +283,46 @@ export default function ConciergeIntake() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, setSearchParams]);
 
+  // Phase 3: prefill from search-results / homepage / SEO page CTAs.
+  // Accepts ?location=Boise,ID  ?treatment=detox  ?insurance=aetna  ?from=...
+  // Runs once on mount; never overwrites a value the user has already filled.
+  const prefillAppliedRef = useRef(false);
+  useEffect(() => {
+    if (prefillAppliedRef.current) return;
+    const loc = searchParams.get("location") || "";
+    const treatment = searchParams.get("treatment") || "";
+    const insurance = searchParams.get("insurance") || "";
+    if (!loc && !treatment && !insurance) return;
+    prefillAppliedRef.current = true;
+
+    setFormData((prev) => {
+      const next = { ...prev };
+      if (loc && !next.desiredCity && !next.desiredState) {
+        // "Boise, ID" → city="Boise", state="ID". Bare ZIP / single token → city.
+        const parts = loc.split(",").map((s) => s.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+          next.desiredCity = parts[0];
+          next.desiredState = parts[1].toUpperCase().slice(0, 2);
+        } else {
+          next.desiredCity = parts[0] || "";
+        }
+      }
+      if (insurance && !next.insuranceCarrier) {
+        next.insuranceCarrier = insurance;
+        if (!next.paymentType) next.paymentType = "insurance";
+      }
+      // Treatment hint maps loosely to levelOfCare when terms align.
+      if (treatment && !next.levelOfCare) {
+        const t = treatment.toLowerCase();
+        if (t.includes("detox")) next.levelOfCare = "detox";
+        else if (t.includes("inpatient") || t.includes("residential")) next.levelOfCare = "residential";
+        else if (t.includes("outpatient") || t.includes("iop") || t.includes("php")) next.levelOfCare = "outpatient";
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Load draft from localStorage (non-PII fields only, with TTL)
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
