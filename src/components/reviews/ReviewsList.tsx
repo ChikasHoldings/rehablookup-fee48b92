@@ -24,6 +24,12 @@ interface ReviewsListProps {
   isAuthenticated: boolean;
   onToggleHelpful: (reviewId: string) => Promise<{ error: Error | null }>;
   facilityId?: string;
+  /**
+   * When true, render without an outer Card and without the duplicate
+   * "Community Reviews" header/avg-rating row (used when the parent already
+   * provides a unified section heading + summary).
+   */
+  bare?: boolean;
 }
 
 export function ReviewsList({ 
@@ -33,7 +39,8 @@ export function ReviewsList({
   isLoading,
   isAuthenticated,
   onToggleHelpful,
-  facilityId
+  facilityId,
+  bare = false,
 }: ReviewsListProps) {
   const [responses, setResponses] = useState<Map<string, ReviewResponse>>(new Map());
   const [visibleCount, setVisibleCount] = useState(REVIEWS_PER_PAGE);
@@ -71,44 +78,45 @@ export function ReviewsList({
   const hasMore = visibleCount < reviews.length;
 
   if (isLoading) {
-    return (
+    const loadingInner = (
+      <div className="flex justify-center py-8">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+      </div>
+    );
+    return bare ? loadingInner : (
       <Card>
-        <CardContent className="py-8">
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-          </div>
-        </CardContent>
+        <CardContent className="py-8">{loadingInner}</CardContent>
       </Card>
     );
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Community Reviews</CardTitle>
-          {averageRating && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={cn(
-                      "h-4 w-4",
-                      star <= Math.round(averageRating)
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-muted-foreground/30"
-                    )}
-                  />
-                ))}
-              </div>
-              <span className="font-semibold">{averageRating}</span>
-              <span className="text-muted-foreground text-sm">({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})</span>
-            </div>
-          )}
+  const headerRow = (
+    <div className="flex items-center justify-between">
+      <CardTitle className="text-lg">Community Reviews</CardTitle>
+      {averageRating && (
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={cn(
+                  "h-4 w-4",
+                  star <= Math.round(averageRating)
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-muted-foreground/30"
+                )}
+              />
+            ))}
+          </div>
+          <span className="font-semibold">{averageRating}</span>
+          <span className="text-muted-foreground text-sm">({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})</span>
         </div>
-      </CardHeader>
-      <CardContent>
+      )}
+    </div>
+  );
+
+  const listBody = (
+    <>
         {reviews.length === 0 ? (
           <div className="text-center py-8">
             <Star className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
@@ -221,7 +229,18 @@ export function ReviewsList({
             )}
           </div>
         )}
-      </CardContent>
+    </>
+  );
+
+  if (bare) {
+    return <div>{listBody}</div>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>{headerRow}</CardHeader>
+      <CardContent>{listBody}</CardContent>
     </Card>
   );
 }
+

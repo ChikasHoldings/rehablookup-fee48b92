@@ -28,6 +28,11 @@ interface ReviewFormProps {
   onUpdate: (rating: number, reviewText: string) => Promise<{ error: Error | null }>;
   onDelete: () => Promise<{ error: Error | null }>;
   onResendVerification?: () => Promise<{ error: Error | null }>;
+  /**
+   * When true, render without an outer Card wrapper (used when the parent
+   * already provides a unified section heading + container).
+   */
+  bare?: boolean;
 }
 
 export function ReviewForm({ 
@@ -39,7 +44,8 @@ export function ReviewForm({
   onSubmit,
   onUpdate,
   onDelete,
-  onResendVerification
+  onResendVerification,
+  bare = false,
 }: ReviewFormProps) {
   const [rating, setRating] = useState(userReview?.rating || 0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -49,6 +55,20 @@ export function ReviewForm({
   const [isResending, setIsResending] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
+
+  // When `bare`, replace shadcn Card primitives with plain divs so the form
+  // sits flush inside the parent's unified section (no nested card chrome).
+  const ShellCard: React.ElementType = bare
+    ? (props: React.HTMLAttributes<HTMLDivElement>) => <div {...props} />
+    : Card;
+  const ShellHeader: React.ElementType = bare
+    ? (props: React.HTMLAttributes<HTMLDivElement>) => (
+        <div {...props} className={cn('mb-3', props.className)} />
+      )
+    : CardHeader;
+  const ShellContent: React.ElementType = bare
+    ? (props: React.HTMLAttributes<HTMLDivElement>) => <div {...props} />
+    : CardContent;
 
   const handleResendVerification = async () => {
     if (!onResendVerification) return;
@@ -137,22 +157,22 @@ export function ReviewForm({
 
   if (!isAuthReady) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="py-8 text-center">
+      <ShellCard className="border-dashed">
+        <ShellContent className="py-8 text-center">
           <Loader2 className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3 animate-spin" />
           <h3 className="font-medium text-lg mb-2">Loading Review Access</h3>
           <p className="text-muted-foreground">
             Checking your account so we can show the right review options.
           </p>
-        </CardContent>
-      </Card>
+        </ShellContent>
+      </ShellCard>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <Card className="border-dashed">
-        <CardContent className="py-8 text-center">
+      <ShellCard className="border-dashed">
+        <ShellContent className="py-8 text-center">
           <Star className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
           <h3 className="font-medium text-lg mb-2">Share Your Experience</h3>
           <p className="text-muted-foreground mb-4">
@@ -161,15 +181,15 @@ export function ReviewForm({
           <Button asChild>
             <Link to="/login">Sign In to Review</Link>
           </Button>
-        </CardContent>
-      </Card>
+        </ShellContent>
+      </ShellCard>
     );
   }
 
   if (!isEmailVerified) {
     return (
-      <Card className="border-yellow-500/20 bg-yellow-500/5">
-        <CardContent className="py-8 text-center">
+      <ShellCard className="border-yellow-500/20 bg-yellow-500/5">
+        <ShellContent className="py-8 text-center">
           <Mail className="h-10 w-10 text-yellow-600 mx-auto mb-3" />
           <h3 className="font-medium text-lg mb-2">Verify Your Email</h3>
           <p className="text-muted-foreground mb-4">
@@ -182,16 +202,16 @@ export function ReviewForm({
           >
             {isResending ? 'Sending...' : 'Resend Verification Email'}
           </Button>
-        </CardContent>
-      </Card>
+        </ShellContent>
+      </ShellCard>
     );
   }
 
   if (userReview && userReview.status === 'approved') {
     return (
       <>
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="py-6">
+        <ShellCard className="border-primary/20 bg-primary/5">
+          <ShellContent className="py-6">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
               <div>
@@ -223,8 +243,8 @@ export function ReviewForm({
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </ShellContent>
+        </ShellCard>
 
         <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
           <AlertDialogContent>
@@ -249,8 +269,8 @@ export function ReviewForm({
   if (userReview && userReview.status === 'pending') {
     return (
       <>
-        <Card className="border-yellow-500/20 bg-yellow-500/5">
-          <CardContent className="py-6">
+        <ShellCard className="border-yellow-500/20 bg-yellow-500/5">
+          <ShellContent className="py-6">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
               <div>
@@ -285,8 +305,8 @@ export function ReviewForm({
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </ShellContent>
+        </ShellCard>
 
         <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
           <AlertDialogContent>
@@ -309,14 +329,14 @@ export function ReviewForm({
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <ShellCard>
+      <ShellHeader>
         <CardTitle className="text-lg">Write a Review</CardTitle>
         <CardDescription>
           Share your experience at {facilityName}
         </CardDescription>
-      </CardHeader>
-      <CardContent>
+      </ShellHeader>
+      <ShellContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">Your Rating</label>
@@ -381,7 +401,7 @@ export function ReviewForm({
             )}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+      </ShellContent>
+    </ShellCard>
   );
 }
