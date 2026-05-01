@@ -232,7 +232,7 @@ for (const fn of FUNCTIONS) {
     // welcome-email functions are required to surface the richer
     // idempotency contract (status / idempotencyKey / firstSentAt).
     if (fn.name !== "notify-admin-provider-signup") {
-      assertStringIncludes(src, 'status: result.deduplicated ? "deduplicated" : "sent"');
+      assertStringIncludes(src, 'const status = result.deduplicated ? "deduplicated" : "sent"');
       assertStringIncludes(src, "idempotencyKey: effectiveIdempotencyKey");
       assertStringIncludes(src, "firstSentAt: result.firstSentAt");
     }
