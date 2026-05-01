@@ -3523,6 +3523,42 @@ export type Database = {
         }
         Relationships: []
       }
+      not_found_events: {
+        Row: {
+          created_at: string
+          id: string
+          path: string
+          referrer: string | null
+          search: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          viewport: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          path: string
+          referrer?: string | null
+          search?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewport?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          path?: string
+          referrer?: string | null
+          search?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          viewport?: string | null
+        }
+        Relationships: []
+      }
       notification_events: {
         Row: {
           channel: string

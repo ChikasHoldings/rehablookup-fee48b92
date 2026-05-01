@@ -145,6 +145,56 @@ export const analytics = {
     });
   },
 
+  // 404 / NotFound view — captures the exact path + referrer so we can
+  // identify the top sources of dead-end traffic the next day. Fires both
+  // a GA event AND a backend insert via the log-not-found edge function so
+  // we have first-party data even when GA is blocked by ad-blockers.
+  pageNotFound: (params: {
+    path: string;
+    search?: string;
+    referrer?: string;
+    viewport?: string;
+    userId?: string | null;
+    sessionId?: string | null;
+  }) => {
+    const { path, search, referrer, viewport, userId, sessionId } = params;
+
+    // 1) GA event (page_not_found is a custom event; page_location is the
+    // standard GA dimension so it shows up in the event report without
+    // extra config).
+    trackEvent('page_not_found', {
+      event_category: 'Error',
+      event_label: path,
+      page_location: path + (search || ''),
+      page_referrer: referrer || '(direct)',
+      viewport: viewport,
+    });
+
+    // 2) Backend insert (fire-and-forget). We import lazily to avoid pulling
+    // the supabase client into pages that never 404.
+    if (typeof window === 'undefined') return;
+    import('@/integrations/supabase/client')
+      .then(({ supabase }) => {
+        supabase.functions
+          .invoke('log-not-found', {
+            body: {
+              path,
+              search: search || null,
+              referrer: referrer || null,
+              viewport: viewport || null,
+              userId: userId || null,
+              sessionId: sessionId || null,
+            },
+          })
+          .catch(() => {
+            /* fire-and-forget; never block the user */
+          });
+      })
+      .catch(() => {
+        /* ignore — analytics must never break navigation */
+      });
+  },
+
   // ========== ENHANCED ECOMMERCE TRACKING ==========
   
   // View subscription plan (view_item)

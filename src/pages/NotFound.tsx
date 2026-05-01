@@ -1,5 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { analytics } from "@/lib/analytics";
+import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -22,10 +24,54 @@ const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const reportedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+    // Strict-Mode guard: only report each unique pathname once per mount.
+    if (reportedRef.current === location.pathname) return;
+    reportedRef.current = location.pathname;
+
+    if (import.meta.env.DEV) {
+      console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+    }
+
+    // Best-effort: pull the current user id (may be null for anon traffic)
+    // and forward path + referrer + viewport to GA + the backend log.
+    let cancelled = false;
+    supabase.auth.getUser()
+      .then(({ data }) => {
+        if (cancelled) return;
+        analytics.pageNotFound({
+          path: location.pathname,
+          search: location.search,
+          referrer: typeof document !== "undefined" ? document.referrer : "",
+          viewport:
+            typeof window !== "undefined"
+              ? `${window.innerWidth}x${window.innerHeight}`
+              : undefined,
+          userId: data.user?.id ?? null,
+          sessionId:
+            typeof window !== "undefined"
+              ? window.sessionStorage?.getItem("rl_session_id") ?? null
+              : null,
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        analytics.pageNotFound({
+          path: location.pathname,
+          search: location.search,
+          referrer: typeof document !== "undefined" ? document.referrer : "",
+          viewport:
+            typeof window !== "undefined"
+              ? `${window.innerWidth}x${window.innerHeight}`
+              : undefined,
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname, location.search]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
