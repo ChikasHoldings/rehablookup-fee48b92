@@ -1023,7 +1023,7 @@ export default function ConciergeIntake() {
               <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
                 {/* Progress */}
                 <div className="px-4 sm:px-6 md:px-8 pt-4 pb-3 border-b bg-muted/30">
-                  <IntakeProgress currentStep={currentStep} totalSteps={7} />
+                  <IntakeProgress currentStep={currentStep} totalSteps={TOTAL_STEPS} />
                 </div>
 
                 {/* Step Content */}
@@ -1065,7 +1065,7 @@ export default function ConciergeIntake() {
                 </div>
 
                 {/* Navigation */}
-                {currentStep < 7 && (
+                {currentStep < TOTAL_STEPS && (
                   <div className="px-4 sm:px-6 md:px-8 py-4 border-t bg-muted/20 flex flex-col-reverse sm:flex-row justify-center gap-3">
                     {currentStep > 1 && (
                       <Button
@@ -1078,8 +1078,17 @@ export default function ConciergeIntake() {
                       </Button>
                     )}
                     {currentStep === 6 ? (
-                      // Email verification step - only show Continue if verified
                       emailVerification.verified && (
+                        <Button
+                          onClick={handleNext}
+                          className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
+                        >
+                          Continue to Phone Verification
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      )
+                    ) : currentStep === 7 ? (
+                      phoneVerification.verified && (
                         <Button
                           onClick={handleNext}
                           className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
@@ -1100,7 +1109,7 @@ export default function ConciergeIntake() {
                   </div>
                 )}
 
-                {currentStep === 7 && (
+                {currentStep === TOTAL_STEPS && (
                   <div className="px-4 sm:px-6 py-3 border-t bg-muted/20 flex justify-center">
                     <Button
                       variant="ghost"
