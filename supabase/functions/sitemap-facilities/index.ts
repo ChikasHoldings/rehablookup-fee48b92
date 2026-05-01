@@ -13,6 +13,21 @@ function slugify(s: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+// Slug normalizer — MUST stay in sync with `normalizeSlug` in
+// `src/lib/slugUtils.ts` and the runtime route guard in
+// `src/pages/CenterProfile.tsx`. Used to canonicalize persisted facility
+// slugs before emitting them into the sitemap so we never publish mixed-
+// case, whitespace-padded, or doubly-hyphenated `/center/<slug>` URLs.
+function normalizeSlug(slug: string | null | undefined): string {
+  if (!slug) return "";
+  return String(slug)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 // Two-letter US state abbreviation -> full slug, for facilities stored as "CA" etc.
 const STATE_ABBR_TO_SLUG: Record<string, string> = {
   al: "alabama", ak: "alaska", az: "arizona", ar: "arkansas", ca: "california",
@@ -1888,7 +1903,13 @@ async function generateFacilitiesSitemap(): Promise<string> {
 `;
 
   for (const facility of allFacilities) {
-    if (!facility.slug) continue;
+    // Normalize the persisted slug so the sitemap emits the same
+    // canonical URL that <SEO />, internal <Link>s, and the runtime
+    // route guard agree on (lowercase, hyphen-separated, no whitespace,
+    // no trailing slash). Skip rows whose slug doesn't survive
+    // normalization rather than emitting a malformed URL.
+    const canonicalSlug = normalizeSlug(facility.slug);
+    if (!canonicalSlug) continue;
 
     const lastmod = facility.updated_at
       ? new Date(facility.updated_at).toISOString().split("T")[0]
@@ -1915,7 +1936,7 @@ async function generateFacilitiesSitemap(): Promise<string> {
     }
 
     sitemap += generateUrlEntry(
-      `/center/${facility.slug}`,
+      `/center/${canonicalSlug}`,
       priority,
       "weekly",
       lastmod,
