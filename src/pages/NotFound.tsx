@@ -1,5 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { analytics } from "@/lib/analytics";
+import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
