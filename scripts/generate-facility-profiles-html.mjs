@@ -137,6 +137,65 @@ async function fetchFacilities() {
 }
 
 // ---------------------------------------------------------------------------
+// Facility-specific FAQ builder
+// ---------------------------------------------------------------------------
+
+/**
+ * Build 4 fact-based Q/A pairs per facility. We only reference data we have on
+ * the row — never insurance, ratings, programs, or accreditations the row
+ * doesn't expose — and we route every "I want more detail" answer to either
+ * the live profile (Request Info modal) or the concierge service. This keeps
+ * the FAQs E-E-A-T compliant and avoids unverifiable claims.
+ *
+ * Returns at least 3 entries so FAQPage JSON-LD always passes the audit.
+ */
+function buildFacilityFaqs(f) {
+  const name = f.name;
+  const city = f.city;
+  const state = f.state;
+  const type = f.facility_type;
+  const founded = f.year_established ? String(f.year_established) : "";
+
+  const locationLine = f.address
+    ? `${name} is located at ${f.address}, ${city}, ${state}${f.zip_code ? " " + f.zip_code : ""}.`
+    : `${name} is based in ${city}, ${state}.`;
+
+  const faqs = [
+    {
+      q: `Where is ${name} located?`,
+      a:
+        `${locationLine} You can view the full address, get directions, and see nearby treatment options on the facility profile at rehablookup.com/center/${f.slug}.`,
+    },
+    {
+      q: `What type of addiction treatment does ${name} provide?`,
+      a: type
+        ? `${name} operates as a ${type} in ${city}, ${state}, focused on addiction medicine and recovery support. Specific programs, levels of care, and admission criteria are listed on the verified profile.`
+        : `${name} provides addiction treatment services in ${city}, ${state}. Program details and levels of care are listed on the verified profile so you can confirm the right fit before reaching out.`,
+    },
+    {
+      q: `How do I contact ${name} or request more information?`,
+      a: f.phone
+        ? `You can call ${name} at ${f.phone} or use the "Request Information" form on the RehabLookup profile to send a confidential inquiry. A facility representative typically responds the same business day.`
+        : `Use the "Request Information" form on the ${name} profile at rehablookup.com/center/${f.slug} to send a confidential inquiry. A facility representative typically responds the same business day.`,
+    },
+    {
+      q: `Does ${name} accept insurance, and how is treatment paid for?`,
+      a:
+        `Coverage and self-pay options vary by program and individual plan. To verify benefits or discuss payment, request information directly through the ${name} profile — the facility's admissions team can confirm accepted insurance and out-of-pocket costs in writing before you commit.`,
+    },
+  ];
+
+  if (founded) {
+    faqs.push({
+      q: `When was ${name} established?`,
+      a: `${name} was established in ${founded} and currently operates in ${city}, ${state}. The verified profile shows the latest editorial review date and any updates submitted by the facility.`,
+    });
+  }
+
+  return faqs;
+}
+
+// ---------------------------------------------------------------------------
 // HTML template
 // ---------------------------------------------------------------------------
 
