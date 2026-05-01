@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getFriendlyMessageForError } from "@/lib/contracts/friendly-error-messages";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
@@ -78,6 +79,11 @@ export default function ProviderSupport() {
       });
 
       if (error) throw error;
+      if (data && typeof data === "object" && (data as { success?: boolean }).success === false) {
+        const friendly = await getFriendlyMessageForError(data);
+        toast({ title: friendly.title, description: friendly.description, variant: "destructive" });
+        return;
+      }
 
       toast({
         title: "Message Sent",
@@ -90,9 +96,10 @@ export default function ProviderSupport() {
       setMessage("");
     } catch (error) {
       console.error("Error sending support request:", error);
+      const friendly = await getFriendlyMessageForError(error);
       toast({
-        title: "Failed to send message",
-        description: "Please try again or email us directly.",
+        title: friendly.title,
+        description: friendly.description,
         variant: "destructive",
       });
     } finally {
