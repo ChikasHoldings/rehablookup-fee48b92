@@ -284,10 +284,17 @@ Deno.serve(async (req) => {
       to: [providerEmail],
       subject: `🎁 ${providerFirstName}, your welcome credit offer is waiting — claim bonus credits now`,
       html: emailHtml,
+      // Trace headers — let recipients (and bounce/complaint webhooks)
+      // tie the message back to the originating request.
+      headers: {
+        "X-Request-Id": shortId,
+        "X-Email-Type": "provider_welcome_offer",
+        "X-Idempotency-Key": effectiveIdempotencyKey,
+      },
     }, {
       emailType: "provider_welcome_offer",
       idempotencyKey: effectiveIdempotencyKey,
-      metadata: { facilityId, facilityName },
+      metadata: { facilityId, facilityName, shortId },
     });
 
     if (!result.success && !result.deduplicated) {

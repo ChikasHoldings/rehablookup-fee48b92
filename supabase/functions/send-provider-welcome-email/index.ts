@@ -287,10 +287,17 @@ Deno.serve(async (req) => {
       to: [providerEmail],
       subject: `${isPro ? "⭐ " : ""}Welcome to RehabLookup, ${providerFirstName} — your provider account is ready!`,
       html: emailHtml,
+      // Trace headers — let recipients (and bounce/complaint webhooks)
+      // tie the message back to the originating request.
+      headers: {
+        "X-Request-Id": shortId,
+        "X-Email-Type": "provider_welcome",
+        "X-Idempotency-Key": effectiveIdempotencyKey,
+      },
     }, {
       emailType: "provider_welcome",
       idempotencyKey: effectiveIdempotencyKey,
-      metadata: { facilityId, facilityName },
+      metadata: { facilityId, facilityName, shortId },
     });
 
     if (result.deduplicated) {
