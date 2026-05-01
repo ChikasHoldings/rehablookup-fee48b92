@@ -140,3 +140,59 @@ Deno.test("metadata: PaymentIntent carries facility_id, amount_cents, bonus_cent
     assertStringIncludes(slice, key);
   }
 });
+
+Deno.test("response shape: every rejection path emits a stable machine-readable `code`", () => {
+  // Ops/log-scrapers pivot on these. Renaming any of them is a breaking
+  // change for dashboards and runbooks — update consumers in the same PR.
+  const REQUIRED_CODES = [
+    // Auth / request shape
+    "AUTH_MISSING_SIGNATURE",
+    "AUTH_TS_NOT_NUMERIC",
+    "AUTH_TS_OUT_OF_WINDOW",
+    "AUTH_SIGNATURE_MISMATCH",
+    "BAD_REQUEST_BODY",
+    // Settings / config
+    "SETTINGS_NOT_FOUND_OR_DISABLED",
+    "SETTINGS_QUERY_FAILED",
+    "BALANCE_ABOVE_THRESHOLD",
+    "INVALID_RELOAD_AMOUNT",
+    "USER_NOT_FOUND",
+    // Stripe-side
+    "NO_STRIPE_CUSTOMER",
+    "NO_PAYMENT_METHOD",
+    "PAYMENT_NOT_SUCCEEDED",
+    // Idempotency / concurrency
+    "AUTO_RELOAD_LOCK_HELD",
+    "RECENT_AUTO_RELOAD_FOUND",
+    // Success + catch-all
+    "AUTO_RELOAD_CHARGED",
+    "UNHANDLED_EXCEPTION",
+  ];
+  for (const code of REQUIRED_CODES) {
+    assertStringIncludes(
+      SOURCE,
+      `"${code}"`,
+      `Stable response code "${code}" missing — debugging consumers depend on it`,
+    );
+  }
+});
+
+Deno.test("response shape: never echoes the expected HMAC signature", () => {
+  // Defense-in-depth: returning the server-computed signature would let any
+  // caller mint a valid one. We allow length/hex-charset diagnostics only.
+  const sigBlock = SOURCE.match(
+    /AUTH_SIGNATURE_MISMATCH[\s\S]{0,800}?\}\)/,
+  );
+  assert(sigBlock, "AUTH_SIGNATURE_MISMATCH response block not found");
+  // Strip the allowed `expectedSigLength` diagnostic before scanning so
+  // the regex below catches a real `expected` echo only.
+  const block = sigBlock![0].replace(/expectedSigLength/g, "");
+  assert(
+    !/\bexpected\b/.test(block),
+    "Signature-mismatch response must not include the expected HMAC",
+  );
+  assert(
+    !block.includes("serviceRoleKey"),
+    "Signature-mismatch response must not include the service-role key",
+  );
+});
