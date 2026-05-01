@@ -120,29 +120,59 @@ export function UnlockLeadButton({
   // Only show original price strikethrough for non-redistributed leads with Pro discount
   const originalPriceDisplay = (!isRedistributed && isPro) ? formatPrice(basePrice) : null;
 
+  const sharedDialogs = (
+    <>
+      <UnlockConfirmDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        leadName={leadName}
+        inquiryType={type}
+        cityState={cityState}
+        finalPrice={finalPrice}
+        originalPrice={(!isRedistributed && isPro) ? basePrice : null}
+        discountPercent={effectiveDiscountPercent}
+        hasEnoughCredits={hasEnoughCredits}
+        currentBalance={balance}
+        onConfirm={handleUnlock}
+        isLoading={isUnlocking}
+      />
+      <UnlockSuccessDialog
+        open={showSuccessDialog}
+        onOpenChange={setShowSuccessDialog}
+        revealed={revealedLead}
+        cityState={cityState}
+        amountCharged={finalPrice}
+        balanceAfter={Math.max(0, balance - finalPrice)}
+      />
+    </>
+  );
+
   if (variant === "compact") {
     return (
-      <Button
-        size="sm"
-        variant="secondary"
-        className={cn("gap-1.5", className)}
-        onClick={handleClick}
-        disabled={isUnlocking}
-      >
-        {isUnlocking ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <Lock className="h-3.5 w-3.5" />
-        )}
-        Unlock {priceDisplay}
-      </Button>
+      <>
+        <Button
+          size="sm"
+          variant="secondary"
+          className={cn("gap-1.5", className)}
+          onClick={handleClick}
+          disabled={isUnlocking}
+        >
+          {isUnlocking ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Lock className="h-3.5 w-3.5" />
+          )}
+          Unlock {priceDisplay}
+        </Button>
+        {sharedDialogs}
+      </>
     );
   }
 
   if (variant === "card") {
     return (
       <>
-        <div 
+        <div
           onClick={handleClick}
           className={cn(
             "absolute inset-0 flex items-center justify-center bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg cursor-pointer",
@@ -158,21 +188,7 @@ export function UnlockLeadButton({
             Unlock for {priceDisplay}
           </Button>
         </div>
-
-        <UnlockConfirmDialog
-          open={showConfirmDialog}
-          onOpenChange={setShowConfirmDialog}
-          leadName={leadName}
-          inquiryType={type}
-          cityState={cityState}
-          finalPrice={finalPrice}
-          originalPrice={(!isRedistributed && isPro) ? basePrice : null}
-          discountPercent={effectiveDiscountPercent}
-          hasEnoughCredits={hasEnoughCredits}
-          currentBalance={balance}
-          onConfirm={handleUnlock}
-          isLoading={isUnlocking}
-        />
+        {sharedDialogs}
       </>
     );
   }
@@ -200,21 +216,7 @@ export function UnlockLeadButton({
           </>
         )}
       </Button>
-
-        <UnlockConfirmDialog
-          open={showConfirmDialog}
-          onOpenChange={setShowConfirmDialog}
-          leadName={leadName}
-          inquiryType={type}
-          cityState={cityState}
-          finalPrice={finalPrice}
-          originalPrice={(!isRedistributed && isPro) ? basePrice : null}
-          discountPercent={effectiveDiscountPercent}
-          hasEnoughCredits={hasEnoughCredits}
-          currentBalance={balance}
-          onConfirm={handleUnlock}
-          isLoading={isUnlocking}
-        />
+      {sharedDialogs}
     </>
   );
 }
