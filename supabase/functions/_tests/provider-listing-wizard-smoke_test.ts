@@ -302,16 +302,14 @@ Deno.test("[request-facility-from-marketing] inserts a real lead with source=mar
 Deno.test("[request-facility-from-marketing] facility email send failure is best-effort (does not fail request)", async () => {
   const src = await loadSource(REQUEST_PATH);
   // Email failure must NOT throw — the lead has already been written and
-  // the user-facing success contract is "we recorded your request".
-  const emailIdx = src.indexOf("sendEmailWithRetry");
-  assert(emailIdx > 0, "must call sendEmailWithRetry");
-  const window = src.slice(emailIdx - 200, emailIdx + 800);
-  assertStringIncludes(window, "try {");
-  assertStringIncludes(window, "} catch");
-  // The catch logs WARN and continues — it must not rethrow.
+  // the user-facing success contract is "we recorded your request". The
+  // sendEmailWithRetry call must therefore be wrapped in try/catch and the
+  // catch must log at WARN (not rethrow).
+  assertStringIncludes(src, "sendEmailWithRetry");
+  const re = /try\s*\{[\s\S]{0,400}?sendEmailWithRetry\([\s\S]{0,600}?\}\s*catch\s*\(emailError\)\s*\{[\s\S]{0,300}?WARN[\s\S]{0,200}?\}/;
   assert(
-    /catch\s*\(emailError\)\s*\{[\s\S]{0,300}?WARN/.test(window),
-    "email failure must be logged at WARN and swallowed",
+    re.test(src),
+    "sendEmailWithRetry must be wrapped in try/catch with a WARN-level swallowing handler",
   );
 });
 
