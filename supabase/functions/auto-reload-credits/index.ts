@@ -88,10 +88,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Fetch auto-reload settings
+    // Fetch auto-reload settings (explicit columns — never select *)
     const { data: settings, error: settingsError } = await supabaseAdmin
       .from("provider_auto_reload_settings")
-      .select("*")
+      .select("provider_id, facility_id, enabled, threshold_cents, reload_amount_cents")
       .eq("provider_id", providerId)
       .eq("enabled", true)
       .maybeSingle();
