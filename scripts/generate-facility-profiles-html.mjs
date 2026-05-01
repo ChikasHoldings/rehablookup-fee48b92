@@ -402,6 +402,7 @@ ${f.phone ? `<a class="btn btn-secondary" href="tel:${escapeAttr(f.phone)}">Call
 <li><a href="/concierge">Get a free personalized placement match</a></li>
 </ul>
 </section>
+${faqHtml}
 </main>
 <footer><p>&copy; ${new Date().getFullYear()} RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy</a> &middot; <a href="/terms-of-service">Terms</a> &middot; <a href="/editorial-policy">Editorial Policy</a></p></footer>
 </body>
