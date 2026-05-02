@@ -238,8 +238,12 @@ Deno.serve(async (req) => {
     const discountPercent = hasPro ? (proSub.unlock_discount_percent ?? platformProDiscount) : 0;
 
     // ── 4. Calculate fee ──
-    // Domestic is free ($0); any non-zero intake payment indicates an international case.
-    const isIntl = isInternational === true || (inquiry.payment_amount_cents && inquiry.payment_amount_cents > 0);
+    // STRUCTURAL TRUTH: `concierge_inquiries` rows are domestic-only. International placements
+    // live in `international_placement_cases` and never reach this function. We do NOT infer
+    // intl/domestic from `payment_amount_cents` (legacy default was 2900, which would mass-
+    // misclassify every legacy domestic row as international). Callers may still pass
+    // `isInternational: true` explicitly for any future hybrid scenario.
+    const isIntl = isInternational === true;
     const baseFee = isIntl ? internationalFee : domesticFee;
     const feeCents = hasPro ? Math.round(baseFee * (1 - discountPercent / 100)) : baseFee;
     const actualFeeType = isIntl ? 'international_flat_fee' : 'flat_fee';
