@@ -381,3 +381,60 @@ export function tourCancelledUserEmail(data: TourEmailData): string {
     emailFooter()
   );
 }
+
+/**
+ * Email sent to seeker confirming their tour is locked in.
+ * Triggered when the seeker accepts a facility's proposed tour time
+ * (status: tour_confirmed). Pairs with tourConfirmedFacilityEmail.
+ */
+export function tourConfirmedUserEmail(data: TourEmailData): string {
+  const firstName = data.seekerName.split(" ")[0];
+  const confirmedTime = data.confirmedDateTime ? formatDateTime(data.confirmedDateTime) : "See details";
+
+  const confirmationBox = `
+    <p style="margin: 0 0 8px 0; font-size: 14px; color: #059669; text-transform: uppercase; letter-spacing: 0.5px;">
+      ✓ Tour Confirmed
+    </p>
+    <p style="margin: 0 0 12px 0; font-size: 20px; font-weight: 600; color: #065F46;">
+      ${confirmedTime}
+    </p>
+    <p style="margin: 0 0 8px 0; font-size: 15px; color: ${BRAND_COLORS.textPrimary};">
+      <strong>Facility:</strong> ${data.facilityName}
+    </p>
+    <p style="margin: 0 0 8px 0; font-size: 15px; color: ${BRAND_COLORS.textPrimary};">
+      <strong>Location:</strong> ${data.facilityCity}, ${data.facilityState}
+    </p>
+    <p style="margin: 0; font-size: 15px; color: ${BRAND_COLORS.textPrimary};">
+      <strong>Tour Type:</strong> ${formatTourType(data.tourType)}
+    </p>
+  `;
+
+  const tipsBlock = `
+    <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: ${BRAND_COLORS.textPrimary};">
+      How to prepare:
+    </p>
+    <ul style="margin: 0; padding: 0 0 0 18px; font-size: 14px; color: ${BRAND_COLORS.textSecondary}; line-height: 1.7;">
+      <li>Bring a list of questions about programs, length of stay, and aftercare.</li>
+      <li>Have your insurance card or payment information handy.</li>
+      <li>${data.tourType === "virtual"
+        ? "Test your camera and microphone a few minutes early."
+        : "Plan to arrive 10–15 minutes early."}</li>
+      <li>Note anything that feels off — your advisor can help you compare options.</li>
+    </ul>
+  `;
+
+  const content = `
+    ${paragraph(`Hi ${firstName},`)}
+    ${paragraph(`Your tour is locked in. <strong>${data.facilityName}</strong> is expecting you at the time below.`)}
+    ${successBox(confirmationBox)}
+    ${infoBox(tipsBlock)}
+    ${paragraph(`If anything changes, you can reschedule or cancel from your concierge portal — or just reply to this email and our team will help.`)}
+    ${ctaButton("View Tour Details", "https://rehablookup.com/account/concierge", BRAND_COLORS.success)}
+  `;
+
+  return emailWrapper(
+    emailHeader("Tour Confirmed!", data.facilityName, "✅") +
+    emailBody(content) +
+    emailFooter()
+  );
+}
