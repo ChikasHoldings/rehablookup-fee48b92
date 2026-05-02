@@ -149,6 +149,21 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
     navigate(detailsUrl, { state: { fromSearch: true, openContactForm: true } });
   }, [handleFeaturedClick, navigate, detailsUrl]);
 
+  // Profile button — same destination as the card, but stops propagation so
+  // the click is unambiguous and we don't double-fire the card's onClick.
+  const handleProfileClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleFeaturedClick();
+    navigate(detailsUrl, { state: { fromSearch: true } });
+  }, [handleFeaturedClick, navigate, detailsUrl]);
+
+  // Call button — tracks the featured click for analytics parity, then lets
+  // the native tel: handler take over. We don't preventDefault.
+  const handleCallClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleFeaturedClick();
+  }, [handleFeaturedClick]);
+
   // Compact horizontal layout for mobile/list view
   if (variant === "compact") {
     return (
