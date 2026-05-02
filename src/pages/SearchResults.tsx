@@ -8,7 +8,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import { SearchResultsForm } from "@/components/search/SearchResultsForm";
-import { FilterChips } from "@/components/search/FilterChips";
+
 import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
 import { 
