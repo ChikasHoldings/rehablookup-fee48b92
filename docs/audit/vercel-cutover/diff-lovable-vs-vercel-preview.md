@@ -1,0 +1,88 @@
+# Cutover Snapshot Diff
+
+- Before: `docs/audit/vercel-cutover/lovable-snapshot.csv` (53 URLs)
+- After:  `docs/audit/vercel-cutover/vercel-preview-snapshot.csv` (48 URLs)
+- Total differences: **77** (CRITICAL 21, HIGH 20, LOW 36)
+
+## CRITICAL (21)
+- **missing** `/24-7-detox-near-me` — URL present before, missing in after-snapshot
+- **canonical** `/about` —  → https://rehablookup.com/about
+- **missing** `/benzo-rehab-near-me` — URL present before, missing in after-snapshot
+- **missing** `/cocaine-rehab-near-me` — URL present before, missing in after-snapshot
+- **canonical** `/contact` —  → https://rehablookup.com/contact
+- **canonical** `/for-providers` —  → https://rehablookup.com/for-providers
+- **missing** `/heroin-rehab-near-me` — URL present before, missing in after-snapshot
+- **missing** `/how-much-does-rehab-cost` — URL present before, missing in after-snapshot
+- **missing** `/how-to-choose-rehab` — URL present before, missing in after-snapshot
+- **canonical** `/insurance/aetna-rehab` —  → https://rehablookup.com/insurance/aetna-rehab
+- **canonical** `/insurance/bcbs-treatment` —  → https://rehablookup.com/insurance/bcbs-treatment
+- **canonical** `/luxury-rehab-near-me` —  → https://rehablookup.com/luxury-rehab-near-me
+- **missing** `/meth-rehab-near-me` — URL present before, missing in after-snapshot
+- **missing** `/opioid-rehab-near-me` — URL present before, missing in after-snapshot
+- **missing** `/prescription-drug-rehab-near-me` — URL present before, missing in after-snapshot
+- **canonical** `/rehab-centers/california` —  → https://rehablookup.com/rehab-centers/california
+- **canonical** `/rehab-centers/florida` —  → https://rehablookup.com/rehab-centers/florida
+- **canonical** `/rehab-centers/new-york` —  → https://rehablookup.com/rehab-centers/new-york
+- **canonical** `/rehab-centers/texas` —  → https://rehablookup.com/rehab-centers/texas
+- **missing** `/what-to-expect-in-rehab` — URL present before, missing in after-snapshot
+- **missing** `/xanax-rehab-near-me` — URL present before, missing in after-snapshot
+
+## HIGH (20)
+- **title** `/about` — "Find Trusted Addiction Treatment Centers | RehabLookup" → "About RehabLookup | RehabLookup"
+- **desc** `/about` — "Search 15,000+ verified rehab centers near you. Compare deto…" → "Learn about RehabLookup…"
+- **title** `/contact` — "Find Trusted Addiction Treatment Centers | RehabLookup" → "Contact Us | RehabLookup"
+- **desc** `/contact` — "Search 15,000+ verified rehab centers near you. Compare deto…" → "Get in touch with RehabLookup. Questions about treatment, pr…"
+- **title** `/for-providers` — "Find Trusted Addiction Treatment Centers | RehabLookup" → "List Your Rehab Center Free | RehabLookup for Providers"
+- **desc** `/for-providers` — "Search 15,000+ verified rehab centers near you. Compare deto…" → "List your treatment center for free on RehabLookup. Connect …"
+- **title** `/insurance/aetna-rehab` — "Find Trusted Addiction Treatment Centers | RehabLookup" → "Aetna Rehab Coverage | RehabLookup"
+- **desc** `/insurance/aetna-rehab` — "Search 15,000+ verified rehab centers near you. Compare deto…" → "Aetna insurance coverage for addiction treatment. Find in-ne…"
+- **title** `/insurance/bcbs-treatment` — "Find Trusted Addiction Treatment Centers | RehabLookup" → "BCBS Treatment Coverage | RehabLookup"
+- **desc** `/insurance/bcbs-treatment` — "Search 15,000+ verified rehab centers near you. Compare deto…" → "Blue Cross Blue Shield coverage for addiction treatment. Fin…"
+- **title** `/luxury-rehab-near-me` — "Find Trusted Addiction Treatment Centers | RehabLookup" → "Luxury Rehab Near Me | RehabLookup"
+- **desc** `/luxury-rehab-near-me` — "Search 15,000+ verified rehab centers near you. Compare deto…" → "Find luxury rehab centers near you with premium amenities, p…"
+- **title** `/rehab-centers/california` — "Find Trusted Addiction Treatment Centers | RehabLookup" → "Rehab Centers in California — Find Addiction Treatment | RehabLookup"
+- **desc** `/rehab-centers/california` — "Search 15,000+ verified rehab centers near you. Compare deto…" → "Find accredited rehab centers in California. Compare inpatie…"
+- **title** `/rehab-centers/florida` — "Find Trusted Addiction Treatment Centers | RehabLookup" → "Rehab Centers in Florida — Find Addiction Treatment | RehabLookup"
+- **desc** `/rehab-centers/florida` — "Search 15,000+ verified rehab centers near you. Compare deto…" → "Find accredited rehab centers in Florida. Compare inpatient,…"
+- **title** `/rehab-centers/new-york` — "Find Trusted Addiction Treatment Centers | RehabLookup" → "Rehab Centers in New York — Find Addiction Treatment | RehabLookup"
+- **desc** `/rehab-centers/new-york` — "Search 15,000+ verified rehab centers near you. Compare deto…" → "Find accredited rehab centers in New York. Compare inpatient…"
+- **title** `/rehab-centers/texas` — "Find Trusted Addiction Treatment Centers | RehabLookup" → "Rehab Centers in Texas — Find Addiction Treatment | RehabLookup"
+- **desc** `/rehab-centers/texas` — "Search 15,000+ verified rehab centers near you. Compare deto…" → "Find accredited rehab centers in Texas. Compare inpatient, o…"
+
+## LOW (36)
+- **h1** `/about` — "Find Trusted Addiction Treatment Centers Near You" → "About RehabLookup"
+- **jsonLd** `/about` — 5 → 1
+- **robots** `/about` — "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" → "index, follow"
+- **h1** `/contact` — "Find Trusted Addiction Treatment Centers Near You" → "Contact Us"
+- **jsonLd** `/contact` — 5 → 1
+- **robots** `/contact` — "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" → "index, follow"
+- **added** `/dual-diagnosis-rehab-near-me` — New URL in after-snapshot (200)
+- **h1** `/for-providers` — "Find Trusted Addiction Treatment Centers Near You" → "Grow Your Admissions with Qualified Families"
+- **jsonLd** `/for-providers` — 5 → 2
+- **robots** `/for-providers` — "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" → "index, follow"
+- **h1** `/insurance/aetna-rehab` — "Find Trusted Addiction Treatment Centers Near You" → "Aetna Rehab Coverage"
+- **jsonLd** `/insurance/aetna-rehab` — 5 → 1
+- **robots** `/insurance/aetna-rehab` — "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" → "index, follow"
+- **h1** `/insurance/bcbs-treatment` — "Find Trusted Addiction Treatment Centers Near You" → "BCBS Treatment Coverage"
+- **jsonLd** `/insurance/bcbs-treatment` — 5 → 1
+- **robots** `/insurance/bcbs-treatment` — "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" → "index, follow"
+- **h1** `/luxury-rehab-near-me` — "Find Trusted Addiction Treatment Centers Near You" → "Luxury Rehab Near Me"
+- **jsonLd** `/luxury-rehab-near-me` — 5 → 1
+- **robots** `/luxury-rehab-near-me` — "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" → "index, follow"
+- **added** `/outpatient-near-me` — New URL in after-snapshot (200)
+- **h1** `/rehab-centers/california` — "Find Trusted Addiction Treatment Centers Near You" → "Rehab Centers in California"
+- **jsonLd** `/rehab-centers/california` — 5 → 2
+- **robots** `/rehab-centers/california` — "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" → "index, follow"
+- **h1** `/rehab-centers/florida` — "Find Trusted Addiction Treatment Centers Near You" → "Rehab Centers in Florida"
+- **jsonLd** `/rehab-centers/florida` — 5 → 2
+- **robots** `/rehab-centers/florida` — "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" → "index, follow"
+- **h1** `/rehab-centers/new-york` — "Find Trusted Addiction Treatment Centers Near You" → "Rehab Centers in New York"
+- **jsonLd** `/rehab-centers/new-york` — 5 → 2
+- **robots** `/rehab-centers/new-york` — "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" → "index, follow"
+- **h1** `/rehab-centers/texas` — "Find Trusted Addiction Treatment Centers Near You" → "Rehab Centers in Texas"
+- **jsonLd** `/rehab-centers/texas` — 5 → 2
+- **robots** `/rehab-centers/texas` — "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" → "index, follow"
+- **added** `/treatment-types/alcohol-rehabilitation` — New URL in after-snapshot (200)
+- **added** `/treatment-types/drug-addiction-treatment` — New URL in after-snapshot (200)
+- **added** `/treatment-types/dual-diagnosis-treatment` — New URL in after-snapshot (200)
+- **added** `/treatment-types/outpatient-programs` — New URL in after-snapshot (200)

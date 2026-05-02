@@ -94,8 +94,10 @@ for (const [p, st, mc] of ALWAYS) await check(p, st, mc);
 console.log(`\n  Redirects (phase=${PHASE})`);
 for (const [p, postStatus] of REDIRECTS) {
   // pre-phase: Lovable serves SPA fallback (200) — redirect not yet live.
-  // post-phase: Vercel must serve a server-side 301.
-  const expected = PHASE === "pre" ? 200 : postStatus;
+  // post-phase: Vercel serves a permanent server redirect. Accept either
+  // 301 (statusCode: 301) or 308 (permanent: true) — both are permanent,
+  // both pass equity, and Google treats them equivalently.
+  const expected = PHASE === "pre" ? [200] : [301, 308];
   await check(p, expected, []);
 }
 
@@ -104,9 +106,16 @@ for (const [p, st, mc] of [["/", 200, ["RehabLookup"]], ["/rehab-centers/califor
   await check(p, st, mc, BOT_UA);
 }
 
-// www → apex: pre accepts current 302 OR target 301; post requires 301.
-const wwwExpected = PHASE === "pre" ? [301, 302] : 301;
-await check(WWW, wwwExpected, [], UA, "www → apex");
+// www → apex: only meaningful when testing the apex host itself. The host
+// rule matches `www.rehablookup.com`; when --host points at a *.vercel.app
+// preview the rule can never match, so skip rather than emit a false negative.
+const isPreviewHost = /\.vercel\.app$/i.test(new URL(HOST).hostname);
+if (isPreviewHost) {
+  console.log(`\n  www → apex                                    SKIP  (preview host — rule only fires on apex DNS)`);
+} else {
+  const wwwExpected = PHASE === "pre" ? [301, 302, 308] : [301, 308];
+  await check(WWW, wwwExpected, [], UA, "www → apex");
+}
 
 console.log(`\n${failures === 0 ? "✅" : "❌"} ${failures} failure(s) [phase=${PHASE}]\n`);
 if (failures === 0 && PHASE === "pre") {
