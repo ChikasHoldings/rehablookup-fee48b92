@@ -106,7 +106,7 @@ If monitor has stayed clean for 24 hours:
    - Submit `https://rehablookup.com/sitemap-index.xml` (re-submit even if already there — forces a recrawl)
    - Submit each child sitemap individually
 4. In Bing Webmaster Tools: same submission
-5. Run `node scripts/monitor-cutover.mjs` daily for 7 days
+5. Run `node scripts/monitor-cutover.mjs --phase post` daily for 7 days
 
 ---
 
