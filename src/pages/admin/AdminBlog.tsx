@@ -55,6 +55,8 @@ import {
 } from "lucide-react";
 import { ArticleEditor } from "@/components/admin/blog/ArticleEditor";
 import { useDebounce } from "@/hooks/useDebounce";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 interface BlogArticle {
   id: string;
@@ -382,7 +384,7 @@ export default function AdminBlog() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredArticles.map((article) => (
+              visibleArticles.map((article) => (
                 <TableRow key={article.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -484,12 +486,18 @@ export default function AdminBlog() {
             )}
           </TableBody>
         </Table>
-        {/* Results count */}
-        {!isLoading && filteredArticles.length > 0 && (
-          <div className="px-4 py-3 border-t text-xs text-muted-foreground tabular-nums">
-            Showing {filteredArticles.length} of {articles?.length ?? 0} articles
-          </div>
-        )}
+        {/* Pagination */}
+        <div className="px-4 pb-2">
+          <PaginationFooter
+            page={articlesPagination.page}
+            pageSize={articlesPagination.pageSize}
+            totalPages={articlesPagination.totalPages}
+            totalItems={filteredArticles.length}
+            onPageChange={articlesPagination.setPage}
+            onPageSizeChange={articlesPagination.setPageSize}
+            itemLabel="article"
+          />
+        </div>
       </div>
 
       {/* Article Editor Dialog */}
