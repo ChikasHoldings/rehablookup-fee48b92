@@ -63,6 +63,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Most BCBS plans cover inpatient and outpatient addiction treatment",
     type: "private",
     detailsUrl: "/insurance/bcbs-treatment",
+    slug: "bcbs",
   },
   {
     name: "Aetna",
@@ -71,6 +72,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Covers detox, residential, and outpatient substance abuse programs",
     type: "private",
     detailsUrl: "/insurance/aetna-rehab",
+    slug: "aetna",
   },
   {
     name: "Cigna",
@@ -79,6 +81,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Behavioral health coverage includes substance use disorder treatment",
     type: "private",
     detailsUrl: "/insurance/cigna-rehab",
+    slug: "cigna",
   },
   {
     name: "United Healthcare",
@@ -87,6 +90,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Comprehensive addiction treatment coverage under most plans",
     type: "private",
     detailsUrl: "/insurance/united-healthcare-rehab",
+    slug: "united-healthcare",
   },
   {
     name: "Kaiser Permanente",
@@ -95,6 +99,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "In-network treatment facilities and integrated behavioral health",
     type: "private",
     detailsUrl: "/insurance/kaiser-rehab",
+    slug: "kaiser",
   },
   {
     name: "Humana",
@@ -103,6 +108,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Mental health and substance abuse treatment included in most plans",
     type: "private",
     detailsUrl: "/insurance/humana-rehab",
+    slug: "humana",
   },
   {
     name: "Anthem",
@@ -111,6 +117,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Substance abuse treatment covered as essential health benefit",
     type: "private",
     detailsUrl: "/insurance/anthem-rehab",
+    slug: "anthem",
   },
   {
     name: "Molina Healthcare",
@@ -119,6 +126,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Behavioral health coverage through Medicaid and ACA plans in 19+ states",
     type: "private",
     detailsUrl: "/insurance/molina-rehab",
+    slug: "molina",
   },
   {
     name: "Magellan Health",
@@ -127,6 +135,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Manages substance abuse benefits for millions through employer and government plans",
     type: "private",
     detailsUrl: "/insurance/magellan-rehab",
+    slug: "magellan",
   },
   {
     name: "WellCare",
@@ -135,6 +144,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Behavioral health coverage through Medicaid and Medicare Advantage plans",
     type: "private",
     detailsUrl: "/insurance/wellcare-rehab",
+    slug: "wellcare",
   },
   {
     name: "Ambetter",
@@ -143,6 +153,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Substance use disorder treatment as ACA essential health benefit",
     type: "private",
     detailsUrl: "/insurance/ambetter-rehab",
+    slug: "ambetter",
   },
   {
     name: "Oscar Health",
@@ -151,6 +162,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "ACA-compliant behavioral health benefits with dedicated care team",
     type: "private",
     detailsUrl: "/insurance/oscar-rehab",
+    slug: "oscar",
   },
   {
     name: "Highmark BCBS",
@@ -159,6 +171,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Comprehensive behavioral health coverage in PA, DE, WV, and western NY",
     type: "private",
     detailsUrl: "/insurance/highmark-rehab",
+    slug: "highmark",
   },
 ];
 
@@ -170,6 +183,7 @@ const governmentPrograms: InsuranceProvider[] = [
     coverageNotes: "Part A covers inpatient treatment; Part B covers outpatient services",
     type: "government",
     detailsUrl: "/insurance/medicare-rehab",
+    slug: "medicare",
   },
   {
     name: "Medicaid",
@@ -178,6 +192,7 @@ const governmentPrograms: InsuranceProvider[] = [
     coverageNotes: "Coverage varies by state but generally includes substance abuse treatment",
     type: "government",
     detailsUrl: "/insurance/medicaid-rehab",
+    slug: "medicaid",
   },
   {
     name: "TRICARE",
@@ -186,6 +201,7 @@ const governmentPrograms: InsuranceProvider[] = [
     coverageNotes: "Comprehensive addiction treatment benefits for service members",
     type: "government",
     detailsUrl: "/insurance/tricare-rehab",
+    slug: "tricare",
   },
 ];
 
