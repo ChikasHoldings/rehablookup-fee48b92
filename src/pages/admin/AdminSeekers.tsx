@@ -58,6 +58,8 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 interface UserProfile {
   id: string;
@@ -81,7 +83,7 @@ interface UserProfile {
   has_concierge?: boolean;
 }
 
-const ITEMS_PER_PAGE = 25;
+
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -99,7 +101,7 @@ export default function AdminSeekers() {
   const [verificationFilter, setVerificationFilter] = useState<"all" | "verified" | "unverified">("all");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -224,12 +226,17 @@ export default function AdminSeekers() {
     },
   });
 
-  // Fetch users with aggregated data - PAGINATED
+  const { page: currentPage, pageSize, totalPages, setPage: setCurrentPage, setPageSize } = usePagination({
+    tableId: "admin-seekers",
+    defaultPageSize: 25,
+    totalItems: totalCount ?? 0,
+  });
+
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users", currentPage, verificationFilter, searchQuery],
     queryFn: async () => {
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      const from = (currentPage - 1) * pageSize;
+      const to = from + pageSize - 1;
 
       let profileQuery = supabase
         .from("seeker_profiles")
