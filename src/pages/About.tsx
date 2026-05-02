@@ -363,22 +363,22 @@ const About = () => {
                 name: "Chiedu Kabakwu",
                 title: "Founder & CEO",
                 image: founderPortrait,
-                bio: "Healthcare entrepreneur and patient-advocacy advisor with a decade of experience at the intersection of behavioral health, technology, and family services. Founded RehabLookup to bring transparency and dignity to how families discover trusted addiction treatment.",
-                credentials: "MBA, Business Administration & Healthcare Strategy",
+                bio: "Chiedu Kabakwu is the founder and CEO of RehabLookup, a verified directory and concierge platform connecting families with trusted addiction treatment centers across the United States. With a decade of experience at the intersection of behavioral health, technology, and patient advocacy, he leads strategy, partnerships, and the company's mission to bring transparency, accountability, and dignity to how people find rehab.",
+                credentials: "MBA — Business Administration & Healthcare Strategy",
               },
               {
                 name: "Dr. Sarah Mitchell",
                 title: "Medical Director & Content Advisor",
                 image: medicalDirectorPortrait,
-                bio: "Board-certified psychiatrist specializing in addiction medicine. Oversees all clinical content accuracy and facility verification standards.",
-                credentials: "MD, Board Certified Psychiatrist, ASAM Fellow",
+                bio: "Dr. Sarah Mitchell is a board-certified psychiatrist specializing in addiction medicine and dual diagnosis care. As Medical Director, she leads clinical review of every treatment guide, oversees facility verification standards, and ensures that RehabLookup's content reflects current evidence-based practices in detox, inpatient rehab, and medication-assisted treatment (MAT).",
+                credentials: "MD · Board-Certified Psychiatrist · ASAM Fellow",
               },
               {
                 name: "David Reyes",
                 title: "Chief Technology Officer",
                 image: ctoPortrait,
-                bio: "Health tech veteran who previously built HIPAA-compliant platforms for major hospital systems. Leads platform security, privacy, and data integrity.",
-                credentials: "MS Computer Science, CISSP",
+                bio: "David Reyes is a health-tech veteran who has built HIPAA-compliant platforms for major hospital systems and digital-health startups. As CTO, he leads platform engineering, data security, and privacy at RehabLookup — overseeing infrastructure, accessibility, and the safeguards that protect every family's information from intake through placement.",
+                credentials: "MS Computer Science · CISSP · HIPAA Security Officer",
               },
             ].map((leader) => (
               <div key={leader.name} className="group rounded-2xl bg-card border border-border/50 overflow-hidden hover:shadow-lg transition-shadow duration-300">
