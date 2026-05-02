@@ -603,6 +603,9 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
       if (!facility) {
         // Slug doesn't resolve → emit a noindex page so Google doesn't bank
         // the URL as thin/duplicate content. Still 200 so SPA fallback works.
+        // Also log this as a server-side 404 event so the admin 404 monitor
+        // sees crawler-driven 404s that would otherwise miss the client beacon.
+        logServerSideNotFound(supabase, path, 'unknown_facility_slug').catch(() => {});
         return buildNotFoundCenterHtml(path);
       }
 
