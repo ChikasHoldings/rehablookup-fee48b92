@@ -235,13 +235,39 @@ function renderFacilityHtml(f) {
     })),
   };
 
+  // Mirror src/components/SEO.tsx → generateLocalBusinessSchema() so the
+  // crawler-served HTML carries the same multi-type LocalBusiness schema the
+  // SPA hydrates client-side. Crawlers (Googlebot, Bingbot, social unfurlers)
+  // typically read the static HTML before/instead of the hydrated DOM, so the
+  // pre-rendered block is the authoritative copy for rich-results eligibility.
+  const galleryImages = Array.isArray(f.gallery_urls) ? f.gallery_urls.filter(Boolean) : [];
+  const schemaImages = [
+    f.logo_url,
+    ...galleryImages,
+  ].filter(Boolean);
+  const mapsQuery = encodeURIComponent(
+    `${f.name}, ${f.address || ""}, ${f.city}, ${f.state} ${f.zip_code || ""}`.replace(/\s+/g, " ").trim(),
+  );
+  const hasMap = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+
   const medicalClinicLd = {
     "@context": "https://schema.org",
-    "@type": "MedicalClinic",
-    name: f.name,
+    "@type": ["MedicalOrganization", "MedicalClinic", "MedicalBusiness", "LocalBusiness"],
+    "@id": canonical,
     url: canonical,
+    name: f.name,
+    legalName: f.name,
     description: baseDesc,
-    image: ogImage,
+    image: schemaImages.length > 0 ? schemaImages : ogImage,
+    ...(f.logo_url
+      ? {
+          logo: {
+            "@type": "ImageObject",
+            url: f.logo_url,
+            caption: `${f.name} logo`,
+          },
+        }
+      : {}),
     telephone: f.phone || undefined,
     address: {
       "@type": "PostalAddress",
@@ -251,11 +277,34 @@ function renderFacilityHtml(f) {
       postalCode: f.zip_code || undefined,
       addressCountry: "US",
     },
-    medicalSpecialty: "Addiction Medicine",
+    areaServed: [
+      { "@type": "City", name: f.city },
+      { "@type": "State", name: f.state },
+    ],
+    geo: {
+      "@type": "GeoCoordinates",
+      addressCountry: "US",
+    },
+    hasMap,
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      opens: "00:00",
+      closes: "23:59",
+    },
+    isAccessibleForFree: false,
+    medicalSpecialty: ["Addiction Medicine", "Psychiatry", "Behavioral Health"],
     ...(f.facility_type ? { "@additionalType": f.facility_type } : {}),
     ...(f.year_established ? { foundingDate: String(f.year_established) } : {}),
     ...(f.website ? { sameAs: [f.website] } : {}),
     isAcceptingNewPatients: true,
+    knowsAbout: [
+      "Substance Use Disorder Treatment",
+      "Alcohol Addiction Treatment",
+      "Drug Addiction Treatment",
+      "Dual Diagnosis Treatment",
+      "Mental Health Treatment",
+    ],
     publisher: {
       "@type": "Organization",
       name: "RehabLookup",
