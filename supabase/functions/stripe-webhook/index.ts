@@ -301,7 +301,7 @@ Deno.serve(async (req) => {
               user_phone: "",
               status: "pending_intake",
               payment_status: "paid",
-              payment_amount_cents: 2900,
+              payment_amount_cents: 0,
               checkout_session_id: checkoutSessionId,
               stripe_payment_intent_id: paymentIntentId,
               stripe_customer_id: session.customer as string,
