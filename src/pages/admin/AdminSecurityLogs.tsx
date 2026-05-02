@@ -74,6 +74,8 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 interface RateLimitLog {
   id: string;
@@ -113,7 +115,7 @@ interface BlockedIdentifier {
   is_active: boolean;
 }
 
-const ITEMS_PER_PAGE = 25;
+
 
 // Cache for IP locations to avoid repeated lookups
 const ipLocationCache = new Map<string, IpLocation>();
@@ -127,8 +129,6 @@ export default function AdminSecurityLogs() {
   const [dateRange, setDateRange] = useState<string>("7d");
   const [customDateFrom, setCustomDateFrom] = useState<Date | undefined>();
   const [customDateTo, setCustomDateTo] = useState<Date | undefined>();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [blockedPage, setBlockedPage] = useState(1);
   const [activeTab, setActiveTab] = useState("activity");
   const [selectedLog, setSelectedLog] = useState<RateLimitLog | null>(null);
   const [ipLocations, setIpLocations] = useState<Map<string, IpLocation>>(new Map());
@@ -636,16 +636,24 @@ export default function AdminSecurityLogs() {
   );
 
   // Pagination
-  const totalPages = Math.max(1, Math.ceil((filteredLogs?.length || 0) / ITEMS_PER_PAGE));
+  const { page: currentPage, pageSize: logsPageSize, totalPages, setPage: setCurrentPage, setPageSize: setLogsPageSize } = usePagination({
+    tableId: "admin-security-logs",
+    defaultPageSize: 25,
+    totalItems: filteredLogs?.length ?? 0,
+  });
   const paginatedLogs = filteredLogs?.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    (currentPage - 1) * logsPageSize,
+    currentPage * logsPageSize
   );
 
-  const totalBlockedPages = Math.max(1, Math.ceil((filteredBlocked?.length || 0) / ITEMS_PER_PAGE));
+  const { page: blockedPage, pageSize: blockedPageSize, totalPages: totalBlockedPages, setPage: setBlockedPage, setPageSize: setBlockedPageSize } = usePagination({
+    tableId: "admin-security-blocked",
+    defaultPageSize: 25,
+    totalItems: filteredBlocked?.length ?? 0,
+  });
   const paginatedBlocked = filteredBlocked?.slice(
-    (blockedPage - 1) * ITEMS_PER_PAGE,
-    blockedPage * ITEMS_PER_PAGE
+    (blockedPage - 1) * blockedPageSize,
+    blockedPage * blockedPageSize
   );
 
   // Reset page when filters change
@@ -1071,36 +1079,15 @@ export default function AdminSecurityLogs() {
                   </div>
 
                   {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-4">
-                      <p className="text-sm text-muted-foreground">
-                        Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to{" "}
-                        {Math.min(currentPage * ITEMS_PER_PAGE, filteredLogs?.length || 0)} of{" "}
-                        {filteredLogs?.length || 0} logs
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                          disabled={currentPage === 1}
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <span className="text-sm tabular-nums">
-                          Page {currentPage} of {totalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                          disabled={currentPage === totalPages}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  <PaginationFooter
+                    page={currentPage}
+                    pageSize={logsPageSize}
+                    totalPages={totalPages}
+                    totalItems={filteredLogs?.length ?? 0}
+                    onPageChange={setCurrentPage}
+                    onPageSizeChange={setLogsPageSize}
+                    itemLabel="log"
+                  />
                 </>
               )}
             </CardContent>
@@ -1400,36 +1387,15 @@ export default function AdminSecurityLogs() {
                   </div>
 
                   {/* Pagination */}
-                  {totalBlockedPages > 1 && (
-                    <div className="flex items-center justify-between mt-4">
-                      <p className="text-sm text-muted-foreground">
-                        Showing {((blockedPage - 1) * ITEMS_PER_PAGE) + 1} to{" "}
-                        {Math.min(blockedPage * ITEMS_PER_PAGE, filteredBlocked?.length || 0)} of{" "}
-                        {filteredBlocked?.length || 0} blocked identifiers
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setBlockedPage((p) => Math.max(1, p - 1))}
-                          disabled={blockedPage === 1}
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <span className="text-sm tabular-nums">
-                          Page {blockedPage} of {totalBlockedPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setBlockedPage((p) => Math.min(totalBlockedPages, p + 1))}
-                          disabled={blockedPage === totalBlockedPages}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  <PaginationFooter
+                    page={blockedPage}
+                    pageSize={blockedPageSize}
+                    totalPages={totalBlockedPages}
+                    totalItems={filteredBlocked?.length ?? 0}
+                    onPageChange={setBlockedPage}
+                    onPageSizeChange={setBlockedPageSize}
+                    itemLabel="blocked identifier"
+                  />
                 </>
               ) : (
                 <div className="text-center py-12">
