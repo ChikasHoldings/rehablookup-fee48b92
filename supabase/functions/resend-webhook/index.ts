@@ -132,6 +132,40 @@ Deno.serve(async (req) => {
       logStep("Tracking event stored", { eventType, emailId, emailType });
     }
 
+    // Suppression sync — block future sends to bad addresses.
+    // Map Resend events → suppressed_emails.reason (CHECK constrained):
+    //   bounced     → "bounced"      (hard bounce; permanent)
+    //   complained  → "complained"   (spam complaint)
+    //   unsubscribed → "unsubscribed" (recipient opted out via Resend list)
+    // Soft bounces / opens / clicks / delivered are ignored here — they don't
+    // suppress sending. Insert is best-effort and idempotent (unique on email).
+    const SUPPRESSION_MAP: Record<string, string> = {
+      bounced: "bounced",
+      complained: "complained",
+      unsubscribed: "unsubscribed",
+    };
+    const suppressionReason = SUPPRESSION_MAP[eventType];
+    if (suppressionReason && recipientEmail) {
+      const normalized = recipientEmail.toLowerCase().trim();
+      const { error: suppressErr } = await supabaseClient
+        .from("suppressed_emails")
+        .upsert(
+          {
+            email: normalized,
+            reason: suppressionReason,
+            source: "resend_webhook",
+            notes: `Resend ${rawEventType} for email_id ${emailId}`,
+          },
+          { onConflict: "email", ignoreDuplicates: true },
+        );
+      if (suppressErr) {
+        // Don't fail the webhook — Resend will retry forever otherwise.
+        logStep("Suppression upsert failed (non-fatal)", { error: suppressErr.message, normalized });
+      } else {
+        logStep("Recipient suppressed", { normalized, reason: suppressionReason });
+      }
+    }
+
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
