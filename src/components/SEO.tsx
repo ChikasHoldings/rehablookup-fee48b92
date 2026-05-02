@@ -16,6 +16,10 @@ interface SEOProps {
   modifiedTime?: string;
   locale?: string;
   hreflang?: { lang: string; href: string }[];
+  /** Pagination: full URL or path of the previous page in the sequence (rel="prev"). */
+  prevUrl?: string;
+  /** Pagination: full URL or path of the next page in the sequence (rel="next"). */
+  nextUrl?: string;
 }
 
 const SITE_NAME = "RehabLookup";
@@ -111,6 +115,8 @@ export function SEO({
   modifiedTime,
   locale = "en_US",
   hreflang,
+  prevUrl,
+  nextUrl,
 }: SEOProps) {
   const fullTitle = title === SITE_NAME || title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
   
@@ -119,7 +125,38 @@ export function SEO({
     ? normalizeCanonicalPath(canonical) 
     : getCurrentPath();
   const canonicalUrl = `${SITE_URL}${normalizedCanonical}`;
-  
+
+  // Pagination URLs: preserve query strings since pagination depends on ?page=N
+  // style params. Accept absolute URLs on our host, or paths.
+  const buildPaginationUrl = (input?: string): string | null => {
+    if (!input || typeof input !== "string") return null;
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+    if (/^https?:\/\//i.test(trimmed)) {
+      try {
+        const u = new URL(trimmed);
+        const host = u.hostname.toLowerCase();
+        const isOurs =
+          host === "rehablookup.com" ||
+          host === "www.rehablookup.com" ||
+          host.endsWith(".rehablookup.com") ||
+          host.endsWith(".lovable.app") ||
+          host.endsWith(".lovable.dev");
+        if (!isOurs) return null;
+        return `${SITE_URL}${u.pathname.toLowerCase()}${u.search}`;
+      } catch {
+        return null;
+      }
+    }
+    let path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    const [pathPart, queryPart = ""] = path.split("?");
+    const lower = pathPart.toLowerCase().replace(/\/{2,}/g, "/");
+    const cleaned = lower.length > 1 && lower.endsWith("/") ? lower.slice(0, -1) : lower;
+    return `${SITE_URL}${cleaned}${queryPart ? `?${queryPart}` : ""}`;
+  };
+  const prevHref = buildPaginationUrl(prevUrl);
+  const nextHref = buildPaginationUrl(nextUrl);
+
   const imageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
   const truncatedDescription = description.length > 160 ? description.slice(0, 157) + "..." : description;
 
@@ -302,6 +339,8 @@ export function SEO({
         <meta name="keywords" content={keywords.join(", ")} />
       )}
      <link rel="canonical" href={canonicalUrl} />
+     {prevHref && <link rel="prev" href={prevHref} />}
+     {nextHref && <link rel="next" href={nextHref} />}
      {hreflang && hreflang.map(({ lang, href }) => (
        <link key={lang} rel="alternate" hrefLang={lang} href={href} />
      ))}
