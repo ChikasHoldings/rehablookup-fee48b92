@@ -15,11 +15,14 @@ import {
   Star,
   Shield,
   Clock,
+  ChevronLeft,
   ChevronRight,
   Building2,
   HelpCircle,
   Users,
-  Award
+  Award,
+  Filter,
+  X
 } from "lucide-react";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import supportSpecialistImg from "@/assets/support-specialist.png";
