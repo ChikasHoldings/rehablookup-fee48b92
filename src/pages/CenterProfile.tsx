@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/ui/RatingBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
+import { ProfileConciergeRescue } from "@/components/profile/ProfileConciergeRescue";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
 import {
   MapPin,
@@ -1481,6 +1482,16 @@ const CenterProfile = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Passive concierge rescue — inline, never a popup. Honors discovery-first policy. */}
+      <ProfileConciergeRescue
+        facility={{
+          id: facility.id,
+          name: facility.name,
+          city: facility.city,
+          state: facility.state,
+        }}
+      />
 
       {/* Request Info Modal */}
       <RequestInfoModal
