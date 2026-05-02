@@ -303,6 +303,7 @@ function buildManagerBody(data: Awaited<ReturnType<typeof fetchManagerData>>, pe
   const actions: string[] = [];
   if (data.pendingProviders > 0) actions.push(actionItem(`${data.pendingProviders} provider(s) pending review`, `${DASHBOARD_URL}/admin/providers`));
   if (data.openEscalations > 0) actions.push(actionItem(`${data.openEscalations} escalation(s) to address`, `${DASHBOARD_URL}/admin/escalations`));
+  if (data.emailFailures > 0) actions.push(actionItem(`${data.emailFailures} email send(s) failed all retries`, `${DASHBOARD_URL}/admin/email-logs`));
 
   return `
     <p style="font-size:13px;color:${BRAND.muted};margin:0 0 16px;">Operational overview for the ${periodLabel(period).toLowerCase()} period.</p>
