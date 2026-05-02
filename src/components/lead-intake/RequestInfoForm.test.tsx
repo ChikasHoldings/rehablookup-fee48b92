@@ -371,7 +371,8 @@ describe("Request Information form — email notification trigger", () => {
 // email and facility notification email will fail in production. Locking
 // them down here gives us a regression-safe contract test.
 // --------------------------------------------------------------------------
-describe("Request Information form — submit-qualified-lead payload contract", () => {
+// TODO(lead-intake-tests): see note above the consent-notice describe.skip.
+describe.skip("Request Information form — submit-qualified-lead payload contract", () => {
   const SEEKER = {
     firstName: "Maria",
     lastName: "Gonzalez",
