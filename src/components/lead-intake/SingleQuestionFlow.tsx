@@ -735,7 +735,7 @@ export function SingleQuestionFlow({
 
             <Button
               onClick={handleContactSubmit}
-              disabled={isSendingCode || isSubmitting || !consentToContact}
+              disabled={isProcessing || isSendingCode || isSubmitting || !consentToContact}
               className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
               size="lg"
             >
@@ -792,7 +792,7 @@ export function SingleQuestionFlow({
             
             <Button 
               onClick={handleVerifyCode}
-              disabled={isVerifying || verificationCode.length !== 6 || isSubmitting}
+              disabled={isProcessing || isVerifying || verificationCode.length !== 6 || isSubmitting}
               className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
               size="lg"
             >
