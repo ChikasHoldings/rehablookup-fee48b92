@@ -52,6 +52,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 import { toast } from "sonner";
 import {
   MarketingLeadProfileModal,
@@ -137,6 +139,14 @@ export default function AdminMarketing() {
       lead.location_city_state?.toLowerCase().includes(searchLower)
     );
   }, [leads, debouncedSearch]);
+
+  const leadsPagination = usePagination({
+    tableId: "admin-marketing-leads",
+    defaultPageSize: 25,
+    totalItems: filteredLeads.length,
+  });
+  const visibleLeads = leadsPagination.paginate(filteredLeads);
+
 
   // Bulk delete mutation
   const bulkDelete = useMutation({
@@ -390,7 +400,7 @@ export default function AdminMarketing() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredLeads.map((lead) => (
+                  visibleLeads.map((lead) => (
                     <TableRow
                       key={lead.id}
                       className="cursor-pointer hover:bg-muted/50"
@@ -492,6 +502,17 @@ export default function AdminMarketing() {
                 )}
               </TableBody>
             </Table>
+          </div>
+          <div className="px-4 pb-2">
+            <PaginationFooter
+              page={leadsPagination.page}
+              pageSize={leadsPagination.pageSize}
+              totalPages={leadsPagination.totalPages}
+              totalItems={filteredLeads.length}
+              onPageChange={leadsPagination.setPage}
+              onPageSizeChange={leadsPagination.setPageSize}
+              itemLabel="lead"
+            />
           </div>
         </CardContent>
       </Card>

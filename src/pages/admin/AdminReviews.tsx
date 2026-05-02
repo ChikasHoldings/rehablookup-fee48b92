@@ -38,6 +38,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ReviewDetailModal } from '@/components/admin/ReviewDetailModal';
+import { PaginationFooter } from '@/components/common/PaginationFooter';
+import { usePagination } from '@/hooks/usePagination';
 
 interface ReviewWithDetails {
   id: string;
@@ -452,6 +454,13 @@ export default function AdminReviews() {
     return true;
   });
 
+  const reviewsPagination = usePagination({
+    tableId: `admin-reviews-${selectedTab}`,
+    defaultPageSize: 25,
+    totalItems: filteredReviews.length,
+  });
+  const visibleReviews = reviewsPagination.paginate(filteredReviews);
+
   const pendingCount = reviews.filter(r => r.status === 'pending').length;
   const approvedCount = reviews.filter(r => r.status === 'approved').length;
   const rejectedCount = reviews.filter(r => r.status === 'rejected').length;
@@ -697,7 +706,7 @@ export default function AdminReviews() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {filteredReviews.map((review) => (
+                {visibleReviews.map((review) => (
                   <Card key={review.id} className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => setSelectedReview(review)}>
                     <CardHeader>
                       <div className="flex items-start justify-between">
@@ -814,6 +823,15 @@ export default function AdminReviews() {
                 ))}
               </div>
             )}
+            <PaginationFooter
+              page={reviewsPagination.page}
+              pageSize={reviewsPagination.pageSize}
+              totalPages={reviewsPagination.totalPages}
+              totalItems={filteredReviews.length}
+              onPageChange={reviewsPagination.setPage}
+              onPageSizeChange={reviewsPagination.setPageSize}
+              itemLabel="review"
+            />
           </TabsContent>
         ))}
       </Tabs>

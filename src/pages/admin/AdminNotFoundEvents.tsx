@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertTriangle, RefreshCw, Search, ExternalLink } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 type TimeRange = "24h" | "7d" | "30d" | "all";
 type KindFilter = "all" | "spa_route" | "static_asset";
@@ -150,6 +152,14 @@ export default function AdminNotFoundEvents() {
     return list.filter((s) => s.path.toLowerCase().includes(q));
   }, [summaries, search, kindFilter]);
 
+  const eventsPagination = usePagination({
+    tableId: "admin-not-found",
+    defaultPageSize: 50,
+    totalItems: filtered.length,
+  });
+  const visibleFiltered = eventsPagination.paginate(filtered);
+
+
   const totalHits = summaries.reduce((sum, s) => sum + s.hits, 0);
   const uniquePaths = summaries.length;
 
@@ -250,7 +260,7 @@ export default function AdminNotFoundEvents() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.slice(0, 200).map((s) => (
+                {visibleFiltered.map((s) => (
                   <TableRow key={s.path}>
                     <TableCell className="font-mono text-xs break-all">
                       <div>{s.path}</div>
@@ -309,11 +319,15 @@ export default function AdminNotFoundEvents() {
               </TableBody>
             </Table>
           )}
-          {filtered.length > 200 && (
-            <p className="text-xs text-muted-foreground mt-3">
-              Showing top 200 of {filtered.length} paths. Refine your filter to see more.
-            </p>
-          )}
+          <PaginationFooter
+            page={eventsPagination.page}
+            pageSize={eventsPagination.pageSize}
+            totalPages={eventsPagination.totalPages}
+            totalItems={filtered.length}
+            onPageChange={eventsPagination.setPage}
+            onPageSizeChange={eventsPagination.setPageSize}
+            itemLabel="path"
+          />
         </CardContent>
       </Card>
 
