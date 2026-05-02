@@ -104,7 +104,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
   const internalRef = useRef<HTMLElement>(null);
   const cardRef = ref || internalRef;
   const hasTrackedImpression = useRef(false);
-  const { trackImpression } = useProviderEventTracking();
+  const { trackImpression, trackClickToCall } = useProviderEventTracking();
   const { toggleFavorite, isFavorite } = useFavorites();
   
   // Always prefer slug → /center/{slug}. Fall back to safe directory listing
