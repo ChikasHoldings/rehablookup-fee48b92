@@ -57,6 +57,7 @@ import { cn } from "@/lib/utils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
+import { RehabScorePanel } from "@/components/profile/RehabScorePanel";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
