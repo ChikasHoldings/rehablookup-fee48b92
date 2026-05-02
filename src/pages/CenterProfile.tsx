@@ -1224,8 +1224,8 @@ const CenterProfile = () => {
               <FacilityStaffSection facilityId={facility.id} />
 
               {/* SEO-friendly FAQ — data-driven, unique per profile.
-                  PageFAQ emits FAQPage JSON-LD only when faqs.length > 0,
-                  satisfying the FAQ JSON-LD audit (≥3 Q&A pairs). */}
+                  PageFAQ emits FAQPage JSON-LD when ≥3 Q&A pairs are
+                  present, satisfying the FAQ JSON-LD audit. */}
               {(() => {
                 const faqs = buildProfileFAQs({
                   name: facility.name,
@@ -1242,17 +1242,12 @@ const CenterProfile = () => {
                 });
                 if (faqs.length < 3) return null;
                 return (
-                  <ProfileSection
-                    icon={ShieldCheck}
+                  <PageFAQ
+                    faqs={faqs}
                     title="Frequently Asked Questions"
-                    iconColor="bg-primary/10 text-primary"
-                  >
-                    <PageFAQ
-                      faqs={faqs}
-                      title=""
-                      className="!py-0"
-                    />
-                  </ProfileSection>
+                    description={`Common questions about ${facility.name}, treatment options, insurance, and what to expect.`}
+                    className="!py-0 !pt-2"
+                  />
                 );
               })()}
 
