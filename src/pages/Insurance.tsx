@@ -41,7 +41,6 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import {
   INSURER_MATCH_CONFIGS,
   facilityMatchesInsurer,
-  getInsurerMatch,
 } from "@/lib/insurerMatchKeywords";
 
 interface InsuranceProvider {
