@@ -57,6 +57,15 @@ jobs:
       - name: Verify SPA <Navigate> ↔ vercel.json 301 parity
         run: npm run check:redirect-parity
 
+      # Live post-deploy crawl — only runs when VERCEL_URL secret is set
+      # (typically pointed at the Vercel preview for the PR or the production
+      # apex). Skips silently otherwise so PRs don't fail before cutover.
+      - name: Post-deploy Vercel validator (live crawl)
+        if: env.VERCEL_URL != ''
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
+        run: npm run validate:vercel-deploy
+
       # Internal-link check on every PR/push — fast, deterministic, no network.
       # External links are validated nightly in crawl-404.yml so upstream
       # uptime noise can't block merges.
