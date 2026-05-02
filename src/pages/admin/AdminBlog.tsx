@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Json } from "@/integrations/supabase/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -148,6 +148,14 @@ export default function AdminBlog() {
     totalItems: filteredArticles.length,
   });
   const visibleArticles = articlesPagination.paginate(filteredArticles);
+
+  // Reset to page 1 whenever filters/search change so the user always lands
+  // on the first page of the new result set (otherwise totalPages clamps
+  // the page number but can leave the user on the LAST page of fewer results).
+  useEffect(() => {
+    articlesPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, categoryFilter, statusFilter]);
 
 
   const deleteMutation = useMutation({

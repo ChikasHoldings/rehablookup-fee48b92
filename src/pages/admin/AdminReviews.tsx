@@ -461,6 +461,12 @@ export default function AdminReviews() {
   });
   const visibleReviews = reviewsPagination.paginate(filteredReviews);
 
+  // Tab switch lands the user on page 1 of the new tab's result set.
+  useEffect(() => {
+    reviewsPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTab]);
+
   const pendingCount = reviews.filter(r => r.status === 'pending').length;
   const approvedCount = reviews.filter(r => r.status === 'approved').length;
   const rejectedCount = reviews.filter(r => r.status === 'rejected').length;

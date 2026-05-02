@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -175,6 +175,12 @@ export default function AdminStaff() {
     totalItems: filteredUsers.length,
   });
   const visibleUsers = staffPagination.paginate(filteredUsers);
+
+  // Reset to page 1 on tab/filter/search change.
+  useEffect(() => {
+    staffPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, searchQuery, filterRole]);
 
 
   const getUserDisplayName = (user: AdminUser) => {

@@ -53,21 +53,21 @@ export function TrustStrip() {
       aria-label="Why families trust Rehab Lookup"
       className="border-y border-border bg-muted/40"
     >
-      <div className="container mx-auto px-4 md:px-6 py-6 md:py-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-5xl mx-auto">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 sm:py-10 md:py-12">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-5xl mx-auto">
           {items.map((item) => (
             <div
               key={item.label}
-              className="flex items-center gap-3 rounded-xl bg-background border border-border px-4 py-3"
+              className="flex items-center gap-2.5 sm:gap-3 rounded-xl bg-background border border-border px-3 py-3 sm:px-4 sm:py-3.5"
             >
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <item.icon className="h-5 w-5 text-primary" />
+              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <item.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </div>
               <div className="min-w-0">
-                <div className="text-base md:text-lg font-bold text-foreground leading-tight">
+                <div className="text-sm sm:text-base md:text-lg font-bold text-foreground leading-tight">
                   {item.value}
                 </div>
-                <div className="text-xs text-muted-foreground truncate">
+                <div className="text-[11px] sm:text-xs text-muted-foreground leading-snug">
                   {item.label}
                 </div>
               </div>
