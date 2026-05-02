@@ -29,6 +29,8 @@ import { useProStatus } from '@/hooks/useProStatus';
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
 import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
+import { PaginationFooter } from '@/components/common/PaginationFooter';
+import { usePagination } from '@/hooks/usePagination';
 
 
 
@@ -71,6 +73,13 @@ export default function ProviderReviews() {
       return true;
     });
   }, [reviews, selectedTab, facilityFilter]);
+
+  const reviewsPagination = usePagination({
+    tableId: "provider-reviews",
+    defaultPageSize: 25,
+    totalItems: filteredReviews.length,
+  });
+  const visibleReviews = reviewsPagination.paginate(filteredReviews);
 
   // Calculate filtered stats
   const filteredStats = useMemo(() => {
@@ -223,7 +232,7 @@ export default function ProviderReviews() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {filteredReviews.map((review) => (
+              {visibleReviews.map((review) => (
                 <ProviderReviewCard
                   key={review.id}
                   review={review}
@@ -234,6 +243,15 @@ export default function ProviderReviews() {
                   onFlagReview={handleFlagReview}
                 />
               ))}
+              <PaginationFooter
+                page={reviewsPagination.page}
+                pageSize={reviewsPagination.pageSize}
+                totalPages={reviewsPagination.totalPages}
+                totalItems={filteredReviews.length}
+                onPageChange={reviewsPagination.setPage}
+                onPageSizeChange={reviewsPagination.setPageSize}
+                itemLabel="review"
+              />
             </div>
           )}
         </TabsContent>

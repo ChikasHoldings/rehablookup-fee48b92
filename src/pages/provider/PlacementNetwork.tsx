@@ -32,6 +32,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -208,6 +210,21 @@ export default function ProviderPlacementNetworkPage() {
     },
     enabled: !!selectedFacility?.id,
   });
+
+  // Pagination — placements (admissions) and invoices
+  const placementsPagination = usePagination({
+    tableId: "provider-placement-admissions",
+    defaultPageSize: 25,
+    totalItems: placements?.length ?? 0,
+  });
+  const visiblePlacements = placementsPagination.paginate(placements ?? []);
+
+  const invoicesPagination = usePagination({
+    tableId: "provider-placement-invoices",
+    defaultPageSize: 25,
+    totalItems: invoices?.length ?? 0,
+  });
+  const visibleInvoices = invoicesPagination.paginate(invoices ?? []);
 
   // ── Error handling ──
   useEffect(() => {
@@ -537,7 +554,7 @@ export default function ProviderPlacementNetworkPage() {
 
                 {placements && placements.length > 0 ? (
                   <div className="space-y-2">
-                    {placements.map((p) => (
+                    {visiblePlacements.map((p) => (
                       <Card key={p.id} className="hover:shadow-sm transition-shadow">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between gap-4">
@@ -572,6 +589,17 @@ export default function ProviderPlacementNetworkPage() {
                         </CardContent>
                       </Card>
                     ))}
+                    {(placements?.length ?? 0) > placementsPagination.pageSize && (
+                      <PaginationFooter
+                        page={placementsPagination.page}
+                        pageSize={placementsPagination.pageSize}
+                        totalPages={placementsPagination.totalPages}
+                        totalItems={placements?.length ?? 0}
+                        onPageChange={placementsPagination.setPage}
+                        onPageSizeChange={placementsPagination.setPageSize}
+                        itemLabel="admission"
+                      />
+                    )}
                   </div>
                 ) : (
                   <Card className="border-dashed">
@@ -781,7 +809,7 @@ export default function ProviderPlacementNetworkPage() {
                             <Label className="text-sm font-medium">Invoices</Label>
                           </div>
                           <div className="space-y-2">
-                            {invoices.map((inv) => (
+                            {visibleInvoices.map((inv) => (
                               <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg gap-2 bg-muted/20">
                                 <div className="min-w-0">
                                   <p className="text-sm font-medium">${(inv.amount_cents / 100).toFixed(2)}</p>
@@ -799,6 +827,17 @@ export default function ProviderPlacementNetworkPage() {
                                 </div>
                               </div>
                             ))}
+                            {(invoices?.length ?? 0) > invoicesPagination.pageSize && (
+                              <PaginationFooter
+                                page={invoicesPagination.page}
+                                pageSize={invoicesPagination.pageSize}
+                                totalPages={invoicesPagination.totalPages}
+                                totalItems={invoices?.length ?? 0}
+                                onPageChange={invoicesPagination.setPage}
+                                onPageSizeChange={invoicesPagination.setPageSize}
+                                itemLabel="invoice"
+                              />
+                            )}
                           </div>
                         </div>
                       )}

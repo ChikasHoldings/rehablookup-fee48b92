@@ -20,6 +20,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 import { InquiryListItem } from "@/components/provider/inquiries/InquiryListItem";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 import { InquiryDetailPanel } from "@/components/provider/inquiries/InquiryDetailPanel";
 import { InquiriesStatsHeader } from "@/components/provider/inquiries/InquiriesStatsHeader";
 import type { InquiryType } from "@/components/provider/InquiryTypeBadge";
@@ -253,6 +255,21 @@ export default function ProviderInquiriesPage() {
       return true;
     });
   }, [inquiries, searchQuery, statusFilter, facilityFilter, dateRange]);
+
+  // Pagination over filtered inquiries (numbered, persisted page size).
+  const {
+    page,
+    pageSize,
+    totalPages,
+    paginate,
+    setPage,
+    setPageSize,
+  } = usePagination({
+    tableId: "provider-inquiries",
+    defaultPageSize: 25,
+    totalItems: filteredInquiries.length,
+  });
+  const visibleInquiries = paginate(filteredInquiries);
 
 
   const clearFilters = () => {
@@ -506,15 +523,30 @@ export default function ProviderInquiriesPage() {
                   )}
                 </div>
               ) : (
-                filteredInquiries.map((inquiry) => (
-                  <InquiryListItem
-                    key={inquiry.id}
-                    inquiry={inquiry}
-                    isUnlocked={inquiry.is_unlocked === true}
-                    isSelected={selectedInquiry?.id === inquiry.id}
-                    onClick={() => handleSelectInquiry(inquiry)}
-                  />
-                ))
+                <>
+                  {visibleInquiries.map((inquiry) => (
+                    <InquiryListItem
+                      key={inquiry.id}
+                      inquiry={inquiry}
+                      isUnlocked={inquiry.is_unlocked === true}
+                      isSelected={selectedInquiry?.id === inquiry.id}
+                      onClick={() => handleSelectInquiry(inquiry)}
+                    />
+                  ))}
+                  {filteredInquiries.length > pageSize && (
+                    <div className="px-3 sm:px-4">
+                      <PaginationFooter
+                        page={page}
+                        pageSize={pageSize}
+                        totalPages={totalPages}
+                        totalItems={filteredInquiries.length}
+                        onPageChange={setPage}
+                        onPageSizeChange={setPageSize}
+                        itemLabel="lead"
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

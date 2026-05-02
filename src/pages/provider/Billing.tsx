@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProviderCredits } from "@/hooks/useProviderCredits";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 import { useProStatus } from "@/hooks/useProStatus";
 import { useProviderPaymentMethods } from "@/hooks/useProviderPaymentMethods";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -107,7 +109,11 @@ export default function ProviderBillingPage() {
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [deleteCardConfirm, setDeleteCardConfirm] = useState<{ id: string; isOpen: boolean }>({ id: "", isOpen: false });
-  const [showAllTransactions, setShowAllTransactions] = useState(false);
+  const txPagination = usePagination({
+    tableId: "provider-billing-transactions",
+    defaultPageSize: 25,
+    totalItems: transactions.length,
+  });
 
   // Post-checkout polling
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -291,7 +297,7 @@ export default function ProviderBillingPage() {
     }
   };
 
-  const visibleTransactions = showAllTransactions ? transactions : transactions.slice(0, 8);
+  const visibleTransactions = txPagination.paginate(transactions);
 
   // Determine if any cards are expiring or expired
   const hasExpiringCards = paymentMethods.some(pm => isCardExpiringSoon(pm.exp_month, pm.exp_year) && !isCardExpired(pm.exp_month, pm.exp_year));
@@ -521,16 +527,17 @@ export default function ProviderBillingPage() {
                     </div>
                   ))}
                 </div>
-                {transactions.length > 8 && (
+                {transactions.length > txPagination.pageSize && (
                   <div className="pt-3 border-t mt-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full text-sm text-muted-foreground"
-                      onClick={() => setShowAllTransactions(!showAllTransactions)}
-                    >
-                      {showAllTransactions ? "Show less" : `Show all ${transactions.length} transactions`}
-                    </Button>
+                    <PaginationFooter
+                      page={txPagination.page}
+                      pageSize={txPagination.pageSize}
+                      totalPages={txPagination.totalPages}
+                      totalItems={transactions.length}
+                      onPageChange={txPagination.setPage}
+                      onPageSizeChange={txPagination.setPageSize}
+                      itemLabel="transaction"
+                    />
                   </div>
                 )}
               </>
