@@ -263,6 +263,14 @@ const htmlFiles = walkHtml(PUBLIC_DIR);
 const internalRefs = new Map();
 const externalRefs = new Map();
 
+// Source files we don't fail the build on for external links: facility
+// profiles (`public/center/*`) embed third-party websites supplied by the
+// facility itself (their public website, in `Website:` and JSON-LD `sameAs`).
+// We don't control those domains; any of them can be transiently down at any
+// time, which would constantly flake the nightly job. Internal links from
+// these pages are still validated below.
+const isFacilityProfileSource = (file) => file.startsWith("center/") || file === "center.html";
+
 for (const file of htmlFiles) {
   const html = readFileSync(join(PUBLIC_DIR, file), "utf8");
   for (const href of extractHrefs(html)) {
@@ -273,6 +281,8 @@ for (const file of htmlFiles) {
     } else if (c.kind === "external") {
       const host = (() => { try { return new URL(c.url).hostname; } catch { return ""; } })();
       if (EXTERNAL_ALLOW_LIST.has(host)) continue;
+      // Skip facility-owned outbound websites (see comment above).
+      if (isFacilityProfileSource(file)) continue;
       if (!externalRefs.has(c.url)) externalRefs.set(c.url, new Set());
       externalRefs.get(c.url).add(file);
     }
