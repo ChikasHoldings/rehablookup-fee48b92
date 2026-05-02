@@ -101,9 +101,9 @@ const About = () => {
             "numberOfEmployees": { "@type": "QuantitativeValue", "minValue": 10, "maxValue": 50 },
             "founder": {
               "@type": "Person",
-              "name": "Marcus Johnson",
+              "name": "Chiedu Kabakwu",
               "jobTitle": "Founder & CEO",
-              "alumniOf": "Healthcare Administration",
+              "alumniOf": "Business Administration & Healthcare Strategy",
             },
             "member": [
               {
@@ -360,11 +360,11 @@ const About = () => {
           <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
             {[
               {
-                name: "Marcus Johnson",
+                name: "Chiedu Kabakwu",
                 title: "Founder & CEO",
-                image: ceoPortrait,
-                bio: "Former healthcare executive with 15+ years in addiction treatment operations. Founded RehabLookup after witnessing families struggle to find quality treatment information.",
-                credentials: "MBA, Healthcare Administration",
+                image: founderPortrait,
+                bio: "Healthcare entrepreneur and patient-advocacy advisor with a decade of experience at the intersection of behavioral health, technology, and family services. Founded RehabLookup to bring transparency and dignity to how families discover trusted addiction treatment.",
+                credentials: "MBA, Business Administration & Healthcare Strategy",
               },
               {
                 name: "Dr. Sarah Mitchell",
