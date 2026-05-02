@@ -174,13 +174,14 @@ async function fetchSuperAdminData(supabase: any, start: string, end: string) {
 
 // deno-lint-ignore no-explicit-any
 async function fetchManagerData(supabase: any, start: string, end: string) {
-  const [newLeads, unlockedLeads, placements, confirmedPlacements, pendingProviders, openEscalations] = await Promise.all([
+  const [newLeads, unlockedLeads, placements, confirmedPlacements, pendingProviders, openEscalations, emailFailures] = await Promise.all([
     supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("lead_unlocks").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).eq("placement_confirmed", true).gte("placement_confirmed_at", start).lte("placement_confirmed_at", end),
     supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("admin_escalations").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]),
+    supabase.from("email_send_failures").select("id", { count: "exact", head: true }).is("resolved_at", null).gte("created_at", start),
   ]);
 
   // Conversion rate
@@ -195,7 +196,8 @@ async function fetchManagerData(supabase: any, start: string, end: string) {
     placements: placements.count || 0,
     confirmedPlacements: confirmedPlacements.count || 0,
     pendingProviders: pendingProviders.count || 0,
-    openEscalations: openEscalations || 0,
+    openEscalations: openEscalations.count || 0,
+    emailFailures: emailFailures.count || 0,
   };
 }
 
