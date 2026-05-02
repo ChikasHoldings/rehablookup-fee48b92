@@ -296,15 +296,32 @@ export function SearchForm({
               <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             )}
             <input
+              ref={inputRef}
               type="text"
               placeholder="City, State, or ZIP"
               value={location}
               onChange={(e) => handleLocationChange(e.target.value.slice(0, 200))}
+              onFocus={() => setShowSuggestions(true)}
+              onKeyDown={handleKeyDown}
               maxLength={200}
+              autoComplete="off"
               className={cn(
                 "h-12 w-full rounded-xl border border-input bg-background pl-11 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
                 zipcodeData && !isZipcode && "border-green-200 bg-green-50/50 dark:bg-green-950/20"
               )}
+            />
+            <LocationSuggestionsDropdown
+              query={location}
+              open={showSuggestions}
+              suggestions={suggestions}
+              highlightedIndex={highlightedIndex}
+              zipLoading={isZipLookupLoading}
+              resolvedZip={resolvedZip}
+              zipError={zipError}
+              anchorRef={inputRef}
+              onSelectSuggestion={handleSelectSuggestion}
+              onSelectZip={handleSelectZip}
+              onDismiss={() => setShowSuggestions(false)}
             />
           </div>
           
