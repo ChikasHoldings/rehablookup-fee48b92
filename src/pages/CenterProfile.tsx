@@ -811,8 +811,8 @@ const CenterProfile = () => {
 
           {/* Hero Header */}
           <div className="mb-8 rounded-2xl bg-card shadow-lg overflow-hidden border border-border/30">
-            {/* Hero Image */}
-            <div className="relative h-52 md:h-72 overflow-hidden">
+            {/* Hero Image — bg-muted reserves a colored placeholder so swap-in is invisible */}
+            <div className="relative h-52 md:h-72 overflow-hidden bg-muted">
               {galleryImages.length > 0 ? (
                 <img 
                   src={galleryImages[0]} 
@@ -821,6 +821,8 @@ const CenterProfile = () => {
                   width={800}
                   height={400}
                   loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
                 />
               ) : (
                 <img 
@@ -829,6 +831,8 @@ const CenterProfile = () => {
                   className="w-full h-full object-cover"
                   width={800}
                   height={400}
+                  loading="eager"
+                  decoding="async"
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
