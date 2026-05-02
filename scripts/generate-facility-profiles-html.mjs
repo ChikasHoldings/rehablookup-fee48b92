@@ -22,7 +22,7 @@
  * Idempotent: safe to re-run; overwrites existing files.
  */
 
-import { writeFile, mkdir } from "node:fs/promises";
+import { writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
