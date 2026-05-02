@@ -115,6 +115,8 @@ export function SEO({
   modifiedTime,
   locale = "en_US",
   hreflang,
+  prevUrl,
+  nextUrl,
 }: SEOProps) {
   const fullTitle = title === SITE_NAME || title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
   
