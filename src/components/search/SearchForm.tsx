@@ -38,7 +38,7 @@ export function SearchForm({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [lookupTimeout, setLookupTimeout] = useState<NodeJS.Timeout | null>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const { data: zipcodeData, isLoading: isZipLookupLoading, error: zipError, lookup: lookupZipcode, reset: resetZipLookup } = useZipcodeLookup();
@@ -96,21 +96,8 @@ export function SearchForm({
     };
   }, [lookupTimeout]);
 
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        suggestionsRef.current && 
-        !suggestionsRef.current.contains(e.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(e.target as Node)
-      ) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  // Click-outside dismissal is handled inside LocationSuggestionsDropdown via
+  // the `anchorRef` prop, so we don't need a separate listener here.
 
   const handleSelectSuggestion = useCallback((suggestion: LocationSuggestion) => {
     setLocation(formatLocationSuggestion(suggestion));
