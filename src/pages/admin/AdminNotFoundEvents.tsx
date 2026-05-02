@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -158,6 +158,12 @@ export default function AdminNotFoundEvents() {
     totalItems: filtered.length,
   });
   const visibleFiltered = eventsPagination.paginate(filtered);
+
+  // Reset to page 1 on filter/search change.
+  useEffect(() => {
+    eventsPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, kindFilter]);
 
 
   const totalHits = summaries.reduce((sum, s) => sum + s.hits, 0);

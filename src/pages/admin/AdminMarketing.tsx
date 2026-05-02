@@ -147,6 +147,13 @@ export default function AdminMarketing() {
   });
   const visibleLeads = leadsPagination.paginate(filteredLeads);
 
+  // Reset to page 1 when filters/search change so users always see the
+  // first page of the new result set instead of the clamped last page.
+  useEffect(() => {
+    leadsPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, statusFilter]);
+
 
   // Bulk delete mutation
   const bulkDelete = useMutation({

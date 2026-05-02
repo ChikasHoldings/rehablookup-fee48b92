@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -269,6 +269,12 @@ export default function ProviderNotificationsPage() {
     totalItems: filteredNotifications.length,
   });
   const visibleNotifications = notifPagination.paginate(filteredNotifications);
+
+  // Reset to page 1 on tab change so users always land on first page.
+  useEffect(() => {
+    notifPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const groupedNotifications = visibleNotifications.reduce((groups, notification) => {
     const date = format(new Date(notification.created_at), "yyyy-MM-dd");
