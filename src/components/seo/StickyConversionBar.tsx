@@ -1,10 +1,11 @@
 import { useState, useEffect, forwardRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Heart, X } from "lucide-react";
+import { Heart, Phone, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const HIDDEN_ROUTES = ["/concierge", "/provider", "/admin", "/lp/", "/account"];
+const HELPLINE_TEL = "1-800-662-4357";
 
 export const StickyConversionBar = forwardRef<HTMLDivElement>(function StickyConversionBar(_props, ref) {
   const [visible, setVisible] = useState(false);
@@ -14,7 +15,8 @@ export const StickyConversionBar = forwardRef<HTMLDivElement>(function StickyCon
   const shouldHide = HIDDEN_ROUTES.some((r) => location.pathname.startsWith(r));
 
   useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > 500);
+    const onScroll = () => setVisible(window.scrollY > 150);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -38,6 +40,12 @@ export const StickyConversionBar = forwardRef<HTMLDivElement>(function StickyCon
         <p className="sm:hidden text-sm font-semibold text-foreground min-w-0 truncate">Find treatment today</p>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <Button asChild size="sm" variant="outline" className="gap-1.5 px-2.5 sm:hidden">
+            <a href={`tel:${HELPLINE_TEL}`} aria-label="Call helpline">
+              <Phone className="h-3.5 w-3.5 shrink-0" />
+              <span className="whitespace-nowrap">Call</span>
+            </a>
+          </Button>
           <Button asChild size="sm" className="gap-1.5 px-3 sm:px-4">
             <Link to="/concierge">
               <Heart className="h-3.5 w-3.5 shrink-0" />

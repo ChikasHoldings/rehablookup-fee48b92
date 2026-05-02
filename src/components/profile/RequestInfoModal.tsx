@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 import {
   Building2,
   Shield,
@@ -73,10 +74,22 @@ interface RequestInfoModalProps {
   };
 }
 
-// Track capacity warning analytics (legacy - now silent)
+// Track capacity warning analytics → GA4 + Meta Pixel (no PII)
 async function trackCapacityEvent(eventType: string, facilityId: string, metadata?: Record<string, unknown>) {
-  // Analytics function removed - was using deleted track-request-help edge function
-  console.debug("Capacity event:", eventType, facilityId);
+  try {
+    trackEvent(eventType, {
+      event_category: "Capacity",
+      event_label: facilityId,
+      ...metadata,
+    });
+    (window as unknown as { fbq?: (...a: unknown[]) => void })?.fbq?.(
+      "trackCustom",
+      eventType,
+      { facility_id: facilityId },
+    );
+  } catch {
+    // best-effort
+  }
 }
 
 // Capacity Warning Component with analytics
@@ -169,15 +182,26 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-// Analytics tracking helper
-// Analytics tracking (legacy - now silent)
+// Lead-form analytics → GA4 + Meta Pixel (no PII; only facility id + flags)
 const trackAnalyticsEvent = async (
   eventType: string,
   facilityId: string,
   metadata?: Record<string, unknown>
 ) => {
-  // Analytics function removed - was using deleted track-request-help edge function
-  console.debug("Lead form event:", eventType, facilityId);
+  try {
+    trackEvent(eventType, {
+      event_category: "LeadForm",
+      event_label: facilityId,
+      ...metadata,
+    });
+    (window as unknown as { fbq?: (...a: unknown[]) => void })?.fbq?.(
+      "trackCustom",
+      eventType,
+      { facility_id: facilityId },
+    );
+  } catch {
+    // best-effort
+  }
 };
 
 // Custom success component for modal context

@@ -9,6 +9,7 @@ import { TrustBar } from "@/components/seo/TrustBar";
 import { ConversionSection } from "@/components/seo/ConversionSection";
 import { ComparisonSection } from "@/components/seo/ComparisonSection";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
+import { InlineMiniIntake } from "@/components/seo/InlineMiniIntake";
 import {
   InternalLinkingSection,
   treatmentTypeLinks,
@@ -223,6 +224,11 @@ export function SEOLandingTemplate({
                 Browse All Centers
               </Link>
             </Button>
+          </div>
+
+          {/* Inline mini-intake (above-the-fold conversion surface) */}
+          <div className="mt-6 max-w-2xl">
+            <InlineMiniIntake source="seo_landing_hero" />
           </div>
         </div>
       </section>
