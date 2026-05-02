@@ -160,11 +160,6 @@ export default function AdminLeads() {
   const searchQuery = useDebounce(searchInput, 350);
   const hasActiveFilters = statusFilter !== "all" || inquiryTypeFilter !== "all" || redistributionFilter !== "all" || searchInput !== "" || dateRange.from !== undefined;
 
-  const { page: currentPage, pageSize, totalPages, setPage: setCurrentPage, setPageSize } = usePagination({
-    tableId: "admin-leads",
-    defaultPageSize: 25,
-    totalItems: totalCount ?? 0,
-  });
 
   const clearAllFilters = () => {
     setStatusFilter("all"); setInquiryTypeFilter("all"); setRedistributionFilter("all");
