@@ -224,6 +224,7 @@ const OscarRehab = lazy(() => import("./pages/insurance/OscarRehab"));
 const HighmarkRehab = lazy(() => import("./pages/insurance/HighmarkRehab"));
 const CostEstimator = lazy(() => import("./pages/CostEstimator"));
 const ArticleDetail = lazy(() => import("./pages/ArticleDetail"));
+const News = lazy(() => import("./pages/News"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -1101,6 +1102,8 @@ const AppInner = () => {
             <Route path="/how-it-works" element={<PublicRouteGuard><HowItWorks /></PublicRouteGuard>} />
             <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
             <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
+            <Route path="/news" element={<PublicRouteGuard><News /></PublicRouteGuard>} />
+            <Route path="/news/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
             <Route path="/blog" element={<Navigate to="/resources" replace />} />
             <Route path="/blog/:id" element={<BlogRedirect />} />
             <Route path="/insurance" element={<PublicRouteGuard><Insurance /></PublicRouteGuard>} />
