@@ -314,6 +314,12 @@ const RehabCenters = () => {
     ? `/rehab-centers?browsePage=${browseSafePage + 1}`
     : undefined;
 
+  // Early return: 301-equivalent client redirect for single-filter combos.
+  // Placed after all hooks so React's rules-of-hooks aren't violated.
+  if (hubRedirect) {
+    return <Navigate to={hubRedirect} replace />;
+  }
+
   return (
     <Layout>
       <SEO
