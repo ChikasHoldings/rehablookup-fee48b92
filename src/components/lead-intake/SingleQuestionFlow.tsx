@@ -262,6 +262,9 @@ export function SingleQuestionFlow({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [consentToContact, setConsentToContact] = useState(false);
   const isSubmittingRef = useRef(false);
+  // Mirrors ref-based guards into render state so buttons visibly disable
+  // during the async window between click and parent `isSubmitting=true`.
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Filter questions based on skip conditions
   const activeQuestions = QUESTIONS.filter(q => !q.skipIf || !q.skipIf(formData));
