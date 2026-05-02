@@ -590,7 +590,10 @@ const CenterProfile = () => {
     return <CenterNotFound attemptedSlug={slug} reason="inactive" />;
   }
 
-  if (!slug || isLoading || isFetching || !isFetched) {
+  // Show skeleton only on the very first load. Background refetches keep the
+  // already-rendered profile in place to avoid a flash to skeleton on revisit
+  // or when auth state changes (currentUserId becomes available after mount).
+  if (!slug || (isLoading && !facility)) {
     return (
       <Layout>
         <CenterProfileSkeleton />
