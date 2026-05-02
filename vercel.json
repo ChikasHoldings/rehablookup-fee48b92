@@ -83,7 +83,7 @@
   "rewrites": [
     {
       "source": "/((?!.*\\.[a-zA-Z0-9]+$|api/|assets/).*)",
-      "destination": "/index.html"
+      "destination": "/"
     }
   ],
   "headers": [
