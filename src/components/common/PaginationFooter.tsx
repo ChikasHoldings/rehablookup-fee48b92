@@ -5,7 +5,11 @@ import { cn } from "@/lib/utils";
 
 interface PaginationFooterProps {
   page: number;
-  pageSize: PageSize;
+  /**
+   * Current page size. Must be one of `PAGE_SIZE_OPTIONS` when the page-size
+   * selector is shown; can be any positive integer when `hidePageSize` is true.
+   */
+  pageSize: number;
   totalPages: number;
   totalItems: number;
   onPageChange: (page: number) => void;
@@ -13,7 +17,7 @@ interface PaginationFooterProps {
   /** Singular noun for the count label (e.g. "lead", "facility"). */
   itemLabel?: string;
   className?: string;
-  /** Hide the page-size selector (useful when items < smallest size). */
+  /** Hide the page-size selector (useful for SEO-locked sizes). */
   hidePageSize?: boolean;
 }
 
