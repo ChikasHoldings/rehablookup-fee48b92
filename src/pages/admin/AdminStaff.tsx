@@ -176,6 +176,12 @@ export default function AdminStaff() {
   });
   const visibleUsers = staffPagination.paginate(filteredUsers);
 
+  // Reset to page 1 on tab/filter/search change.
+  useEffect(() => {
+    staffPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, searchQuery, filterRole]);
+
 
   const getUserDisplayName = (user: AdminUser) => {
     if (user.display_name) return user.display_name;
