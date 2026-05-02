@@ -47,7 +47,8 @@
     "build:vercel": "npm run generate:seo-html && npm run generate:missing-html && npm run generate:gsc-recovery-html && npm run generate:facility-profiles-html && npm run patch:og-image && npm run generate:sitemaps && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "check:hub-routes": "node scripts/check-hub-routes.mjs"
+    "check:hub-routes": "node scripts/check-hub-routes.mjs",
+    "check:vercel-cutover": "node scripts/check-vercel-cutover.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
