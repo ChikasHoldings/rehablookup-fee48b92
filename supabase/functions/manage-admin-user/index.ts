@@ -503,6 +503,9 @@ Deno.serve(async (req) => {
             to: [targetProfile.email],
             subject: "Your RehabLookup Admin Password Has Been Reset",
             html: generatePasswordResetEmail(targetProfile.first_name || "Admin", tempPassword, loginUrl),
+          }, {
+            emailType: "admin_password_reset",
+            idempotencyKey: `admin-pwd-reset-${targetUserId}-${tempPasswordExpiry.toISOString()}`,
           });
         }
 
@@ -677,6 +680,9 @@ Deno.serve(async (req) => {
             to: [targetProfile.email],
             subject: "Your RehabLookup Admin Invitation (Resent)",
             html: generateInvitationEmail(displayName, targetProfile.email, tempPassword, loginUrl),
+          }, {
+            emailType: "admin_invitation_resent",
+            idempotencyKey: `admin-invite-${targetUserId}-${tempPasswordExpiry.toISOString()}`,
           });
         }
 

@@ -334,6 +334,9 @@ Deno.serve(async (req) => {
         to: [sanitizedEmail],
         subject: "We found treatment options for you",
         html: getLeadConfirmationEmail(firstName, matchedFacilities.length),
+      }, {
+        emailType: "marketing_lead_confirmation",
+        idempotencyKey: `mkt-lead-${lead.id}`,
       });
       log(requestId, "INFO", "Confirmation email sent to lead");
     } catch (emailError) {
