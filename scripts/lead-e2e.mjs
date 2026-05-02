@@ -23,15 +23,16 @@ function step(name, ok, details) {
   return r;
 }
 
-// 1. Pick an approved facility
-const { data: facilities, error: fErr } = await anon
-  .from("public_facilities")
-  .select("id, name, slug")
-  .limit(1);
-if (fErr || !facilities?.length) {
-  step("pick facility", false, { note: fErr?.message || "no facilities" });
+// 1. Pick an approved facility via public edge function (anon access)
+const facRes = await fetch(`${SUPABASE_URL}/functions/v1/get-public-facilities`, {
+  headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
+});
+const facJson = await facRes.json().catch(() => ({}));
+const facilities = facJson?.facilities || [];
+if (!facRes.ok || !facilities.length) {
+  step("pick facility", false, { note: `status=${facRes.status} count=${facilities.length}` });
   console.log(JSON.stringify(results, null, 2));
-  Deno?.exit?.(1) ?? process.exit(1);
+  process.exit(1);
 }
 const facility = facilities[0];
 step("pick facility", true, { note: `${facility.name} (${facility.id})` });
