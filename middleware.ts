@@ -40,13 +40,18 @@ export default function middleware(request: Request) {
     return next();
   }
 
-  // Apex / index.html already serves the SPA correctly.
-  if (url.pathname === "/" || url.pathname === "/index.html") {
+  // Apex already serves the SPA shell.
+  if (url.pathname === "/") {
     return next();
   }
 
   // Real users → rewrite to the SPA shell so React + GA/Pixel load.
-  const target = new URL("/index.html", url);
+  // We rewrite to "/" (NOT "/index.html") because `cleanUrls: true` in
+  // vercel.json 308-redirects /index.html → /, which breaks an internal
+  // rewrite and produces NOT_FOUND. Rewriting to "/" serves the SPA shell
+  // while the browser URL stays on the original deep link, so React Router
+  // can take over and render the correct page.
+  const target = new URL("/", url);
   target.search = url.search;
   return rewrite(target);
 }
