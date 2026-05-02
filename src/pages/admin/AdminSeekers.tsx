@@ -372,7 +372,7 @@ export default function AdminSeekers() {
   });
 
   const safeUsers = users || [];
-  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
+  
 
   const handleFilterChange = (value: "all" | "verified" | "unverified") => {
     setVerificationFilter(value);
