@@ -139,6 +139,13 @@ export function LeadIntakeSuccess({ facilityName, facilityId, leadId, firstName,
             <p className="text-xs text-muted-foreground mt-3">
               Something not right? Reply to the confirmation email we just sent and we'll update it.
             </p>
+            <div className="mt-3 flex justify-start">
+              <ResendConfirmationButton
+                email={contact?.email}
+                facilityId={facilityId}
+                leadId={leadId}
+              />
+            </div>
           </div>
         )}
 
