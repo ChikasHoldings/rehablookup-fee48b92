@@ -270,6 +270,12 @@ export default function ProviderNotificationsPage() {
   });
   const visibleNotifications = notifPagination.paginate(filteredNotifications);
 
+  // Reset to page 1 on tab change so users always land on first page.
+  useEffect(() => {
+    notifPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
   const groupedNotifications = visibleNotifications.reduce((groups, notification) => {
     const date = format(new Date(notification.created_at), "yyyy-MM-dd");
     const today = format(new Date(), "yyyy-MM-dd");
