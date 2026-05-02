@@ -142,6 +142,14 @@ export default function AdminBlog() {
     );
   }, [articles, debouncedSearch]);
 
+  const articlesPagination = usePagination({
+    tableId: "admin-blog",
+    defaultPageSize: 25,
+    totalItems: filteredArticles.length,
+  });
+  const visibleArticles = articlesPagination.paginate(filteredArticles);
+
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const article = articles?.find((a) => a.id === id);
