@@ -600,7 +600,28 @@ export const stateCountyData: StateCountyData[] = [
 
 export function getCountyBySlug(stateSlug: string, countySlug: string): CountyData | undefined {
   const stateData = stateCountyData.find(s => s.stateSlug === stateSlug);
-  return stateData?.counties.find(c => c.slug === countySlug);
+  if (!stateData) return undefined;
+
+  // Exact match first
+  const exact = stateData.counties.find(c => c.slug === countySlug);
+  if (exact) return exact;
+
+  // Fallback: many counties share names across states (Jefferson, Montgomery,
+  // Kent, York, etc.) and are stored with a state-suffix slug (e.g.
+  // "jefferson-la", "kent-mi", "york-me"). Inbound traffic, prerendered HTML,
+  // and historical sitemap URLs use the plain base ("jefferson"). Since we've
+  // already scoped to one state and base slugs are unique within a state,
+  // matching by the base portion of the stored slug is unambiguous and safe.
+  const base = countySlug.toLowerCase();
+  return stateData.counties.find(c => {
+    const stored = c.slug.toLowerCase();
+    if (stored === base) return true;
+    // Stored slug is "<base>-<state-suffix>" — match if the prefix before the
+    // last dash equals the requested slug.
+    const lastDash = stored.lastIndexOf("-");
+    if (lastDash === -1) return false;
+    return stored.slice(0, lastDash) === base;
+  });
 }
 
 export function getStateCounties(stateSlug: string): CountyData[] {
