@@ -297,7 +297,7 @@ export default function AdminLeads() {
   });
 
   const filteredLeads = useMemo(() => leads || [], [leads]);
-  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
+  
 
   // Delete
   const handleDeleteLead = async () => {
