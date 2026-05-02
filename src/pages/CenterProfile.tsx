@@ -45,6 +45,7 @@ import {
   ChevronRight,
   Handshake,
   GlobeIcon,
+  Scale,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
 import { useEffect, useRef, useState, useCallback } from "react";
