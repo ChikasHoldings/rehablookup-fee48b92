@@ -447,6 +447,19 @@ export default function ProviderNotificationsPage() {
                     ))}
                   </div>
                 ))}
+                {filteredNotifications.length > notifPagination.pageSize && (
+                  <div className="px-4 pb-4">
+                    <PaginationFooter
+                      page={notifPagination.page}
+                      pageSize={notifPagination.pageSize}
+                      totalPages={notifPagination.totalPages}
+                      totalItems={filteredNotifications.length}
+                      onPageChange={notifPagination.setPage}
+                      onPageSizeChange={notifPagination.setPageSize}
+                      itemLabel="notification"
+                    />
+                  </div>
+                )}
               </CardContent>
             )}
           </Card>
