@@ -16,6 +16,10 @@ interface SEOProps {
   modifiedTime?: string;
   locale?: string;
   hreflang?: { lang: string; href: string }[];
+  /** Pagination: full URL or path of the previous page in the sequence (rel="prev"). */
+  prevUrl?: string;
+  /** Pagination: full URL or path of the next page in the sequence (rel="next"). */
+  nextUrl?: string;
 }
 
 const SITE_NAME = "RehabLookup";
