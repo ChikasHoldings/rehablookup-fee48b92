@@ -7,13 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, RefreshCw, Search, ExternalLink } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertTriangle, RefreshCw, Search, ExternalLink, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
+import { resolvePattern } from "@/lib/notFoundPatterns";
 
 type TimeRange = "24h" | "7d" | "30d" | "all";
 type KindFilter = "all" | "spa_route" | "static_asset";
+type GroupMode = "pattern" | "path";
+
+interface PatternSummary {
+  patternId: string;
+  patternLabel: string;
+  hits: number;
+  uniquePaths: number;
+  lastSeen: string;
+  hasBotTraffic: boolean;
+  paths: PathSummary[];
+}
 
 interface NotFoundEvent {
   id: string;
