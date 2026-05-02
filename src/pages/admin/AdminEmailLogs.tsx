@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Mail, CheckCircle2, XCircle, AlertTriangle, Clock, Search, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { usePagination } from "@/hooks/usePagination";
 
 type TimeRange = "24h" | "7d" | "30d" | "all";
@@ -389,18 +390,21 @@ export default function AdminEmailLogs() {
             </Table>
           </div>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3 border-t">
+          {/* Pagination (cursor-style; no total count for tracking events) */}
+          <div className="flex flex-col gap-3 px-4 py-3 border-t sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              Page {page + 1} · Showing {logs.length} results
+              Page {pageOneBased} · Showing {logs.length} results
             </p>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button size="sm" variant="outline" disabled={rawLogs.length < PAGE_SIZE} onClick={() => setPage(p => p + 1)}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <PageSizeSelect value={PAGE_SIZE} onChange={setPageSize} />
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="outline" disabled={rawLogs.length < PAGE_SIZE} onClick={() => setPage(p => p + 1)}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
