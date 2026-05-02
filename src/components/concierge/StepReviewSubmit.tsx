@@ -148,25 +148,8 @@ export function StepReviewSubmit({
           <InfoRow label="Assessment Pref." value={data.assessmentPreference} />
         </SectionCard>
 
-        {/* Step 4: Payment & Insurance */}
-        <SectionCard title="Payment & Insurance" icon={CreditCard} step={4} onEdit={onEdit}>
-          <InfoRow label="Payment Type" value={data.paymentType} />
-          {data.insuranceCarrier && (
-            <>
-              <InfoRow label="Insurance Carrier" value={data.insuranceCarrier} />
-              <InfoRow label="Member ID" value={data.insuranceMemberId} />
-              <InfoRow label="Group Number" value={data.insuranceGroupNumber} />
-              <InfoRow label="Employer" value={data.employerName} />
-              <InfoRow label="Benefits Verified" value={data.benefitsVerified} />
-            </>
-          )}
-          {data.budgetRange && <InfoRow label="Budget Range" value={data.budgetRange} />}
-          <InfoRow label="Scholarship Interest" value={data.scholarshipInterest} />
-          <InfoRow label="Willing to Travel" value={data.willingToTravel} />
-        </SectionCard>
-
-        {/* Step 5: Contact Information */}
-        <SectionCard title="Contact Information" icon={Phone} step={5} onEdit={onEdit}>
+        {/* Step 4: Contact Information */}
+        <SectionCard title="Contact Information" icon={Phone} step={4} onEdit={onEdit}>
           <InfoRow label="Name" value={fullName} />
           <InfoRow label="Phone" value={data.phone} />
           <InfoRow label="Email" value={data.email} />
