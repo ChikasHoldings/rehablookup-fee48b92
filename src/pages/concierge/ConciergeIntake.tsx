@@ -23,7 +23,7 @@ import {
 import { StepWhoNeedsHelp } from "@/components/concierge/StepWhoNeedsHelp";
 import { StepCareNeed } from "@/components/concierge/StepCareNeed";
 import { StepLogistics } from "@/components/concierge/StepLogistics";
-import { StepPaymentInfo } from "@/components/concierge/StepPaymentInfo";
+
 import { StepContact } from "@/components/concierge/StepContact";
 import { StepEmailVerification } from "@/components/concierge/StepEmailVerification";
 import { StepPhoneVerification } from "@/components/concierge/StepPhoneVerification";
