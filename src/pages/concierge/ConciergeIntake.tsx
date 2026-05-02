@@ -675,7 +675,7 @@ export default function ConciergeIntake() {
     // Auto-advance to phone verification step
     setTimeout(() => {
       setDirection(1);
-      setCurrentStep(7);
+      setCurrentStep(6);
       scrollToTopSmooth();
     }, 800);
   };
@@ -685,7 +685,7 @@ export default function ConciergeIntake() {
     setEmailVerification({ verified: false, verifiedAt: null });
     localStorage.removeItem(EMAIL_VERIFICATION_KEY);
     setDirection(-1);
-    setCurrentStep(5);
+    setCurrentStep(4);
   };
 
   const handlePhoneVerified = (verifiedAt: string) => {
@@ -695,7 +695,7 @@ export default function ConciergeIntake() {
     // Auto-advance to review step
     setTimeout(() => {
       setDirection(1);
-      setCurrentStep(8);
+      setCurrentStep(7);
       scrollToTopSmooth();
     }, 800);
   };
@@ -704,7 +704,7 @@ export default function ConciergeIntake() {
     setPhoneVerification({ verified: false, verifiedAt: null });
     localStorage.removeItem(PHONE_VERIFICATION_KEY);
     setDirection(-1);
-    setCurrentStep(5);
+    setCurrentStep(4);
   };
 
   // Fires concierge_intake_started exactly once per mount, the first time the
