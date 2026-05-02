@@ -345,6 +345,9 @@ Deno.serve(async (req) => {
             </body>
             </html>
           `,
+        }, {
+          emailType: "placement_case_seeker_confirmation",
+          idempotencyKey: `placement-seeker-${caseData.id}`,
         });
         logStep(requestId, "User confirmation email sent");
       } catch (emailError) {
@@ -361,7 +364,7 @@ Deno.serve(async (req) => {
         };
 
         await sendEmailWithRetry(supabase, resend, {
-          from: "RehabLookup System <system@rehablookup.com>",
+          from: "RehabLookup System <no-reply@rehablookup.com>",
           to: ["placement@rehablookup.com"],
           subject: `[NEW CASE] ${urgencyLabel[urgency] || urgency} - ${seekerName} - ${levelOfCare}`,
           html: `
@@ -394,6 +397,9 @@ Deno.serve(async (req) => {
             ${preferredCities ? `<p><strong>Preferred Cities:</strong> ${preferredCities}</p>` : ""}
             ${additionalNotes ? `<p><strong>Additional Notes:</strong> ${additionalNotes}</p>` : ""}
           `,
+        }, {
+          emailType: "placement_case_admin_notification",
+          idempotencyKey: `placement-admin-${caseData.id}`,
         });
         logStep(requestId, "Admin notification email sent");
       } catch (adminEmailError) {

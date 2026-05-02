@@ -225,6 +225,7 @@ Deno.serve(async (req) => {
               .join("\n");
 
             try {
+              const _alertHourBucket = new Date().toISOString().slice(0, 13); // YYYY-MM-DDTHH
               await sendEmailWithRetry(supabase, resend, {
                 from: "RehabLookup Security <no-reply@rehablookup.com>",
                 to: adminEmails,
@@ -267,6 +268,9 @@ Deno.serve(async (req) => {
                     </div>
                   </div>
                 `,
+              }, {
+                emailType: "admin_brute_force_alert",
+                idempotencyKey: `brute-force-${_alertHourBucket}`,
               });
               console.log(`[CHECK-BRUTE-FORCE] Email alert sent to ${adminEmails.length} admin(s)`);
             } catch (emailError) {

@@ -392,6 +392,9 @@ Deno.serve(async (req) => {
 </body>
 </html>
           `,
+        }, {
+          emailType: "admin_user_welcome",
+          idempotencyKey: `admin-welcome-${userId}`,
         });
         console.log("[CREATE-ADMIN-USER] Welcome email sent to:", email);
       } catch (emailError) {

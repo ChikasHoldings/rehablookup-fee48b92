@@ -1,169 +1,111 @@
-# Vercel Cutover SEO Audit & Runbook
+# Transactional Email Hardening — Full Audit & Coverage Sweep
 
-## TL;DR
+Goal: every admin, provider, and client transactional email is (1) **actually triggered** when its event fires, (2) **rendered correctly** on Gmail / Apple Mail / Outlook, and (3) **never silently dropped** by retries, suppression, or bad recipient data.
 
-Your site is **mostly Vercel-ready** — `vercel.json` already has 63 server-side 301s, hybrid pre-rendered HTML (4,641 files in `public/`), correct sitemap headers, and a parity validator (`check:redirect-parity`). But there are **4 blockers** that will cause SEO regressions if you flip DNS today. Fix them first, then follow the cutover runbook below. Expected outcome with the fixes applied: **zero ranking loss**, faster TTFB on pre-rendered pages, and cleaner 301s for search engines.
+## Current footprint (what we found)
 
----
+- **~40 send-* edge functions** sending mail directly via Resend through `sendEmailWithRetry`.
+- **3 shared template modules**: `email-templates.ts` (core builders + plan styling), `tour-email-templates.ts` (7 templates), `message-email-templates.ts` (3 templates).
+- **Sender domain**: `no-reply@rehablookup.com` (one stray `system@rehablookup.com` in `send-admin-daily-summary`).
+- **Tracking**: `email_tracking_events` (event_type: `sent`, etc.). Last 30d shows only 8 distinct `email_type`s firing — indicating most send paths are **not logging tracking events**, so we can't prove coverage from data alone.
+- **No central dispatcher** today — each function builds HTML inline + calls Resend. That's why bugs sneak in per-function.
 
-## Must-fix before cutover (blockers)
+## Scope — three workstreams
 
-### 1. The catch-all rewrite breaks pre-rendered HTML serving (CRITICAL)
+### 1. Coverage audit (find emails that should fire but don't)
 
-Current `vercel.json`:
-```json
-"rewrites": [
-  { "source": "/((?!.*\\.[a-zA-Z0-9]+$|api/|assets/|_next/).*)", "destination": "/index.html" }
-]
-```
-
-Vercel evaluates `rewrites` **after** the filesystem, so `public/rehab-centers/california.html` will normally win. **However**, your pre-render layout uses both `<path>.html` AND `<path>/index.html` (hybrid). Vercel's filesystem handler with `cleanUrls: true` resolves both — but only when the rewrite is structured to allow it. The risk: if Vercel's rewrite engine fires before the cleanUrls resolver on certain edge cases (notably routes ending in a segment that *also* exists as a directory), bots get the SPA shell, not the SEO HTML.
-
-**Fix:** Add an explicit "filesystem-first" handle and an opt-in pre-render rewrite:
-```json
-"rewrites": [
-  { "source": "/((?!.*\\.[a-zA-Z0-9]+$|api/|assets/).*)", "destination": "/index.html" }
-],
-"cleanUrls": true,
-"trailingSlash": false
-```
-Already mostly correct — but **remove `_next/`** (Next.js artifact, irrelevant on Vite) to keep the regex tight, and add a `validate:vercel-deploy` step that does an actual local `vercel build && vercel dev` smoke test crawling 50 representative routes (script already exists, just wire it into CI).
-
-### 2. Lovable preview hosts hardcoded into canonical helper
-
-`src/components/SEO.tsx` line 54-55 still treats `*.lovable.app` and `*.lovable.dev` as "ours". After cutover, requests *should* never hit those hosts (Vercel will own DNS), but if someone shares a preview link, the canonical will be set to the preview path on the apex domain — fine. But the Lovable-published mirror at `rehablookup.lovable.app` will keep serving and its canonicals will point to `rehablookup.com`. **Action: either unpublish the Lovable build right after cutover, or add `<meta name="robots" content="noindex">` to the Lovable mirror via a temporary build flag.** Otherwise Google sees two live origins for ~1 week. Recommended: unpublish Lovable hosting 24h after Vercel goes green.
-
-### 3. Sitemap freshness on Vercel build
-
-Your `build:vercel` script regenerates sitemaps at build time, but **Vercel only rebuilds on git push**. Today, `generate:sitemaps` reads from Supabase live data. After cutover, a new facility published in the admin panel won't appear in the sitemap until the next code deploy. Two options:
-- **(A) Quick fix**: Add a Vercel cron (`vercel.json` → `crons`) that hits an edge function which regenerates and uploads sitemap XML to a Vercel Blob or a Supabase Storage bucket served via rewrite. ~2 hours of work.
-- **(B) Acceptable interim**: Trigger Vercel deploy hooks from Supabase whenever facilities table changes (Postgres webhook → Vercel deploy hook URL).
-
-Recommend **(B)** for cutover — simpler, 30 min of work, and your facility publish cadence is low enough that deploy-on-write is fine.
-
-### 4. Edge-function-driven prerender for bots is dead on Vercel
-
-`supabase/functions/detect-and-prerender` is a Lovable-hosting middleware. On Vercel it won't be invoked unless you manually wire it into a Vercel Edge Middleware. **Good news**: you don't need it — your hybrid `<path>.html` mirrors are served directly by Vercel's filesystem to *all* clients (bots and humans), which is actually better SEO than UA-sniffing. **Action**: leave the edge function deployed (no harm, other consumers may exist), but **remove any references to it from the frontend** and confirm no client code calls `/functions/v1/detect-and-prerender` (a quick grep — I'll do this in implementation).
-
----
-
-## Pre-cutover audit checklist (I will run all of these)
+Build a single source-of-truth matrix in `docs/email-matrix.md` with one row per event:
 
 ```text
-1. Crawl current production (rehablookup.com on Lovable) → snapshot:
-   - HTTP status, canonical, title, meta description, h1
-   - For top 200 URLs from sitemap + GSC top-pages export
-2. Run vercel build locally → vercel dev → crawl same 200 URLs
-3. Diff: status / canonical / title / description must match exactly
-4. Validate every redirect in vercel.json resolves to a 200
-   (currently 63 redirects; script already exists: validate-vercel-deploy.mjs)
-5. Verify /sitemap-index.xml, /sitemap.xml, /sitemap-facilities.xml,
-   /sitemap-extras.xml, /robots.txt all return 200 with correct
-   Content-Type (vercel.json headers already correct)
-6. Verify /center/<slug>, /rehab-centers/<state>,
-   /rehab-centers/<state>/<city>, /treatment-types/<slug>,
-   /<x>-near-me, /us-rehab/<slug>, /insurance/<slug>,
-   /provider-guides/<slug> all serve pre-rendered HTML (not SPA shell)
-7. Verify trailing-slash 301 fires server-side (not client-side
-   <Navigate>) — vercel.json already has /:path+/ → /:path+
-8. Verify www → apex 301 (already in vercel.json line 11)
-9. Run: npm run check:redirect-parity, validate:sitemap-robots,
-   check:facility-sitemap-sync, check:gsc-indexing, check:internal-links
+Event                          Audience    Function                       Template            Idempotency key            Tracking
+-----                          --------    --------                       --------            -------                    --------
+Lead created → facility        Provider    send-lead-email                facilityNewLead     lead-new-{leadId}-{fid}    facility_new_lead
+Lead unlocked                  Provider    unlock-lead                    leadUnlocked        unlock-{leadId}            lead_unlocked
+Lead expiring T-60min          Provider    send-unlock-reminders          leadExpiring        expiring-{leadId}          lead_expiring
+Lead redistributed             Provider    process-lead-redistribution    leadRedistributed   redist-{leadId}-{fid}      lead_redistributed
+Listing approved/rejected      Provider    send-approval-email            listingApproved     approval-{listingId}       listing_approval
+Credit purchase / auto-reload  Provider    stripe-webhook                 creditPurchased     credit-{paymentIntent}     credit_purchased
+Subscription renewed/failed    Provider    notify-payment-failed          paymentFailed       pay-fail-{invoiceId}       payment_failed
+Profile incomplete reminder    Provider    send-profile-reminders         profileIncomplete   profile-rem-{userId}-{d}   profile_reminder
+Provider welcome (claimed)     Provider    send-provider-welcome-email    providerWelcome     welcome-{userId}           provider_welcome
+Tour requested/proposed/...    Both        send-tour-notifications        tour*               tour-{phase}-{tourId}      tour_{phase}
+Inquiry submitted              Client      send-lead-confirmation         seekerInquiry       inquiry-{inquiryId}        seeker_inquiry
+Advisor assigned               Client      send-concierge-notifications   advisorAssigned     concierge-adv-{caseId}     concierge_advisor
+Provider interested            Client      send-concierge-notifications   providerInterested  concierge-int-{caseId}-{fid} provider_interested
+Tour confirmed (seeker)        Client      send-tour-notifications        tourConfirmedUser   tour-confirmed-seeker-{tid} tour_confirmed_seeker
+Admission scheduled            Client      confirm-placement              admissionScheduled  admit-{caseId}             admission_scheduled
+Email verification             Client      send-verification-code         verificationCode   verify-{email}-{ts}        verification_code
+Password reset                 Client      send-password-reset            passwordReset      pwd-{userId}-{ts}          password_reset
+New message (concierge / DM)   Both        send-message-notifications     messageTo*         msg-{messageId}-{role}     message_*
+Account / billing security     Both        send-security-block-notification securityBlock    sec-{eventId}              security_block
+Daily admin digest             Admin       send-admin-daily-summary       adminDigest        digest-{YYYY-MM-DD}        admin_digest
+Provider signup → admin        Admin       notify-admin-provider-signup   adminProviderSignup admin-prov-{userId}       admin_provider_signup
+Flagged image → admin          Admin       notify-flagged-image           adminFlaggedImage   flag-{imageId}             admin_flagged_image
+Churn / health alerts          Admin       check-churn-alerts / health    adminHealth         hc-{type}-{day}            admin_health
 ```
 
-I'll produce **`docs/audit/vercel-cutover/`** with: `pre-cutover-snapshot.csv`, `vercel-build-snapshot.csv`, `diff-report.md`, and `redirect-validation.json`.
+For each row I will:
+- Open the source function and confirm the trigger fires (DB trigger / cron / inline call).
+- Confirm `idempotencyKey` is set (no idempotency = duplicate sends on retry).
+- Confirm `emailType` is recorded so it shows in `email_tracking_events`.
+- Flag any audience that's missing the email entirely (e.g. provider gets an in-app notif but no email). Log gaps in the matrix as `MISSING` and fix them.
 
----
+Known suspects from the inventory:
+- Inline `from:` strings → standardize to `RehabLookup <no-reply@rehablookup.com>` (one off-domain `system@rehablookup.com` to fix).
+- Several functions (e.g. `send-marketing-followup`, `send-retention-outreach`) look like marketing — confirm and **explicitly exclude** from this transactional pass; they belong to the Phase-2 marketing tool.
+- `seeker_inquiry_confirmation` only shows 1 event in 30d — likely under-firing or under-tracked. Verify.
 
-## DNS cutover runbook
+### 2. Template rendering audit (no broken HTML in any inbox)
 
-### T-7 days
-- Land all 4 blocker fixes; merge to main
-- Vercel project deployed, accessible at `<project>.vercel.app`
-- Run full audit; resolve any diffs
-- Lower TTL on `rehablookup.com` A-record + `www` CNAME to **300s** (5 min)
+A. **Snapshot test harness** — new `supabase/functions/_tests/email-render_test.ts`:
+- For every exported template builder in `_shared/*-email-templates.ts`, render with realistic fixture data.
+- Assert: starts with `<!DOCTYPE`, contains exactly one `</html>`, no unresolved `${...}` placeholders, no `undefined`/`null`/`NaN`/`[object Object]` substrings, all `<a href>` are absolute URLs, no `dangerouslySetInnerHTML` analogue (raw template literal with unescaped user input).
+- Run via existing Deno test runner.
 
-### T-1 day
-- Final audit re-run
-- Take fresh GSC export of top 1,000 URLs + their current rankings (baseline)
-- Open Sentry/error-monitoring dashboards in tabs
+B. **Visual QA pass** (one-time, not automated):
+- Render each template to `/tmp/email-previews/*.html`, screenshot light + dark + Outlook-narrow widths, eyeball for: clipped buttons, missing logo, broken color tokens, double footers, missing unsubscribe context, mobile reflow.
+- Fix issues in the shared builders (`emailHeader`, `ctaButton`, `emailFooter`) once — they cascade to all templates.
 
-### T-0 (cutover)
-1. In DNS provider, change `rehablookup.com` A-record from Lovable IP `185.158.133.1` → Vercel `76.76.21.21` (or Vercel-supplied target)
-2. Change `www` CNAME → `cname.vercel-dns.com`
-3. In Vercel project: add `rehablookup.com` and `www.rehablookup.com` as domains; set `rehablookup.com` as primary
-4. Wait for SSL cert provisioning (Vercel usually <2 min)
-5. Run post-cutover monitor (below) **immediately**, then at T+15min, T+1h, T+6h, T+24h
-6. **Do NOT unpublish Lovable hosting yet** — keep as instant rollback
+C. **Inline-HTML cleanup** — ~30 functions hand-roll HTML instead of using the shared builders. We will:
+- Replace each with `emailStart() + emailHeader() + emailBodyStart() + ... + emailEnd()` so all emails share one visual system.
+- This is the highest-leverage rendering fix; one bad `<table>` breaks Outlook everywhere it's copy-pasted.
 
-### T+24h (if green)
-- Unpublish the Lovable project (Project Settings → Publish → Unpublish)
-- Restore TTL to 3600s
-- Submit fresh sitemaps in GSC + Bing Webmaster Tools (forces recrawl)
+### 3. Reliability hardening (no silent drops)
 
-### Rollback (any time within 24h, if traffic drops >20% or 5xx spikes)
-- Revert DNS A-record back to `185.158.133.1`
-- Revert `www` CNAME to its prior Lovable value
-- TTL is 300s → propagation in 5–10 min
-- Lovable hosting is still live, so service resumes instantly
+- **Tracking everywhere**: every `sendEmailWithRetry` call must pass `emailType` + `idempotencyKey`. Add a lint test that greps for `sendEmailWithRetry(` and fails CI if either is missing.
+- **Recipient guard**: `_shared/recipient-email-guard.ts` already exists — enforce it in `sendEmailWithRetry` itself (single chokepoint) instead of relying on each caller.
+- **Suppression check**: short-circuit sends to addresses that previously hard-bounced (Resend webhook → `email_tracking_events` already capturing `bounced`/`complained`; add a `suppressed_emails` table + check in the sender). Required so a single bad address doesn't poison reputation.
+- **Resend webhook coverage**: `resend-webhook` exists — confirm it writes `delivered`/`bounced`/`complained`/`opened` rows. Without these we can't measure deliverability.
+- **DLQ**: after 3 retry attempts, write to a `email_send_failures` table + post to admin daily digest. Today retried sends just disappear into logs.
 
----
+## Deliverables
 
-## Post-cutover monitoring script
+1. `docs/email-matrix.md` — the coverage matrix above, with `OK` / `MISSING` / `FIXED` per row.
+2. Patches to every send-* function that is missing a trigger, idempotency key, or tracking event.
+3. Refactor of inline-HTML functions onto the shared builders.
+4. New `email-render_test.ts` snapshot suite + a lint test for `sendEmailWithRetry` arguments.
+5. New `suppressed_emails` table + check in `resilient-email-sender.ts`.
+6. New `email_send_failures` table + admin digest entry.
+7. Visual QA report (`/tmp/email-previews/REPORT.md`) listing each template with screenshot + pass/fail.
 
-I will add `scripts/monitor-cutover.mjs` that:
-- Crawls top 200 URLs from sitemap + GSC export
-- Compares response status, canonical URL, title, meta description, and presence of key JSON-LD types vs. the pre-cutover snapshot
-- Outputs a markdown diff report and exits non-zero if any regression
-- Designed to be run manually at T+0, T+15m, T+1h, T+6h, T+24h, T+7d
+## Out of scope (intentional)
 
-Plus a simple uptime/status alerting recipe (UptimeRobot or Vercel's built-in monitoring) on:
-- `https://rehablookup.com/` → 200
-- `https://rehablookup.com/sitemap-index.xml` → 200
-- `https://rehablookup.com/center/<known-slug>` → 200 + contains pre-rendered marker
-- `https://rehablookup.com/rehab-centers/california` → 200 + contains pre-rendered marker
+- Marketing emails (newsletter, drips, re-engagement) — separate Phase-2 tool (Customer.io recommendation stands).
+- Migration to Lovable's built-in `send-transactional-email` queue — your stack is already deeply integrated with Resend + `sendEmailWithRetry`; rebuilding on the Lovable queue would be a bigger refactor than this audit. Happy to do it as a follow-up if you want pgmq-backed retries instead of in-function retries.
 
----
+## Sequencing
 
-## What I'll deliver in implementation mode
+1. Build the coverage matrix (read-only audit, ~1 pass through every send-* function).
+2. Land reliability primitives: suppression table, DLQ table, sender guards, tracking lint.
+3. Fix MISSING rows from the matrix (each is a small targeted patch).
+4. Refactor inline-HTML functions onto shared builders (mechanical).
+5. Add render snapshot tests + run the visual QA pass; fix any rendering bugs found.
+6. Deploy all touched functions; smoke-test critical paths via `curl_edge_functions`.
 
-1. **Code changes**
-   - Tighten `vercel.json` rewrite regex (drop `_next/`)
-   - Wire `validate:vercel-deploy` into the SEO validators GitHub Action
-   - Set up Supabase → Vercel deploy hook for facility publish events
-   - Remove any frontend reference to `detect-and-prerender` (if found)
+## Open questions before I start
 
-2. **New scripts**
-   - `scripts/audit/snapshot-production.mjs` — crawls top URLs, dumps CSV
-   - `scripts/audit/diff-snapshots.mjs` — compares two snapshots
-   - `scripts/monitor-cutover.mjs` — post-cutover live diff against baseline
+1. **DLQ surfacing** — alert via the existing daily admin digest, or a separate immediate Slack-style admin email on first failure? (recommend: digest for noise control, immediate only for `bounced`/`complained` of admin/provider primary contacts).
+2. **Marketing-looking functions** (`send-marketing-followup`, `send-retention-outreach`, `send-provider-welcome-offer-email`) — keep them firing as-is during this pass, or pause them until the Customer.io migration? (recommend: keep firing, just standardize templates so they don't visually drift).
+3. **Should I migrate to Lovable's built-in transactional queue** (pgmq + `send-transactional-email`) as part of this, or stay on Resend + `sendEmailWithRetry`? (recommend: stay on current stack for this pass; revisit after the audit lands).
 
-3. **Audit artifacts**
-   - `docs/audit/vercel-cutover/pre-cutover-snapshot.csv`
-   - `docs/audit/vercel-cutover/vercel-build-snapshot.csv`
-   - `docs/audit/vercel-cutover/diff-report.md`
-   - `docs/audit/vercel-cutover/redirect-validation.json`
-   - `docs/audit/vercel-cutover/RUNBOOK.md` (the runbook above as a living doc)
-
-4. **Verification**
-   - Full local `vercel build` + `vercel dev` smoke test
-   - All existing CI validators (`check:internal-links`, `check:redirect-parity`, `check:facility-sitemap-sync`, `validate:sitemap-robots`, `check:gsc-indexing`, `check:structured-data`) pass
-
----
-
-## Honest risk assessment
-
-| Risk | Likelihood | Mitigation |
-|---|---|---|
-| Catch-all rewrite swallows pre-rendered HTML | Medium | Blocker #1 + local `vercel dev` crawl test |
-| Stale sitemap after facility publish | High (ongoing) | Blocker #3 deploy hook |
-| Two live origins (Lovable + Vercel) for 24h | Low SEO impact | Canonicals already point to apex; unpublish Lovable T+24h |
-| Cert provisioning fails | Low | Vercel auto-retries; Lovable still live as fallback |
-| Edge function calls (auth, intake) break due to CORS | Low | Edge functions stay on Supabase; CORS allows `*` already |
-| Google re-crawls slowly and rankings dip 1–2 weeks | Medium | Resubmit sitemaps in GSC immediately after cutover; monitor |
-
-**Net expected SEO impact: 0%.** URLs unchanged, canonicals unchanged, redirects mirrored server-side, pre-rendered HTML preserved. The cutover is **safe** with these fixes.
-
----
-
-Approve this plan and I'll switch to build mode and execute it end-to-end.
+Reply **"ship it"** to proceed with the recommended defaults, or answer any of the three questions to adjust.

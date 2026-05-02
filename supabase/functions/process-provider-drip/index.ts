@@ -459,6 +459,9 @@ Deno.serve(async (req) => {
             "List-Unsubscribe": `<mailto:no-reply@rehablookup.com?subject=unsubscribe>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
+        }, {
+          emailType: "provider_onboarding_drip",
+          idempotencyKey: `drip-${drip.id}-day${drip.day_number}`,
         });
 
         console.log(`[DRIP v${VERSION}] Day ${drip.day_number} sent to ${drip.provider_email}:`, emailResult);

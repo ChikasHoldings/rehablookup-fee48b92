@@ -105,6 +105,9 @@ const sendSubscriptionNotificationEmail = async (
       to: [email],
       subject: actionInfo.subject,
       html,
+    }, {
+      emailType: `subscription_${action}`,
+      idempotencyKey: `sub-${action}-${email}-${new Date().toISOString().slice(0, 10)}`,
     });
     logStep("Notification email sent", { email, action });
   } catch (error) {

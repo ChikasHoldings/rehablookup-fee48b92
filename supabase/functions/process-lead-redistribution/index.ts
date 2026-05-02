@@ -303,6 +303,9 @@ Deno.serve(async (req) => {
               to: email,
               subject: `🔁 New discounted lead in your area (${discountPrice}) — ${facility.name}`,
               html: getRedistributedLeadEmail(facility.name, maskLeadName(lead.name), dashboardUrl, discountPrice, locationHint, levelOfCare),
+            }, {
+              emailType: "lead_redistributed",
+              idempotencyKey: `lead-redist-${lead.id}-${facility.id}`,
             });
 
             // Create in-app provider notification with FOMO signals

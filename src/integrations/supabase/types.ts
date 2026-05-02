@@ -1450,6 +1450,48 @@ export type Database = {
           },
         ]
       }
+      email_send_failures: {
+        Row: {
+          attempts: number
+          created_at: string
+          email_type: string
+          error_message: string | null
+          id: string
+          idempotency_key: string | null
+          metadata: Json | null
+          recipient_email: string
+          resolved_at: string | null
+          resolved_by: string | null
+          subject: string | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          email_type: string
+          error_message?: string | null
+          id?: string
+          idempotency_key?: string | null
+          metadata?: Json | null
+          recipient_email: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          subject?: string | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          idempotency_key?: string | null
+          metadata?: Json | null
+          recipient_email?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          subject?: string | null
+        }
+        Relationships: []
+      }
       email_tracking_events: {
         Row: {
           created_at: string
@@ -5733,6 +5775,33 @@ export type Database = {
           status?: string
           subject?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      suppressed_emails: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          notes: string | null
+          reason: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          notes?: string | null
+          reason: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          notes?: string | null
+          reason?: string
+          source?: string | null
         }
         Relationships: []
       }

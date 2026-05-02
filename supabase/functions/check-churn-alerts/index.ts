@@ -221,6 +221,9 @@ Deno.serve(async (req) => {
       to: adminEmails,
       subject: `⚠️ High Churn Alert: ${churnRate.toFixed(1)}% churn rate detected`,
       html: emailHtml,
+    }, {
+      emailType: "admin_churn_alert",
+      idempotencyKey: `churn-alert-${alertKey}`,
     });
 
     if (emailError) {

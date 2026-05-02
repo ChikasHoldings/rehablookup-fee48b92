@@ -387,6 +387,9 @@ Deno.serve(async (req) => {
                   to: adminEmails,
                   subject: `⚠️ ${highRiskProviders.length} Provider(s) At Risk of Churning`,
                   html: emailHtml,
+                }, {
+                  emailType: "admin_provider_health_alert",
+                  idempotencyKey: `provider-health-${alertKey}`,
                 });
 
                 logStep("Alert email sent", { adminCount: adminEmails.length });
