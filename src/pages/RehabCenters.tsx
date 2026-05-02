@@ -6,6 +6,7 @@ import { SEO, generateDirectoryCollectionSchema } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { SearchForm } from "@/components/search/SearchForm";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { usStates } from "@/data/usStates";
@@ -692,48 +693,18 @@ const RehabCenters = () => {
           )}
 
           {/* Pagination */}
-          {browseTotalPages > 1 && (
-            <nav
-              className="mt-8 flex items-center justify-center gap-1"
-              aria-label="Browse results pagination"
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => setBrowsePage(browseSafePage - 1)}
-                disabled={browseSafePage === 1}
-                aria-label="Previous page"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Prev</span>
-              </Button>
-              {browsePageNumbers.map((p) => (
-                <Button
-                  key={p}
-                  variant={p === browseSafePage ? "default" : "outline"}
-                  size="sm"
-                  className="min-w-9"
-                  onClick={() => setBrowsePage(p)}
-                  aria-label={`Page ${p}`}
-                  aria-current={p === browseSafePage ? "page" : undefined}
-                >
-                  {p}
-                </Button>
-              ))}
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => setBrowsePage(browseSafePage + 1)}
-                disabled={browseSafePage === browseTotalPages}
-                aria-label="Next page"
-              >
-                <span className="hidden sm:inline">Next</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </nav>
-          )}
+          <PaginationFooter
+            page={browseSafePage}
+            pageSize={BROWSE_PAGE_SIZE as 10 | 25 | 50 | 100}
+            totalPages={browseTotalPages}
+            totalItems={browseFiltered.length}
+            onPageChange={setBrowsePage}
+            onPageSizeChange={() => {
+              /* page size fixed for canonical hub SEO stability */
+            }}
+            itemLabel="center"
+            hidePageSize
+          />
         </div>
       </section>
 
