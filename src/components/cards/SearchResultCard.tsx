@@ -345,6 +345,16 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
           {formattedPhone && telLink && (
             <a 
               href={telLink}
+              onClick={() => {
+                if (center.isFromDatabase && center.id) {
+                  trackClickToCall(center.id, "search");
+                }
+                trackEvent("card_call_click", {
+                  event_category: "Conversion",
+                  event_label: center.id ?? center.name,
+                  surface: "search_card",
+                });
+              }}
               className={cn(
                 "inline-flex items-center gap-1.5 text-sm font-medium mb-2 w-fit",
                 "hover:underline transition-colors",
