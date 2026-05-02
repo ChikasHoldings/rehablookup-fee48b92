@@ -339,6 +339,8 @@ export function SEO({
         <meta name="keywords" content={keywords.join(", ")} />
       )}
      <link rel="canonical" href={canonicalUrl} />
+     {prevHref && <link rel="prev" href={prevHref} />}
+     {nextHref && <link rel="next" href={nextHref} />}
      {hreflang && hreflang.map(({ lang, href }) => (
        <link key={lang} rel="alternate" hrefLang={lang} href={href} />
      ))}
