@@ -28,33 +28,46 @@ import {
 
 // Zod schema for the contact step. Mirrors UI rules + adds length caps to
 // prevent abuse and align with backend Zod validation in the edge function.
+const NAME_REGEX = /^[\p{L}\p{M}'’\-.\s]+$/u;
 const contactSchema = z.object({
   firstName: z
     .string()
     .trim()
-    .min(1, { message: "First name is required" })
+    .min(2, { message: "First name must be at least 2 characters" })
     .max(60, { message: "First name must be under 60 characters" })
-    .regex(/^[\p{L}\p{M}'’\-.\s]+$/u, { message: "First name contains invalid characters" }),
+    .regex(NAME_REGEX, { message: "First name contains invalid characters" }),
   lastName: z
     .string()
     .trim()
-    .min(1, { message: "Last name is required" })
+    .min(2, { message: "Last name must be at least 2 characters" })
     .max(60, { message: "Last name must be under 60 characters" })
-    .regex(/^[\p{L}\p{M}'’\-.\s]+$/u, { message: "Last name contains invalid characters" }),
+    .regex(NAME_REGEX, { message: "Last name contains invalid characters" }),
   phone: z
     .string()
     .trim()
+    .min(1, { message: "Phone number is required" })
     .max(32, { message: "Phone number is too long" })
-    .refine(isValidPhoneNumber, { message: "Valid phone number is required" }),
+    .refine(isValidPhoneNumber, { message: "Please enter a valid 10-digit US phone number" }),
   email: z
     .string()
     .trim()
+    .min(1, { message: "Email is required" })
     .max(254, { message: "Email is too long" })
-    .refine(isValidEmail, { message: "Valid email is required" }),
+    .refine(isValidEmail, { message: "Please enter a valid email address" }),
   consentToContact: z.literal(true, {
     errorMap: () => ({ message: "Please agree to be contacted to continue" }),
   }),
 });
+
+// Per-field validators used for inline `onBlur` errors before submission.
+function validateNameField(value: string, label: string): string | null {
+  const v = value.trim();
+  if (!v) return `${label} is required`;
+  if (v.length < 2) return `${label} must be at least 2 characters`;
+  if (v.length > 60) return `${label} must be under 60 characters`;
+  if (!NAME_REGEX.test(v)) return `${label} contains invalid characters`;
+  return null;
+}
 
 
 // Question types
