@@ -935,6 +935,7 @@ Deno.serve(async (req) => {
             insuranceType: data.insuranceType,
             message: data.message,
             preferredContact: data.preferredContact,
+            submittedAt: now,
           }),
         }, {
           emailType: "facility_new_lead",
