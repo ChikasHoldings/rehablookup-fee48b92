@@ -13,6 +13,8 @@ interface LeadIntakeSuccessContact {
 
 interface LeadIntakeSuccessProps {
   facilityName?: string | null;
+  facilityId?: string;
+  leadId?: string;
   firstName?: string;
   contact?: LeadIntakeSuccessContact;
 }
