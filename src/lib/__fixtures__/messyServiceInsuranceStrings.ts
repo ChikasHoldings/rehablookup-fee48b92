@@ -239,10 +239,14 @@ export const MESSY_INSURANCE_FIXTURES: FixtureCase[] = [
   {
     input: "Anthem Blue Cross Blue Shield of California",
     mustEmitSlugs: ["bcbs-treatment"],
-    mustNotEmitSlugs: ["anthem-rehab"],
+    // NOTE: at the raw regex level, \banthem\b legitimately matches this
+    // string too. The "Anthem must NOT leak past BCBS" rule is a *precedence*
+    // property (table ordering + first-match-wins), not a regex property,
+    // so it's asserted in the dedicated precedence describe-block, not here.
+    mustNotEmitSlugs: [],
     notes:
-      "BCBS regex sits BEFORE the standalone /anthem/ regex AND first-match-wins. " +
-      "'Anthem Blue Cross' must collapse to BCBS, never emit anthem-rehab too.",
+      "BCBS regex sits BEFORE the standalone /anthem/ regex; first-match-wins " +
+      "must collapse 'Anthem Blue Cross' to BCBS. Precedence asserted separately.",
   },
   {
     input: "Anthem Inc.",
