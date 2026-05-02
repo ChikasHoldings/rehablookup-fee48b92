@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
-  User, Heart, MapPin, CreditCard, Phone, Edit2, 
+  User, Heart, MapPin, Phone, Edit2, 
   CheckCircle, AlertCircle, Lock, Loader2, Shield 
 } from "lucide-react";
 import { ConciergeIntakeData } from "@/pages/concierge/ConciergeIntake";
