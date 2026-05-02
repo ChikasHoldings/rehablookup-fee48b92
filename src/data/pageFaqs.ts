@@ -8,6 +8,19 @@ export const homeFaqs: FAQItem[] = [
   { question: "Are the facilities on RehabLookup verified?", answer: "Yes. All listed facilities go through a verification process that checks licensing, accreditation, and operational status before they appear on the platform." },
   { question: "Can I search for rehab centers by insurance?", answer: "Absolutely. You can filter results by insurance provider to find facilities that accept your specific plan, including Aetna, BCBS, Cigna, UnitedHealthcare, Medicare, and Medicaid." },
   { question: "How quickly can I get placed in a treatment center?", answer: "Many facilities offer same-day or next-day admission. Through our placement service, we can often connect you with an available facility within 24–48 hours." },
+  { question: "Can I find rehab centers near me on RehabLookup?", answer: "Yes. Use our location search to find rehab centers near your city, state, or ZIP code. Each listing shows distance, accepted insurance, treatment programs, and verified contact information." },
+  { question: "What should I look for when choosing a rehab center?", answer: "Look for state licensing, accreditation (such as Joint Commission or CARF), evidence-based treatments, qualified clinical staff, dual diagnosis capability if needed, and transparent pricing or insurance acceptance." },
+  { question: "Is my information kept private when I contact a center?", answer: "Yes. All inquiries on RehabLookup are confidential. Your contact details are only shared with the facility you choose to engage with, and never sold or used for unrelated marketing." },
+];
+
+// ─── Contact Page ─────────────────────────────────────────────────────────────
+export const contactFaqs: FAQItem[] = [
+  { question: "How quickly will RehabLookup respond to my message?", answer: "Our support team responds to most inquiries within 1–2 business days. For urgent treatment questions, we recommend using our placement service, which connects you with a specialist who can respond same-day." },
+  { question: "What's the best way to contact RehabLookup for treatment help?", answer: "If you're looking for treatment placement, use our free placement service for the fastest response. For general questions, partnership inquiries, or feedback, email us at Support@rehablookup.com." },
+  { question: "Can I speak with someone directly about a loved one's addiction?", answer: "Yes. Our placement specialists are trained to help families navigate the treatment process. Submit a placement request and a specialist will reach out to discuss options confidentially." },
+  { question: "Does RehabLookup offer 24/7 emergency support?", answer: "RehabLookup is a directory and placement platform, not a crisis line. If you or someone you love is in immediate danger, call 988 (Suicide & Crisis Lifeline) or SAMHSA's free 24/7 helpline at 1-800-662-4357." },
+  { question: "How can treatment providers list their facility on RehabLookup?", answer: "Treatment providers can apply to list their facility through our 'For Providers' page. All listings go through a verification process that checks licensing, accreditation, and operational status." },
+  { question: "Is there a cost to contact RehabLookup?", answer: "No. Contacting RehabLookup is completely free, whether you're seeking treatment, asking a question, or exploring our placement service. We never charge clients for matching or support." },
 ];
 
 // ─── Treatment Types Hub ──────────────────────────────────────────────────────

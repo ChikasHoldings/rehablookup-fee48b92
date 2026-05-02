@@ -21,6 +21,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { PageFAQ } from "@/components/seo/PageFAQ";
+import { contactFaqs } from "@/data/pageFaqs";
 
 const contactMethods = [
   {
@@ -471,6 +473,13 @@ const Contact = () => {
           </div>
         </div>
       </section>
+
+      <PageFAQ
+        faqs={contactFaqs}
+        title="Contact & Support FAQs"
+        description="Quick answers about reaching RehabLookup, response times, and how to get treatment help."
+        className="border-t border-border bg-muted/30"
+      />
 
     </Layout>
   );
