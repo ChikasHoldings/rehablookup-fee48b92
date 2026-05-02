@@ -59,8 +59,14 @@ for (const r of spaRedirects) {
   if (hit.destination !== r.destination) {
     mismatched.push({ ...r, vercelDestination: hit.destination });
   }
-  if (hit.permanent !== true) {
-    mismatched.push({ ...r, note: "vercel redirect is not permanent (must be 301)" });
+  // Vercel accepts EITHER `permanent: true` (legacy) OR `statusCode: 301` (modern).
+  // Both produce a real HTTP 301 at the edge.
+  const isPermanent = hit.permanent === true || hit.statusCode === 301;
+  if (!isPermanent) {
+    mismatched.push({
+      ...r,
+      note: `vercel redirect is not permanent (got statusCode=${hit.statusCode ?? "?"}, permanent=${hit.permanent ?? "?"}; must be 301)`,
+    });
   }
 }
 
