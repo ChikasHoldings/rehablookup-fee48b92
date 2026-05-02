@@ -168,18 +168,52 @@ export default function AdminNotFoundEvents() {
     return list.filter((s) => s.path.toLowerCase().includes(q));
   }, [summaries, search, kindFilter]);
 
+
+  // Aggregate paths into pattern buckets using the shared resolver. We
+  // build this off `filtered` so kind+search filters apply uniformly to
+  // both views.
+  const patternSummaries = useMemo<PatternSummary[]>(() => {
+    const byPattern = new Map<string, PatternSummary>();
+    for (const p of filtered) {
+      const rule = resolvePattern(p.path);
+      let bucket = byPattern.get(rule.id);
+      if (!bucket) {
+        bucket = {
+          patternId: rule.id,
+          patternLabel: rule.label,
+          hits: 0,
+          uniquePaths: 0,
+          lastSeen: p.lastSeen,
+          hasBotTraffic: false,
+          paths: [],
+        };
+        byPattern.set(rule.id, bucket);
+      }
+      bucket.hits += p.hits;
+      bucket.uniquePaths += 1;
+      if (p.lastSeen > bucket.lastSeen) bucket.lastSeen = p.lastSeen;
+      if (p.hasBotTraffic) bucket.hasBotTraffic = true;
+      bucket.paths.push(p);
+    }
+    const out = Array.from(byPattern.values());
+    for (const b of out) b.paths.sort((a, b) => b.hits - a.hits);
+    out.sort((a, b) => b.hits - a.hits);
+    return out;
+  }, [filtered]);
+
   const eventsPagination = usePagination({
     tableId: "admin-not-found",
     defaultPageSize: 50,
-    totalItems: filtered.length,
+    totalItems: groupMode === "pattern" ? patternSummaries.length : filtered.length,
   });
   const visibleFiltered = eventsPagination.paginate(filtered);
+  const visiblePatterns = eventsPagination.paginate(patternSummaries);
 
-  // Reset to page 1 on filter/search change.
+  // Reset to page 1 on filter/search/group change.
   useEffect(() => {
     eventsPagination.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, kindFilter]);
+  }, [search, kindFilter, groupMode]);
 
 
   const totalHits = summaries.reduce((sum, s) => sum + s.hits, 0);
