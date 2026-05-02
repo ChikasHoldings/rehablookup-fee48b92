@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Search, MapPin, Stethoscope, Shield, Loader2, CheckCircle2 } from "lucide-react";
 import { treatmentTypes as treatmentTypeOptions, insuranceProviders as insuranceProviderOptions } from "@/data/treatmentCenters";
-import { getLocationSuggestions, type LocationSuggestion } from "@/data/locationSuggestions";
+import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
 import { MultiSelectDropdown } from "./MultiSelectDropdown";
 import { LocationSuggestionsDropdown, type ResolvedZip } from "./LocationSuggestionsDropdown";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
