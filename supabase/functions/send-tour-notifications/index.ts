@@ -5,6 +5,7 @@ import {
   tourRequestedAdminEmail,
   tourProposedUserEmail,
   tourConfirmedFacilityEmail,
+  tourConfirmedUserEmail,
   tourCancelledFacilityEmail,
   tourCancelledUserEmail,
   TourEmailData,
