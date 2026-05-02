@@ -310,8 +310,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Phase 5: live trust signals — verified-facility count from DB */}
-      <TrustStrip />
+      {/* TrustStrip moved to /concierge — see ConciergeLanding.tsx */}
 
       {/* Featured Centers - Premium Horizontal Scroll */}
       <HomepageFeaturedSection />
