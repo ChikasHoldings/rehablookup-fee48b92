@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
