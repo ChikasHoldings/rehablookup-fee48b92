@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Stethoscope, Shield, Building2, Loader2, CheckCircle2, Navigation } from "lucide-react";
+import { Search, MapPin, Stethoscope, Shield, Loader2, CheckCircle2 } from "lucide-react";
 import { treatmentTypes as treatmentTypeOptions, insuranceProviders as insuranceProviderOptions } from "@/data/treatmentCenters";
 import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
 import { MultiSelectDropdown } from "./MultiSelectDropdown";
+import { LocationSuggestionsDropdown, type ResolvedZip } from "./LocationSuggestionsDropdown";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
@@ -37,17 +38,22 @@ export function SearchForm({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [lookupTimeout, setLookupTimeout] = useState<NodeJS.Timeout | null>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const { data: zipcodeData, isLoading: isZipLookupLoading, lookup: lookupZipcode, reset: resetZipLookup } = useZipcodeLookup();
+  const { data: zipcodeData, isLoading: isZipLookupLoading, error: zipError, lookup: lookupZipcode, reset: resetZipLookup } = useZipcodeLookup();
 
   // Check if input is a zipcode
   const isZipcode = useMemo(() => /^\d{1,5}$/.test(location.trim()), [location]);
   const isCompleteZipcode = useMemo(() => /^\d{5}$/.test(location.trim()), [location]);
-  
+
+  // Build the resolved-zip object the dropdown surfaces as a selectable row.
+  const resolvedZip: ResolvedZip | null = useMemo(() => {
+    if (!isCompleteZipcode || !zipcodeData) return null;
+    return { zip: location.trim(), city: zipcodeData.city, stateAbbr: zipcodeData.stateAbbr };
+  }, [isCompleteZipcode, zipcodeData, location]);
+
   const suggestions = useMemo(() => {
-    if (isZipcode) return []; // Don't show suggestions for zipcode input
+    if (isZipcode) return []; // City/state matches don't apply to numeric input
     return getLocationSuggestions(location);
   }, [location, isZipcode]);
   
@@ -75,14 +81,10 @@ export function SearchForm({
     }
   }, [lookupZipcode, resetZipLookup, lookupTimeout]);
   
-  // Auto-fill location when zipcode data is received
-  useEffect(() => {
-    if (zipcodeData && isCompleteZipcode) {
-      const formattedLocation = `${zipcodeData.city}, ${zipcodeData.stateAbbr}`;
-      setLocation(formattedLocation);
-      setShowSuggestions(false);
-    }
-  }, [zipcodeData, isCompleteZipcode]);
+  // We no longer auto-replace the user's typed ZIP — the dropdown surfaces a
+  // selectable "ZIP — City, ST" row so users see what's happening and stay
+  // in control. They can press Enter, click the row, or just submit the ZIP
+  // and let downstream search handle the resolved location.
   
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -93,31 +95,40 @@ export function SearchForm({
     };
   }, [lookupTimeout]);
 
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        suggestionsRef.current && 
-        !suggestionsRef.current.contains(e.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(e.target as Node)
-      ) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  // Click-outside dismissal is handled inside LocationSuggestionsDropdown via
+  // the `anchorRef` prop, so we don't need a separate listener here.
 
-  const handleSelectSuggestion = (suggestion: LocationSuggestion) => {
+  const handleSelectSuggestion = useCallback((suggestion: LocationSuggestion) => {
     setLocation(formatLocationSuggestion(suggestion));
     setShowSuggestions(false);
     setHighlightedIndex(-1);
-  };
+    // Don't keep stale ZIP data around after we accept a city/state.
+    resetZipLookup();
+  }, [resetZipLookup]);
+
+  const handleSelectZip = useCallback((zip: ResolvedZip) => {
+    setLocation(`${zip.city}, ${zip.stateAbbr}`);
+    setShowSuggestions(false);
+    setHighlightedIndex(-1);
+    resetZipLookup();
+  }, [resetZipLookup]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!showSuggestions || suggestions.length === 0) return;
+    if (!showSuggestions) return;
 
+    // Numeric ZIP path: Enter accepts the resolved row when available.
+    if (isZipcode) {
+      if (e.key === "Enter" && resolvedZip) {
+        e.preventDefault();
+        handleSelectZip(resolvedZip);
+      } else if (e.key === "Escape") {
+        setShowSuggestions(false);
+      }
+      return;
+    }
+
+    // City/state path
+    if (suggestions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setHighlightedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
@@ -199,46 +210,20 @@ export function SearchForm({
               )}
             </div>
             
-            {/* Autocomplete Suggestions */}
-            {showSuggestions && suggestions.length > 0 && (
-              <div
-                ref={suggestionsRef}
-                className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border/60 bg-card shadow-2xl animate-in fade-in-0 slide-in-from-top-1 duration-150"
-              >
-                <div className="py-1 px-1">
-                  {suggestions.map((suggestion, index) => (
-                    <button
-                      key={suggestion.type === "state" ? suggestion.abbr : `${suggestion.name}-${suggestion.state}`}
-                      type="button"
-                      onClick={() => handleSelectSuggestion(suggestion)}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px] transition-all duration-100",
-                        index === highlightedIndex
-                          ? "bg-primary/10 text-foreground"
-                          : "text-foreground/80 hover:bg-muted/50"
-                      )}
-                    >
-                      <div className={cn(
-                        "h-7 w-7 rounded-md flex items-center justify-center shrink-0",
-                        suggestion.type === "state" ? "bg-primary/10" : "bg-muted"
-                      )}>
-                        {suggestion.type === "state" ? (
-                          <Navigation className="h-3.5 w-3.5 text-primary" />
-                        ) : (
-                          <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        )}
-                      </div>
-                      <span className="flex-1 truncate font-medium">
-                        {formatLocationSuggestion(suggestion)}
-                      </span>
-                      <span className="text-xs text-muted-foreground/60 font-semibold uppercase tracking-wider bg-muted/50 px-1.5 py-0.5 rounded">
-                        {suggestion.type === "state" ? "State" : "City"}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Autocomplete (city/state + ZIP suggestions) */}
+            <LocationSuggestionsDropdown
+              query={location}
+              open={showSuggestions}
+              suggestions={suggestions}
+              highlightedIndex={highlightedIndex}
+              zipLoading={isZipLookupLoading}
+              resolvedZip={resolvedZip}
+              zipError={zipError}
+              anchorRef={inputRef}
+              onSelectSuggestion={handleSelectSuggestion}
+              onSelectZip={handleSelectZip}
+              onDismiss={() => setShowSuggestions(false)}
+            />
           </div>
           
           {/* Type of Care - Multi-select */}
@@ -297,15 +282,32 @@ export function SearchForm({
               <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             )}
             <input
+              ref={inputRef}
               type="text"
               placeholder="City, State, or ZIP"
               value={location}
               onChange={(e) => handleLocationChange(e.target.value.slice(0, 200))}
+              onFocus={() => setShowSuggestions(true)}
+              onKeyDown={handleKeyDown}
               maxLength={200}
+              autoComplete="off"
               className={cn(
                 "h-12 w-full rounded-xl border border-input bg-background pl-11 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
                 zipcodeData && !isZipcode && "border-green-200 bg-green-50/50 dark:bg-green-950/20"
               )}
+            />
+            <LocationSuggestionsDropdown
+              query={location}
+              open={showSuggestions}
+              suggestions={suggestions}
+              highlightedIndex={highlightedIndex}
+              zipLoading={isZipLookupLoading}
+              resolvedZip={resolvedZip}
+              zipError={zipError}
+              anchorRef={inputRef}
+              onSelectSuggestion={handleSelectSuggestion}
+              onSelectZip={handleSelectZip}
+              onDismiss={() => setShowSuggestions(false)}
             />
           </div>
           
@@ -368,15 +370,32 @@ export function SearchForm({
               <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground md:left-3 md:h-4 md:w-4" />
             )}
             <input
+              ref={inputRef}
               type="text"
               placeholder="City, State, or ZIP"
               value={location}
               onChange={(e) => handleLocationChange(e.target.value.slice(0, 200))}
+              onFocus={() => setShowSuggestions(true)}
+              onKeyDown={handleKeyDown}
               maxLength={200}
+              autoComplete="off"
               className={cn(
                 "h-12 w-full rounded-xl border border-input bg-card pl-12 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:h-10 md:rounded-lg md:pl-9 md:pr-3 md:text-sm",
                 zipcodeData && !isZipcode && "border-green-200 bg-green-50/50 dark:bg-green-950/20"
               )}
+            />
+            <LocationSuggestionsDropdown
+              query={location}
+              open={showSuggestions}
+              suggestions={suggestions}
+              highlightedIndex={highlightedIndex}
+              zipLoading={isZipLookupLoading}
+              resolvedZip={resolvedZip}
+              zipError={zipError}
+              anchorRef={inputRef}
+              onSelectSuggestion={handleSelectSuggestion}
+              onSelectZip={handleSelectZip}
+              onDismiss={() => setShowSuggestions(false)}
             />
           </div>
         </div>
@@ -435,7 +454,7 @@ export function SearchForm({
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-lg">
         <div className="grid gap-0 md:grid-cols-4">
           {/* Location */}
-          <div className="border-b border-border p-4 md:border-b-0 md:border-r">
+          <div className="relative border-b border-border p-4 md:border-b-0 md:border-r">
             <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {isZipLookupLoading ? (
                 <Loader2 className="h-4 w-4 text-primary animate-spin" />
@@ -447,10 +466,15 @@ export function SearchForm({
               Location
             </label>
             <input
+              ref={inputRef}
               type="text"
               placeholder="ZIP, City, or State"
               value={location}
               onChange={(e) => handleLocationChange(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onKeyDown={handleKeyDown}
+              maxLength={200}
+              autoComplete="off"
               className={cn(
                 "w-full bg-transparent text-base font-medium text-foreground placeholder:text-muted-foreground focus:outline-none",
                 zipcodeData && !isZipcode && "text-green-700 dark:text-green-400"
@@ -459,6 +483,19 @@ export function SearchForm({
             {isZipLookupLoading && (
               <p className="mt-1 text-xs text-muted-foreground animate-pulse">Looking up ZIP...</p>
             )}
+            <LocationSuggestionsDropdown
+              query={location}
+              open={showSuggestions}
+              suggestions={suggestions}
+              highlightedIndex={highlightedIndex}
+              zipLoading={isZipLookupLoading}
+              resolvedZip={resolvedZip}
+              zipError={zipError}
+              anchorRef={inputRef}
+              onSelectSuggestion={handleSelectSuggestion}
+              onSelectZip={handleSelectZip}
+              onDismiss={() => setShowSuggestions(false)}
+            />
           </div>
 
           {/* Treatment Type */}
