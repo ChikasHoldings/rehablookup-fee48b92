@@ -2,7 +2,7 @@ import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Heart, Sparkles } from "lucide-react";
+import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Sparkles, Phone, ExternalLink } from "lucide-react";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
@@ -143,11 +143,20 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
     navigate(detailsUrl, { state: { fromSearch: true } });
   }, [handleFeaturedClick, navigate, detailsUrl]);
 
-  const handleGetHelpClick = useCallback((e: React.MouseEvent) => {
+  // Profile button — same destination as the card, but stops propagation so
+  // the click is unambiguous and we don't double-fire the card's onClick.
+  const handleProfileClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     handleFeaturedClick();
-    navigate(detailsUrl, { state: { fromSearch: true, openContactForm: true } });
+    navigate(detailsUrl, { state: { fromSearch: true } });
   }, [handleFeaturedClick, navigate, detailsUrl]);
+
+  // Call button — tracks the featured click for analytics parity, then lets
+  // the native tel: handler take over. We don't preventDefault.
+  const handleCallClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleFeaturedClick();
+  }, [handleFeaturedClick]);
 
   // Compact horizontal layout for mobile/list view
   if (variant === "compact") {
@@ -271,23 +280,43 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="mt-3">
-            <Button 
-              variant="default" 
+          {/* Actions — Call + Profile (Call hidden when phone unavailable) */}
+          <div className="mt-3 flex gap-2">
+            {telLink && (
+              <Button
+                asChild
+                variant="default"
+                size="sm"
+                className={cn(
+                  "flex-1 h-8 text-xs font-semibold gap-1.5",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                  showFeaturedBadge
+                    ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
+                    : "shadow-sm"
+                )}
+              >
+                <a
+                  href={telLink}
+                  onClick={handleCallClick}
+                  aria-label={`Call ${center.name} at ${formattedPhone}`}
+                >
+                  <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                  Call
+                </a>
+              </Button>
+            )}
+            <Button
+              variant={telLink ? "outline" : "default"}
               size="sm"
-              onClick={handleGetHelpClick}
-              aria-label={`Check availability at ${center.name}`}
+              onClick={handleProfileClick}
+              aria-label={`View profile for ${center.name}`}
               className={cn(
-                "w-full h-8 text-xs font-semibold gap-1.5",
+                "flex-1 h-8 text-xs font-semibold gap-1.5",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-                showFeaturedBadge 
-                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
-                  : "shadow-sm"
               )}
             >
-              <Heart className="h-3.5 w-3.5" aria-hidden="true" />
-              Check Availability
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              Profile
             </Button>
           </div>
         </div>
@@ -470,23 +499,43 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
           {center.description}
         </p>
 
-        {/* Single CTA Button */}
-        <div className="mt-3 pt-2 border-t border-border/40">
-          <Button 
-            variant="default" 
+        {/* CTAs — Call + Profile (Call hidden when phone unavailable) */}
+        <div className="mt-3 pt-2 border-t border-border/40 flex gap-2">
+          {telLink && (
+            <Button
+              asChild
+              variant="default"
+              size="sm"
+              className={cn(
+                "flex-1 gap-1.5 h-9 text-xs font-semibold",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                showFeaturedBadge
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
+                  : "shadow-sm"
+              )}
+            >
+              <a
+                href={telLink}
+                onClick={handleCallClick}
+                aria-label={`Call ${center.name} at ${formattedPhone}`}
+              >
+                <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                Call
+              </a>
+            </Button>
+          )}
+          <Button
+            variant={telLink ? "outline" : "default"}
             size="sm"
-            onClick={handleGetHelpClick}
-            aria-label={`Check availability at ${center.name}`}
+            onClick={handleProfileClick}
+            aria-label={`View profile for ${center.name}`}
             className={cn(
-              "w-full gap-1.5 h-9 text-xs font-semibold",
+              "flex-1 gap-1.5 h-9 text-xs font-semibold",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-              showFeaturedBadge 
-                ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
-                : "shadow-sm"
             )}
           >
-            <Heart className="h-3.5 w-3.5" aria-hidden="true" />
-            Check Availability
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            View Profile
           </Button>
         </div>
       </div>
