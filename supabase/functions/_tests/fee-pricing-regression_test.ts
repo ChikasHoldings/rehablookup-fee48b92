@@ -147,6 +147,8 @@ async function* walk(dir: string): AsyncGenerator<string> {
 
 Deno.test("Sweep: no stray legacy $299 / 29900 cent references", async () => {
   const SELF = "/_tests/fee-pricing-regression_test.ts";
+  // Historical migrations are immutable; the latest migration overrides earlier defaults.
+  const SKIP_DIR = "/supabase/migrations/";
   const hits: string[] = [];
   // Match \$299 or 29900 as standalone tokens (avoid e.g. 29900x or 1299900).
   const pattern = /(?:\$299\b|(?<![\d])29900(?![\d]))/;
