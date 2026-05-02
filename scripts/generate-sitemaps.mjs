@@ -220,9 +220,12 @@ async function main() {
   const prerenderedPaths = discoverPrerenderedPaths(publicDir);
   console.log(`[sitemap] discovered ${prerenderedPaths.size} prerendered routes (hybrid layout)`);
 
+  const spaRoutes = await extractSpaRoutes();
+  console.log(`[sitemap] discovered ${spaRoutes.staticRoutes.size} static SPA routes and ${spaRoutes.dynamicPrefixes.length} dynamic prefixes from src/App.tsx`);
+
   const stats = { before: 0, kept: 0, dropped: 0, samples: [] };
   for (const target of targets) {
-    await generateSitemapFile(target, prerenderedPaths, stats);
+    await generateSitemapFile(target, prerenderedPaths, stats, spaRoutes);
   }
 
   await ensureExtrasInIndex();
