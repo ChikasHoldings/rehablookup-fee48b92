@@ -230,6 +230,7 @@ const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const EditorialPolicy = lazy(() => import("./pages/EditorialPolicy"));
+const RehabScore = lazy(() => import("./pages/RehabScore"));
 const MedicalDisclaimer = lazy(() => import("./pages/MedicalDisclaimer"));
 const SeekerSignup = lazy(() => import("./pages/SeekerSignup"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -1139,6 +1140,7 @@ const AppInner = () => {
             <Route path="/terms-of-service" element={<PublicRouteGuard><TermsOfService /></PublicRouteGuard>} />
             <Route path="/terms" element={<Navigate to="/terms-of-service" replace />} />
             <Route path="/editorial-policy" element={<PublicRouteGuard><EditorialPolicy /></PublicRouteGuard>} />
+            <Route path="/rehab-score" element={<PublicRouteGuard><RehabScore /></PublicRouteGuard>} />
             <Route path="/medical-disclaimer" element={<PublicRouteGuard><MedicalDisclaimer /></PublicRouteGuard>} />
             
             {/* Seeker Authentication */}
