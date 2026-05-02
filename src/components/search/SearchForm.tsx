@@ -39,7 +39,6 @@ export function SearchForm({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [lookupTimeout, setLookupTimeout] = useState<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   
   const { data: zipcodeData, isLoading: isZipLookupLoading, error: zipError, lookup: lookupZipcode, reset: resetZipLookup } = useZipcodeLookup();
 
