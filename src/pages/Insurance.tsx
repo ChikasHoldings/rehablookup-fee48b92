@@ -35,6 +35,13 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { useMemo } from "react";
+import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { treatmentCenters } from "@/data/treatmentCenters";
+import {
+  INSURER_MATCH_CONFIGS,
+  facilityMatchesInsurer,
+} from "@/lib/insurerMatchKeywords";
 
 interface InsuranceProvider {
   name: string;
@@ -43,6 +50,8 @@ interface InsuranceProvider {
   coverageNotes: string;
   type: "private" | "government";
   detailsUrl?: string;
+  /** Slug matching INSURER_MATCH_CONFIGS — enables live facility counts. */
+  slug?: string;
 }
 
 const majorInsurers: InsuranceProvider[] = [
@@ -53,6 +62,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Most BCBS plans cover inpatient and outpatient addiction treatment",
     type: "private",
     detailsUrl: "/insurance/bcbs-treatment",
+    slug: "bcbs",
   },
   {
     name: "Aetna",
@@ -61,6 +71,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Covers detox, residential, and outpatient substance abuse programs",
     type: "private",
     detailsUrl: "/insurance/aetna-rehab",
+    slug: "aetna",
   },
   {
     name: "Cigna",
@@ -69,6 +80,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Behavioral health coverage includes substance use disorder treatment",
     type: "private",
     detailsUrl: "/insurance/cigna-rehab",
+    slug: "cigna",
   },
   {
     name: "United Healthcare",
@@ -77,6 +89,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Comprehensive addiction treatment coverage under most plans",
     type: "private",
     detailsUrl: "/insurance/united-healthcare-rehab",
+    slug: "united-healthcare",
   },
   {
     name: "Kaiser Permanente",
@@ -85,6 +98,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "In-network treatment facilities and integrated behavioral health",
     type: "private",
     detailsUrl: "/insurance/kaiser-rehab",
+    slug: "kaiser",
   },
   {
     name: "Humana",
@@ -93,6 +107,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Mental health and substance abuse treatment included in most plans",
     type: "private",
     detailsUrl: "/insurance/humana-rehab",
+    slug: "humana",
   },
   {
     name: "Anthem",
@@ -101,6 +116,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Substance abuse treatment covered as essential health benefit",
     type: "private",
     detailsUrl: "/insurance/anthem-rehab",
+    slug: "anthem",
   },
   {
     name: "Molina Healthcare",
@@ -109,6 +125,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Behavioral health coverage through Medicaid and ACA plans in 19+ states",
     type: "private",
     detailsUrl: "/insurance/molina-rehab",
+    slug: "molina",
   },
   {
     name: "Magellan Health",
@@ -117,6 +134,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Manages substance abuse benefits for millions through employer and government plans",
     type: "private",
     detailsUrl: "/insurance/magellan-rehab",
+    slug: "magellan",
   },
   {
     name: "WellCare",
@@ -125,6 +143,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Behavioral health coverage through Medicaid and Medicare Advantage plans",
     type: "private",
     detailsUrl: "/insurance/wellcare-rehab",
+    slug: "wellcare",
   },
   {
     name: "Ambetter",
@@ -133,6 +152,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Substance use disorder treatment as ACA essential health benefit",
     type: "private",
     detailsUrl: "/insurance/ambetter-rehab",
+    slug: "ambetter",
   },
   {
     name: "Oscar Health",
@@ -141,6 +161,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "ACA-compliant behavioral health benefits with dedicated care team",
     type: "private",
     detailsUrl: "/insurance/oscar-rehab",
+    slug: "oscar",
   },
   {
     name: "Highmark BCBS",
@@ -149,6 +170,7 @@ const majorInsurers: InsuranceProvider[] = [
     coverageNotes: "Comprehensive behavioral health coverage in PA, DE, WV, and western NY",
     type: "private",
     detailsUrl: "/insurance/highmark-rehab",
+    slug: "highmark",
   },
 ];
 
@@ -160,6 +182,7 @@ const governmentPrograms: InsuranceProvider[] = [
     coverageNotes: "Part A covers inpatient treatment; Part B covers outpatient services",
     type: "government",
     detailsUrl: "/insurance/medicare-rehab",
+    slug: "medicare",
   },
   {
     name: "Medicaid",
@@ -168,6 +191,7 @@ const governmentPrograms: InsuranceProvider[] = [
     coverageNotes: "Coverage varies by state but generally includes substance abuse treatment",
     type: "government",
     detailsUrl: "/insurance/medicaid-rehab",
+    slug: "medicaid",
   },
   {
     name: "TRICARE",
@@ -176,6 +200,7 @@ const governmentPrograms: InsuranceProvider[] = [
     coverageNotes: "Comprehensive addiction treatment benefits for service members",
     type: "government",
     detailsUrl: "/insurance/tricare-rehab",
+    slug: "tricare",
   },
 ];
 
@@ -452,7 +477,14 @@ const faqs = [
   },
 ];
 
-const InsuranceCard = ({ provider }: { provider: InsuranceProvider }) => {
+const InsuranceCard = ({
+  provider,
+  count,
+}: {
+  provider: InsuranceProvider;
+  /** Live count of facilities accepting this insurer (undefined while loading). */
+  count?: number;
+}) => {
   const CardContent = (
     <div className={cn(
       "rounded-xl border border-border bg-card p-5 transition-all",
@@ -477,10 +509,15 @@ const InsuranceCard = ({ provider }: { provider: InsuranceProvider }) => {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-foreground">{provider.name}</h3>
+            {typeof count === "number" && count > 0 && (
+              <Badge variant="secondary" className="text-[10px] font-medium">
+                {count} {count === 1 ? "center" : "centers"}
+              </Badge>
+            )}
             {provider.detailsUrl && (
-              <ArrowRight className="h-4 w-4 text-primary" />
+              <ArrowRight className="h-4 w-4 text-primary ml-auto" />
             )}
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">{provider.description}</p>
@@ -505,6 +542,33 @@ const InsuranceCard = ({ provider }: { provider: InsuranceProvider }) => {
 };
 
 export default function Insurance() {
+  // Compute live facility counts per insurer (combines DB + static fallback,
+  // dedup by id, then matches via shared keyword config).
+  const { data: approvedFacilities = [] } = useStaticFacilities();
+  const insurerCounts = useMemo<Record<string, number>>(() => {
+    const seen = new Set<string>();
+    const pool: any[] = [];
+    for (const f of approvedFacilities as any[]) {
+      if (!seen.has(f.id)) {
+        seen.add(f.id);
+        pool.push(f);
+      }
+    }
+    for (const f of treatmentCenters) {
+      if (!seen.has(f.id)) {
+        seen.add(f.id);
+        pool.push(f);
+      }
+    }
+    const counts: Record<string, number> = {};
+    for (const cfg of INSURER_MATCH_CONFIGS) {
+      counts[cfg.slug] = pool.filter((f: any) =>
+        facilityMatchesInsurer(f.insuranceAccepted, cfg.keywords),
+      ).length;
+    }
+    return counts;
+  }, [approvedFacilities]);
+
   return (
     <Layout>
       <SEO
@@ -572,7 +636,11 @@ export default function Insurance() {
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {majorInsurers.map((provider) => (
-              <InsuranceCard key={provider.name} provider={provider} />
+              <InsuranceCard
+                key={provider.name}
+                provider={provider}
+                count={provider.slug ? insurerCounts[provider.slug] : undefined}
+              />
             ))}
           </div>
         </div>
@@ -595,7 +663,11 @@ export default function Insurance() {
 
           <div className="grid gap-4 md:grid-cols-2">
             {governmentPrograms.map((provider) => (
-              <InsuranceCard key={provider.name} provider={provider} />
+              <InsuranceCard
+                key={provider.name}
+                provider={provider}
+                count={provider.slug ? insurerCounts[provider.slug] : undefined}
+              />
             ))}
           </div>
         </div>

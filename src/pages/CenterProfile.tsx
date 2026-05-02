@@ -45,6 +45,7 @@ import {
   ChevronRight,
   Handshake,
   GlobeIcon,
+  Scale,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -57,6 +58,7 @@ import { cn } from "@/lib/utils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
+import { RehabScorePanel } from "@/components/profile/RehabScorePanel";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
@@ -1164,6 +1166,29 @@ const CenterProfile = () => {
                   </p>
                 </ProfileSection>
               )}
+
+              {/* Rehab Score — public transparency summary, links to /rehab-score methodology */}
+              <ProfileSection
+                icon={Scale}
+                title="Rehab Score"
+                iconColor="bg-primary/10 text-primary"
+              >
+                <RehabScorePanel
+                  input={{
+                    verified: facility.verified,
+                    yearEstablished: facility.year_established,
+                    description: facility.description,
+                    galleryUrls: facility.gallery_urls,
+                    facilityServices: facility.facility_services,
+                    facilityInsurance: facility.facility_insurance,
+                    facilityAgeGroups: facility.facility_age_groups,
+                    facilityAccreditations: facility.facility_accreditations,
+                    facilityCredentials: facility.facility_credentials,
+                    googleRating: ratingData.averageRating,
+                    googleReviewCount: ratingData.reviewCount,
+                  }}
+                />
+              </ProfileSection>
 
               {/* Trust & Accreditations — inline, no card wrapper */}
               {(() => {

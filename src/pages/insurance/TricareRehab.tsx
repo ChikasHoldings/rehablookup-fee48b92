@@ -4,7 +4,7 @@ import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
+import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 import { InternalLinkingSection, treatmentTypeLinks, nearMeLinks, resourceLinks } from "@/components/seo/InternalLinkingSection";
 import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import {
@@ -149,7 +149,7 @@ export default function TricareRehab() {
         </div>
       </section>
 
-      <FeaturedCentersSection title="Treatment Centers Accepting TRICARE" description="Verified facilities that work with TRICARE insurance" limit={8} className="border-t border-border" />
+      <InsuranceFacilitiesSection insurerSlug="tricare" title="Treatment Centers Accepting TRICARE" limit={8} className="border-t border-border" />
 
       <section className="border-t border-border bg-muted/30 py-10 md:py-14">
         <div className="container">

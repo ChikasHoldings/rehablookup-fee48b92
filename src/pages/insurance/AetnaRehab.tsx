@@ -25,7 +25,7 @@ import {
   nearMeLinks, 
   resourceLinks 
 } from "@/components/seo/InternalLinkingSection";
-import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
+import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 
 const coverageDetails = [
   {
@@ -321,12 +321,7 @@ export default function AetnaRehab() {
       </section>
 
       {/* Featured Centers accepting Aetna */}
-      <FeaturedCentersSection 
-        title="Treatment Centers Accepting Aetna"
-        description="Verified facilities that work with Aetna insurance"
-        limit={8}
-        className="border-t border-border"
-      />
+      <InsuranceFacilitiesSection insurerSlug="aetna" title="Treatment Centers Accepting Aetna" limit={8} className="border-t border-border" />
 
       {/* FAQs */}
       <section className="border-t border-border bg-muted/30 py-10 md:py-14">
