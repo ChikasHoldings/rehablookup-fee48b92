@@ -20,7 +20,7 @@ import {
 import supportSpecialistImg from "@/assets/support-specialist.png";
 import aboutTeamImage from "@/assets/about-team.jpg";
 import aboutMissionImage from "@/assets/about-mission.jpg";
-import ceoPortrait from "@/assets/team/ceo-portrait.jpg";
+import founderPortrait from "@/assets/team/founder-chiedu-kabakwu.webp";
 import medicalDirectorPortrait from "@/assets/team/medical-director-portrait.jpg";
 import ctoPortrait from "@/assets/team/cto-portrait.jpg";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
