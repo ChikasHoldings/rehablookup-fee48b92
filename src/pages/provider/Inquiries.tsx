@@ -264,12 +264,19 @@ export default function ProviderInquiriesPage() {
     paginate,
     setPage,
     setPageSize,
+    reset: resetPage,
   } = usePagination({
     tableId: "provider-inquiries",
     defaultPageSize: 25,
     totalItems: filteredInquiries.length,
   });
   const visibleInquiries = paginate(filteredInquiries);
+
+  // Reset to page 1 when any inquiry filter changes.
+  useEffect(() => {
+    resetPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, statusFilter, facilityFilter, dateRange.from, dateRange.to]);
 
 
   const clearFilters = () => {
