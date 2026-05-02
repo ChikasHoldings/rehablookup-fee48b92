@@ -4,7 +4,12 @@ Living document. Update after each cutover or rehearsal.
 
 **Goal**: move `rehablookup.com` DNS from Lovable hosting (`185.158.133.1`) to Vercel with **zero SEO regression**. Site already has 4,641 pre-rendered HTML files, 63 server-side 301s mirrored in `vercel.json`, and parity validators in CI.
 
-> **Important**: running `scripts/monitor-cutover.mjs` against the **current Lovable origin** is expected to flag `/blog`, `/centers`, `/privacy` (200 instead of 301) and `www` (302 instead of 301). Lovable hosting can't issue server-side 301s for these — that's _the reason_ we're cutting over. Post-cutover, Vercel will return real 301s and these checks will pass. Treat the monitor as authoritative only **after** DNS flips.
+> **Important — phase flag**: `scripts/monitor-cutover.mjs` is phase-aware.
+>
+> - **Before DNS flip** (rehearsal / sanity on Lovable): run `--phase=pre`. This expects the current Lovable behavior (200 SPA fallback for `/blog`, `/centers`, `/privacy`; 302 on `www→apex`). It must exit 0.
+> - **After DNS flip** (every check from T+0 onward): run `--phase=post`. This expects the Vercel target state (server 301s for the documented redirects; 301 on `www→apex`). It must exit 0.
+>
+> Running the wrong phase will produce expected-but-spurious failures. The pre-phase rehearsal **passed cleanly** as of the latest commit.
 
 ---
 
@@ -81,7 +86,7 @@ Living document. Update after each cutover or rehearsal.
 
 3. **Verify immediately** (DNS still partially propagating, but Vercel's edge usually resolves within seconds):
    ```bash
-   node scripts/monitor-cutover.mjs --host https://rehablookup.com
+   node scripts/monitor-cutover.mjs --host https://rehablookup.com --phase post
    ```
    Expect **0 failures**. If any CRITICAL fail → see Rollback below.
 
@@ -101,7 +106,7 @@ If monitor has stayed clean for 24 hours:
    - Submit `https://rehablookup.com/sitemap-index.xml` (re-submit even if already there — forces a recrawl)
    - Submit each child sitemap individually
 4. In Bing Webmaster Tools: same submission
-5. Run `node scripts/monitor-cutover.mjs` daily for 7 days
+5. Run `node scripts/monitor-cutover.mjs --phase post` daily for 7 days
 
 ---
 
