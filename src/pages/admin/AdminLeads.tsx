@@ -238,8 +238,8 @@ export default function AdminLeads() {
   const { data: leads, isLoading } = useQuery({
     queryKey: ["admin-leads", statusFilter, inquiryTypeFilter, redistributionFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      const from = (currentPage - 1) * pageSize;
+      const to = from + pageSize - 1;
       let query = supabase
         .from("leads")
         .select("id, facility_id, original_facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, qualified, quality_flag, redistribution_status, assignment_status, age_range, gender, preferred_contact, lead_score, lead_score_label, credit_cost, exclusive_until, extended_until, assigned_at, lead_expired_at, shared_with")
