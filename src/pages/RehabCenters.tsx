@@ -695,7 +695,7 @@ const RehabCenters = () => {
           {/* Pagination */}
           <PaginationFooter
             page={browseSafePage}
-            pageSize={BROWSE_PAGE_SIZE as 10 | 25 | 50 | 100}
+            pageSize={BROWSE_PAGE_SIZE}
             totalPages={browseTotalPages}
             totalItems={browseFiltered.length}
             onPageChange={setBrowsePage}
