@@ -330,13 +330,23 @@ const RehabCenters = () => {
         nextUrl={seoNextUrl}
         noindex={seoNoindex}
         structuredData={!seoNoindex ? [
-          {
-            "@context": "https://schema.org",
-            "@type": "CollectionPage",
-            "name": seoBaseTitle,
-            "description": seoDescription,
-            "url": `https://rehablookup.com${seoCanonical}`,
-          },
+          generateDirectoryCollectionSchema({
+            name: seoBaseTitle,
+            description: seoDescription,
+            canonicalUrl: seoCanonical,
+            resultCount: browseFiltered.length,
+            currentPage: browseSafePage,
+            totalPages: browseTotalPages,
+            pageSize: BROWSE_PAGE_SIZE,
+            prevUrl: seoPrevUrl,
+            nextUrl: seoNextUrl,
+            facilities: browsePaginated.slice(0, 10).map((c: any) => ({
+              name: c.name,
+              city: c.city,
+              state: c.state,
+              slug: c.slug,
+            })),
+          }),
         ] : undefined}
         breadcrumbs={[
           { name: "Home", url: "/" },
