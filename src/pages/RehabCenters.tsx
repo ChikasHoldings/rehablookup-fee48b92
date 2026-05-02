@@ -249,21 +249,70 @@ const RehabCenters = () => {
     }
   ];
 
+  // ── Per-variant SEO meta ──
+  // Each unique combo of treatment + insurance + page must surface its own
+  // title/description/canonical so crawlers don't see N URLs share the same
+  // metadata. Filtered combos canonicalize back to the bare /rehab-centers
+  // (and are noindexed) to avoid index-bloat from filter facets, while
+  // paginated views self-canonicalize so page 2+ isn't dedup'd against page 1.
+  const browseTreatmentLabel = browseTreatment
+    ? (BROWSE_TREATMENTS.find((o) => o.value === browseTreatment)?.label ?? "")
+    : "";
+  const browseInsuranceLabel = browseInsurance
+    ? (BROWSE_INSURERS.find((o) => o.value === browseInsurance)?.label ?? "")
+    : "";
+
+  const seoTitleParts: string[] = [];
+  if (browseTreatmentLabel) seoTitleParts.push(browseTreatmentLabel);
+  seoTitleParts.push("Rehab Centers");
+  if (browseInsuranceLabel) seoTitleParts.push(`Accepting ${browseInsuranceLabel}`);
+  const seoBaseTitle = browseHasFilter
+    ? seoTitleParts.join(" ")
+    : "Find Rehab Centers Near You";
+  const seoTitle =
+    browseSafePage > 1 ? `${seoBaseTitle} — Page ${browseSafePage}` : seoBaseTitle;
+
+  const descSegments: string[] = [];
+  descSegments.push(
+    `Browse ${browseFiltered.length} verified addiction treatment centers${
+      browseTreatmentLabel ? ` offering ${browseTreatmentLabel.toLowerCase()}` : ""
+    }${browseInsuranceLabel ? ` that accept ${browseInsuranceLabel}` : ""}.`,
+  );
+  if (browseSafePage > 1) {
+    descSegments.push(`Page ${browseSafePage} of ${browseTotalPages}.`);
+  }
+  descSegments.push(
+    "Compare programs, check insurance, and find the right rehab facility for your recovery journey.",
+  );
+  const seoDescription = descSegments.join(" ");
+
+  // Canonical: filtered combos collapse to the base URL (filter facets are
+  // not indexable), but paginated variants of the unfiltered list keep
+  // ?browsePage=N so each page is its own canonical target.
+  const seoCanonical = browseHasFilter
+    ? "/rehab-centers"
+    : browseSafePage > 1
+      ? `/rehab-centers?browsePage=${browseSafePage}`
+      : "/rehab-centers";
+
+  const seoNoindex = browseHasFilter;
+
   return (
     <Layout>
       <SEO
-        title="Find Rehab Centers Near You"
-        description="Search and compare verified addiction treatment centers. Filter by location, treatment type, and insurance. Find the right rehab facility for your recovery journey."
-        canonical="/rehab-centers"
-        structuredData={[
+        title={seoTitle}
+        description={seoDescription}
+        canonical={seoCanonical}
+        noindex={seoNoindex}
+        structuredData={!seoNoindex ? [
           {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
-            "name": "Find Rehab Centers Near You",
-            "description": "Search and compare verified addiction treatment centers across the United States.",
-            "url": "https://rehablookup.com/rehab-centers",
+            "name": seoBaseTitle,
+            "description": seoDescription,
+            "url": `https://rehablookup.com${seoCanonical}`,
           },
-        ]}
+        ] : undefined}
         breadcrumbs={[
           { name: "Home", url: "/" },
           { name: "Find Rehab", url: "/rehab-centers" },
