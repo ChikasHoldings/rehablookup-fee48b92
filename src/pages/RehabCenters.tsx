@@ -820,7 +820,7 @@ const RehabCenters = () => {
                       { label: "Los Angeles, CA", to: "/rehab-centers/california/los-angeles" },
                       { label: "Houston, TX", to: "/rehab-centers/texas/houston" },
                       { label: "Miami, FL", to: "/rehab-centers/florida/miami" },
-                      { label: "New York, NY", to: "/rehab-centers/new-york/new-york" },
+                      { label: "New York, NY", to: "/rehab-centers/new-york/new-york-city" },
                       { label: "Phoenix, AZ", to: "/rehab-centers/arizona/phoenix" },
                       { label: "Chicago, IL", to: "/rehab-centers/illinois/chicago" },
                     ].map((c) => (
