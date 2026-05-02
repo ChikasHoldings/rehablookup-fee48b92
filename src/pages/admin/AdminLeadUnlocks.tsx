@@ -29,6 +29,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 type UnlockRow = {
   unlock_id: string;
@@ -54,7 +56,7 @@ type UnlockRow = {
 
 type DateRange = { from: Date | undefined; to: Date | undefined };
 
-const PAGE_SIZE = 50;
+
 
 const RANGE_PRESETS = [
   { label: "Last 24 hours", days: 1 },
@@ -81,7 +83,17 @@ function facilityDisplay(row: UnlockRow) {
 
 export default function AdminLeadUnlocks() {
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const { page: pageOneBased, pageSize: PAGE_SIZE, totalPages, setPage: setPageOneBased, setPageSize } = usePagination({
+    tableId: "admin-lead-unlocks",
+    defaultPageSize: 50,
+    totalItems: totalCount,
+  });
+  const page = pageOneBased - 1;
+  const setPage = (next: number | ((p: number) => number)) => {
+    const resolved = typeof next === "function" ? (next as (p: number) => number)(page) : next;
+    setPageOneBased(resolved + 1);
+  };
   const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 30),
     to: new Date(),
@@ -108,8 +120,10 @@ export default function AdminLeadUnlocks() {
     staleTime: 30_000,
   });
 
-  const totalCount = data?.[0]?.total_count ?? 0;
-  const totalPages = Math.max(1, Math.ceil(Number(totalCount) / PAGE_SIZE));
+  const fetchedTotal = data?.[0]?.total_count ?? 0;
+  useEffect(() => {
+    setTotalCount(Number(fetchedTotal));
+  }, [fetchedTotal]);
 
   const filteredRows = useMemo(() => {
     if (!data) return [];
