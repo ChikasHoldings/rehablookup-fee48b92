@@ -158,10 +158,8 @@ export function SearchResultsForm() {
               className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
               aria-label="Distance from location"
             >
-              <span className="flex items-center gap-1.5 truncate">
-                <Navigation className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <SelectValue placeholder="Distance" />
-              </span>
+              <Navigation className="h-3.5 w-3.5 text-muted-foreground shrink-0 mr-1.5" aria-hidden="true" />
+              <SelectValue placeholder="Distance" />
             </SelectTrigger>
             <SelectContent className="bg-card">
               <SelectItem value={ANY_VALUE}>Any</SelectItem>
@@ -181,10 +179,8 @@ export function SearchResultsForm() {
               className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
               aria-label="Treatment type"
             >
-              <span className="flex items-center gap-1.5 truncate">
-                <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <SelectValue placeholder="Treatment" />
-              </span>
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0 mr-1.5" aria-hidden="true" />
+              <SelectValue placeholder="Treatment" />
             </SelectTrigger>
             <SelectContent className="bg-card">
               <SelectItem value={ANY_VALUE}>Any</SelectItem>
@@ -204,10 +200,8 @@ export function SearchResultsForm() {
               className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
               aria-label="Insurance (optional)"
             >
-              <span className="flex items-center gap-1.5 truncate">
-                <Shield className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <SelectValue placeholder="Insurance" />
-              </span>
+              <Shield className="h-3.5 w-3.5 text-muted-foreground shrink-0 mr-1.5" aria-hidden="true" />
+              <SelectValue placeholder="Insurance" />
             </SelectTrigger>
             <SelectContent className="bg-card">
               <SelectItem value={ANY_VALUE}>Any</SelectItem>
