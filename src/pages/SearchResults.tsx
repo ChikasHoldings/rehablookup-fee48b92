@@ -8,7 +8,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import { SearchResultsForm } from "@/components/search/SearchResultsForm";
-import { FilterChips } from "@/components/search/FilterChips";
+
 import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
 import { 
@@ -1092,18 +1092,18 @@ const SearchResults = () => {
       {/* Split Screen Layout */}
       <div className="bg-gradient-to-b from-secondary/20 to-background min-h-screen">
         <div className="container py-6">
-          <div className="flex gap-6">
+          <div className="flex gap-6 xl:gap-8">
             {/* Left Sidebar — Desktop Only */}
-            <aside className="hidden lg:block w-[280px] shrink-0">
-              <div className="sticky top-[128px] max-h-[calc(100vh-144px)] overflow-y-auto rounded-2xl border border-border bg-card shadow-sm p-5 scrollbar-thin">
+            <aside className="hidden lg:block w-[300px] xl:w-[340px] shrink-0">
+              <div className="sticky top-[124px] max-h-[calc(100vh-140px)] overflow-y-auto rounded-2xl border border-border bg-card shadow-sm p-5 xl:p-6 scrollbar-thin">
                 {/* Sidebar Header */}
                 <div className="flex items-center gap-2 mb-5 pb-4 border-b border-border">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shrink-0">
                     <SlidersHorizontal className="h-4 w-4 text-primary-foreground" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h2 className="text-sm font-bold text-foreground">Filters</h2>
-                    <p className="text-xs text-muted-foreground">Refine your search</p>
+                    <p className="text-xs text-muted-foreground">Narrow your results</p>
                   </div>
                 </div>
                 <FilterSidebar />
@@ -1130,37 +1130,6 @@ const SearchResults = () => {
                       </div>
                     </div>
                   )}
-                  {/* Quick filter chips — mirror sidebar filters for one-tap refinement */}
-                  <FilterChips
-                    className="mb-4"
-                    treatmentOptions={treatmentTypeFilters.map(({ value, label }) => ({ value, label }))}
-                    insuranceOptions={insuranceFilters.map(({ value, label }) => ({ value, label }))}
-                    distanceOptions={distanceFilters
-                      .filter((d) => d.value !== "any")
-                      .map(({ value, label }) => ({ value, label }))}
-                    selectedTreatments={selectedTreatmentTypes}
-                    selectedInsurance={selectedInsuranceTypes}
-                    selectedDistance={selectedDistance}
-                    onToggleTreatment={(v) =>
-                      toggleFilter("treatmentTypes", v, selectedTreatmentTypes)
-                    }
-                    onToggleInsurance={(v) =>
-                      toggleFilter("insuranceTypes", v, selectedInsuranceTypes)
-                    }
-                    onSetDistance={(v) => setSingleFilter("distance", v)}
-                    onClearAll={
-                      activeFiltersCount > 0
-                        ? () => {
-                            const newParams = new URLSearchParams(searchParams);
-                            newParams.delete("treatmentTypes");
-                            newParams.delete("insuranceTypes");
-                            newParams.delete("distance");
-                            newParams.delete("page");
-                            setSearchParams(newParams);
-                          }
-                        : undefined
-                    }
-                  />
 
                   {/* Results Summary */}
                   <div className="flex items-center justify-between mb-5">
