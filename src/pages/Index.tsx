@@ -5,7 +5,7 @@ import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Button } from "@/components/ui/button";
 import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
-import { TrustStrip } from "@/components/home/TrustStrip";
+// TrustStrip moved to /concierge
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { buildConciergeHref } from "@/lib/conciergeHref";
@@ -310,8 +310,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Phase 5: live trust signals — verified-facility count from DB */}
-      <TrustStrip />
+      {/* TrustStrip moved to /concierge — see ConciergeLanding.tsx */}
 
       {/* Featured Centers - Premium Horizontal Scroll */}
       <HomepageFeaturedSection />

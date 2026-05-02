@@ -31,6 +31,7 @@ import {
   Heart,
 } from "lucide-react";
 import conciergeHero from "@/assets/concierge-hero.jpg";
+import { TrustStrip } from "@/components/home/TrustStrip";
 
 
 const STATS = [
@@ -203,6 +204,9 @@ export default function ConciergeLanding() {
               </div>
             </div>
           </section>
+
+          {/* Trust signals — moved from homepage. Live verified-facility count. */}
+          <TrustStrip />
           
           {/* How It Works */}
           <section className="py-12 sm:py-16 md:py-24 bg-background">
