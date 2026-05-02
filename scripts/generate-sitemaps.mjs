@@ -2,6 +2,7 @@ import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { discoverPrerenderedPaths } from "./lib/prerender-discovery.mjs";
+import { extractSpaRoutes } from "./lib/extract-spa-routes.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,32 +19,16 @@ const targets = [
 ];
 
 // Routes that are router-resolved at runtime (not prerendered files) but are
-// guaranteed to render valid SEO content via the SPA + Helmet. We keep them
-// in the sitemap even if no static HTML exists. Treat as an allowlist.
-const RUNTIME_ALLOWLIST = new Set([
-  "/", // SPA shell IS the homepage
-  "/rehab-centers",
-  "/treatment-types",
-  "/locations",
-  "/insurance",
-  "/about",
-  "/contact",
-  "/resources",
-  "/for-providers",
-  "/concierge",
-  "/how-it-works",
-  "/cost-estimator",
-  "/editorial-policy",
-  "/medical-disclaimer",
-  "/privacy-policy",
-  "/terms-of-service",
-]);
-
-// Path prefixes that are dynamically prerendered (facility profiles after
-// iteration 2 lands a top-N prerender script). For now we keep them in the
-// sitemap because Googlebot can render the React app; they will be replaced
-// by static files once iteration 2 ships.
-const DYNAMIC_PREFIX_ALLOWLIST = ["/center/"];
+// guaranteed to render valid SEO content via the SPA + Helmet. We derive the
+// allowlist directly from `src/App.tsx` so the sitemap stays in sync with the
+// router. See scripts/lib/extract-spa-routes.mjs for inclusion/exclusion rules.
+//
+// In addition, every URL whose path lives under one of the dynamic prefixes
+// (e.g. `/rehab-near-me/`, `/insurance/`, `/center/`) is kept because the
+// SPA route handles every value of the trailing param (state/city/slug).
+//
+// `/center/` is always included — it's the facility profile namespace.
+const STATIC_DYNAMIC_PREFIXES = ["/center/"];
 
 async function fileExists(filePath) {
   try { await access(filePath); return true; } catch { return false; }
@@ -106,7 +91,10 @@ function canonicalizePath(p) {
  * rewrites every `<loc>` to its canonical lowercase / no-trailing-slash
  * form so we never publish inconsistent URLs to Search Console.
  */
-function filterSitemapXml(xml, prerenderedPaths, stats) {
+function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
+  const { staticRoutes, dynamicPrefixes } = spaRoutes;
+  const allDynamicPrefixes = [...new Set([...dynamicPrefixes, ...STATIC_DYNAMIC_PREFIXES])];
+
   const before = (xml.match(/<url>/g) || []).length;
   let kept = 0;
   const droppedSamples = [];
@@ -129,9 +117,9 @@ function filterSitemapXml(xml, prerenderedPaths, stats) {
     }
     const norm = canonical.toLowerCase().replace(/\/$/, "") || "/";
     const hasPrerender = prerenderedPaths.has(norm);
-    const inAllowlist = RUNTIME_ALLOWLIST.has(norm);
-    const inDynamic = DYNAMIC_PREFIX_ALLOWLIST.some((pref) => norm.startsWith(pref));
-    if (hasPrerender || inAllowlist || inDynamic) {
+    const inStatic = staticRoutes.has(norm) || norm === "/";
+    const inDynamic = allDynamicPrefixes.some((pref) => norm.startsWith(pref) && norm.length > pref.length);
+    if (hasPrerender || inStatic || inDynamic) {
       kept++;
       // Rewrite <loc> to canonical form. Build absolute URL using the
       // original origin so we don't accidentally swap hosts.
@@ -145,7 +133,7 @@ function filterSitemapXml(xml, prerenderedPaths, stats) {
       const rewritten = block.replace(/<loc>\s*[^<\s]+\s*<\/loc>/, `<loc>${canonicalLoc}</loc>`);
       return rewritten;
     }
-    if (droppedSamples.length < 5) droppedSamples.push(`${loc} (no prerender)`);
+    if (droppedSamples.length < 5) droppedSamples.push(`${loc} (no prerender, no SPA route)`);
     return "";
   });
 
@@ -157,12 +145,12 @@ function filterSitemapXml(xml, prerenderedPaths, stats) {
   return filtered;
 }
 
-async function generateSitemapFile({ type, fileName }, prerenderedPaths, stats) {
+async function generateSitemapFile({ type, fileName }, prerenderedPaths, stats, spaRoutes) {
   const filePath = path.join(publicDir, fileName);
   try {
     let xml = await fetchSitemap(type);
     // Sitemap-index files are meta — don't filter URLs, they list other sitemaps.
-    if (type !== "index") xml = filterSitemapXml(xml, prerenderedPaths, stats);
+    if (type !== "index") xml = filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes);
     await writeFile(filePath, xml, "utf8");
     console.log(`[sitemap] generated ${fileName}`);
   } catch (error) {
@@ -232,9 +220,12 @@ async function main() {
   const prerenderedPaths = discoverPrerenderedPaths(publicDir);
   console.log(`[sitemap] discovered ${prerenderedPaths.size} prerendered routes (hybrid layout)`);
 
+  const spaRoutes = await extractSpaRoutes();
+  console.log(`[sitemap] discovered ${spaRoutes.staticRoutes.size} static SPA routes and ${spaRoutes.dynamicPrefixes.length} dynamic prefixes from src/App.tsx`);
+
   const stats = { before: 0, kept: 0, dropped: 0, samples: [] };
   for (const target of targets) {
-    await generateSitemapFile(target, prerenderedPaths, stats);
+    await generateSitemapFile(target, prerenderedPaths, stats, spaRoutes);
   }
 
   await ensureExtrasInIndex();
