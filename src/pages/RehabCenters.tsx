@@ -33,12 +33,72 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   InternalLinkingSection, 
   nearMeLinks, 
   insuranceLinks, 
   resourceLinks 
 } from "@/components/seo/InternalLinkingSection";
+
+// Browse panel options — labels are user-facing, values feed URL params and
+// are matched (case-insensitive substring) against center.treatmentTypes
+// and center.insuranceAccepted. Keep the option set tight so the dropdowns
+// stay scannable; rare options live in the deeper /search-results filter.
+const BROWSE_TREATMENTS = [
+  { value: "detox", label: "Detox" },
+  { value: "inpatient", label: "Inpatient / Residential" },
+  { value: "outpatient", label: "Outpatient" },
+  { value: "iop", label: "Intensive Outpatient (IOP)" },
+  { value: "php", label: "Partial Hospitalization (PHP)" },
+  { value: "dual-diagnosis", label: "Dual Diagnosis" },
+  { value: "mental-health", label: "Mental Health" },
+  { value: "holistic", label: "Holistic Therapy" },
+] as const;
+
+const BROWSE_INSURERS = [
+  { value: "aetna", label: "Aetna" },
+  { value: "anthem", label: "Anthem" },
+  { value: "bcbs", label: "Blue Cross Blue Shield" },
+  { value: "cigna", label: "Cigna" },
+  { value: "humana", label: "Humana" },
+  { value: "kaiser", label: "Kaiser Permanente" },
+  { value: "united", label: "United Healthcare" },
+  { value: "medicare", label: "Medicare" },
+  { value: "medicaid", label: "Medicaid" },
+  { value: "tricare", label: "TRICARE" },
+] as const;
+
+// Match URL filter values against the free-text strings stored on each center.
+// We compare against label AND value so e.g. "bcbs" matches "Blue Cross Blue Shield".
+function matchesTreatment(center: any, value: string): boolean {
+  if (!value) return true;
+  const opt = BROWSE_TREATMENTS.find((o) => o.value === value);
+  const needles = [value, opt?.label].filter(Boolean).map((s) => String(s).toLowerCase());
+  return (center.treatmentTypes ?? []).some((t: string) => {
+    const lt = t.toLowerCase();
+    return needles.some((n) => lt.includes(n) || n.includes(lt));
+  });
+}
+
+function matchesInsurance(center: any, value: string): boolean {
+  if (!value) return true;
+  const opt = BROWSE_INSURERS.find((o) => o.value === value);
+  const needles = [value, opt?.label].filter(Boolean).map((s) => String(s).toLowerCase());
+  return (center.insuranceAccepted ?? []).some((i: string) => {
+    const li = i.toLowerCase();
+    return needles.some((n) => li.includes(n) || n.includes(li));
+  });
+}
+
+const BROWSE_PAGE_SIZE = 12;
+
 
 const RehabCenters = () => {
   const { data: approvedFacilities = [] } = useStaticFacilities();
