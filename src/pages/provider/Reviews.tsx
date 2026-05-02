@@ -81,6 +81,12 @@ export default function ProviderReviews() {
   });
   const visibleReviews = reviewsPagination.paginate(filteredReviews);
 
+  // Reset to page 1 on tab/facility filter change.
+  useEffect(() => {
+    reviewsPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTab, facilityFilter]);
+
   // Calculate filtered stats
   const filteredStats = useMemo(() => {
     const filtered = facilityFilter === "all" ? reviews : reviews.filter(r => r.facility_id === facilityFilter);
