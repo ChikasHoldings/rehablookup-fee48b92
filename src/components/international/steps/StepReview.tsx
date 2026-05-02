@@ -132,7 +132,7 @@ export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <div>
               <p className="text-xs md:text-sm text-muted-foreground">Placement Service Fee</p>
-              <p className="text-2xl md:text-3xl font-bold text-foreground">$299 <span className="text-sm font-normal text-muted-foreground">USD</span></p>
+              <p className="text-2xl md:text-3xl font-bold text-foreground">$99 <span className="text-sm font-normal text-muted-foreground">USD</span></p>
             </div>
             <CreditCard className="h-6 w-6 md:h-8 md:w-8 text-primary" />
           </div>
@@ -164,7 +164,7 @@ export function StepReview({ data, isSubmitting, onSubmit }: StepReviewProps) {
               </>
             ) : (
               <>
-                Continue to Payment — $299
+                Continue to Payment — $99
               </>
             )}
           </Button>
