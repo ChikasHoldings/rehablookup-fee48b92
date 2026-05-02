@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
     // Fetch inquiry details
     const { data: inquiry, error: inquiryError } = await supabase
       .from("concierge_inquiries")
-      .select("*")
+      .select("id, status, level_of_care, insurance_carrier, insurance_member_id, payment_type, preferred_city, preferred_state, gender, age_range, timeline_urgency, primary_concern")
       .eq("id", inquiryId)
       .single();
 
