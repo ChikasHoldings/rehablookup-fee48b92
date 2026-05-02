@@ -256,6 +256,21 @@ export default function ProviderInquiriesPage() {
     });
   }, [inquiries, searchQuery, statusFilter, facilityFilter, dateRange]);
 
+  // Pagination over filtered inquiries (numbered, persisted page size).
+  const {
+    page,
+    pageSize,
+    totalPages,
+    paginate,
+    setPage,
+    setPageSize,
+  } = usePagination({
+    tableId: "provider-inquiries",
+    defaultPageSize: 25,
+    totalItems: filteredInquiries.length,
+  });
+  const visibleInquiries = paginate(filteredInquiries);
+
 
   const clearFilters = () => {
     setSearchQuery("");
