@@ -809,7 +809,7 @@ export default function ProviderPlacementNetworkPage() {
                             <Label className="text-sm font-medium">Invoices</Label>
                           </div>
                           <div className="space-y-2">
-                            {invoices.map((inv) => (
+                            {visibleInvoices.map((inv) => (
                               <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg gap-2 bg-muted/20">
                                 <div className="min-w-0">
                                   <p className="text-sm font-medium">${(inv.amount_cents / 100).toFixed(2)}</p>
@@ -827,6 +827,17 @@ export default function ProviderPlacementNetworkPage() {
                                 </div>
                               </div>
                             ))}
+                            {(invoices?.length ?? 0) > invoicesPagination.pageSize && (
+                              <PaginationFooter
+                                page={invoicesPagination.page}
+                                pageSize={invoicesPagination.pageSize}
+                                totalPages={invoicesPagination.totalPages}
+                                totalItems={invoices?.length ?? 0}
+                                onPageChange={invoicesPagination.setPage}
+                                onPageSizeChange={invoicesPagination.setPageSize}
+                                itemLabel="invoice"
+                              />
+                            )}
                           </div>
                         </div>
                       )}
