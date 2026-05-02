@@ -161,7 +161,9 @@ export function HomepageFeaturedSection() {
 
   if (featuredCenters.length === 0) return null;
 
-  const locationLabel = userState && !geo.isLoading
+  // Only show city/state label for US visitors — non-US region codes (e.g. "10" for Balikesir, TR)
+  // would otherwise render as "Showing results near Balikesir, 10" on a US-focused directory.
+  const locationLabel = geo.isUS && userState && !geo.isLoading
     ? `Showing results near ${userCity ? `${userCity}, ` : ""}${userState}`
     : "Verified facilities across the United States";
 
