@@ -601,30 +601,53 @@ export const stateCountyData: StateCountyData[] = [
 ];
 
 
+/**
+ * Per-state slug alias map. For each state, maps every accepted incoming slug
+ * (canonical stored slug + base alias for state-suffixed slugs like
+ * "jefferson-la" → "jefferson") to its CountyData.
+ *
+ * Built once at module load. Aliases are only registered when unambiguous
+ * within a state (no two counties in the same state share the same base),
+ * so resolution is deterministic and never relies on runtime prefix matching.
+ */
+const countySlugIndex: Map<string, Map<string, CountyData>> = (() => {
+  const index = new Map<string, Map<string, CountyData>>();
+
+  for (const state of stateCountyData) {
+    const stateMap = new Map<string, CountyData>();
+
+    // 1. Register canonical slugs (always win).
+    for (const county of state.counties) {
+      stateMap.set(county.slug.toLowerCase(), county);
+    }
+
+    // 2. Compute base aliases ("jefferson-la" → "jefferson") and register
+    //    only when the base is unambiguous and doesn't collide with a
+    //    canonical slug already in the map.
+    const baseCounts = new Map<string, number>();
+    const baseToCounty = new Map<string, CountyData>();
+    for (const county of state.counties) {
+      const slug = county.slug.toLowerCase();
+      const lastDash = slug.lastIndexOf("-");
+      if (lastDash === -1) continue;
+      const base = slug.slice(0, lastDash);
+      baseCounts.set(base, (baseCounts.get(base) ?? 0) + 1);
+      baseToCounty.set(base, county);
+    }
+    for (const [base, count] of baseCounts) {
+      if (count === 1 && !stateMap.has(base)) {
+        stateMap.set(base, baseToCounty.get(base)!);
+      }
+    }
+
+    index.set(state.stateSlug, stateMap);
+  }
+
+  return index;
+})();
+
 export function getCountyBySlug(stateSlug: string, countySlug: string): CountyData | undefined {
-  const stateData = stateCountyData.find(s => s.stateSlug === stateSlug);
-  if (!stateData) return undefined;
-
-  // Exact match first
-  const exact = stateData.counties.find(c => c.slug === countySlug);
-  if (exact) return exact;
-
-  // Fallback: many counties share names across states (Jefferson, Montgomery,
-  // Kent, York, etc.) and are stored with a state-suffix slug (e.g.
-  // "jefferson-la", "kent-mi", "york-me"). Inbound traffic, prerendered HTML,
-  // and historical sitemap URLs use the plain base ("jefferson"). Since we've
-  // already scoped to one state and base slugs are unique within a state,
-  // matching by the base portion of the stored slug is unambiguous and safe.
-  const base = countySlug.toLowerCase();
-  return stateData.counties.find(c => {
-    const stored = c.slug.toLowerCase();
-    if (stored === base) return true;
-    // Stored slug is "<base>-<state-suffix>" — match if the prefix before the
-    // last dash equals the requested slug.
-    const lastDash = stored.lastIndexOf("-");
-    if (lastDash === -1) return false;
-    return stored.slice(0, lastDash) === base;
-  });
+  return countySlugIndex.get(stateSlug)?.get(countySlug.toLowerCase());
 }
 
 export function getStateCounties(stateSlug: string): CountyData[] {
