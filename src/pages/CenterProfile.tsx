@@ -605,6 +605,7 @@ const CenterProfile = () => {
   // when the query truly returned no row (or hard-errored). While a refetch
   // is in flight without prior data, keep showing the skeleton.
   if (!facility) {
+    // Refetch in flight without prior data → keep skeleton, don't flash NotFound
     if (isFetching && !isFetched) {
       return (
         <Layout>
@@ -612,7 +613,6 @@ const CenterProfile = () => {
         </Layout>
       );
     }
-    if (error || isFetched) {
     return (
       <Layout>
         <SEO
@@ -635,6 +635,24 @@ const CenterProfile = () => {
               <Button size="lg" className="gap-2 shadow-md">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Search
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <SEO title="Center Not Found" description="Unavailable" noindex={true} />
+        <div className="bg-gradient-to-b from-muted/50 to-background min-h-screen py-20">
+          <div className="container max-w-md text-center">
+            <h1 className="mb-3 font-display text-2xl font-bold text-foreground">Center Not Found</h1>
+            <Link to="/rehab-centers">
+              <Button size="lg" className="gap-2 shadow-md mt-4">
+                <ArrowLeft className="h-4 w-4" /> Back to Search
               </Button>
             </Link>
           </div>
