@@ -23,7 +23,7 @@ import {
 import { StepWhoNeedsHelp } from "@/components/concierge/StepWhoNeedsHelp";
 import { StepCareNeed } from "@/components/concierge/StepCareNeed";
 import { StepLogistics } from "@/components/concierge/StepLogistics";
-import { StepPaymentInfo } from "@/components/concierge/StepPaymentInfo";
+
 import { StepContact } from "@/components/concierge/StepContact";
 import { StepEmailVerification } from "@/components/concierge/StepEmailVerification";
 import { StepPhoneVerification } from "@/components/concierge/StepPhoneVerification";
@@ -209,7 +209,7 @@ const initialData: ConciergeIntakeData = {
   hipaaConsent: false,
 };
 
-// 8 steps: Who → Care → Logistics → Payment Info → Contact → Verify Email → Verify Phone → Review & Submit
+// 7 steps: Who → Care → Logistics → Contact → Verify Email → Verify Phone → Review & Submit
 const STEP_CONFIG = [
   { 
     title: "Who Needs Help", 
@@ -225,11 +225,6 @@ const STEP_CONFIG = [
     title: "Location & Preferences", 
     description: "Where and how you'd like to receive care",
     icon: "📍"
-  },
-  { 
-    title: "Payment & Insurance", 
-    description: "How treatment will be funded",
-    icon: "💳"
   },
   { 
     title: "Contact Information", 
@@ -635,16 +630,7 @@ export default function ConciergeIntake() {
         if (!formData.timeline) errors.timeline = "Timeline is required";
         if (!formData.assessmentPreference) errors.assessmentPreference = "Assessment preference is required";
         break;
-      case 4: // Payment
-        if (!formData.paymentType) errors.paymentType = "Payment type is required";
-        if ((formData.paymentType === "insurance" || formData.paymentType === "both") && !formData.insuranceCarrier) {
-          errors.insuranceCarrier = "Insurance carrier is required";
-        }
-        if ((formData.paymentType === "self-pay" || formData.paymentType === "both") && !formData.budgetRange) {
-          errors.budgetRange = "Budget range is required";
-        }
-        break;
-      case 5: // Contact
+      case 4: // Contact
         if (!formData.firstName || formData.firstName.trim().length < 1) errors.firstName = "First name is required";
         if (formData.firstName && formData.firstName.length > 100) errors.firstName = "First name is too long";
         if (!formData.lastName || formData.lastName.trim().length < 1) errors.lastName = "Last name is required";
@@ -666,12 +652,12 @@ export default function ConciergeIntake() {
         }
         if (!formData.hipaaConsent) errors.hipaaConsent = "You must consent to continue";
         break;
-      case 6: // Email verification
+      case 5: // Email verification
         if (!emailVerification.verified) {
           errors.email = "Please verify your email to continue";
         }
         break;
-      case 7: // Phone verification
+      case 6: // Phone verification
         if (!phoneVerification.verified) {
           errors.phone = "Please verify your phone number to continue";
         }
@@ -689,7 +675,7 @@ export default function ConciergeIntake() {
     // Auto-advance to phone verification step
     setTimeout(() => {
       setDirection(1);
-      setCurrentStep(7);
+      setCurrentStep(6);
       scrollToTopSmooth();
     }, 800);
   };
@@ -699,7 +685,7 @@ export default function ConciergeIntake() {
     setEmailVerification({ verified: false, verifiedAt: null });
     localStorage.removeItem(EMAIL_VERIFICATION_KEY);
     setDirection(-1);
-    setCurrentStep(5);
+    setCurrentStep(4);
   };
 
   const handlePhoneVerified = (verifiedAt: string) => {
@@ -709,7 +695,7 @@ export default function ConciergeIntake() {
     // Auto-advance to review step
     setTimeout(() => {
       setDirection(1);
-      setCurrentStep(8);
+      setCurrentStep(7);
       scrollToTopSmooth();
     }, 800);
   };
@@ -718,7 +704,7 @@ export default function ConciergeIntake() {
     setPhoneVerification({ verified: false, verifiedAt: null });
     localStorage.removeItem(PHONE_VERIFICATION_KEY);
     setDirection(-1);
-    setCurrentStep(5);
+    setCurrentStep(4);
   };
 
   // Fires concierge_intake_started exactly once per mount, the first time the
@@ -794,8 +780,8 @@ export default function ConciergeIntake() {
         { step_number: currentStep, total_steps: TOTAL_STEPS },
       );
       if (currentStep < TOTAL_STEPS) {
-        // Auto-save draft to DB when leaving contact step (step 5)
-        if (currentStep === 5) {
+        // Auto-save draft to DB when leaving contact step (step 4)
+        if (currentStep === 4) {
           try {
             const { data: draftData } = await supabase.functions.invoke("save-placement-draft", {
               body: {
@@ -845,7 +831,7 @@ export default function ConciergeIntake() {
     if (isSubmitting) return;
 
     // Validate all previous steps (incl. email + phone verification)
-    for (let step = 1; step <= 7; step++) {
+    for (let step = 1; step <= 6; step++) {
       if (!validateStep(step)) {
         setCurrentStep(step);
         toast.error("Please complete all required fields before submitting");
@@ -929,21 +915,13 @@ export default function ConciergeIntake() {
         );
       case 4:
         return (
-          <StepPaymentInfo
-            data={formData}
-            errors={stepErrors}
-            onChange={updateFormData}
-          />
-        );
-      case 5:
-        return (
           <StepContact
             data={formData}
             errors={stepErrors}
             onChange={updateFormData}
           />
         );
-      case 6:
+      case 5:
         return (
           <>
             <StepEmailVerification
@@ -974,7 +952,7 @@ export default function ConciergeIntake() {
             />
           </>
         );
-      case 7:
+      case 6:
         return (
           <StepPhoneVerification
             phone={formData.phone}
@@ -985,7 +963,7 @@ export default function ConciergeIntake() {
             verifiedAt={phoneVerification.verifiedAt}
           />
         );
-      case 8:
+      case 7:
         return (
           <StepReviewSubmit
             data={formData}
@@ -1003,8 +981,8 @@ export default function ConciergeIntake() {
 
   // Determine if we can proceed from current step
   const canProceed = () => {
-    if (currentStep === 6) return emailVerification.verified;
-    if (currentStep === 7) return phoneVerification.verified;
+    if (currentStep === 5) return emailVerification.verified;
+    if (currentStep === 6) return phoneVerification.verified;
     return true;
   };
 
@@ -1096,7 +1074,7 @@ export default function ConciergeIntake() {
                         Back
                       </Button>
                     )}
-                    {currentStep === 6 ? (
+                    {currentStep === 5 ? (
                       emailVerification.verified && (
                         <Button
                           onClick={handleNext}
@@ -1106,7 +1084,7 @@ export default function ConciergeIntake() {
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       )
-                    ) : currentStep === 7 ? (
+                    ) : currentStep === 6 ? (
                       phoneVerification.verified && (
                         <Button
                           onClick={handleNext}
@@ -1121,7 +1099,7 @@ export default function ConciergeIntake() {
                         onClick={handleNext}
                         className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
                       >
-                        {currentStep === 5 ? "Verify Email" : "Continue"}
+                        {currentStep === 4 ? "Verify Email" : "Continue"}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     )}
