@@ -1,26 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   User, Heart, MapPin, Phone, Edit2, 
-  CheckCircle, AlertCircle, Lock, Loader2, Shield 
+  CheckCircle, Loader2, Shield 
 } from "lucide-react";
 import { ConciergeIntakeData } from "@/pages/concierge/ConciergeIntake";
-import { useSearchParams } from "react-router-dom";
-
-interface PaymentState {
-  sessionId: string | null;
-  paid: boolean;
-  verifiedAt: string | null;
-}
 
 interface StepReviewSubmitProps {
   data: ConciergeIntakeData;
-  paymentState: PaymentState;
   onEdit: (step: number) => void;
   onPay: () => void;
   isSubmitting: boolean;
-  isProcessingPayment: boolean;
 }
 
 const SectionCard = ({ 
@@ -73,29 +63,15 @@ const InfoRow = ({ label, value }: { label: string; value: string | boolean | nu
 
 export function StepReviewSubmit({
   data,
-  paymentState,
   onEdit,
   onPay,
   isSubmitting,
-  isProcessingPayment,
 }: StepReviewSubmitProps) {
-  const [searchParams] = useSearchParams();
-  const wasCanceled = searchParams.get("canceled") === "true";
-
   // Compute full name from firstName and lastName
   const fullName = [data.firstName, data.lastName].filter(Boolean).join(" ") || data.decisionMakerName;
 
   return (
     <div className="space-y-6">
-      {/* Legacy cancel param (from old paid flow) — safe to ignore but show a friendly note */}
-      {wasCanceled && !paymentState.paid && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Your information is saved. Click "Submit My Request" when you're ready.
-          </AlertDescription>
-        </Alert>
-      )}
 
       <div className="text-center mb-4">
         <h3 className="text-lg font-semibold text-foreground">Review Your Information</h3>
@@ -186,11 +162,11 @@ export function StepReviewSubmit({
           </p>
           <Button
             onClick={onPay}
-            disabled={isProcessingPayment}
+            disabled={isSubmitting}
             size="lg"
             className="w-full sm:w-auto min-w-[280px] h-12 text-base bg-gradient-to-r from-primary to-primary/80"
           >
-            {isProcessingPayment ? (
+            {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Submitting...
