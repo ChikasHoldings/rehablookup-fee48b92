@@ -129,8 +129,27 @@ async function fetchSuperAdminData(supabase: any, start: string, end: string) {
   const totalViews = profileViewsResult.count || 0;
   const totalImpressions = listingImpressionsResult.count || 0;
 
-  // System alerts (escalations)
-  const { count: openEscalations } = await supabase.from("admin_escalations").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]);
+  // Email delivery failures (DLQ) — unresolved sends that exhausted retries.
+  // Surfaced so ops can spot bounce floods, domain issues, or template breakage.
+  const { count: emailFailureCount } = await supabase
+    .from("email_send_failures")
+    .select("id", { count: "exact", head: true })
+    .is("resolved_at", null)
+    .gte("created_at", start);
+  const { data: emailFailureBreakdown } = await supabase
+    .from("email_send_failures")
+    .select("email_type")
+    .is("resolved_at", null)
+    .gte("created_at", start)
+    .limit(500);
+  const failureByType: Record<string, number> = {};
+  for (const row of emailFailureBreakdown || []) {
+    const t = (row as { email_type: string }).email_type || "unknown";
+    failureByType[t] = (failureByType[t] || 0) + 1;
+  }
+  const topEmailFailures = Object.entries(failureByType)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
 
   return {
     newProviders: newProviders.count || 0,
