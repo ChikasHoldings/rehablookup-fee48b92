@@ -915,21 +915,13 @@ export default function ConciergeIntake() {
         );
       case 4:
         return (
-          <StepPaymentInfo
-            data={formData}
-            errors={stepErrors}
-            onChange={updateFormData}
-          />
-        );
-      case 5:
-        return (
           <StepContact
             data={formData}
             errors={stepErrors}
             onChange={updateFormData}
           />
         );
-      case 6:
+      case 5:
         return (
           <>
             <StepEmailVerification
@@ -960,7 +952,7 @@ export default function ConciergeIntake() {
             />
           </>
         );
-      case 7:
+      case 6:
         return (
           <StepPhoneVerification
             phone={formData.phone}
@@ -971,7 +963,7 @@ export default function ConciergeIntake() {
             verifiedAt={phoneVerification.verifiedAt}
           />
         );
-      case 8:
+      case 7:
         return (
           <StepReviewSubmit
             data={formData}
