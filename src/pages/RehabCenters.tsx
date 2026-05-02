@@ -694,8 +694,32 @@ const RehabCenters = () => {
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
                   This combination is rare in our verified directory. Try one of the
-                  options below — or let our placement team match you with vetted
-                  centers nationwide, free.
+                  options below — or talk to our placement team and we'll match you
+                  with vetted centers nationwide, free.
+                </p>
+
+                {/* Prominent contact CTA — surfaced inside the empty card so the
+                    fastest path forward (a phone call) is one tap away. */}
+                <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                  <a
+                    href="tel:1-800-662-4357"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors w-full sm:w-auto"
+                    aria-label="Call SAMHSA national helpline 1-800-662-4357 — free, confidential, 24/7"
+                  >
+                    <Phone className="h-4 w-4" aria-hidden="true" />
+                    Call 1-800-662-4357
+                  </a>
+                  <Link
+                    to="/concierge"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors w-full sm:w-auto"
+                  >
+                    <Heart className="h-4 w-4" aria-hidden="true" />
+                    Get matched, free
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Link>
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Free • Confidential • 24/7 helpline
                 </p>
 
                 {/* Quick filter-relaxation chips */}
@@ -785,16 +809,41 @@ const RehabCenters = () => {
                   </div>
                 )}
 
-                {/* Browse-by-state nudge */}
-                <div className="mt-6">
-                  <Link
-                    to="/locations"
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline underline-offset-4"
-                  >
-                    <MapPin className="h-4 w-4" />
-                    Browse centers by state
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
+                {/* Broaden by location — popular city hubs + all-states link.
+                    Helps users widen their search when filter combos return zero. */}
+                <div className="mt-7 text-left max-w-2xl mx-auto">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 text-center">
+                    Or broaden your search by location
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {[
+                      { label: "Los Angeles, CA", to: "/rehab-centers/california/los-angeles" },
+                      { label: "Houston, TX", to: "/rehab-centers/texas/houston" },
+                      { label: "Miami, FL", to: "/rehab-centers/florida/miami" },
+                      { label: "New York, NY", to: "/rehab-centers/new-york/new-york-city" },
+                      { label: "Phoenix, AZ", to: "/rehab-centers/arizona/phoenix" },
+                      { label: "Chicago, IL", to: "/rehab-centers/illinois/chicago" },
+                    ].map((c) => (
+                      <Link
+                        key={c.label}
+                        to={c.to}
+                        className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:border-primary/40 hover:text-primary transition-colors"
+                      >
+                        <MapPin className="h-3 w-3" aria-hidden="true" />
+                        {c.label}
+                      </Link>
+                    ))}
+                  </div>
+                  <div className="mt-3 text-center">
+                    <Link
+                      to="/locations"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline underline-offset-4"
+                    >
+                      <MapPin className="h-4 w-4" aria-hidden="true" />
+                      Browse all 50 states
+                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Link>
+                  </div>
                 </div>
               </div>
 
