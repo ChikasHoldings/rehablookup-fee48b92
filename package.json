@@ -48,7 +48,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "check:hub-routes": "node scripts/check-hub-routes.mjs",
-    "check:vercel-cutover": "node scripts/check-vercel-cutover.mjs"
+    "check:vercel-cutover": "node scripts/check-vercel-cutover.mjs",
+    "check:ua-routing": "node scripts/check-ua-routing.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
