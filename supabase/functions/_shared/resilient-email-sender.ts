@@ -24,9 +24,13 @@ interface EmailParams {
 }
 
 interface SendOptions {
-  /** Category for tracking (e.g., "provider_welcome", "lead_notification") */
+  /** Category for tracking (e.g., "provider_welcome", "lead_notification"). REQUIRED. */
   emailType: string;
-  /** Unique key for idempotency. If provided, checks for existing "sent" record before sending. */
+  /**
+   * Unique key for idempotency. STRONGLY RECOMMENDED for any event-driven
+   * email so retries (function re-invocations, cron re-runs, webhook re-deliveries)
+   * never produce duplicate sends. Format: `<event>-<id>` (e.g. `lead-new-${leadId}-${facilityId}`).
+   */
   idempotencyKey?: string;
   /** Max retry attempts (default: 3) */
   maxRetries?: number;
@@ -250,6 +254,22 @@ export async function sendEmailWithRetry(
     recipientEmail,
     metadata: { ...metadata, error: lastError, maxRetries },
   });
+
+  // Persist to email_send_failures so admins can review on the daily digest.
+  // Failures here must NEVER break the caller — swallow any insert error.
+  try {
+    await supabase.from("email_send_failures").insert({
+      email_type: emailType,
+      recipient_email: recipientEmail,
+      subject: normalizedParams.subject,
+      error_message: lastError,
+      attempts: maxRetries,
+      idempotency_key: idempotencyKey ?? null,
+      metadata: metadata ?? null,
+    });
+  } catch (err) {
+    console.error(`${LOG_PREFIX} DLQ insert failed:`, err);
+  }
 
   console.error(`${LOG_PREFIX} Dead-lettered after ${maxRetries} attempts: ${recipientEmail}`);
   return { success: false, error: lastError, attempts: maxRetries, deadLettered: true };
