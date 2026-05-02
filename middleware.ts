@@ -1,20 +1,28 @@
-// Vercel Edge Middleware
-// PURPOSE: With `cleanUrls: true`, Vercel rewrites e.g. `/rehab-centers/california`
-// to the prerendered `/rehab-centers/california.html` for everyone — but those
-// prerendered files are crawler-only stubs (no GA, no Meta Pixel, no React app).
-// That caused real users to land on a dead static page after the DNS cutover and
-// killed Google Analytics traffic (no page_view ever fires).
+// Vercel Edge Middleware (Vite / non-Next project)
 //
-// Fix: serve the prerendered HTML ONLY to known SEO/social crawlers; rewrite
-// every real browser to the SPA shell (`/index.html`) so the React app + GA/Pixel
-// load normally. Static assets, sitemaps, robots, API and Next-internal paths
-// are left untouched.
+// PURPOSE: With `cleanUrls: true`, Vercel maps every clean URL
+// (e.g. `/rehab-centers/california`) to the prerendered
+// `/rehab-centers/california.html`. Those prerendered files are crawler-only
+// stubs — no Google Analytics, no Meta Pixel, no React app. After the DNS
+// cutover real users started landing on those stubs, no `page_view` ever
+// fired, and GA traffic appeared to crater.
+//
+// Fix: detect known SEO / social crawlers and let them keep the prerendered
+// HTML (good for SEO). Rewrite every other request to `/index.html` so the
+// real React SPA renders, GA `gtag()` / Meta Pixel `fbq()` fire on every
+// page view, and analytics traffic returns to normal.
+//
+// Notes:
+//   * Static assets, sitemap, robots, /api/*, /_vercel/* are excluded by the
+//     matcher and never enter this function.
+//   * `/` is left alone because Vercel already serves /index.html for the apex.
+//   * Crawlers fall through unchanged → vercel.json `cleanUrls` continues to
+//     deliver the prerendered `<path>.html` (or the SPA shell if the file
+//     doesn't exist).
 
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { rewrite, next } from "@vercel/edge";
 
 export const config = {
-  // Match everything except static assets & files with an extension.
   matcher: [
     "/((?!_next/|_vercel/|api/|assets/|favicon|robots\\.txt|sitemap|.*\\.).*)",
   ],
@@ -23,23 +31,22 @@ export const config = {
 const CRAWLER_UA =
   /(googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp|applebot|petalbot|sogou|exabot|facebot|facebookexternalhit|twitterbot|linkedinbot|pinterestbot|slackbot|telegrambot|whatsapp|discordbot|embedly|quora link preview|redditbot|tumblr|vkshare|w3c_validator|ahrefsbot|semrushbot|mj12bot|dotbot|rogerbot|screaming frog|gptbot|chatgpt-user|oai-searchbot|claudebot|perplexitybot|google-inspectiontool|adsbot-google|mediapartners-google|bytespider|googleother)/i;
 
-export default function middleware(req: NextRequest) {
-  const ua = req.headers.get("user-agent") || "";
-  const { pathname, search } = req.nextUrl;
+export default function middleware(request: Request) {
+  const ua = request.headers.get("user-agent") || "";
+  const url = new URL(request.url);
 
-  // Real browsers → always serve the SPA so React + GA/Pixel run.
-  if (!CRAWLER_UA.test(ua)) {
-    // Skip the homepage rewrite (index.html is already the default).
-    if (pathname === "/" || pathname === "/index.html") {
-      return NextResponse.next();
-    }
-    const url = req.nextUrl.clone();
-    url.pathname = "/index.html";
-    url.search = search;
-    return NextResponse.rewrite(url);
+  // Crawlers → keep the prerendered HTML (SEO).
+  if (CRAWLER_UA.test(ua)) {
+    return next();
   }
 
-  // Crawlers → fall through to Vercel's cleanUrls behavior, which serves the
-  // prerendered `<path>.html` if it exists, else the SPA shell.
-  return NextResponse.next();
+  // Apex / index.html already serves the SPA correctly.
+  if (url.pathname === "/" || url.pathname === "/index.html") {
+    return next();
+  }
+
+  // Real users → rewrite to the SPA shell so React + GA/Pixel load.
+  const target = new URL("/index.html", url);
+  target.search = url.search;
+  return rewrite(target);
 }
