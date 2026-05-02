@@ -637,7 +637,11 @@ export default function Insurance() {
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {majorInsurers.map((provider) => (
-              <InsuranceCard key={provider.name} provider={provider} />
+              <InsuranceCard
+                key={provider.name}
+                provider={provider}
+                count={provider.slug ? insurerCounts[provider.slug] : undefined}
+              />
             ))}
           </div>
         </div>
@@ -660,7 +664,11 @@ export default function Insurance() {
 
           <div className="grid gap-4 md:grid-cols-2">
             {governmentPrograms.map((provider) => (
-              <InsuranceCard key={provider.name} provider={provider} />
+              <InsuranceCard
+                key={provider.name}
+                provider={provider}
+                count={provider.slug ? insurerCounts[provider.slug] : undefined}
+              />
             ))}
           </div>
         </div>
