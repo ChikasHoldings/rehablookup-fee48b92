@@ -952,8 +952,15 @@ const SearchResults = () => {
         nextUrl={seoNextUrl}
         noindex={shouldNoindex}
         structuredData={!shouldNoindex ? generateSearchResultsSchema({
+          query: queryParam || undefined,
           location: location || undefined,
           resultCount: filteredCenters.length,
+          canonicalUrl: seoCanonical,
+          currentPage,
+          totalPages,
+          pageSize: ITEMS_PER_PAGE,
+          prevUrl: seoPrevUrl,
+          nextUrl: seoNextUrl,
           facilities: paginatedCenters.slice(0, 10).map(c => ({
             name: c.name,
             city: c.city,
