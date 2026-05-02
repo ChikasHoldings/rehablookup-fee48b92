@@ -4,9 +4,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 const SearchResultCardSkeleton: React.FC = () => {
   return (
     <div className="flex flex-col md:flex-row overflow-hidden rounded-xl border border-border bg-card shadow-md">
-      {/* Image skeleton */}
-      <div className="relative md:w-64 lg:w-72 shrink-0 overflow-hidden">
-        <div className="aspect-[16/10] md:aspect-auto md:h-full md:min-h-[220px]">
+      {/* Image skeleton — matches SearchResultCard exactly to avoid swap-in jump */}
+      <div className="relative md:w-60 lg:w-64 shrink-0 overflow-hidden">
+        <div className="aspect-[16/10] md:aspect-auto md:h-full md:min-h-[180px]">
           <Skeleton className="h-full w-full" />
         </div>
         {/* Logo skeleton */}
