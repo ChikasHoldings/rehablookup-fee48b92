@@ -76,14 +76,10 @@ export function SearchForm({
     }
   }, [lookupZipcode, resetZipLookup, lookupTimeout]);
   
-  // Auto-fill location when zipcode data is received
-  useEffect(() => {
-    if (zipcodeData && isCompleteZipcode) {
-      const formattedLocation = `${zipcodeData.city}, ${zipcodeData.stateAbbr}`;
-      setLocation(formattedLocation);
-      setShowSuggestions(false);
-    }
-  }, [zipcodeData, isCompleteZipcode]);
+  // We no longer auto-replace the user's typed ZIP — the dropdown surfaces a
+  // selectable "ZIP — City, ST" row so users see what's happening and stay
+  // in control. They can press Enter, click the row, or just submit the ZIP
+  // and let downstream search handle the resolved location.
   
   // Cleanup timeout on unmount
   useEffect(() => {
