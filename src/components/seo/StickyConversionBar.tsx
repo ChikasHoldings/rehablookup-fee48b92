@@ -1,10 +1,11 @@
 import { useState, useEffect, forwardRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Heart, X } from "lucide-react";
+import { Heart, Phone, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const HIDDEN_ROUTES = ["/concierge", "/provider", "/admin", "/lp/", "/account"];
+const HELPLINE_TEL = "+18005551234";
 
 export const StickyConversionBar = forwardRef<HTMLDivElement>(function StickyConversionBar(_props, ref) {
   const [visible, setVisible] = useState(false);
