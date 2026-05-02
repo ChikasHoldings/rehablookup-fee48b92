@@ -704,6 +704,16 @@ const SearchResults = () => {
     location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""
   }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, check insurance, and start recovery.`;
 
+  // rel="prev"/"next" — only emit on indexable paginated views so crawlers
+  // can stitch the sequence together without us advertising filtered/noindex
+  // variants.
+  const seoPrevUrl = !shouldNoindex && currentPage > 1
+    ? (currentPage - 1 === 1 ? "/search-results" : `/search-results?page=${currentPage - 1}`)
+    : undefined;
+  const seoNextUrl = !shouldNoindex && currentPage < totalPages
+    ? `/search-results?page=${currentPage + 1}`
+    : undefined;
+
   // Mobile filter sidebar open state
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
