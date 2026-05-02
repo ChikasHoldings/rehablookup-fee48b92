@@ -338,6 +338,7 @@ Deno.serve(async (req) => {
   const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
   const SMOKE_EMAIL = Deno.env.get("SMOKE_ADMIN_EMAIL");
   const SMOKE_PASSWORD = Deno.env.get("SMOKE_ADMIN_PASSWORD");
+  const SMOKE_CRON_SECRET = Deno.env.get("SMOKE_CRON_SECRET");
 
   if (!SUPABASE_URL || !SERVICE_KEY || !ANON_KEY) {
     return new Response(JSON.stringify({ error: "Server misconfigured" }), {
@@ -355,42 +356,57 @@ Deno.serve(async (req) => {
   }
 
   // ---- Authorize caller ---------------------------------------------------
-  const authHeader = req.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Missing bearer token" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  const callerClient = createClient(SUPABASE_URL, ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-    auth: { persistSession: false },
-  });
-  const { data: callerAuth } = await callerClient.auth.getUser();
-  const callerId = callerAuth.user?.id;
-  if (!callerId) {
-    return new Response(JSON.stringify({ error: "Not authenticated" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  // Two accepted auth modes:
+  //   1. Cron mode — `x-cron-secret` header matches SMOKE_CRON_SECRET. Used by
+  //      pg_cron for the daily automated run. No user session required.
+  //   2. Manual mode — caller is an authenticated super_admin. Used by the
+  //      Admin Panel "Run smoke tests" button.
+  const cronHeader = req.headers.get("x-cron-secret") ?? "";
+  const isCronCall =
+    !!SMOKE_CRON_SECRET &&
+    cronHeader.length > 0 &&
+    cronHeader === SMOKE_CRON_SECRET;
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { persistSession: false },
   });
 
-  const { data: callerProfile } = await admin
-    .from("admin_user_profiles")
-    .select("admin_role")
-    .eq("user_id", callerId)
-    .maybeSingle();
+  if (!isCronCall) {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Missing bearer token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-  if (callerProfile?.admin_role !== "super_admin") {
-    return new Response(JSON.stringify({ error: "Super admin role required" }), {
-      status: 403,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const callerClient = createClient(SUPABASE_URL, ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
     });
+    const { data: callerAuth } = await callerClient.auth.getUser();
+    const callerId = callerAuth.user?.id;
+    if (!callerId) {
+      return new Response(JSON.stringify({ error: "Not authenticated" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: callerProfile } = await admin
+      .from("admin_user_profiles")
+      .select("admin_role")
+      .eq("user_id", callerId)
+      .maybeSingle();
+
+    if (callerProfile?.admin_role !== "super_admin") {
+      return new Response(JSON.stringify({ error: "Super admin role required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  } else {
+    console.log("[run-smoke-tests] Cron-triggered run (x-cron-secret matched)");
   }
 
   // ---- Sign in as the seeded test admin -----------------------------------
@@ -680,6 +696,15 @@ async function finalize(
   const passed = results.filter((r) => r.ok).length;
   const failed = results.length - passed;
   const totalMs = results.reduce((sum, r) => sum + r.durationMs, 0);
+
+  // Always log a one-line summary so log-based monitoring (e.g. nightly cron
+  // alerts) can grep for "[run-smoke-tests] FAIL" without parsing the JSON.
+  const logTag = failed === 0 ? "PASS" : "FAIL";
+  const failedNames = results.filter((r) => !r.ok).map((r) => r.name);
+  console.log(
+    `[run-smoke-tests] ${logTag} total=${results.length} passed=${passed} failed=${failed} ms=${totalMs}` +
+      (failedNames.length ? ` failedSteps=${JSON.stringify(failedNames)}` : ""),
+  );
 
   return new Response(
     JSON.stringify(
