@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Phone, ArrowRight, Heart, Shield, Clock, HeartHandshake, Mail, MessageSquare, User } from "lucide-react";
+import { ResendConfirmationButton } from "./ResendConfirmationButton";
 import { useEffect, useState } from "react";
 
 interface LeadIntakeSuccessContact {
