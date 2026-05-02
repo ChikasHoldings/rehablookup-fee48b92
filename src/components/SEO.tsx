@@ -1339,7 +1339,13 @@ export function generateInsuranceSchema(insurance: {
   };
 }
 
-// Search results / directory listing schema
+// Search results / directory listing schema with pagination signals.
+//
+// Crawlers use SearchResultsPage + an embedded ItemList to understand that
+// the page is a result-set view, and the page-level URL/identifier fields
+// (`@id`, `url`, `isPartOf`, `pagination`) tell them which paginated variant
+// they're looking at so each indexable page surfaces its own JSON-LD instead
+// of all variants colliding on a single graph node.
 export function generateSearchResultsSchema(params: {
   query?: string;
   location?: string;
@@ -1350,53 +1356,199 @@ export function generateSearchResultsSchema(params: {
     state: string;
     slug?: string;
   }>;
+  /** Absolute URL or path of the current (paginated) view. Required for unique @id per page. */
+  canonicalUrl?: string;
+  /** Current page number (1-indexed). Omit on non-paginated views. */
+  currentPage?: number;
+  /** Total page count for the current result set. */
+  totalPages?: number;
+  /** Items shown per page (used by Schema.org `pagination` hints). */
+  pageSize?: number;
+  /** Absolute URL or path of the previous page in the sequence. */
+  prevUrl?: string;
+  /** Absolute URL or path of the next page in the sequence. */
+  nextUrl?: string;
+  /** Override page name; defaults to a sensible auto-generated label. */
+  pageName?: string;
 }) {
+  const SITE = "https://rehablookup.com";
+
+  // Promote any path/absolute input to a clean absolute rehablookup.com URL.
+  const toAbs = (input?: string): string | undefined => {
+    if (!input) return undefined;
+    const trimmed = input.trim();
+    if (!trimmed) return undefined;
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return `${SITE}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
+  };
+
   const locationText = params.location ? ` near ${params.location}` : "";
-  
-  return [
-    {
-      "@context": "https://schema.org",
-      "@type": "SearchResultsPage",
-      name: `Addiction Treatment Centers${locationText}`,
-      description: `Browse ${params.resultCount} verified addiction treatment centers${locationText}. Compare programs, check insurance, and find the right rehab facility.`,
-      mainEntity: {
-        "@type": "ItemList",
-        name: `Treatment Centers${locationText}`,
-        numberOfItems: params.resultCount,
-        itemListOrder: "https://schema.org/ItemListOrderDescending",
-        itemListElement: params.facilities?.slice(0, 10).map((facility, index) => ({
-          "@type": "ListItem",
-          position: index + 1,
-          item: {
-            "@type": ["MedicalClinic", "MedicalBusiness", "LocalBusiness"],
-            name: facility.name,
-            address: {
-              "@type": "PostalAddress",
-              addressLocality: facility.city,
-              addressRegion: facility.state,
-              addressCountry: "US",
-            },
-            url: (() => {
-              const path = buildFacilityPath(facility);
-              return path ? `https://rehablookup.com${path}` : undefined;
-            })(),
-            medicalSpecialty: "Addiction Medicine",
-          },
-        })) || [],
-      },
+  const queryText = params.query ? ` matching "${params.query}"` : "";
+  const pageSuffix = params.currentPage && params.currentPage > 1
+    ? ` — Page ${params.currentPage}`
+    : "";
+
+  const canonicalAbs = toAbs(params.canonicalUrl);
+  const prevAbs = toAbs(params.prevUrl);
+  const nextAbs = toAbs(params.nextUrl);
+
+  const pageName = params.pageName ?? `Addiction Treatment Centers${locationText}${queryText}${pageSuffix}`;
+  const description = `Browse ${params.resultCount} verified addiction treatment centers${locationText}${queryText}${
+    params.currentPage && params.currentPage > 1 && params.totalPages
+      ? ` (page ${params.currentPage} of ${params.totalPages})`
+      : ""
+  }. Compare programs, check insurance, and find the right rehab facility.`;
+
+  // Build ItemList numbering relative to the global result set so paginated
+  // views advertise the correct global positions (page 2 → 11, 12, …).
+  const baseOffset = params.currentPage && params.pageSize
+    ? (params.currentPage - 1) * params.pageSize
+    : 0;
+
+  const searchResultsPage: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "SearchResultsPage",
+    name: pageName,
+    description,
+    ...(canonicalAbs && { "@id": `${canonicalAbs}#searchresults`, url: canonicalAbs }),
+    isPartOf: {
+      "@type": "WebSite",
+      "@id": `${SITE}/#website`,
+      url: SITE,
     },
+    inLanguage: "en-US",
+    mainEntity: {
+      "@type": "ItemList",
+      name: `Treatment Centers${locationText}${queryText}`,
+      numberOfItems: params.resultCount,
+      itemListOrder: "https://schema.org/ItemListOrderDescending",
+      itemListElement: params.facilities?.slice(0, 10).map((facility, index) => ({
+        "@type": "ListItem",
+        position: baseOffset + index + 1,
+        item: {
+          "@type": ["MedicalClinic", "MedicalBusiness", "LocalBusiness"],
+          name: facility.name,
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: facility.city,
+            addressRegion: facility.state,
+            addressCountry: "US",
+          },
+          url: (() => {
+            const path = buildFacilityPath(facility);
+            return path ? `${SITE}${path}` : undefined;
+          })(),
+          medicalSpecialty: "Addiction Medicine",
+        },
+      })) || [],
+    },
+  };
+
+  // Schema.org `pagination` is informal but widely consumed; pair it with
+  // `previousItem`/`nextItem` on a separate WebPage node so crawlers that
+  // ignore one signal still pick up the other.
+  if (params.currentPage && params.totalPages && params.totalPages > 1) {
+    (searchResultsPage as any).pagination = {
+      "@type": "Pagination",
+      currentPage: params.currentPage,
+      totalPages: params.totalPages,
+      ...(params.pageSize && { pageSize: params.pageSize }),
+    };
+    if (prevAbs) (searchResultsPage as any).previousItem = prevAbs;
+    if (nextAbs) (searchResultsPage as any).nextItem = nextAbs;
+  }
+
+  return [
+    searchResultsPage,
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      url: "https://rehablookup.com",
+      url: SITE,
       potentialAction: {
         "@type": "SearchAction",
         target: {
           "@type": "EntryPoint",
-          urlTemplate: "https://rehablookup.com/rehab-centers?location={search_term_string}",
+          urlTemplate: `${SITE}/rehab-centers?location={search_term_string}`,
         },
         "query-input": "required name=search_term_string",
       },
     },
   ];
+}
+
+// CollectionPage schema for the /rehab-centers directory hub. Mirrors the
+// pagination signals above so paginated variants get unique JSON-LD too.
+export function generateDirectoryCollectionSchema(params: {
+  name: string;
+  description: string;
+  canonicalUrl: string;
+  resultCount: number;
+  currentPage?: number;
+  totalPages?: number;
+  pageSize?: number;
+  prevUrl?: string;
+  nextUrl?: string;
+  facilities?: Array<{ name: string; city: string; state: string; slug?: string }>;
+}) {
+  const SITE = "https://rehablookup.com";
+  const toAbs = (input?: string): string | undefined => {
+    if (!input) return undefined;
+    if (/^https?:\/\//i.test(input)) return input;
+    return `${SITE}${input.startsWith("/") ? "" : "/"}${input}`;
+  };
+  const canonicalAbs = toAbs(params.canonicalUrl)!;
+  const prevAbs = toAbs(params.prevUrl);
+  const nextAbs = toAbs(params.nextUrl);
+  const baseOffset = params.currentPage && params.pageSize
+    ? (params.currentPage - 1) * params.pageSize
+    : 0;
+
+  const node: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${canonicalAbs}#collection`,
+    name: params.name,
+    description: params.description,
+    url: canonicalAbs,
+    isPartOf: { "@type": "WebSite", "@id": `${SITE}/#website`, url: SITE },
+    inLanguage: "en-US",
+    mainEntity: {
+      "@type": "ItemList",
+      name: params.name,
+      numberOfItems: params.resultCount,
+      itemListOrder: "https://schema.org/ItemListOrderAscending",
+      itemListElement: params.facilities?.slice(0, 10).map((f, i) => ({
+        "@type": "ListItem",
+        position: baseOffset + i + 1,
+        item: {
+          "@type": ["MedicalClinic", "MedicalBusiness", "LocalBusiness"],
+          name: f.name,
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: f.city,
+            addressRegion: f.state,
+            addressCountry: "US",
+          },
+          url: (() => {
+            const path = buildFacilityPath(f);
+            return path ? `${SITE}${path}` : undefined;
+          })(),
+          medicalSpecialty: "Addiction Medicine",
+        },
+      })) || [],
+    },
+  };
+
+  if (params.currentPage && params.totalPages && params.totalPages > 1) {
+    node.pagination = {
+      "@type": "Pagination",
+      currentPage: params.currentPage,
+      totalPages: params.totalPages,
+      ...(params.pageSize && { pageSize: params.pageSize }),
+    };
+    if (prevAbs) node.previousItem = prevAbs;
+    if (nextAbs) node.nextItem = nextAbs;
+  }
+
+  return node;
 }
