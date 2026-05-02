@@ -25,7 +25,9 @@ HOST=https://rehablookup.vercel.app npm run check:vercel-cutover
 ```
 This must pass: SPA fallback, sitemap, robots, redirects, security headers, canonical.
 
-> **Note**: the `www → apex 301` check is automatically skipped when HOST is not the apex. It is verified in step 5.
+> **Important context**: this same script will FAIL when run against the current Lovable-hosted production (`https://rehablookup.com`) because Lovable hosting does not execute `vercel.json` redirects/headers and serves the SPA shell instead of the prerendered `*.html` for clean URLs. That is expected and is precisely why we are migrating. The script must pass on `*.vercel.app` to validate that all 11 currently-failing checks (redirects, trailing-slash 301, X-Frame-Options, prerendered canonicals) will start working as soon as DNS points at Vercel.
+
+> The `www → apex 301` check is automatically skipped when HOST is not the apex. It is verified in step 5.
 
 ### 3. Lower TTL (24+ hours before cutover)
 At your DNS provider, drop TTL on the existing apex A record and `www` record to **300 seconds (5 min)** so a rollback propagates fast.
