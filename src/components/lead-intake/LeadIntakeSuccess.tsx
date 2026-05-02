@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Phone, ArrowRight, Heart, Shield, Clock, HeartHandshake, Mail, MessageSquare, User } from "lucide-react";
+import { ResendConfirmationButton } from "./ResendConfirmationButton";
 import { useEffect, useState } from "react";
 
 interface LeadIntakeSuccessContact {
@@ -12,6 +13,8 @@ interface LeadIntakeSuccessContact {
 
 interface LeadIntakeSuccessProps {
   facilityName?: string | null;
+  facilityId?: string;
+  leadId?: string;
   firstName?: string;
   contact?: LeadIntakeSuccessContact;
 }
@@ -38,7 +41,7 @@ function maskPhone(phone?: string) {
   return `••• ••• ${digits.slice(-4)}`;
 }
 
-export function LeadIntakeSuccess({ facilityName, firstName, contact }: LeadIntakeSuccessProps) {
+export function LeadIntakeSuccess({ facilityName, facilityId, leadId, firstName, contact }: LeadIntakeSuccessProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -136,6 +139,13 @@ export function LeadIntakeSuccess({ facilityName, firstName, contact }: LeadInta
             <p className="text-xs text-muted-foreground mt-3">
               Something not right? Reply to the confirmation email we just sent and we'll update it.
             </p>
+            <div className="mt-3 flex justify-start">
+              <ResendConfirmationButton
+                email={contact?.email}
+                facilityId={facilityId}
+                leadId={leadId}
+              />
+            </div>
           </div>
         )}
 

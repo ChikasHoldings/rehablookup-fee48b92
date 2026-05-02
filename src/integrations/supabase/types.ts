@@ -2898,6 +2898,51 @@ export type Database = {
           },
         ]
       }
+      lead_email_resend_attempts: {
+        Row: {
+          count: number
+          created_at: string
+          email: string
+          last_sent_at: string
+          lead_id: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          email: string
+          last_sent_at?: string
+          lead_id: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          email?: string
+          last_sent_at?: string
+          lead_id?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_email_resend_attempts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_email_resend_attempts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_emails: {
         Row: {
           created_at: string

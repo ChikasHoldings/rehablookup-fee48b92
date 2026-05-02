@@ -33,6 +33,9 @@ verify_jwt = false
 [functions.submit-qualified-lead]
 verify_jwt = false
 
+[functions.resend-lead-confirmation]
+verify_jwt = false
+
 [functions.submit-page-issue-report]
 verify_jwt = false
 
