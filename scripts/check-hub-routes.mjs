@@ -83,6 +83,7 @@ const ROOT_HUBS = new Set([
   "/how-it-works",
   "/cost-estimator",
   "/editorial-policy",
+  "/rehab-score",
   "/medical-disclaimer",
   "/for-providers",
   "/provider-resources",
