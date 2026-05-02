@@ -263,21 +263,47 @@ function ModalSuccessView({
     : null;
   const hasContactRecap = !!(contact && (contact.email || contact.phone || preferredLabel));
 
+  const displayFacilityName = facilityName || facility.name;
   return (
     <div className="px-6 pb-6 pt-2 space-y-5">
       <div className="text-center space-y-3">
         <div className="mx-auto w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-          <CheckCircle className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
+            <CheckCircle className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-foreground">
             Request Sent, {firstName}!
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            {facilityName || facility.name} has received your information and will be in touch.
+            Your information has been delivered to{" "}
+            <span className="font-semibold text-foreground">{displayFacilityName}</span>.
           </p>
         </div>
       </div>
+
+      {/* Email-sent status banner */}
+      {contact?.email && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-xl border border-emerald-200/70 dark:border-emerald-800/50 bg-emerald-50/70 dark:bg-emerald-950/20 p-4 flex items-start gap-3"
+        >
+          <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 shrink-0">
+            <Mail className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+          </div>
+          <div className="text-sm">
+            <div className="font-semibold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+              <CheckCircle className="h-3.5 w-3.5" />
+              Confirmation email sent
+            </div>
+            <p className="text-emerald-800/90 dark:text-emerald-300/90 mt-0.5 leading-relaxed">
+              We sent a copy to{" "}
+              <span className="font-medium break-all">{contact.email}</span>.
+              Don't see it within a few minutes? Check your spam folder.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Contact recap */}
       {hasContactRecap && (

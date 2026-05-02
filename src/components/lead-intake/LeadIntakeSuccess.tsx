@@ -79,7 +79,7 @@ export function LeadIntakeSuccess({ facilityName, facilityId, leadId, firstName,
           Thank You{firstName ? `, ${firstName}` : ""}!
         </h1>
         
-        <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+        <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
           {facilityName ? (
             <>
               Your request has been sent to{" "}
@@ -93,6 +93,30 @@ export function LeadIntakeSuccess({ facilityName, facilityId, leadId, firstName,
             </>
           )}
         </p>
+
+        {/* Email-sent status banner */}
+        {contact?.email && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mb-6 rounded-xl border border-emerald-200/70 dark:border-emerald-800/50 bg-emerald-50/70 dark:bg-emerald-950/20 p-4 flex items-start gap-3 text-left"
+          >
+            <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 shrink-0">
+              <Mail className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+            </div>
+            <div className="text-sm">
+              <div className="font-semibold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Confirmation email sent
+              </div>
+              <p className="text-emerald-800/90 dark:text-emerald-300/90 mt-0.5 leading-relaxed">
+                We sent a copy to{" "}
+                <span className="font-medium break-all">{contact.email}</span>.
+                Don't see it within a few minutes? Check your spam folder.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Contact Details Recap */}
         {hasContactRecap && (
