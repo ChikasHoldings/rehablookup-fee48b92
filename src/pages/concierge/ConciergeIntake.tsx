@@ -1074,7 +1074,7 @@ export default function ConciergeIntake() {
                         Back
                       </Button>
                     )}
-                    {currentStep === 6 ? (
+                    {currentStep === 5 ? (
                       emailVerification.verified && (
                         <Button
                           onClick={handleNext}
@@ -1084,7 +1084,7 @@ export default function ConciergeIntake() {
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       )
-                    ) : currentStep === 7 ? (
+                    ) : currentStep === 6 ? (
                       phoneVerification.verified && (
                         <Button
                           onClick={handleNext}
@@ -1099,7 +1099,7 @@ export default function ConciergeIntake() {
                         onClick={handleNext}
                         className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
                       >
-                        {currentStep === 5 ? "Verify Email" : "Continue"}
+                        {currentStep === 4 ? "Verify Email" : "Continue"}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     )}
