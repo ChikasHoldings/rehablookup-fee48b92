@@ -363,6 +363,8 @@ const About = () => {
                 name: "Chiedu Kabakwu",
                 title: "Founder & CEO",
                 image: founderPortrait,
+                imageAlt:
+                  "Portrait of Chiedu Kabakwu, Founder and CEO of RehabLookup, a behavioral health and patient advocacy leader guiding families to trusted addiction treatment.",
                 bio: "Founder and CEO of RehabLookup. A decade of experience across behavioral health, technology, and patient advocacy — leading the company's mission to bring transparency and dignity to how families find trusted addiction treatment.",
                 credentials: "MBA — Business Administration & Healthcare Strategy",
               },
@@ -370,6 +372,8 @@ const About = () => {
                 name: "Dr. Sarah Mitchell",
                 title: "Medical Director & Content Advisor",
                 image: medicalDirectorPortrait,
+                imageAlt:
+                  "Portrait of Dr. Sarah Mitchell, MD, board-certified psychiatrist and Medical Director at RehabLookup, specializing in addiction medicine, dual diagnosis, and medication-assisted treatment.",
                 bio: "Board-certified psychiatrist specializing in addiction medicine and dual diagnosis care. Leads clinical review of treatment guides and facility verification standards, ensuring our content reflects evidence-based practices in detox, rehab, and medication-assisted treatment (MAT).",
                 credentials: "MD · Board-Certified Psychiatrist · ASAM Fellow",
               },
@@ -377,6 +381,8 @@ const About = () => {
                 name: "David Reyes",
                 title: "Chief Technology Officer",
                 image: ctoPortrait,
+                imageAlt:
+                  "Portrait of David Reyes, Chief Technology Officer at RehabLookup, a health-tech engineering leader overseeing HIPAA-compliant platform security and patient data privacy.",
                 bio: "Health-tech veteran with a track record of building HIPAA-compliant platforms for hospital systems and digital-health startups. Leads engineering, data security, and privacy — safeguarding every family's information from intake through placement.",
                 credentials: "MS Computer Science · CISSP · HIPAA Security Officer",
               },
@@ -385,7 +391,7 @@ const About = () => {
                 <div className="aspect-square overflow-hidden">
                   <img
                     src={leader.image}
-                    alt={`${leader.name} - ${leader.title} at RehabLookup`}
+                    alt={leader.imageAlt}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                     width={512}
