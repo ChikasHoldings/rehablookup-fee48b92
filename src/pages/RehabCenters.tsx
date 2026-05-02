@@ -476,7 +476,184 @@ const RehabCenters = () => {
         </section>
       )}
 
-      {/* Browse by State */}
+      {/* Browse all centers — single-select filters + numeric pagination.
+          Lives between the curated rows and the State/FAQ blocks so users
+          who scroll past the highlights still get a tool to narrow the full
+          directory without leaving /rehab-centers. */}
+      <section
+        id="browse-all"
+        ref={browseAnchorRef}
+        className="bg-background border-t border-border py-10 md:py-14 scroll-mt-24"
+      >
+        <div className="container">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+            <div>
+              <h2 className="font-display text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
+                <Filter className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                Browse All Rehab Centers
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Narrow by treatment type or insurance — page through every verified facility.
+              </p>
+            </div>
+            <p
+              className="text-sm text-muted-foreground"
+              aria-live="polite"
+            >
+              {browseFiltered.length === 0 ? (
+                "No matches"
+              ) : (
+                <>
+                  Showing{" "}
+                  <span className="font-medium text-foreground">
+                    {(browseSafePage - 1) * BROWSE_PAGE_SIZE + 1}
+                    –
+                    {Math.min(browseSafePage * BROWSE_PAGE_SIZE, browseFiltered.length)}
+                  </span>{" "}
+                  of <span className="font-medium text-foreground">{browseFiltered.length}</span>
+                </>
+              )}
+            </p>
+          </div>
+
+          {/* Filter row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1fr_1fr_auto] gap-3 mb-6 p-4 rounded-xl border border-border bg-card">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" /> Treatment type
+              </label>
+              <Select
+                value={browseTreatment || "any"}
+                onValueChange={(v) => setBrowseParam("browseTreatment", v)}
+              >
+                <SelectTrigger className="w-full h-10 text-sm bg-background">
+                  <SelectValue placeholder="Any treatment type" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border shadow-lg max-h-72">
+                  <SelectItem value="any" className="text-sm">Any treatment type</SelectItem>
+                  {BROWSE_TREATMENTS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-sm">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5" /> Insurance
+              </label>
+              <Select
+                value={browseInsurance || "any"}
+                onValueChange={(v) => setBrowseParam("browseInsurance", v)}
+              >
+                <SelectTrigger className="w-full h-10 text-sm bg-background">
+                  <SelectValue placeholder="Any insurance" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border shadow-lg max-h-72">
+                  <SelectItem value="any" className="text-sm">Any insurance</SelectItem>
+                  {BROWSE_INSURERS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-sm">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-end">
+              {browseHasFilter ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-10 gap-2 w-full md:w-auto"
+                  onClick={clearBrowseFilters}
+                >
+                  <X className="h-4 w-4" /> Clear
+                </Button>
+              ) : (
+                <div className="hidden md:block h-10" aria-hidden="true" />
+              )}
+            </div>
+          </div>
+
+          {/* Results grid */}
+          {browsePaginated.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {browsePaginated.map((center) => (
+                <TreatmentCenterCard
+                  key={center.id}
+                  center={center}
+                  featured={center.featured}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-10 text-center">
+              <p className="text-sm text-muted-foreground">
+                No centers match the current filters.
+              </p>
+              {browseHasFilter && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="mt-2"
+                  onClick={clearBrowseFilters}
+                >
+                  Clear filters
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {browseTotalPages > 1 && (
+            <nav
+              className="mt-8 flex items-center justify-center gap-1"
+              aria-label="Browse results pagination"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => setBrowsePage(browseSafePage - 1)}
+                disabled={browseSafePage === 1}
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Prev</span>
+              </Button>
+              {browsePageNumbers.map((p) => (
+                <Button
+                  key={p}
+                  variant={p === browseSafePage ? "default" : "outline"}
+                  size="sm"
+                  className="min-w-9"
+                  onClick={() => setBrowsePage(p)}
+                  aria-label={`Page ${p}`}
+                  aria-current={p === browseSafePage ? "page" : undefined}
+                >
+                  {p}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => setBrowsePage(browseSafePage + 1)}
+                disabled={browseSafePage === browseTotalPages}
+                aria-label="Next page"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </nav>
+          )}
+        </div>
+      </section>
+
+
       <section className="bg-secondary/30 border-y border-border py-10 md:py-14">
         <div className="container">
           <div className="text-center mb-8">
