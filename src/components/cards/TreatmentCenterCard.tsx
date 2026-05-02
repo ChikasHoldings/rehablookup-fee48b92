@@ -2,7 +2,7 @@ import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Heart, Sparkles } from "lucide-react";
+import { MapPin, Crown, ShieldCheck, Clock, CreditCard, Heart, Sparkles, Phone, ExternalLink } from "lucide-react";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { TreatmentCenter } from "@/data/treatmentCenters";
 import { cn } from "@/lib/utils";
