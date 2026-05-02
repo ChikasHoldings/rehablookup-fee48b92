@@ -124,7 +124,7 @@ export function StepEmailVerification({
             {email}
           </p>
           <p className="text-sm text-green-600 dark:text-green-400">
-            You're all set to proceed to payment
+            You're all set — let's continue
           </p>
         </motion.div>
 
@@ -179,7 +179,7 @@ export function StepEmailVerification({
           >
             <div className="text-center py-4">
               <p className="text-muted-foreground mb-6">
-                {firstName ? `${firstName}, we` : "We"} need to verify your email before you can complete payment.
+                {firstName ? `${firstName}, we` : "We"} need to verify your email before submitting your request.
                 Click below to receive a 6-digit verification code.
               </p>
               
