@@ -66,6 +66,17 @@ jobs:
           VERCEL_URL: ${{ secrets.VERCEL_URL }}
         run: npm run validate:vercel-deploy
 
+      # Live hub & near-me coverage: every prerendered hub must return 200
+      # (or 301→canonical hub) with the correct <title> + canonical on the
+      # deployed host. Catches SPA-fallback regressions, missing prerenders,
+      # and stale canonicals before they hit Google.
+      - name: Verify hub & near-me routes (live)
+        if: env.VERCEL_URL != ''
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
+        run: node scripts/check-hub-routes.mjs --host "$VERCEL_URL" --concurrency 16
+
+
       # Internal-link check on every PR/push — fast, deterministic, no network.
       # External links are validated nightly in crawl-404.yml so upstream
       # uptime noise can't block merges.
