@@ -21,7 +21,7 @@ import supportSpecialistImg from "@/assets/support-specialist.png";
 import aboutTeamImage from "@/assets/about-team.jpg";
 import aboutMissionImage from "@/assets/about-mission.jpg";
 import founderPortrait from "@/assets/team/founder-chiedu-kabakwu.webp";
-import medicalDirectorPortrait from "@/assets/team/medical-director-portrait.jpg";
+import medicalDirectorPortrait from "@/assets/team/medical-director-portrait.webp";
 import ctoPortrait from "@/assets/team/cto-portrait.jpg";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
