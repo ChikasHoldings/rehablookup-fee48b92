@@ -113,7 +113,7 @@ const isPreviewHost = /\.vercel\.app$/i.test(new URL(HOST).hostname);
 if (isPreviewHost) {
   console.log(`\n  www → apex                                    SKIP  (preview host — rule only fires on apex DNS)`);
 } else {
-  const wwwExpected = PHASE === "pre" ? [301, 302] : 301;
+  const wwwExpected = PHASE === "pre" ? [301, 302, 308] : [301, 308];
   await check(WWW, wwwExpected, [], UA, "www → apex");
 }
 
