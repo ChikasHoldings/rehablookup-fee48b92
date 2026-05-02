@@ -1223,6 +1223,39 @@ const CenterProfile = () => {
               {/* Our Team Section */}
               <FacilityStaffSection facilityId={facility.id} />
 
+              {/* SEO-friendly FAQ — data-driven, unique per profile.
+                  PageFAQ emits FAQPage JSON-LD only when faqs.length > 0,
+                  satisfying the FAQ JSON-LD audit (≥3 Q&A pairs). */}
+              {(() => {
+                const faqs = buildProfileFAQs({
+                  name: facility.name,
+                  city: facility.city,
+                  state: facility.state,
+                  services,
+                  insurance: insuranceList,
+                  ageGroups,
+                  genderServed: facility.gender_served,
+                  facilityType: facility.facility_type,
+                  yearEstablished: facility.year_established,
+                  verified: facility.verified,
+                  accreditations: facility.facility_accreditations,
+                });
+                if (faqs.length < 3) return null;
+                return (
+                  <ProfileSection
+                    icon={ShieldCheck}
+                    title="Frequently Asked Questions"
+                    iconColor="bg-primary/10 text-primary"
+                  >
+                    <PageFAQ
+                      faqs={faqs}
+                      title=""
+                      className="!py-0"
+                    />
+                  </ProfileSection>
+                );
+              })()}
+
               {/* Contextual internal links — strengthens crawl paths from
                   the profile to related treatment-type, city, state, and
                   insurance hubs. Built from the facility's actual services
