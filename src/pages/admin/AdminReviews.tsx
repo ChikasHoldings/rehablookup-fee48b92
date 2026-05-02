@@ -823,6 +823,15 @@ export default function AdminReviews() {
                 ))}
               </div>
             )}
+            <PaginationFooter
+              page={reviewsPagination.page}
+              pageSize={reviewsPagination.pageSize}
+              totalPages={reviewsPagination.totalPages}
+              totalItems={filteredReviews.length}
+              onPageChange={reviewsPagination.setPage}
+              onPageSizeChange={reviewsPagination.setPageSize}
+              itemLabel="review"
+            />
           </TabsContent>
         ))}
       </Tabs>
