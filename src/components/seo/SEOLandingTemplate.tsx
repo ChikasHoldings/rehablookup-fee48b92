@@ -9,6 +9,7 @@ import { TrustBar } from "@/components/seo/TrustBar";
 import { ConversionSection } from "@/components/seo/ConversionSection";
 import { ComparisonSection } from "@/components/seo/ComparisonSection";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
+import { InlineMiniIntake } from "@/components/seo/InlineMiniIntake";
 import {
   InternalLinkingSection,
   treatmentTypeLinks,
