@@ -523,15 +523,30 @@ export default function ProviderInquiriesPage() {
                   )}
                 </div>
               ) : (
-                filteredInquiries.map((inquiry) => (
-                  <InquiryListItem
-                    key={inquiry.id}
-                    inquiry={inquiry}
-                    isUnlocked={inquiry.is_unlocked === true}
-                    isSelected={selectedInquiry?.id === inquiry.id}
-                    onClick={() => handleSelectInquiry(inquiry)}
-                  />
-                ))
+                <>
+                  {visibleInquiries.map((inquiry) => (
+                    <InquiryListItem
+                      key={inquiry.id}
+                      inquiry={inquiry}
+                      isUnlocked={inquiry.is_unlocked === true}
+                      isSelected={selectedInquiry?.id === inquiry.id}
+                      onClick={() => handleSelectInquiry(inquiry)}
+                    />
+                  ))}
+                  {filteredInquiries.length > pageSize && (
+                    <div className="px-3 sm:px-4">
+                      <PaginationFooter
+                        page={page}
+                        pageSize={pageSize}
+                        totalPages={totalPages}
+                        totalItems={filteredInquiries.length}
+                        onPageChange={setPage}
+                        onPageSizeChange={setPageSize}
+                        itemLabel="lead"
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
