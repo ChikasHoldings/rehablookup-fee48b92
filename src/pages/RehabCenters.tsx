@@ -297,12 +297,24 @@ const RehabCenters = () => {
 
   const seoNoindex = browseHasFilter;
 
+  // rel="prev"/"next" — only emit on indexable (unfiltered) paginated views
+  // so crawlers can stitch page 1 → N together without surfacing filter-facet
+  // variants we intentionally noindex.
+  const seoPrevUrl = !seoNoindex && browseSafePage > 1
+    ? (browseSafePage - 1 === 1 ? "/rehab-centers" : `/rehab-centers?browsePage=${browseSafePage - 1}`)
+    : undefined;
+  const seoNextUrl = !seoNoindex && browseSafePage < browseTotalPages
+    ? `/rehab-centers?browsePage=${browseSafePage + 1}`
+    : undefined;
+
   return (
     <Layout>
       <SEO
         title={seoTitle}
         description={seoDescription}
         canonical={seoCanonical}
+        prevUrl={seoPrevUrl}
+        nextUrl={seoNextUrl}
         noindex={seoNoindex}
         structuredData={!seoNoindex ? [
           {
