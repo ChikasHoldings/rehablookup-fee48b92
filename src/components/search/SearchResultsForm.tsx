@@ -164,7 +164,7 @@ export function SearchResultsForm() {
               </span>
             </SelectTrigger>
             <SelectContent className="bg-card">
-              <SelectItem value={ANY_VALUE}>Any distance</SelectItem>
+              <SelectItem value={ANY_VALUE}>Any</SelectItem>
               {DISTANCE_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
@@ -187,7 +187,7 @@ export function SearchResultsForm() {
               </span>
             </SelectTrigger>
             <SelectContent className="bg-card">
-              <SelectItem value={ANY_VALUE}>Any treatment</SelectItem>
+              <SelectItem value={ANY_VALUE}>Any</SelectItem>
               {TREATMENT_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
@@ -210,7 +210,7 @@ export function SearchResultsForm() {
               </span>
             </SelectTrigger>
             <SelectContent className="bg-card">
-              <SelectItem value={ANY_VALUE}>Any insurance</SelectItem>
+              <SelectItem value={ANY_VALUE}>Any</SelectItem>
               {INSURANCE_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
