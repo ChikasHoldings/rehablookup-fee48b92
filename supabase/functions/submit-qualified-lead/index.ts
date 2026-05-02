@@ -216,8 +216,81 @@ function extractClientIp(req: Request): string | null {
 }
 
 // ============ EMAIL TEMPLATES ============
-function getSeekerConfirmationEmail(name: string, facilityName: string): string {
+// ---------- shared formatting helpers ----------
+function formatUrgency(urgency?: string): string {
+  if (!urgency) return "Pending assessment";
+  const u = urgency.toLowerCase().replace(/-/g, "_");
+  if (u === "immediate" || u === "immediately" || u === "urgent") return "🔴 Immediate";
+  if (u === "within_week" || u === "this_week") return "🟡 Within a week";
+  if (u === "within_month" || u === "this_month") return "🟢 Within a month";
+  if (u === "flexible") return "🔵 Flexible";
+  return urgency;
+}
+
+function formatLevelOfCare(loc?: string): string {
+  if (!loc) return "—";
+  return loc.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatPreferredContact(pc?: string): string {
+  if (!pc) return "Any method";
+  const p = pc.toLowerCase();
+  if (p === "call" || p === "phone") return "📞 Phone call";
+  if (p === "text") return "💬 Text message";
+  if (p === "email") return "📧 Email";
+  return pc;
+}
+
+function formatSubmittedAt(d: Date): string {
+  // e.g. "May 2, 2026 · 3:42 PM ET"
+  try {
+    return d.toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+    });
+  } catch {
+    return d.toUTCString();
+  }
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// ---------- seeker (client) confirmation email ----------
+function getSeekerConfirmationEmail(
+  name: string,
+  facilityName: string,
+  details: {
+    urgency?: string;
+    levelOfCare?: string;
+    insuranceType?: string;
+    preferredContact?: string;
+    message?: string;
+    submittedAt?: Date;
+  } = {}
+): string {
   const firstName = name.split(" ")[0];
+  const submittedAt = details.submittedAt ?? new Date();
+  const safeFacility = escapeHtml(facilityName);
+  const urgencyLine = formatUrgency(details.urgency);
+  const careLine = formatLevelOfCare(details.levelOfCare);
+  const insuranceLine = details.insuranceType ? escapeHtml(details.insuranceType) : "—";
+  const preferredLine = formatPreferredContact(details.preferredContact);
+  const messageExcerpt = details.message
+    ? escapeHtml(details.message.length > 280 ? details.message.slice(0, 280).trim() + "…" : details.message)
+    : "";
+
   return `
 <!DOCTYPE html>
 <html>
@@ -235,33 +308,59 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
               <div style="font-size: 48px; margin-bottom: 16px;">✉️</div>
               <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
               <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
-                Inquiry Received
+                Inquiry sent to ${safeFacility}
               </h1>
-              <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.8); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">Your message has been delivered</p>
+              <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.85); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">Submitted ${formatSubmittedAt(submittedAt)}</p>
             </td>
           </tr>
           <tr>
             <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
-              <p style="margin: 0 0 20px 0; color: #374151; font-size: 16px; line-height: 1.6;">
-                Hi ${firstName},
+              <p style="margin: 0 0 16px 0; color: #111827; font-size: 16px; line-height: 1.6;">
+                Hi ${escapeHtml(firstName)},
               </p>
               <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Thank you for reaching out! Your inquiry has been successfully delivered to <strong style="color: #0f766e;">${facilityName}</strong>.
+                Your inquiry has been delivered to <strong style="color: #0f766e;">${safeFacility}</strong>. Here's a copy of what you submitted so you have it for your records.
               </p>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; margin-bottom: 24px;">
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #0f766e;">📞 What happens next?</p>
-                    <ul style="margin: 0; padding: 0 0 0 20px; color: #115e59; font-size: 14px; line-height: 1.8;">
-                      <li>The facility will review your inquiry shortly</li>
-                      <li>A representative will contact you within 24-48 hours</li>
-                      <li>They'll reach out using your preferred contact method</li>
-                    </ul>
+                    <p style="margin: 0 0 12px 0; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Submission details</p>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; color: #1e293b; line-height: 1.6;">
+                      <tr><td style="padding: 4px 12px 4px 0; color: #64748b; width: 160px;">Treatment center</td><td style="padding: 4px 0;"><strong>${safeFacility}</strong></td></tr>
+                      <tr><td style="padding: 4px 12px 4px 0; color: #64748b;">Level of care</td><td style="padding: 4px 0;">${careLine}</td></tr>
+                      <tr><td style="padding: 4px 12px 4px 0; color: #64748b;">Insurance</td><td style="padding: 4px 0;">${insuranceLine}</td></tr>
+                      <tr><td style="padding: 4px 12px 4px 0; color: #64748b;">Timeline</td><td style="padding: 4px 0;">${urgencyLine}</td></tr>
+                      <tr><td style="padding: 4px 12px 4px 0; color: #64748b;">Preferred contact</td><td style="padding: 4px 0;">${preferredLine}</td></tr>
+                    </table>
+                    ${messageExcerpt ? `
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                      <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Your message</p>
+                      <p style="margin: 0; font-size: 14px; color: #334155; line-height: 1.6; white-space: pre-wrap;">${messageExcerpt}</p>
+                    </div>
+                    ` : ""}
                   </td>
                 </tr>
               </table>
-              <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">
-                If you have any questions in the meantime, feel free to contact us at <a href="mailto:Support@rehablookup.com" style="color: #0f766e; text-decoration: none;">Support@rehablookup.com</a>.
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #0f766e;">📞 What happens next</p>
+                    <ol style="margin: 0; padding: 0 0 0 20px; color: #115e59; font-size: 14px; line-height: 1.7;">
+                      <li><strong>Within a few hours:</strong> ${safeFacility} will review your inquiry.</li>
+                      <li><strong>Within 24–48 hours:</strong> An admissions specialist will reach out via your preferred method (${preferredLine}).</li>
+                      <li><strong>On the call:</strong> You can ask about programs, insurance coverage, and start dates — no obligation.</li>
+                    </ol>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 16px 0; color: #374151; font-size: 14px; line-height: 1.6;">
+                <strong>Haven't heard back?</strong> If 48 hours pass without a response, reply to this email or contact us at <a href="mailto:Support@rehablookup.com" style="color: #0f766e; text-decoration: none;">Support@rehablookup.com</a> and we'll help connect you with another provider.
+              </p>
+              <p style="margin: 0; color: #6b7280; font-size: 13px; line-height: 1.6;">
+                Your information is kept confidential and is only shared with the treatment center you contacted.
               </p>
             </td>
           </tr>
@@ -295,21 +394,28 @@ function getSeekerConfirmationEmail(name: string, facilityName: string): string 
 function getFacilityNotificationEmail(
   leadName: string,
   facilityName: string,
-  details: { urgency?: string; levelOfCare?: string; insuranceType?: string; message?: string; preferredContact?: string }
+  details: {
+    urgency?: string;
+    levelOfCare?: string;
+    insuranceType?: string;
+    message?: string;
+    preferredContact?: string;
+    submittedAt?: Date;
+  }
 ): string {
   const maskedName = maskLeadName(leadName);
   const maskedEmail = "●●●@●●●.com";
   const maskedPhone = "(●●●) ●●●-●●●●";
   const firstName = leadName.split(" ")[0];
-  
-  const urgencyDisplay = details.urgency === 'immediate' ? '🔴 Immediate' 
-    : details.urgency === 'within_week' ? '🟡 Within a week'
-    : details.urgency === 'within_month' ? '🟢 Within a month'
-    : details.urgency === 'flexible' ? '🔵 Flexible'
-    : '⚪ Pending assessment';
-  
-  const levelOfCareDisplay = details.levelOfCare?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || '—';
-  
+  const submittedAt = details.submittedAt ?? new Date();
+  const safeFacility = escapeHtml(facilityName);
+  const urgencyDisplay = formatUrgency(details.urgency);
+  const levelOfCareDisplay = formatLevelOfCare(details.levelOfCare);
+  const preferredDisplay = formatPreferredContact(details.preferredContact);
+  const messageExcerpt = details.message
+    ? escapeHtml(details.message.length > 320 ? details.message.slice(0, 320).trim() + "…" : details.message)
+    : "";
+
   return `
 <!DOCTYPE html>
 <html>
@@ -327,15 +433,15 @@ function getFacilityNotificationEmail(
               <div style="font-size: 48px; margin-bottom: 16px;">🔔</div>
               <p style="margin: 0 0 8px 0; font-size: 12px; color: rgba(255,255,255,0.7); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-transform: uppercase; letter-spacing: 1px;">REHABLOOKUP</p>
               <h1 style="margin: 0; font-size: 24px; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600;">
-                New Inquiry Received
+                New inquiry for ${safeFacility}
               </h1>
-              <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.8); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">${facilityName}</p>
+              <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.85); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px;">Submitted ${formatSubmittedAt(submittedAt)}</p>
             </td>
           </tr>
           <tr>
             <td style="background: #ffffff; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
               <p style="margin: 0 0 24px 0; color: #374151; font-size: 15px; line-height: 1.6;">
-                Great news! Someone is interested in your facility and has submitted an inquiry through RehabLookup.
+                A potential client just submitted an inquiry through your <strong>${safeFacility}</strong> profile on RehabLookup.
               </p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
@@ -344,72 +450,50 @@ function getFacilityNotificationEmail(
                       <tr>
                         <td style="vertical-align: top; width: 60px;">
                           <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #1B365D 0%, #2C4A7F 100%); border-radius: 50%; color: #ffffff; font-size: 18px; font-weight: 600; text-align: center; line-height: 50px;">
-                            ${firstName[0]?.toUpperCase() || '?'}
+                            ${escapeHtml(firstName[0]?.toUpperCase() || '?')}
                           </div>
                         </td>
                         <td style="vertical-align: top; padding-left: 16px;">
-                          <p style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #1e293b;">${maskedName}</p>
+                          <p style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #1e293b;">${escapeHtml(maskedName)}</p>
                           <p style="margin: 0; font-size: 13px; color: #64748b;">New inquiry • ${urgencyDisplay}</p>
                         </td>
                       </tr>
                     </table>
                     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <table role="presentation" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td style="width: 24px; color: #64748b;">📧</td>
-                              <td style="font-size: 14px; color: #334155;">${maskedEmail}</td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <table role="presentation" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td style="width: 24px; color: #64748b;">📱</td>
-                              <td style="font-size: 14px; color: #334155;">${maskedPhone}</td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <table role="presentation" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td style="width: 24px; color: #64748b;">🏥</td>
-                              <td style="font-size: 14px; color: #334155;">${levelOfCareDisplay}</td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                      ${details.insuranceType ? `
-                      <tr>
-                        <td style="padding: 8px 0;">
-                          <table role="presentation" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td style="width: 24px; color: #64748b;">💳</td>
-                              <td style="font-size: 14px; color: #334155;">${details.insuranceType}</td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                      ` : ''}
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; color: #334155; line-height: 1.6;">
+                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b; width: 170px;">Email</td><td style="padding: 6px 0;">${maskedEmail}</td></tr>
+                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Phone</td><td style="padding: 6px 0;">${maskedPhone}</td></tr>
+                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Level of care</td><td style="padding: 6px 0;">${levelOfCareDisplay}</td></tr>
+                      ${details.insuranceType ? `<tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Insurance</td><td style="padding: 6px 0;">${escapeHtml(details.insuranceType)}</td></tr>` : ""}
+                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Timeline</td><td style="padding: 6px 0;">${urgencyDisplay}</td></tr>
+                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Preferred contact</td><td style="padding: 6px 0;">${preferredDisplay}</td></tr>
                     </table>
+                    ${messageExcerpt ? `
+                    <div style="margin-top: 16px; padding: 14px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
+                      <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Message from prospect</p>
+                      <p style="margin: 0; font-size: 14px; color: #334155; line-height: 1.6; white-space: pre-wrap;">${messageExcerpt}</p>
+                    </div>
+                    ` : ""}
                   </td>
                 </tr>
               </table>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
-                  <td style="padding: 20px; text-align: center;">
-                    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #92400e;">🔒 Full Contact Info Hidden</p>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #92400e;">🔒 Full contact info is locked</p>
                     <p style="margin: 0 0 16px 0; font-size: 13px; color: #78350f; line-height: 1.5;">
-                      Unlock this lead in your dashboard to view full contact details and connect with this potential client.
+                      Unlock this lead in your dashboard to see ${escapeHtml(firstName)}'s full name, phone, and email so you can reach out directly.
                     </p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #78350f; line-height: 1.6;">
+                      <strong>Your next steps:</strong>
+                    </p>
+                    <ol style="margin: 0 0 16px 20px; padding: 0; font-size: 13px; color: #78350f; line-height: 1.7;">
+                      <li>Open the lead in your provider dashboard.</li>
+                      <li>Unlock to reveal contact details.</li>
+                      <li>Reach out via ${preferredDisplay} within 24 hours for the best conversion rate.</li>
+                    </ol>
                     <a href="https://rehablookup.com/provider/inquiries" style="display: inline-block; background: #1B365D; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px;">
-                      🔓 Unlock Lead in Dashboard
+                      🔓 Unlock lead in dashboard
                     </a>
                   </td>
                 </tr>
@@ -418,7 +502,7 @@ function getFacilityNotificationEmail(
                 <tr>
                   <td style="padding: 16px;">
                     <p style="margin: 0; font-size: 13px; color: #1e40af; line-height: 1.5;">
-                      💡 <strong>Tip:</strong> Quick response times lead to higher conversion rates. Try to reach out within 24 hours!
+                      💡 <strong>Tip:</strong> Providers who respond within the first hour convert up to 7× more leads than those who wait a day.
                     </p>
                   </td>
                 </tr>
@@ -436,7 +520,7 @@ function getFacilityNotificationEmail(
                     <p style="margin: 0 0 16px 0; color: #93c5fd; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px;">
                       Connecting families with quality care
                     </p>
-                    <a href="https://rehablookup.com/provider/settings" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Notification Settings</a>
+                    <a href="https://rehablookup.com/provider/settings" style="color: #93c5fd; text-decoration: none; font-size: 12px;">Notification settings</a>
                     <p style="margin: 16px 0 0 0; color: rgba(255,255,255,0.5); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px;">
                       © ${new Date().getFullYear()} RehabLookup. All rights reserved.
                     </p>
@@ -791,7 +875,14 @@ Deno.serve(async (req) => {
         from: "RehabLookup <no-reply@rehablookup.com>",
         to: [data.email],
         subject: `Your inquiry to ${facility.name} has been received`,
-        html: getSeekerConfirmationEmail(data.name, facility.name),
+        html: getSeekerConfirmationEmail(data.name, facility.name, {
+          urgency: data.urgency,
+          levelOfCare: data.levelOfCare,
+          insuranceType: data.insuranceType,
+          preferredContact: data.preferredContact,
+          message: data.message,
+          submittedAt: now,
+        }),
       }, {
         emailType: "seeker_inquiry_confirmation",
         idempotencyKey: `seeker-confirm-${lead.id}`,
@@ -844,6 +935,7 @@ Deno.serve(async (req) => {
             insuranceType: data.insuranceType,
             message: data.message,
             preferredContact: data.preferredContact,
+            submittedAt: now,
           }),
         }, {
           emailType: "facility_new_lead",
