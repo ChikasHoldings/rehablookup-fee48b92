@@ -505,23 +505,43 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
           {center.description}
         </p>
 
-        {/* Single CTA Button */}
-        <div className="mt-3 pt-2 border-t border-border/40">
-          <Button 
-            variant="default" 
+        {/* CTAs — Call + Profile (Call hidden when phone unavailable) */}
+        <div className="mt-3 pt-2 border-t border-border/40 flex gap-2">
+          {telLink && (
+            <Button
+              asChild
+              variant="default"
+              size="sm"
+              className={cn(
+                "flex-1 gap-1.5 h-9 text-xs font-semibold",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                showFeaturedBadge
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
+                  : "shadow-sm"
+              )}
+            >
+              <a
+                href={telLink}
+                onClick={handleCallClick}
+                aria-label={`Call ${center.name} at ${formattedPhone}`}
+              >
+                <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                Call
+              </a>
+            </Button>
+          )}
+          <Button
+            variant={telLink ? "outline" : "default"}
             size="sm"
-            onClick={handleGetHelpClick}
-            aria-label={`Check availability at ${center.name}`}
+            onClick={handleProfileClick}
+            aria-label={`View profile for ${center.name}`}
             className={cn(
-              "w-full gap-1.5 h-9 text-xs font-semibold",
+              "flex-1 gap-1.5 h-9 text-xs font-semibold",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-              showFeaturedBadge 
-                ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-md"
-                : "shadow-sm"
             )}
           >
-            <Heart className="h-3.5 w-3.5" aria-hidden="true" />
-            Check Availability
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            View Profile
           </Button>
         </div>
       </div>
