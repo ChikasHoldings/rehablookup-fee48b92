@@ -375,6 +375,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
                 <p><strong>Facility:</strong> ${emailData.facilityName}</p>
                 <p><strong>Time:</strong> ${formatDateTime(emailData.confirmedDateTime)}</p>
               </div>`,
+            }, {
+              emailType: "tour_confirmed_admin",
+              idempotencyKey: `tour-confirmed-admin-${tourId}`,
             });
             results.adminEmail = true;
           } catch (e) {
@@ -399,6 +402,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
                 to: [facilityEmail],
                 subject: `Tour Cancelled - ${emailData.seekerName}`,
                 html: tourCancelledFacilityEmail(emailData),
+              }, {
+                emailType: "tour_cancelled_facility",
+                idempotencyKey: `tour-cancelled-facility-${tourId}`,
               });
               results.facilityEmail = true;
             } catch (e) {
@@ -434,6 +440,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
                 to: [userEmail],
                 subject: `Tour Update - ${emailData.facilityName}`,
                 html: tourCancelledUserEmail(emailData),
+              }, {
+                emailType: "tour_cancelled_user",
+                idempotencyKey: `tour-cancelled-user-${tourId}`,
               });
               results.userEmail = true;
             } catch (e) {
@@ -480,6 +489,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
                 <p><strong>Seeker:</strong> ${emailData.seekerName}</p>
                 <p><strong>Facility:</strong> ${emailData.facilityName}</p>
               </div>`,
+            }, {
+              emailType: "tour_cancelled_admin",
+              idempotencyKey: `tour-cancelled-admin-${tourId}-${cancelledBy}`,
             });
           } catch (e) {
             console.error("Admin cancel email failed:", e);
