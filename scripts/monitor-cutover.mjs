@@ -104,9 +104,16 @@ for (const [p, st, mc] of [["/", 200, ["RehabLookup"]], ["/rehab-centers/califor
   await check(p, st, mc, BOT_UA);
 }
 
-// www → apex: pre accepts current 302 OR target 301; post requires 301.
-const wwwExpected = PHASE === "pre" ? [301, 302] : 301;
-await check(WWW, wwwExpected, [], UA, "www → apex");
+// www → apex: only meaningful when testing the apex host itself. The host
+// rule matches `www.rehablookup.com`; when --host points at a *.vercel.app
+// preview the rule can never match, so skip rather than emit a false negative.
+const isPreviewHost = /\.vercel\.app$/i.test(new URL(HOST).hostname);
+if (isPreviewHost) {
+  console.log(`\n  www → apex                                    SKIP  (preview host — rule only fires on apex DNS)`);
+} else {
+  const wwwExpected = PHASE === "pre" ? [301, 302] : 301;
+  await check(WWW, wwwExpected, [], UA, "www → apex");
+}
 
 console.log(`\n${failures === 0 ? "✅" : "❌"} ${failures} failure(s) [phase=${PHASE}]\n`);
 if (failures === 0 && PHASE === "pre") {
