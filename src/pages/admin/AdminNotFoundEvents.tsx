@@ -159,6 +159,12 @@ export default function AdminNotFoundEvents() {
   });
   const visibleFiltered = eventsPagination.paginate(filtered);
 
+  // Reset to page 1 on filter/search change.
+  useEffect(() => {
+    eventsPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, kindFilter]);
+
 
   const totalHits = summaries.reduce((sum, s) => sum + s.hits, 0);
   const uniquePaths = summaries.length;
