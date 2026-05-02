@@ -139,6 +139,89 @@ const RehabCenters = () => {
   // Popular states for browse
   const popularStates = usStates.slice(0, 12);
 
+  // ── Browse-all panel: URL-driven, single-select dropdowns + numeric pages ──
+  // We use dedicated URL params (`browseTreatment`, `browseInsurance`,
+  // `browsePage`) so this panel's state never collides with the search
+  // form / /search-results query string and stays shareable on its own.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const browseTreatment = searchParams.get("browseTreatment") ?? "";
+  const browseInsurance = searchParams.get("browseInsurance") ?? "";
+  const browsePage = Math.max(1, parseInt(searchParams.get("browsePage") ?? "1", 10) || 1);
+
+  const browseFiltered = useMemo(() => {
+    return sorted.filter(
+      (c) => matchesTreatment(c, browseTreatment) && matchesInsurance(c, browseInsurance),
+    );
+  }, [sorted, browseTreatment, browseInsurance]);
+
+  const browseTotalPages = Math.max(1, Math.ceil(browseFiltered.length / BROWSE_PAGE_SIZE));
+  const browseSafePage = Math.min(browsePage, browseTotalPages);
+  const browsePaginated = useMemo(() => {
+    const start = (browseSafePage - 1) * BROWSE_PAGE_SIZE;
+    return browseFiltered.slice(start, start + BROWSE_PAGE_SIZE);
+  }, [browseFiltered, browseSafePage]);
+
+  // Anchor for scroll-on-paginate; lets the page jump back to the panel when
+  // users click a different page so they don't lose their place mid-results.
+  const browseAnchorRef = useRef<HTMLDivElement | null>(null);
+
+  const setBrowseParam = useCallback(
+    (key: "browseTreatment" | "browseInsurance", value: string) => {
+      const next = new URLSearchParams(searchParams);
+      if (value && value !== "any") next.set(key, value);
+      else next.delete(key);
+      next.delete("browsePage"); // reset to page 1 on filter change
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+
+  const setBrowsePage = useCallback(
+    (page: number) => {
+      const next = new URLSearchParams(searchParams);
+      if (page <= 1) next.delete("browsePage");
+      else next.set("browsePage", String(page));
+      setSearchParams(next, { replace: true });
+      // Defer scroll so DOM has rendered the new page before we move.
+      requestAnimationFrame(() => {
+        browseAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    },
+    [searchParams, setSearchParams],
+  );
+
+  const clearBrowseFilters = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("browseTreatment");
+    next.delete("browseInsurance");
+    next.delete("browsePage");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  // If the URL points to a page beyond the current filtered range (e.g. user
+  // narrowed filters via back-button), normalize it so the visible state and
+  // URL stay in sync without forcing a reload.
+  useEffect(() => {
+    if (browsePage > browseTotalPages && searchParams.get("browsePage")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("browsePage");
+      setSearchParams(next, { replace: true });
+    }
+  }, [browsePage, browseTotalPages, searchParams, setSearchParams]);
+
+  const browseHasFilter = Boolean(browseTreatment || browseInsurance);
+
+  // Sliding window of up to 5 numeric page buttons, mirroring the convention
+  // used on /search-results so users get a consistent pagination feel.
+  const browsePageNumbers = useMemo(() => {
+    const total = browseTotalPages;
+    const current = browseSafePage;
+    if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 3) return [1, 2, 3, 4, 5];
+    if (current >= total - 2) return [total - 4, total - 3, total - 2, total - 1, total];
+    return [current - 2, current - 1, current, current + 1, current + 2];
+  }, [browseTotalPages, browseSafePage]);
+
   const handleSearchComplete = () => {
     // Search form handles navigation
   };
