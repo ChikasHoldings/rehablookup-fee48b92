@@ -144,34 +144,33 @@ step("get-public-facilities (anon)", true, {
   });
 }
 
-// ─── 8. unlock-lead missing leadId ──────────────────────────────────────────
+// ─── 8. unlock-lead enforces auth BEFORE field validation ───────────────────
+//        These two cases would normally test MISSING_FIELD_LEAD_ID and
+//        INVALID_LEAD_ID, but the function (correctly) checks the auth
+//        token before parsing the body, so anon callers always 401. The
+//        in-function field validation path IS exercised by run-smoke-tests
+//        which signs in as a seeded super_admin first.
 {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/unlock-lead`, {
     method: "POST",
     headers: ANON_HEADERS,
-    body: JSON.stringify({ facilityId: facility.id }),
+    body: JSON.stringify({ facilityId: facility.id }), // no leadId
   });
-  const body = await res.json().catch(() => ({}));
-  const code = body?.code || body?.error?.code;
-  step("unlock-lead returns MISSING_FIELD_LEAD_ID", res.status === 400 && code === "MISSING_FIELD_LEAD_ID", {
+  step("unlock-lead anon → 401 (auth ordered before validation)", res.status === 401, {
     status: res.status,
-    code,
   });
+  await res.text();
 }
-
-// ─── 9. unlock-lead invalid UUID ────────────────────────────────────────────
 {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/unlock-lead`, {
     method: "POST",
     headers: ANON_HEADERS,
     body: JSON.stringify({ leadId: "not-a-uuid", facilityId: facility.id }),
   });
-  const body = await res.json().catch(() => ({}));
-  const code = body?.code || body?.error?.code;
-  step("unlock-lead returns INVALID_LEAD_ID for bad UUID", res.status === 400 && code === "INVALID_LEAD_ID", {
+  step("unlock-lead anon w/ bad UUID → 401 (auth wins)", res.status === 401, {
     status: res.status,
-    code,
   });
+  await res.text();
 }
 
 // ─── Summary ────────────────────────────────────────────────────────────────
