@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { resolveFilterHubRedirect } from "@/lib/rehabCentersFilterRedirects";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
@@ -147,6 +148,12 @@ const RehabCenters = () => {
   const browseTreatment = searchParams.get("browseTreatment") ?? "";
   const browseInsurance = searchParams.get("browseInsurance") ?? "";
   const browsePage = Math.max(1, parseInt(searchParams.get("browsePage") ?? "1", 10) || 1);
+
+  // Single-filter combos redirect to their dedicated, indexable hub page.
+  // This keeps the filter URL safely shareable while consolidating SEO
+  // signals on the hub. Dual-filter combos fall through and stay noindex.
+  // Vercel-side 301 parity for these query→path mappings lives in vercel.json.
+  const hubRedirect = resolveFilterHubRedirect({ browseTreatment, browseInsurance });
 
   const browseFiltered = useMemo(() => {
     return sorted.filter(
@@ -306,6 +313,12 @@ const RehabCenters = () => {
   const seoNextUrl = !seoNoindex && browseSafePage < browseTotalPages
     ? `/rehab-centers?browsePage=${browseSafePage + 1}`
     : undefined;
+
+  // Early return: 301-equivalent client redirect for single-filter combos.
+  // Placed after all hooks so React's rules-of-hooks aren't violated.
+  if (hubRedirect) {
+    return <Navigate to={hubRedirect} replace />;
+  }
 
   return (
     <Layout>
