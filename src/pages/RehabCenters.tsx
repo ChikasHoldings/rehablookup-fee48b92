@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
