@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     const actorType = getCaseEventActorType(adminProfile?.admin_role ?? null);
 
     if (!adminRole) {
-      throw new Error("Only administrators can send introductions");
+      throw new ApiError("FORBIDDEN", "Only administrators can send introductions", 403);
     }
 
     logStep(requestId, "Admin authenticated", { adminId: userData.user.id });
