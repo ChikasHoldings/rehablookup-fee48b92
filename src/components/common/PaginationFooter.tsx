@@ -61,7 +61,7 @@ export function PaginationFooter({
 
       <div className="flex flex-wrap items-center justify-end gap-3">
         {!hidePageSize && (
-          <PageSizeSelect value={pageSize} onChange={onPageSizeChange} />
+          <PageSizeSelect value={pageSize as PageSize} onChange={onPageSizeChange} />
         )}
         <DataPagination
           currentPage={page}
