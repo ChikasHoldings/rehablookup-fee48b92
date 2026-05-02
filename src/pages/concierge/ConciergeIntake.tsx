@@ -780,6 +780,19 @@ export default function ConciergeIntake() {
   const handleNext = async () => {
     if (validateStep(currentStep)) {
       if (currentStep === 1) fireStartedEvent();
+      // Per-step funnel telemetry (GA4 + Meta Pixel) — measures abandonment
+      // between every step in the wizard so we can see exactly where users drop.
+      trackEvent("concierge_intake_step_complete", {
+        event_category: "ConciergeFunnel",
+        event_label: `step_${currentStep}`,
+        step_number: currentStep,
+        total_steps: TOTAL_STEPS,
+      });
+      (window as unknown as { fbq?: (...a: unknown[]) => void })?.fbq?.(
+        "trackCustom",
+        "ConciergeIntakeStepComplete",
+        { step_number: currentStep, total_steps: TOTAL_STEPS },
+      );
       if (currentStep < TOTAL_STEPS) {
         // Auto-save draft to DB when leaving contact step (step 5)
         if (currentStep === 5) {
@@ -805,6 +818,11 @@ export default function ConciergeIntake() {
       }
     } else {
       toast.error("Please fill in all required fields");
+      trackEvent("concierge_intake_step_invalid", {
+        event_category: "ConciergeFunnel",
+        event_label: `step_${currentStep}`,
+        step_number: currentStep,
+      });
     }
   };
 
