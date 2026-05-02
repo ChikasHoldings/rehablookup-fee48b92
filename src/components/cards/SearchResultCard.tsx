@@ -24,6 +24,8 @@ import { buildFacilityPath } from "@/lib/slugUtils";
 import { useState, useCallback, memo, useRef, useEffect, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
+import { trackEvent } from "@/lib/analytics";
+import { buildConciergeHref } from "@/lib/conciergeHref";
 
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { useFavorites } from "@/hooks/useFavorites";
