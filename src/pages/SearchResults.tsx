@@ -750,27 +750,26 @@ const SearchResults = () => {
         </Select>
       </div>
 
-      {/* Treatment Type */}
+      {/* Treatment Type — single-select dropdown */}
       <FilterSection id="treatment" icon={<Building2 className="h-3.5 w-3.5" />} label="Treatment Type" count={selectedTreatmentTypes.length}>
-        <div className="space-y-1.5">
-          {treatmentTypeFilters.map((filter) => {
-            const active = selectedTreatmentTypes.includes(filter.value);
-            return (
-              <button
-                key={filter.value}
-                onClick={() => toggleFilter("treatmentTypes", filter.value, selectedTreatmentTypes)}
-                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
-                  active
-                    ? "bg-primary/10 text-primary font-medium border border-primary/20"
-                    : "text-foreground hover:bg-secondary/60 border border-transparent"
-                }`}
-              >
-                <span>{filter.label}</span>
-                {active && <X className="h-3.5 w-3.5" />}
-              </button>
-            );
-          })}
-        </div>
+        <Select
+          value={selectedTreatmentTypes[0] ?? "any"}
+          onValueChange={(v) => setSingleFilter("treatmentTypes", v)}
+        >
+          <SelectTrigger className="w-full h-9 text-sm border-border bg-card">
+            <SelectValue placeholder="Any treatment type" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border shadow-lg max-h-72">
+            <SelectItem value="any" className="text-sm cursor-pointer">
+              Any treatment type
+            </SelectItem>
+            {treatmentTypeFilters.map((filter) => (
+              <SelectItem key={filter.value} value={filter.value} className="text-sm cursor-pointer">
+                {filter.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </FilterSection>
 
       {/* Distance */}
