@@ -146,8 +146,11 @@ Deno.serve(async (req) => {
   try {
     logStep(requestId, "Function started", { version: VERSION });
 
+    // Stripe key only required for the legacy paid flow; domestic concierge is free.
+    // Validation is deferred until we know we're not skipping payment so that
+    // free-intake / validation paths (e.g. email_required) don't 500 in environments
+    // without STRIPE_SECRET_KEY configured.
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -268,6 +271,7 @@ Deno.serve(async (req) => {
     let session: Stripe.Checkout.Session | null = null;
     let sessionUserId: string | null = null;
     if (!skipPayment) {
+      if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
       const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
       session = await stripe.checkout.sessions.retrieve(sessionId!);
       if (session.payment_status !== 'paid') {
