@@ -132,6 +132,28 @@ async function fetchSuperAdminData(supabase: any, start: string, end: string) {
   // System alerts (escalations)
   const { count: openEscalations } = await supabase.from("admin_escalations").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]);
 
+  // Email delivery failures (DLQ) — unresolved sends that exhausted retries.
+  // Surfaced so ops can spot bounce floods, domain issues, or template breakage.
+  const { count: emailFailureCount } = await supabase
+    .from("email_send_failures")
+    .select("id", { count: "exact", head: true })
+    .is("resolved_at", null)
+    .gte("created_at", start);
+  const { data: emailFailureBreakdown } = await supabase
+    .from("email_send_failures")
+    .select("email_type")
+    .is("resolved_at", null)
+    .gte("created_at", start)
+    .limit(500);
+  const failureByType: Record<string, number> = {};
+  for (const row of emailFailureBreakdown || []) {
+    const t = (row as { email_type: string }).email_type || "unknown";
+    failureByType[t] = (failureByType[t] || 0) + 1;
+  }
+  const topEmailFailures = Object.entries(failureByType)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
   return {
     newProviders: newProviders.count || 0,
     newLeads: newLeads.count || 0,
@@ -145,18 +167,21 @@ async function fetchSuperAdminData(supabase: any, start: string, end: string) {
     flaggedItems: flaggedItems.count || 0,
     conciergeInquiries: conciergeInquiries.count || 0,
     openEscalations: openEscalations || 0,
+    emailFailures: emailFailureCount || 0,
+    topEmailFailures,
   };
 }
 
 // deno-lint-ignore no-explicit-any
 async function fetchManagerData(supabase: any, start: string, end: string) {
-  const [newLeads, unlockedLeads, placements, confirmedPlacements, pendingProviders, openEscalations] = await Promise.all([
+  const [newLeads, unlockedLeads, placements, confirmedPlacements, pendingProviders, openEscalations, emailFailures] = await Promise.all([
     supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("lead_unlocks").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).eq("placement_confirmed", true).gte("placement_confirmed_at", start).lte("placement_confirmed_at", end),
     supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("admin_escalations").select("id", { count: "exact", head: true }).in("status", ["open", "in_progress"]),
+    supabase.from("email_send_failures").select("id", { count: "exact", head: true }).is("resolved_at", null).gte("created_at", start),
   ]);
 
   // Conversion rate
@@ -171,7 +196,8 @@ async function fetchManagerData(supabase: any, start: string, end: string) {
     placements: placements.count || 0,
     confirmedPlacements: confirmedPlacements.count || 0,
     pendingProviders: pendingProviders.count || 0,
-    openEscalations: openEscalations || 0,
+    openEscalations: openEscalations.count || 0,
+    emailFailures: emailFailures.count || 0,
   };
 }
 
@@ -238,6 +264,12 @@ function buildSuperAdminBody(data: Awaited<ReturnType<typeof fetchSuperAdminData
   if (data.pendingProviders > 0) actions.push(actionItem(`${data.pendingProviders} provider(s) awaiting approval`, `${DASHBOARD_URL}/admin/providers`));
   if (data.flaggedItems > 0) actions.push(actionItem(`${data.flaggedItems} flagged item(s) need review`, `${DASHBOARD_URL}/admin/moderation`));
   if (data.openEscalations > 0) actions.push(actionItem(`${data.openEscalations} open escalation(s)`, `${DASHBOARD_URL}/admin/escalations`));
+  if (data.emailFailures > 0) {
+    const breakdown = data.topEmailFailures.length
+      ? ` (top: ${data.topEmailFailures.map(([t, n]) => `${t}×${n}`).join(", ")})`
+      : "";
+    actions.push(actionItem(`${data.emailFailures} email send(s) failed all retries${breakdown}`, `${DASHBOARD_URL}/admin/email-logs`));
+  }
 
   return `
     <p style="font-size:13px;color:${BRAND.muted};margin:0 0 16px;">Full platform visibility for the ${periodLabel(period).toLowerCase()} period.</p>
@@ -271,6 +303,7 @@ function buildManagerBody(data: Awaited<ReturnType<typeof fetchManagerData>>, pe
   const actions: string[] = [];
   if (data.pendingProviders > 0) actions.push(actionItem(`${data.pendingProviders} provider(s) pending review`, `${DASHBOARD_URL}/admin/providers`));
   if (data.openEscalations > 0) actions.push(actionItem(`${data.openEscalations} escalation(s) to address`, `${DASHBOARD_URL}/admin/escalations`));
+  if (data.emailFailures > 0) actions.push(actionItem(`${data.emailFailures} email send(s) failed all retries`, `${DASHBOARD_URL}/admin/email-logs`));
 
   return `
     <p style="font-size:13px;color:${BRAND.muted};margin:0 0 16px;">Operational overview for the ${periodLabel(period).toLowerCase()} period.</p>
