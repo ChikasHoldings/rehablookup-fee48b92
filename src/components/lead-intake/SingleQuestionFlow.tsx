@@ -262,6 +262,9 @@ export function SingleQuestionFlow({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [consentToContact, setConsentToContact] = useState(false);
   const isSubmittingRef = useRef(false);
+  // Mirrors ref-based guards into render state so buttons visibly disable
+  // during the async window between click and parent `isSubmitting=true`.
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Filter questions based on skip conditions
   const activeQuestions = QUESTIONS.filter(q => !q.skipIf || !q.skipIf(formData));
@@ -340,6 +343,7 @@ export function SingleQuestionFlow({
   const handleContactSubmit = async () => {
     if (isSubmittingRef.current || isContactSubmitting.current) return;
     isContactSubmitting.current = true;
+    setIsProcessing(true);
     
     try {
     const parsed = contactSchema.safeParse({
@@ -384,23 +388,29 @@ export function SingleQuestionFlow({
     }
     } finally {
       isContactSubmitting.current = false;
+      setIsProcessing(false);
     }
   };
   
   // Handle verification
   const handleVerifyCode = async () => {
-    if (isSubmittingRef.current) return;
+    if (isSubmittingRef.current || isProcessing) return;
     if (verificationCode.length === 6) {
-      const success = await verifyCode(verificationCode);
-      if (success) {
-        isSubmittingRef.current = true;
-        try {
-          await onSubmit({ skipVerificationCheck: true });
-        } finally {
-          isSubmittingRef.current = false;
+      setIsProcessing(true);
+      try {
+        const success = await verifyCode(verificationCode);
+        if (success) {
+          isSubmittingRef.current = true;
+          try {
+            await onSubmit({ skipVerificationCheck: true });
+          } finally {
+            isSubmittingRef.current = false;
+          }
+        } else {
+          setErrors({ code: "Invalid or expired code" });
         }
-      } else {
-        setErrors({ code: "Invalid or expired code" });
+      } finally {
+        setIsProcessing(false);
       }
     }
   };
@@ -725,7 +735,7 @@ export function SingleQuestionFlow({
 
             <Button
               onClick={handleContactSubmit}
-              disabled={isSendingCode || isSubmitting || !consentToContact}
+              disabled={isProcessing || isSendingCode || isSubmitting || !consentToContact}
               className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
               size="lg"
             >
@@ -782,7 +792,7 @@ export function SingleQuestionFlow({
             
             <Button 
               onClick={handleVerifyCode}
-              disabled={isVerifying || verificationCode.length !== 6 || isSubmitting}
+              disabled={isProcessing || isVerifying || verificationCode.length !== 6 || isSubmitting}
               className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"
               size="lg"
             >
