@@ -527,16 +527,17 @@ export default function ProviderBillingPage() {
                     </div>
                   ))}
                 </div>
-                {transactions.length > 8 && (
+                {transactions.length > txPagination.pageSize && (
                   <div className="pt-3 border-t mt-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full text-sm text-muted-foreground"
-                      onClick={() => setShowAllTransactions(!showAllTransactions)}
-                    >
-                      {showAllTransactions ? "Show less" : `Show all ${transactions.length} transactions`}
-                    </Button>
+                    <PaginationFooter
+                      page={txPagination.page}
+                      pageSize={txPagination.pageSize}
+                      totalPages={txPagination.totalPages}
+                      totalItems={transactions.length}
+                      onPageChange={txPagination.setPage}
+                      onPageSizeChange={txPagination.setPageSize}
+                      itemLabel="transaction"
+                    />
                   </div>
                 )}
               </>
