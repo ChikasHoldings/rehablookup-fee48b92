@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
         break;
 
       case 'advisor_claimed':
-        await sendAdvisorClaimedNotification(inquiry, supabase, results, metadata);
+        await sendAdvisorClaimedNotification(resend, inquiry, supabase, results, metadata);
         break;
 
       case 'seeker_rejected_provider':
