@@ -85,9 +85,14 @@ function locationSlug(s) {
 // ---------------------------------------------------------------------------
 
 /**
- * Pull every approved + verified facility with a slug. We select only the
- * columns we need to render the static SEO mirror — keeps payload small and
- * matches the no-`select(*)` core memory rule.
+ * Pull every approved facility with a slug. Filter MUST match the
+ * sitemap-facilities edge function (which only filters by `status=approved`)
+ * so every URL in sitemap-facilities.xml has a corresponding /center/<slug>.html
+ * mirror — otherwise the check:facility-sitemap-sync validator fails the
+ * build with "static HTML file has no sitemap entry" / vice-versa.
+ *
+ * We select only the columns we need to render the static SEO mirror — keeps
+ * payload small and matches the no-`select(*)` core memory rule.
  */
 async function fetchFacilities() {
   const cols = [
