@@ -106,7 +106,7 @@ Deno.test("email-templates: emailStart + emailEnd produce a valid wrapper", () =
 });
 
 Deno.test("email-templates: emailHeader handles all plan types", () => {
-  for (const plan of ["free", "pro", "premium"] as const) {
+  for (const plan of ["free", "pro"] as const) {
     const html = emailStart() +
       emailHeader("Test Title", plan, { subtitle: "subtitle", icon: "🚀" }) +
       emailEnd();
@@ -142,33 +142,31 @@ Deno.test("email-templates: full assembled email renders cleanly", () => {
 // ---- Message templates ----
 
 const messageFixture = {
-  recipientName: "Jane",
-  senderName: "Riverside Treatment Center",
-  preview: "Hi Jane, we received your inquiry and...",
-  threadUrl: "https://rehablookup.com/messages/abc-123",
-  caseNumber: "RL-12345",
+  seekerName: "Jane D.",
+  seekerEmail: "jane@example.com",
+  facilityName: "Riverside Treatment Center",
+  senderName: "Riverside Admissions",
+  senderType: "facility" as const,
+  messagePreview: "Hi Jane, we received your inquiry and have availability next week.",
+  threadType: "facility" as const,
 };
 
 Deno.test("message-templates: messageToSeekerEmail", () => {
-  const html = messageToSeekerEmail(messageFixture);
-  assertCleanEmailHtml("messageToSeekerEmail", html);
+  assertCleanEmailHtml("messageToSeekerEmail", messageToSeekerEmail(messageFixture));
 });
 
 Deno.test("message-templates: messageToFacilityEmail", () => {
-  const html = messageToFacilityEmail({
-    ...messageFixture,
-    recipientName: "Riverside Admissions",
-    senderName: "Jane D.",
-  });
-  assertCleanEmailHtml("messageToFacilityEmail", html);
+  assertCleanEmailHtml(
+    "messageToFacilityEmail",
+    messageToFacilityEmail({ ...messageFixture, senderType: "seeker", senderName: "Jane D." }),
+  );
 });
 
 Deno.test("message-templates: messageToAdvisorEmail", () => {
-  const html = messageToAdvisorEmail({
-    ...messageFixture,
-    recipientName: "Sarah (Advisor)",
-  });
-  assertCleanEmailHtml("messageToAdvisorEmail", html);
+  assertCleanEmailHtml(
+    "messageToAdvisorEmail",
+    messageToAdvisorEmail({ ...messageFixture, threadType: "advisor", senderType: "seeker", senderName: "Jane D." }),
+  );
 });
 
 // ---- Tour templates ----
@@ -176,15 +174,15 @@ Deno.test("message-templates: messageToAdvisorEmail", () => {
 const tourFixture = {
   seekerName: "Jane D.",
   facilityName: "Riverside Treatment Center",
-  facilityAddress: "123 Recovery Way, Austin, TX 78701",
-  facilityPhone: "+1-512-555-0100",
+  facilityCity: "Austin",
+  facilityState: "TX",
+  tourType: "in-person" as const,
+  preferredDates: ["2026-05-10T14:00:00Z", "2026-05-11T10:00:00Z"],
   proposedDateTime: "2026-05-10T14:00:00Z",
   confirmedDateTime: "2026-05-10T14:00:00Z",
-  requestedDateTime: "2026-05-10T14:00:00Z",
   notes: "Please bring photo ID.",
-  tourId: "tour-abc-123",
-  facilityId: "fac-xyz-456",
-  inquiryId: "inq-789",
+  contactPreference: "phone",
+  facilityNotes: "Ask for the admissions desk on arrival.",
 };
 
 Deno.test("tour-templates: tourRequestedFacilityEmail", () => {
