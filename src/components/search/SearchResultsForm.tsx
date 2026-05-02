@@ -148,7 +148,7 @@ export function SearchResultsForm() {
         <div
           role="group"
           aria-label="Refine results"
-          className="grid grid-cols-3 gap-2 lg:flex lg:items-center lg:gap-1.5 lg:flex-1"
+          className="grid grid-cols-1 sm:grid-cols-3 gap-2 lg:flex lg:items-center lg:gap-1.5 lg:flex-1"
         >
           <Select
             value={distance || ANY_VALUE}
@@ -160,11 +160,15 @@ export function SearchResultsForm() {
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                 <Navigation className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <SelectValue placeholder="Distance" />
+                <span className="truncate">
+                  {distance
+                    ? DISTANCE_OPTIONS.find((o) => o.value === distance)?.label ?? "Distance"
+                    : "Distance"}
+                </span>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-card">
-              <SelectItem value={ANY_VALUE}>Any</SelectItem>
+              <SelectItem value={ANY_VALUE}>Any distance</SelectItem>
               {DISTANCE_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
@@ -183,11 +187,15 @@ export function SearchResultsForm() {
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                 <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <SelectValue placeholder="Treatment" />
+                <span className="truncate">
+                  {treatment
+                    ? TREATMENT_OPTIONS.find((o) => o.value === treatment)?.label ?? "Treatment"
+                    : "Treatment"}
+                </span>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-card">
-              <SelectItem value={ANY_VALUE}>Any</SelectItem>
+              <SelectItem value={ANY_VALUE}>Any treatment</SelectItem>
               {TREATMENT_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
@@ -206,11 +214,15 @@ export function SearchResultsForm() {
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                 <Shield className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <SelectValue placeholder="Insurance" />
+                <span className="truncate">
+                  {insurance
+                    ? INSURANCE_OPTIONS.find((o) => o.value === insurance)?.label ?? "Insurance"
+                    : "Insurance"}
+                </span>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-card">
-              <SelectItem value={ANY_VALUE}>Any</SelectItem>
+              <SelectItem value={ANY_VALUE}>Any insurance</SelectItem>
               {INSURANCE_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
