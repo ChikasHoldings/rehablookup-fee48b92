@@ -273,25 +273,33 @@ export default function AdminNotFoundEvents() {
       </div>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between gap-3 flex-wrap">
-          <CardTitle>Top missing paths</CardTitle>
-          <div className="flex items-center gap-2">
-            <Select value={kindFilter} onValueChange={(v) => setKindFilter(v as KindFilter)}>
-              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All requests</SelectItem>
-                <SelectItem value="spa_route">SPA routes</SelectItem>
-                <SelectItem value="static_asset">Static assets</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="relative w-72">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Filter paths…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
+        <CardHeader className="flex-col items-stretch gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <CardTitle>{groupMode === "pattern" ? "Top missing patterns" : "Top missing paths"}</CardTitle>
+            <div className="flex items-center gap-2">
+              <Tabs value={groupMode} onValueChange={(v) => setGroupMode(v as GroupMode)}>
+                <TabsList>
+                  <TabsTrigger value="pattern">By pattern</TabsTrigger>
+                  <TabsTrigger value="path">By exact path</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Select value={kindFilter} onValueChange={(v) => setKindFilter(v as KindFilter)}>
+                <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All requests</SelectItem>
+                  <SelectItem value="spa_route">SPA routes</SelectItem>
+                  <SelectItem value="static_asset">Static assets</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative w-72">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Filter paths…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -302,6 +310,45 @@ export default function AdminNotFoundEvents() {
             <div className="text-sm text-muted-foreground py-8 text-center">
               No 404 events in this window. 🎉
             </div>
+          ) : groupMode === "pattern" ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Pattern</TableHead>
+                  <TableHead className="w-32 text-right">Hits</TableHead>
+                  <TableHead className="w-32 text-right">Unique paths</TableHead>
+                  <TableHead className="w-32">Last seen</TableHead>
+                  <TableHead className="w-20">Source</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visiblePatterns.map((p) => (
+                  <TableRow
+                    key={p.patternId}
+                    className="cursor-pointer hover:bg-muted/40"
+                    onClick={() => setDrillPattern(p)}
+                  >
+                    <TableCell className="font-mono text-xs">{p.patternLabel}</TableCell>
+                    <TableCell className="text-right font-semibold">{p.hits}</TableCell>
+                    <TableCell className="text-right">{p.uniquePaths}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(p.lastSeen), { addSuffix: true })}
+                    </TableCell>
+                    <TableCell>
+                      {p.hasBotTraffic ? (
+                        <Badge variant="secondary" className="text-xs">bot</Badge>
+                      ) : (
+                        <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">user</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           ) : (
             <Table>
               <TableHeader>
@@ -379,13 +426,49 @@ export default function AdminNotFoundEvents() {
             page={eventsPagination.page}
             pageSize={eventsPagination.pageSize}
             totalPages={eventsPagination.totalPages}
-            totalItems={filtered.length}
+            totalItems={groupMode === "pattern" ? patternSummaries.length : filtered.length}
             onPageChange={eventsPagination.setPage}
             onPageSizeChange={eventsPagination.setPageSize}
-            itemLabel="path"
+            itemLabel={groupMode === "pattern" ? "pattern" : "path"}
           />
         </CardContent>
       </Card>
+
+      {/* Drill-down: paths inside a pattern bucket */}
+      <Dialog open={!!drillPattern} onOpenChange={(o) => !o && setDrillPattern(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-mono text-sm break-all">
+              {drillPattern?.patternLabel}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-xs text-muted-foreground mb-3">
+            {drillPattern?.hits.toLocaleString()} hits across {drillPattern?.uniquePaths.toLocaleString()} unique paths
+          </div>
+          <div className="max-h-[60vh] overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Path</TableHead>
+                  <TableHead className="w-20 text-right">Hits</TableHead>
+                  <TableHead className="w-32">Last seen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(drillPattern?.paths || []).slice(0, 200).map((p) => (
+                  <TableRow key={p.path}>
+                    <TableCell className="font-mono text-xs break-all">{p.path}</TableCell>
+                    <TableCell className="text-right font-semibold">{p.hits}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(p.lastSeen), { addSuffix: true })}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
