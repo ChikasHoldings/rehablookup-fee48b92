@@ -468,7 +468,7 @@ export function SearchForm({
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-lg">
         <div className="grid gap-0 md:grid-cols-4">
           {/* Location */}
-          <div className="border-b border-border p-4 md:border-b-0 md:border-r">
+          <div className="relative border-b border-border p-4 md:border-b-0 md:border-r">
             <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {isZipLookupLoading ? (
                 <Loader2 className="h-4 w-4 text-primary animate-spin" />
@@ -480,10 +480,15 @@ export function SearchForm({
               Location
             </label>
             <input
+              ref={inputRef}
               type="text"
               placeholder="ZIP, City, or State"
               value={location}
               onChange={(e) => handleLocationChange(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onKeyDown={handleKeyDown}
+              maxLength={200}
+              autoComplete="off"
               className={cn(
                 "w-full bg-transparent text-base font-medium text-foreground placeholder:text-muted-foreground focus:outline-none",
                 zipcodeData && !isZipcode && "text-green-700 dark:text-green-400"
@@ -492,6 +497,19 @@ export function SearchForm({
             {isZipLookupLoading && (
               <p className="mt-1 text-xs text-muted-foreground animate-pulse">Looking up ZIP...</p>
             )}
+            <LocationSuggestionsDropdown
+              query={location}
+              open={showSuggestions}
+              suggestions={suggestions}
+              highlightedIndex={highlightedIndex}
+              zipLoading={isZipLookupLoading}
+              resolvedZip={resolvedZip}
+              zipError={zipError}
+              anchorRef={inputRef}
+              onSelectSuggestion={handleSelectSuggestion}
+              onSelectZip={handleSelectZip}
+              onDismiss={() => setShowSuggestions(false)}
+            />
           </div>
 
           {/* Treatment Type */}
