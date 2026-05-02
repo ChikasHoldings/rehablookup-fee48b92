@@ -22,25 +22,33 @@ const APP_TSX = path.resolve(__dirname, "../../src/App.tsx");
 const SMART_CATCHALL = path.resolve(__dirname, "../../src/components/SmartCatchAll.tsx");
 
 // Routes intentionally excluded from any public sitemap (auth/admin/internal).
+// IMPORTANT: be specific — `/provider-guides/*` and `/provider-resources` are
+// PUBLIC marketing pages and must be indexed; only the panel at `/provider/*`
+// (and the other auth surfaces below) are excluded.
 const EXCLUDE_PATTERNS = [
-  /^\/admin/,
-  /^\/account/,
-  /^\/provider/,
-  /^\/seeker/,
-  /^\/client/,
-  /^\/auth/,
-  /^\/login/,
-  /^\/signup/,
-  /^\/reset-password/,
-  /^\/forgot-password/,
+  /^\/admin(\/|$)/,
+  /^\/account(\/|$)/,
+  /^\/provider(\/|$)/,           // /provider, /provider/foo — but NOT /provider-guides
+  /^\/provider-login$/,
+  /^\/provider-signup$/,
+  /^\/provider-faq$/,
+  /^\/provider-support$/,
+  /^\/provider-reset-password$/,
+  /^\/seeker(\/|$)/,
+  /^\/client(\/|$)/,
+  /^\/auth(\/|$)/,
+  /^\/login$/,
+  /^\/signup$/,
+  /^\/reset-password$/,
+  /^\/forgot-password$/,
   /^\/404$/,
   /^\/dev\//,
-  /^\/ads\//,           // tracking destinations, not SEO
-  /^\/lp\//,            // landing-page redirects
-  /^\/center\//,        // handled by dedicated DYNAMIC_PREFIX_ALLOWLIST entry
-  /^\/centers\//,       // duplicate of /center/
-  /^\/facility\//,      // duplicate of /center/
-  /^\/get-more-/,       // provider-facing acquisition pages, not public SEO
+  /^\/ads\//,                    // tracking destinations, not SEO
+  /^\/lp\//,                     // landing-page redirects
+  /^\/center\//,                 // handled by dedicated /center/ prefix
+  /^\/centers\//,                // duplicate of /center/
+  /^\/facility\//,               // duplicate of /center/
+  /^\/get-more-/,                // provider-facing SmartCatchAll variants
 ];
 
 function isExcluded(p) {
