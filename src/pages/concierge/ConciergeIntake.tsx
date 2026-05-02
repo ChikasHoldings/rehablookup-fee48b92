@@ -967,11 +967,9 @@ export default function ConciergeIntake() {
         return (
           <StepReviewSubmit
             data={formData}
-            paymentState={{ sessionId: null, paid: false, verifiedAt: null }}
             onEdit={handleEditStep}
             onPay={handleSubmitFree}
-            isSubmitting={false}
-            isProcessingPayment={isSubmitting}
+            isSubmitting={isSubmitting}
           />
         );
       default:
