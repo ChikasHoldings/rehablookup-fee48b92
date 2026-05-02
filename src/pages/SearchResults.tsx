@@ -683,12 +683,26 @@ const SearchResults = () => {
     }
   }, [isLoading, filteredCenters.length, location, treatment, insurance, queryParam]);
 
-  // Determine display title
+  // Determine display title (used in the page header). The SEO <title> below
+  // augments this with the page number so paginated variants don't collide.
   const searchDisplayTitle = queryParam
     ? `Results for "${queryParam}"`
     : location
       ? `Rehab Centers Near ${location}`
       : "Find Treatment Centers";
+
+  // Build a unique-per-variant SEO title and self-canonical for indexable
+  // (i.e. unfiltered) paginated variants so page 2+ isn't deduped against
+  // page 1. Filtered/empty variants stay noindexed but still ship unique
+  // meta to crawlers that ignore noindex hints.
+  const seoTitleSuffix = currentPage > 1 ? ` — Page ${currentPage}` : "";
+  const seoTitle = `${searchDisplayTitle}${seoTitleSuffix}`;
+  const seoCanonical = !shouldNoindex && currentPage > 1
+    ? `/search-results?page=${currentPage}`
+    : "/search-results";
+  const seoDescription = `Browse ${filteredCenters.length} verified addiction treatment centers${
+    location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""
+  }${currentPage > 1 ? ` (page ${currentPage} of ${totalPages})` : ""}. Compare rehab programs, check insurance, and start recovery.`;
 
   // Mobile filter sidebar open state
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
