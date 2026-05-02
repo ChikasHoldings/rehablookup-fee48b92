@@ -590,7 +590,10 @@ const CenterProfile = () => {
     return <CenterNotFound attemptedSlug={slug} reason="inactive" />;
   }
 
-  if (!slug || isLoading || isFetching || !isFetched) {
+  // Show skeleton only on the very first load. Background refetches keep the
+  // already-rendered profile in place to avoid a flash to skeleton on revisit
+  // or when auth state changes (currentUserId becomes available after mount).
+  if (!slug || (isLoading && !facility)) {
     return (
       <Layout>
         <CenterProfileSkeleton />
@@ -599,8 +602,17 @@ const CenterProfile = () => {
   }
 
   // Only after a completed fetch do we render the not-found state, and only
-  // when the query truly returned no row (or hard-errored).
-  if (error || facility === null || facility === undefined) {
+  // when the query truly returned no row (or hard-errored). While a refetch
+  // is in flight without prior data, keep showing the skeleton.
+  if (!facility) {
+    // Refetch in flight without prior data → keep skeleton, don't flash NotFound
+    if (isFetching && !isFetched) {
+      return (
+        <Layout>
+          <CenterProfileSkeleton />
+        </Layout>
+      );
+    }
     return (
       <Layout>
         <SEO
@@ -623,6 +635,24 @@ const CenterProfile = () => {
               <Button size="lg" className="gap-2 shadow-md">
                 <ArrowLeft className="h-4 w-4" />
                 Back to Search
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <SEO title="Center Not Found" description="Unavailable" noindex={true} />
+        <div className="bg-gradient-to-b from-muted/50 to-background min-h-screen py-20">
+          <div className="container max-w-md text-center">
+            <h1 className="mb-3 font-display text-2xl font-bold text-foreground">Center Not Found</h1>
+            <Link to="/rehab-centers">
+              <Button size="lg" className="gap-2 shadow-md mt-4">
+                <ArrowLeft className="h-4 w-4" /> Back to Search
               </Button>
             </Link>
           </div>
@@ -781,8 +811,8 @@ const CenterProfile = () => {
 
           {/* Hero Header */}
           <div className="mb-8 rounded-2xl bg-card shadow-lg overflow-hidden border border-border/30">
-            {/* Hero Image */}
-            <div className="relative h-52 md:h-72 overflow-hidden">
+            {/* Hero Image — bg-muted reserves a colored placeholder so swap-in is invisible */}
+            <div className="relative h-52 md:h-72 overflow-hidden bg-muted">
               {galleryImages.length > 0 ? (
                 <img 
                   src={galleryImages[0]} 
@@ -791,6 +821,8 @@ const CenterProfile = () => {
                   width={800}
                   height={400}
                   loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
                 />
               ) : (
                 <img 
@@ -799,6 +831,8 @@ const CenterProfile = () => {
                   className="w-full h-full object-cover"
                   width={800}
                   height={400}
+                  loading="eager"
+                  decoding="async"
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />

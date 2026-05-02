@@ -1166,17 +1166,12 @@ const SearchResults = () => {
 
                   {/* Results List */}
                   <div className="space-y-4">
-                    {paginatedCenters.map((center, index) => (
-                      <div
+                    {paginatedCenters.map((center) => (
+                      <SearchResultCard
                         key={center.id}
-                        className="animate-fade-in"
-                        style={{ animationDelay: `${index * 40}ms` }}
-                      >
-                        <SearchResultCard
-                          center={center}
-                          featured={center.featured}
-                        />
-                      </div>
+                        center={center}
+                        featured={center.featured}
+                      />
                     ))}
                   </div>
 
