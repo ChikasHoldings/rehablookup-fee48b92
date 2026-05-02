@@ -9,6 +9,7 @@ import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSecti
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { buildConciergeHref } from "@/lib/conciergeHref";
+import { analytics } from "@/lib/analytics";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
