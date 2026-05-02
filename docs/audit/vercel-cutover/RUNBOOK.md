@@ -86,7 +86,7 @@ Living document. Update after each cutover or rehearsal.
 
 3. **Verify immediately** (DNS still partially propagating, but Vercel's edge usually resolves within seconds):
    ```bash
-   node scripts/monitor-cutover.mjs --host https://rehablookup.com
+   node scripts/monitor-cutover.mjs --host https://rehablookup.com --phase post
    ```
    Expect **0 failures**. If any CRITICAL fail → see Rollback below.
 
