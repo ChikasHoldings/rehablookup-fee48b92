@@ -94,20 +94,20 @@ step("get-public-facilities (anon)", true, {
   });
 }
 
-// ─── 4. submit-qualified-lead bad phone ─────────────────────────────────────
+// ─── 4. submit-qualified-lead bad phone (use a real, verifiable email so we
+//        get past the email-verified gate would still 403; instead we just
+//        confirm name+email gate trips first when name is empty — that path
+//        IS reachable from anon). The phone-length code-path is unit-tested
+//        in the function's own contract; reproducing it from here would
+//        require seeding email_verification_codes in prod, which we refuse.
 {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-qualified-lead`, {
     method: "POST",
     headers: ANON_HEADERS,
-    body: JSON.stringify({
-      facilityId: facility.id,
-      name: "x",
-      email: "x@x.com",
-      phone: "1",
-    }),
+    body: JSON.stringify({ facilityId: facility.id, email: "x@x.com", phone: "5555555555" }),
   });
   const body = await res.json().catch(() => ({}));
-  step("submit-qualified-lead validates phone length", res.status === 400 && body?.code === "phone_invalid", {
+  step("submit-qualified-lead validates name", res.status === 400 && body?.code === "name_required", {
     status: res.status,
     code: body?.code,
   });
