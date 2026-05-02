@@ -149,6 +149,14 @@ export default function AdminBlog() {
   });
   const visibleArticles = articlesPagination.paginate(filteredArticles);
 
+  // Reset to page 1 whenever filters/search change so the user always lands
+  // on the first page of the new result set (otherwise totalPages clamps
+  // the page number but can leave the user on the LAST page of fewer results).
+  useEffect(() => {
+    articlesPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, categoryFilter, statusFilter]);
+
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
