@@ -268,6 +268,9 @@ Deno.serve(async (req) => {
                     </div>
                   </div>
                 `,
+              }, {
+                emailType: "admin_brute_force_alert",
+                idempotencyKey: `brute-force-${_alertHourBucket}`,
               });
               console.log(`[CHECK-BRUTE-FORCE] Email alert sent to ${adminEmails.length} admin(s)`);
             } catch (emailError) {
