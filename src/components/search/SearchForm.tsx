@@ -41,14 +41,20 @@ export function SearchForm({
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const { data: zipcodeData, isLoading: isZipLookupLoading, lookup: lookupZipcode, reset: resetZipLookup } = useZipcodeLookup();
+  const { data: zipcodeData, isLoading: isZipLookupLoading, error: zipError, lookup: lookupZipcode, reset: resetZipLookup } = useZipcodeLookup();
 
   // Check if input is a zipcode
   const isZipcode = useMemo(() => /^\d{1,5}$/.test(location.trim()), [location]);
   const isCompleteZipcode = useMemo(() => /^\d{5}$/.test(location.trim()), [location]);
-  
+
+  // Build the resolved-zip object the dropdown surfaces as a selectable row.
+  const resolvedZip: ResolvedZip | null = useMemo(() => {
+    if (!isCompleteZipcode || !zipcodeData) return null;
+    return { zip: location.trim(), city: zipcodeData.city, stateAbbr: zipcodeData.stateAbbr };
+  }, [isCompleteZipcode, zipcodeData, location]);
+
   const suggestions = useMemo(() => {
-    if (isZipcode) return []; // Don't show suggestions for zipcode input
+    if (isZipcode) return []; // City/state matches don't apply to numeric input
     return getLocationSuggestions(location);
   }, [location, isZipcode]);
   
