@@ -44,6 +44,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 type AuditLog = {
   id: string;
@@ -181,7 +183,7 @@ const targetTypeConfig: Record<string, { icon: React.ReactNode; label: string }>
   notifications: { icon: <Bell className="h-3.5 w-3.5" />, label: "Notifications" },
 };
 
-const ITEMS_PER_PAGE = 20;
+
 
 const datePresets = [
   { label: "Today", days: 0 },
@@ -197,7 +199,7 @@ export default function AdminAuditLog() {
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [targetFilter, setTargetFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: subDays(new Date(), 30), to: new Date() });
-  const [currentPage, setCurrentPage] = useState(1);
+  
 
   const invalidateAuditLog = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-audit-log"] });
@@ -306,10 +308,14 @@ export default function AdminAuditLog() {
   }, [logs, actionFilter, targetFilter, searchQuery, adminProfileMap]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE);
+  const { page: currentPage, pageSize, totalPages, setPage: setCurrentPage, setPageSize } = usePagination({
+    tableId: "admin-audit-log",
+    defaultPageSize: 25,
+    totalItems: filteredLogs.length,
+  });
   const paginatedLogs = filteredLogs.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
 
   // Get unique action types for filter
@@ -714,58 +720,15 @@ export default function AdminAuditLog() {
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6 pt-4 border-t">
-              <p className="text-sm text-muted-foreground tabular-nums">
-                Page {currentPage} of {totalPages}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum: number;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        className="w-8 h-8 p-0"
-                        onClick={() => setCurrentPage(pageNum)}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
-          )}
+          <PaginationFooter
+            page={currentPage}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalItems={filteredLogs.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="entry"
+          />
         </CardContent>
       </Card>
     </div>
