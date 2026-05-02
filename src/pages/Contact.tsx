@@ -21,6 +21,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { PageFAQ } from "@/components/seo/PageFAQ";
+import { contactFaqs } from "@/data/pageFaqs";
 
 const contactMethods = [
   {
