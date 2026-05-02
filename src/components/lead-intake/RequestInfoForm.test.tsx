@@ -89,15 +89,21 @@ function clearContactStepFields() {
   const emailInput = screen.getByPlaceholderText(/you@example\.com/i) as HTMLInputElement;
   const telInput = document.querySelector('input[type="tel"]') as HTMLInputElement | null;
 
+  // React tracks the previous value on the input node; to trigger a real
+  // controlled-component change we must use the prototype's native setter so
+  // React's synthetic event sees the empty value and updates state.
+  const setNativeValue = (el: HTMLInputElement, value: string) => {
+    const proto = Object.getPrototypeOf(el);
+    const setter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
+    setter ? setter.call(el, value) : (el.value = value);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+
   act(() => {
-    firstNameInput.value = "";
-    lastNameInput.value = "";
-    emailInput.value = "";
-    if (telInput) telInput.value = "";
-    firstNameInput.dispatchEvent(new Event("input", { bubbles: true }));
-    lastNameInput.dispatchEvent(new Event("input", { bubbles: true }));
-    emailInput.dispatchEvent(new Event("input", { bubbles: true }));
-    if (telInput) telInput.dispatchEvent(new Event("input", { bubbles: true }));
+    setNativeValue(firstNameInput, "");
+    setNativeValue(lastNameInput, "");
+    setNativeValue(emailInput, "");
+    if (telInput) setNativeValue(telInput, "");
   });
 }
 
