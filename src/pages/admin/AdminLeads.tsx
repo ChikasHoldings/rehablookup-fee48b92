@@ -163,7 +163,7 @@ export default function AdminLeads() {
   const { page: currentPage, pageSize, totalPages, setPage: setCurrentPage, setPageSize } = usePagination({
     tableId: "admin-leads",
     defaultPageSize: 25,
-    totalItems: 0, // set below via prop in footer
+    totalItems: totalCount ?? 0,
   });
 
   const clearAllFilters = () => {
