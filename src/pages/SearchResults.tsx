@@ -795,32 +795,39 @@ const SearchResults = () => {
         </div>
       </FilterSection>
 
-      {/* Insurance */}
+      {/* Insurance — single-select dropdown */}
       <FilterSection id="insurance" icon={<Shield className="h-3.5 w-3.5" />} label="Insurance" count={selectedInsuranceTypes.length}>
-        <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
-          {insuranceFilters.map((filter) => {
-            const active = selectedInsuranceTypes.includes(filter.value);
-            return (
-              <button
-                key={filter.value}
-                onClick={() => toggleFilter("insuranceTypes", filter.value, selectedInsuranceTypes)}
-                className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
-                  active
-                    ? "bg-primary/10 text-primary font-medium border border-primary/20"
-                    : "text-foreground hover:bg-secondary/60 border border-transparent"
-                }`}
-              >
-                {filter.logo ? (
-                  <img src={filter.logo} alt={`${filter.label} logo`} className="h-4 w-5 object-contain shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                ) : (
-                  <CreditCard className="h-4 w-4 shrink-0 text-muted-foreground" />
-                )}
-                <span className="flex-1 text-left truncate">{filter.label}</span>
-                {active && <X className="h-3.5 w-3.5 shrink-0" />}
-              </button>
-            );
-          })}
-        </div>
+        <Select
+          value={selectedInsuranceTypes[0] ?? "any"}
+          onValueChange={(v) => setSingleFilter("insuranceTypes", v)}
+        >
+          <SelectTrigger className="w-full h-9 text-sm border-border bg-card">
+            <SelectValue placeholder="Any insurance" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border shadow-lg max-h-72">
+            <SelectItem value="any" className="text-sm cursor-pointer">
+              Any insurance
+            </SelectItem>
+            {insuranceFilters.map((filter) => (
+              <SelectItem key={filter.value} value={filter.value} className="text-sm cursor-pointer">
+                <span className="flex items-center gap-2">
+                  {filter.logo ? (
+                    <img
+                      src={filter.logo}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-3.5 w-4 object-contain shrink-0"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : (
+                    <CreditCard className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  )}
+                  <span className="truncate">{filter.label}</span>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </FilterSection>
 
       {/* Amenities */}
