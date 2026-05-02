@@ -4,6 +4,8 @@ Living document. Update after each cutover or rehearsal.
 
 **Goal**: move `rehablookup.com` DNS from Lovable hosting (`185.158.133.1`) to Vercel with **zero SEO regression**. Site already has 4,641 pre-rendered HTML files, 63 server-side 301s mirrored in `vercel.json`, and parity validators in CI.
 
+> **Important**: running `scripts/monitor-cutover.mjs` against the **current Lovable origin** is expected to flag `/blog`, `/centers`, `/privacy` (200 instead of 301) and `www` (302 instead of 301). Lovable hosting can't issue server-side 301s for these — that's _the reason_ we're cutting over. Post-cutover, Vercel will return real 301s and these checks will pass. Treat the monitor as authoritative only **after** DNS flips.
+
 ---
 
 ## 0. One-time prep (already done as of cutover commit)
