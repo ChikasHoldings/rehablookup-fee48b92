@@ -875,7 +875,14 @@ Deno.serve(async (req) => {
         from: "RehabLookup <no-reply@rehablookup.com>",
         to: [data.email],
         subject: `Your inquiry to ${facility.name} has been received`,
-        html: getSeekerConfirmationEmail(data.name, facility.name),
+        html: getSeekerConfirmationEmail(data.name, facility.name, {
+          urgency: data.urgency,
+          levelOfCare: data.levelOfCare,
+          insuranceType: data.insuranceType,
+          preferredContact: data.preferredContact,
+          message: data.message,
+          submittedAt: now,
+        }),
       }, {
         emailType: "seeker_inquiry_confirmation",
         idempotencyKey: `seeker-confirm-${lead.id}`,
