@@ -32,6 +32,8 @@ import { cn } from "@/lib/utils";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { exportLeadsToCSV } from "@/lib/csvExport";
 import { InquiryDetailModal } from "@/components/admin/inquiries/InquiryDetailModal";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 export type Lead = {
   id: string;
@@ -84,7 +86,7 @@ const DATE_PRESETS = [
   { label: "Custom", value: "custom", getRange: () => ({ from: undefined, to: undefined }) },
 ];
 
-const ITEMS_PER_PAGE = 25;
+
 
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
@@ -149,7 +151,6 @@ export default function AdminLeads() {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
