@@ -13,8 +13,7 @@ import {
 
 /**
  * Treatment options — values mirror the `treatmentTypes` URL-param values
- * already consumed by the SearchResults filter pipeline (see
- * `treatmentTypeFilters` in SearchResults.tsx). Keep in sync.
+ * already consumed by the SearchResults filter pipeline. Keep in sync.
  */
 const TREATMENT_OPTIONS = [
   { value: "detox", label: "Detox" },
@@ -24,11 +23,6 @@ const TREATMENT_OPTIONS = [
   { value: "holistic", label: "Holistic" },
 ] as const;
 
-/**
- * Insurance options — values mirror the `insuranceTypes` URL-param values
- * already consumed by the SearchResults filter pipeline (see
- * `insuranceFilters` in SearchResults.tsx). Keep in sync.
- */
 const INSURANCE_OPTIONS = [
   { value: "aetna", label: "Aetna" },
   { value: "bcbs", label: "Blue Cross Blue Shield" },
@@ -42,10 +36,6 @@ const INSURANCE_OPTIONS = [
   { value: "tricare", label: "TRICARE" },
 ] as const;
 
-/**
- * Distance options — values mirror the `distance` URL-param values used by
- * the sidebar `distanceFilters` in SearchResults.tsx. Keep in sync.
- */
 const DISTANCE_OPTIONS = [
   { value: "10", label: "Within 10 miles" },
   { value: "25", label: "Within 25 miles" },
@@ -58,15 +48,14 @@ const ANY_VALUE = "__any__";
 /**
  * Inline search form for the /search-results page.
  *
- * - Location field accepts ZIP, "City, State", state name/abbrev, or city
- *   (parsed downstream by `parseLocationInput`).
- * - Treatment dropdown is single-select and writes a single value to the
- *   `treatmentTypes` param (the param itself is comma-separated and the
- *   sidebar still supports multi-select).
- * - Insurance dropdown is optional and writes to the `insuranceTypes` param
- *   the same way.
- * - Submitting writes to URL search params; the SearchResults page reacts
- *   automatically. Resets pagination to page 1.
+ * Visual structure (desktop):
+ *   ┌──────────────────────────────────┬─ refinements ─┬───────┐
+ *   │  📍 Location (prominent)         │ Dist · Tx · Ins│ 🔍 Search │
+ *   └──────────────────────────────────┴────────────────┴───────┘
+ *
+ * Location is the hero input; refinement selects are grouped together inside
+ * a subtle bordered cluster so users perceive them as "filters" distinct from
+ * the primary "where" question. Search button is visually anchored on the right.
  */
 export function SearchResultsForm() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -82,7 +71,6 @@ export function SearchResultsForm() {
   });
   const [distance, setDistance] = useState<string>(searchParams.get("distance") ?? "");
 
-  // Keep the form in sync if URL params change elsewhere (e.g. sidebar pills).
   useEffect(() => {
     setLocation(searchParams.get("location") ?? "");
     const t = (searchParams.get("treatmentTypes") ?? "").split(",").filter(Boolean)[0] ?? "";
@@ -103,25 +91,15 @@ export function SearchResultsForm() {
       next.delete("location");
     }
 
-    if (treatment) {
-      next.set("treatmentTypes", treatment);
-    } else {
-      next.delete("treatmentTypes");
-    }
+    if (treatment) next.set("treatmentTypes", treatment);
+    else next.delete("treatmentTypes");
 
-    if (insurance) {
-      next.set("insuranceTypes", insurance);
-    } else {
-      next.delete("insuranceTypes");
-    }
+    if (insurance) next.set("insuranceTypes", insurance);
+    else next.delete("insuranceTypes");
 
-    if (distance) {
-      next.set("distance", distance);
-    } else {
-      next.delete("distance");
-    }
+    if (distance) next.set("distance", distance);
+    else next.delete("distance");
 
-    // Reset pagination on a fresh search.
     next.delete("page");
     setSearchParams(next);
   };
@@ -131,114 +109,128 @@ export function SearchResultsForm() {
       onSubmit={handleSubmit}
       role="search"
       aria-label="Search rehab centers"
-      className="grid grid-cols-1 gap-2 sm:grid-cols-[repeat(14,minmax(0,1fr))]"
+      className="w-full"
     >
-      {/* Location */}
-      <div className="relative sm:col-span-4">
-        <MapPin
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden="true"
-        />
-        <Input
-          type="text"
-          inputMode="search"
-          autoComplete="postal-code"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="ZIP, city, or state"
-          aria-label="Location: ZIP code, city, or state"
-          className="h-10 pl-9 text-sm"
-        />
-      </div>
-
-      {/* Distance */}
-      <div className="sm:col-span-3">
-        <Select
-          value={distance || ANY_VALUE}
-          onValueChange={(v) => setDistance(v === ANY_VALUE ? "" : v)}
-        >
-          <SelectTrigger
-            className="h-10 text-sm"
-            aria-label="Distance from location"
+      {/* Unified pill container — visually anchors the whole search */}
+      <div className="flex flex-col lg:flex-row lg:items-stretch gap-2 lg:gap-0 lg:rounded-full lg:border lg:border-border lg:bg-card lg:shadow-sm lg:p-1.5 lg:focus-within:ring-2 lg:focus-within:ring-primary/20 lg:focus-within:border-primary/40 transition-all">
+        {/* PRIMARY: Location — prominent on desktop */}
+        <div className="relative flex-1 lg:min-w-0">
+          <label
+            htmlFor="search-location"
+            className="hidden lg:flex items-center gap-1.5 absolute left-5 top-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70 pointer-events-none"
           >
-            <span className="flex items-center gap-2 truncate">
-              <Navigation className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              <SelectValue placeholder="Any distance" />
-            </span>
-          </SelectTrigger>
-          <SelectContent className="bg-card">
-            <SelectItem value={ANY_VALUE}>Any distance</SelectItem>
-            {DISTANCE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+            <MapPin className="h-3 w-3" aria-hidden="true" />
+            Location
+          </label>
+          <MapPin
+            className="lg:hidden pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            id="search-location"
+            type="text"
+            inputMode="search"
+            autoComplete="postal-code"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Enter ZIP, city, or state"
+            aria-label="Location: ZIP code, city, or state"
+            className="h-11 pl-9 text-sm lg:h-12 lg:pl-5 lg:pr-4 lg:pt-5 lg:pb-1 lg:text-base lg:font-medium lg:border-0 lg:bg-transparent lg:shadow-none lg:rounded-full lg:focus-visible:ring-0 lg:placeholder:text-muted-foreground/60"
+          />
+        </div>
 
-      {/* Treatment type */}
-      <div className="sm:col-span-3">
-        <Select
-          value={treatment || ANY_VALUE}
-          onValueChange={(v) => setTreatment(v === ANY_VALUE ? "" : v)}
+        {/* Vertical divider on desktop */}
+        <div className="hidden lg:flex items-center px-1">
+          <div className="h-7 w-px bg-border" aria-hidden="true" />
+        </div>
+
+        {/* GROUPED REFINEMENTS: distance · treatment · insurance */}
+        <div
+          role="group"
+          aria-label="Refine results"
+          className="grid grid-cols-3 gap-2 lg:flex lg:items-center lg:gap-1 lg:flex-[1.6]"
         >
-          <SelectTrigger
-            className="h-10 text-sm"
-            aria-label="Treatment type"
+          <Select
+            value={distance || ANY_VALUE}
+            onValueChange={(v) => setDistance(v === ANY_VALUE ? "" : v)}
           >
-            <span className="flex items-center gap-2 truncate">
-              <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              <SelectValue placeholder="Treatment type" />
-            </span>
-          </SelectTrigger>
-          <SelectContent className="bg-card">
-            <SelectItem value={ANY_VALUE}>Any treatment</SelectItem>
-            {TREATMENT_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+            <SelectTrigger
+              className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
+              aria-label="Distance from location"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <Navigation className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+                <SelectValue placeholder="Distance" />
+              </span>
+            </SelectTrigger>
+            <SelectContent className="bg-card">
+              <SelectItem value={ANY_VALUE}>Any distance</SelectItem>
+              {DISTANCE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-      {/* Insurance (optional) */}
-      <div className="sm:col-span-3">
-        <Select
-          value={insurance || ANY_VALUE}
-          onValueChange={(v) => setInsurance(v === ANY_VALUE ? "" : v)}
-        >
-          <SelectTrigger
-            className="h-10 text-sm"
-            aria-label="Insurance (optional)"
+          <Select
+            value={treatment || ANY_VALUE}
+            onValueChange={(v) => setTreatment(v === ANY_VALUE ? "" : v)}
           >
-            <span className="flex items-center gap-2 truncate">
-              <Shield className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              <SelectValue placeholder="Insurance (optional)" />
-            </span>
-          </SelectTrigger>
-          <SelectContent className="bg-card">
-            <SelectItem value={ANY_VALUE}>Any insurance</SelectItem>
-            {INSURANCE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+            <SelectTrigger
+              className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
+              aria-label="Treatment type"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+                <SelectValue placeholder="Treatment" />
+              </span>
+            </SelectTrigger>
+            <SelectContent className="bg-card">
+              <SelectItem value={ANY_VALUE}>Any treatment</SelectItem>
+              {TREATMENT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-      {/* Submit */}
-      <div className="sm:col-span-1">
-        <Button
-          type="submit"
-          className="h-10 w-full gap-2"
-          aria-label="Search rehab centers"
-        >
-          <Search className="h-4 w-4" aria-hidden="true" />
-          <span className="sm:hidden">Search</span>
-        </Button>
+          <Select
+            value={insurance || ANY_VALUE}
+            onValueChange={(v) => setInsurance(v === ANY_VALUE ? "" : v)}
+          >
+            <SelectTrigger
+              className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
+              aria-label="Insurance (optional)"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <Shield className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+                <SelectValue placeholder="Insurance" />
+              </span>
+            </SelectTrigger>
+            <SelectContent className="bg-card">
+              <SelectItem value={ANY_VALUE}>Any insurance</SelectItem>
+              {INSURANCE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* SEARCH — anchored CTA */}
+        <div className="lg:pl-1.5 lg:flex lg:items-center">
+          <Button
+            type="submit"
+            className="h-11 w-full lg:h-10 lg:w-auto lg:px-5 lg:rounded-full gap-2 font-semibold shadow-sm"
+            aria-label="Search rehab centers"
+          >
+            <Search className="h-4 w-4" aria-hidden="true" />
+            <span className="lg:inline">Search</span>
+          </Button>
+        </div>
       </div>
     </form>
   );
