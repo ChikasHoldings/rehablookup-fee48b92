@@ -211,6 +211,21 @@ export default function ProviderPlacementNetworkPage() {
     enabled: !!selectedFacility?.id,
   });
 
+  // Pagination — placements (admissions) and invoices
+  const placementsPagination = usePagination({
+    tableId: "provider-placement-admissions",
+    defaultPageSize: 25,
+    totalItems: placements?.length ?? 0,
+  });
+  const visiblePlacements = placementsPagination.paginate(placements ?? []);
+
+  const invoicesPagination = usePagination({
+    tableId: "provider-placement-invoices",
+    defaultPageSize: 25,
+    totalItems: invoices?.length ?? 0,
+  });
+  const visibleInvoices = invoicesPagination.paginate(invoices ?? []);
+
   // ── Error handling ──
   useEffect(() => {
     if (introductionsError) {
