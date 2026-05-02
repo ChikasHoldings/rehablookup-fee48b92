@@ -238,6 +238,60 @@ async function main() {
         return;
       }
 
+      // Follow a single same-host 301/308 to its canonical target — these are
+      // intentional legacy-slug redirects (configured in vercel.json) and the
+      // canonical destination is what should serve real content. Off-host or
+      // chained redirects remain failures.
+      if ([301, 308].includes(result.status) && result.location) {
+        let target;
+        try {
+          target = new URL(result.location, url);
+        } catch {
+          failures.push({ route, kind: "status", msg: `bad redirect target ${result.location}` });
+          return;
+        }
+        const sameHost = target.origin === new URL(url).origin;
+        if (!sameHost) {
+          failures.push({
+            route,
+            kind: "status",
+            msg: `expected 200, got ${result.status} → off-host ${target.toString()}`,
+          });
+          return;
+        }
+        try {
+          result = await fetchHtml(target.toString());
+        } catch (err) {
+          failures.push({ route, kind: "fetch", msg: `after 301: ${String(err?.message || err)}` });
+          return;
+        }
+        if (result.status !== 200) {
+          failures.push({
+            route,
+            kind: "status",
+            msg: `301 chain: ${target.pathname} returned ${result.status}`,
+          });
+          return;
+        }
+        // Canonical of the served (destination) HTML must point to the
+        // destination — never back to the legacy slug. Title compare is
+        // skipped here because the local prerendered file for the legacy
+        // slug is not what's served (and shouldn't be).
+        const liveCanonical = normalizeCanonical(pickCanonical(result.body));
+        const expectedRedirCanonical = normalizeCanonical(`https://rehablookup.com${target.pathname}`);
+        if (liveCanonical && expectedRedirCanonical && liveCanonical !== expectedRedirCanonical) {
+          failures.push({
+            route,
+            kind: "canonical",
+            msg: `301 → ${target.pathname} but canonical is ${liveCanonical}`,
+          });
+          return;
+        }
+        ok++;
+        if (VERBOSE) console.log(`  ✓ ${route} → ${target.pathname} (301)`);
+        return;
+      }
+
       if (result.status !== 200) {
         failures.push({
           route,
