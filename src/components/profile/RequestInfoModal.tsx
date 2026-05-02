@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LeadIntakeForm } from "@/components/lead-intake";
+import { ResendConfirmationButton } from "@/components/lead-intake/ResendConfirmationButton";
 
 interface NearbyFacility {
   id: string;
