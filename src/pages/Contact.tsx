@@ -474,6 +474,13 @@ const Contact = () => {
         </div>
       </section>
 
+      <PageFAQ
+        faqs={contactFaqs}
+        title="Contact & Support FAQs"
+        description="Quick answers about reaching RehabLookup, response times, and how to get treatment help."
+        className="border-t border-border bg-muted/30"
+      />
+
     </Layout>
   );
 };
