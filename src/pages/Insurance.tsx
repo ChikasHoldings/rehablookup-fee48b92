@@ -35,6 +35,14 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { useMemo } from "react";
+import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { treatmentCenters } from "@/data/treatmentCenters";
+import {
+  INSURER_MATCH_CONFIGS,
+  facilityMatchesInsurer,
+  getInsurerMatch,
+} from "@/lib/insurerMatchKeywords";
 
 interface InsuranceProvider {
   name: string;
@@ -43,6 +51,8 @@ interface InsuranceProvider {
   coverageNotes: string;
   type: "private" | "government";
   detailsUrl?: string;
+  /** Slug matching INSURER_MATCH_CONFIGS — enables live facility counts. */
+  slug?: string;
 }
 
 const majorInsurers: InsuranceProvider[] = [
