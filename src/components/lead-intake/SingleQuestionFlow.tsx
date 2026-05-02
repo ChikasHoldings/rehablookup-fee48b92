@@ -557,10 +557,17 @@ export function SingleQuestionFlow({
                     updateFormData({ firstName: e.target.value });
                     setErrors(prev => ({ ...prev, firstName: "" }));
                   }}
+                  onBlur={(e) => {
+                    const msg = validateNameField(e.target.value, "First name");
+                    if (msg) setErrors(prev => ({ ...prev, firstName: msg }));
+                  }}
                   className={cn("h-11 sm:h-12 text-sm sm:text-base rounded-lg", errors.firstName && "border-destructive")}
                   autoComplete="given-name"
+                  aria-invalid={!!errors.firstName}
+                  aria-describedby={errors.firstName ? "firstName-error" : undefined}
+                  maxLength={60}
                 />
-                {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
+                {errors.firstName && <p id="firstName-error" className="text-xs text-destructive">{errors.firstName}</p>}
               </div>
               <div className="space-y-1.5 sm:space-y-2">
                 <Label className="text-xs sm:text-sm font-medium">Last Name *</Label>
@@ -571,10 +578,17 @@ export function SingleQuestionFlow({
                     updateFormData({ lastName: e.target.value });
                     setErrors(prev => ({ ...prev, lastName: "" }));
                   }}
+                  onBlur={(e) => {
+                    const msg = validateNameField(e.target.value, "Last name");
+                    if (msg) setErrors(prev => ({ ...prev, lastName: msg }));
+                  }}
                   className={cn("h-11 sm:h-12 text-sm sm:text-base rounded-lg", errors.lastName && "border-destructive")}
                   autoComplete="family-name"
+                  aria-invalid={!!errors.lastName}
+                  aria-describedby={errors.lastName ? "lastName-error" : undefined}
+                  maxLength={60}
                 />
-                {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
+                {errors.lastName && <p id="lastName-error" className="text-xs text-destructive">{errors.lastName}</p>}
               </div>
             </div>
             
@@ -586,9 +600,15 @@ export function SingleQuestionFlow({
                   updateFormData({ phone: value });
                   setErrors(prev => ({ ...prev, phone: "" }));
                 }}
+                onBlur={() => {
+                  const msg = validatePhoneNumber(formData.phone, true);
+                  if (msg) setErrors(prev => ({ ...prev, phone: msg }));
+                }}
                 className={cn("h-11 sm:h-12", errors.phone && "border-destructive")}
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? "phone-error" : undefined}
               />
-              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+              {errors.phone && <p id="phone-error" className="text-xs text-destructive">{errors.phone}</p>}
             </div>
             
             <div className="space-y-1.5 sm:space-y-2">
@@ -603,9 +623,15 @@ export function SingleQuestionFlow({
                     resetEmailVerification();
                   }
                 }}
+                onBlur={() => {
+                  const msg = getEmailValidationError(formData.email);
+                  if (msg) setErrors(prev => ({ ...prev, email: msg }));
+                }}
                 className={cn("h-11 sm:h-12", errors.email && "border-destructive")}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "email-error" : undefined}
               />
-              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+              {errors.email && <p id="email-error" className="text-xs text-destructive">{errors.email}</p>}
             </div>
             
             {/* Explicit consent — required before submit */}
