@@ -171,15 +171,48 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "Processing", { inquiryId, trigger });
 
-    // Fetch current status
+    // Fetch current status + advisor assignment
     const { data: inquiry, error: inquiryError } = await supabase
       .from("concierge_inquiries")
-      .select("id, status")
+      .select("id, status, assigned_advisor_id")
       .eq("id", inquiryId)
       .single();
 
     if (inquiryError || !inquiry) {
       throw new Error("Inquiry not found: " + inquiryError?.message);
+    }
+
+    // Safety net: ensure an advisor is assigned before walking past `advisor_assigned`.
+    // The DB trigger handles this on insert, but legacy/imported rows may slip through.
+    if (!inquiry.assigned_advisor_id) {
+      const { data: advisors } = await supabase
+        .from("admin_user_profiles")
+        .select("user_id")
+        .eq("admin_role", "advisor")
+        .eq("status", "active");
+
+      if (advisors && advisors.length > 0) {
+        const picked = advisors[Math.floor(Math.random() * advisors.length)].user_id;
+        const { error: assignErr } = await supabase
+          .from("concierge_inquiries")
+          .update({ assigned_advisor_id: picked })
+          .eq("id", inquiryId)
+          .is("assigned_advisor_id", null);
+        if (assignErr) {
+          logStep(requestId, "Advisor auto-assign failed", { error: assignErr.message });
+        } else {
+          logStep(requestId, "Advisor auto-assigned", { advisorId: picked });
+          await supabase.from("concierge_case_events").insert({
+            inquiry_id: inquiryId,
+            event_type: "advisor_assigned",
+            event_data: { advisor_id: picked, auto: true, source: "auto-status-transition" },
+            actor_id: actorId || null,
+            actor_type: actorType,
+          });
+        }
+      } else {
+        logStep(requestId, "No active advisors available for auto-assign");
+      }
     }
 
     const validFrom = TRIGGER_VALID_FROM[trigger];
