@@ -935,9 +935,9 @@ const SearchResults = () => {
   return (
     <Layout>
       <SEO
-        title={searchDisplayTitle}
-        description={`Browse ${filteredCenters.length} verified addiction treatment centers${location ? ` near ${location}` : queryParam ? ` matching "${queryParam}"` : ""}. Compare rehab programs, check insurance, and start recovery.`}
-        canonical="/search-results"
+        title={seoTitle}
+        description={seoDescription}
+        canonical={seoCanonical}
         noindex={shouldNoindex}
         structuredData={!shouldNoindex ? generateSearchResultsSchema({
           location: location || undefined,
