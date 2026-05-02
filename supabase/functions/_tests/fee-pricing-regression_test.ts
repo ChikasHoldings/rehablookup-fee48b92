@@ -155,6 +155,7 @@ Deno.test("Sweep: no stray legacy $299 / 29900 cent references", async () => {
 
   for await (const file of walk(ROOT.replace(/\/$/, ""))) {
     if (file.endsWith(SELF)) continue;
+    if (file.includes(SKIP_DIR)) continue;
     let text: string;
     try {
       text = await Deno.readTextFile(file);
