@@ -224,46 +224,20 @@ export function SearchForm({
               )}
             </div>
             
-            {/* Autocomplete Suggestions */}
-            {showSuggestions && suggestions.length > 0 && (
-              <div
-                ref={suggestionsRef}
-                className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border/60 bg-card shadow-2xl animate-in fade-in-0 slide-in-from-top-1 duration-150"
-              >
-                <div className="py-1 px-1">
-                  {suggestions.map((suggestion, index) => (
-                    <button
-                      key={suggestion.type === "state" ? suggestion.abbr : `${suggestion.name}-${suggestion.state}`}
-                      type="button"
-                      onClick={() => handleSelectSuggestion(suggestion)}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px] transition-all duration-100",
-                        index === highlightedIndex
-                          ? "bg-primary/10 text-foreground"
-                          : "text-foreground/80 hover:bg-muted/50"
-                      )}
-                    >
-                      <div className={cn(
-                        "h-7 w-7 rounded-md flex items-center justify-center shrink-0",
-                        suggestion.type === "state" ? "bg-primary/10" : "bg-muted"
-                      )}>
-                        {suggestion.type === "state" ? (
-                          <Navigation className="h-3.5 w-3.5 text-primary" />
-                        ) : (
-                          <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        )}
-                      </div>
-                      <span className="flex-1 truncate font-medium">
-                        {formatLocationSuggestion(suggestion)}
-                      </span>
-                      <span className="text-xs text-muted-foreground/60 font-semibold uppercase tracking-wider bg-muted/50 px-1.5 py-0.5 rounded">
-                        {suggestion.type === "state" ? "State" : "City"}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Autocomplete (city/state + ZIP suggestions) */}
+            <LocationSuggestionsDropdown
+              query={location}
+              open={showSuggestions}
+              suggestions={suggestions}
+              highlightedIndex={highlightedIndex}
+              zipLoading={isZipLookupLoading}
+              resolvedZip={resolvedZip}
+              zipError={zipError}
+              anchorRef={inputRef}
+              onSelectSuggestion={handleSelectSuggestion}
+              onSelectZip={handleSelectZip}
+              onDismiss={() => setShowSuggestions(false)}
+            />
           </div>
           
           {/* Type of Care - Multi-select */}
