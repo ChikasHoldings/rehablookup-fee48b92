@@ -948,6 +948,8 @@ const SearchResults = () => {
         title={seoTitle}
         description={seoDescription}
         canonical={seoCanonical}
+        prevUrl={seoPrevUrl}
+        nextUrl={seoNextUrl}
         noindex={shouldNoindex}
         structuredData={!shouldNoindex ? generateSearchResultsSchema({
           location: location || undefined,
