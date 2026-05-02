@@ -554,7 +554,7 @@ export default function ProviderPlacementNetworkPage() {
 
                 {placements && placements.length > 0 ? (
                   <div className="space-y-2">
-                    {placements.map((p) => (
+                    {visiblePlacements.map((p) => (
                       <Card key={p.id} className="hover:shadow-sm transition-shadow">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between gap-4">
@@ -589,6 +589,17 @@ export default function ProviderPlacementNetworkPage() {
                         </CardContent>
                       </Card>
                     ))}
+                    {(placements?.length ?? 0) > placementsPagination.pageSize && (
+                      <PaginationFooter
+                        page={placementsPagination.page}
+                        pageSize={placementsPagination.pageSize}
+                        totalPages={placementsPagination.totalPages}
+                        totalItems={placements?.length ?? 0}
+                        onPageChange={placementsPagination.setPage}
+                        onPageSizeChange={placementsPagination.setPageSize}
+                        itemLabel="admission"
+                      />
+                    )}
                   </div>
                 ) : (
                   <Card className="border-dashed">
