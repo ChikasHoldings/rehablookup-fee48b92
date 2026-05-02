@@ -94,8 +94,10 @@ for (const [p, st, mc] of ALWAYS) await check(p, st, mc);
 console.log(`\n  Redirects (phase=${PHASE})`);
 for (const [p, postStatus] of REDIRECTS) {
   // pre-phase: Lovable serves SPA fallback (200) — redirect not yet live.
-  // post-phase: Vercel must serve a server-side 301.
-  const expected = PHASE === "pre" ? 200 : postStatus;
+  // post-phase: Vercel serves a permanent server redirect. Accept either
+  // 301 (statusCode: 301) or 308 (permanent: true) — both are permanent,
+  // both pass equity, and Google treats them equivalently.
+  const expected = PHASE === "pre" ? [200] : [301, 308];
   await check(p, expected, []);
 }
 
