@@ -421,11 +421,19 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
 
 
           {/* Actions Footer */}
-          <div className="flex items-center gap-2 mt-auto">
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 mt-auto">
             <Link 
               to={`${detailsUrl}?inquiry=info`}
               state={{ fromSearch: true, inquiryType: 'request_info' }}
-              onClick={handleFeaturedClick}
+              onClick={() => {
+                handleFeaturedClick();
+                trackEvent("card_request_info_click", {
+                  event_category: "Conversion",
+                  event_label: center.id ?? center.name,
+                  surface: "search_card",
+                  is_featured: !!showFeaturedBadge,
+                });
+              }}
               className="flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
               aria-label={`Request information from ${center.name}`}
             >
@@ -445,22 +453,50 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
               </Button>
             </Link>
             <Link 
-              to={detailsUrl}
-              onClick={handleFeaturedClick}
-              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
-              aria-label={`View details for ${center.name}`}
+              to={buildConciergeHref({
+                location: `${center.city}, ${center.state}`,
+                source: "search_card_concierge_fallback",
+              })}
+              onClick={() =>
+                trackEvent("card_concierge_fallback_click", {
+                  event_category: "Conversion",
+                  event_label: center.id ?? center.name,
+                  surface: "search_card",
+                })
+              }
+              className="sm:w-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
+              aria-label={`Let our team match you with a center in ${center.city}`}
             >
               <Button 
                 size="default"
                 variant="outline"
                 tabIndex={-1}
-                className="h-10 text-sm font-semibold gap-2 rounded-lg group/btn"
+                className="w-full sm:w-auto h-10 text-sm font-semibold gap-2 rounded-lg group/btn"
               >
-                View Details
-                <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" aria-hidden="true" />
+                <Heart className="h-4 w-4" aria-hidden="true" />
+                <span className="md:hidden">Get Matched</span>
+                <span className="hidden md:inline">Match Me Free</span>
               </Button>
             </Link>
           </div>
+
+          {/* Tertiary: View full profile (de-emphasized so primary CTA wins) */}
+          <Link
+            to={detailsUrl}
+            onClick={() => {
+              handleFeaturedClick();
+              trackEvent("card_view_details_click", {
+                event_category: "Engagement",
+                event_label: center.id ?? center.name,
+                surface: "search_card",
+              });
+            }}
+            className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary underline underline-offset-4 transition-colors w-fit"
+            aria-label={`View full profile for ${center.name}`}
+          >
+            View full profile
+            <ArrowRight className="h-3 w-3" aria-hidden="true" />
+          </Link>
         </div>
       </div>
     </article>
