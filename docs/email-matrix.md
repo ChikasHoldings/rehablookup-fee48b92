@@ -105,6 +105,6 @@ These functions are **marketing**, not transactional. They keep firing as-is, bu
 ## Known gaps / follow-ups
 
 1. **Inline-HTML cleanup** — ~30 functions still hand-roll `<table>` HTML instead of using the shared builders (`emailHeader`, `emailBodyStart`, etc). Mechanical refactor; deferred to a focused follow-up so this PR stays reviewable.
-2. **Resend webhook → suppressed_emails** — confirm `resend-webhook` writes to the new `suppressed_emails` table on `email.bounced` / `email.complained` events.
-3. **DLQ surfacing in admin digest** — wire the new `email_send_failures` table into `send-admin-daily-summary` so unresolved failures are visible to ops.
+2. ✅ **Resend webhook → suppressed_emails** — `resend-webhook` now upserts into `suppressed_emails` on `email.bounced`, `email.complained`, and `email.unsubscribed` events (source: `resend_webhook`).
+3. ✅ **DLQ surfacing in admin digest** — `send-admin-daily-summary` now reports unresolved `email_send_failures` to super_admin (with top-3 breakdown by email_type) and manager digests, linking to `/admin/email-logs`.
 4. **Phase 2 (marketing)** — set up `mail.rehablookup.com` subdomain on Customer.io for newsletters / drips / re-engagement.
