@@ -1,6 +1,7 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2026-05-02 — sitemap regenerated; 31113 URLs included (filtered from 31998). Prerender coverage: hybrid <path>.html + <path>/index.html.
 # Last updated: 2026-05-02 — sitemap regenerated; 31028 URLs included (filtered from 31998). Prerender coverage: hybrid <path>.html + <path>/index.html.
 # Last updated: 2026-05-01 — sitemap regenerated; 2055 URLs included (filtered from 31998). Prerender coverage: hybrid <path>.html + <path>/index.html.
 # Last updated: 2026-05-01 — v7.15.0 GSC "Blocked by robots.txt" remediation:
