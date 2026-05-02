@@ -468,7 +468,7 @@ ${faqHtml}
 // ---------------------------------------------------------------------------
 
 async function main() {
-  console.log("[facility-prerender] Fetching approved + verified facilities…");
+  console.log("[facility-prerender] Fetching approved facilities…");
   let facilities;
   try {
     facilities = await fetchFacilities();
