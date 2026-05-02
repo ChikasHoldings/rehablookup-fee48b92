@@ -264,6 +264,12 @@ function buildSuperAdminBody(data: Awaited<ReturnType<typeof fetchSuperAdminData
   if (data.pendingProviders > 0) actions.push(actionItem(`${data.pendingProviders} provider(s) awaiting approval`, `${DASHBOARD_URL}/admin/providers`));
   if (data.flaggedItems > 0) actions.push(actionItem(`${data.flaggedItems} flagged item(s) need review`, `${DASHBOARD_URL}/admin/moderation`));
   if (data.openEscalations > 0) actions.push(actionItem(`${data.openEscalations} open escalation(s)`, `${DASHBOARD_URL}/admin/escalations`));
+  if (data.emailFailures > 0) {
+    const breakdown = data.topEmailFailures.length
+      ? ` (top: ${data.topEmailFailures.map(([t, n]) => `${t}×${n}`).join(", ")})`
+      : "";
+    actions.push(actionItem(`${data.emailFailures} email send(s) failed all retries${breakdown}`, `${DASHBOARD_URL}/admin/email-logs`));
+  }
 
   return `
     <p style="font-size:13px;color:${BRAND.muted};margin:0 0 16px;">Full platform visibility for the ${periodLabel(period).toLowerCase()} period.</p>
