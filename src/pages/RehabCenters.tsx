@@ -694,8 +694,32 @@ const RehabCenters = () => {
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
                   This combination is rare in our verified directory. Try one of the
-                  options below — or let our placement team match you with vetted
-                  centers nationwide, free.
+                  options below — or talk to our placement team and we'll match you
+                  with vetted centers nationwide, free.
+                </p>
+
+                {/* Prominent contact CTA — surfaced inside the empty card so the
+                    fastest path forward (a phone call) is one tap away. */}
+                <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                  <a
+                    href="tel:1-800-662-4357"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors w-full sm:w-auto"
+                    aria-label="Call SAMHSA national helpline 1-800-662-4357 — free, confidential, 24/7"
+                  >
+                    <Phone className="h-4 w-4" aria-hidden="true" />
+                    Call 1-800-662-4357
+                  </a>
+                  <Link
+                    to="/concierge"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground hover:border-primary/30 hover:text-primary transition-colors w-full sm:w-auto"
+                  >
+                    <Heart className="h-4 w-4" aria-hidden="true" />
+                    Get matched, free
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Link>
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Free • Confidential • 24/7 helpline
                 </p>
 
                 {/* Quick filter-relaxation chips */}
