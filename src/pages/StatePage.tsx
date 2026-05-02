@@ -296,11 +296,14 @@ const StatePage = () => {
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-4 md:gap-6">
-              <div className="flex items-center gap-2 text-white text-sm md:text-base">
-                <Building2 className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
-                <span className="font-semibold">{stateCenters.length}</span>
-                <span className="text-white/80">Verified Facilities</span>
-              </div>
+              {/* Hide count chip while loading so prerendered HTML doesn't bake in "0" */}
+              {!isLoading && stateCenters.length > 0 && (
+                <div className="flex items-center gap-2 text-white text-sm md:text-base">
+                  <Building2 className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
+                  <span className="font-semibold">{stateCenters.length}</span>
+                  <span className="text-white/80">Verified {stateCenters.length === 1 ? "Facility" : "Facilities"}</span>
+                </div>
+              )}
               <div className="flex items-center gap-2 text-white text-sm md:text-base">
                 <MapPin className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
                 <span className="font-semibold">{stateData.cities.length}</span>
@@ -338,9 +341,13 @@ const StatePage = () => {
               <h2 className="text-2xl font-bold text-foreground">
                 Treatment Centers in {stateData.name}
               </h2>
-              <p className="mt-1 text-muted-foreground">
-                {stateCenters.length} verified facilities available
-              </p>
+              {!isLoading && (
+                <p className="mt-1 text-muted-foreground">
+                  {stateCenters.length > 0
+                    ? `${stateCenters.length} verified ${stateCenters.length === 1 ? "facility" : "facilities"} available`
+                    : `We're actively adding verified centers in ${stateData.name}`}
+                </p>
+              )}
             </div>
           </div>
 
