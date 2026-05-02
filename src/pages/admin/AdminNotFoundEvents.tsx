@@ -72,6 +72,8 @@ export default function AdminNotFoundEvents() {
   const [range, setRange] = useState<TimeRange>("30d");
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [search, setSearch] = useState("");
+  const [groupMode, setGroupMode] = useState<GroupMode>("pattern");
+  const [drillPattern, setDrillPattern] = useState<PatternSummary | null>(null);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["not-found-events", range],
