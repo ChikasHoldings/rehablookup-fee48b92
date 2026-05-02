@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProviderReviews, ProviderReview } from '@/hooks/useProviderReviews';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
