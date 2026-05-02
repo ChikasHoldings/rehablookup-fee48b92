@@ -81,10 +81,7 @@
     { "source": "/lp/social", "destination": "/", "statusCode": 301 }
   ],
   "rewrites": [
-    {
-      "source": "/((?!.*\\.[a-zA-Z0-9]+$|api/|assets/).*)",
-      "destination": "/"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
