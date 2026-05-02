@@ -74,10 +74,22 @@ interface RequestInfoModalProps {
   };
 }
 
-// Track capacity warning analytics (legacy - now silent)
+// Track capacity warning analytics → GA4 + Meta Pixel (no PII)
 async function trackCapacityEvent(eventType: string, facilityId: string, metadata?: Record<string, unknown>) {
-  // Analytics function removed - was using deleted track-request-help edge function
-  console.debug("Capacity event:", eventType, facilityId);
+  try {
+    trackEvent(eventType, {
+      event_category: "Capacity",
+      event_label: facilityId,
+      ...metadata,
+    });
+    (window as unknown as { fbq?: (...a: unknown[]) => void })?.fbq?.(
+      "trackCustom",
+      eventType,
+      { facility_id: facilityId },
+    );
+  } catch {
+    // best-effort
+  }
 }
 
 // Capacity Warning Component with analytics
