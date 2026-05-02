@@ -225,6 +225,7 @@ Deno.serve(async (req) => {
               .join("\n");
 
             try {
+              const _alertHourBucket = new Date().toISOString().slice(0, 13); // YYYY-MM-DDTHH
               await sendEmailWithRetry(supabase, resend, {
                 from: "RehabLookup Security <no-reply@rehablookup.com>",
                 to: adminEmails,
