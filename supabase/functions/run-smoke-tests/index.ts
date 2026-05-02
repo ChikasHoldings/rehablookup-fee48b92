@@ -697,6 +697,15 @@ async function finalize(
   const failed = results.length - passed;
   const totalMs = results.reduce((sum, r) => sum + r.durationMs, 0);
 
+  // Always log a one-line summary so log-based monitoring (e.g. nightly cron
+  // alerts) can grep for "[run-smoke-tests] FAIL" without parsing the JSON.
+  const logTag = failed === 0 ? "PASS" : "FAIL";
+  const failedNames = results.filter((r) => !r.ok).map((r) => r.name);
+  console.log(
+    `[run-smoke-tests] ${logTag} total=${results.length} passed=${passed} failed=${failed} ms=${totalMs}` +
+      (failedNames.length ? ` failedSteps=${JSON.stringify(failedNames)}` : ""),
+  );
+
   return new Response(
     JSON.stringify(
       {
