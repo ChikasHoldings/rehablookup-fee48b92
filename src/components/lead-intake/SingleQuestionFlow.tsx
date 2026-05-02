@@ -10,8 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { EmailInput } from "@/components/ui/email-input";
-import { isValidPhoneNumber } from "@/lib/phoneUtils";
-import { isValidEmail } from "@/lib/emailUtils";
+import { isValidPhoneNumber, validatePhoneNumber } from "@/lib/phoneUtils";
+import { isValidEmail, getEmailValidationError } from "@/lib/emailUtils";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { cn } from "@/lib/utils";
 import {
