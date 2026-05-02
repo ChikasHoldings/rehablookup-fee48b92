@@ -234,7 +234,13 @@ export default function AdminLeads() {
     },
   });
 
-  // Paginated leads
+  const { page: currentPage, pageSize, totalPages, setPage: setCurrentPage, setPageSize } = usePagination({
+    tableId: "admin-leads",
+    defaultPageSize: 25,
+    totalItems: totalCount ?? 0,
+  });
+
+
   const { data: leads, isLoading } = useQuery({
     queryKey: ["admin-leads", statusFilter, inquiryTypeFilter, redistributionFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
