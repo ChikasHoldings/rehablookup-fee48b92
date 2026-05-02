@@ -1,8 +1,10 @@
 /**
- * Extract every <Route path="..."> declared in src/App.tsx and split into:
+ * Extract every <Route path="..."> declared in src/App.tsx AND every prefix
+ * handled by SmartCatchAll (the wildcard "*" route handler), and split into:
  *   - staticRoutes: literal paths with no params (e.g. "/about", "/rehab-near-me")
  *   - dynamicPrefixes: parent prefixes that have parameterized children
- *     (e.g. "/rehab-near-me/" because there's "/rehab-near-me/:stateSlug")
+ *     (e.g. "/rehab-near-me/" because there's "/rehab-near-me/:stateSlug",
+ *      and "/best-rehab-centers-in-" because SmartCatchAll dispatches it)
  *
  * The sitemap generator uses both lists to keep SPA-only URLs in the sitemap
  * even when no pre-rendered HTML exists on disk — they still render valid
@@ -17,6 +19,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_TSX = path.resolve(__dirname, "../../src/App.tsx");
+const SMART_CATCHALL = path.resolve(__dirname, "../../src/components/SmartCatchAll.tsx");
 
 // Routes intentionally excluded from any public sitemap (auth/admin/internal).
 const EXCLUDE_PATTERNS = [
@@ -37,10 +40,40 @@ const EXCLUDE_PATTERNS = [
   /^\/center\//,        // handled by dedicated DYNAMIC_PREFIX_ALLOWLIST entry
   /^\/centers\//,       // duplicate of /center/
   /^\/facility\//,      // duplicate of /center/
+  /^\/get-more-/,       // provider-facing acquisition pages, not public SEO
 ];
 
 function isExcluded(p) {
   return EXCLUDE_PATTERNS.some((re) => re.test(p));
+}
+
+/**
+ * Pull every "/...-in-" / "/best-rehab-centers-in-" / etc. prefix string
+ * literal out of SmartCatchAll.tsx. We're matching string-literal prefixes
+ * declared in arrays and `pathname.startsWith("...")` calls — both forms
+ * appear in the file.
+ */
+async function extractCatchAllPrefixes() {
+  let src;
+  try {
+    src = await readFile(SMART_CATCHALL, "utf8");
+  } catch {
+    return [];
+  }
+
+  const prefixes = new Set();
+
+  // 1. Array-literal prefixes: lines like   "/alcohol-rehab-in-",
+  for (const m of src.matchAll(/["'`](\/[a-z0-9-]+-(?:in|patients-in)-)["'`]/g)) {
+    prefixes.add(m[1]);
+  }
+
+  // 2. pathname.startsWith("/best-rehab-centers-in-") and similar
+  for (const m of src.matchAll(/startsWith\(\s*["'`](\/[a-z0-9-]+-)["'`]\s*\)/g)) {
+    prefixes.add(m[1]);
+  }
+
+  return [...prefixes];
 }
 
 export async function extractSpaRoutes() {
@@ -56,14 +89,18 @@ export async function extractSpaRoutes() {
 
     if (raw.includes(":")) {
       // Parameterized route — record its parent prefix.
-      // "/rehab-near-me/:stateSlug"        → "/rehab-near-me/"
-      // "/insurance/:slug"                 → "/insurance/"
-      // "/30-day-rehab-programs/:s/:c"     → "/30-day-rehab-programs/"
       const parent = raw.slice(0, raw.indexOf("/:"));
       if (parent && parent.length > 1) dynamicPrefixes.add(parent + "/");
     } else {
       staticRoutes.add(raw.toLowerCase());
     }
+  }
+
+  // Merge SmartCatchAll prefixes — these handle URLs that don't appear as
+  // explicit <Route> entries but ARE valid SEO pages dispatched by the
+  // wildcard handler.
+  for (const pref of await extractCatchAllPrefixes()) {
+    if (!isExcluded(pref)) dynamicPrefixes.add(pref);
   }
 
   return {
