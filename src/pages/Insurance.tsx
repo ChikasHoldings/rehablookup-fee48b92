@@ -478,7 +478,14 @@ const faqs = [
   },
 ];
 
-const InsuranceCard = ({ provider }: { provider: InsuranceProvider }) => {
+const InsuranceCard = ({
+  provider,
+  count,
+}: {
+  provider: InsuranceProvider;
+  /** Live count of facilities accepting this insurer (undefined while loading). */
+  count?: number;
+}) => {
   const CardContent = (
     <div className={cn(
       "rounded-xl border border-border bg-card p-5 transition-all",
@@ -503,10 +510,15 @@ const InsuranceCard = ({ provider }: { provider: InsuranceProvider }) => {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-foreground">{provider.name}</h3>
+            {typeof count === "number" && count > 0 && (
+              <Badge variant="secondary" className="text-[10px] font-medium">
+                {count} {count === 1 ? "center" : "centers"}
+              </Badge>
+            )}
             {provider.detailsUrl && (
-              <ArrowRight className="h-4 w-4 text-primary" />
+              <ArrowRight className="h-4 w-4 text-primary ml-auto" />
             )}
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">{provider.description}</p>
@@ -531,6 +543,33 @@ const InsuranceCard = ({ provider }: { provider: InsuranceProvider }) => {
 };
 
 export default function Insurance() {
+  // Compute live facility counts per insurer (combines DB + static fallback,
+  // dedup by id, then matches via shared keyword config).
+  const { data: approvedFacilities = [] } = useStaticFacilities();
+  const insurerCounts = useMemo<Record<string, number>>(() => {
+    const seen = new Set<string>();
+    const pool: any[] = [];
+    for (const f of approvedFacilities as any[]) {
+      if (!seen.has(f.id)) {
+        seen.add(f.id);
+        pool.push(f);
+      }
+    }
+    for (const f of treatmentCenters) {
+      if (!seen.has(f.id)) {
+        seen.add(f.id);
+        pool.push(f);
+      }
+    }
+    const counts: Record<string, number> = {};
+    for (const cfg of INSURER_MATCH_CONFIGS) {
+      counts[cfg.slug] = pool.filter((f: any) =>
+        facilityMatchesInsurer(f.insuranceAccepted, cfg.keywords),
+      ).length;
+    }
+    return counts;
+  }, [approvedFacilities]);
+
   return (
     <Layout>
       <SEO
