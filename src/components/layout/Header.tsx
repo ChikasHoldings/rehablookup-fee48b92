@@ -402,7 +402,7 @@ export function Header({
               ) : (
                 <>
                   <PrefetchLink to="/provider-signup" className="hidden lg:block">
-                    <Button size="sm" variant="outline" className="h-8 text-sm">Get Listed</Button>
+                    <Button size="sm" variant="outline" className="h-8 text-sm">List Your Facility</Button>
                   </PrefetchLink>
                   <PrefetchLink to="/login">
                     <Button size="sm" className="h-8 text-sm gap-1.5">
