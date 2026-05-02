@@ -59,6 +59,8 @@ import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 import { RehabScorePanel } from "@/components/profile/RehabScorePanel";
+import { PageFAQ } from "@/components/seo/PageFAQ";
+import { buildProfileFAQs } from "@/lib/buildProfileFAQs";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
@@ -1220,6 +1222,34 @@ const CenterProfile = () => {
 
               {/* Our Team Section */}
               <FacilityStaffSection facilityId={facility.id} />
+
+              {/* SEO-friendly FAQ — data-driven, unique per profile.
+                  PageFAQ emits FAQPage JSON-LD when ≥3 Q&A pairs are
+                  present, satisfying the FAQ JSON-LD audit. */}
+              {(() => {
+                const faqs = buildProfileFAQs({
+                  name: facility.name,
+                  city: facility.city,
+                  state: facility.state,
+                  services,
+                  insurance: insuranceList,
+                  ageGroups,
+                  genderServed: facility.gender_served,
+                  facilityType: facility.facility_type,
+                  yearEstablished: facility.year_established,
+                  verified: facility.verified,
+                  accreditations: facility.facility_accreditations,
+                });
+                if (faqs.length < 3) return null;
+                return (
+                  <PageFAQ
+                    faqs={faqs}
+                    title="Frequently Asked Questions"
+                    description={`Common questions about ${facility.name}, treatment options, insurance, and what to expect.`}
+                    className="!py-0 !pt-2"
+                  />
+                );
+              })()}
 
               {/* Contextual internal links — strengthens crawl paths from
                   the profile to related treatment-type, city, state, and
