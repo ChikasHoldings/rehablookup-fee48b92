@@ -1167,6 +1167,29 @@ const CenterProfile = () => {
                 </ProfileSection>
               )}
 
+              {/* Rehab Score — public transparency summary, links to /rehab-score methodology */}
+              <ProfileSection
+                icon={Scale}
+                title="Rehab Score"
+                iconColor="bg-primary/10 text-primary"
+              >
+                <RehabScorePanel
+                  input={{
+                    verified: facility.verified,
+                    yearEstablished: facility.year_established,
+                    description: facility.description,
+                    galleryUrls: facility.gallery_urls,
+                    facilityServices: facility.facility_services,
+                    facilityInsurance: facility.facility_insurance,
+                    facilityAgeGroups: facility.facility_age_groups,
+                    facilityAccreditations: facility.facility_accreditations,
+                    facilityCredentials: facility.facility_credentials,
+                    googleRating: ratingData.averageRating,
+                    googleReviewCount: ratingData.reviewCount,
+                  }}
+                />
+              </ProfileSection>
+
               {/* Trust & Accreditations — inline, no card wrapper */}
               {(() => {
                 const verifiedAccreditations = (facility.facility_accreditations || []).filter(a => a.verified);
