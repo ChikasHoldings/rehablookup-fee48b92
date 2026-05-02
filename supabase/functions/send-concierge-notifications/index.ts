@@ -1430,6 +1430,7 @@ async function sendInvoicePaidEmail(
 // ============================================================================
 
 async function sendAdvisorClaimedNotification(
+  resend: Resend,
   inquiry: InquiryData,
   supabase: any,
   results: Array<{ recipient: string; emailId?: string; notificationId?: string }>,
@@ -1457,6 +1458,57 @@ async function sendAdvisorClaimedNotification(
       link: '/account/concierge',
       metadata: { inquiry_id: inquiry.id },
     });
+  }
+
+  // Seeker email — Phase 1 transactional email
+  // Brokerage-safe: never expose advisor PII (name, phone, email).
+  if (resend && inquiry.user_email) {
+    const firstName = inquiry.user_name.split(' ')[0] || 'there';
+
+    const seekerHtml = emailWrapper(`
+      ${emailHeader('A Placement Advisor Is on Your Case', `Case #${caseId}`, '🤝')}
+      <tr>
+        <td style="padding: 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <p style="margin: 0 0 20px 0; font-size: 16px; color: #1a1a1a;">
+            Hi ${firstName},
+          </p>
+          <p style="margin: 0 0 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+            Good news — a dedicated RehabLookup placement advisor has been assigned to your case and will be reaching out soon to help you find the right treatment.
+          </p>
+
+          ${infoBox(`<strong>What happens next:</strong><br><br>
+            • Your advisor will contact you within 24 hours<br>
+            • They'll review your needs, insurance, and preferences<br>
+            • They'll coordinate introductions with vetted facilities on your behalf<br>
+            • You'll never be contacted directly by facilities — your advisor manages everything`)}
+
+          <p style="margin: 24px 0; font-size: 15px; color: #4b5563; line-height: 1.6;">
+            No action is required from you right now. If anything changes or you have urgent questions, you can reply to this email or message your advisor through your portal.
+          </p>
+
+          ${ctaButton('View Your Case', 'https://rehablookup.com/account/concierge')}
+        </td>
+      </tr>
+      ${emailFooter()}
+    `);
+
+    try {
+      const { emailId: emailData, error: emailError } = await sendEmailWithRetry(supabase, resend, {
+        from: "RehabLookup Concierge <no-reply@rehablookup.com>",
+        to: [inquiry.user_email],
+        subject: `A placement advisor is on your case — Case #${caseId}`,
+        html: seekerHtml,
+      }, {
+        emailType: 'concierge_advisor_assigned_seeker',
+        idempotencyKey: `concierge-advisor-assigned-${inquiry.id}`,
+      });
+
+      if (!emailError) {
+        results.push({ recipient: inquiry.user_email, emailId: emailData });
+      }
+    } catch (e) {
+      logStep('Warning: advisor-assigned seeker email failed', { error: String(e) });
+    }
   }
 
   results.push({ recipient: 'admin', notificationId: 'advisor_claimed_alert' });
