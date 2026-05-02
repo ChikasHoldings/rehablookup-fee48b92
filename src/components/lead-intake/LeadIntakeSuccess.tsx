@@ -41,7 +41,7 @@ function maskPhone(phone?: string) {
   return `••• ••• ${digits.slice(-4)}`;
 }
 
-export function LeadIntakeSuccess({ facilityName, firstName, contact }: LeadIntakeSuccessProps) {
+export function LeadIntakeSuccess({ facilityName, facilityId, leadId, firstName, contact }: LeadIntakeSuccessProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
