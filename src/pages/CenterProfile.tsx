@@ -1483,6 +1483,16 @@ const CenterProfile = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Passive concierge rescue — inline, never a popup. Honors discovery-first policy. */}
+      <ProfileConciergeRescue
+        facility={{
+          id: facility.id,
+          name: facility.name,
+          city: facility.city,
+          state: facility.state,
+        }}
+      />
+
       {/* Request Info Modal */}
       <RequestInfoModal
         open={requestModalOpen}
