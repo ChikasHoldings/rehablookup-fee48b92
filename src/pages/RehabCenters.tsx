@@ -149,6 +149,12 @@ const RehabCenters = () => {
   const browseInsurance = searchParams.get("browseInsurance") ?? "";
   const browsePage = Math.max(1, parseInt(searchParams.get("browsePage") ?? "1", 10) || 1);
 
+  // Single-filter combos redirect to their dedicated, indexable hub page.
+  // This keeps the filter URL safely shareable while consolidating SEO
+  // signals on the hub. Dual-filter combos fall through and stay noindex.
+  // Vercel-side 301 parity for these query→path mappings lives in vercel.json.
+  const hubRedirect = resolveFilterHubRedirect({ browseTreatment, browseInsurance });
+
   const browseFiltered = useMemo(() => {
     return sorted.filter(
       (c) => matchesTreatment(c, browseTreatment) && matchesInsurance(c, browseInsurance),
