@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
+import { trackEvent } from "@/lib/analytics";
 import {
   emitConciergeFunnelEvent,
   fnv1a32,
