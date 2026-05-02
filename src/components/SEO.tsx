@@ -125,7 +125,38 @@ export function SEO({
     ? normalizeCanonicalPath(canonical) 
     : getCurrentPath();
   const canonicalUrl = `${SITE_URL}${normalizedCanonical}`;
-  
+
+  // Pagination URLs: preserve query strings since pagination depends on ?page=N
+  // style params. Accept absolute URLs on our host, or paths.
+  const buildPaginationUrl = (input?: string): string | null => {
+    if (!input || typeof input !== "string") return null;
+    const trimmed = input.trim();
+    if (!trimmed) return null;
+    if (/^https?:\/\//i.test(trimmed)) {
+      try {
+        const u = new URL(trimmed);
+        const host = u.hostname.toLowerCase();
+        const isOurs =
+          host === "rehablookup.com" ||
+          host === "www.rehablookup.com" ||
+          host.endsWith(".rehablookup.com") ||
+          host.endsWith(".lovable.app") ||
+          host.endsWith(".lovable.dev");
+        if (!isOurs) return null;
+        return `${SITE_URL}${u.pathname.toLowerCase()}${u.search}`;
+      } catch {
+        return null;
+      }
+    }
+    let path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    const [pathPart, queryPart = ""] = path.split("?");
+    const lower = pathPart.toLowerCase().replace(/\/{2,}/g, "/");
+    const cleaned = lower.length > 1 && lower.endsWith("/") ? lower.slice(0, -1) : lower;
+    return `${SITE_URL}${cleaned}${queryPart ? `?${queryPart}` : ""}`;
+  };
+  const prevHref = buildPaginationUrl(prevUrl);
+  const nextHref = buildPaginationUrl(nextUrl);
+
   const imageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
   const truncatedDescription = description.length > 160 ? description.slice(0, 157) + "..." : description;
 
