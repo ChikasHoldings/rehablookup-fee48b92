@@ -50,10 +50,21 @@ export function TrustStrip() {
 
   return (
     <section
-      aria-label="Why families trust Rehab Lookup"
+      aria-labelledby="trust-strip-heading"
       className="border-y border-border bg-muted/40"
     >
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 sm:py-10 md:py-12">
+        <header className="text-center mb-6 sm:mb-8 max-w-2xl mx-auto">
+          <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2">
+            Why families trust us
+          </p>
+          <h2
+            id="trust-strip-heading"
+            className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground"
+          >
+            Trusted guidance, verified facilities
+          </h2>
+        </header>
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-5xl mx-auto">
           {items.map((item) => (
             <div
