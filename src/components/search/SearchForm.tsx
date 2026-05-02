@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin, Stethoscope, Shield, Building2, Loader2, CheckCircle2, Navigation } from "lucide-react";
+import { Search, MapPin, Stethoscope, Shield, Loader2, CheckCircle2 } from "lucide-react";
 import { treatmentTypes as treatmentTypeOptions, insuranceProviders as insuranceProviderOptions } from "@/data/treatmentCenters";
-import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
+import { getLocationSuggestions, type LocationSuggestion } from "@/data/locationSuggestions";
 import { MultiSelectDropdown } from "./MultiSelectDropdown";
+import { LocationSuggestionsDropdown, type ResolvedZip } from "./LocationSuggestionsDropdown";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
