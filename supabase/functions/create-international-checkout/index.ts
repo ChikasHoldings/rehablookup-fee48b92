@@ -28,8 +28,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const INTERNATIONAL_PRICE_ID = "price_1SwGkF9fxdThyiakznR520wG";
-const EXPECTED_AMOUNT_CENTS = 29900;
+const INTERNATIONAL_PRICE_ID = "price_1TSR6U9fxdThyiak3hfLXWXb";
+const EXPECTED_AMOUNT_CENTS = 9900;
 
 // Maximum request body size (50KB)
 const MAX_BODY_SIZE = 50000;
