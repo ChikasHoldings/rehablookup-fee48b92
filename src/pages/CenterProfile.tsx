@@ -1195,6 +1195,28 @@ const CenterProfile = () => {
               {/* Our Team Section */}
               <FacilityStaffSection facilityId={facility.id} />
 
+              {/* Contextual internal links — strengthens crawl paths from
+                  the profile to related treatment-type, city, state, and
+                  insurance hubs. Built from the facility's actual services
+                  + insurance so links stay topically relevant. */}
+              {(() => {
+                const { treatmentLinks, locationLinks, insuranceLinks } = buildProfileRelatedLinks({
+                  city: facility.city,
+                  state: facility.state,
+                  services: facility.facility_services,
+                  insurance: facility.facility_insurance,
+                });
+                return (
+                  <RelatedLinksSection
+                    title={`Explore More Rehab Options in ${facility.state}`}
+                    treatmentLinks={treatmentLinks}
+                    locationLinks={locationLinks}
+                    insuranceLinks={insuranceLinks}
+                    className="-mx-4 sm:-mx-6 lg:mx-0 rounded-2xl"
+                  />
+                );
+              })()}
+
               {/* Community Reviews — single consolidated section */}
               <ProfileSection
                 icon={MessageSquare}
