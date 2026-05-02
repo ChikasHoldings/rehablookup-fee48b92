@@ -5,7 +5,7 @@ import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Button } from "@/components/ui/button";
 import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
-import { TrustStrip } from "@/components/home/TrustStrip";
+// TrustStrip moved to /concierge
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { buildConciergeHref } from "@/lib/conciergeHref";
