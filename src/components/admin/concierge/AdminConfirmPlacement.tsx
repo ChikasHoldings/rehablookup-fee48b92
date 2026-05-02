@@ -93,11 +93,12 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
     enabled: !!selectedFacilityId,
   });
 
-  // Domestic intake is free ($0); any non-zero intake payment indicates an international case.
-  const isInternational = (caseData.payment_amount_cents ?? 0) > 0;
-  const baseFee = isInternational
-    ? (feeConfig?.international ?? DEFAULT_INTERNATIONAL)
-    : (feeConfig?.domestic ?? DEFAULT_DOMESTIC);
+  // STRUCTURAL TRUTH: `concierge_inquiries` is the domestic table. International placements
+  // live in `international_placement_cases` and render through `InternationalCaseDetailSheet`
+  // — they never reach this component. Do NOT infer intl/domestic from payment_amount_cents
+  // (legacy default 2900 would misclassify every domestic row as international).
+  const isInternational = false;
+  const baseFee = feeConfig?.domestic ?? DEFAULT_DOMESTIC;
   const hasPro = !!selectedProStatus;
   const discountPercent = hasPro
     ? (selectedProStatus?.unlock_discount_percent ?? feeConfig?.proDiscount ?? DEFAULT_PRO_DISCOUNT)

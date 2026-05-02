@@ -353,7 +353,7 @@ Deno.serve(async (req) => {
       preferred_state: sanitizeString(intakeData.desiredState, 50),
       preferred_city: sanitizeString(intakeData.desiredCity || currentCity, 100),
       payment_status: skipPayment ? 'free' : 'paid',
-      payment_amount_cents: skipPayment ? 0 : 2900,
+      payment_amount_cents: 0, // Domestic concierge is free for clients ($0).
       status: 'new',
       checkout_session_id: sessionId ?? null,
       stripe_payment_intent_id: session && typeof session.payment_intent === 'string' ? session.payment_intent : null,

@@ -319,7 +319,7 @@ Deno.serve(async (req) => {
         user_phone: phone,
         status: "new",
         payment_status: "pending",
-        payment_amount_cents: 2900,
+        payment_amount_cents: 0, // Domestic concierge is free for clients ($0).
         intake_data: fullIntakeData,
         email_verified_at: validatedEmailVerifiedAt,
         form_completed_at: now,
