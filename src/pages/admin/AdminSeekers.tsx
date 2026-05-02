@@ -58,6 +58,8 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 interface UserProfile {
   id: string;
@@ -81,7 +83,7 @@ interface UserProfile {
   has_concierge?: boolean;
 }
 
-const ITEMS_PER_PAGE = 25;
+
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -99,7 +101,7 @@ export default function AdminSeekers() {
   const [verificationFilter, setVerificationFilter] = useState<"all" | "verified" | "unverified">("all");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -224,12 +226,17 @@ export default function AdminSeekers() {
     },
   });
 
-  // Fetch users with aggregated data - PAGINATED
+  const { page: currentPage, pageSize, totalPages, setPage: setCurrentPage, setPageSize } = usePagination({
+    tableId: "admin-seekers",
+    defaultPageSize: 25,
+    totalItems: totalCount ?? 0,
+  });
+
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users", currentPage, verificationFilter, searchQuery],
     queryFn: async () => {
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      const from = (currentPage - 1) * pageSize;
+      const to = from + pageSize - 1;
 
       let profileQuery = supabase
         .from("seeker_profiles")
@@ -365,7 +372,7 @@ export default function AdminSeekers() {
   });
 
   const safeUsers = users || [];
-  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
+  
 
   const handleFilterChange = (value: "all" | "verified" | "unverified") => {
     setVerificationFilter(value);
@@ -692,56 +699,17 @@ export default function AdminSeekers() {
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t">
-              <p className="text-sm text-muted-foreground tabular-nums">
-                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage <= 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum: number;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        className="w-8 h-8 p-0"
-                        onClick={() => setCurrentPage(pageNum)}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage >= totalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+          <div className="px-4 pb-2">
+            <PaginationFooter
+              page={currentPage}
+              pageSize={pageSize}
+              totalPages={totalPages}
+              totalItems={totalCount ?? 0}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              itemLabel="user"
+            />
+          </div>
         </CardContent>
       </Card>
 

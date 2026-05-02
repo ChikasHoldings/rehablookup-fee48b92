@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import {
@@ -29,6 +29,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 type UnlockRow = {
   unlock_id: string;
@@ -54,7 +56,7 @@ type UnlockRow = {
 
 type DateRange = { from: Date | undefined; to: Date | undefined };
 
-const PAGE_SIZE = 50;
+
 
 const RANGE_PRESETS = [
   { label: "Last 24 hours", days: 1 },
@@ -81,7 +83,17 @@ function facilityDisplay(row: UnlockRow) {
 
 export default function AdminLeadUnlocks() {
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const { page: pageOneBased, pageSize: PAGE_SIZE, totalPages, setPage: setPageOneBased, setPageSize } = usePagination({
+    tableId: "admin-lead-unlocks",
+    defaultPageSize: 50,
+    totalItems: totalCount,
+  });
+  const page = pageOneBased - 1;
+  const setPage = (next: number | ((p: number) => number)) => {
+    const resolved = typeof next === "function" ? (next as (p: number) => number)(page) : next;
+    setPageOneBased(resolved + 1);
+  };
   const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 30),
     to: new Date(),
@@ -108,8 +120,10 @@ export default function AdminLeadUnlocks() {
     staleTime: 30_000,
   });
 
-  const totalCount = data?.[0]?.total_count ?? 0;
-  const totalPages = Math.max(1, Math.ceil(Number(totalCount) / PAGE_SIZE));
+  const fetchedTotal = data?.[0]?.total_count ?? 0;
+  useEffect(() => {
+    setTotalCount(Number(fetchedTotal));
+  }, [fetchedTotal]);
 
   const filteredRows = useMemo(() => {
     if (!data) return [];
@@ -421,33 +435,17 @@ export default function AdminLeadUnlocks() {
           </div>
 
           {/* Pagination */}
-          {!isLoading && totalCount > PAGE_SIZE && (
-            <div className="flex items-center justify-between border-t px-4 py-3 text-sm">
-              <div className="text-muted-foreground">
-                Page {page + 1} of {totalPages} — {Number(totalCount).toLocaleString()} total
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                >
-                  <ChevronLeft className="mr-1 h-4 w-4" />
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={page + 1 >= totalPages}
-                >
-                  Next
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+          <div className="px-4 pb-2">
+            <PaginationFooter
+              page={pageOneBased}
+              pageSize={PAGE_SIZE}
+              totalPages={totalPages}
+              totalItems={Number(totalCount)}
+              onPageChange={setPageOneBased}
+              onPageSizeChange={setPageSize}
+              itemLabel="unlock"
+            />
+          </div>
         </CardContent>
       </Card>
     </div>

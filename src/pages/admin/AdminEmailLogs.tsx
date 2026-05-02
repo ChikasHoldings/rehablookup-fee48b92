@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Mail, CheckCircle2, XCircle, AlertTriangle, Clock, Search, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { PageSizeSelect } from "@/components/common/PageSizeSelect";
+import { usePagination } from "@/hooks/usePagination";
 
 type TimeRange = "24h" | "7d" | "30d" | "all";
 type StatusFilter =
@@ -24,7 +27,7 @@ type StatusFilter =
   | "dlq"
   | "retry";
 
-const PAGE_SIZE = 50;
+
 
 function getTimeRangeStart(range: TimeRange): string | null {
   const now = new Date();
@@ -67,7 +70,16 @@ export default function AdminEmailLogs() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(0);
+  const { page: pageOneBased, pageSize: PAGE_SIZE, totalPages, setPage: setPageOneBased, setPageSize } = usePagination({
+    tableId: "admin-email-logs",
+    defaultPageSize: 50,
+    totalItems: 0,
+  });
+  const page = pageOneBased - 1;
+  const setPage = (next: number | ((p: number) => number)) => {
+    const resolved = typeof next === "function" ? (next as (p: number) => number)(page) : next;
+    setPageOneBased(resolved + 1);
+  };
 
   // Fetch all email types for filter dropdown
   const { data: emailTypes = [] } = useQuery({
@@ -378,18 +390,21 @@ export default function AdminEmailLogs() {
             </Table>
           </div>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3 border-t">
+          {/* Pagination (cursor-style; no total count for tracking events) */}
+          <div className="flex flex-col gap-3 px-4 py-3 border-t sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              Page {page + 1} · Showing {logs.length} results
+              Page {pageOneBased} · Showing {logs.length} results
             </p>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button size="sm" variant="outline" disabled={rawLogs.length < PAGE_SIZE} onClick={() => setPage(p => p + 1)}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <PageSizeSelect value={PAGE_SIZE} onChange={setPageSize} />
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="outline" disabled={rawLogs.length < PAGE_SIZE} onClick={() => setPage(p => p + 1)}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

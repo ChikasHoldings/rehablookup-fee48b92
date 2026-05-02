@@ -32,6 +32,8 @@ import { cn } from "@/lib/utils";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { exportLeadsToCSV } from "@/lib/csvExport";
 import { InquiryDetailModal } from "@/components/admin/inquiries/InquiryDetailModal";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 export type Lead = {
   id: string;
@@ -84,7 +86,7 @@ const DATE_PRESETS = [
   { label: "Custom", value: "custom", getRange: () => ({ from: undefined, to: undefined }) },
 ];
 
-const ITEMS_PER_PAGE = 25;
+
 
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
@@ -149,7 +151,6 @@ export default function AdminLeads() {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -158,6 +159,7 @@ export default function AdminLeads() {
 
   const searchQuery = useDebounce(searchInput, 350);
   const hasActiveFilters = statusFilter !== "all" || inquiryTypeFilter !== "all" || redistributionFilter !== "all" || searchInput !== "" || dateRange.from !== undefined;
+
 
   const clearAllFilters = () => {
     setStatusFilter("all"); setInquiryTypeFilter("all"); setRedistributionFilter("all");
@@ -232,12 +234,18 @@ export default function AdminLeads() {
     },
   });
 
-  // Paginated leads
+  const { page: currentPage, pageSize, totalPages, setPage: setCurrentPage, setPageSize } = usePagination({
+    tableId: "admin-leads",
+    defaultPageSize: 25,
+    totalItems: totalCount ?? 0,
+  });
+
+
   const { data: leads, isLoading } = useQuery({
     queryKey: ["admin-leads", statusFilter, inquiryTypeFilter, redistributionFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      const from = (currentPage - 1) * pageSize;
+      const to = from + pageSize - 1;
       let query = supabase
         .from("leads")
         .select("id, facility_id, original_facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, qualified, quality_flag, redistribution_status, assignment_status, age_range, gender, preferred_contact, lead_score, lead_score_label, credit_cost, exclusive_until, extended_until, assigned_at, lead_expired_at, shared_with")
@@ -289,7 +297,7 @@ export default function AdminLeads() {
   });
 
   const filteredLeads = useMemo(() => leads || [], [leads]);
-  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
+  
 
   // Delete
   const handleDeleteLead = async () => {
@@ -573,31 +581,17 @@ export default function AdminLeads() {
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t">
-              <p className="text-sm text-muted-foreground tabular-nums">
-                {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>Previous</Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum: number;
-                    if (totalPages <= 5) pageNum = i + 1;
-                    else if (currentPage <= 3) pageNum = i + 1;
-                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
-                    else pageNum = currentPage - 2 + i;
-                    return (
-                      <Button key={pageNum} variant={currentPage === pageNum ? "default" : "outline"} size="sm" className="w-8 h-8 p-0" onClick={() => setCurrentPage(pageNum)}>
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                </div>
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>Next</Button>
-              </div>
-            </div>
-          )}
+          <div className="px-4 pb-2">
+            <PaginationFooter
+              page={currentPage}
+              pageSize={pageSize}
+              totalPages={totalPages}
+              totalItems={totalCount ?? 0}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              itemLabel="lead"
+            />
+          </div>
         </CardContent>
       </Card>
 

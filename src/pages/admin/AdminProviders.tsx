@@ -31,8 +31,8 @@ import {
   type Facility,
   type ProSubscription,
 } from "@/components/admin/providers";
-
-const ITEMS_PER_PAGE = 15;
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -53,7 +53,7 @@ export default function AdminProviders() {
   const [activeTab, setActiveTab] = useState("all");
   const [selectedProvider, setSelectedProvider] = useState<Facility | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  
   
   // Image flagging state
   const [showFlagDialog, setShowFlagDialog] = useState(false);
@@ -223,13 +223,64 @@ export default function AdminProviders() {
     },
   });
 
-  // Fetch providers with pagination and filtering
+  // Fetch total count for current filter
+  const { data: totalCount } = useQuery({
+    queryKey: ["admin-providers-count", activeTab, searchQuery],
+    queryFn: async () => {
+      let query = supabase.from("facilities").select("id", { count: "exact", head: true });
+
+      if (activeTab === "approved") {
+        query = query.eq("status", "approved").neq("suspended", true);
+      } else if (activeTab === "pending") {
+        query = query.eq("status", "pending");
+      } else if (activeTab === "suspended") {
+        query = query.eq("suspended", true);
+      } else if (activeTab === "pro") {
+        const { data: proFacilities } = await supabase
+          .from("pro_subscriptions")
+          .select("facility_id")
+          .eq("status", "active");
+        const proIds = proFacilities?.map(p => p.facility_id) || [];
+        if (proIds.length === 0) return 0;
+        let proQuery = supabase.from("facilities").select("id", { count: "exact", head: true }).in("id", proIds);
+        if (searchQuery) {
+          const sanitized = searchQuery.replace(/[%_\\]/g, "");
+          if (sanitized) {
+            proQuery = proQuery.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
+          }
+        }
+        const { count: proCount } = await proQuery;
+        return proCount || 0;
+      } else if (activeTab === "placement") {
+        query = query.eq("concierge_network_opted_in", true);
+      }
+
+      if (searchQuery) {
+        const sanitized = searchQuery.replace(/[%_\\]/g, "");
+        if (sanitized) {
+          query = query.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
+        }
+      }
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { page: currentPage, pageSize, totalPages, setPage: setCurrentPage, setPageSize } = usePagination({
+    tableId: "admin-providers",
+    defaultPageSize: 25,
+    totalItems: totalCount ?? 0,
+  });
+
+
   const { data: providers, isLoading } = useQuery({
     queryKey: ["admin-providers", activeTab, searchQuery, currentPage],
     queryFn: async () => {
       try {
-        const from = (currentPage - 1) * ITEMS_PER_PAGE;
-        const to = from + ITEMS_PER_PAGE - 1;
+        const from = (currentPage - 1) * pageSize;
+        const to = from + pageSize - 1;
 
         let query = supabase
           .from("facilities")
@@ -278,53 +329,6 @@ export default function AdminProviders() {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
-
-  // Fetch total count for current filter
-  const { data: totalCount } = useQuery({
-    queryKey: ["admin-providers-count", activeTab, searchQuery],
-    queryFn: async () => {
-      let query = supabase.from("facilities").select("id", { count: "exact", head: true });
-
-      if (activeTab === "approved") {
-        query = query.eq("status", "approved").neq("suspended", true);
-      } else if (activeTab === "pending") {
-        query = query.eq("status", "pending");
-      } else if (activeTab === "suspended") {
-        query = query.eq("suspended", true);
-      } else if (activeTab === "pro") {
-        const { data: proFacilities } = await supabase
-          .from("pro_subscriptions")
-          .select("facility_id")
-          .eq("status", "active");
-        const proIds = proFacilities?.map(p => p.facility_id) || [];
-        if (proIds.length === 0) return 0;
-        let proQuery = supabase.from("facilities").select("id", { count: "exact", head: true }).in("id", proIds);
-        if (searchQuery) {
-          const sanitized = searchQuery.replace(/[%_\\]/g, "");
-          if (sanitized) {
-            proQuery = proQuery.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
-          }
-        }
-        const { count: proCount } = await proQuery;
-        return proCount || 0;
-      } else if (activeTab === "placement") {
-        query = query.eq("concierge_network_opted_in", true);
-      }
-
-      if (searchQuery) {
-        const sanitized = searchQuery.replace(/[%_\\]/g, "");
-        if (sanitized) {
-          query = query.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
-        }
-      }
-
-      const { count, error } = await query;
-      if (error) throw error;
-      return count || 0;
-    },
-  });
-
-  const totalPages = Math.ceil((totalCount || 0) / ITEMS_PER_PAGE);
 
   // Fetch lead counts for providers using count queries (no row fetching)
   const { data: leadCounts } = useQuery({
@@ -661,56 +665,17 @@ export default function AdminProviders() {
         </CardContent>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20">
-            <p className="text-sm text-muted-foreground">
-              <span className="tabular-nums">Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalCount || 0)} of {totalCount} providers</span>
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </Button>
-              <div className="hidden sm:flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum: number;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={currentPage === pageNum ? "default" : "outline"}
-                      size="sm"
-                      className="w-8 h-8 p-0"
-                      onClick={() => setCurrentPage(pageNum)}
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
+        <div className="px-4 pb-4">
+          <PaginationFooter
+            page={currentPage}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            totalItems={totalCount ?? 0}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="provider"
+          />
+        </div>
       </Card>
 
       {/* Provider Detail Modal */}
