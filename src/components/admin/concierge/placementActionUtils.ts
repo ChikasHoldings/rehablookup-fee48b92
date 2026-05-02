@@ -88,7 +88,7 @@ export function getCaseNextSteps(
       tab: "actions",
       icon: AlertTriangle,
       priority: "blocker",
-      description: "Intake fee not yet paid. Avoid sending introductions until confirmed.",
+      description: "Placement fee not yet paid. Domestic placement is free for clients — applies to international cases or legacy unpaid records.",
       owner: "seeker",
       ownerLabel: "Waiting on client",
     });
