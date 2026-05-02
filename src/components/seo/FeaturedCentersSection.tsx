@@ -152,8 +152,8 @@ export function FeaturedCentersSection({
     el.scrollBy({ left: dir === "left" ? -cardWidth - 16 : cardWidth + 16, behavior: "smooth" });
   }, []);
 
-  // Location context label
-  const locationLabel = userState && !geo.isLoading
+  // Location context label — gate on isUS to avoid non-US region codes leaking through
+  const locationLabel = geo.isUS && userState && !geo.isLoading
     ? `Showing results near ${userCity ? `${userCity}, ` : ""}${userState}`
     : description;
 
