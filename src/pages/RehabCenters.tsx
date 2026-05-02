@@ -5,6 +5,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO, generateDirectoryCollectionSchema } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { SearchForm } from "@/components/search/SearchForm";
+import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { treatmentCenters } from "@/data/treatmentCenters";
