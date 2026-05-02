@@ -266,33 +266,18 @@ const Index = () => {
               <SearchForm variant="directory" />
             </div>
 
-            {/* Primary CTA: Free Concierge Help */}
-            <div className="mt-6 flex flex-col items-center gap-3 animate-fade-in relative z-10" style={{ animationDelay: "150ms" }}>
-              <Link
-                to={buildConciergeHref({ source: "home_hero_cta" })}
-                className="group inline-flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3.5 text-base md:text-lg font-semibold text-accent-foreground shadow-lg shadow-accent/30 ring-1 ring-white/20 hover:bg-accent/90 hover:shadow-xl hover:scale-[1.02] active:scale-[0.99] transition-all"
-              >
-                <Heart className="h-5 w-5" aria-hidden="true" />
-                <span>Get Free Help Finding Treatment</span>
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-              </Link>
-              <p className="text-xs md:text-sm text-white/80">
-                Free, confidential placement assistance — speak with a real advisor in minutes.
-              </p>
-            </div>
-
-            {/* Secondary Quick Links */}
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in relative z-0" style={{ animationDelay: "200ms" }}>
-              <Link
-                to="/international"
-                className="inline-flex items-center gap-1 text-sm text-white/70 hover:text-white underline underline-offset-4 transition-colors"
+            {/* Quick Links */}
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in relative z-0" style={{ animationDelay: "150ms" }}>
+              <Link 
+                to="/international" 
+                className="inline-flex items-center gap-1 text-sm text-white/75 hover:text-white underline underline-offset-4 transition-colors"
               >
                 International Placement
               </Link>
               <span className="text-white/40">•</span>
-              <Link
-                to="/for-providers"
-                className="inline-flex items-center gap-1 text-sm text-white/70 hover:text-white underline underline-offset-4 transition-colors"
+              <Link 
+                to="/for-providers" 
+                className="inline-flex items-center gap-1 text-sm text-white/75 hover:text-white underline underline-offset-4 transition-colors"
               >
                 List Your Treatment Center
               </Link>
