@@ -5,7 +5,7 @@ import { Heart, Phone, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const HIDDEN_ROUTES = ["/concierge", "/provider", "/admin", "/lp/", "/account"];
-const HELPLINE_TEL = "+18005551234";
+const HELPLINE_TEL = "1-800-662-4357";
 
 export const StickyConversionBar = forwardRef<HTMLDivElement>(function StickyConversionBar(_props, ref) {
   const [visible, setVisible] = useState(false);
