@@ -634,13 +634,35 @@ export function SingleQuestionFlow({
               {errors.email && <p id="email-error" className="text-xs text-destructive">{errors.email}</p>}
             </div>
             
+            {/* Privacy notice — concise reassurance above consent */}
+            <div className="flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/15 p-2.5 sm:p-3">
+              <Shield className="h-4 w-4 text-primary mt-0.5 shrink-0" aria-hidden="true" />
+              <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+                Your information is kept <span className="font-medium text-foreground">confidential</span> and is never sold. We only share it with
+                {facilityName ? ` ${facilityName}` : " the treatment center you select"} so they can respond to your request.{" "}
+                <a
+                  href="/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline font-medium text-primary hover:text-primary/80"
+                >
+                  Read our Privacy Policy
+                </a>
+                .
+              </p>
+            </div>
+
             {/* Explicit consent — required before submit */}
             <div className="space-y-1.5">
               <label
                 htmlFor="consent-to-contact"
                 className={cn(
-                  "flex items-start gap-3 rounded-xl border bg-muted/30 p-3 sm:p-3.5 cursor-pointer transition-colors hover:bg-muted/50",
-                  errors.consentToContact ? "border-destructive" : "border-border"
+                  "flex items-start gap-3 rounded-xl border-2 bg-card p-3 sm:p-3.5 cursor-pointer transition-colors",
+                  errors.consentToContact
+                    ? "border-destructive bg-destructive/5"
+                    : consentToContact
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/40 hover:bg-muted/40"
                 )}
               >
                 <Checkbox
@@ -655,39 +677,46 @@ export function SingleQuestionFlow({
                   className="mt-0.5"
                   aria-describedby="consent-description"
                   aria-invalid={!!errors.consentToContact}
+                  aria-required="true"
                 />
                 <span
                   id="consent-description"
-                  className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed select-none"
+                  className="text-xs sm:text-sm text-foreground leading-relaxed select-none"
                 >
-                  I agree to be contacted by
-                  {facilityName ? ` ${facilityName}` : " the selected treatment center"}{" "}
-                  via phone, SMS, or email about treatment options. Message &amp; data
-                  rates may apply. My information is confidential — see the{" "}
-                  <a
-                    href="/privacy-policy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-foreground"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Privacy Policy
-                  </a>{" "}
-                  and{" "}
-                  <a
-                    href="/terms-of-service"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-foreground"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Terms
-                  </a>
-                  .
+                  <span className="font-semibold block mb-1">
+                    I agree to be contacted <span className="text-destructive" aria-hidden="true">*</span>
+                  </span>
+                  <span className="text-[11px] sm:text-xs text-muted-foreground">
+                    By checking this box, I consent to be contacted by
+                    {facilityName ? ` ${facilityName}` : " the selected treatment center"}{" "}
+                    via phone, SMS, or email about treatment options. Consent is not a
+                    condition of treatment. Message &amp; data rates may apply. I can opt
+                    out at any time. See the{" "}
+                    <a
+                      href="/privacy-policy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Privacy Policy
+                    </a>{" "}
+                    and{" "}
+                    <a
+                      href="/terms-of-service"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Terms
+                    </a>
+                    .
+                  </span>
                 </span>
               </label>
               {errors.consentToContact && (
-                <p className="text-xs text-destructive flex items-center gap-1.5">
+                <p className="text-xs text-destructive flex items-center gap-1.5" role="alert">
                   <AlertCircle className="h-3.5 w-3.5" />
                   {errors.consentToContact}
                 </p>
