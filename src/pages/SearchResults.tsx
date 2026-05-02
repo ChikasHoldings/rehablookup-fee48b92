@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateSearchResultsSchema } from "@/components/SEO";
 import { SearchResultCard } from "@/components/cards/SearchResultCard";
+import { DataPagination } from "@/components/common/DataPagination";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
@@ -1208,62 +1209,12 @@ const SearchResults = () => {
                   </div>
 
                   {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex justify-center gap-2 mt-10">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="h-10 px-4 rounded-xl border-border bg-card shadow-sm hover:shadow-md transition-all"
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Previous
-                      </Button>
-
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          let pageNum: number;
-                          if (totalPages <= 5) {
-                            pageNum = i + 1;
-                          } else if (currentPage <= 3) {
-                            pageNum = i + 1;
-                          } else if (currentPage >= totalPages - 2) {
-                            pageNum = totalPages - 4 + i;
-                          } else {
-                            pageNum = currentPage - 2 + i;
-                          }
-
-                          return (
-                            <Button
-                              key={pageNum}
-                              variant={currentPage === pageNum ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => handlePageChange(pageNum)}
-                              className={`h-10 w-10 rounded-xl transition-all ${
-                                currentPage === pageNum
-                                  ? "bg-primary text-primary-foreground shadow-md"
-                                  : "border-border bg-card shadow-sm hover:shadow-md"
-                              }`}
-                            >
-                              {pageNum}
-                            </Button>
-                          );
-                        })}
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="h-10 px-4 rounded-xl border-border bg-card shadow-sm hover:shadow-md transition-all"
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </div>
-                  )}
+                  <DataPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    className="mt-10 justify-center"
+                  />
                 </>
               ) : (
                 /* Empty State */
