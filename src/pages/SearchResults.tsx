@@ -820,22 +820,24 @@ const SearchResults = () => {
         </div>
       </FilterSection>
 
-      {/* Insurance — single-select dropdown */}
+      {/* Insurance — multi-select toggle buttons (mirrors Amenities pattern).
+          Persists via the `insuranceTypes` URL param (comma-separated). */}
       <FilterSection id="insurance" icon={<Shield className="h-3.5 w-3.5" />} label="Insurance" count={selectedInsuranceTypes.length}>
-        <Select
-          value={selectedInsuranceTypes[0] ?? "any"}
-          onValueChange={(v) => setSingleFilter("insuranceTypes", v)}
-        >
-          <SelectTrigger className="w-full h-9 text-sm border-border bg-card">
-            <SelectValue placeholder="Any insurance" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border shadow-lg max-h-72">
-            <SelectItem value="any" className="text-sm cursor-pointer">
-              Any insurance
-            </SelectItem>
-            {insuranceFilters.map((filter) => (
-              <SelectItem key={filter.value} value={filter.value} className="text-sm cursor-pointer">
-                <span className="flex items-center gap-2">
+        <div className="space-y-1.5">
+          {insuranceFilters.map((filter) => {
+            const active = selectedInsuranceTypes.includes(filter.value);
+            return (
+              <button
+                key={filter.value}
+                onClick={() => toggleFilter("insuranceTypes", filter.value, selectedInsuranceTypes)}
+                aria-pressed={active}
+                className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
+                  active
+                    ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                    : "text-foreground hover:bg-secondary/60 border border-transparent"
+                }`}
+              >
+                <span className="flex items-center gap-2 min-w-0">
                   {filter.logo ? (
                     <img
                       src={filter.logo}
@@ -849,10 +851,11 @@ const SearchResults = () => {
                   )}
                   <span className="truncate">{filter.label}</span>
                 </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+                {active && <X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+              </button>
+            );
+          })}
+        </div>
       </FilterSection>
 
       {/* Amenities */}
