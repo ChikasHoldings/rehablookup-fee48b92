@@ -5,6 +5,7 @@ import {
   tourRequestedAdminEmail,
   tourProposedUserEmail,
   tourConfirmedFacilityEmail,
+  tourConfirmedUserEmail,
   tourCancelledFacilityEmail,
   tourCancelledUserEmail,
   TourEmailData,
@@ -299,6 +300,38 @@ Deno.serve(async (req: Request): Promise<Response> => {
           } catch (e) {
             console.error("Facility email failed:", e);
           }
+        }
+
+        // Confirmation email to the seeker (Phase 1 transactional email)
+        const seekerEmail = tour.inquiry?.user_email;
+        if (resend && seekerEmail) {
+          try {
+            const seekerEmailResult = await sendEmailWithRetry(supabase, resend, {
+              from: "RehabLookup Concierge <no-reply@rehablookup.com>",
+              to: [seekerEmail],
+              subject: `Your tour at ${emailData.facilityName} is confirmed`,
+              html: tourConfirmedUserEmail(emailData),
+            }, {
+              emailType: "tour_confirmed_seeker",
+              idempotencyKey: `tour-confirmed-seeker-${tourId}`,
+            });
+            results.seekerEmail = seekerEmailResult;
+            console.log("Seeker confirmation email sent:", seekerEmailResult);
+          } catch (e) {
+            console.error("Seeker email failed:", e);
+          }
+        }
+
+        // In-app notification for seeker
+        if (tour.inquiry?.user_id) {
+          await supabase.from("seeker_notifications").insert({
+            user_id: tour.inquiry.user_id,
+            type: "tour_confirmed",
+            title: "Tour Confirmed",
+            message: `Your tour at ${emailData.facilityName} is confirmed for ${formatDateTime(tour.confirmed_datetime)}.`,
+            link: "/account/concierge",
+            metadata: { tour_id: tourId, facility_id: tour.facility?.id },
+          });
         }
 
         // SMS to facility
