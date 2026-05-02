@@ -7,13 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, RefreshCw, Search, ExternalLink } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertTriangle, RefreshCw, Search, ExternalLink, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
+import { resolvePattern } from "@/lib/notFoundPatterns";
 
 type TimeRange = "24h" | "7d" | "30d" | "all";
 type KindFilter = "all" | "spa_route" | "static_asset";
+type GroupMode = "pattern" | "path";
+
+interface PatternSummary {
+  patternId: string;
+  patternLabel: string;
+  hits: number;
+  uniquePaths: number;
+  lastSeen: string;
+  hasBotTraffic: boolean;
+  paths: PathSummary[];
+}
 
 interface NotFoundEvent {
   id: string;
@@ -58,6 +72,8 @@ export default function AdminNotFoundEvents() {
   const [range, setRange] = useState<TimeRange>("30d");
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [search, setSearch] = useState("");
+  const [groupMode, setGroupMode] = useState<GroupMode>("pattern");
+  const [drillPattern, setDrillPattern] = useState<PatternSummary | null>(null);
 
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["not-found-events", range],
@@ -152,18 +168,52 @@ export default function AdminNotFoundEvents() {
     return list.filter((s) => s.path.toLowerCase().includes(q));
   }, [summaries, search, kindFilter]);
 
+
+  // Aggregate paths into pattern buckets using the shared resolver. We
+  // build this off `filtered` so kind+search filters apply uniformly to
+  // both views.
+  const patternSummaries = useMemo<PatternSummary[]>(() => {
+    const byPattern = new Map<string, PatternSummary>();
+    for (const p of filtered) {
+      const rule = resolvePattern(p.path);
+      let bucket = byPattern.get(rule.id);
+      if (!bucket) {
+        bucket = {
+          patternId: rule.id,
+          patternLabel: rule.label,
+          hits: 0,
+          uniquePaths: 0,
+          lastSeen: p.lastSeen,
+          hasBotTraffic: false,
+          paths: [],
+        };
+        byPattern.set(rule.id, bucket);
+      }
+      bucket.hits += p.hits;
+      bucket.uniquePaths += 1;
+      if (p.lastSeen > bucket.lastSeen) bucket.lastSeen = p.lastSeen;
+      if (p.hasBotTraffic) bucket.hasBotTraffic = true;
+      bucket.paths.push(p);
+    }
+    const out = Array.from(byPattern.values());
+    for (const b of out) b.paths.sort((a, b) => b.hits - a.hits);
+    out.sort((a, b) => b.hits - a.hits);
+    return out;
+  }, [filtered]);
+
   const eventsPagination = usePagination({
     tableId: "admin-not-found",
     defaultPageSize: 50,
-    totalItems: filtered.length,
+    totalItems: groupMode === "pattern" ? patternSummaries.length : filtered.length,
   });
   const visibleFiltered = eventsPagination.paginate(filtered);
+  const visiblePatterns = eventsPagination.paginate(patternSummaries);
 
-  // Reset to page 1 on filter/search change.
+  // Reset to page 1 on filter/search/group change.
   useEffect(() => {
     eventsPagination.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, kindFilter]);
+  }, [search, kindFilter, groupMode]);
 
 
   const totalHits = summaries.reduce((sum, s) => sum + s.hits, 0);
@@ -223,25 +273,33 @@ export default function AdminNotFoundEvents() {
       </div>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between gap-3 flex-wrap">
-          <CardTitle>Top missing paths</CardTitle>
-          <div className="flex items-center gap-2">
-            <Select value={kindFilter} onValueChange={(v) => setKindFilter(v as KindFilter)}>
-              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All requests</SelectItem>
-                <SelectItem value="spa_route">SPA routes</SelectItem>
-                <SelectItem value="static_asset">Static assets</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="relative w-72">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Filter paths…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
+        <CardHeader className="flex-col items-stretch gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <CardTitle>{groupMode === "pattern" ? "Top missing patterns" : "Top missing paths"}</CardTitle>
+            <div className="flex items-center gap-2">
+              <Tabs value={groupMode} onValueChange={(v) => setGroupMode(v as GroupMode)}>
+                <TabsList>
+                  <TabsTrigger value="pattern">By pattern</TabsTrigger>
+                  <TabsTrigger value="path">By exact path</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Select value={kindFilter} onValueChange={(v) => setKindFilter(v as KindFilter)}>
+                <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All requests</SelectItem>
+                  <SelectItem value="spa_route">SPA routes</SelectItem>
+                  <SelectItem value="static_asset">Static assets</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative w-72">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Filter paths…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -252,6 +310,45 @@ export default function AdminNotFoundEvents() {
             <div className="text-sm text-muted-foreground py-8 text-center">
               No 404 events in this window. 🎉
             </div>
+          ) : groupMode === "pattern" ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Pattern</TableHead>
+                  <TableHead className="w-32 text-right">Hits</TableHead>
+                  <TableHead className="w-32 text-right">Unique paths</TableHead>
+                  <TableHead className="w-32">Last seen</TableHead>
+                  <TableHead className="w-20">Source</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visiblePatterns.map((p) => (
+                  <TableRow
+                    key={p.patternId}
+                    className="cursor-pointer hover:bg-muted/40"
+                    onClick={() => setDrillPattern(p)}
+                  >
+                    <TableCell className="font-mono text-xs">{p.patternLabel}</TableCell>
+                    <TableCell className="text-right font-semibold">{p.hits}</TableCell>
+                    <TableCell className="text-right">{p.uniquePaths}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(p.lastSeen), { addSuffix: true })}
+                    </TableCell>
+                    <TableCell>
+                      {p.hasBotTraffic ? (
+                        <Badge variant="secondary" className="text-xs">bot</Badge>
+                      ) : (
+                        <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs">user</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           ) : (
             <Table>
               <TableHeader>
@@ -329,13 +426,49 @@ export default function AdminNotFoundEvents() {
             page={eventsPagination.page}
             pageSize={eventsPagination.pageSize}
             totalPages={eventsPagination.totalPages}
-            totalItems={filtered.length}
+            totalItems={groupMode === "pattern" ? patternSummaries.length : filtered.length}
             onPageChange={eventsPagination.setPage}
             onPageSizeChange={eventsPagination.setPageSize}
-            itemLabel="path"
+            itemLabel={groupMode === "pattern" ? "pattern" : "path"}
           />
         </CardContent>
       </Card>
+
+      {/* Drill-down: paths inside a pattern bucket */}
+      <Dialog open={!!drillPattern} onOpenChange={(o) => !o && setDrillPattern(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-mono text-sm break-all">
+              {drillPattern?.patternLabel}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-xs text-muted-foreground mb-3">
+            {drillPattern?.hits.toLocaleString()} hits across {drillPattern?.uniquePaths.toLocaleString()} unique paths
+          </div>
+          <div className="max-h-[60vh] overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Path</TableHead>
+                  <TableHead className="w-20 text-right">Hits</TableHead>
+                  <TableHead className="w-32">Last seen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(drillPattern?.paths || []).slice(0, 200).map((p) => (
+                  <TableRow key={p.path}>
+                    <TableCell className="font-mono text-xs break-all">{p.path}</TableCell>
+                    <TableCell className="text-right font-semibold">{p.hits}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(p.lastSeen), { addSuffix: true })}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>

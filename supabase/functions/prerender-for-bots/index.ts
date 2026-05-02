@@ -514,6 +514,29 @@ function buildNotFoundCenterHtml(path: string): string {
 const DEFAULT_OG_IMAGE = 'https://rehablookup.com/og-image.jpg';
 const BASE_URL = 'https://rehablookup.com';
 
+/**
+ * Fire-and-forget insert into not_found_events for crawler-driven 404s that
+ * the SPA's client-side beacon would never see (because we return a 200
+ * fallback page to bots). Caller MUST .catch() — never block prerendering.
+ */
+async function logServerSideNotFound(
+  supabase: ReturnType<typeof createClient>,
+  path: string,
+  reason: string,
+): Promise<void> {
+  try {
+    await supabase.from('not_found_events').insert({
+      path,
+      request_kind: 'spa_route',
+      http_method: 'GET',
+      user_agent: `prerender-for-bots:${reason}`,
+      referrer: null,
+    });
+  } catch (err) {
+    console.error('[Prerender] logServerSideNotFound failed:', err);
+  }
+}
+
 // Generate fallback HTML with proper OG tags, optionally enhanced with DB data
 async function generateFallbackHtml(path: string, supabase: ReturnType<typeof createClient> | null): Promise<string> {
   // ---- Blog article: /resources/{slug} ----
@@ -603,6 +626,9 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
       if (!facility) {
         // Slug doesn't resolve → emit a noindex page so Google doesn't bank
         // the URL as thin/duplicate content. Still 200 so SPA fallback works.
+        // Also log this as a server-side 404 event so the admin 404 monitor
+        // sees crawler-driven 404s that would otherwise miss the client beacon.
+        logServerSideNotFound(supabase, path, 'unknown_facility_slug').catch(() => {});
         return buildNotFoundCenterHtml(path);
       }
 
