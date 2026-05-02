@@ -158,8 +158,10 @@ export function SearchResultsForm() {
               className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
               aria-label="Distance from location"
             >
-              <Navigation className="h-3.5 w-3.5 text-muted-foreground shrink-0 mr-1.5" aria-hidden="true" />
-              <SelectValue placeholder="Distance" />
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <Navigation className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+                <SelectValue placeholder="Distance" />
+              </div>
             </SelectTrigger>
             <SelectContent className="bg-card">
               <SelectItem value={ANY_VALUE}>Any</SelectItem>
@@ -179,8 +181,10 @@ export function SearchResultsForm() {
               className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
               aria-label="Treatment type"
             >
-              <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0 mr-1.5" aria-hidden="true" />
-              <SelectValue placeholder="Treatment" />
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+                <SelectValue placeholder="Treatment" />
+              </div>
             </SelectTrigger>
             <SelectContent className="bg-card">
               <SelectItem value={ANY_VALUE}>Any</SelectItem>
@@ -200,8 +204,10 @@ export function SearchResultsForm() {
               className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
               aria-label="Insurance (optional)"
             >
-              <Shield className="h-3.5 w-3.5 text-muted-foreground shrink-0 mr-1.5" aria-hidden="true" />
-              <SelectValue placeholder="Insurance" />
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <Shield className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+                <SelectValue placeholder="Insurance" />
+              </div>
             </SelectTrigger>
             <SelectContent className="bg-card">
               <SelectItem value={ANY_VALUE}>Any</SelectItem>
