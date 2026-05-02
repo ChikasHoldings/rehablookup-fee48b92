@@ -831,7 +831,7 @@ export default function ConciergeIntake() {
     if (isSubmitting) return;
 
     // Validate all previous steps (incl. email + phone verification)
-    for (let step = 1; step <= 7; step++) {
+    for (let step = 1; step <= 6; step++) {
       if (!validateStep(step)) {
         setCurrentStep(step);
         toast.error("Please complete all required fields before submitting");
