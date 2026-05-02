@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
             email: clientEmail || "",
             stripe_checkout_session_id: session.id,
             stripe_payment_intent_id: paymentIntentId,
-            amount_cents: 29900,
+            amount_cents: 9900,
             currency: "USD",
             status: "succeeded",
             client_name: clientName,
@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
               user_id: userId || null,
               stripe_checkout_session_id: session.id,
               stripe_payment_intent_id: paymentIntentId,
-              seeker_fee_amount_cents: 29900,
+              seeker_fee_amount_cents: 9900,
               seeker_fee_status: "paid",
               status: "pending_intake",
               intake_data: {},
@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
         await supabaseAdmin.from("admin_notifications").insert({
           type: "international_payment",
           title: "New International Placement Payment",
-          message: `${clientName} from ${clientCountry} paid $299 for international placement`,
+          message: `${clientName} from ${clientCountry} paid $99 for international placement`,
           metadata: {
             session_id: session.id,
             payment_intent_id: paymentIntentId,
@@ -1786,7 +1786,7 @@ Deno.serve(async (req) => {
             await supabaseAdmin.from("admin_notifications").insert({
               type: "international_refund",
               title: "International Payment Refunded",
-              message: `Refunded $299 to ${intlPayment.client_name} (${intlPayment.email})`,
+              message: `Refunded $99 to ${intlPayment.client_name} (${intlPayment.email})`,
               metadata: {
                 payment_id: intlPayment.id,
                 charge_id: charge.id,
