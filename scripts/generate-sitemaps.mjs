@@ -91,7 +91,10 @@ function canonicalizePath(p) {
  * rewrites every `<loc>` to its canonical lowercase / no-trailing-slash
  * form so we never publish inconsistent URLs to Search Console.
  */
-function filterSitemapXml(xml, prerenderedPaths, stats) {
+function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
+  const { staticRoutes, dynamicPrefixes } = spaRoutes;
+  const allDynamicPrefixes = [...new Set([...dynamicPrefixes, ...STATIC_DYNAMIC_PREFIXES])];
+
   const before = (xml.match(/<url>/g) || []).length;
   let kept = 0;
   const droppedSamples = [];
@@ -114,9 +117,9 @@ function filterSitemapXml(xml, prerenderedPaths, stats) {
     }
     const norm = canonical.toLowerCase().replace(/\/$/, "") || "/";
     const hasPrerender = prerenderedPaths.has(norm);
-    const inAllowlist = RUNTIME_ALLOWLIST.has(norm);
-    const inDynamic = DYNAMIC_PREFIX_ALLOWLIST.some((pref) => norm.startsWith(pref));
-    if (hasPrerender || inAllowlist || inDynamic) {
+    const inStatic = staticRoutes.has(norm) || norm === "/";
+    const inDynamic = allDynamicPrefixes.some((pref) => norm.startsWith(pref) && norm.length > pref.length);
+    if (hasPrerender || inStatic || inDynamic) {
       kept++;
       // Rewrite <loc> to canonical form. Build absolute URL using the
       // original origin so we don't accidentally swap hosts.
@@ -130,7 +133,7 @@ function filterSitemapXml(xml, prerenderedPaths, stats) {
       const rewritten = block.replace(/<loc>\s*[^<\s]+\s*<\/loc>/, `<loc>${canonicalLoc}</loc>`);
       return rewritten;
     }
-    if (droppedSamples.length < 5) droppedSamples.push(`${loc} (no prerender)`);
+    if (droppedSamples.length < 5) droppedSamples.push(`${loc} (no prerender, no SPA route)`);
     return "";
   });
 
@@ -142,12 +145,12 @@ function filterSitemapXml(xml, prerenderedPaths, stats) {
   return filtered;
 }
 
-async function generateSitemapFile({ type, fileName }, prerenderedPaths, stats) {
+async function generateSitemapFile({ type, fileName }, prerenderedPaths, stats, spaRoutes) {
   const filePath = path.join(publicDir, fileName);
   try {
     let xml = await fetchSitemap(type);
     // Sitemap-index files are meta — don't filter URLs, they list other sitemaps.
-    if (type !== "index") xml = filterSitemapXml(xml, prerenderedPaths, stats);
+    if (type !== "index") xml = filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes);
     await writeFile(filePath, xml, "utf8");
     console.log(`[sitemap] generated ${fileName}`);
   } catch (error) {
