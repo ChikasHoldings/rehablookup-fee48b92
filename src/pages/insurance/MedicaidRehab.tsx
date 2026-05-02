@@ -4,7 +4,7 @@ import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
+import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 import {
   Shield,
   CheckCircle,
@@ -307,12 +307,7 @@ export default function MedicaidRehab() {
       </section>
 
       {/* Featured Centers accepting Medicaid */}
-      <FeaturedCentersSection 
-        title="Treatment Centers Accepting Medicaid"
-        description="Verified facilities that accept Medicaid coverage"
-        limit={8}
-        className="border-t border-border"
-      />
+      <InsuranceFacilitiesSection insurerSlug="medicaid" title="Treatment Centers Accepting Medicaid" limit={8} className="border-t border-border" />
 
       {/* FAQs */}
       <section className="py-10 md:py-14">

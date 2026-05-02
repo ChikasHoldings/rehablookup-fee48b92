@@ -4,7 +4,7 @@ import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
+import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 import {
   Shield,
   CheckCircle,
@@ -309,12 +309,7 @@ export default function KaiserRehab() {
       </section>
 
       {/* Featured Centers */}
-      <FeaturedCentersSection 
-        title="Treatment Centers Accepting Kaiser"
-        description="Verified facilities that work with Kaiser Permanente"
-        limit={8}
-        className="border-t border-border"
-      />
+      <InsuranceFacilitiesSection insurerSlug="kaiser" title="Treatment Centers Accepting Kaiser" limit={8} className="border-t border-border" />
 
       {/* FAQs */}
       <section className="py-10 md:py-14">

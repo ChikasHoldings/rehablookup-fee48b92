@@ -4,7 +4,7 @@ import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
+import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 import {
   Shield,
   CheckCircle,
@@ -326,12 +326,7 @@ export default function MedicareRehab() {
       </section>
 
       {/* Featured Centers accepting Medicare */}
-      <FeaturedCentersSection 
-        title="Treatment Centers Accepting Medicare"
-        description="Verified facilities that participate in Medicare"
-        limit={8}
-        className="border-t border-border"
-      />
+      <InsuranceFacilitiesSection insurerSlug="medicare" title="Treatment Centers Accepting Medicare" limit={8} className="border-t border-border" />
 
       {/* FAQs */}
       <section className="py-10 md:py-14">
