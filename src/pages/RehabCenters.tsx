@@ -809,16 +809,41 @@ const RehabCenters = () => {
                   </div>
                 )}
 
-                {/* Browse-by-state nudge */}
-                <div className="mt-6">
-                  <Link
-                    to="/locations"
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline underline-offset-4"
-                  >
-                    <MapPin className="h-4 w-4" />
-                    Browse centers by state
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
+                {/* Broaden by location — popular city hubs + all-states link.
+                    Helps users widen their search when filter combos return zero. */}
+                <div className="mt-7 text-left max-w-2xl mx-auto">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 text-center">
+                    Or broaden your search by location
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {[
+                      { label: "Los Angeles, CA", to: "/rehab-centers/california/los-angeles" },
+                      { label: "Houston, TX", to: "/rehab-centers/texas/houston" },
+                      { label: "Miami, FL", to: "/rehab-centers/florida/miami" },
+                      { label: "New York, NY", to: "/rehab-centers/new-york/new-york" },
+                      { label: "Phoenix, AZ", to: "/rehab-centers/arizona/phoenix" },
+                      { label: "Chicago, IL", to: "/rehab-centers/illinois/chicago" },
+                    ].map((c) => (
+                      <Link
+                        key={c.label}
+                        to={c.to}
+                        className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:border-primary/40 hover:text-primary transition-colors"
+                      >
+                        <MapPin className="h-3 w-3" aria-hidden="true" />
+                        {c.label}
+                      </Link>
+                    ))}
+                  </div>
+                  <div className="mt-3 text-center">
+                    <Link
+                      to="/locations"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline underline-offset-4"
+                    >
+                      <MapPin className="h-4 w-4" aria-hidden="true" />
+                      Browse all 50 states
+                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Link>
+                  </div>
                 </div>
               </div>
 
