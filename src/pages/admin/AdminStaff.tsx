@@ -68,6 +68,8 @@ import { CreateAdminUserDialog } from "@/components/admin/CreateAdminUserDialog"
 import { AdminUserPermissionsDialog } from "@/components/admin/AdminUserPermissionsDialog";
 import { AdminStaffDetailModal } from "@/components/admin/AdminStaffDetailModal";
 import { cn } from "@/lib/utils";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 const ROLE_ICONS: Record<AdminRoleType, React.ElementType> = {
   super_admin: ShieldAlert,
@@ -166,6 +168,14 @@ export default function AdminStaff() {
       return matchesSearch && matchesRole && matchesStatus;
     });
   }, [safeAdminUsers, searchQuery, filterRole, activeTab]);
+
+  const staffPagination = usePagination({
+    tableId: "admin-staff",
+    defaultPageSize: 25,
+    totalItems: filteredUsers.length,
+  });
+  const visibleUsers = staffPagination.paginate(filteredUsers);
+
 
   const getUserDisplayName = (user: AdminUser) => {
     if (user.display_name) return user.display_name;
@@ -552,11 +562,22 @@ export default function AdminStaff() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filteredUsers.map((user) => (
-            <UserCard key={user.user_id} user={user} />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {visibleUsers.map((user) => (
+              <UserCard key={user.user_id} user={user} />
+            ))}
+          </div>
+          <PaginationFooter
+            page={staffPagination.page}
+            pageSize={staffPagination.pageSize}
+            totalPages={staffPagination.totalPages}
+            totalItems={filteredUsers.length}
+            onPageChange={staffPagination.setPage}
+            onPageSizeChange={staffPagination.setPageSize}
+            itemLabel="staff member"
+          />
+        </>
       )}
 
       {/* Staff Detail Modal */}
