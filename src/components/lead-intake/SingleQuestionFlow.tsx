@@ -10,8 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { EmailInput } from "@/components/ui/email-input";
-import { isValidPhoneNumber } from "@/lib/phoneUtils";
-import { isValidEmail } from "@/lib/emailUtils";
+import { isValidPhoneNumber, validatePhoneNumber } from "@/lib/phoneUtils";
+import { isValidEmail, getEmailValidationError } from "@/lib/emailUtils";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { cn } from "@/lib/utils";
 import {
@@ -28,33 +28,46 @@ import {
 
 // Zod schema for the contact step. Mirrors UI rules + adds length caps to
 // prevent abuse and align with backend Zod validation in the edge function.
+const NAME_REGEX = /^[\p{L}\p{M}'’\-.\s]+$/u;
 const contactSchema = z.object({
   firstName: z
     .string()
     .trim()
-    .min(1, { message: "First name is required" })
+    .min(2, { message: "First name must be at least 2 characters" })
     .max(60, { message: "First name must be under 60 characters" })
-    .regex(/^[\p{L}\p{M}'’\-.\s]+$/u, { message: "First name contains invalid characters" }),
+    .regex(NAME_REGEX, { message: "First name contains invalid characters" }),
   lastName: z
     .string()
     .trim()
-    .min(1, { message: "Last name is required" })
+    .min(2, { message: "Last name must be at least 2 characters" })
     .max(60, { message: "Last name must be under 60 characters" })
-    .regex(/^[\p{L}\p{M}'’\-.\s]+$/u, { message: "Last name contains invalid characters" }),
+    .regex(NAME_REGEX, { message: "Last name contains invalid characters" }),
   phone: z
     .string()
     .trim()
+    .min(1, { message: "Phone number is required" })
     .max(32, { message: "Phone number is too long" })
-    .refine(isValidPhoneNumber, { message: "Valid phone number is required" }),
+    .refine(isValidPhoneNumber, { message: "Please enter a valid 10-digit US phone number" }),
   email: z
     .string()
     .trim()
+    .min(1, { message: "Email is required" })
     .max(254, { message: "Email is too long" })
-    .refine(isValidEmail, { message: "Valid email is required" }),
+    .refine(isValidEmail, { message: "Please enter a valid email address" }),
   consentToContact: z.literal(true, {
     errorMap: () => ({ message: "Please agree to be contacted to continue" }),
   }),
 });
+
+// Per-field validators used for inline `onBlur` errors before submission.
+function validateNameField(value: string, label: string): string | null {
+  const v = value.trim();
+  if (!v) return `${label} is required`;
+  if (v.length < 2) return `${label} must be at least 2 characters`;
+  if (v.length > 60) return `${label} must be under 60 characters`;
+  if (!NAME_REGEX.test(v)) return `${label} contains invalid characters`;
+  return null;
+}
 
 
 // Question types
@@ -544,10 +557,17 @@ export function SingleQuestionFlow({
                     updateFormData({ firstName: e.target.value });
                     setErrors(prev => ({ ...prev, firstName: "" }));
                   }}
+                  onBlur={(e) => {
+                    const msg = validateNameField(e.target.value, "First name");
+                    if (msg) setErrors(prev => ({ ...prev, firstName: msg }));
+                  }}
                   className={cn("h-11 sm:h-12 text-sm sm:text-base rounded-lg", errors.firstName && "border-destructive")}
                   autoComplete="given-name"
+                  aria-invalid={!!errors.firstName}
+                  aria-describedby={errors.firstName ? "firstName-error" : undefined}
+                  maxLength={60}
                 />
-                {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
+                {errors.firstName && <p id="firstName-error" className="text-xs text-destructive">{errors.firstName}</p>}
               </div>
               <div className="space-y-1.5 sm:space-y-2">
                 <Label className="text-xs sm:text-sm font-medium">Last Name *</Label>
@@ -558,10 +578,17 @@ export function SingleQuestionFlow({
                     updateFormData({ lastName: e.target.value });
                     setErrors(prev => ({ ...prev, lastName: "" }));
                   }}
+                  onBlur={(e) => {
+                    const msg = validateNameField(e.target.value, "Last name");
+                    if (msg) setErrors(prev => ({ ...prev, lastName: msg }));
+                  }}
                   className={cn("h-11 sm:h-12 text-sm sm:text-base rounded-lg", errors.lastName && "border-destructive")}
                   autoComplete="family-name"
+                  aria-invalid={!!errors.lastName}
+                  aria-describedby={errors.lastName ? "lastName-error" : undefined}
+                  maxLength={60}
                 />
-                {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
+                {errors.lastName && <p id="lastName-error" className="text-xs text-destructive">{errors.lastName}</p>}
               </div>
             </div>
             
@@ -573,9 +600,15 @@ export function SingleQuestionFlow({
                   updateFormData({ phone: value });
                   setErrors(prev => ({ ...prev, phone: "" }));
                 }}
+                onBlur={() => {
+                  const msg = validatePhoneNumber(formData.phone, true);
+                  if (msg) setErrors(prev => ({ ...prev, phone: msg }));
+                }}
                 className={cn("h-11 sm:h-12", errors.phone && "border-destructive")}
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? "phone-error" : undefined}
               />
-              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+              {errors.phone && <p id="phone-error" className="text-xs text-destructive">{errors.phone}</p>}
             </div>
             
             <div className="space-y-1.5 sm:space-y-2">
@@ -590,9 +623,15 @@ export function SingleQuestionFlow({
                     resetEmailVerification();
                   }
                 }}
+                onBlur={() => {
+                  const msg = getEmailValidationError(formData.email);
+                  if (msg) setErrors(prev => ({ ...prev, email: msg }));
+                }}
                 className={cn("h-11 sm:h-12", errors.email && "border-destructive")}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "email-error" : undefined}
               />
-              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+              {errors.email && <p id="email-error" className="text-xs text-destructive">{errors.email}</p>}
             </div>
             
             {/* Explicit consent — required before submit */}
