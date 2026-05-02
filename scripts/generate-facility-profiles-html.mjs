@@ -119,7 +119,6 @@ async function fetchFacilities() {
     `${PROJECT_URL}/rest/v1/facilities` +
     `?select=${encodeURIComponent(cols)}` +
     `&status=eq.approved` +
-    `&verified=eq.true` +
     `&slug=not.is.null` +
     `&order=updated_at.desc`;
 
