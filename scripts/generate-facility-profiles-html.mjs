@@ -22,7 +22,7 @@
  * Idempotent: safe to re-run; overwrites existing files.
  */
 
-import { writeFile, mkdir } from "node:fs/promises";
+import { writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -85,9 +85,14 @@ function locationSlug(s) {
 // ---------------------------------------------------------------------------
 
 /**
- * Pull every approved + verified facility with a slug. We select only the
- * columns we need to render the static SEO mirror — keeps payload small and
- * matches the no-`select(*)` core memory rule.
+ * Pull every approved facility with a slug. Filter MUST match the
+ * sitemap-facilities edge function (which only filters by `status=approved`)
+ * so every URL in sitemap-facilities.xml has a corresponding /center/<slug>.html
+ * mirror — otherwise the check:facility-sitemap-sync validator fails the
+ * build with "static HTML file has no sitemap entry" / vice-versa.
+ *
+ * We select only the columns we need to render the static SEO mirror — keeps
+ * payload small and matches the no-`select(*)` core memory rule.
  */
 async function fetchFacilities() {
   const cols = [
@@ -114,7 +119,6 @@ async function fetchFacilities() {
     `${PROJECT_URL}/rest/v1/facilities` +
     `?select=${encodeURIComponent(cols)}` +
     `&status=eq.approved` +
-    `&verified=eq.true` +
     `&slug=not.is.null` +
     `&order=updated_at.desc`;
 
@@ -464,7 +468,7 @@ ${faqHtml}
 // ---------------------------------------------------------------------------
 
 async function main() {
-  console.log("[facility-prerender] Fetching approved + verified facilities…");
+  console.log("[facility-prerender] Fetching approved facilities…");
   let facilities;
   try {
     facilities = await fetchFacilities();
@@ -485,6 +489,12 @@ async function main() {
 
   await mkdir(centerDir, { recursive: true });
 
+  // Track which slugs we're about to write so we can prune any stale .html
+  // files left over from a prior run (facility flipped to pending/rejected,
+  // slug renamed, etc.). Without this, an orphan file would surface as a
+  // hard error in `check:facility-sitemap-sync` ("static HTML file has no
+  // sitemap entry") and fail the SEO Validators CI job.
+  const liveSlugs = new Set();
   let written = 0;
   for (const f of facilities) {
     if (!f.slug || !f.name || !f.city || !f.state) {
@@ -494,11 +504,29 @@ async function main() {
     const html = renderFacilityHtml(f);
     const outFile = path.join(centerDir, `${f.slug}.html`);
     await writeFile(outFile, html, "utf8");
+    liveSlugs.add(f.slug);
     written++;
   }
 
+  // Prune stale mirrors so /public/center/*.html stays in lock-step with the
+  // approved-facility set returned by the sitemap edge function.
+  let pruned = 0;
+  try {
+    const existing = await readdir(centerDir);
+    for (const file of existing) {
+      if (!file.endsWith(".html")) continue;
+      const slug = file.replace(/\.html$/, "");
+      if (!liveSlugs.has(slug)) {
+        await unlink(path.join(centerDir, file));
+        pruned++;
+      }
+    }
+  } catch (err) {
+    console.warn(`[facility-prerender] Stale-file pruning skipped: ${err.message}`);
+  }
+
   console.log(
-    `[facility-prerender] Wrote ${written} facility profile(s) to public/center/*.html`,
+    `[facility-prerender] Wrote ${written} facility profile(s); pruned ${pruned} stale mirror(s).`,
   );
 }
 
