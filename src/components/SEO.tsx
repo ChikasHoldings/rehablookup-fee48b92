@@ -56,7 +56,8 @@ function normalizeCanonicalPath(input: string | undefined | null): string {
         host === "www.rehablookup.com" ||
         host.endsWith(".rehablookup.com") ||
         host.endsWith(".lovable.app") ||
-        host.endsWith(".lovable.dev");
+        host.endsWith(".lovable.dev") ||
+        host.endsWith(".vercel.app");
       path = isOurs ? u.pathname + u.search + u.hash : "/";
     } catch {
       return "/";
@@ -141,7 +142,8 @@ export function SEO({
           host === "www.rehablookup.com" ||
           host.endsWith(".rehablookup.com") ||
           host.endsWith(".lovable.app") ||
-          host.endsWith(".lovable.dev");
+          host.endsWith(".lovable.dev") ||
+          host.endsWith(".vercel.app");
         if (!isOurs) return null;
         return `${SITE_URL}${u.pathname.toLowerCase()}${u.search}`;
       } catch {
