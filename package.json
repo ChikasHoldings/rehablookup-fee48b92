@@ -12,6 +12,7 @@
     "generate:facility-profiles-html": "node scripts/generate-facility-profiles-html.mjs",
     "validate:seo-schema": "node scripts/validate-seo-schema.mjs",
     "validate:sitemap-robots": "node scripts/validate-sitemap-robots.mjs",
+    "check:sitemap-coverage": "node scripts/check-sitemap-coverage.mjs",
     "check:facility-sitemap-sync": "node scripts/check-facility-sitemap-sync.mjs",
     "check:gsc-indexing": "node scripts/check-gsc-indexing.mjs",
     "check:structured-data": "node scripts/check-structured-data.mjs",
