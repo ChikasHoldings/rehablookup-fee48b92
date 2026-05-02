@@ -225,6 +225,11 @@ export function SEOLandingTemplate({
               </Link>
             </Button>
           </div>
+
+          {/* Inline mini-intake (above-the-fold conversion surface) */}
+          <div className="mt-6 max-w-2xl">
+            <InlineMiniIntake source="seo_landing_hero" />
+          </div>
         </div>
       </section>
 
