@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import {
@@ -435,33 +435,17 @@ export default function AdminLeadUnlocks() {
           </div>
 
           {/* Pagination */}
-          {!isLoading && totalCount > PAGE_SIZE && (
-            <div className="flex items-center justify-between border-t px-4 py-3 text-sm">
-              <div className="text-muted-foreground">
-                Page {page + 1} of {totalPages} — {Number(totalCount).toLocaleString()} total
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                >
-                  <ChevronLeft className="mr-1 h-4 w-4" />
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={page + 1 >= totalPages}
-                >
-                  Next
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+          <div className="px-4 pb-2">
+            <PaginationFooter
+              page={pageOneBased}
+              pageSize={PAGE_SIZE}
+              totalPages={totalPages}
+              totalItems={Number(totalCount)}
+              onPageChange={setPageOneBased}
+              onPageSizeChange={setPageSize}
+              itemLabel="unlock"
+            />
+          </div>
         </CardContent>
       </Card>
     </div>
