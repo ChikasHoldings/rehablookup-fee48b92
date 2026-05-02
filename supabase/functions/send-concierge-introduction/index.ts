@@ -63,12 +63,18 @@ Deno.serve(async (req) => {
 
     // Authenticate caller - must be admin
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    if (!authHeader) {
+      logStep(requestId, "Unauthorized: missing Authorization header");
+      throw new ApiError("UNAUTHORIZED", "Missing Authorization header", 401);
+    }
 
     const anonClient = createClient(supabaseUrl, supabaseAnonKey);
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await anonClient.auth.getUser(token);
-    if (userError || !userData.user) throw new Error("Authentication failed");
+    if (userError || !userData.user) {
+      logStep(requestId, "Unauthorized: invalid token", { error: userError?.message });
+      throw new ApiError("UNAUTHORIZED", "Authentication failed", 401);
+    }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
