@@ -630,16 +630,7 @@ export default function ConciergeIntake() {
         if (!formData.timeline) errors.timeline = "Timeline is required";
         if (!formData.assessmentPreference) errors.assessmentPreference = "Assessment preference is required";
         break;
-      case 4: // Payment
-        if (!formData.paymentType) errors.paymentType = "Payment type is required";
-        if ((formData.paymentType === "insurance" || formData.paymentType === "both") && !formData.insuranceCarrier) {
-          errors.insuranceCarrier = "Insurance carrier is required";
-        }
-        if ((formData.paymentType === "self-pay" || formData.paymentType === "both") && !formData.budgetRange) {
-          errors.budgetRange = "Budget range is required";
-        }
-        break;
-      case 5: // Contact
+      case 4: // Contact
         if (!formData.firstName || formData.firstName.trim().length < 1) errors.firstName = "First name is required";
         if (formData.firstName && formData.firstName.length > 100) errors.firstName = "First name is too long";
         if (!formData.lastName || formData.lastName.trim().length < 1) errors.lastName = "Last name is required";
@@ -661,12 +652,12 @@ export default function ConciergeIntake() {
         }
         if (!formData.hipaaConsent) errors.hipaaConsent = "You must consent to continue";
         break;
-      case 6: // Email verification
+      case 5: // Email verification
         if (!emailVerification.verified) {
           errors.email = "Please verify your email to continue";
         }
         break;
-      case 7: // Phone verification
+      case 6: // Phone verification
         if (!phoneVerification.verified) {
           errors.phone = "Please verify your phone number to continue";
         }
