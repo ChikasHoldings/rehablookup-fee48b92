@@ -46,6 +46,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useProviderNotifications, ProviderNotification } from "@/hooks/useProviderNotifications";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 import { cn } from "@/lib/utils";
 
 const notificationTypeIcons: Record<string, React.ReactNode> = {
@@ -261,7 +263,14 @@ export default function ProviderNotificationsPage() {
     return tabMatch && typeMatch;
   });
 
-  const groupedNotifications = filteredNotifications.reduce((groups, notification) => {
+  const notifPagination = usePagination({
+    tableId: "provider-notifications",
+    defaultPageSize: 25,
+    totalItems: filteredNotifications.length,
+  });
+  const visibleNotifications = notifPagination.paginate(filteredNotifications);
+
+  const groupedNotifications = visibleNotifications.reduce((groups, notification) => {
     const date = format(new Date(notification.created_at), "yyyy-MM-dd");
     const today = format(new Date(), "yyyy-MM-dd");
     const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
