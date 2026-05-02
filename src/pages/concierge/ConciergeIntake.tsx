@@ -981,8 +981,8 @@ export default function ConciergeIntake() {
 
   // Determine if we can proceed from current step
   const canProceed = () => {
-    if (currentStep === 6) return emailVerification.verified;
-    if (currentStep === 7) return phoneVerification.verified;
+    if (currentStep === 5) return emailVerification.verified;
+    if (currentStep === 6) return phoneVerification.verified;
     return true;
   };
 
