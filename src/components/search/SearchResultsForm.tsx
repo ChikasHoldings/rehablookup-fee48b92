@@ -147,7 +147,7 @@ export function SearchResultsForm() {
         <div
           role="group"
           aria-label="Refine results"
-          className="grid grid-cols-1 sm:grid-cols-3 gap-2 lg:flex lg:items-center lg:gap-1.5 lg:flex-1"
+          className="w-full grid grid-cols-1 sm:grid-cols-3 gap-2 lg:flex lg:items-center lg:gap-1.5 lg:flex-1 lg:w-auto"
         >
           <Select
             value={distance || ANY_VALUE}
