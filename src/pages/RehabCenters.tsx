@@ -24,6 +24,9 @@ import {
   Users,
   Award,
   Filter,
+  Search,
+  Sparkles,
+  ArrowRight,
   X
 } from "lucide-react";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
