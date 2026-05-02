@@ -125,26 +125,52 @@ Deno.test("Edge: charge-placement-fee uses explicit isInternational flag", () =>
 });
 
 // ── 7. Global sweep — no stray $299 / 29900 references ─────────────────────
+async function* walk(dir: string): AsyncGenerator<string> {
+  for await (const entry of Deno.readDir(dir)) {
+    const path = `${dir}/${entry.name}`;
+    if (entry.isDirectory) {
+      if (
+        entry.name === "node_modules" ||
+        entry.name === "dist" ||
+        entry.name === ".git" ||
+        entry.name === ".lovable"
+      ) continue;
+      yield* walk(path);
+    } else if (entry.isFile) {
+      // Only scan source-y extensions
+      if (/\.(tsx?|jsx?|sql|md|json|html|css)$/i.test(entry.name)) {
+        yield path;
+      }
+    }
+  }
+}
+
 Deno.test("Sweep: no stray legacy $299 / 29900 cent references", async () => {
-  const cmd = new Deno.Command("rg", {
-    args: [
-      "-n",
-      "--glob", "!*.lock",
-      "--glob", "!node_modules",
-      "--glob", "!dist",
-      "--glob", "!**/_tests/fee-pricing-regression_test.ts",
-      "\\$299\\b|\\b29900\\b",
-      ROOT,
-    ],
-    stdout: "piped",
-    stderr: "piped",
-  });
-  const { stdout } = await cmd.output();
-  const out = new TextDecoder().decode(stdout).trim();
+  const SELF = "/_tests/fee-pricing-regression_test.ts";
+  const hits: string[] = [];
+  // Match \$299 or 29900 as standalone tokens (avoid e.g. 29900x or 1299900).
+  const pattern = /(?:\$299\b|(?<![\d])29900(?![\d]))/;
+
+  for await (const file of walk(ROOT.replace(/\/$/, ""))) {
+    if (file.endsWith(SELF)) continue;
+    let text: string;
+    try {
+      text = await Deno.readTextFile(file);
+    } catch {
+      continue;
+    }
+    const lines = text.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      if (pattern.test(lines[i])) {
+        hits.push(`${file}:${i + 1}: ${lines[i].trim()}`);
+      }
+    }
+  }
+
   assertEquals(
-    out,
-    "",
-    `Found stray legacy $299 / 29900 references:\n${out}`,
+    hits.length,
+    0,
+    `Found stray legacy $299 / 29900 references:\n${hits.join("\n")}`,
   );
 });
 
