@@ -114,7 +114,7 @@ export function SearchResultsForm() {
       {/* Unified pill container — visually anchors the whole search */}
       <div className="flex flex-col lg:flex-row lg:items-stretch gap-2 lg:gap-0 lg:rounded-full lg:border lg:border-border lg:bg-card lg:shadow-sm lg:p-1.5 lg:focus-within:ring-2 lg:focus-within:ring-primary/20 lg:focus-within:border-primary/40 transition-all">
         {/* PRIMARY: Location — prominent on desktop */}
-        <div className="relative flex-1 lg:min-w-0">
+        <div className="relative flex-1 lg:min-w-[280px] lg:max-w-[360px]">
           <label
             htmlFor="search-location"
             className="hidden lg:flex items-center gap-1.5 absolute left-5 top-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70 pointer-events-none"
@@ -148,7 +148,7 @@ export function SearchResultsForm() {
         <div
           role="group"
           aria-label="Refine results"
-          className="grid grid-cols-3 gap-2 lg:flex lg:items-center lg:gap-1 lg:flex-[1.6]"
+          className="grid grid-cols-3 gap-2 lg:flex lg:items-center lg:gap-1.5 lg:flex-1"
         >
           <Select
             value={distance || ANY_VALUE}
