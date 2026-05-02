@@ -780,8 +780,8 @@ export default function ConciergeIntake() {
         { step_number: currentStep, total_steps: TOTAL_STEPS },
       );
       if (currentStep < TOTAL_STEPS) {
-        // Auto-save draft to DB when leaving contact step (step 5)
-        if (currentStep === 5) {
+        // Auto-save draft to DB when leaving contact step (step 4)
+        if (currentStep === 4) {
           try {
             const { data: draftData } = await supabase.functions.invoke("save-placement-draft", {
               body: {
