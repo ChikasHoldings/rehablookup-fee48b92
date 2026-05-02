@@ -182,15 +182,26 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-// Analytics tracking helper
-// Analytics tracking (legacy - now silent)
+// Lead-form analytics → GA4 + Meta Pixel (no PII; only facility id + flags)
 const trackAnalyticsEvent = async (
   eventType: string,
   facilityId: string,
   metadata?: Record<string, unknown>
 ) => {
-  // Analytics function removed - was using deleted track-request-help edge function
-  console.debug("Lead form event:", eventType, facilityId);
+  try {
+    trackEvent(eventType, {
+      event_category: "LeadForm",
+      event_label: facilityId,
+      ...metadata,
+    });
+    (window as unknown as { fbq?: (...a: unknown[]) => void })?.fbq?.(
+      "trackCustom",
+      eventType,
+      { facility_id: facilityId },
+    );
+  } catch {
+    // best-effort
+  }
 };
 
 // Custom success component for modal context
