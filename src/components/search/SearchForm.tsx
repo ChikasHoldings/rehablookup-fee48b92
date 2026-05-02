@@ -106,15 +106,37 @@ export function SearchForm({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelectSuggestion = (suggestion: LocationSuggestion) => {
+  const handleSelectSuggestion = useCallback((suggestion: LocationSuggestion) => {
     setLocation(formatLocationSuggestion(suggestion));
     setShowSuggestions(false);
     setHighlightedIndex(-1);
-  };
+    // Don't keep stale ZIP data around after we accept a city/state.
+    resetZipLookup();
+  }, [resetZipLookup]);
+
+  const handleSelectZip = useCallback((zip: ResolvedZip) => {
+    setLocation(`${zip.city}, ${zip.stateAbbr}`);
+    setShowSuggestions(false);
+    setHighlightedIndex(-1);
+    resetZipLookup();
+  }, [resetZipLookup]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!showSuggestions || suggestions.length === 0) return;
+    if (!showSuggestions) return;
 
+    // Numeric ZIP path: Enter accepts the resolved row when available.
+    if (isZipcode) {
+      if (e.key === "Enter" && resolvedZip) {
+        e.preventDefault();
+        handleSelectZip(resolvedZip);
+      } else if (e.key === "Escape") {
+        setShowSuggestions(false);
+      }
+      return;
+    }
+
+    // City/state path
+    if (suggestions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setHighlightedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
