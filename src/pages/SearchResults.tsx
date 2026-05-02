@@ -1095,7 +1095,7 @@ const SearchResults = () => {
           <div className="flex gap-6 xl:gap-8">
             {/* Left Sidebar — Desktop Only */}
             <aside className="hidden lg:block w-[300px] xl:w-[340px] shrink-0">
-              <div className="sticky top-[124px] max-h-[calc(100vh-140px)] overflow-y-auto rounded-2xl border border-border bg-card shadow-sm p-5 xl:p-6 scrollbar-thin">
+              <div className="sticky top-[188px] max-h-[calc(100vh-200px)] overflow-y-auto rounded-2xl border border-border bg-card shadow-sm p-5 xl:p-6 scrollbar-thin">
                 {/* Sidebar Header */}
                 <div className="flex items-center gap-2 mb-5 pb-4 border-b border-border">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shrink-0">
