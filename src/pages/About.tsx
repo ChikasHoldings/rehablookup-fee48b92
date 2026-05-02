@@ -22,7 +22,7 @@ import aboutTeamImage from "@/assets/about-team.jpg";
 import aboutMissionImage from "@/assets/about-mission.jpg";
 import founderPortrait from "@/assets/team/founder-chiedu-kabakwu.webp";
 import medicalDirectorPortrait from "@/assets/team/medical-director-portrait.webp";
-import ctoPortrait from "@/assets/team/cto-portrait.jpg";
+import ctoPortrait from "@/assets/team/cto-portrait.webp";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 const values = [
