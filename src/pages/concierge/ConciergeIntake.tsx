@@ -209,7 +209,7 @@ const initialData: ConciergeIntakeData = {
   hipaaConsent: false,
 };
 
-// 8 steps: Who → Care → Logistics → Payment Info → Contact → Verify Email → Verify Phone → Review & Submit
+// 7 steps: Who → Care → Logistics → Contact → Verify Email → Verify Phone → Review & Submit
 const STEP_CONFIG = [
   { 
     title: "Who Needs Help", 
@@ -225,11 +225,6 @@ const STEP_CONFIG = [
     title: "Location & Preferences", 
     description: "Where and how you'd like to receive care",
     icon: "📍"
-  },
-  { 
-    title: "Payment & Insurance", 
-    description: "How treatment will be funded",
-    icon: "💳"
   },
   { 
     title: "Contact Information", 
