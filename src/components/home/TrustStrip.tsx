@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, Star, Users, Clock } from "lucide-react";
+import { ShieldCheck, Scale, Users, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -34,7 +35,13 @@ export function TrustStrip() {
   }, []);
 
   // Numbers we can stand behind even before inventory grows.
-  const items: { icon: typeof ShieldCheck; value: string; label: string }[] = [
+  const items: {
+    icon: typeof ShieldCheck;
+    value: string;
+    label: string;
+    href?: string;
+    ariaLabel?: string;
+  }[] = [
     {
       icon: ShieldCheck,
       value:
@@ -45,7 +52,13 @@ export function TrustStrip() {
     },
     { icon: Clock, value: "~60 min", label: "Average match time" },
     { icon: Users, value: "Free", label: "Confidential placement" },
-    { icon: Star, value: "5★", label: "Specialist-rated guidance" },
+    {
+      icon: Scale,
+      value: "Transparent",
+      label: "How we rank →",
+      href: "/rehab-score",
+      ariaLabel: "Learn how RehabLookup ranks treatment centers — Rehab Score methodology",
+    },
   ];
 
   return (
@@ -66,24 +79,42 @@ export function TrustStrip() {
           </h2>
         </header>
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-5xl mx-auto">
-          {items.map((item) => (
-            <div
-              key={item.label}
-              className="flex items-center gap-2.5 sm:gap-3 rounded-xl bg-background border border-border px-3 py-3 sm:px-4 sm:py-3.5"
-            >
-              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <item.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm sm:text-base md:text-lg font-bold text-foreground leading-tight">
-                  {item.value}
+          {items.map((item) => {
+            const inner = (
+              <>
+                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <item.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
-                <div className="text-[11px] sm:text-xs text-muted-foreground leading-snug">
-                  {item.label}
+                <div className="min-w-0">
+                  <div className="text-sm sm:text-base md:text-lg font-bold text-foreground leading-tight">
+                    {item.value}
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-muted-foreground leading-snug">
+                    {item.label}
+                  </div>
                 </div>
+              </>
+            );
+            const baseClass =
+              "flex items-center gap-2.5 sm:gap-3 rounded-xl bg-background border border-border px-3 py-3 sm:px-4 sm:py-3.5";
+            if (item.href) {
+              return (
+                <Link
+                  key={item.label}
+                  to={item.href}
+                  aria-label={item.ariaLabel ?? item.label}
+                  className={`${baseClass} hover:border-primary/40 hover:bg-primary/5 transition-colors`}
+                >
+                  {inner}
+                </Link>
+              );
+            }
+            return (
+              <div key={item.label} className={baseClass}>
+                {inner}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
