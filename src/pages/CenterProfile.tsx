@@ -602,8 +602,17 @@ const CenterProfile = () => {
   }
 
   // Only after a completed fetch do we render the not-found state, and only
-  // when the query truly returned no row (or hard-errored).
-  if (error || facility === null || facility === undefined) {
+  // when the query truly returned no row (or hard-errored). While a refetch
+  // is in flight without prior data, keep showing the skeleton.
+  if (!facility) {
+    if (isFetching && !isFetched) {
+      return (
+        <Layout>
+          <CenterProfileSkeleton />
+        </Layout>
+      );
+    }
+    if (error || isFetched) {
     return (
       <Layout>
         <SEO
