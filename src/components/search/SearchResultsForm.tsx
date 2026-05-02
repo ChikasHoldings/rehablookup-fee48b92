@@ -147,19 +147,19 @@ export function SearchResultsForm() {
         <div
           role="group"
           aria-label="Refine results"
-          className="w-full grid grid-cols-1 sm:grid-cols-3 gap-2 lg:flex lg:items-center lg:gap-1.5 lg:flex-1 lg:w-auto"
+          className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 lg:flex lg:items-center lg:gap-1.5 lg:flex-1 lg:w-auto"
         >
           <Select
             value={distance || ANY_VALUE}
             onValueChange={(v) => setDistance(v === ANY_VALUE ? "" : v)}
           >
             <SelectTrigger
-              className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
+              className="h-11 text-sm px-3 lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
               aria-label="Distance from location"
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <Navigation className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <span className="truncate">
+                <Navigation className="hidden md:block h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+                <span className="truncate text-left">
                   {distance
                     ? DISTANCE_OPTIONS.find((o) => o.value === distance)?.label ?? "Distance"
                     : "Distance"}
@@ -181,12 +181,12 @@ export function SearchResultsForm() {
             onValueChange={(v) => setTreatment(v === ANY_VALUE ? "" : v)}
           >
             <SelectTrigger
-              className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
+              className="h-11 text-sm px-3 lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
               aria-label="Treatment type"
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <span className="truncate">
+                <Building2 className="hidden md:block h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+                <span className="truncate text-left">
                   {treatment
                     ? TREATMENT_OPTIONS.find((o) => o.value === treatment)?.label ?? "Treatment"
                     : "Treatment"}
@@ -208,12 +208,12 @@ export function SearchResultsForm() {
             onValueChange={(v) => setInsurance(v === ANY_VALUE ? "" : v)}
           >
             <SelectTrigger
-              className="h-11 text-sm lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
+              className="h-11 text-sm px-3 sm:col-span-2 md:col-span-1 lg:h-10 lg:flex-1 lg:rounded-full lg:border-0 lg:bg-muted/50 hover:lg:bg-muted transition-colors"
               aria-label="Insurance (optional)"
             >
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <Shield className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                <span className="truncate">
+                <Shield className="hidden md:block h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+                <span className="truncate text-left">
                   {insurance
                     ? INSURANCE_OPTIONS.find((o) => o.value === insurance)?.label ?? "Insurance"
                     : "Insurance"}
