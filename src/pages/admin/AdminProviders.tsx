@@ -279,57 +279,6 @@ export default function AdminProviders() {
     refetchOnWindowFocus: true,
   });
 
-  // Fetch total count for current filter
-  const { data: totalCount } = useQuery({
-    queryKey: ["admin-providers-count", activeTab, searchQuery],
-    queryFn: async () => {
-      let query = supabase.from("facilities").select("id", { count: "exact", head: true });
-
-      if (activeTab === "approved") {
-        query = query.eq("status", "approved").neq("suspended", true);
-      } else if (activeTab === "pending") {
-        query = query.eq("status", "pending");
-      } else if (activeTab === "suspended") {
-        query = query.eq("suspended", true);
-      } else if (activeTab === "pro") {
-        const { data: proFacilities } = await supabase
-          .from("pro_subscriptions")
-          .select("facility_id")
-          .eq("status", "active");
-        const proIds = proFacilities?.map(p => p.facility_id) || [];
-        if (proIds.length === 0) return 0;
-        let proQuery = supabase.from("facilities").select("id", { count: "exact", head: true }).in("id", proIds);
-        if (searchQuery) {
-          const sanitized = searchQuery.replace(/[%_\\]/g, "");
-          if (sanitized) {
-            proQuery = proQuery.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
-          }
-        }
-        const { count: proCount } = await proQuery;
-        return proCount || 0;
-      } else if (activeTab === "placement") {
-        query = query.eq("concierge_network_opted_in", true);
-      }
-
-      if (searchQuery) {
-        const sanitized = searchQuery.replace(/[%_\\]/g, "");
-        if (sanitized) {
-          query = query.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
-        }
-      }
-
-      const { count, error } = await query;
-      if (error) throw error;
-      return count || 0;
-    },
-  });
-
-  const { page: currentPage, pageSize, totalPages, setPage: setCurrentPage, setPageSize } = usePagination({
-    tableId: "admin-providers",
-    defaultPageSize: 25,
-    totalItems: totalCount ?? 0,
-  });
-
   // Fetch lead counts for providers using count queries (no row fetching)
   const { data: leadCounts } = useQuery({
     queryKey: ["admin-provider-lead-counts", providers?.map((p) => p.id)],
