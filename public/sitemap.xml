@@ -187504,6 +187504,12 @@
     <priority>0.30</priority>
   </url>
   <url>
+    <loc>https://rehablookup.com/rehab-score</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.60</priority>
+  </url>
+  <url>
     <loc>https://rehablookup.com/medical-disclaimer</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>yearly</changefreq>

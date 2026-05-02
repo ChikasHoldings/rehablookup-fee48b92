@@ -46,6 +46,7 @@ const KEEP_ALLOWLIST = new Set([
   "/terms",
   "/terms-of-service",
   "/editorial-policy",
+  "/rehab-score",
   "/medical-disclaimer",
   "/accessibility",
 ]);
