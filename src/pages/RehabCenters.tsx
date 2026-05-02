@@ -5,6 +5,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO, generateDirectoryCollectionSchema } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { SearchForm } from "@/components/search/SearchForm";
+import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -24,6 +25,9 @@ import {
   Users,
   Award,
   Filter,
+  Search,
+  Sparkles,
+  ArrowRight,
   X
 } from "lucide-react";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
@@ -675,20 +679,131 @@ const RehabCenters = () => {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-10 text-center">
-              <p className="text-sm text-muted-foreground">
-                No centers match the current filters.
-              </p>
-              {browseHasFilter && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="mt-2"
-                  onClick={clearBrowseFilters}
-                >
-                  Clear filters
-                </Button>
-              )}
+            <div className="space-y-6">
+              {/* Friendly empty-state with actionable alternatives */}
+              <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/5 via-card to-card p-6 sm:p-8 text-center">
+                <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-primary/10 mb-4">
+                  <Search className="h-6 w-6 text-primary" aria-hidden="true" />
+                </div>
+                <h3 className="font-display text-xl md:text-2xl font-bold text-foreground">
+                  No centers match{" "}
+                  {browseTreatmentLabel && browseInsuranceLabel
+                    ? `${browseTreatmentLabel} + ${browseInsuranceLabel}`
+                    : browseTreatmentLabel || browseInsuranceLabel || "your filters"}{" "}
+                  yet
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
+                  This combination is rare in our verified directory. Try one of the
+                  options below — or let our placement team match you with vetted
+                  centers nationwide, free.
+                </p>
+
+                {/* Quick filter-relaxation chips */}
+                {browseHasFilter && (
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                    {browseTreatment && browseInsurance && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-9 gap-1.5"
+                          onClick={() => setBrowseParam("browseInsurance", "any")}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          Remove “{browseInsuranceLabel}”
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-9 gap-1.5"
+                          onClick={() => setBrowseParam("browseTreatment", "any")}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          Remove “{browseTreatmentLabel}”
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="h-9 gap-1.5"
+                      onClick={clearBrowseFilters}
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      See all verified centers
+                    </Button>
+                  </div>
+                )}
+
+                {/* Suggested alternative treatment filters */}
+                {browseTreatment && (
+                  <div className="mt-6 text-left max-w-2xl mx-auto">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                      Try a related treatment type
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {BROWSE_TREATMENTS
+                        .filter((t) => t.value !== browseTreatment)
+                        .slice(0, 5)
+                        .map((t) => (
+                          <Button
+                            key={t.value}
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => setBrowseParam("browseTreatment", t.value)}
+                          >
+                            {t.label}
+                          </Button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Suggested alternative insurance filters */}
+                {browseInsurance && (
+                  <div className="mt-5 text-left max-w-2xl mx-auto">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                      Try another insurance plan
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {BROWSE_INSURERS
+                        .filter((i) => i.value !== browseInsurance)
+                        .slice(0, 5)
+                        .map((i) => (
+                          <Button
+                            key={i.value}
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => setBrowseParam("browseInsurance", i.value)}
+                          >
+                            {i.label}
+                          </Button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Browse-by-state nudge */}
+                <div className="mt-6">
+                  <Link
+                    to="/locations"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline underline-offset-4"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Browse centers by state
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Concierge fallback (already wired with telemetry) */}
+              <NoResultsConciergeCTA
+                treatmentTypes={browseTreatment ? [browseTreatmentLabel || browseTreatment] : []}
+                insuranceTypes={browseInsurance ? [browseInsuranceLabel || browseInsurance] : []}
+                source="rehab_centers_directory"
+              />
             </div>
           )}
 
