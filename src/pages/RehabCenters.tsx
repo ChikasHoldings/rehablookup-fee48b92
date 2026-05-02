@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
@@ -15,11 +15,14 @@ import {
   Star,
   Shield,
   Clock,
+  ChevronLeft,
   ChevronRight,
   Building2,
   HelpCircle,
   Users,
-  Award
+  Award,
+  Filter,
+  X
 } from "lucide-react";
 import MedicalPatternBackground from "@/components/backgrounds/MedicalPatternBackground";
 import supportSpecialistImg from "@/assets/support-specialist.png";
@@ -30,12 +33,72 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   InternalLinkingSection, 
   nearMeLinks, 
   insuranceLinks, 
   resourceLinks 
 } from "@/components/seo/InternalLinkingSection";
+
+// Browse panel options — labels are user-facing, values feed URL params and
+// are matched (case-insensitive substring) against center.treatmentTypes
+// and center.insuranceAccepted. Keep the option set tight so the dropdowns
+// stay scannable; rare options live in the deeper /search-results filter.
+const BROWSE_TREATMENTS = [
+  { value: "detox", label: "Detox" },
+  { value: "inpatient", label: "Inpatient / Residential" },
+  { value: "outpatient", label: "Outpatient" },
+  { value: "iop", label: "Intensive Outpatient (IOP)" },
+  { value: "php", label: "Partial Hospitalization (PHP)" },
+  { value: "dual-diagnosis", label: "Dual Diagnosis" },
+  { value: "mental-health", label: "Mental Health" },
+  { value: "holistic", label: "Holistic Therapy" },
+] as const;
+
+const BROWSE_INSURERS = [
+  { value: "aetna", label: "Aetna" },
+  { value: "anthem", label: "Anthem" },
+  { value: "bcbs", label: "Blue Cross Blue Shield" },
+  { value: "cigna", label: "Cigna" },
+  { value: "humana", label: "Humana" },
+  { value: "kaiser", label: "Kaiser Permanente" },
+  { value: "united", label: "United Healthcare" },
+  { value: "medicare", label: "Medicare" },
+  { value: "medicaid", label: "Medicaid" },
+  { value: "tricare", label: "TRICARE" },
+] as const;
+
+// Match URL filter values against the free-text strings stored on each center.
+// We compare against label AND value so e.g. "bcbs" matches "Blue Cross Blue Shield".
+function matchesTreatment(center: any, value: string): boolean {
+  if (!value) return true;
+  const opt = BROWSE_TREATMENTS.find((o) => o.value === value);
+  const needles = [value, opt?.label].filter(Boolean).map((s) => String(s).toLowerCase());
+  return (center.treatmentTypes ?? []).some((t: string) => {
+    const lt = t.toLowerCase();
+    return needles.some((n) => lt.includes(n) || n.includes(lt));
+  });
+}
+
+function matchesInsurance(center: any, value: string): boolean {
+  if (!value) return true;
+  const opt = BROWSE_INSURERS.find((o) => o.value === value);
+  const needles = [value, opt?.label].filter(Boolean).map((s) => String(s).toLowerCase());
+  return (center.insuranceAccepted ?? []).some((i: string) => {
+    const li = i.toLowerCase();
+    return needles.some((n) => li.includes(n) || n.includes(li));
+  });
+}
+
+const BROWSE_PAGE_SIZE = 12;
+
 
 const RehabCenters = () => {
   const { data: approvedFacilities = [] } = useStaticFacilities();
@@ -75,6 +138,89 @@ const RehabCenters = () => {
 
   // Popular states for browse
   const popularStates = usStates.slice(0, 12);
+
+  // ── Browse-all panel: URL-driven, single-select dropdowns + numeric pages ──
+  // We use dedicated URL params (`browseTreatment`, `browseInsurance`,
+  // `browsePage`) so this panel's state never collides with the search
+  // form / /search-results query string and stays shareable on its own.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const browseTreatment = searchParams.get("browseTreatment") ?? "";
+  const browseInsurance = searchParams.get("browseInsurance") ?? "";
+  const browsePage = Math.max(1, parseInt(searchParams.get("browsePage") ?? "1", 10) || 1);
+
+  const browseFiltered = useMemo(() => {
+    return sorted.filter(
+      (c) => matchesTreatment(c, browseTreatment) && matchesInsurance(c, browseInsurance),
+    );
+  }, [sorted, browseTreatment, browseInsurance]);
+
+  const browseTotalPages = Math.max(1, Math.ceil(browseFiltered.length / BROWSE_PAGE_SIZE));
+  const browseSafePage = Math.min(browsePage, browseTotalPages);
+  const browsePaginated = useMemo(() => {
+    const start = (browseSafePage - 1) * BROWSE_PAGE_SIZE;
+    return browseFiltered.slice(start, start + BROWSE_PAGE_SIZE);
+  }, [browseFiltered, browseSafePage]);
+
+  // Anchor for scroll-on-paginate; lets the page jump back to the panel when
+  // users click a different page so they don't lose their place mid-results.
+  const browseAnchorRef = useRef<HTMLDivElement | null>(null);
+
+  const setBrowseParam = useCallback(
+    (key: "browseTreatment" | "browseInsurance", value: string) => {
+      const next = new URLSearchParams(searchParams);
+      if (value && value !== "any") next.set(key, value);
+      else next.delete(key);
+      next.delete("browsePage"); // reset to page 1 on filter change
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+
+  const setBrowsePage = useCallback(
+    (page: number) => {
+      const next = new URLSearchParams(searchParams);
+      if (page <= 1) next.delete("browsePage");
+      else next.set("browsePage", String(page));
+      setSearchParams(next, { replace: true });
+      // Defer scroll so DOM has rendered the new page before we move.
+      requestAnimationFrame(() => {
+        browseAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    },
+    [searchParams, setSearchParams],
+  );
+
+  const clearBrowseFilters = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("browseTreatment");
+    next.delete("browseInsurance");
+    next.delete("browsePage");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  // If the URL points to a page beyond the current filtered range (e.g. user
+  // narrowed filters via back-button), normalize it so the visible state and
+  // URL stay in sync without forcing a reload.
+  useEffect(() => {
+    if (browsePage > browseTotalPages && searchParams.get("browsePage")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("browsePage");
+      setSearchParams(next, { replace: true });
+    }
+  }, [browsePage, browseTotalPages, searchParams, setSearchParams]);
+
+  const browseHasFilter = Boolean(browseTreatment || browseInsurance);
+
+  // Sliding window of up to 5 numeric page buttons, mirroring the convention
+  // used on /search-results so users get a consistent pagination feel.
+  const browsePageNumbers = useMemo(() => {
+    const total = browseTotalPages;
+    const current = browseSafePage;
+    if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 3) return [1, 2, 3, 4, 5];
+    if (current >= total - 2) return [total - 4, total - 3, total - 2, total - 1, total];
+    return [current - 2, current - 1, current, current + 1, current + 2];
+  }, [browseTotalPages, browseSafePage]);
 
   const handleSearchComplete = () => {
     // Search form handles navigation
@@ -330,7 +476,184 @@ const RehabCenters = () => {
         </section>
       )}
 
-      {/* Browse by State */}
+      {/* Browse all centers — single-select filters + numeric pagination.
+          Lives between the curated rows and the State/FAQ blocks so users
+          who scroll past the highlights still get a tool to narrow the full
+          directory without leaving /rehab-centers. */}
+      <section
+        id="browse-all"
+        ref={browseAnchorRef}
+        className="bg-background border-t border-border py-10 md:py-14 scroll-mt-24"
+      >
+        <div className="container">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+            <div>
+              <h2 className="font-display text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
+                <Filter className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                Browse All Rehab Centers
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Narrow by treatment type or insurance — page through every verified facility.
+              </p>
+            </div>
+            <p
+              className="text-sm text-muted-foreground"
+              aria-live="polite"
+            >
+              {browseFiltered.length === 0 ? (
+                "No matches"
+              ) : (
+                <>
+                  Showing{" "}
+                  <span className="font-medium text-foreground">
+                    {(browseSafePage - 1) * BROWSE_PAGE_SIZE + 1}
+                    –
+                    {Math.min(browseSafePage * BROWSE_PAGE_SIZE, browseFiltered.length)}
+                  </span>{" "}
+                  of <span className="font-medium text-foreground">{browseFiltered.length}</span>
+                </>
+              )}
+            </p>
+          </div>
+
+          {/* Filter row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1fr_1fr_auto] gap-3 mb-6 p-4 rounded-xl border border-border bg-card">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" /> Treatment type
+              </label>
+              <Select
+                value={browseTreatment || "any"}
+                onValueChange={(v) => setBrowseParam("browseTreatment", v)}
+              >
+                <SelectTrigger className="w-full h-10 text-sm bg-background">
+                  <SelectValue placeholder="Any treatment type" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border shadow-lg max-h-72">
+                  <SelectItem value="any" className="text-sm">Any treatment type</SelectItem>
+                  {BROWSE_TREATMENTS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-sm">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5" /> Insurance
+              </label>
+              <Select
+                value={browseInsurance || "any"}
+                onValueChange={(v) => setBrowseParam("browseInsurance", v)}
+              >
+                <SelectTrigger className="w-full h-10 text-sm bg-background">
+                  <SelectValue placeholder="Any insurance" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border shadow-lg max-h-72">
+                  <SelectItem value="any" className="text-sm">Any insurance</SelectItem>
+                  {BROWSE_INSURERS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-sm">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-end">
+              {browseHasFilter ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-10 gap-2 w-full md:w-auto"
+                  onClick={clearBrowseFilters}
+                >
+                  <X className="h-4 w-4" /> Clear
+                </Button>
+              ) : (
+                <div className="hidden md:block h-10" aria-hidden="true" />
+              )}
+            </div>
+          </div>
+
+          {/* Results grid */}
+          {browsePaginated.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {browsePaginated.map((center) => (
+                <TreatmentCenterCard
+                  key={center.id}
+                  center={center}
+                  featured={center.featured}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-10 text-center">
+              <p className="text-sm text-muted-foreground">
+                No centers match the current filters.
+              </p>
+              {browseHasFilter && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="mt-2"
+                  onClick={clearBrowseFilters}
+                >
+                  Clear filters
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {browseTotalPages > 1 && (
+            <nav
+              className="mt-8 flex items-center justify-center gap-1"
+              aria-label="Browse results pagination"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => setBrowsePage(browseSafePage - 1)}
+                disabled={browseSafePage === 1}
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Prev</span>
+              </Button>
+              {browsePageNumbers.map((p) => (
+                <Button
+                  key={p}
+                  variant={p === browseSafePage ? "default" : "outline"}
+                  size="sm"
+                  className="min-w-9"
+                  onClick={() => setBrowsePage(p)}
+                  aria-label={`Page ${p}`}
+                  aria-current={p === browseSafePage ? "page" : undefined}
+                >
+                  {p}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => setBrowsePage(browseSafePage + 1)}
+                disabled={browseSafePage === browseTotalPages}
+                aria-label="Next page"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </nav>
+          )}
+        </div>
+      </section>
+
+
       <section className="bg-secondary/30 border-y border-border py-10 md:py-14">
         <div className="container">
           <div className="text-center mb-8">
