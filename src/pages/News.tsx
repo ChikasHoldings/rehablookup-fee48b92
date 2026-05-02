@@ -42,7 +42,7 @@ function NewsCard({ article, featured = false }: { article: NewsArticle; feature
 
   return (
     <Link
-      to={`/news/${article.slug}`}
+      to={`/resources/${article.slug}`}
       className={`group flex flex-col rounded-xl border border-border/50 bg-card overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 ${
         featured ? "md:flex-row" : ""
       }`}
