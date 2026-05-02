@@ -323,7 +323,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
                   )}
                   {(caseData.payment_status === "paid" || caseData.payment_status === "succeeded") && !caseData.refund_type && (
                     <Button size="sm" variant="outline" onClick={() => setActionDialog("refund")}>
-                      <CreditCard className="h-3.5 w-3.5 mr-1" /> Refund/Credit $299
+                      <CreditCard className="h-3.5 w-3.5 mr-1" /> Refund/Credit $99
                     </Button>
                   )}
                 </div>
@@ -609,7 +609,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
           <DialogHeader>
             <DialogTitle>Confirm Admission</DialogTitle>
             <DialogDescription>
-              This will mark the case as admitted, create a $4,500 facility invoice, and process the client's $299 fee.
+              This will mark the case as admitted, create a $4,500 facility invoice, and process the client's $99 fee.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -621,7 +621,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
             </div>
             
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Client Fee Resolution ($299)</Label>
+              <Label className="text-sm font-medium">Client Fee Resolution ($99)</Label>
               <div className="space-y-2">
                 <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
                   <input
@@ -633,7 +633,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
                     className="h-4 w-4 text-primary"
                   />
                   <div>
-                    <p className="font-medium text-sm">Refund $299</p>
+                    <p className="font-medium text-sm">Refund $99</p>
                     <p className="text-xs text-muted-foreground">Process refund to client's original payment method via Stripe</p>
                   </div>
                 </label>
@@ -647,7 +647,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
                     className="h-4 w-4 text-primary"
                   />
                   <div>
-                    <p className="font-medium text-sm">Credit $299</p>
+                    <p className="font-medium text-sm">Credit $99</p>
                     <p className="text-xs text-muted-foreground">Mark as credited for future services (no Stripe refund)</p>
                   </div>
                 </label>
@@ -677,7 +677,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
           <DialogHeader>
             <DialogTitle>Refund or Credit Client Fee</DialogTitle>
             <DialogDescription>
-              The client paid $299 for placement coordination.
+              The client paid $99 for placement coordination.
             </DialogDescription>
           </DialogHeader>
           <div>

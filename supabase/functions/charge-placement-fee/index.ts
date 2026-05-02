@@ -238,7 +238,8 @@ Deno.serve(async (req) => {
     const discountPercent = hasPro ? (proSub.unlock_discount_percent ?? platformProDiscount) : 0;
 
     // ── 4. Calculate fee ──
-    const isIntl = isInternational === true || (inquiry.payment_amount_cents && inquiry.payment_amount_cents >= 29900);
+    // Domestic is free ($0); any non-zero intake payment indicates an international case.
+    const isIntl = isInternational === true || (inquiry.payment_amount_cents && inquiry.payment_amount_cents > 0);
     const baseFee = isIntl ? internationalFee : domesticFee;
     const feeCents = hasPro ? Math.round(baseFee * (1 - discountPercent / 100)) : baseFee;
     const actualFeeType = isIntl ? 'international_flat_fee' : 'flat_fee';

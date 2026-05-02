@@ -93,7 +93,8 @@ export function AdminConfirmPlacement({ caseData, onRefresh }: AdminConfirmPlace
     enabled: !!selectedFacilityId,
   });
 
-  const isInternational = caseData.payment_amount_cents >= 29900;
+  // Domestic intake is free ($0); any non-zero intake payment indicates an international case.
+  const isInternational = (caseData.payment_amount_cents ?? 0) > 0;
   const baseFee = isInternational
     ? (feeConfig?.international ?? DEFAULT_INTERNATIONAL)
     : (feeConfig?.domestic ?? DEFAULT_DOMESTIC);

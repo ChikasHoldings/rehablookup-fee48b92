@@ -180,12 +180,12 @@ Deno.serve(async (req) => {
 
         logStep("Processing client fee resolution", { clientFeeResolution, paymentIntentId: caseData.stripe_payment_intent_id });
 
-        // Handle client $299 fee refund/credit
+        // Handle client placement fee refund/credit
         let refundId: string | null = null;
         const refundType = clientFeeResolution === "refund" ? "refunded" : "credited";
 
         if (clientFeeResolution === "refund" && caseData.stripe_payment_intent_id && caseData.payment_status === "paid") {
-          // Process Stripe refund for $299
+          // Process Stripe refund of the client's intake fee
           try {
             const refund = await stripe.refunds.create({
               payment_intent: caseData.stripe_payment_intent_id,

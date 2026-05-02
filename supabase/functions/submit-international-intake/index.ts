@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
         client_country: clientCountry,
         preferred_language: preferredLanguage,
         payment_status: "paid",
-        payment_amount_cents: 29900,
+        payment_amount_cents: 9900,
         stripe_checkout_session_id: sessionId,
         stripe_payment_intent_id: session.payment_intent as string,
         intake_data: intakeData || {},

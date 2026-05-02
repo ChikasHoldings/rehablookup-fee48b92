@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
         preferred_language: preferredLanguage,
         status: "draft",
         payment_status: "pending",
-        payment_amount_cents: 29900,
+        payment_amount_cents: 9900,
         intake_data: fullIntakeData,
         email_verified_at: validatedEmailVerifiedAt,
         form_completed_at: now,
