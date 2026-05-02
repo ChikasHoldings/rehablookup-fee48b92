@@ -60,6 +60,8 @@ import { RetentionDashboard } from "@/components/admin/RetentionDashboard";
 import { SubscriptionDetailModal } from "@/components/admin/SubscriptionDetailModal";
 import { PlanSettingsTab } from "@/components/admin/PlanSettingsTab";
 import { FeaturedPlacementTab } from "@/components/admin/FeaturedPlacementTab";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 
 type SubscriptionStats = {
   total_subscriptions: number;
@@ -198,8 +200,6 @@ export default function AdminSubscriptions() {
   const debouncedSearch = useDebounce(searchQuery, 350);
   const [planFilter, setPlanFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState<SortColumn>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [selectedSubscription, setSelectedSubscription] = useState<EnrichedSubscription | null>(null);
@@ -383,7 +383,11 @@ export default function AdminSubscriptions() {
   useEffect(() => { setCurrentPage(1); }, [debouncedSearch, planFilter, statusFilter]);
 
   /* ───── Pagination ───── */
-  const totalPages = Math.max(1, Math.ceil(sortedSubscriptions.length / itemsPerPage));
+  const { page: currentPage, pageSize: itemsPerPage, totalPages, setPage: setCurrentPage, setPageSize: setItemsPerPage } = usePagination({
+    tableId: "admin-subscriptions",
+    defaultPageSize: 10,
+    totalItems: sortedSubscriptions.length,
+  });
   const paginatedSubscriptions = sortedSubscriptions.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -743,32 +747,15 @@ export default function AdminSubscriptions() {
                   </TooltipProvider>
 
                   {/* Pagination */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground tabular-nums">
-                      <span>Showing</span>
-                      <Select value={itemsPerPage.toString()} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
-                        <SelectTrigger className="w-[70px] h-8"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="10">10</SelectItem>
-                          <SelectItem value="25">25</SelectItem>
-                          <SelectItem value="50">50</SelectItem>
-                          <SelectItem value="100">100</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <span>of {sortedSubscriptions.length} results</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
-                        <ChevronLeft className="h-4 w-4 mr-1" />Prev
-                      </Button>
-                      <span className="text-sm text-muted-foreground tabular-nums">
-                        {currentPage} / {totalPages}
-                      </span>
-                      <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
-                        Next<ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </div>
-                  </div>
+                  <PaginationFooter
+                    page={currentPage}
+                    pageSize={itemsPerPage}
+                    totalPages={totalPages}
+                    totalItems={sortedSubscriptions.length}
+                    onPageChange={setCurrentPage}
+                    onPageSizeChange={setItemsPerPage}
+                    itemLabel="subscription"
+                  />
                 </>
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
