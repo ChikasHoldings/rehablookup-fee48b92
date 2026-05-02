@@ -4,7 +4,7 @@ import { SEO, generateFAQSchema, generateLocalBusinessAggregateSchema } from "@/
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
+import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 import {
   Shield,
   CheckCircle,
@@ -271,12 +271,7 @@ export default function CignaRehab() {
       </section>
 
       {/* Featured Centers accepting Cigna */}
-      <FeaturedCentersSection 
-        title="Treatment Centers Accepting Cigna"
-        description="Verified facilities that work with Cigna insurance"
-        limit={8}
-        className="border-t border-border"
-      />
+      <InsuranceFacilitiesSection insurerSlug="cigna" title="Treatment Centers Accepting Cigna" limit={8} className="border-t border-border" />
 
       {/* FAQs */}
       <section className="border-t border-border bg-muted/30 py-10 md:py-14">

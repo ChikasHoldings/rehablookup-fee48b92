@@ -4,7 +4,7 @@ import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { FeaturedCentersSection } from "@/components/seo/FeaturedCentersSection";
+import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 import { InternalLinkingSection, treatmentTypeLinks, nearMeLinks, resourceLinks } from "@/components/seo/InternalLinkingSection";
 import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import { Shield, CheckCircle, ArrowRight, Phone, MapPin, FileText, Clock, DollarSign, Building2, Users, Stethoscope, Heart, AlertCircle } from "lucide-react";
@@ -60,7 +60,7 @@ export default function OscarRehab() {
 
       <section className="py-10 md:py-14"><div className="container"><div className="grid md:grid-cols-2 gap-8 items-center"><div><h2 className="font-display text-xl font-bold text-foreground md:text-2xl mb-4">Oscar Behavioral Health Benefits</h2><ul className="space-y-3">{["ACA-compliant essential health benefit coverage", "Dedicated care team for each member", "Easy-to-use app for benefits navigation", "Telehealth behavioral health sessions", "Free 24/7 doctor on call for guidance"].map((b, i) => (<li key={i} className="flex items-start gap-3"><CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" /><span className="text-muted-foreground">{b}</span></li>))}</ul></div><div className="bg-muted/50 rounded-xl p-6 border border-border"><div className="flex items-center gap-3 mb-4"><Phone className="h-6 w-6 text-primary" /><h3 className="font-semibold text-foreground">Oscar Care Team</h3></div><p className="text-muted-foreground text-sm mb-4">Oscar assigns a dedicated care team to help navigate your benefits.</p><div className="space-y-2 text-sm"><p className="flex items-center gap-2"><Clock className="h-4 w-4 text-muted-foreground" /><span>24/7 doctor on call</span></p><p className="flex items-center gap-2"><FileText className="h-4 w-4 text-muted-foreground" /><span>Use the Oscar app for quick access</span></p></div></div></div></div></section>
 
-      <FeaturedCentersSection title="Treatment Centers Accepting Oscar" description="Verified facilities that work with Oscar Health insurance" limit={8} className="border-t border-border" />
+      <InsuranceFacilitiesSection insurerSlug="oscar" title="Treatment Centers Accepting Oscar" limit={8} className="border-t border-border" />
 
       <section className="border-t border-border bg-muted/30 py-10 md:py-14"><div className="container"><div className="mb-8 text-center"><h2 className="font-display text-xl font-bold text-foreground md:text-2xl">Oscar Coverage Questions</h2></div><div className="mx-auto max-w-3xl space-y-4">{faqs.map((faq, i) => (<div key={i} className="rounded-xl border border-border bg-card p-5"><h3 className="font-semibold text-foreground mb-2">{faq.question}</h3><p className="text-sm text-muted-foreground">{faq.answer}</p></div>))}</div></div></section>
 
