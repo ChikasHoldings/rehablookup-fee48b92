@@ -38,6 +38,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ReviewDetailModal } from '@/components/admin/ReviewDetailModal';
+import { PaginationFooter } from '@/components/common/PaginationFooter';
+import { usePagination } from '@/hooks/usePagination';
 
 interface ReviewWithDetails {
   id: string;
