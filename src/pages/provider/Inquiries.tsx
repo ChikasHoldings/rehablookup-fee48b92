@@ -20,6 +20,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 import { InquiryListItem } from "@/components/provider/inquiries/InquiryListItem";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
+import { usePagination } from "@/hooks/usePagination";
 import { InquiryDetailPanel } from "@/components/provider/inquiries/InquiryDetailPanel";
 import { InquiriesStatsHeader } from "@/components/provider/inquiries/InquiriesStatsHeader";
 import type { InquiryType } from "@/components/provider/InquiryTypeBadge";
