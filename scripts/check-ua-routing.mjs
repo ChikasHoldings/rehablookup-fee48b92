@@ -81,6 +81,7 @@ for (const path of ROUTES) {
     assert(status === 200, `status ${status}`);
     assert(/<div\s+id=["']root["']/i.test(body), 'missing <div id="root">');
     assert(body.includes("G-2VB6C1X2MQ"), "missing GA4 tag G-2VB6C1X2MQ");
+    assert(/gtag\(\s*['"]config['"]\s*,\s*['"]G-2VB6C1X2MQ['"]/.test(body), "missing immediate GA4 config call");
     assert(/fbq\s*\(\s*['"]init['"]/.test(body), "missing Meta Pixel init");
     // The crawler stub has no <script type="module" src="/assets/...">.
     assert(/<script[^>]+src=["']\/assets\//i.test(body), "missing Vite bundle <script src>");
