@@ -2,9 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    
-    <!-- Google Analytics - deferred to improve FCP -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+
+    <!-- Google Analytics 4 — must load in <head> BEFORE the SPA bundle so the
+         page_view beacon is fired before React mounts and dynamic imports
+         saturate the network (Vercel cutover regression: GA POSTs were being
+         aborted with ERR_ABORTED when the snippet sat at end-of-body). -->
+    <script>
+      if (location.hostname === 'www.rehablookup.com') {
+        location.replace('https://rehablookup.com' + location.pathname + location.search + location.hash);
+      }
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', 'G-2VB6C1X2MQ', { send_page_view: true });
+    </script>
     
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
