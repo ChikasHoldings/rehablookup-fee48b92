@@ -187,8 +187,28 @@ export default function InternationalApplication() {
     }
   };
 
-  const handleNext = () => {
+  const trackIntlEvent = (
+    action: "continue" | "skip" | "submit_now" | "submit_final" | "back",
+    extra: Record<string, unknown> = {}
+  ) => {
+    try {
+      if (typeof window !== "undefined" && (window as any).gtag) {
+        (window as any).gtag("event", `intl_form_${action}`, {
+          event_category: "international_placement",
+          step: currentStep,
+          total_steps: TOTAL_STEPS,
+          optional_step: OPTIONAL_STEPS.has(currentStep),
+          ...extra,
+        });
+      }
+    } catch (e) {
+      // analytics must never break UX
+    }
+  };
+
+  const handleNext = (source: "continue" | "skip" = "continue") => {
     if (currentStep < TOTAL_STEPS && canProceed()) {
+      trackIntlEvent(source);
       setCurrentStep(currentStep + 1);
       scrollToTopSmooth();
     }
@@ -201,7 +221,8 @@ export default function InternationalApplication() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (source: "submit_now" | "submit_final" = "submit_final") => {
+    trackIntlEvent(source);
     setIsSubmitting(true);
     try {
       // Store intake data in localStorage for retrieval after payment
@@ -361,7 +382,7 @@ export default function InternationalApplication() {
           <StepReview
             data={data}
             isSubmitting={isSubmitting}
-            onSubmit={handleSubmit}
+            onSubmit={() => handleSubmit("submit_final")}
           />
         );
       default:
@@ -416,14 +437,14 @@ export default function InternationalApplication() {
                         {OPTIONAL_STEPS.has(currentStep) && (
                           <Button
                             variant="ghost"
-                            onClick={handleNext}
+                            onClick={() => handleNext("skip")}
                             className="h-10 md:h-12 px-3 md:px-4 text-muted-foreground"
                           >
                             Skip
                           </Button>
                         )}
                         <Button
-                          onClick={handleNext}
+                          onClick={() => handleNext("continue")}
                           disabled={!canProceed()}
                           className="h-10 md:h-12 px-5 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground"
                         >
@@ -436,7 +457,7 @@ export default function InternationalApplication() {
                       <div className="text-center pt-1">
                         <button
                           type="button"
-                          onClick={handleSubmit}
+                          onClick={() => handleSubmit("submit_now")}
                           disabled={isSubmitting}
                           className="text-xs md:text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors disabled:opacity-50"
                         >
