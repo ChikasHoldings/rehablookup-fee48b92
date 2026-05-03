@@ -436,14 +436,14 @@ export default function InternationalApplication() {
                         {OPTIONAL_STEPS.has(currentStep) && (
                           <Button
                             variant="ghost"
-                            onClick={handleNext}
+                            onClick={() => handleNext("skip")}
                             className="h-10 md:h-12 px-3 md:px-4 text-muted-foreground"
                           >
                             Skip
                           </Button>
                         )}
                         <Button
-                          onClick={handleNext}
+                          onClick={() => handleNext("continue")}
                           disabled={!canProceed()}
                           className="h-10 md:h-12 px-5 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground"
                         >
