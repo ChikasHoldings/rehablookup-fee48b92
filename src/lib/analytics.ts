@@ -78,11 +78,41 @@ export const analytics = {
   },
 
   // Search actions
-  search: (searchTerm: string, resultsCount?: number) => {
+  search: (
+    searchTerm: string,
+    resultsCount?: number,
+    extra?: { treatment?: string; insurance?: string; source?: string },
+  ) => {
     trackEvent('search', {
       event_category: 'Search',
       search_term: searchTerm,
       results_count: resultsCount,
+      treatment_filter: extra?.treatment || null,
+      insurance_filter: extra?.insurance || null,
+      search_source: extra?.source || null,
+    });
+  },
+
+  // Directory result-panel filter changes (treatment / insurance / page / clear)
+  directoryFilter: (
+    action: 'change' | 'clear' | 'relax' | 'paginate',
+    params: {
+      filter?: 'treatment' | 'insurance' | 'all';
+      value?: string;
+      page?: number;
+      results_count?: number;
+      source?: string;
+    },
+  ) => {
+    trackEvent('directory_filter', {
+      event_category: 'Search',
+      event_label: `${action}:${params.filter ?? 'page'}`,
+      filter_action: action,
+      filter_name: params.filter || null,
+      filter_value: params.value || null,
+      page: params.page ?? null,
+      results_count: params.results_count ?? null,
+      filter_source: params.source || 'rehab-centers',
     });
   },
 
