@@ -401,24 +401,49 @@ export default function InternationalApplication() {
 
                 {/* Navigation */}
                 {currentStep < TOTAL_STEPS && (
-                  <div className="px-3 md:px-10 py-3 md:py-6 border-t bg-muted/20 flex justify-between items-center gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={handleBack}
-                      disabled={currentStep === 1}
-                      className={`h-10 md:h-12 px-4 md:px-6 ${currentStep === 1 ? 'invisible' : ''}`}
-                    >
-                      <ArrowLeft className="mr-1.5 md:mr-2 h-4 w-4" />
-                      <span className="hidden sm:inline">Back</span>
-                    </Button>
-                    <Button
-                      onClick={handleNext}
-                      disabled={!canProceed()}
-                      className="h-10 md:h-12 px-5 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground"
-                    >
-                      Continue
-                      <ArrowRight className="ml-1.5 md:ml-2 h-4 w-4" />
-                    </Button>
+                  <div className="px-3 md:px-10 py-3 md:py-6 border-t bg-muted/20 space-y-3">
+                    <div className="flex justify-between items-center gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={handleBack}
+                        disabled={currentStep === 1}
+                        className={`h-10 md:h-12 px-4 md:px-6 ${currentStep === 1 ? 'invisible' : ''}`}
+                      >
+                        <ArrowLeft className="mr-1.5 md:mr-2 h-4 w-4" />
+                        <span className="hidden sm:inline">Back</span>
+                      </Button>
+                      <div className="flex items-center gap-2">
+                        {OPTIONAL_STEPS.has(currentStep) && (
+                          <Button
+                            variant="ghost"
+                            onClick={handleNext}
+                            className="h-10 md:h-12 px-3 md:px-4 text-muted-foreground"
+                          >
+                            Skip
+                          </Button>
+                        )}
+                        <Button
+                          onClick={handleNext}
+                          disabled={!canProceed()}
+                          className="h-10 md:h-12 px-5 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground"
+                        >
+                          Continue
+                          <ArrowRight className="ml-1.5 md:ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {currentStep >= MVP_SUBMIT_FROM_STEP && currentStep < TOTAL_STEPS && (
+                      <div className="text-center pt-1">
+                        <button
+                          type="button"
+                          onClick={handleSubmit}
+                          disabled={isSubmitting}
+                          className="text-xs md:text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors disabled:opacity-50"
+                        >
+                          {isSubmitting ? "Starting checkout…" : "Submit now & complete details with your advisor"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
