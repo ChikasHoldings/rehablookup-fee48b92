@@ -595,26 +595,21 @@
       document.getElementById('root').classList.add('js-loaded');
       document.getElementById('root').classList.remove('js-loading');
     </script>
-    <!-- Google Analytics - deferred until after page is interactive -->
+    <!-- Google Analytics -->
     <script>
-      // Defer GA loading until page is idle to improve TTI
-      function loadGoogleAnalytics() {
-        var script = document.createElement('script');
-        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ';
-        script.async = true;
-        document.head.appendChild(script);
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        window.gtag = gtag;
-        gtag('js', new Date());
-        gtag('config', 'G-2VB6C1X2MQ');
+      if (location.hostname === 'www.rehablookup.com') {
+        location.replace('https://rehablookup.com' + location.pathname + location.search + location.hash);
       }
-      // Load well after page becomes interactive to avoid impacting TTI
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(loadGoogleAnalytics, { timeout: 8000 });
-      } else {
-        setTimeout(loadGoogleAnalytics, 5000);
-      }
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', 'G-2VB6C1X2MQ', { send_page_view: true });
+
+      var gaScript = document.createElement('script');
+      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ';
+      gaScript.async = true;
+      document.head.appendChild(gaScript);
     </script>
     <!-- Prefetch likely next pages for instant navigation -->
     <link rel="prefetch" href="/rehab-centers" as="document" />
