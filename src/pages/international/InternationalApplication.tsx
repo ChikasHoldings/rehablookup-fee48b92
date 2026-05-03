@@ -187,8 +187,28 @@ export default function InternationalApplication() {
     }
   };
 
-  const handleNext = () => {
+  const trackIntlEvent = (
+    action: "continue" | "skip" | "submit_now" | "submit_final" | "back",
+    extra: Record<string, unknown> = {}
+  ) => {
+    try {
+      if (typeof window !== "undefined" && (window as any).gtag) {
+        (window as any).gtag("event", `intl_form_${action}`, {
+          event_category: "international_placement",
+          step: currentStep,
+          total_steps: TOTAL_STEPS,
+          optional_step: OPTIONAL_STEPS.has(currentStep),
+          ...extra,
+        });
+      }
+    } catch (e) {
+      // analytics must never break UX
+    }
+  };
+
+  const handleNext = (source: "continue" | "skip" = "continue") => {
     if (currentStep < TOTAL_STEPS && canProceed()) {
+      trackIntlEvent(source);
       setCurrentStep(currentStep + 1);
       scrollToTopSmooth();
     }
