@@ -153,29 +153,33 @@ export default function InternationalApplication() {
     }
   };
 
+  // Steps where user can fast-forward to checkout (everything beyond is optional follow-up)
+  const MVP_SUBMIT_FROM_STEP = 5; // After Location, all remaining steps are optional
+
+  // Optional steps — user can skip without filling
+  const OPTIONAL_STEPS = new Set([4, 6, 7, 8, 10]); // Phone, Patient, LoC, Clinical, Amenities
+
   // Step validation
   const canProceed = () => {
     switch (currentStep) {
-      case 1: // Contact (name)
+      case 1: // Contact (name) — REQUIRED
         return data.first_name.trim() && data.last_name.trim();
-      case 2: // Email
+      case 2: // Email — REQUIRED
         return data.email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
-      case 3: // Email Verification (NEW)
+      case 3: // Email Verification — REQUIRED
         return emailVerification.verified;
-      case 4: // Phone
-        return true; // Optional
-      case 5: // Location
-        return data.country && data.preferred_language;
-      case 6: // Patient
-        return data.seeking_for && data.age_range && data.gender;
-      case 7: // Level of Care
-        return data.level_of_care;
-      case 8: // Clinical
-        return data.primary_concern;
-      case 9: // Preferences
-        return data.budget_range && data.rehab_style;
-      case 10: // Amenities
-        return true; // Optional
+      case 4: // Phone — OPTIONAL
+        return true;
+      case 5: // Location — REQUIRED (country only; language defaults to English)
+        return !!data.country;
+      case 6: // Patient — OPTIONAL (advisor will follow up)
+      case 7: // Level of Care — OPTIONAL
+      case 8: // Clinical — OPTIONAL
+        return true;
+      case 9: // Preferences — OPTIONAL (budget helps matching but not required)
+        return true;
+      case 10: // Amenities — OPTIONAL
+        return true;
       case 11: // Review
         return true;
       default:
@@ -397,24 +401,49 @@ export default function InternationalApplication() {
 
                 {/* Navigation */}
                 {currentStep < TOTAL_STEPS && (
-                  <div className="px-3 md:px-10 py-3 md:py-6 border-t bg-muted/20 flex justify-between items-center gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={handleBack}
-                      disabled={currentStep === 1}
-                      className={`h-10 md:h-12 px-4 md:px-6 ${currentStep === 1 ? 'invisible' : ''}`}
-                    >
-                      <ArrowLeft className="mr-1.5 md:mr-2 h-4 w-4" />
-                      <span className="hidden sm:inline">Back</span>
-                    </Button>
-                    <Button
-                      onClick={handleNext}
-                      disabled={!canProceed()}
-                      className="h-10 md:h-12 px-5 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground"
-                    >
-                      Continue
-                      <ArrowRight className="ml-1.5 md:ml-2 h-4 w-4" />
-                    </Button>
+                  <div className="px-3 md:px-10 py-3 md:py-6 border-t bg-muted/20 space-y-3">
+                    <div className="flex justify-between items-center gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={handleBack}
+                        disabled={currentStep === 1}
+                        className={`h-10 md:h-12 px-4 md:px-6 ${currentStep === 1 ? 'invisible' : ''}`}
+                      >
+                        <ArrowLeft className="mr-1.5 md:mr-2 h-4 w-4" />
+                        <span className="hidden sm:inline">Back</span>
+                      </Button>
+                      <div className="flex items-center gap-2">
+                        {OPTIONAL_STEPS.has(currentStep) && (
+                          <Button
+                            variant="ghost"
+                            onClick={handleNext}
+                            className="h-10 md:h-12 px-3 md:px-4 text-muted-foreground"
+                          >
+                            Skip
+                          </Button>
+                        )}
+                        <Button
+                          onClick={handleNext}
+                          disabled={!canProceed()}
+                          className="h-10 md:h-12 px-5 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground"
+                        >
+                          Continue
+                          <ArrowRight className="ml-1.5 md:ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {currentStep >= MVP_SUBMIT_FROM_STEP && currentStep < TOTAL_STEPS && (
+                      <div className="text-center pt-1">
+                        <button
+                          type="button"
+                          onClick={handleSubmit}
+                          disabled={isSubmitting}
+                          className="text-xs md:text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors disabled:opacity-50"
+                        >
+                          {isSubmitting ? "Starting checkout…" : "Submit now & complete details with your advisor"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
