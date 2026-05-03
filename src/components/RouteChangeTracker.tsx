@@ -19,15 +19,29 @@ export function RouteChangeTracker() {
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.gtag) return;
+    const path = location.pathname + location.search + location.hash;
+    const debug =
+      typeof window !== "undefined" &&
+      (window.location.search.includes("gtm_debug") ||
+        window.location.hash.includes("gtm_debug"));
+
     // Skip first mount — gtag('config') in index.html already sent page_view.
     if (isFirst.current) {
       isFirst.current = false;
+      if (debug) {
+        // eslint-disable-next-line no-console
+        console.info("[GA4] initial page_view (from index.html):", path);
+      }
       return;
     }
     window.gtag("config", "G-2VB6C1X2MQ", {
-      page_path: location.pathname + location.search + location.hash,
+      page_path: path,
       page_title: document.title,
     });
+    if (debug) {
+      // eslint-disable-next-line no-console
+      console.info("[GA4] SPA page_view sent:", path, "| title:", document.title);
+    }
   }, [location.pathname, location.search, location.hash]);
 
   return null;
