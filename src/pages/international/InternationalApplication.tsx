@@ -382,7 +382,7 @@ export default function InternationalApplication() {
           <StepReview
             data={data}
             isSubmitting={isSubmitting}
-            onSubmit={handleSubmit}
+            onSubmit={() => handleSubmit("submit_final")}
           />
         );
       default:
