@@ -967,7 +967,7 @@ const CenterProfile = () => {
               <Button 
                 size="lg" 
                 className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold shadow-sm"
-                onClick={() => setRequestModalOpen(true)}
+                onClick={() => handleRequestInfoOpen("hero_request_call")}
               >
                 <Phone className="h-4 w-4 shrink-0" />
                 <span className="truncate">Request Call</span>
@@ -976,7 +976,7 @@ const CenterProfile = () => {
                 variant="outline" 
                 size="lg"
                 className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold"
-                onClick={() => setRequestModalOpen(true)}
+                onClick={() => handleRequestInfoOpen("hero_request_info")}
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
                 <span className="truncate">Request Info</span>
@@ -1362,7 +1362,7 @@ const CenterProfile = () => {
                     <Button 
                       size="lg" 
                       className="w-full gap-2 h-11 text-sm font-semibold"
-                      onClick={() => setRequestModalOpen(true)}
+                      onClick={() => handleRequestInfoOpen("sidebar_request_info")}
                     >
                       <Sparkles className="h-4 w-4" />
                       Request Info
@@ -1447,7 +1447,7 @@ const CenterProfile = () => {
                 <Button 
                   size="lg" 
                   className="w-full gap-2 h-11 text-sm font-semibold"
-                  onClick={() => setRequestModalOpen(true)}
+                  onClick={() => handleRequestInfoOpen("sidebar_get_started")}
                 >
                   <Sparkles className="h-4 w-4" />
                   Get Started
