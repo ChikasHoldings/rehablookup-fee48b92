@@ -1,26 +1,23 @@
 // Vercel Edge Middleware (Vite / non-Next project)
 //
-// PURPOSE: With `cleanUrls: true`, Vercel maps every clean URL
-// (e.g. `/rehab-centers/california`) to the prerendered
-// `/rehab-centers/california.html`. Those prerendered files are crawler-only
-// stubs — no Google Analytics, no Meta Pixel, no React app. After the DNS
-// cutover real users started landing on those stubs, no `page_view` ever
-// fired, and GA traffic appeared to crater.
+// MIGRATION ROUTING FIX (May 2026):
+// On the Lovable→Vercel cutover, ~28k SPA-only sitemap URLs returned 404 to
+// Googlebot. Root cause: `cleanUrls: true` makes Vercel look up `<path>.html`
+// for every clean URL. When middleware returned `next()` for crawlers and no
+// prerender file existed, Vercel served a 404 instead of falling through to
+// the SPA rewrite. This collapsed indexed traffic.
 //
-// Fix: detect known SEO / social crawlers and let them keep the prerendered
-// HTML (good for SEO). Rewrite every other request to `/index.html` so the
-// real React SPA renders, GA `gtag()` / Meta Pixel `fbq()` fire on every
-// page view, and analytics traffic returns to normal.
+// Fix: import `prerender-manifest.json` (built from /public on every deploy).
+//   * Crawler + prerender exists → next()  → Vercel serves the .html file.
+//   * Crawler + no prerender    → rewrite("/")  → SPA shell renders, React
+//                                                + react-helmet-async emits
+//                                                proper title/meta/canonical.
+//   * Real user                 → rewrite("/")  → SPA shell so GA/Pixel fire.
 //
-// Notes:
-//   * Static assets, sitemap, robots, /api/*, /_vercel/* are excluded by the
-//     matcher and never enter this function.
-//   * `/` is left alone because Vercel already serves /index.html for the apex.
-//   * Crawlers fall through unchanged → vercel.json `cleanUrls` continues to
-//     deliver the prerendered `<path>.html` (or the SPA shell if the file
-//     doesn't exist).
+// Result: every public route returns 200 to Googlebot with crawlable HTML.
 
 import { rewrite, next } from "@vercel/edge";
+import manifest from "./public/prerender-manifest.json" with { type: "json" };
 
 export const config = {
   matcher: [
@@ -29,34 +26,32 @@ export const config = {
   ],
 };
 
+const PRERENDERED = new Set(manifest);
+
 const CRAWLER_UA =
   /(googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp|applebot|petalbot|sogou|exabot|facebot|facebookexternalhit|twitterbot|linkedinbot|pinterestbot|slackbot|telegrambot|whatsapp|discordbot|embedly|quora link preview|redditbot|tumblr|vkshare|w3c_validator|ahrefsbot|semrushbot|mj12bot|dotbot|rogerbot|screaming frog|gptbot|chatgpt-user|oai-searchbot|claudebot|perplexitybot|google-inspectiontool|adsbot-google|mediapartners-google|bytespider|googleother)/i;
 
 export default function middleware(request: Request) {
   const ua = request.headers.get("user-agent") || "";
   const url = new URL(request.url);
+  const pathname = url.pathname;
 
-  // Canonical host enforcement is handled by vercel.json `redirects` (301
-  // www.rehablookup.com → rehablookup.com). We intentionally do NOT redirect
-  // here — server-side 301 in vercel.json is the single source of truth and
-  // a JS-level redirect would break GA referrer attribution and add latency.
+  // Apex always serves the SPA shell directly.
+  if (pathname === "/") return next();
 
-  // Crawlers → keep the prerendered HTML (SEO).
-  if (CRAWLER_UA.test(ua)) {
-    return next();
+  const isCrawler = CRAWLER_UA.test(ua);
+
+  if (isCrawler) {
+    // Bot + prerendered file exists → let Vercel serve <path>.html.
+    if (PRERENDERED.has(pathname)) return next();
+    // Bot + no prerender → rewrite to SPA shell so React renders correct
+    // title/meta/canonical instead of returning 404.
+    const target = new URL("/", url);
+    target.search = url.search;
+    return rewrite(target);
   }
 
-  // Apex already serves the SPA shell.
-  if (url.pathname === "/") {
-    return next();
-  }
-
-  // Real users → rewrite to the SPA shell so React + GA/Pixel load.
-  // We rewrite to "/" (NOT "/index.html") because `cleanUrls: true` in
-  // vercel.json 308-redirects /index.html → /, which breaks an internal
-  // rewrite and produces NOT_FOUND. Rewriting to "/" serves the SPA shell
-  // while the browser URL stays on the original deep link, so React Router
-  // can take over and render the correct page.
+  // Real users → SPA shell so GA/Pixel always fire on every route.
   const target = new URL("/", url);
   target.search = url.search;
   return rewrite(target);
