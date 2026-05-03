@@ -6,6 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { RouteChangeTracker } from "@/components/RouteChangeTracker";
 import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
 import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
@@ -523,6 +524,7 @@ const AppInner = () => {
             <SafeBrowserRouter>
               <NavigationProvider>
                 <ScrollToTop />
+        <RouteChangeTracker />
         <CookieConsentBanner />
         <Suspense fallback={null}>
           <TrailingSlashRedirect>
