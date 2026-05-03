@@ -17,7 +17,7 @@
 // Result: every public route returns 200 to Googlebot with crawlable HTML.
 
 import { rewrite, next } from "@vercel/edge";
-import manifest from "./public/prerender-manifest.json" with { type: "json" };
+import { PRERENDERED_PATHS } from "./prerender-manifest";
 
 export const config = {
   matcher: [
@@ -26,7 +26,7 @@ export const config = {
   ],
 };
 
-const PRERENDERED = new Set(manifest);
+const PRERENDERED = new Set(PRERENDERED_PATHS);
 
 const CRAWLER_UA =
   /(googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp|applebot|petalbot|sogou|exabot|facebot|facebookexternalhit|twitterbot|linkedinbot|pinterestbot|slackbot|telegrambot|whatsapp|discordbot|embedly|quora link preview|redditbot|tumblr|vkshare|w3c_validator|ahrefsbot|semrushbot|mj12bot|dotbot|rogerbot|screaming frog|gptbot|chatgpt-user|oai-searchbot|claudebot|perplexitybot|google-inspectiontool|adsbot-google|mediapartners-google|bytespider|googleother)/i;
