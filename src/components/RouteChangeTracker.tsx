@@ -40,7 +40,14 @@ export function RouteChangeTracker() {
     // and canonical before we capture them. Falls back to setTimeout for SSR.
     const send = () => {
       if (!window.gtag) return;
-      const pageLocation = window.location.href;
+      // Prefer <link rel="canonical"> href so GA4 page_location always
+      // matches what Google indexes — strips utm/query, enforces lowercase,
+      // and pins to the production host. Falls back to window.location.href
+      // when the page hasn't set a canonical yet.
+      const canonicalEl = document.querySelector(
+        'link[rel="canonical"]',
+      ) as HTMLLinkElement | null;
+      const pageLocation = canonicalEl?.href || window.location.href;
       const pageReferrer = lastUrlRef.current || document.referrer || "";
       const pageTitle = document.title;
 
