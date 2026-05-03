@@ -14,6 +14,10 @@ interface ResponsiveListingGridProps {
   conciergeTreatment?: string;
   conciergeInsurance?: string;
   conciergeSource?: string;
+  /** When `facilities` is empty, render these as "nearby suggestions" instead of a blank state. */
+  nearbyFacilities?: any[];
+  /** Label shown above nearby fallback (e.g. "Centers in nearby cities"). */
+  nearbyLabel?: string;
 }
 
 export function ResponsiveListingGrid({
@@ -23,6 +27,8 @@ export function ResponsiveListingGrid({
   conciergeTreatment,
   conciergeInsurance,
   conciergeSource = "responsive_listing_grid_empty",
+  nearbyFacilities,
+  nearbyLabel = "Centers in nearby areas",
 }: ResponsiveListingGridProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
