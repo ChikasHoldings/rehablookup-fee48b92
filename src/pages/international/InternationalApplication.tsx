@@ -457,7 +457,7 @@ export default function InternationalApplication() {
                       <div className="text-center pt-1">
                         <button
                           type="button"
-                          onClick={handleSubmit}
+                          onClick={() => handleSubmit("submit_now")}
                           disabled={isSubmitting}
                           className="text-xs md:text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors disabled:opacity-50"
                         >
