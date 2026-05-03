@@ -72,6 +72,21 @@ async function check(name, fn) {
 
 console.log(`\nUA routing smoke — host: ${HOST}\n`);
 
+if (new URL(HOST).hostname === "rehablookup.com") {
+  await check("www.rehablookup.com → rehablookup.com 301", async () => {
+    const r = await fetch("https://www.rehablookup.com/rehab-centers/california", {
+      redirect: "manual",
+      headers: { "User-Agent": BROWSER_UA, Accept: "text/html,*/*" },
+    });
+    assert([301, 308].includes(r.status), `status ${r.status}`);
+    const location = r.headers.get("location") || "";
+    assert(
+      location === "https://rehablookup.com/rehab-centers/california",
+      `location ${location}`,
+    );
+  });
+}
+
 for (const path of ROUTES) {
   const url = `${HOST}${path}`;
 
