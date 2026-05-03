@@ -16,6 +16,7 @@ import path from "node:path";
 const ROOT = process.cwd();
 const PUBLIC_DIR = path.join(ROOT, "public");
 const OUT = path.join(PUBLIC_DIR, "prerender-manifest.json");
+const TS_OUT = path.join(ROOT, "prerender-manifest.ts");
 
 const paths = new Set();
 
