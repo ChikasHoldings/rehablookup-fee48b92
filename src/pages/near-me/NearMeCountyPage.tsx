@@ -211,6 +211,16 @@ export default function NearMeCountyPage() {
             <SearchResultsLoading />
           ) : facilities.length > 0 ? (
             <ResponsiveListingGrid facilities={facilities} maxItems={12} />
+          ) : nearbyFacilities.length > 0 ? (
+            <ResponsiveListingGrid
+              facilities={[]}
+              nearbyFacilities={nearbyFacilities}
+              nearbyLabel={`Centers in nearby ${stateInfo.name} counties`}
+              maxItems={12}
+              conciergeLocation={`${countyName}, ${stateInfo.abbreviation}`}
+              conciergeTreatment={nearMeType.treatmentType}
+              conciergeSource="near_me_county_nearby_fallback"
+            />
           ) : (
             <div className="text-center py-12 bg-muted/30 rounded-lg">
               <MapPin className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
