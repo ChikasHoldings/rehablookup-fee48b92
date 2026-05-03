@@ -35,6 +35,13 @@ export default function middleware(request: Request) {
   const ua = request.headers.get("user-agent") || "";
   const url = new URL(request.url);
 
+  // Canonical host: keep all users and analytics on rehablookup.com.
+  // Middleware runs before vercel.json redirects, so enforce this here too.
+  if (url.hostname === "www.rehablookup.com") {
+    url.hostname = "rehablookup.com";
+    return Response.redirect(url, 301);
+  }
+
   // Crawlers → keep the prerendered HTML (SEO).
   if (CRAWLER_UA.test(ua)) {
     return next();
