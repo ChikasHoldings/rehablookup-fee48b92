@@ -11,6 +11,7 @@ import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { usStates } from "@/data/usStates";
+import { analytics } from "@/lib/analytics";
 import { 
   Heart, 
   MapPin, 
