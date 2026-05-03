@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 
 /**
@@ -15,9 +15,15 @@ import { useLocation } from "react-router-dom";
  */
 export function RouteChangeTracker() {
   const location = useLocation();
+  const isFirst = useRef(true);
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.gtag) return;
+    // Skip first mount — gtag('config') in index.html already sent page_view.
+    if (isFirst.current) {
+      isFirst.current = false;
+      return;
+    }
     const url = location.pathname + location.search + location.hash;
     window.gtag("event", "page_view", {
       page_path: url,
