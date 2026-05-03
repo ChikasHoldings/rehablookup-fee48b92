@@ -611,22 +611,8 @@
       document.getElementById('root').classList.add('js-loaded');
       document.getElementById('root').classList.remove('js-loading');
     </script>
-    <!-- Google Analytics -->
-    <script>
-      if (location.hostname === 'www.rehablookup.com') {
-        location.replace('https://rehablookup.com' + location.pathname + location.search + location.hash);
-      }
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      window.gtag = gtag;
-      gtag('js', new Date());
-      gtag('config', 'G-2VB6C1X2MQ', { send_page_view: true });
+    <!-- GA4 already loaded in <head> -->
 
-      var gaScript = document.createElement('script');
-      gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ';
-      gaScript.async = true;
-      document.head.appendChild(gaScript);
-    </script>
     <!-- Prefetch likely next pages for instant navigation -->
     <link rel="prefetch" href="/rehab-centers" as="document" />
     <link rel="prefetch" href="/concierge" as="document" />
