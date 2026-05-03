@@ -1,0 +1,43 @@
+#!/usr/bin/env node
+/**
+ * Builds public/prerender-manifest.json — a JSON array of every clean URL path
+ * that has a corresponding static HTML file in /public. The Vercel Edge
+ * Middleware imports this manifest to decide whether a crawler should receive
+ * the prerendered HTML (`next()` lets Vercel serve `<path>.html`) or the SPA
+ * shell rewrite (when no prerender exists, otherwise the bot would 404).
+ *
+ * This is the migration-routing fix for the issue where ~28k SPA-only sitemap
+ * URLs returned 404 to Googlebot because `cleanUrls: true` looks up
+ * `/path.html`, finds nothing, and bypasses the SPA rewrite.
+ */
+import fs from "node:fs";
+import path from "node:path";
+
+const ROOT = process.cwd();
+const PUBLIC_DIR = path.join(ROOT, "public");
+const OUT = path.join(PUBLIC_DIR, "prerender-manifest.json");
+
+const paths = new Set();
+
+function walk(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walk(full);
+    } else if (entry.isFile() && entry.name.endsWith(".html")) {
+      let rel = full.slice(PUBLIC_DIR.length).replace(/\\/g, "/");
+      // /foo/index.html -> /foo
+      if (rel.endsWith("/index.html")) rel = rel.slice(0, -"/index.html".length) || "/";
+      // /foo.html -> /foo
+      else if (rel.endsWith(".html")) rel = rel.slice(0, -".html".length);
+      if (rel === "" || rel === "/index") rel = "/";
+      paths.add(rel);
+    }
+  }
+}
+
+walk(PUBLIC_DIR);
+
+const list = [...paths].sort();
+fs.writeFileSync(OUT, JSON.stringify(list));
+console.log(`✓ prerender-manifest.json written with ${list.length} paths`);
