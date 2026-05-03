@@ -538,15 +538,38 @@ const CenterProfile = () => {
   };
 
   const trackInteraction = useCallback((type: "call" | "website") => {
-    if (facility?.id) {
-      // Track in provider_events (single source of truth)
-      if (type === "call") {
-        trackClickToCall(facility.id, "profile");
-      } else {
-        trackWebsiteClick(facility.id, "profile");
-      }
+    if (!facility?.id) return;
+    // Track in provider_events (single source of truth for billing/scoring)
+    if (type === "call") {
+      trackClickToCall(facility.id, "profile");
+    } else {
+      trackWebsiteClick(facility.id, "profile");
     }
-  }, [facility?.id, trackClickToCall, trackWebsiteClick]);
+    // Mirror to GA4 so funnel reports can correlate Call Now clicks with
+    // sessions/sources without joining provider_events.
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", type === "call" ? "facility_call_now" : "facility_website", {
+        event_category: "Facility",
+        event_label: facility.name || facility.slug || facility.id,
+        facility_id: facility.id,
+        facility_slug: facility.slug || null,
+        cta_location: "profile",
+      });
+    }
+  }, [facility?.id, facility?.name, facility?.slug, trackClickToCall, trackWebsiteClick]);
+
+  const handleRequestInfoOpen = useCallback((cta_location: string) => {
+    setRequestModalOpen(true);
+    if (typeof window !== "undefined" && window.gtag && facility?.id) {
+      window.gtag("event", "facility_request_info", {
+        event_category: "Facility",
+        event_label: facility.name || facility.slug || facility.id,
+        facility_id: facility.id,
+        facility_slug: facility.slug || null,
+        cta_location,
+      });
+    }
+  }, [facility?.id, facility?.name, facility?.slug]);
 
   // Show skeleton while:
   // - the slug isn't ready yet (route param still resolving), OR
@@ -944,7 +967,7 @@ const CenterProfile = () => {
               <Button 
                 size="lg" 
                 className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold shadow-sm"
-                onClick={() => setRequestModalOpen(true)}
+                onClick={() => handleRequestInfoOpen("hero_request_call")}
               >
                 <Phone className="h-4 w-4 shrink-0" />
                 <span className="truncate">Request Call</span>
@@ -953,7 +976,7 @@ const CenterProfile = () => {
                 variant="outline" 
                 size="lg"
                 className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold"
-                onClick={() => setRequestModalOpen(true)}
+                onClick={() => handleRequestInfoOpen("hero_request_info")}
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
                 <span className="truncate">Request Info</span>
@@ -1339,7 +1362,7 @@ const CenterProfile = () => {
                     <Button 
                       size="lg" 
                       className="w-full gap-2 h-11 text-sm font-semibold"
-                      onClick={() => setRequestModalOpen(true)}
+                      onClick={() => handleRequestInfoOpen("sidebar_request_info")}
                     >
                       <Sparkles className="h-4 w-4" />
                       Request Info
@@ -1424,7 +1447,7 @@ const CenterProfile = () => {
                 <Button 
                   size="lg" 
                   className="w-full gap-2 h-11 text-sm font-semibold"
-                  onClick={() => setRequestModalOpen(true)}
+                  onClick={() => handleRequestInfoOpen("sidebar_get_started")}
                 >
                   <Sparkles className="h-4 w-4" />
                   Get Started
