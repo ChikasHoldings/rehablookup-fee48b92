@@ -538,15 +538,38 @@ const CenterProfile = () => {
   };
 
   const trackInteraction = useCallback((type: "call" | "website") => {
-    if (facility?.id) {
-      // Track in provider_events (single source of truth)
-      if (type === "call") {
-        trackClickToCall(facility.id, "profile");
-      } else {
-        trackWebsiteClick(facility.id, "profile");
-      }
+    if (!facility?.id) return;
+    // Track in provider_events (single source of truth for billing/scoring)
+    if (type === "call") {
+      trackClickToCall(facility.id, "profile");
+    } else {
+      trackWebsiteClick(facility.id, "profile");
     }
-  }, [facility?.id, trackClickToCall, trackWebsiteClick]);
+    // Mirror to GA4 so funnel reports can correlate Call Now clicks with
+    // sessions/sources without joining provider_events.
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", type === "call" ? "facility_call_now" : "facility_website", {
+        event_category: "Facility",
+        event_label: facility.name || facility.slug || facility.id,
+        facility_id: facility.id,
+        facility_slug: facility.slug || null,
+        cta_location: "profile",
+      });
+    }
+  }, [facility?.id, facility?.name, facility?.slug, trackClickToCall, trackWebsiteClick]);
+
+  const handleRequestInfoOpen = useCallback((cta_location: string) => {
+    setRequestModalOpen(true);
+    if (typeof window !== "undefined" && window.gtag && facility?.id) {
+      window.gtag("event", "facility_request_info", {
+        event_category: "Facility",
+        event_label: facility.name || facility.slug || facility.id,
+        facility_id: facility.id,
+        facility_slug: facility.slug || null,
+        cta_location,
+      });
+    }
+  }, [facility?.id, facility?.name, facility?.slug]);
 
   // Show skeleton while:
   // - the slug isn't ready yet (route param still resolving), OR
