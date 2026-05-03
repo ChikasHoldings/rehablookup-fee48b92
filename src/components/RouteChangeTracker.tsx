@@ -24,10 +24,8 @@ export function RouteChangeTracker() {
       isFirst.current = false;
       return;
     }
-    const url = location.pathname + location.search + location.hash;
-    window.gtag("event", "page_view", {
-      page_path: url,
-      page_location: window.location.origin + url,
+    window.gtag("config", "G-2VB6C1X2MQ", {
+      page_path: location.pathname + location.search + location.hash,
       page_title: document.title,
     });
   }, [location.pathname, location.search, location.hash]);
