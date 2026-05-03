@@ -15,6 +15,7 @@ import { Layout } from "@/components/layout/Layout";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import { queryClient } from "@/lib/queryClient";
  import { NavigationProvider } from "@/contexts/NavigationContext";
+import { Analytics } from "@vercel/analytics/react";
 
 // Eagerly load homepage for instant LCP
 import Index from "./pages/Index";
@@ -1631,6 +1632,7 @@ const AppInner = () => {
           </SafeTooltipProvider>
         </SafeQueryClientProvider>
       </HelmetProvider>
+      <Analytics />
     </GlobalErrorBoundary>
   );
 };
