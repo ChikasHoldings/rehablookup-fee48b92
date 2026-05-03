@@ -39,8 +39,13 @@
     <meta name="keywords" content="rehab near me, drug rehab near me, alcohol rehab near me, addiction treatment centers, detox centers near me, inpatient rehab, outpatient treatment, dual diagnosis treatment, free rehab near me, luxury rehab, womens rehab, mens rehab, fentanyl addiction treatment, opioid rehab, heroin rehab, suboxone treatment, MAT treatment, sober living near me, recovery programs, substance abuse treatment, PHP program, IOP treatment, residential treatment, alcohol detox, drug detox, rehab centers California, rehab centers Florida, rehab centers Texas, affordable rehab, state funded rehab, medicaid rehab, veterans rehab, teen rehab, young adult treatment" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow" />
-    <!-- NOTE: canonical, og:*, and twitter:* tags are injected per-route by <SEO /> (react-helmet-async).
-         No hardcoded canonical here — that would force every route to alias the homepage in Google. -->
+    <!-- Hardcoded homepage canonical + og:url. Per-route pages are pre-rendered
+         to /public/<route>/index.html with their own canonical, so this default
+         only applies to the SPA shell served at "/" (the homepage). -->
+    <link rel="canonical" href="https://rehablookup.com/" />
+    <meta property="og:url" content="https://rehablookup.com/" />
+    <meta property="og:title" content="Find Trusted Addiction Treatment Centers | RehabLookup" />
+    <meta property="og:description" content="Search 15,000+ verified rehab centers near you. Compare detox, inpatient, outpatient &amp; dual diagnosis programs. Free insurance verification. 24/7 confidential help." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://rehablookup.com/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
