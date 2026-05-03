@@ -153,29 +153,33 @@ export default function InternationalApplication() {
     }
   };
 
+  // Steps where user can fast-forward to checkout (everything beyond is optional follow-up)
+  const MVP_SUBMIT_FROM_STEP = 5; // After Location, all remaining steps are optional
+
+  // Optional steps — user can skip without filling
+  const OPTIONAL_STEPS = new Set([4, 6, 7, 8, 10]); // Phone, Patient, LoC, Clinical, Amenities
+
   // Step validation
   const canProceed = () => {
     switch (currentStep) {
-      case 1: // Contact (name)
+      case 1: // Contact (name) — REQUIRED
         return data.first_name.trim() && data.last_name.trim();
-      case 2: // Email
+      case 2: // Email — REQUIRED
         return data.email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
-      case 3: // Email Verification (NEW)
+      case 3: // Email Verification — REQUIRED
         return emailVerification.verified;
-      case 4: // Phone
-        return true; // Optional
-      case 5: // Location
-        return data.country && data.preferred_language;
-      case 6: // Patient
-        return data.seeking_for && data.age_range && data.gender;
-      case 7: // Level of Care
-        return data.level_of_care;
-      case 8: // Clinical
-        return data.primary_concern;
-      case 9: // Preferences
-        return data.budget_range && data.rehab_style;
-      case 10: // Amenities
-        return true; // Optional
+      case 4: // Phone — OPTIONAL
+        return true;
+      case 5: // Location — REQUIRED (country only; language defaults to English)
+        return !!data.country;
+      case 6: // Patient — OPTIONAL (advisor will follow up)
+      case 7: // Level of Care — OPTIONAL
+      case 8: // Clinical — OPTIONAL
+        return true;
+      case 9: // Preferences — OPTIONAL (budget helps matching but not required)
+        return true;
+      case 10: // Amenities — OPTIONAL
+        return true;
       case 11: // Review
         return true;
       default:
