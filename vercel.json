@@ -1,27 +1,6 @@
 {
-    "$schema": "https://openapi.vercel.sh/vercel.json",
-    "buildCommand": "npm run build:vercel",
-    "outputDirectory": "dist",
-    "installCommand": "npm install",
-    "framework": "vite",
-    "trailingSlash": false,
-    "cleanUrls": true,
-    "redirects": [
-          { "source": "/:path*", "has": [{ "type": "host", "value": "www.rehablookup.com" }], "destination": "https://rehablookup.com/:path*", "statusCode": 301 },
-          { "source": "/request-help", "destination": "/concierge", "statusCode": 301 },
-          { "source": "/request-help/intake", "destination": "/concierge/intake", "statusCode": 301 },
-          { "source": "/request-help/thank-you", "destination": "/concierge/thank-you", "statusCode": 301 },
-          { "source": "/request-help/create-password", "destination": "/concierge/thank-you", "statusCode": 301 },
-          { "source": "/concierge/create-password", "destination": "/concierge/thank-you", "statusCode": 301 },
-          { "source": "/placement-help", "destination": "/concierge", "statusCode": 301 },
-          { "source": "/treatment-types/drug-addiction", "destination": "/treatment-types/drug-addiction-treatment", "statusCode": 301 },
-          { "source": "/treatment-types/dual-diagnosis", "destination": "/treatment-types/dual-diagnosis-treatment", "statusCode": 301 },
-          { "source": "/treatment-types/holistic-treatment", "destination": "/treatment-types/holistic-therapy", "statusCode": 301 },
-          { "source": "/treatment/dual-diagnosis", "destination": "/treatment-types/dual-diagnosis-treatment", "statusCode": 301 },
-          { "source": "/treatment/detox", "destination": "/treatment-types/detox-programs", "statusCode": 301 },
-          { "source": "/treatment/inpatient-rehab", "destination": "/treatment-types/residential-inpatient", "statusCode": 301 },
-          { "source": "/treatment/alcohol-rehab", "destination": "/treatment-types/alcohol-rehabilitation", "statusCode": 301 },
-          { "source": "/lp/treatment", "destination": "/treatment-types", "statusCode": 301 },
-          { "source": "/treatment", "destination": "/treatment-types", "statusCode": 301 },
-          { "source": "/centers", "destination": "/rehab-centers", "statusCode": 301 },
-          { "source": "/find-rehab", "destination": "/rehab-ce
+      "cleanUrls": true,
+      "trailingSlash": false,
+      "buildCommand": "npm run build:vercel",
+      "outputDirectory": "dist"
+}
