@@ -24,6 +24,7 @@ import { rewrite, next } from "@vercel/edge";
 
 export const config = {
   matcher: [
+    "/",
     "/((?!_next/|_vercel/|api/|assets/|favicon|robots\\.txt|sitemap|.*\\.).*)",
   ],
 };
