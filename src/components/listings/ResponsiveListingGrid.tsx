@@ -14,6 +14,10 @@ interface ResponsiveListingGridProps {
   conciergeTreatment?: string;
   conciergeInsurance?: string;
   conciergeSource?: string;
+  /** When `facilities` is empty, render these as "nearby suggestions" instead of a blank state. */
+  nearbyFacilities?: any[];
+  /** Label shown above nearby fallback (e.g. "Centers in nearby cities"). */
+  nearbyLabel?: string;
 }
 
 export function ResponsiveListingGrid({
@@ -23,6 +27,8 @@ export function ResponsiveListingGrid({
   conciergeTreatment,
   conciergeInsurance,
   conciergeSource = "responsive_listing_grid_empty",
+  nearbyFacilities,
+  nearbyLabel = "Centers in nearby areas",
 }: ResponsiveListingGridProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -57,8 +63,42 @@ export function ResponsiveListingGrid({
     el.scrollBy({ left: amount, behavior: "smooth" });
   };
 
-  // Empty state fallback
+  // Empty state: render nearby suggestions if available, otherwise CTA fallback
   if (items.length === 0) {
+    const nearby = (nearbyFacilities || []).slice(0, maxItems);
+
+    if (nearby.length > 0) {
+      return (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+            <p className="text-sm font-medium text-foreground">
+              No exact matches yet — showing {nearby.length} {nearby.length === 1 ? "center" : "centers"} {nearbyLabel.toLowerCase()}.
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {nearby.map((facility) => (
+              <TreatmentCenterCard key={facility.id || facility.name} center={facility} />
+            ))}
+          </div>
+          <div className="flex justify-center pt-2">
+            <Link
+              to={buildConciergeHref({
+                location: conciergeLocation,
+                treatment: conciergeTreatment,
+                insurance: conciergeInsurance,
+                source: conciergeSource,
+              })}
+            >
+              <Button variant="outline" className="gap-2">
+                <Heart className="h-4 w-4" />
+                Get Personalized Help
+              </Button>
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-xl border border-dashed border-border bg-muted/20">
         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">

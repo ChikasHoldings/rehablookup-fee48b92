@@ -99,6 +99,22 @@ export default function NearMeCountyPage() {
     return stateCounties.filter((c) => c.slug !== countySlug).slice(0, 6);
   }, [stateCounties, countySlug]);
 
+  // Nearby facility suggestions when in-county results are empty: pull from neighboring counties in same state
+  const nearbyFacilities = useMemo(() => {
+    if (facilities.length > 0 || !stateInfo || nearbyCounties.length === 0) return [];
+    const stateLower = stateInfo.name.toLowerCase();
+    const stateAbbr = stateInfo.abbreviation.toLowerCase();
+    const nearbyCities = nearbyCounties.flatMap((c) => c.majorCities.map((x) => x.toLowerCase()));
+    return allFacilities
+      .filter((f) => {
+        const fState = (f.state || "").toLowerCase();
+        const fCity = (f.city || "").toLowerCase();
+        const inState = fState === stateLower || fState === stateAbbr;
+        return inState && nearbyCities.some((cc) => fCity.includes(cc) || cc.includes(fCity));
+      })
+      .slice(0, 12);
+  }, [facilities.length, stateInfo, nearbyCounties, allFacilities]);
+
   if (!nearMeType || !stateInfo || !countyData) {
     return <Navigate to="/404" replace />;
   }
@@ -195,6 +211,16 @@ export default function NearMeCountyPage() {
             <SearchResultsLoading />
           ) : facilities.length > 0 ? (
             <ResponsiveListingGrid facilities={facilities} maxItems={12} />
+          ) : nearbyFacilities.length > 0 ? (
+            <ResponsiveListingGrid
+              facilities={[]}
+              nearbyFacilities={nearbyFacilities}
+              nearbyLabel={`Centers in nearby ${stateInfo.name} counties`}
+              maxItems={12}
+              conciergeLocation={`${countyName}, ${stateInfo.abbreviation}`}
+              conciergeTreatment={nearMeType.treatmentType}
+              conciergeSource="near_me_county_nearby_fallback"
+            />
           ) : (
             <div className="text-center py-12 bg-muted/30 rounded-lg">
               <MapPin className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
