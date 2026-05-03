@@ -221,7 +221,8 @@ export default function InternationalApplication() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (source: "submit_now" | "submit_final" = "submit_final") => {
+    trackIntlEvent(source);
     setIsSubmitting(true);
     try {
       // Store intake data in localStorage for retrieval after payment
