@@ -1,136 +1,27 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build:vercel",
-  "outputDirectory": "dist",
-  "installCommand": "npm install",
-  "framework": "vite",
-  "trailingSlash": false,
-  "cleanUrls": true,
-  "redirects": [
-    { "source": "/:path*", "has": [{ "type": "host", "value": "www.rehablookup.com" }], "destination": "https://rehablookup.com/:path*", "statusCode": 301 },
-    { "source": "/:path+/", "destination": "/:path+", "statusCode": 301 },
-
-    { "source": "/request-help", "destination": "/concierge", "statusCode": 301 },
-    { "source": "/request-help/intake", "destination": "/concierge/intake", "statusCode": 301 },
-    { "source": "/request-help/thank-you", "destination": "/concierge/thank-you", "statusCode": 301 },
-    { "source": "/request-help/create-password", "destination": "/concierge/thank-you", "statusCode": 301 },
-    { "source": "/concierge/create-password", "destination": "/concierge/thank-you", "statusCode": 301 },
-    { "source": "/placement-help", "destination": "/concierge", "statusCode": 301 },
-
-    { "source": "/treatment-types/drug-addiction", "destination": "/treatment-types/drug-addiction-treatment", "statusCode": 301 },
-    { "source": "/treatment-types/dual-diagnosis", "destination": "/treatment-types/dual-diagnosis-treatment", "statusCode": 301 },
-    { "source": "/treatment-types/holistic-treatment", "destination": "/treatment-types/holistic-therapy", "statusCode": 301 },
-    { "source": "/treatment/dual-diagnosis", "destination": "/treatment-types/dual-diagnosis-treatment", "statusCode": 301 },
-    { "source": "/treatment/detox", "destination": "/treatment-types/detox-programs", "statusCode": 301 },
-    { "source": "/treatment/inpatient-rehab", "destination": "/treatment-types/residential-inpatient", "statusCode": 301 },
-    { "source": "/treatment/alcohol-rehab", "destination": "/treatment-types/alcohol-rehabilitation", "statusCode": 301 },
-    { "source": "/lp/treatment", "destination": "/treatment-types", "statusCode": 301 },
-    { "source": "/treatment", "destination": "/treatment-types", "statusCode": 301 },
-
-    { "source": "/centers", "destination": "/rehab-centers", "statusCode": 301 },
-    { "source": "/find-rehab", "destination": "/rehab-centers", "statusCode": 301 },
-    { "source": "/find-treatment", "destination": "/rehab-centers", "statusCode": 301 },
-    { "source": "/rehab", "destination": "/rehab-centers", "statusCode": 301 },
-    { "source": "/directory", "destination": "/rehab-centers", "statusCode": 301 },
-    { "source": "/blog", "destination": "/resources", "statusCode": 301 },
-    { "source": "/search", "destination": "/search-results", "statusCode": 301 },
-    { "source": "/sitemap", "destination": "/sitemap-index.xml", "statusCode": 301 },
-
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseTreatment", "value": "detox" }], "missing": [{ "type": "query", "key": "browseInsurance" }], "destination": "/treatment-types/detox-programs", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseTreatment", "value": "inpatient" }], "missing": [{ "type": "query", "key": "browseInsurance" }], "destination": "/treatment-types/residential-inpatient", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseTreatment", "value": "outpatient" }], "missing": [{ "type": "query", "key": "browseInsurance" }], "destination": "/treatment-types/outpatient-programs", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseTreatment", "value": "iop" }], "missing": [{ "type": "query", "key": "browseInsurance" }], "destination": "/treatment-types/outpatient-programs", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseTreatment", "value": "php" }], "missing": [{ "type": "query", "key": "browseInsurance" }], "destination": "/treatment-types/outpatient-programs", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseTreatment", "value": "dual-diagnosis" }], "missing": [{ "type": "query", "key": "browseInsurance" }], "destination": "/treatment-types/dual-diagnosis-treatment", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseTreatment", "value": "mental-health" }], "missing": [{ "type": "query", "key": "browseInsurance" }], "destination": "/treatment-types/dual-diagnosis-treatment", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseTreatment", "value": "holistic" }], "missing": [{ "type": "query", "key": "browseInsurance" }], "destination": "/treatment-types/holistic-therapy", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseInsurance", "value": "aetna" }], "missing": [{ "type": "query", "key": "browseTreatment" }], "destination": "/insurance/aetna-rehab", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseInsurance", "value": "bcbs" }], "missing": [{ "type": "query", "key": "browseTreatment" }], "destination": "/insurance/bcbs-treatment", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseInsurance", "value": "cigna" }], "missing": [{ "type": "query", "key": "browseTreatment" }], "destination": "/insurance/cigna-rehab", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseInsurance", "value": "united" }], "missing": [{ "type": "query", "key": "browseTreatment" }], "destination": "/insurance/united-healthcare-rehab", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseInsurance", "value": "medicare" }], "missing": [{ "type": "query", "key": "browseTreatment" }], "destination": "/insurance/medicare-rehab", "statusCode": 301 },
-    { "source": "/rehab-centers", "has": [{ "type": "query", "key": "browseInsurance", "value": "medicaid" }], "missing": [{ "type": "query", "key": "browseTreatment" }], "destination": "/insurance/medicaid-rehab", "statusCode": 301 },
-
-    { "source": "/detox-centers-centers", "destination": "/detox-centers", "statusCode": 301 },
-    { "source": "/rehab-vs-detox", "destination": "/detox-vs-rehab", "statusCode": 301 },
-    { "source": "/what-is-intensive-outpatient", "destination": "/what-is-iop", "statusCode": 301 },
-
-    { "source": "/us-rehab/best-rehab-usa", "destination": "/best-rehab-centers-in-usa", "statusCode": 301 },
-    { "source": "/us-rehab/detox-usa", "destination": "/treatment-types/detox-programs", "statusCode": 301 },
-    { "source": "/us-rehab/california", "destination": "/rehab-centers/california", "statusCode": 301 },
-    { "source": "/rehab-in-usa-for-canadians", "destination": "/us-rehab/canadian-patients", "statusCode": 301 },
-    { "source": "/rehab-in-usa-for-uk-patients", "destination": "/us-rehab/uk-patients", "statusCode": 301 },
-    { "source": "/rehab-in-usa-for-international-patients", "destination": "/international", "statusCode": 301 },
-    { "source": "/best-rehab-centers-in-usa-for-foreigners", "destination": "/can-foreigners-go-to-rehab-in-usa", "statusCode": 301 },
-    { "source": "/luxury-rehab-centers-usa", "destination": "/us-rehab/luxury-rehab-america", "statusCode": 301 },
-    { "source": "/private-rehab-usa", "destination": "/us-rehab/private-rehab-america", "statusCode": 301 },
-    { "source": "/confidential-rehab-usa", "destination": "/us-rehab/private-rehab-america", "statusCode": 301 },
-    { "source": "/international/intake", "destination": "/international/apply", "statusCode": 301 },
-
-    { "source": "/insurance/aetna", "destination": "/insurance/aetna-rehab", "statusCode": 301 },
-    { "source": "/insurance/bcbs", "destination": "/insurance/bcbs-treatment", "statusCode": 301 },
-    { "source": "/insurance/cigna", "destination": "/insurance/cigna-rehab", "statusCode": 301 },
-    { "source": "/insurance/united-healthcare", "destination": "/insurance/united-healthcare-rehab", "statusCode": 301 },
-    { "source": "/insurance/humana", "destination": "/insurance/humana-rehab", "statusCode": 301 },
-    { "source": "/insurance/kaiser", "destination": "/insurance/kaiser-rehab", "statusCode": 301 },
-    { "source": "/insurance/medicare", "destination": "/insurance/medicare-rehab", "statusCode": 301 },
-    { "source": "/insurance/medicaid", "destination": "/insurance/medicaid-rehab", "statusCode": 301 },
-    { "source": "/insurance/anthem", "destination": "/insurance/anthem-rehab", "statusCode": 301 },
-
-    { "source": "/privacy", "destination": "/privacy-policy", "statusCode": 301 },
-    { "source": "/terms", "destination": "/terms-of-service", "statusCode": 301 },
-    { "source": "/signup", "destination": "/seeker/signup", "statusCode": 301 },
-    { "source": "/reset-password", "destination": "/seeker/reset-password", "statusCode": 301 },
-    { "source": "/seeker", "destination": "/client", "statusCode": 301 },
-
-    { "source": "/provider-reset-password", "destination": "/provider/reset-password", "statusCode": 301 },
-    { "source": "/provider/login", "destination": "/login", "statusCode": 301 },
-    { "source": "/provider-login", "destination": "/login", "statusCode": 301 },
-    { "source": "/provider/support", "destination": "/provider-support", "statusCode": 301 },
-    { "source": "/provider/faq", "destination": "/provider-faq", "statusCode": 301 },
-    { "source": "/provider/signup", "destination": "/provider-signup", "statusCode": 301 },
-    { "source": "/provider-guides", "destination": "/provider-resources", "statusCode": 301 },
-    { "source": "/admin-login", "destination": "/admin/login", "statusCode": 301 },
-
-    { "source": "/my-account/:path*", "destination": "/account", "statusCode": 301 },
-    { "source": "/lp/social", "destination": "/", "statusCode": 301 }
-  ],
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(self)" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" }
-      ]
-    },
-    {
-      "source": "/assets/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
-    },
-    {
-      "source": "/(.*)\\.(jpg|jpeg|png|webp|svg|ico|woff2|woff|ttf)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
-    },
-    {
-      "source": "/sitemap(.*)\\.xml",
-      "headers": [
-        { "key": "Content-Type", "value": "application/xml; charset=utf-8" },
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
-      ]
-    },
-    {
-      "source": "/robots.txt",
-      "headers": [
-        { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
-        { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
-      ]
-    }
-  ],
-  "github": { "silent": true }
-}
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "buildCommand": "npm run build:vercel",
+    "outputDirectory": "dist",
+    "installCommand": "npm install",
+    "framework": "vite",
+    "trailingSlash": false,
+    "cleanUrls": true,
+    "redirects": [
+          { "source": "/:path*", "has": [{ "type": "host", "value": "www.rehablookup.com" }], "destination": "https://rehablookup.com/:path*", "statusCode": 301 },
+          { "source": "/request-help", "destination": "/concierge", "statusCode": 301 },
+          { "source": "/request-help/intake", "destination": "/concierge/intake", "statusCode": 301 },
+          { "source": "/request-help/thank-you", "destination": "/concierge/thank-you", "statusCode": 301 },
+          { "source": "/request-help/create-password", "destination": "/concierge/thank-you", "statusCode": 301 },
+          { "source": "/concierge/create-password", "destination": "/concierge/thank-you", "statusCode": 301 },
+          { "source": "/placement-help", "destination": "/concierge", "statusCode": 301 },
+          { "source": "/treatment-types/drug-addiction", "destination": "/treatment-types/drug-addiction-treatment", "statusCode": 301 },
+          { "source": "/treatment-types/dual-diagnosis", "destination": "/treatment-types/dual-diagnosis-treatment", "statusCode": 301 },
+          { "source": "/treatment-types/holistic-treatment", "destination": "/treatment-types/holistic-therapy", "statusCode": 301 },
+          { "source": "/treatment/dual-diagnosis", "destination": "/treatment-types/dual-diagnosis-treatment", "statusCode": 301 },
+          { "source": "/treatment/detox", "destination": "/treatment-types/detox-programs", "statusCode": 301 },
+          { "source": "/treatment/inpatient-rehab", "destination": "/treatment-types/residential-inpatient", "statusCode": 301 },
+          { "source": "/treatment/alcohol-rehab", "destination": "/treatment-types/alcohol-rehabilitation", "statusCode": 301 },
+          { "source": "/lp/treatment", "destination": "/treatment-types", "statusCode": 301 },
+          { "source": "/treatment", "destination": "/treatment-types", "statusCode": 301 },
+          { "source": "/centers", "destination": "/rehab-centers", "statusCode": 301 },
+          { "source": "/find-rehab", "destination": "/rehab-ce
