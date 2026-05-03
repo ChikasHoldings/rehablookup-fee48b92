@@ -155,8 +155,14 @@ export function SearchForm({
       .trim()
       .slice(0, 200);
     
-    // Track search in GA
-    analytics.search(sanitizedLocation || "all locations");
+    // Track search in GA — include filter context + originating page so we
+    // can see which entry surfaces drive the most directory traffic.
+    analytics.search(sanitizedLocation || "all locations", undefined, {
+      treatment: selectedTreatmentTypes.slice(0, 10).join(",") || undefined,
+      insurance: selectedInsurance.slice(0, 10).join(",") || undefined,
+      source:
+        typeof window !== "undefined" ? window.location.pathname : undefined,
+    });
     
     const params = new URLSearchParams();
     if (sanitizedLocation) params.set("location", sanitizedLocation);

@@ -11,6 +11,7 @@ import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { usStates } from "@/data/usStates";
+import { analytics } from "@/lib/analytics";
 import { 
   Heart, 
   MapPin, 
@@ -184,8 +185,13 @@ const RehabCenters = () => {
       else next.delete(key);
       next.delete("browsePage"); // reset to page 1 on filter change
       setSearchParams(next, { replace: true });
+      analytics.directoryFilter(value && value !== "any" ? "change" : "clear", {
+        filter: key === "browseTreatment" ? "treatment" : "insurance",
+        value: value && value !== "any" ? value : undefined,
+        results_count: browseFiltered.length,
+      });
     },
-    [searchParams, setSearchParams],
+    [searchParams, setSearchParams, browseFiltered.length],
   );
 
   const setBrowsePage = useCallback(
@@ -194,12 +200,16 @@ const RehabCenters = () => {
       if (page <= 1) next.delete("browsePage");
       else next.set("browsePage", String(page));
       setSearchParams(next, { replace: true });
+      analytics.directoryFilter("paginate", {
+        page,
+        results_count: browseFiltered.length,
+      });
       // Defer scroll so DOM has rendered the new page before we move.
       requestAnimationFrame(() => {
         browseAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     },
-    [searchParams, setSearchParams],
+    [searchParams, setSearchParams, browseFiltered.length],
   );
 
   const clearBrowseFilters = useCallback(() => {
@@ -208,6 +218,7 @@ const RehabCenters = () => {
     next.delete("browseInsurance");
     next.delete("browsePage");
     setSearchParams(next, { replace: true });
+    analytics.directoryFilter("clear", { filter: "all" });
   }, [searchParams, setSearchParams]);
 
   // If the URL points to a page beyond the current filtered range (e.g. user
