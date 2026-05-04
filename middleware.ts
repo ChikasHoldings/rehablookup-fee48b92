@@ -49,6 +49,14 @@ function isArticleRoute(pathname: string): boolean {
   return false;
 }
 
+function isBrowserNavigation(request: Request): boolean {
+  const fetchDest = request.headers.get("sec-fetch-dest") || "";
+  const fetchMode = request.headers.get("sec-fetch-mode") || "";
+  const fetchUser = request.headers.get("sec-fetch-user") || "";
+
+  return fetchDest === "document" || fetchMode === "navigate" || fetchUser === "?1";
+}
+
 export default function middleware(request: Request) {
   const ua = request.headers.get("user-agent") || "";
   const url = new URL(request.url);
@@ -60,11 +68,11 @@ export default function middleware(request: Request) {
   const isCrawler = CRAWLER_UA.test(ua);
   const isSocialCrawler = SOCIAL_CRAWLER_UA.test(ua);
 
-  // Social crawlers fetching an article URL → og-share edge function so they
-  // receive article-specific og:image / twitter:image instead of the default.
-  // Human visitors and search-engine bots fall through to the normal flow
-  // (SPA shell or pre-rendered HTML) so canonicals and indexing are unaffected.
-  if (isSocialCrawler && isArticleRoute(pathname)) {
+  // Article URLs must expose article-specific OG/Twitter images before JS runs.
+  // Known social crawlers are routed here explicitly, and generic unfurlers that
+  // do not send browser navigation headers are routed here too. Real browser
+  // navigations still receive the SPA shell to avoid redirect loops.
+  if ((isSocialCrawler || !isBrowserNavigation(request)) && isArticleRoute(pathname)) {
     const normalized = pathname.replace(/\/+$/, "") || "/";
     return rewrite(`${OG_SHARE_URL}?path=${encodeURIComponent(normalized)}`);
   }
