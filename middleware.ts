@@ -31,6 +31,24 @@ const PRERENDERED = new Set(PRERENDERED_PATHS);
 const CRAWLER_UA =
   /(googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp|applebot|petalbot|sogou|exabot|facebot|facebookexternalhit|twitterbot|linkedinbot|pinterestbot|slackbot|telegrambot|whatsapp|discordbot|embedly|quora link preview|redditbot|tumblr|vkshare|w3c_validator|ahrefsbot|semrushbot|mj12bot|dotbot|rogerbot|screaming frog|gptbot|chatgpt-user|oai-searchbot|claudebot|perplexitybot|google-inspectiontool|adsbot-google|mediapartners-google|bytespider|googleother)/i;
 
+// Social media crawlers that fetch OG/Twitter cards. Articles have unique
+// per-post images (`blog_articles.image_url`), but the SPA shell + static
+// /resources/index.html only carries the default og-image. We route these
+// crawlers to the `og-share` edge function so they see the article's image.
+const SOCIAL_CRAWLER_UA =
+  /(facebookexternalhit|facebot|twitterbot|linkedinbot|pinterest|slackbot|telegrambot|whatsapp|discordbot|embedly|quora link preview|redditbot|tumblr|vkshare|skypeuripreview|nuzzel|bitlybot|flipboard|outbrain|iframely)/i;
+
+const OG_SHARE_URL =
+  "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/og-share";
+
+function isArticleRoute(pathname: string): boolean {
+  // /resources/{slug} (3 segments: "", "resources", "{slug}")
+  if (/^\/resources\/[a-z0-9-]+\/?$/.test(pathname)) return true;
+  // /providers/resources/{slug}
+  if (/^\/providers\/resources\/[a-z0-9-]+\/?$/.test(pathname)) return true;
+  return false;
+}
+
 export default function middleware(request: Request) {
   const ua = request.headers.get("user-agent") || "";
   const url = new URL(request.url);
@@ -40,6 +58,16 @@ export default function middleware(request: Request) {
   if (pathname === "/") return next();
 
   const isCrawler = CRAWLER_UA.test(ua);
+  const isSocialCrawler = SOCIAL_CRAWLER_UA.test(ua);
+
+  // Social crawlers fetching an article URL → og-share edge function so they
+  // receive article-specific og:image / twitter:image instead of the default.
+  // Human visitors and search-engine bots fall through to the normal flow
+  // (SPA shell or pre-rendered HTML) so canonicals and indexing are unaffected.
+  if (isSocialCrawler && isArticleRoute(pathname)) {
+    const normalized = pathname.replace(/\/+$/, "") || "/";
+    return rewrite(`${OG_SHARE_URL}?path=${encodeURIComponent(normalized)}`);
+  }
 
   if (isCrawler) {
     // Bot + prerendered file exists → let Vercel serve <path>.html.
