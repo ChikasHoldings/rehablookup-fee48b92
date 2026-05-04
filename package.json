@@ -40,6 +40,7 @@
     "check:broken-links": "node scripts/check-broken-links.mjs",
     "check:broken-links:internal": "SKIP_EXTERNAL=1 node scripts/check-broken-links.mjs",
     "check:redirect-parity": "node scripts/check-redirect-parity.mjs",
+    "check:article-og": "node scripts/check-article-og-images.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test",
