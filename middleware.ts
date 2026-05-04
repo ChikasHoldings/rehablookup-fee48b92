@@ -70,9 +70,9 @@ export default function middleware(request: Request) {
 
   // Article URLs must expose article-specific OG/Twitter images before JS runs.
   // Known social crawlers are routed here explicitly, and generic unfurlers that
-  // do not send browser navigation headers are routed here too. Real browser
-  // navigations still receive the SPA shell to avoid redirect loops.
-  if ((isSocialCrawler || !isBrowserNavigation(request)) && isArticleRoute(pathname)) {
+  // are neither search crawlers nor browser navigations are routed here too.
+  // Real browser navigations still receive the SPA shell to avoid redirect loops.
+  if ((isSocialCrawler || (!isCrawler && !isBrowserNavigation(request))) && isArticleRoute(pathname)) {
     const normalized = pathname.replace(/\/+$/, "") || "/";
     return rewrite(`${OG_SHARE_URL}?path=${encodeURIComponent(normalized)}`);
   }
