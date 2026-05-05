@@ -161,6 +161,10 @@ const SMART_CATCHALL_PREFIXES = [
   "/center/",
   "/blog/",
   "/state-rehab-faqs/",
+  "/best-rehab-centers-in-",
+  "/list-your-facility-in-",
+  "/for-providers-in-",
+  "/get-more-patients-in-",
 ];
 
 function staticFileExists(p) {
