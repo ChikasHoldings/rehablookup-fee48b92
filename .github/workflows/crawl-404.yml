@@ -114,6 +114,11 @@ jobs:
           cache: "npm"
       - run: npm ci --no-audit --no-fund
 
+      - name: Regenerate sitemaps & static facility profiles
+        run: |
+          npm run generate:facility-profiles-html
+          npm run generate:sitemaps
+
       - name: Run link checker
         env:
           FAIL_ON_EXTERNAL: "1"
