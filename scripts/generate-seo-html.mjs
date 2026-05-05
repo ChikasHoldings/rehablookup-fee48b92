@@ -573,7 +573,30 @@ async function generateStatePages() {
         description: `Addiction treatment centers in ${state}`,
         url: `${BASE_URL}/rehab-centers/${slug}`,
       }],
-      relatedLinks: treatmentTypes.map((tt) => ({ title: `${tt.label} in ${state}`, href: `/treatment-types/${tt.slug}/${slug}` })),
+      relatedLinks: treatmentTypes
+        .map((tt) => {
+          // Map slugs in `treatmentTypes` to canonical /treatment-types/* route prefixes.
+          const routeMap = {
+            "alcohol-rehab": "alcohol-rehabilitation",
+            "drug-rehab": "drug-addiction",
+            "detox-centers": "detox-programs",
+            "inpatient-rehab": "residential-inpatient",
+            "outpatient-rehab": "outpatient-programs",
+            "dual-diagnosis-treatment": "dual-diagnosis-treatment",
+            "luxury-rehab": "luxury-rehab",
+            "sober-living": "sober-living",
+            "free-rehab": "free-rehab",
+            "faith-based-rehab": "faith-based-rehab",
+            "fentanyl-rehab": "fentanyl-rehab",
+            "veterans-rehab": "veterans-rehab",
+            "womens-rehab": "womens-rehab",
+            "mens-rehab": "mens-rehab",
+          };
+          const routePrefix = routeMap[tt.slug];
+          if (!routePrefix) return null;
+          return { title: `${tt.label} in ${state}`, href: `/treatment-types/${routePrefix}/${slug}` };
+        })
+        .filter(Boolean),
     });
     await writePage(path.join(publicDir, "rehab-centers", `${slug}.html`), html);
   }
