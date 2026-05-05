@@ -399,7 +399,6 @@ function buildRehabMarketing(urlPath, parts) {
     breadcrumbs: [
       { name: "Home", url: "/" }, { name: "For Providers", url: "/for-providers" },
       { name: "Rehab Marketing", url: "/rehab-marketing" },
-      { name: state, url: `/rehab-marketing/${stateSlug}` },
       ...(county ? [{ name: `${county} County`, url: `/rehab-marketing/${stateSlug}/county/${parts[3]}` }] : []),
       { name: angleLabel, url: urlPath },
     ],
