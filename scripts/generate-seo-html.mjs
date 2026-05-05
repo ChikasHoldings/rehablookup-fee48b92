@@ -484,11 +484,29 @@ async function generateCityTreatmentPages() {
           <p>RehabLookup lists verified ${tt.label.toLowerCase()} facilities in the ${city.city} area. Each program is checked for proper licensing, accreditation, and quality of care.</p>
           <h2>Insurance Coverage</h2>
           <p>Most insurance plans cover ${tt.label.toLowerCase()} in ${city.city}, ${city.stateAbbr} under the Mental Health Parity Act. Use our free insurance verification tool to check your benefits.</p>`,
-        breadcrumbs: [
-          { name: "Home", url: "/" },
-          { name: tt.label, url: `/${tt.slug === "dual-diagnosis-treatment" ? tt.slug : tt.slug.replace("-rehab", "-rehab-centers").replace("detox-centers", "detox-centers")}` },
-          { name: city.city, url: `/${slug}` },
-        ],
+        breadcrumbs: (() => {
+          // Map tt.slug to a real canonical hub route (must exist in App.tsx).
+          const HUB = {
+            "alcohol-rehab": "/alcohol-rehab-centers",
+            "drug-rehab": "/drug-rehab-centers",
+            "detox-centers": "/detox-centers",
+            "inpatient-rehab": "/inpatient-rehab",
+            "outpatient-rehab": "/outpatient-rehab",
+            "dual-diagnosis-treatment": "/treatment-types/dual-diagnosis-treatment",
+            "luxury-rehab": "/treatment-types/luxury-rehab",
+            "sober-living": "/treatment-types/sober-living",
+            "free-rehab": "/treatment-types/free-rehab",
+            "faith-based-rehab": "/treatment-types/faith-based-rehab",
+            "fentanyl-rehab": "/treatment-types/fentanyl-rehab",
+            "veterans-rehab": "/treatment-types/veterans-rehab",
+            "womens-rehab": "/treatment-types/womens-rehab",
+            "mens-rehab": "/treatment-types/mens-rehab",
+          };
+          const crumbs = [{ name: "Home", url: "/" }];
+          if (HUB[tt.slug]) crumbs.push({ name: tt.label, url: HUB[tt.slug] });
+          crumbs.push({ name: city.city, url: `/${slug}` });
+          return crumbs;
+        })(),
         structuredData: [{
           "@context": "https://schema.org",
           "@type": "MedicalWebPage",
@@ -573,7 +591,30 @@ async function generateStatePages() {
         description: `Addiction treatment centers in ${state}`,
         url: `${BASE_URL}/rehab-centers/${slug}`,
       }],
-      relatedLinks: treatmentTypes.map((tt) => ({ title: `${tt.label} in ${state}`, href: `/treatment-types/${tt.slug}/${slug}` })),
+      relatedLinks: treatmentTypes
+        .map((tt) => {
+          // Map slugs in `treatmentTypes` to canonical /treatment-types/* route prefixes.
+          const routeMap = {
+            "alcohol-rehab": "alcohol-rehabilitation",
+            "drug-rehab": "drug-addiction",
+            "detox-centers": "detox-programs",
+            "inpatient-rehab": "residential-inpatient",
+            "outpatient-rehab": "outpatient-programs",
+            "dual-diagnosis-treatment": "dual-diagnosis-treatment",
+            "luxury-rehab": "luxury-rehab",
+            "sober-living": "sober-living",
+            "free-rehab": "free-rehab",
+            "faith-based-rehab": "faith-based-rehab",
+            "fentanyl-rehab": "fentanyl-rehab",
+            "veterans-rehab": "veterans-rehab",
+            "womens-rehab": "womens-rehab",
+            "mens-rehab": "mens-rehab",
+          };
+          const routePrefix = routeMap[tt.slug];
+          if (!routePrefix) return null;
+          return { title: `${tt.label} in ${state}`, href: `/treatment-types/${routePrefix}/${slug}` };
+        })
+        .filter(Boolean),
     });
     await writePage(path.join(publicDir, "rehab-centers", `${slug}.html`), html);
   }

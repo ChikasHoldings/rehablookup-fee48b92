@@ -399,7 +399,6 @@ function buildRehabMarketing(urlPath, parts) {
     breadcrumbs: [
       { name: "Home", url: "/" }, { name: "For Providers", url: "/for-providers" },
       { name: "Rehab Marketing", url: "/rehab-marketing" },
-      { name: state, url: `/rehab-marketing/${stateSlug}` },
       ...(county ? [{ name: `${county} County`, url: `/rehab-marketing/${stateSlug}/county/${parts[3]}` }] : []),
       { name: angleLabel, url: urlPath },
     ],
@@ -575,7 +574,29 @@ function buildCityRehab(urlPath, slug) {
     metaDescription: `Find ${typeLabel.toLowerCase()} programs in ${city}. Compare accredited facilities, verify insurance, and start treatment.`,
     h1: `${typeLabel} in ${city}`,
     intro: `Find ${typeLabel.toLowerCase()} programs in ${city}. Compare accredited facilities, check insurance acceptance, and connect with admissions teams the same day.`,
-    breadcrumbs: [{ name: "Home", url: "/" }, { name: typeLabel, url: `/${typeSlug}` }, { name: city, url: urlPath }],
+    breadcrumbs: (() => {
+      // Map typeSlug to a real canonical hub route; if none, omit middle crumb.
+      const HUB_ROUTE = {
+        "alcohol-rehab": "/alcohol-rehab-centers",
+        "drug-rehab": "/drug-rehab-centers",
+        "detox-centers": "/detox-centers",
+        "inpatient-rehab": "/inpatient-rehab",
+        "outpatient-rehab": "/outpatient-rehab",
+        "free-rehab": "/treatment-types/free-rehab",
+        "luxury-rehab": "/treatment-types/luxury-rehab",
+        "sober-living": "/treatment-types/sober-living",
+        "faith-based-rehab": "/treatment-types/faith-based-rehab",
+        "fentanyl-rehab": "/treatment-types/fentanyl-rehab",
+        "veterans-rehab": "/treatment-types/veterans-rehab",
+        "womens-rehab": "/treatment-types/womens-rehab",
+        "mens-rehab": "/treatment-types/mens-rehab",
+      };
+      const hub = HUB_ROUTE[typeSlug];
+      const crumbs = [{ name: "Home", url: "/" }];
+      if (hub) crumbs.push({ name: typeLabel, url: hub });
+      crumbs.push({ name: city, url: urlPath });
+      return crumbs;
+    })(),
     sections: [
       { h: `${typeLabel} Options in ${city}`, body: [
         `${city} has accredited ${typeLabel.toLowerCase()} programs offering evidence-based clinical care. Most accept major commercial insurance, Medicaid, and Medicare.`,

@@ -1390,7 +1390,15 @@ function generateDemographicCityRoutes(): RouteEntry[] {
 
 function generateCoOccurringCityRoutes(): RouteEntry[] {
   const routes: RouteEntry[] = [];
+  // Only these co-occurring slugs have city-level SPA routes in App.tsx.
+  const CITY_ROUTABLE = new Set([
+    "anxiety-and-addiction-treatment", "depression-and-addiction-treatment",
+    "ptsd-and-addiction-treatment", "bipolar-and-addiction-treatment",
+    "adhd-and-addiction-treatment", "eating-disorders-and-addiction-treatment",
+    "ocd-and-addiction-treatment", "bpd-and-addiction-treatment",
+  ]);
   for (const slug of CO_OCCURRING_SLUGS) {
+    if (!CITY_ROUTABLE.has(slug)) continue;
     for (const city of MAJOR_CITIES) {
       routes.push({ path: `/${slug}/${city.state}/${city.city}`, priority: 0.55, changefreq: "weekly" });
     }
