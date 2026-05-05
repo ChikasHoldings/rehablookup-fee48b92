@@ -782,6 +782,8 @@ const AppInner = () => {
              <Route path="/eating-disorders-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
              <Route path="/bpd-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
              <Route path="/ocd-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
+             <Route path="/schizophrenia-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
+             <Route path="/chronic-pain-and-addiction-treatment/:stateSlug/:citySlug" element={<PublicRouteGuard><CoOccurringCityPage /></PublicRouteGuard>} />
 
              {/* Duration & Setting Pages */}
              <Route path="/30-day-rehab-programs" element={<PublicRouteGuard><DurationSettingPage /></PublicRouteGuard>} />
