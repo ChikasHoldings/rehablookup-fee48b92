@@ -155,16 +155,22 @@ try {
   vercelRewrites = (vc.rewrites || []).map((r) => r.source);
 } catch {}
 
+// Dynamic prefixes are auto-extracted from src/App.tsx <Route> entries AND
+// from src/components/SmartCatchAll.tsx via the shared route-manifest helper.
+// This keeps the link checker in lock-step with the actual SPA routing
+// surface — no manual list to maintain when new SmartCatchAll prefixes are
+// added (e.g. "/best-rehab-centers-in-", "/for-providers-in-", etc.).
+const { extractSpaRoutes } = await import("./lib/extract-spa-routes.mjs");
+const spaManifest = await extractSpaRoutes();
 const SMART_CATCHALL_PREFIXES = [
+  // Always-on hub prefixes that are dispatched via "*" → SmartCatchAll but
+  // aren't pulled out by the regex extractor (they end with "/" not "-").
   "/treatment-types/",
   "/rehab-centers/",
   "/center/",
   "/blog/",
   "/state-rehab-faqs/",
-  "/best-rehab-centers-in-",
-  "/list-your-facility-in-",
-  "/for-providers-in-",
-  "/get-more-patients-in-",
+  ...spaManifest.dynamicPrefixes,
 ];
 
 function staticFileExists(p) {
