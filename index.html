@@ -19,6 +19,32 @@
       function gtag(){dataLayer.push(arguments);}
       window.gtag = gtag;
       gtag('js', new Date());
+
+      // GA4 debug mode — opt-in via ?ga_debug=1 (or #ga_debug), localStorage
+      // ('ga_debug'='1'), or the existing ?gtm_debug flag. When enabled:
+      //   • debug_mode:true → hits show up in GA4 DebugView in real time
+      //   • console logs every dataLayer push so you can confirm page_view
+      //     and other events fire after SPA navigation
+      // Off by default in production so normal visitors aren't sampled into
+      // DebugView (which excludes them from standard reports).
+      var GA_DEBUG = (function(){
+        try {
+          var qs = location.search + ' ' + location.hash;
+          if (/[?&#](ga_debug|gtm_debug)(=1)?\b/.test(qs)) return true;
+          if (localStorage.getItem('ga_debug') === '1') return true;
+        } catch (e) {}
+        return false;
+      })();
+
+      if (GA_DEBUG) {
+        var _origPush = window.dataLayer.push.bind(window.dataLayer);
+        window.dataLayer.push = function(){
+          try { console.info('[GA4]', Array.from(arguments[0] || arguments)); } catch(e){}
+          return _origPush.apply(window.dataLayer, arguments);
+        };
+        console.info('[GA4] debug mode ON — hits will appear in GA4 DebugView');
+      }
+
       // transport_type:'beacon' uses navigator.sendBeacon so the page_view
       // hit survives SPA navigation / tab close. Without it, the POST to
       // /g/collect is aborted (ERR_ABORTED) when the user clicks a link
@@ -26,6 +52,7 @@
       gtag('config', 'G-2VB6C1X2MQ', {
         send_page_view: true,
         transport_type: 'beacon',
+        debug_mode: GA_DEBUG,
       });
     </script>
     
