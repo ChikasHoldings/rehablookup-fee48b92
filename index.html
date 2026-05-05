@@ -13,47 +13,73 @@
         location.replace('https://rehablookup.com' + location.pathname + location.search + location.hash);
       }
     </script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      window.gtag = gtag;
-      gtag('js', new Date());
+      // ── GA4 bootstrap ──────────────────────────────────────────────
+      // Runs exactly once per full page load, BEFORE the SPA bundle, so
+      // every navigation/state change happens with gtag already wired up.
+      // Idempotency guards prevent duplicate gtag.js script injection or
+      // double `config` calls if this snippet is ever evaluated twice
+      // (e.g. injected by a tag manager, an A/B test, or HMR).
+      (function () {
+        if (window.__GA4_BOOTSTRAPPED__) return;
+        window.__GA4_BOOTSTRAPPED__ = true;
 
-      // GA4 debug mode — opt-in via ?ga_debug=1 (or #ga_debug), localStorage
-      // ('ga_debug'='1'), or the existing ?gtm_debug flag. When enabled:
-      //   • debug_mode:true → hits show up in GA4 DebugView in real time
-      //   • console logs every dataLayer push so you can confirm page_view
-      //     and other events fire after SPA navigation
-      // Off by default in production so normal visitors aren't sampled into
-      // DebugView (which excludes them from standard reports).
-      var GA_DEBUG = (function(){
-        try {
-          var qs = location.search + ' ' + location.hash;
-          if (/[?&#](ga_debug|gtm_debug)(=1)?\b/.test(qs)) return true;
-          if (localStorage.getItem('ga_debug') === '1') return true;
-        } catch (e) {}
-        return false;
+        var GA_ID = 'G-2VB6C1X2MQ';
+
+        // 1) Inject the gtag.js loader exactly once. If another script
+        //    already added it, reuse the existing tag instead of adding
+        //    a second one (which would double-fire page_view).
+        var existing = document.querySelector(
+          'script[src^="https://www.googletagmanager.com/gtag/js"]'
+        );
+        if (!existing) {
+          var s = document.createElement('script');
+          s.async = true;
+          s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+          document.head.appendChild(s);
+        }
+
+        // 2) Wire up dataLayer + gtag stub (safe if already defined).
+        window.dataLayer = window.dataLayer || [];
+        if (typeof window.gtag !== 'function') {
+          window.gtag = function () { window.dataLayer.push(arguments); };
+        }
+        var gtag = window.gtag;
+        gtag('js', new Date());
+
+        // 3) Optional debug logging — opt-in via ?ga_debug=1, #ga_debug,
+        //    ?gtm_debug, or localStorage('ga_debug'='1'). Off by default
+        //    so production traffic isn't routed into GA4 DebugView (which
+        //    excludes those sessions from standard reports).
+        var GA_DEBUG = (function () {
+          try {
+            var qs = location.search + ' ' + location.hash;
+            if (/[?&#](ga_debug|gtm_debug)(=1)?\b/.test(qs)) return true;
+            if (localStorage.getItem('ga_debug') === '1') return true;
+          } catch (e) {}
+          return false;
+        })();
+
+        if (GA_DEBUG && !window.__GA4_DEBUG_HOOKED__) {
+          window.__GA4_DEBUG_HOOKED__ = true;
+          var _origPush = window.dataLayer.push.bind(window.dataLayer);
+          window.dataLayer.push = function () {
+            try { console.info('[GA4]', Array.from(arguments[0] || arguments)); } catch (e) {}
+            return _origPush.apply(window.dataLayer, arguments);
+          };
+          console.info('[GA4] debug mode ON — hits will appear in GA4 DebugView');
+        }
+
+        // 4) Single `config` call. transport_type:'beacon' uses
+        //    navigator.sendBeacon so the page_view hit survives SPA
+        //    navigation / tab close (without it the POST to /g/collect
+        //    is aborted with ERR_ABORTED on click and Realtime flatlines).
+        gtag('config', GA_ID, {
+          send_page_view: true,
+          transport_type: 'beacon',
+          debug_mode: GA_DEBUG,
+        });
       })();
-
-      if (GA_DEBUG) {
-        var _origPush = window.dataLayer.push.bind(window.dataLayer);
-        window.dataLayer.push = function(){
-          try { console.info('[GA4]', Array.from(arguments[0] || arguments)); } catch(e){}
-          return _origPush.apply(window.dataLayer, arguments);
-        };
-        console.info('[GA4] debug mode ON — hits will appear in GA4 DebugView');
-      }
-
-      // transport_type:'beacon' uses navigator.sendBeacon so the page_view
-      // hit survives SPA navigation / tab close. Without it, the POST to
-      // /g/collect is aborted (ERR_ABORTED) when the user clicks a link
-      // before the fetch completes — which silently drops Realtime traffic.
-      gtag('config', 'G-2VB6C1X2MQ', {
-        send_page_view: true,
-        transport_type: 'beacon',
-        debug_mode: GA_DEBUG,
-      });
     </script>
     
     <!-- Security Headers -->
