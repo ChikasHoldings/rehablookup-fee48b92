@@ -81,6 +81,52 @@ function isCenterRoute(pathname: string): boolean {
 }
 
 /**
+ * Returns true if the pathname is a dynamic route that should return 404
+ * to Googlebot when not found in the prerender manifest.
+ * These are routes where non-existent slugs cause soft 404s.
+ */
+function isDynamicSoftRoute(pathname: string): boolean {
+  // /resources/{slug} - article routes (handled separately)
+  // /rehab-centers/{state}/{city} - state/city pages
+  if (/^\/rehab-centers\/[a-z0-9-]+(\/[a-z0-9-]+)*\/?$/.test(pathname)) return true;
+  // /insurance/{provider}/{state} - insurance pages
+  if (/^\/insurance\/[a-z0-9-]+(\/[a-z0-9-]+)*\/?$/.test(pathname)) return true;
+  // /rehab-marketing/{state} - marketing pages
+  if (/^\/rehab-marketing\/[a-z0-9-]+(\/[a-z0-9-]+)*\/?$/.test(pathname)) return true;
+  // /treatment-types/{type}/{state}/{city} - treatment type pages
+  if (/^\/treatment-types\/[a-z0-9-]+(\/[a-z0-9-]+)*\/?$/.test(pathname)) return true;
+  // /detox-centers/{state} - detox center pages
+  if (/^\/detox-centers\/[a-z0-9-]+(\/[a-z0-9-]+)*\/?$/.test(pathname)) return true;
+  return false;
+}
+
+/**
+ * Minimal HTML 404 response for Googlebot on non-existent dynamic pages.
+ * Returns a proper HTTP 404 status with noindex so Google stops crawling
+ * dead slugs and doesn't waste crawl budget.
+ */
+function notFoundResponse(pathname: string): Response {
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Page Not Found | RehabLookup</title>
+  <meta name="description" content="This page is no longer available." />
+</head>
+<body>
+  <h1>Page Not Found</h1>
+  <p>The page you requested (${pathname}) is no longer available.</p>
+  <p><a href="/rehab-centers">Browse all rehab centers</a></p>
+</body>
+</html>`;
+  return new Response(html, {
+    status: 404,
+    headers: { "Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex, nofollow" },
+  });
+}
+
+/**
  * Minimal HTML 404 response for Googlebot on non-existent facility pages.
  * Returns a proper HTTP 404 status with noindex so Google stops crawling
  * dead facility slugs and doesn't waste crawl budget.
@@ -190,6 +236,13 @@ export default function middleware(request: Request) {
       // Pre-rendered .html file exists → rewrite explicitly to it.
       // Correct page-specific canonical is baked into the static HTML.
       return prerenderRewrite(pathname, url);
+    }
+
+    // Dynamic route patterns (rehab-centers, insurance, treatment-types, etc.)
+    // that are NOT in the prerender manifest → these are non-existent slugs.
+    // Return a proper 404 to Googlebot to prevent soft 404s and crawl budget waste.
+    if (isDynamicSoftRoute(pathname)) {
+      return notFoundResponse(pathname);
     }
 
     // Bot + no prerender → rewrite to /index.html (SPA shell).
