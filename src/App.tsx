@@ -387,7 +387,7 @@ function BlogRedirect() {
 function SeekerToClientRedirect() {
   const { "*": rest } = useParams();
   const tail = rest ? `/${rest}` : "";
-  return <Navigate to={`/client${tail}`} replace />;
+  return <Navigate to={`/account${tail}`} replace />;
 }
 
 // /facility/:slug and /profile/:slug → canonical /center/:slug
@@ -1083,7 +1083,7 @@ const AppInner = () => {
 
             {/* Legacy slug rescue — common backlink patterns */}
             {/* "Seeker" → "Client" terminology rename (preserves sub-path) */}
-            <Route path="/seeker" element={<Navigate to="/client" replace />} />
+            <Route path="/seeker" element={<Navigate to="/account" replace />} />
             <Route path="/seeker/*" element={<SeekerToClientRedirect />} />
             {/* Profile/facility shorthand → canonical /center/:slug */}
             <Route path="/facility/:slug" element={<FacilityToCenterRedirect />} />

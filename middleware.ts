@@ -1,34 +1,45 @@
-// Vercel Edge Middleware (Vite / non-Next project)
-//
-// ROUTING FIX (May 2026):
-// On the Lovable→Vercel cutover, ~28k SPA-only sitemap URLs returned 404 to
-// Googlebot. Root cause: `cleanUrls: true` makes Vercel look up `<path>.html`
-// for every clean URL. When middleware returned `next()` for crawlers and no
-// prerender file existed, Vercel served a 404 instead of falling through to
-// the SPA rewrite. This collapsed indexed traffic.
-//
-// SEO CANONICAL FIX (May 2026):
-// The previous fallback rewrote all non-prerendered crawler requests to "/",
-// which served the SPA shell with the homepage canonical hardcoded in
-// index.html. This caused Google to classify every non-prerendered page as a
-// duplicate of the homepage, leading to mass de-indexing.
-//
-// Fix: import `prerender-manifest.json` (built from /public on every deploy).
-//   * Crawler + prerender exists → next()  → Vercel serves the .html file
-//                                             with the correct page-specific
-//                                             canonical URL.
-//   * Crawler + no prerender    → next()  → Vercel serves the dist/index.html
-//                                             SPA shell for this path. React +
-//                                             react-helmet-async sets the
-//                                             correct canonical on hydration.
-//                                             DO NOT rewrite to "/" — that
-//                                             serves the homepage canonical to
-//                                             Googlebot, causing mass
-//                                             de-indexing as duplicates.
-//   * Real user                 → rewrite("/")  → SPA shell so GA/Pixel fire.
-//
-// Result: every public route returns 200 to Googlebot with crawlable HTML
-// and the correct page-specific canonical URL.
+/**
+ * Vercel Edge Middleware — RehabLookup
+ *
+ * ROUTING FIX (May 2026 — Phase 1):
+ *
+ * ROOT CAUSE OF TRAFFIC COLLAPSE (4k → 9 daily users):
+ *   `cleanUrls: true` in vercel.json forced Vercel to look up dist/<path>.html
+ *   for every clean URL. When the middleware returned `next()` for Googlebot
+ *   on a non-prerendered path, Vercel found no .html file and returned a hard
+ *   404. The SPA fallback rewrite (/(.*) → /index.html) only applied to human
+ *   requests that the middleware rewrote to "/". Result: 28,814 valid routes
+ *   returned 404 to Googlebot — all near-me, rehab-marketing, treatment-types,
+ *   search-results, etc.
+ *
+ * THE FIX:
+ *   `cleanUrls` has been removed from vercel.json. Without it, Vercel's
+ *   file-serving order is:
+ *     1. Exact file match in dist/ (e.g., dist/about.html for /about)
+ *     2. Middleware rewrites (this file)
+ *     3. SPA fallback rewrite: /(.*) → /index.html
+ *
+ *   The middleware now EXPLICITLY rewrites crawlers to the .html file for
+ *   prerendered paths (instead of relying on cleanUrls to auto-resolve them),
+ *   and rewrites crawlers to /index.html for non-prerendered paths (so React
+ *   can set the correct canonical on hydration).
+ *
+ * ROUTING TABLE:
+ *   Request type                  Action                    Result
+ *   ─────────────────────────────────────────────────────────────────────────
+ *   Any → "/"                     next()                    dist/index.html
+ *   Crawler + prerendered path    rewrite(<path>.html)      Static HTML, correct canonical
+ *   Crawler + not prerendered     rewrite(/index.html)      SPA shell, React sets canonical
+ *   Social crawler + article      rewrite(og-share fn)      OG-tagged HTML for social cards
+ *   Human visitor                 rewrite(/)                SPA shell, GA/Pixel fire
+ *
+ * CANONICAL STRATEGY:
+ *   - Prerendered pages: canonical is baked into the static HTML at build time.
+ *   - Non-prerendered pages: React's <SEO> component (react-helmet-async) sets
+ *     the canonical from window.location.pathname on hydration.
+ *   - NEVER rewrite non-prerendered crawlers to "/" — that serves the homepage
+ *     canonical to Googlebot, causing mass de-indexing as duplicates.
+ */
 
 import { rewrite, next } from "@vercel/edge";
 import { PRERENDERED_PATHS } from "./prerender-manifest";
@@ -45,10 +56,10 @@ const PRERENDERED = new Set(PRERENDERED_PATHS);
 const CRAWLER_UA =
   /(googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp|applebot|petalbot|sogou|exabot|facebot|facebookexternalhit|twitterbot|linkedinbot|pinterestbot|slackbot|telegrambot|whatsapp|discordbot|embedly|quora link preview|redditbot|tumblr|vkshare|w3c_validator|ahrefsbot|semrushbot|mj12bot|dotbot|rogerbot|screaming frog|gptbot|chatgpt-user|oai-searchbot|claudebot|perplexitybot|google-inspectiontool|adsbot-google|mediapartners-google|bytespider|googleother)/i;
 
-// Social media crawlers that fetch OG/Twitter cards. Articles now have
-// pre-rendered static HTML files at /resources/<slug>.html with correct
-// article-specific OG images. Social crawlers are routed to the og-share
-// edge function as a fallback for any articles not yet pre-rendered.
+// Social media crawlers that fetch OG/Twitter cards. Articles have
+// pre-rendered static HTML files at dist/resources/<slug>.html with correct
+// article-specific OG images. Social crawlers fall back to og-share for any
+// articles not yet pre-rendered (e.g., newly published articles).
 const SOCIAL_CRAWLER_UA =
   /(facebookexternalhit|facebot|twitterbot|linkedinbot|pinterest|slackbot|telegrambot|whatsapp|discordbot|embedly|quora link preview|redditbot|tumblr|vkshare|skypeuripreview|nuzzel|bitlybot|flipboard|outbrain|iframely)/i;
 
@@ -56,7 +67,7 @@ const OG_SHARE_URL =
   "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/og-share";
 
 function isArticleRoute(pathname: string): boolean {
-  // /resources/{slug} (3 segments: "", "resources", "{slug}")
+  // /resources/{slug}
   if (/^\/resources\/[a-z0-9-]+\/?$/.test(pathname)) return true;
   // /providers/resources/{slug}
   if (/^\/providers\/resources\/[a-z0-9-]+\/?$/.test(pathname)) return true;
@@ -67,8 +78,17 @@ function isBrowserNavigation(request: Request): boolean {
   const fetchDest = request.headers.get("sec-fetch-dest") || "";
   const fetchMode = request.headers.get("sec-fetch-mode") || "";
   const fetchUser = request.headers.get("sec-fetch-user") || "";
-
   return fetchDest === "document" || fetchMode === "navigate" || fetchUser === "?1";
+}
+
+/**
+ * Build the explicit rewrite URL for a prerendered path.
+ * Without cleanUrls, Vercel will NOT auto-resolve /foo to dist/foo.html.
+ * We must rewrite explicitly to the .html file path.
+ */
+function prerenderRewrite(pathname: string, url: URL): Response {
+  const htmlPath = pathname.replace(/\/$/, "") + ".html";
+  return rewrite(new URL(htmlPath, url));
 }
 
 export default function middleware(request: Request) {
@@ -82,40 +102,47 @@ export default function middleware(request: Request) {
   const isCrawler = CRAWLER_UA.test(ua);
   const isSocialCrawler = SOCIAL_CRAWLER_UA.test(ua);
 
-  // Article URLs: if a pre-rendered static HTML file exists (added May 2026),
-  // serve it directly via next() — it has the correct canonical and OG image.
-  // Only fall back to og-share for social crawlers on articles without a
-  // pre-rendered file (e.g., newly published articles not yet in a deploy).
+  // ── Article routes (/resources/<slug>, /providers/resources/<slug>) ────────
   if (isArticleRoute(pathname)) {
     if (PRERENDERED.has(pathname)) {
-      // Pre-rendered file exists → serve it (has correct canonical + OG image).
-      return next();
+      // Pre-rendered .html file exists → rewrite explicitly to it.
+      // It has the correct page-specific canonical and OG image baked in.
+      return prerenderRewrite(pathname, url);
     }
-    // No pre-rendered file yet. Social crawlers need article-specific OG image.
+    // No pre-rendered file yet (e.g., newly published article).
+    // Social crawlers need article-specific OG image → og-share function.
     if (isSocialCrawler || (!isCrawler && !isBrowserNavigation(request))) {
       const normalized = pathname.replace(/\/+$/, "") || "/";
       return rewrite(`${OG_SHARE_URL}?path=${encodeURIComponent(normalized)}`);
     }
+    // Googlebot on a new article without a pre-rendered file → SPA shell.
+    // React sets the correct canonical on hydration.
+    if (isCrawler) {
+      return rewrite(new URL("/index.html", url));
+    }
   }
 
+  // ── All other crawler requests ─────────────────────────────────────────────
   if (isCrawler) {
-    // Bot + prerendered file exists → let Vercel serve <path>.html with the
-    // correct page-specific canonical URL.
-    if (PRERENDERED.has(pathname)) return next();
+    if (PRERENDERED.has(pathname)) {
+      // Pre-rendered .html file exists → rewrite explicitly to it.
+      // Correct page-specific canonical is baked into the static HTML.
+      return prerenderRewrite(pathname, url);
+    }
 
-    // Bot + no prerender → return next() so Vercel serves the SPA shell for
-    // this specific path. React + react-helmet-async will set the correct
-    // canonical on hydration.
+    // Bot + no prerender → rewrite to /index.html (SPA shell).
+    // React + react-helmet-async sets the correct page-specific canonical
+    // on hydration. Google can render JavaScript.
     //
-    // IMPORTANT: Do NOT rewrite to "/" here. That would serve the SPA shell
-    // with the homepage canonical (hardcoded in index.html as
-    // https://rehablookup.com/) to Googlebot, causing Google to classify
-    // every non-prerendered page as a duplicate of the homepage — which is
-    // exactly what caused the traffic collapse from 4k to 9 daily users.
-    return next();
+    // CRITICAL: Do NOT rewrite to "/" here. That serves the SPA shell with
+    // the homepage canonical (https://rehablookup.com/) hardcoded in
+    // index.html, causing Google to classify every non-prerendered page as
+    // a duplicate of the homepage — the original cause of the traffic crash.
+    return rewrite(new URL("/index.html", url));
   }
 
-  // Real users → rewrite to SPA shell so GA/Pixel always fire on every route.
+  // ── Human visitors ─────────────────────────────────────────────────────────
+  // Rewrite to the SPA shell so GA/Pixel always fire on every route.
   const target = new URL("/", url);
   target.search = url.search;
   return rewrite(target);

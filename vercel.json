@@ -1,5 +1,4 @@
 {
-  "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
     {
@@ -224,7 +223,7 @@
     },
     {
       "source": "/seeker",
-      "destination": "/client",
+      "destination": "/account",
       "permanent": true
     },
     {
