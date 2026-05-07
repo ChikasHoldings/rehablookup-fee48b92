@@ -1,6 +1,11 @@
 /**
  * Vercel Edge Middleware — RehabLookup
  *
+ * ROUTING FIX (May 2026 — Phase 4):
+ *   Soft 404 fix for /center/* routes. Non-existent facility slugs now return
+ *   HTTP 404 with a noindex HTML body to Googlebot, preventing crawl budget
+ *   waste on dead facility pages.
+ *
  * ROUTING FIX (May 2026 — Phase 1):
  *
  * ROOT CAUSE OF TRAFFIC COLLAPSE (4k → 9 daily users):
@@ -66,6 +71,41 @@ const SOCIAL_CRAWLER_UA =
 const OG_SHARE_URL =
   "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/og-share";
 
+/**
+ * Returns true if the pathname is a /center/<slug> route.
+ * These are facility profile pages — only approved facilities have
+ * prerendered HTML files. All other /center/* slugs are soft 404s.
+ */
+function isCenterRoute(pathname: string): boolean {
+  return /^\/center\/[a-z0-9-]+\/?$/.test(pathname);
+}
+
+/**
+ * Minimal HTML 404 response for Googlebot on non-existent facility pages.
+ * Returns a proper HTTP 404 status with noindex so Google stops crawling
+ * dead facility slugs and doesn't waste crawl budget.
+ */
+function centerNotFoundResponse(): Response {
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Facility Not Found | RehabLookup</title>
+  <meta name="description" content="This rehab facility page is no longer available." />
+</head>
+<body>
+  <h1>Facility Not Found</h1>
+  <p>This rehab center page is no longer available or has not been approved yet.</p>
+  <p><a href="/rehab-centers">Browse all rehab centers</a></p>
+</body>
+</html>`;
+  return new Response(html, {
+    status: 404,
+    headers: { "Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex, nofollow" },
+  });
+}
+
 function isArticleRoute(pathname: string): boolean {
   // /resources/{slug}
   if (/^\/resources\/[a-z0-9-]+\/?$/.test(pathname)) return true;
@@ -120,6 +160,28 @@ export default function middleware(request: Request) {
     if (isCrawler) {
       return rewrite(new URL("/index.html", url));
     }
+  }
+
+  // ── Facility profile routes (/center/<slug>) ────────────────────────────
+  // Only approved facilities have prerendered HTML files in the manifest.
+  // Any /center/* URL not in the manifest is a non-existent or unapproved
+  // facility — return HTTP 404 to Googlebot to prevent crawl budget waste.
+  if (isCenterRoute(pathname)) {
+    if (PRERENDERED.has(pathname)) {
+      // Approved facility with prerendered HTML → serve it.
+      return prerenderRewrite(pathname, url);
+    }
+    // Non-existent or unapproved facility.
+    if (isCrawler) {
+      // Return a real HTTP 404 with noindex to Googlebot.
+      // This stops Google indexing dead facility slugs.
+      return centerNotFoundResponse();
+    }
+    // Human visitors: let the SPA handle it — CenterProfile will render
+    // CenterNotFound with noindex and helpful recovery links.
+    const target = new URL("/", url);
+    target.search = url.search;
+    return rewrite(target);
   }
 
   // ── All other crawler requests ─────────────────────────────────────────────
