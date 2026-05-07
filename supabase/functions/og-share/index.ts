@@ -8,6 +8,13 @@ const corsHeaders = {
 const BASE_URL = 'https://rehablookup.com';
 const DEFAULT_OG_IMAGE = 'https://rehablookup.com/og-image.jpg';
 
+// Googlebot and other search engine crawlers — these should NOT be redirected
+// back to the canonical URL because that would cause a redirect loop:
+// Googlebot → og-share → redirect to /resources/slug → middleware → og-share → loop
+// Instead, Googlebot should read the OG tags directly from this response.
+const SEARCH_CRAWLER_UA =
+  /(googlebot|bingbot|yandex|duckduckbot|baiduspider|slurp|applebot|petalbot|sogou|exabot|gptbot|chatgpt-user|oai-searchbot|claudebot|perplexitybot|google-inspectiontool|adsbot-google|mediapartners-google|bytespider|googleother)/i;
+
 function escHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -28,21 +35,40 @@ interface OgMeta {
   section?: string;
 }
 
-function buildShareHtml(meta: OgMeta): string {
+/**
+ * Build the HTML response for social crawlers and search engines.
+ *
+ * For social crawlers (Facebook, Twitter, etc.): include a meta refresh and
+ * JS redirect so human visitors who somehow land here get sent to the real page.
+ *
+ * For search engine crawlers (Googlebot, etc.): do NOT include the redirect.
+ * The redirect would cause a loop: Googlebot → og-share → redirect to canonical
+ * URL → middleware rewrites back to og-share → infinite loop. Instead, serve
+ * the OG tags directly. Googlebot will read the canonical tag and index the
+ * canonical URL, not this og-share URL.
+ *
+ * The og-share URL itself is served with noindex to prevent it from being
+ * indexed as a separate page.
+ */
+function buildShareHtml(meta: OgMeta, isSearchCrawler: boolean): string {
   const t = escHtml(meta.title);
   const d = escHtml(meta.description).slice(0, 200);
   const img = escHtml(meta.image);
   const url = escHtml(meta.url);
 
-  // This page is seen by crawlers for OG tags.
-  // Human visitors are instantly redirected via meta refresh + JS.
+  // Only include redirect for social crawlers, not search engine crawlers.
+  // Search crawlers must NOT be redirected — it causes a loop.
+  const redirectHtml = isSearchCrawler ? '' : `
+  <meta http-equiv="refresh" content="0;url=${url}">
+  <script>window.location.replace("${url.replace(/"/g, '\\"')}");</script>`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0;url=${url}">
+  <meta charset="UTF-8">${redirectHtml}
   <title>${t}</title>
   <meta name="description" content="${d}">
+  <meta name="robots" content="noindex, nofollow">
   <link rel="canonical" href="${url}">
 
   <meta property="og:type" content="${escHtml(meta.type)}">
@@ -65,8 +91,6 @@ function buildShareHtml(meta: OgMeta): string {
   <meta name="twitter:description" content="${d}">
   <meta name="twitter:image" content="${img}">
   <meta name="twitter:image:alt" content="${t}">
-
-  <script>window.location.replace("${url.replace(/"/g, '\\"')}");</script>
 </head>
 <body>
   <p>Redirecting to <a href="${url}">${t}</a>…</p>
@@ -87,6 +111,11 @@ Deno.serve(async (req) => {
   }
 
   const canonicalUrl = `${BASE_URL}${path}`;
+
+  // Detect if the requester is a search engine crawler (not a social crawler).
+  // Search crawlers must NOT receive the redirect — it causes a loop.
+  const userAgent = req.headers.get('user-agent') || '';
+  const isSearchCrawler = SEARCH_CRAWLER_UA.test(userAgent);
 
   // Initialize Supabase client for DB lookups
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -165,7 +194,7 @@ Deno.serve(async (req) => {
     // Fall through to default meta
   }
 
-  const html = buildShareHtml(meta);
+  const html = buildShareHtml(meta, isSearchCrawler);
 
   return new Response(html, {
     status: 200,
