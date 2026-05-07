@@ -4,20 +4,66 @@ import { useLocation } from "react-router-dom";
 /**
  * Fires a GA4 `page_view` on every React Router navigation.
  *
- * Notes:
- *  - The initial `page_view` is sent automatically by the gtag snippet in
- *    index.html (`gtag('config', ..., { send_page_view: true })`).
- *  - SPA route changes do NOT trigger a new `page_view` automatically.
- *  - We send an explicit `page_view` EVENT (not `config`) so we don't reset
- *    GA4 client state, and we wait two frames so react-helmet-async has
- *    flushed the new <title> before we read `document.title`.
- *  - We always send the canonical `page_location` (full URL) and
- *    `page_referrer` (previous URL) so GA4 sees real navigation chains.
+ * Key fixes:
+ *  1. Reads consent state from localStorage before firing — if analytics_storage
+ *     is 'denied', we queue the page_view and fire it when consent is granted.
+ *  2. Uses window.location.href for page_location (more reliable than reading
+ *     the <link rel="canonical"> tag which can lag on fast SPA navigations).
+ *  3. Listens for 'rehablookup:consent-updated' dispatched by CookieConsentBanner
+ *     so that if a user accepts cookies mid-session, the queued page_view fires.
+ *  4. The initial page_view is sent by gtag('config') in index.html — skipped
+ *     here to avoid double-counting the landing page.
  */
+
+const GA_ID = "G-2VB6C1X2MQ";
+const COOKIE_CONSENT_KEY = "rehablookup_cookie_consent";
+
+function isAnalyticsGranted(): boolean {
+  try {
+    const saved = localStorage.getItem(COOKIE_CONSENT_KEY);
+    if (!saved) return false;
+    const parsed = JSON.parse(saved);
+    return parsed?.version === "1.0" && parsed?.analytics === true;
+  } catch {
+    return false;
+  }
+}
+
 export function RouteChangeTracker() {
   const location = useLocation();
   const isFirst = useRef(true);
   const lastUrlRef = useRef<string>("");
+  // Store the pending page_view so we can fire it when consent is granted.
+  const pendingPageView = useRef<{
+    path: string;
+    pageLocation: string;
+    pageReferrer: string;
+  } | null>(null);
+
+  // Listen for consent updates from CookieConsentBanner.
+  // If analytics was just granted, fire the pending page_view immediately.
+  useEffect(() => {
+    const onConsentUpdated = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.analytics === true && pendingPageView.current) {
+        const { path, pageLocation, pageReferrer } = pendingPageView.current;
+        pendingPageView.current = null;
+        if (window.gtag) {
+          window.gtag("event", "page_view", {
+            page_path: path,
+            page_title: document.title,
+            page_location: pageLocation,
+            page_referrer: pageReferrer,
+            send_to: GA_ID,
+          });
+        }
+      }
+    };
+    window.addEventListener("rehablookup:consent-updated", onConsentUpdated);
+    return () => {
+      window.removeEventListener("rehablookup:consent-updated", onConsentUpdated);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -37,39 +83,42 @@ export function RouteChangeTracker() {
     }
 
     // Wait two animation frames so react-helmet-async flushes the new <title>
-    // and canonical before we capture them. Falls back to setTimeout for SSR.
+    // before we capture it. Falls back to setTimeout for environments without RAF.
     const send = () => {
       if (!window.gtag) return;
-      // Prefer <link rel="canonical"> href so GA4 page_location always
-      // matches what Google indexes — strips utm/query, enforces lowercase,
-      // and pins to the production host. Falls back to window.location.href
-      // when the page hasn't set a canonical yet.
-      const canonicalEl = document.querySelector(
-        'link[rel="canonical"]',
-      ) as HTMLLinkElement | null;
-      const pageLocation = canonicalEl?.href || window.location.href;
+
+      // Use window.location.href directly — more reliable than reading the
+      // <link rel="canonical"> tag which can lag on fast SPA navigations.
+      const pageLocation = window.location.href;
       const pageReferrer = lastUrlRef.current || document.referrer || "";
       const pageTitle = document.title;
 
-      window.gtag("event", "page_view", {
-        page_path: path,
-        page_title: pageTitle,
-        page_location: pageLocation,
-        page_referrer: pageReferrer,
-        send_to: "G-2VB6C1X2MQ",
-      });
+      // Store as pending regardless — fire immediately if consent is granted,
+      // otherwise CookieConsentBanner will fire it on accept.
+      pendingPageView.current = { path, pageLocation, pageReferrer };
+
+      if (isAnalyticsGranted()) {
+        pendingPageView.current = null;
+        window.gtag("event", "page_view", {
+          page_path: path,
+          page_title: pageTitle,
+          page_location: pageLocation,
+          page_referrer: pageReferrer,
+          send_to: GA_ID,
+        });
+        if (debug) {
+          console.info(
+            "[GA4] SPA page_view sent:",
+            path,
+            "| title:", pageTitle,
+            "| referrer:", pageReferrer,
+          );
+        }
+      } else {
+        if (debug) console.info("[GA4] page_view queued (consent pending):", path);
+      }
 
       lastUrlRef.current = pageLocation;
-      if (debug) {
-        console.info(
-          "[GA4] SPA page_view sent:",
-          path,
-          "| title:",
-          pageTitle,
-          "| referrer:",
-          pageReferrer,
-        );
-      }
     };
 
     const raf1 =

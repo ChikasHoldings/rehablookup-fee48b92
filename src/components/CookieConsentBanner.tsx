@@ -54,14 +54,27 @@ export function CookieConsentBanner() {
   }, []);
 
   const applyPreferences = (prefs: CookiePreferences) => {
-    if (window.gtag) {
-      window.gtag("consent", "update", {
-        analytics_storage: prefs.analytics ? "granted" : "denied",
-        ad_storage: prefs.marketing ? "granted" : "denied",
-        ad_user_data: prefs.marketing ? "granted" : "denied",
-        ad_personalization: prefs.marketing ? "granted" : "denied",
-      });
-    }
+    // Update GA4 Consent Mode v2. We retry up to 10 times (1 second total)
+    // in case gtag hasn't loaded yet (e.g. slow network on first visit).
+    const consentPayload = {
+      analytics_storage: prefs.analytics ? ("granted" as const) : ("denied" as const),
+      ad_storage: prefs.marketing ? ("granted" as const) : ("denied" as const),
+      ad_user_data: prefs.marketing ? ("granted" as const) : ("denied" as const),
+      ad_personalization: prefs.marketing ? ("granted" as const) : ("denied" as const),
+    };
+    const tryUpdate = (attempts: number) => {
+      if (window.gtag) {
+        window.gtag("consent", "update", consentPayload);
+        // Dispatch a custom event so other components (e.g. RouteChangeTracker)
+        // can react to consent changes without prop drilling.
+        window.dispatchEvent(
+          new CustomEvent("rehablookup:consent-updated", { detail: prefs })
+        );
+      } else if (attempts > 0) {
+        setTimeout(() => tryUpdate(attempts - 1), 100);
+      }
+    };
+    tryUpdate(10);
   };
 
   const saveConsent = (prefs: CookiePreferences) => {

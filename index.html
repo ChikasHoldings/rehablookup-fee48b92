@@ -47,7 +47,35 @@
         var gtag = window.gtag;
         gtag('js', new Date());
 
-        // 3) Optional debug logging — opt-in via ?ga_debug=1, #ga_debug,
+        // 3) Consent Mode v2 — MUST be set BEFORE the first gtag('config') call.
+        //    Without this, GA4 fires the initial page_view with no consent signal
+        //    and discards it in privacy-regulated regions (EU, UK, etc.).
+        //    We read localStorage immediately so returning visitors who already
+        //    accepted get their consent applied BEFORE the page_view fires —
+        //    not after React hydrates (which is too late for the first hit).
+        (function () {
+          var analyticsConsent = 'denied';
+          var marketingConsent = 'denied';
+          try {
+            var saved = localStorage.getItem('rehablookup_cookie_consent');
+            if (saved) {
+              var parsed = JSON.parse(saved);
+              if (parsed && parsed.version === '1.0') {
+                if (parsed.analytics === true) analyticsConsent = 'granted';
+                if (parsed.marketing === true) marketingConsent = 'granted';
+              }
+            }
+          } catch (e) {}
+          gtag('consent', 'default', {
+            analytics_storage: analyticsConsent,
+            ad_storage: marketingConsent,
+            ad_user_data: marketingConsent,
+            ad_personalization: marketingConsent,
+            wait_for_update: 500,
+          });
+        })();
+
+        // 4) Optional debug logging — opt-in via ?ga_debug=1, #ga_debug,
         //    ?gtm_debug, or localStorage('ga_debug'='1'). Off by default
         //    so production traffic isn't routed into GA4 DebugView (which
         //    excludes those sessions from standard reports).
@@ -70,7 +98,7 @@
           console.info('[GA4] debug mode ON — hits will appear in GA4 DebugView');
         }
 
-        // 4) Single `config` call. transport_type:'beacon' uses
+        // 5) Single `config` call. transport_type:'beacon' uses
         //    navigator.sendBeacon so the page_view hit survives SPA
         //    navigation / tab close (without it the POST to /g/collect
         //    is aborted with ERR_ABORTED on click and Realtime flatlines).
