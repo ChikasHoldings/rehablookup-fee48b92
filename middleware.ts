@@ -69,7 +69,7 @@ const SOCIAL_CRAWLER_UA =
   /(facebookexternalhit|facebot|twitterbot|linkedinbot|pinterest|slackbot|telegrambot|whatsapp|discordbot|embedly|quora link preview|redditbot|tumblr|vkshare|skypeuripreview|nuzzel|bitlybot|flipboard|outbrain|iframely)/i;
 
 const OG_SHARE_URL =
-  "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/og-share";
+  "https://mldbxpntzcjalgjmwnqa.supabase.co/functions/v1/og-share";
 
 /**
  * Returns true if the pathname is a /center/<slug> route.
