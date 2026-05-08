@@ -11,6 +11,12 @@ name: 404 / Broken Route Crawler
 #     every sitemap URL against the deployed production origin, surfaces real
 #     4xx/5xx responses, uploads a markdown report, and fails the run if any
 #     URL is broken (so the user sees a red status on the schedule run).
+#
+# Monitoring:
+#   • A dedicated `notify-on-failure` job fires after all jobs complete and
+#     posts a rich failure summary to the GitHub Step Summary. If the optional
+#     NOTIFY_WEBHOOK_URL secret is set, it also sends a JSON POST to that URL
+#     (compatible with Slack incoming webhooks, Discord, or any HTTP endpoint).
 
 on:
   pull_request:
@@ -140,3 +146,76 @@ jobs:
             cat broken-links-report.md >> "$GITHUB_STEP_SUMMARY"
           fi
 
+  notify-on-failure:
+    name: Failure notification
+    # Run after all other jobs, only if at least one failed
+    needs: [static-route-audit, live-crawl, link-checker]
+    if: |
+      always() &&
+      (
+        needs.static-route-audit.result == 'failure' ||
+        needs.live-crawl.result == 'failure' ||
+        needs.link-checker.result == 'failure'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Build failure summary
+        id: summary
+        run: |
+          FAILED_JOBS=""
+          if [ "${{ needs.static-route-audit.result }}" = "failure" ]; then
+            FAILED_JOBS="${FAILED_JOBS} • Static route / sitemap parity\n"
+          fi
+          if [ "${{ needs.live-crawl.result }}" = "failure" ]; then
+            FAILED_JOBS="${FAILED_JOBS} • Live 404 crawl\n"
+          fi
+          if [ "${{ needs.link-checker.result }}" = "failure" ]; then
+            FAILED_JOBS="${FAILED_JOBS} • Link checker (internal + external)\n"
+          fi
+
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          # Write to GitHub Step Summary
+          echo "## ❌ 404 / Broken Route Crawler — Failure Alert" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Repository:** \`${{ github.repository }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Triggered by:** ${{ github.event_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Run time:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Failed jobs:" >> "$GITHUB_STEP_SUMMARY"
+          echo -e "${FAILED_JOBS}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### What to do:" >> "$GITHUB_STEP_SUMMARY"
+          echo "1. [View the full run logs](${RUN_URL})" >> "$GITHUB_STEP_SUMMARY"
+          echo "2. Check the uploaded artifacts (crawl-404-report.md, broken-links-report.md) for details" >> "$GITHUB_STEP_SUMMARY"
+          echo "3. Fix any broken routes or links in the codebase" >> "$GITHUB_STEP_SUMMARY"
+          echo "4. Push a fix commit — the static-route-audit will re-run automatically" >> "$GITHUB_STEP_SUMMARY"
+
+          # Export for webhook step
+          echo "run_url=${RUN_URL}" >> "$GITHUB_OUTPUT"
+          echo "failed_jobs<<EOF" >> "$GITHUB_OUTPUT"
+          echo -e "${FAILED_JOBS}" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Send webhook notification (if configured)
+        # Only runs if NOTIFY_WEBHOOK_URL secret is set
+        # Compatible with Slack incoming webhooks, Discord, or any HTTP endpoint
+        if: ${{ secrets.NOTIFY_WEBHOOK_URL != '' }}
+        env:
+          WEBHOOK_URL: ${{ secrets.NOTIFY_WEBHOOK_URL }}
+          RUN_URL: ${{ steps.summary.outputs.run_url }}
+          FAILED_JOBS: ${{ steps.summary.outputs.failed_jobs }}
+        run: |
+          PAYLOAD=$(cat <<JSONEOF
+          {
+            "text": "❌ *404 / Broken Route Crawler failed* on \`${{ github.repository }}\`\n\n*Failed jobs:*\n${FAILED_JOBS}\n\n*Triggered by:* ${{ github.event_name }}\n*View run:* ${RUN_URL}"
+          }
+          JSONEOF
+          )
+          curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -d "${PAYLOAD}" \
+            "${WEBHOOK_URL}" \
+            --max-time 10 || echo "Webhook notification failed (non-blocking)"
