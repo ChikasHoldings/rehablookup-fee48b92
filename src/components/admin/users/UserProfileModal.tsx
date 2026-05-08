@@ -79,6 +79,7 @@ export function UserProfileModal({ user, open, onOpenChange, onDeleted }: UserPr
 
   useEffect(() => {
     if (user?.user_id) checkBanStatus(user.user_id).then(setIsBanned);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- checkBanStatus is a stable utility; user.user_id is the correct guard dep
   }, [user?.user_id]);
 
   // Placement journey status for header

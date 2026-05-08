@@ -202,6 +202,7 @@ export function FacilityImageUpload({
         setIsUploading(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- processFiles is a regular function defined above; it captures currentImages via closure which is already in deps
     [currentImages, maxImages, type, toast]
   );
 

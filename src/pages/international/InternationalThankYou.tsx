@@ -86,6 +86,7 @@ export default function InternationalThankYou() {
         console.error("Error parsing intake data:", e);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional run-once effect on mount; email/firstName are only read as guards to avoid overwriting user input
   }, []);
 
   const handleCreateAccount = async () => {

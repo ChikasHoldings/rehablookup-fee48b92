@@ -497,7 +497,7 @@ export function SingleQuestionFlow({
       case "location":
         return (
           <div className="space-y-3 sm:space-y-4">
-            <div className="grid grid-cols-5 gap-2 sm:gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
               <div className="col-span-2 relative">
                 <Input
                   placeholder="ZIP"

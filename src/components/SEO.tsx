@@ -150,7 +150,7 @@ export function SEO({
         return null;
       }
     }
-    let path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    const path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
     const [pathPart, queryPart = ""] = path.split("?");
     const lower = pathPart.toLowerCase().replace(/\/{2,}/g, "/");
     const cleaned = lower.length > 1 && lower.endsWith("/") ? lower.slice(0, -1) : lower;

@@ -97,7 +97,7 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: Cen
           <Target className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-xs font-semibold text-foreground">Conversion Funnel</span>
         </div>
-        <div className="grid grid-cols-4 divide-x">
+        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x">
           {FUNNEL_STAGES.map((stage) => {
             const value = analytics.conversionFunnel[stage.key];
             const maxValue = Math.max(...Object.values(analytics.conversionFunnel), 1);

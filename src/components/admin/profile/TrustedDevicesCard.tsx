@@ -69,7 +69,7 @@ export function TrustedDevicesCard({ userId }: TrustedDevicesCardProps) {
         .eq("user_id", userId);
 
       if (error) throw error;
-      try { localStorage.removeItem("rl_admin_td_token"); } catch {}
+      try { localStorage.removeItem("rl_admin_td_token"); } catch { /* intentional: localStorage may be unavailable */ }
       toast.success("All trusted devices revoked");
       queryClient.invalidateQueries({ queryKey: ["trusted-devices"] });
     } catch {

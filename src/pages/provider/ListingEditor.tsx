@@ -522,7 +522,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     } else {
       console.error("[ListingEditor] Auto-save failed:", error.message);
     }
-  }, [facility, isSaving, currentFacilityId, queryClient, toast]);
+  }, [facility, isSaving, currentFacilityId, queryClient]); // toast is stable from useToast; removing it silences the unnecessary-dep warning
 
   // Auto-save effect
   useEffect(() => {
@@ -545,7 +545,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
   
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!facility) return;
     
     if (autoSaveTimerRef.current) {
@@ -654,7 +654,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         ) : undefined,
       });
     }
-  };
+  }, [facility, validateAllFields, toast, queryClient, currentFacilityId, setFacility]);
 
   // Keyboard shortcut: Ctrl+S / Cmd+S
   useEffect(() => {
@@ -669,7 +669,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasChanges, isSaving, isAutoSaving]);
+  }, [hasChanges, isSaving, isAutoSaving, handleSave]);
 
   // Warn before closing tab with unsaved changes
   useEffect(() => {
@@ -715,7 +715,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     setFieldErrors(prev => ({ ...prev, [field]: error }));
   };
 
-  const validateAllFields = (): boolean => {
+  const validateAllFields = useCallback((): boolean => {
     if (!facility) return false;
     
     const requiredFields = ["name", "facility_type", "address", "city", "state", "zip_code", "phone"];
@@ -739,7 +739,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     setTouchedFields(new Set([...requiredFields, ...optionalFields]));
     
     return isValid;
-  };
+  }, [facility]);
 
   // Helper: assert all Supabase batch ops succeeded; throw on first DB/RLS error.
   const assertAllOk = (

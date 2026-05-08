@@ -181,7 +181,7 @@ export default function MarketingLanding() {
         {/* Stats Bar */}
         <div className="border-b border-border/40 bg-background">
           <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-2xl py-5 sm:py-6">
-            <div className="grid grid-cols-3 text-center gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 text-center gap-4">
               <div>
                 <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary tabular-nums">15,000+</div>
                 <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">Verified Centers</div>

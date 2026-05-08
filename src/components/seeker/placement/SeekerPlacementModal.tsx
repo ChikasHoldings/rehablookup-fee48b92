@@ -264,7 +264,7 @@ export function SeekerPlacementModal({ caseData, open, onOpenChange }: SeekerPla
         {/* Tabs + Content */}
         <Tabs defaultValue="overview" className="flex-1 flex flex-col overflow-hidden">
           <div className="px-4 sm:px-5 pt-3 border-b flex-shrink-0">
-            <TabsList className="w-full grid grid-cols-3">
+            <TabsList className="w-full grid grid-cols-1 sm:grid-cols-3">
               <TabsTrigger value="overview" className="text-xs gap-1">
                 <Activity className="h-3.5 w-3.5" />
                 <span className="hidden xs:inline">Overview</span>

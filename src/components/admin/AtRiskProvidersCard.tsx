@@ -193,7 +193,7 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
                       </Badge>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 text-sm mb-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-3">
                       <div className="flex items-center gap-1.5">
                         <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="text-muted-foreground">Last active:</span>

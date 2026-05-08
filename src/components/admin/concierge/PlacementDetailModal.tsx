@@ -80,6 +80,7 @@ export function PlacementDetailModal({
         },
       }).then(() => onRefresh()).catch(console.error);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- onRefresh is a parent callback; including it would cause infinite re-runs if parent doesn't memoize it
   }, [open, caseData?.id, caseData?.status, adminRole]);
 
   if (!caseData) return null;

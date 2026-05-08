@@ -342,7 +342,7 @@ export default function ProviderSettingsPage() {
       setActiveTab(newTab);
       setSearchParams({ tab: newTab }, { replace: true });
     }
-  }, [hasUnsavedChanges, activeTab]);
+  }, [hasUnsavedChanges, activeTab, setSearchParams]);
 
   const handleDiscardChanges = () => {
     // Reset to initial state
@@ -1475,7 +1475,7 @@ export default function ProviderSettingsPage() {
                         <RadioGroup 
                           value={defaultSnoozeDuration} 
                           onValueChange={setDefaultSnoozeDuration}
-                          className="grid grid-cols-4 gap-2"
+                          className="grid grid-cols-2 sm:grid-cols-4 gap-2"
                         >
                           {[
                             { value: "4_hours", label: "4h" },

@@ -39,7 +39,7 @@ export const LeadRedistributionCard = forwardRef<HTMLDivElement, LeadRedistribut
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="p-4 rounded-lg bg-warning/20 border-2 border-warning/50 shadow-sm">
             <div className="flex items-center gap-2 mb-2">
               <div className="p-1.5 rounded-md bg-warning/30">

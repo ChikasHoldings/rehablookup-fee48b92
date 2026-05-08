@@ -16,7 +16,7 @@ export function getStoredDeviceToken(): string | null {
 export function setStoredDeviceToken(token: string): void {
   try {
     localStorage.setItem(TD_TOKEN_KEY, token);
-  } catch {}
+  } catch { /* intentional: localStorage may be unavailable (private browsing) */ }
 }
 
 export function clearStoredDeviceToken(): void {
@@ -24,7 +24,7 @@ export function clearStoredDeviceToken(): void {
     localStorage.removeItem(TD_TOKEN_KEY);
     // Also clear legacy key
     localStorage.removeItem("rl_admin_trusted_device_token");
-  } catch {}
+  } catch { /* intentional: localStorage may be unavailable (private browsing) */ }
 }
 
 /**

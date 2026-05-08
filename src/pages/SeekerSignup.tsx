@@ -598,7 +598,7 @@ export default function SeekerSignup() {
                   {/* Location */}
                   <div className="space-y-1.5">
                     <Label className="text-sm">Location</Label>
-                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2">
                       <div className="relative">
                         <MapPin className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
                         <Input

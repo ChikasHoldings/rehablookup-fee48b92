@@ -28,6 +28,7 @@ export function EmailVerificationStep({ email, onVerified, onBack }: EmailVerifi
     if (!codeSent && email) {
       sendVerificationCode();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only re-run when email changes; codeSent/sendVerificationCode are guards
   }, [email]);
 
   // Cooldown timer

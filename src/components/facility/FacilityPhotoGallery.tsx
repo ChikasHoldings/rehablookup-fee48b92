@@ -67,7 +67,7 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
       </div>
 
       {/* Desktop: Grid layout (1 large + 4 small) */}
-      <div className="hidden sm:grid grid-cols-4 grid-rows-2 gap-2 h-[220px] md:h-[260px] rounded-xl overflow-hidden">
+      <div className="grid grid-cols-2 sm:grid-cols-4 grid-rows-2 sm:grid-rows-2 gap-2 h-[220px] md:h-[260px] rounded-xl overflow-hidden">
         {/* Main large image */}
         <button
           onClick={() => openLightbox(0)}

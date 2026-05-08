@@ -157,6 +157,7 @@ export function MarketingLeadProfileModal({
       setAdminNotes(lead.admin_notes || "");
       setActiveTab("overview");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- using property-level dep (lead.id) intentionally to avoid re-running on unrelated lead field changes
   }, [lead?.id]);
 
   // Fetch lead journey data
@@ -220,7 +221,7 @@ export function MarketingLeadProfileModal({
         .limit(100);
 
       const facilityIds = [...new Set(pluckNonNull(leadInquiries, "facility_id"))];
-      let facilitiesMap: Record<string, any> = {};
+      const facilitiesMap: Record<string, any> = {};
 
       if (facilityIds.length > 0) {
         const { data: facilities } = await supabase

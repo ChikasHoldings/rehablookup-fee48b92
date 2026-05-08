@@ -42,6 +42,7 @@ export function ProfileInformationCard({
       setFirstName(profile.first_name || "");
       setLastName(profile.last_name || "");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- using property-level deps intentionally to avoid re-running on unrelated profile changes
   }, [profile?.first_name, profile?.last_name]);
 
   const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "Admin User";

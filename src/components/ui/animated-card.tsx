@@ -49,6 +49,7 @@ interface AnimatedCardProps {
 
        observer.observe(element);
        return () => observer.disconnect();
+     // eslint-disable-next-line react-hooks/exhaustive-deps -- elementRef is a stable ref alias for internalRef; instant is the real trigger
      }, [instant]);
 
      return (

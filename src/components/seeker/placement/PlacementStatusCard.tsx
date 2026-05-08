@@ -151,7 +151,7 @@ export function PlacementStatusCard({ caseData }: PlacementStatusCardProps) {
             </div>
 
             {/* Step indicators */}
-            <div className="grid grid-cols-5 gap-1">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-1">
               {GUIDED_STEPS.map((step, index) => {
                 const StepIcon = step.icon;
                 const isCompleted = index < currentStepIndex;

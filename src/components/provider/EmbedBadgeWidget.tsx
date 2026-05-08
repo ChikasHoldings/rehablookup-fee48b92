@@ -306,7 +306,7 @@ export function EmbedBadgeWidget({
               <div className="rounded-2xl border border-border/50 overflow-hidden">
                 <Tabs defaultValue="html" className="w-full">
                   <div className="p-3 border-b border-border/50 bg-muted/20">
-                    <TabsList className="grid w-full grid-cols-4 h-8">
+                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-8">
                       <TabsTrigger value="html" className="text-xs">HTML</TabsTrigger>
                       <TabsTrigger value="wordpress" className="text-xs">WordPress</TabsTrigger>
                       <TabsTrigger value="squarespace" className="text-xs">Squarespace</TabsTrigger>

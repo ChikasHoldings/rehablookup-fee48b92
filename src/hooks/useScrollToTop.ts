@@ -34,6 +34,7 @@ export function useScrollToTop(
     } else {
       window.scrollTo({ top: 0, behavior: "instant" });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- spread of caller-provided dependencies is intentional; ESLint cannot statically verify them
   }, [pathname, hash, containerRef, ...dependencies]);
 }
 

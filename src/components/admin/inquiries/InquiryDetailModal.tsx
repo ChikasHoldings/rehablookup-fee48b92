@@ -418,7 +418,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                 {relatedPlacement && (
                   <div className="p-4 rounded-xl border-2 border-purple-500/30 bg-purple-500/5">
                     <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm"><Handshake className="h-4 w-4 text-purple-600" />Converted to Placement</h4>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                       <div><span className="text-muted-foreground block text-xs">Case ID</span><span className="font-mono text-xs">{relatedPlacement.id.slice(0, 8)}</span></div>
                       <div><span className="text-muted-foreground block text-xs">Status</span><Badge variant="outline" className="text-xs mt-0.5">{relatedPlacement.status}</Badge></div>
                       <div><span className="text-muted-foreground block text-xs">Concern</span><span className="text-xs">{relatedPlacement.primary_concern || "—"}</span></div>

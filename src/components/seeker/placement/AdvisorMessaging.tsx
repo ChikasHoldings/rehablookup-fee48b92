@@ -124,6 +124,7 @@ export function AdvisorMessaging({ inquiryId }: AdvisorMessagingProps) {
     };
     
     markAsRead();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- messages.length is used as a guard; messages array reference is not needed as a dep
   }, [thread?.id, messages?.length, queryClient]);
 
   // Subscribe to realtime message updates

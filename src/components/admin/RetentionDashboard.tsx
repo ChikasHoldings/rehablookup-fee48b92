@@ -383,7 +383,7 @@ export const RetentionDashboard = forwardRef<HTMLDivElement, object>(function Re
                 <CardTitle className="text-sm font-medium">Email Engagement</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div className="text-center p-3 rounded-lg bg-muted/50">
                     <div className="flex items-center justify-center gap-1 mb-1">
                       <Mail className="h-3.5 w-3.5 text-muted-foreground" />
@@ -428,7 +428,7 @@ export const RetentionDashboard = forwardRef<HTMLDivElement, object>(function Re
                 <CardTitle className="text-sm font-medium">Performance by Period</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {[
                     { label: "Last 7 Days", data: data?.metrics.byPeriod.last7Days },
                     { label: "Last 30 Days", data: data?.metrics.byPeriod.last30Days },

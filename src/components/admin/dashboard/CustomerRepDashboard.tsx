@@ -591,7 +591,7 @@ export function CustomerRepDashboard() {
               </CardHeader>
               <CardContent>
                 {loadingReviews ? <Skeleton className="h-20 w-full" /> : (
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
                       <AlertTriangle className="h-5 w-5 text-warning mx-auto mb-1" />
                       <div className="text-xl font-bold text-warning">{reviewStats?.pending}</div>

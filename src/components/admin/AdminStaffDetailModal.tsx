@@ -189,7 +189,7 @@ export function AdminStaffDetailModal({
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="mx-6 mt-3 grid grid-cols-4 flex-shrink-0">
+          <TabsList className="mx-6 mt-3 grid grid-cols-2 sm:grid-cols-4 flex-shrink-0">
             <TabsTrigger value="overview" className="text-xs gap-1">
               <User className="h-3.5 w-3.5" />
               Overview

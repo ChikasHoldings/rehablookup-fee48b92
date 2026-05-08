@@ -434,7 +434,7 @@ export function ManagerDashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
                     <div className="text-xl font-bold text-warning tabular-nums">{escalationStats?.open}</div>
                     <div className="text-[10px] text-muted-foreground">Open</div>
@@ -535,7 +535,7 @@ export function ManagerDashboard() {
                   </div>
                   <Progress value={providerStats?.approvalRate || 0} className="h-2" />
                 </div>
-                <div className="grid grid-cols-3 gap-3 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                   <div className="text-center p-2 rounded-lg bg-success/10">
                     <div className="text-base font-bold text-success tabular-nums">{providerStats?.approved}</div>
                     <div className="text-[10px] text-muted-foreground">Approved</div>
@@ -578,7 +578,7 @@ export function ManagerDashboard() {
             {loadingLeads ? (
               <Skeleton className="h-16 w-full" />
             ) : (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="text-center p-2 rounded-lg bg-muted/50 border">
                   <div className="text-lg font-bold tabular-nums">{leadStats?.totalMonth}</div>
                   <div className="text-[10px] text-muted-foreground">This Month</div>
@@ -617,7 +617,7 @@ export function ManagerDashboard() {
             {loadingSubs ? (
               <Skeleton className="h-16 w-full" />
             ) : (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="text-center p-2 rounded-lg bg-success/10 border border-success/20">
                   <CreditCard className="h-4 w-4 text-success mx-auto mb-1" />
                   <div className="text-lg font-bold text-success tabular-nums">{subscriptionStats?.active}</div>

@@ -506,7 +506,7 @@ export default function SeekerRequests() {
           <div className="space-y-4">
             {/* Filter tabs */}
             <Tabs value={filterTab} onValueChange={(v) => setFilterTab(v as FilterTab)}>
-              <TabsList className="grid w-full grid-cols-3 h-9">
+              <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-9">
                 <TabsTrigger value="all" className="text-xs sm:text-sm gap-1">
                   All
                   <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-1">{requests.length}</Badge>

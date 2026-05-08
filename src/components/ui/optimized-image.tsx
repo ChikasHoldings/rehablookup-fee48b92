@@ -108,7 +108,7 @@ export const OptimizedImage = memo(function OptimizedImage({
           sizes={sizes}
           loading={priority ? "eager" : "lazy"}
           decoding={priority ? "sync" : "async"}
-          // @ts-ignore - fetchpriority is valid HTML but React warns about casing
+          // @ts-expect-error - fetchpriority is valid HTML but React warns about casing
           fetchpriority={priority ? "high" : "auto"}
           onLoad={handleLoad}
           onError={handleError}
@@ -241,7 +241,7 @@ export const LazyImage = memo(function LazyImage({
       alt={alt}
       loading={priority ? "eager" : "lazy"}
       decoding={priority ? "sync" : "async"}
-      // @ts-ignore - fetchpriority is valid HTML but React warns about casing
+      // @ts-expect-error - fetchpriority is valid HTML but React warns about casing
       fetchpriority={priority ? "high" : "auto"}
       className={className}
       {...props}

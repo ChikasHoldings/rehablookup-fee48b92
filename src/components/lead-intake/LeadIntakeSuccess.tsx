@@ -175,7 +175,7 @@ export function LeadIntakeSuccess({ facilityName, facilityId, leadId, firstName,
 
         {/* Feature Cards */}
 
-        <div className="grid grid-cols-3 gap-3 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
           <div className="bg-card border border-border/50 rounded-xl p-4 hover:border-primary/30 transition-colors">
             <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
               <Shield className="w-5 h-5 text-primary" />

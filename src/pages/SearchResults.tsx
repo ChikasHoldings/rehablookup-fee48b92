@@ -166,10 +166,10 @@ const SearchResults = () => {
   const verifiedOnly = searchParams.get("verified") === "true";
   const featuredOnly = searchParams.get("featuredOnly") === "true";
 
-  // Parse comma-separated filter values
-  const selectedTreatmentTypes = treatmentTypesParam ? treatmentTypesParam.split(",") : [];
-  const selectedAmenities = amenitiesParam ? amenitiesParam.split(",") : [];
-  const selectedInsuranceTypes = insuranceTypesParam ? insuranceTypesParam.split(",") : [];
+  // Parse comma-separated filter values — wrapped in useMemo so array references are stable across renders
+  const selectedTreatmentTypes = useMemo(() => treatmentTypesParam ? treatmentTypesParam.split(",") : [], [treatmentTypesParam]);
+  const selectedAmenities = useMemo(() => amenitiesParam ? amenitiesParam.split(",") : [], [amenitiesParam]);
+  const selectedInsuranceTypes = useMemo(() => insuranceTypesParam ? insuranceTypesParam.split(",") : [], [insuranceTypesParam]);
   const selectedDistance = distanceParam || "";
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
@@ -228,14 +228,15 @@ const SearchResults = () => {
 
   const allCenters = approvedFacilities;
 
-  const typeFilterMap: Record<string, string[]> = {
+  // Wrapped in useMemo so the object reference is stable across renders
+  const typeFilterMap = useMemo<Record<string, string[]>>(() => ({
     drug: ["Detox", "Inpatient", "Outpatient"],
     alcohol: ["Detox", "Inpatient", "Outpatient"],
     "mental-health": ["Dual Diagnosis"],
     residential: ["Inpatient"],
     outpatient: ["Outpatient"],
     holistic: ["Inpatient", "Outpatient"],
-  };
+  }), []);
 
   const typeDisplayNames: Record<string, string> = {
     drug: "Drug Addiction",
@@ -541,7 +542,7 @@ const SearchResults = () => {
     }
 
     return { filteredCenters: results, isExpandedSearch: expanded };
-  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData]);
+  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
 
   const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;

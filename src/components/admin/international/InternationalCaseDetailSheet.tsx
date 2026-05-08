@@ -238,7 +238,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
           </SheetHeader>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="intake">Intake</TabsTrigger>
               <TabsTrigger value="notes">Notes</TabsTrigger>

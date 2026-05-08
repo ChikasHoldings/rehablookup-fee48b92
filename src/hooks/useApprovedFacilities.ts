@@ -119,8 +119,9 @@ const getCachedFacilities = (): ApprovedFacility[] | undefined => {
 export const useApprovedFacilities = () => {
   const queryClient = useQueryClient();
   const { data: featuredData, isLoading: isFeaturedLoading } = useFeaturedFacilityIds();
-  const proIds = featuredData?.proFacilityIds || [];
-  const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
+  // Wrap in useMemo so the array reference is stable when featuredData hasn't changed
+  const proIds = useMemo(() => featuredData?.proFacilityIds || [], [featuredData?.proFacilityIds]);
+  const homepageFeaturedIds = useMemo(() => featuredData?.homepageFeaturedIds || [], [featuredData?.homepageFeaturedIds]);
 
   // Real-time subscription for approved facilities updates
   useEffect(() => {

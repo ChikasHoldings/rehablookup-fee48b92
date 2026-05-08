@@ -583,7 +583,7 @@ const Index = () => {
                 
                 {/* Stats Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
-                  <div className="grid grid-cols-4 gap-1.5 md:gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 md:gap-2">
                     {[
                       { value: "15K+", label: "Centers" },
                       { value: "50", label: "States" },

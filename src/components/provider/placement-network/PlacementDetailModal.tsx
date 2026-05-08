@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -227,9 +227,9 @@ export function PlacementDetailModal({
 
   // Clinical/preference projection (always safe for an introduced provider)
   const fullInquiry = disclosedInquiry;
-
   // PII projection (server returns nulls when not disclosed; pii_unlocked flag confirms)
-  const seekerPii = disclosedInquiry?.pii_unlocked ? {
+  // Wrapped in useMemo so the object reference is stable (avoids exhaustive-deps re-run on every render)
+  const seekerPii = useMemo(() => disclosedInquiry?.pii_unlocked ? {
     user_name: disclosedInquiry.user_name,
     user_email: disclosedInquiry.user_email,
     user_phone: disclosedInquiry.user_phone,
@@ -253,9 +253,8 @@ export function PlacementDetailModal({
     current_living_situation: disclosedInquiry.current_living_situation,
     budget_range: disclosedInquiry.budget_range,
     timeline_urgency: disclosedInquiry.timeline_urgency,
-    notes: disclosedInquiry.notes,
-  } : null;
-
+     notes: disclosedInquiry.notes,
+  } : null, [disclosedInquiry]);
   // Log PII disclosure event once per modal open
   const piiDisclosureLogged = useRef(false);
 
@@ -290,6 +289,7 @@ export function PlacementDetailModal({
       }
     };
     logDisclosure();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- seekerPii is derived inline from disclosedInquiry; piiUnlocked is the real trigger; seekerPii conditional is a guard
   }, [piiUnlocked, seekerPii, introduction?.inquiry_id, introduction?.id, facilityId]);
 
   // Reset disclosure flag when modal closes

@@ -469,9 +469,10 @@ export default function AdminProviders() {
   };
 
   // Reset page when debounced search changes
+  // setCurrentPage is a stable useState setter — safe to include in deps
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, setCurrentPage]);
 
   const handleStatusChange = (id: string, newStatus: string) => {
     updateProvider.mutate({

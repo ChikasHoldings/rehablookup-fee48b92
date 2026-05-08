@@ -549,7 +549,7 @@ export default function SeekerReviews() {
             {/* Filter tabs */}
             {reviews.length > 1 && (
               <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-                <TabsList className="grid w-full grid-cols-4 h-9">
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-9">
                   <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
                   <TabsTrigger value="approved" className="text-xs sm:text-sm">Published</TabsTrigger>
                   <TabsTrigger value="pending" className="text-xs sm:text-sm">Pending</TabsTrigger>

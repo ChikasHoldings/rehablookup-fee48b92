@@ -140,19 +140,22 @@ export default function AdminAnalytics() {
         return { from: subDays(today, 30), to: today };
       case "thisMonth":
         return { from: startOfMonth(today), to: endOfMonth(today) };
-      case "lastMonth":
+      case "lastMonth": {
         const lastMonth = subMonths(today, 1);
         return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
+      }
       case "thisQuarter":
         return { from: startOfQuarter(today), to: endOfQuarter(today) };
-      case "lastQuarter":
+      case "lastQuarter": {
         const lastQuarter = subQuarters(today, 1);
         return { from: startOfQuarter(lastQuarter), to: endOfQuarter(lastQuarter) };
+      }
       case "thisYear":
         return { from: startOfYear(today), to: endOfYear(today) };
-      case "lastYear":
+      case "lastYear": {
         const lastYear = subYears(today, 1);
         return { from: startOfYear(lastYear), to: endOfYear(lastYear) };
+      }
       case "custom":
         return { from: customDateRange.from || subDays(today, 30), to: customDateRange.to || today };
       default:
@@ -243,7 +246,7 @@ export default function AdminAnalytics() {
   const { data: leadsData, isLoading: isLoadingLeads, error: leadsError } = useQuery({
     queryKey: ["admin-analytics-leads", dateRange, selectedState, selectedCity],
     queryFn: async () => {
-      let query = supabase
+      const query = supabase
         .from("leads")
         .select("id, facility_id, status, source, created_at, facilities!facility_id(city, state)")
         .gte("created_at", dateRange.from.toISOString())
@@ -344,7 +347,7 @@ export default function AdminAnalytics() {
   const { data: prevLeadsData, error: prevLeadsError } = useQuery({
     queryKey: ["admin-analytics-prev-leads", previousDateRange, selectedState, selectedCity],
     queryFn: async () => {
-      let query = supabase
+      const query = supabase
         .from("leads")
         .select("id, facility_id, status, source, created_at, facilities!facility_id(city, state)")
         .gte("created_at", previousDateRange.from.toISOString())
@@ -973,7 +976,7 @@ export default function AdminAnalytics() {
               <Skeleton className="h-[140px] w-full" />
             ) : (
               <>
-                <div className="grid grid-cols-3 gap-4 mb-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-foreground tabular-nums">{kpis.visitors.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">Profile Views</p>

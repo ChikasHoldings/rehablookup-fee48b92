@@ -548,6 +548,7 @@ export default function AdminSecurityLogs() {
     };
 
     lookupQueue();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- ipLocations and loadingLocations are read as guards but must not be deps (would cause infinite re-runs)
   }, [logs, lookupIpLocation]);
 
   // Lookup location for selected log
@@ -656,14 +657,14 @@ export default function AdminSecurityLogs() {
     blockedPage * blockedPageSize
   );
 
-  // Reset page when filters change
+  // Reset page when filters change — setCurrentPage/setBlockedPage are stable useState setters
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, actionFilter, successFilter, dateRange]);
+  }, [searchQuery, actionFilter, successFilter, dateRange, setCurrentPage]);
 
   useEffect(() => {
     setBlockedPage(1);
-  }, [blockedSearchQuery]);
+  }, [blockedSearchQuery, setBlockedPage]);
 
   const exportLogs = () => {
     if (!filteredLogs) return;

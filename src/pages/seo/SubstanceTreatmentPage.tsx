@@ -21,7 +21,7 @@ export default function SubstanceTreatmentPage() {
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
     const keywords = substance.filterKeys.map((k) => k.toLowerCase());
 
-    let filtered = allFacilities.filter((f) => {
+    const filtered = allFacilities.filter((f) => {
       return (
         f.treatmentTypes?.some((t) =>
           keywords.some((k) => t.toLowerCase().includes(k))

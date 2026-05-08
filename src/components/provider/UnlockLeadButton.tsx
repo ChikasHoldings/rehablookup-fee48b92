@@ -586,7 +586,7 @@ function UnlockSuccessDialog({
               </div>
 
               {(telHref || smsHref || mailHref) && (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <Button asChild variant="outline" size="sm" disabled={!telHref}>
                     <a href={telHref ?? "#"} aria-disabled={!telHref}>
                       <Phone className="h-4 w-4 mr-1.5" />

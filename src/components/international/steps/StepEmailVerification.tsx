@@ -134,6 +134,7 @@ export function StepEmailVerification({
     if (code.length === 6 && !isVerified && !isVerifying) {
       handleVerifyCode();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only trigger on OTP change; isVerified/isVerifying/handleVerifyCode are guards, not triggers
   }, [code]);
 
   if (isVerified) {

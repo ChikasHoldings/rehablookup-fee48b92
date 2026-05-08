@@ -398,7 +398,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                   /* Unlocked State - Show full contact info with instant CTAs */
                   <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
                     {/* Quick Action CTAs */}
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <Button 
                         className="h-12 flex-col gap-0.5 bg-green-600 hover:bg-green-700 text-white"
                         asChild

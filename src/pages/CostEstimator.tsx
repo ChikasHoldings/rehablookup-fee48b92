@@ -439,7 +439,7 @@ const CostEstimator = () => {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="grid grid-cols-3 gap-3"
+                        className="grid grid-cols-1 sm:grid-cols-3 gap-3"
                       >
                         <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 text-center">
                           <p className="text-lg font-bold text-primary">{insurance.coveragePercent}%</p>

@@ -21,18 +21,19 @@ export function useLeadCountdown(createdAt: string): CountdownResult {
     [createdAt]
   );
 
-  const calcRemaining = () => Math.max(0, expiresAt - Date.now());
-  const [remaining, setRemaining] = useState(calcRemaining);
+  const [remaining, setRemaining] = useState(() => Math.max(0, expiresAt - Date.now()));
 
   useEffect(() => {
     if (remaining <= 0) return;
+    // calcRemaining is defined inside the effect so it always captures the current expiresAt
+    const calcRemaining = () => Math.max(0, expiresAt - Date.now());
     const id = setInterval(() => {
       const r = calcRemaining();
       setRemaining(r);
       if (r <= 0) clearInterval(id);
     }, 1000);
     return () => clearInterval(id);
-  }, [expiresAt]);
+  }, [expiresAt, remaining]);
 
   const totalSeconds = Math.floor(remaining / 1000);
   const hours = Math.floor(totalSeconds / 3600);

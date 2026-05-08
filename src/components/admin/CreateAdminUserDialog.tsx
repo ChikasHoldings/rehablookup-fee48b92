@@ -201,7 +201,7 @@ export function CreateAdminUserDialog({ open, onOpenChange }: CreateAdminUserDia
             </DialogHeader>
 
             <Tabs defaultValue="identity" className="mt-4">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
                 <TabsTrigger value="identity">Identity</TabsTrigger>
                 <TabsTrigger value="classification">Classification</TabsTrigger>
                 <TabsTrigger value="permissions">Permissions</TabsTrigger>

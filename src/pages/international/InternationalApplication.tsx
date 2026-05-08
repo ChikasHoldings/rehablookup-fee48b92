@@ -88,6 +88,7 @@ export default function InternationalApplication() {
   });
 
   // Handle payment success return
+   
   useEffect(() => {
     const sessionId = searchParams.get("session_id");
     const paymentSuccess = searchParams.get("payment") === "success";
@@ -96,6 +97,7 @@ export default function InternationalApplication() {
       // Payment successful - submit intake and redirect
       handlePaymentSuccess(sessionId);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- handlePaymentSuccess is defined after this effect; searchParams is the real trigger
   }, [searchParams]);
 
   const handlePaymentSuccess = async (sessionId: string) => {

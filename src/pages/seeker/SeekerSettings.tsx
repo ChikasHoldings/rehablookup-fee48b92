@@ -161,17 +161,21 @@ export default function SeekerSettings() {
   }, [isReady, sessionUserId, sessionEmail]);
 
   // Auto-fill city/state when zipcode changes
+   
   useEffect(() => {
     if (zipcode.length === 5 && !city && !state) {
       zipcodeLookup.lookup(zipcode);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- city/state are intentional guards to skip lookup when already filled; zipcodeLookup is stable
   }, [zipcode]);
 
+   
   useEffect(() => {
     if (zipcodeLookup.data && !city && !state) {
       setCity(zipcodeLookup.data.city);
       setState(zipcodeLookup.data.stateAbbr);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- city/state are intentional guards; setCity/setState are stable setters
   }, [zipcodeLookup.data]);
 
   const handleAvatarClick = () => {

@@ -434,7 +434,7 @@ export default function ProviderSignup() {
 
       // 4-7: Insert related data in parallel (services, age groups, insurance, accreditations)
       const relatedInserts: PromiseLike<void>[] = [];
-      let relatedErrors: string[] = [];
+      const relatedErrors: string[] = [];
 
       if (formData.selectedTreatments.length > 0) {
         relatedInserts.push(

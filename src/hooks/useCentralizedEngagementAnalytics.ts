@@ -65,6 +65,9 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
     ? facilities.filter(f => f.id === filterFacilityId).map(f => f.id)
     : facilities.map((f) => f.id);
 
+  // Stable string key derived from the array — avoids a complex expression in the dep array
+  const facilityIdsKey = facilityIds.join(",");
+
   useEffect(() => {
     if (facilityIds.length === 0) return;
 
@@ -89,7 +92,7 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
     return () => {
       eventChannels.forEach((channel) => supabase.removeChannel(channel));
     };
-  }, [facilityIds.join(","), queryClient]);
+  }, [facilityIdsKey, queryClient]); // eslint-disable-line react-hooks/exhaustive-deps -- facilityIds is derived from facilityIdsKey; including it would cause duplicate subscriptions
 
   return useQuery({
     queryKey: [

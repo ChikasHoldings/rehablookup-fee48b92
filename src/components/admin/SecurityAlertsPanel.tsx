@@ -592,7 +592,7 @@ export function SecurityAlertsPanel() {
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-4 border-t">
           <div className="text-center">
             <p className="text-2xl font-bold text-red-600">{recentCriticalAlerts}</p>
             <p className="text-xs text-muted-foreground">Failures (1hr)</p>

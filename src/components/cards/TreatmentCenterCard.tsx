@@ -124,6 +124,7 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
     }
 
     return () => observer.disconnect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- cardRef is a stable ref object and cannot change between renders
   }, [center.isFromDatabase, center.id, trackImpression]);
 
   const handleFeaturedClick = useCallback(async () => {

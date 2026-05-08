@@ -139,7 +139,8 @@ export default function AdminStaff() {
     user: AdminUser;
   } | null>(null);
 
-  const safeAdminUsers = adminUsers || [];
+  // Wrap in useMemo so the array reference is stable when adminUsers hasn't changed
+  const safeAdminUsers = useMemo(() => adminUsers || [], [adminUsers]);
   
   const stats = useMemo(() => ({
     total: safeAdminUsers.length,

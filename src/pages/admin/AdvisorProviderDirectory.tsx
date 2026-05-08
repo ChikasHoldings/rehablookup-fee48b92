@@ -110,7 +110,7 @@ export default function AdvisorProviderDirectory() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { label: "All Approved", value: counts?.all ?? 0, key: "all", color: "text-foreground" },
           { label: "Enrolled", value: counts?.enrolled ?? 0, key: "enrolled", color: "text-success" },

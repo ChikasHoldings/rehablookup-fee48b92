@@ -83,7 +83,7 @@ export function ROICalculatorWidget() {
       </div>
 
       {/* Highlight Cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="rounded-xl bg-primary/5 border border-primary/10 p-4">
           <TrendingDown className="h-5 w-5 text-primary mb-2" />
           <p className="text-xs text-muted-foreground">vs Google Ads</p>
@@ -184,7 +184,7 @@ export function ROICalculatorWidget() {
       </div>
 
       {/* Why it works */}
-      <div className="grid grid-cols-3 gap-3 pt-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
         {[
           { icon: ShieldCheck, label: "24h Exclusive", desc: "No competing facilities" },
           { icon: Users, label: "Verified Leads", desc: "Real families, real intent" },

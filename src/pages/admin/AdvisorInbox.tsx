@@ -115,7 +115,7 @@ export default function AdvisorInbox() {
           queryClient.invalidateQueries({ queryKey: ["advisor-inbox-threads"] });
         });
     }
-  }, [selectedThread?.id]);
+  }, [selectedThread?.id, selectedThread?.hasUnread, queryClient]);
 
   // Auto-scroll to bottom
   useEffect(() => {

@@ -220,7 +220,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
     return (
       <div className="space-y-5">
         <Skeleton className="h-32 w-full rounded-xl" />
-        <div className="grid grid-cols-3 gap-4"><Skeleton className="h-24 rounded-xl" /><Skeleton className="h-24 rounded-xl" /><Skeleton className="h-24 rounded-xl" /></div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4"><Skeleton className="h-24 rounded-xl" /><Skeleton className="h-24 rounded-xl" /><Skeleton className="h-24 rounded-xl" /></div>
         <Skeleton className="h-40 w-full rounded-xl" />
       </div>
     );
@@ -243,7 +243,7 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         </div>
 
         {/* ── Stats ── */}
-        <div className="grid grid-cols-3 border-b">
+        <div className="grid grid-cols-1 sm:grid-cols-3 border-b">
           <StatCard icon={Bell} iconColor="text-amber-500" bgColor="bg-amber-500/10" value={pendingIntroductions.length} label="Pending" highlight={pendingIntroductions.length > 0} />
           <StatCard icon={CheckCircle} iconColor="text-emerald-500" bgColor="bg-emerald-500/10" value={acceptedCount} label="Accepted" border />
           <StatCard icon={XCircle} iconColor="text-muted-foreground" bgColor="bg-muted" value={declinedCount} label="Declined" border />

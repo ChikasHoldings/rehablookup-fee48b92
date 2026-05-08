@@ -90,7 +90,7 @@ export function ProMultiFacilityOverview({ facilities }: ProMultiFacilityOvervie
       </CardHeader>
       <CardContent className="p-3.5">
         {/* Aggregated totals */}
-        <div className="grid grid-cols-3 gap-2 mb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
           <div className="text-center p-2 rounded-lg bg-muted/50">
             <p className="text-lg font-bold text-foreground tabular-nums">{isLoading ? "…" : totalViews}</p>
             <p className="text-xs text-muted-foreground">Views</p>

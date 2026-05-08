@@ -199,7 +199,7 @@ export function AdminUserPermissionsDialog({
         </div>
 
         <Tabs defaultValue="role" className="mt-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
             <TabsTrigger value="role">Role</TabsTrigger>
             <TabsTrigger value="permissions">Page Access</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>

@@ -98,6 +98,7 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
         console.error("[ConciergeDetailSheet] Auto-transition failed:", err);
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- onRefresh is a parent callback; including it would cause infinite re-runs if parent doesn't memoize it
   }, [open, caseData?.id, caseData?.status, adminRole]);
 
   // Advance status via stepper (uses centralized transition hook)

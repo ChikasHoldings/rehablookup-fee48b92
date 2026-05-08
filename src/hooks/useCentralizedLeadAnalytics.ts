@@ -64,6 +64,9 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange, filterFacilit
     ? facilities.filter(f => f.id === filterFacilityId).map(f => f.id)
     : facilities.map((f) => f.id);
 
+  // Stable string key derived from the array — avoids a complex expression in the dep array
+  const facilityIdsKey = facilityIds.join(",");
+
   // Poll for lead updates every 60 seconds (leads removed from Realtime for PII security)
   useEffect(() => {
     if (facilityIds.length === 0) return;
@@ -73,7 +76,7 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange, filterFacilit
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [facilityIds.join(","), queryClient]);
+  }, [facilityIdsKey, queryClient]); // eslint-disable-line react-hooks/exhaustive-deps -- facilityIds is derived from facilityIdsKey; including it would cause duplicate intervals
 
   return useQuery({
     queryKey: [

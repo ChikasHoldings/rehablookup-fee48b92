@@ -103,6 +103,7 @@ export function StepEmailVerification({
     if (otpValue.length === 6 && !isVerifying && !isVerified) {
       handleVerifyCode(otpValue);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only trigger on OTP change; isVerifying/isVerified/handleVerifyCode are guards, not triggers
   }, [otpValue]);
 
   // Already verified state

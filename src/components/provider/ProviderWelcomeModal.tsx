@@ -40,8 +40,8 @@ async function trackWelcomeEvent(eventType: string, metadata?: Record<string, un
         event_description: `Welcome modal: ${eventType}`,
         metadata,
       },
-    }).catch(() => {});
-  } catch {}
+    }).catch(() => { /* intentional: analytics errors are non-fatal */ });
+  } catch { /* intentional: analytics errors are non-fatal */ }
 }
 
 const FREE_FEATURES = [

@@ -422,7 +422,7 @@ export default function AdminSettings() {
       let csvHeaders: string[] = [];
 
       switch (type) {
-        case "providers":
+        case "providers": {
           const { data: facilities } = await supabase
             .from("facilities")
             .select("name, city, state, phone, email, status, featured, verified, suspended, created_at, updated_at");
@@ -430,7 +430,8 @@ export default function AdminSettings() {
           filename = `providers-export-${new Date().toISOString().split('T')[0]}`;
           csvHeaders = ["name", "city", "state", "phone", "email", "status", "featured", "verified", "suspended", "created_at", "updated_at"];
           break;
-        case "leads":
+        }
+        case "leads": {
           const { data: leads } = await supabase
             .from("leads")
             .select("name, email, phone, status, source, quality_flag, insurance_type, urgency, qualified, created_at, facility_id");
@@ -438,12 +439,12 @@ export default function AdminSettings() {
           filename = `leads-export-${new Date().toISOString().split('T')[0]}`;
           csvHeaders = ["name", "email", "phone", "status", "source", "quality_flag", "insurance_type", "urgency", "qualified", "created_at", "facility_id"];
           break;
-        case "analytics":
+        }
+        case "analytics": {
           const [viewsResult, interactionsResult] = await Promise.all([
             supabase.from("provider_events").select("facility_id, event_type, created_at").in("event_type", ["profile_view", "listing_impression"]).order("created_at", { ascending: false }).limit(1000),
             supabase.from("provider_events").select("id, facility_id, event_type, created_at").in("event_type", ["click_to_call", "website_click"]).order("created_at", { ascending: false }).limit(1000),
           ]);
-          
           if (format === "csv") {
             data = viewsResult.data || [];
             csvHeaders = ["facility_id", "event_type", "created_at"];
@@ -456,7 +457,8 @@ export default function AdminSettings() {
           }
           filename = `analytics-export-${new Date().toISOString().split('T')[0]}`;
           break;
-        case "audit":
+        }
+        case "audit": {
           const { data: auditLogs } = await supabase
             .from("admin_audit_log")
             .select("id, admin_user_id, action_type, target_type, target_id, details, created_at")
@@ -466,7 +468,8 @@ export default function AdminSettings() {
           filename = `audit-log-export-${new Date().toISOString().split('T')[0]}`;
           csvHeaders = ["id", "admin_user_id", "action_type", "target_type", "target_id", "created_at"];
           break;
-        case "subscriptions":
+        }
+        case "subscriptions": {
           const { data: profiles } = await supabase
             .from("profiles")
             .select("first_name, last_name, email, created_at");
@@ -474,7 +477,8 @@ export default function AdminSettings() {
           filename = `subscriptions-export-${new Date().toISOString().split('T')[0]}`;
           csvHeaders = ["first_name", "last_name", "email", "created_at"];
           break;
-        case "notifications":
+        }
+        case "notifications": {
           const { data: notifications } = await supabase
             .from("admin_notifications")
             .select("id, type, title, message, read, created_at")
@@ -484,6 +488,7 @@ export default function AdminSettings() {
           filename = `notifications-export-${new Date().toISOString().split('T')[0]}`;
           csvHeaders = ["id", "type", "title", "message", "read", "created_at"];
           break;
+        }
         default:
           throw new Error("Invalid export type");
       }

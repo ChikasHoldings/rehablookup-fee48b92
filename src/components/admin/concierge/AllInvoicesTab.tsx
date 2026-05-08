@@ -214,7 +214,7 @@ export function AllInvoicesTab() {
   return (
     <div className="space-y-4">
       {/* Stats Summary */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="p-4 rounded-lg border bg-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
             <Receipt className="h-4 w-4" />

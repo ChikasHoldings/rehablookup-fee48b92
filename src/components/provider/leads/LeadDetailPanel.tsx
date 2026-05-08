@@ -621,7 +621,7 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                 /* Unlocked State - Show full contact info with prominent CTAs */
                 <div className="p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
                   {/* Quick Action Buttons - Prominent CTAs */}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Button 
                       className="h-14 flex-col gap-1 bg-green-600 hover:bg-green-700 text-white"
                       asChild

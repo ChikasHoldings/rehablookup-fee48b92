@@ -110,7 +110,8 @@ export function useFavorites() {
     };
 
     syncFavorites();
-  }, [user?.id]); // Only re-run when user ID changes, not the entire user object
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally depends only on user.id; re-running on the full user object would cause unnecessary re-syncs
+  }, [user?.id]);
 
   // Persist to localStorage when favorites change (for guests)
   useEffect(() => {

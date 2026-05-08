@@ -94,7 +94,7 @@ export function AdvisorEarningsCard() {
         ) : (
           <div className="space-y-4">
             {/* Summary Grid */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="text-center p-3 rounded-lg bg-warning/5 border border-warning/20">
                 <Clock className="h-4 w-4 mx-auto text-warning mb-1" />
                 <p className="text-lg font-bold tabular-nums">{formatCents(earnings?.totalPending || 0)}</p>

@@ -70,7 +70,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
       ].filter(Boolean);
       const uniqueFacilityIds = [...new Set(allFacilityIds)];
 
-      let facilityMap: Record<string, any> = {};
+      const facilityMap: Record<string, any> = {};
       if (uniqueFacilityIds.length) {
         const { data: facilities } = await supabase
           .from("facilities")
@@ -81,7 +81,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
 
       // Fetch advisor names
       const advisorIds = [...new Set(pluckNonNull(inqs as { assigned_advisor_id: string | null }[], "assigned_advisor_id"))];
-      let advisorMap: Record<string, string> = {};
+      const advisorMap: Record<string, string> = {};
       if (advisorIds.length) {
         const { data: advisors } = await supabase
           .from("admin_user_profiles")

@@ -153,6 +153,7 @@ export function CameraCaptureDialog({
     if (open && isStreaming) {
       startCamera();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only restart on facingMode change; open/isStreaming/startCamera are guards
   }, [facingMode]);
 
   return (

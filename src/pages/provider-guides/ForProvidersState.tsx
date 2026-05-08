@@ -144,7 +144,7 @@ export default function ForProvidersState() {
         {/* Stats */}
         <section className="border-b border-border bg-card py-6">
           <div className="container max-w-4xl mx-auto px-4">
-            <div className="grid grid-cols-3 gap-6 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
               <div>
                 <div className="text-xl font-bold text-foreground">{state.searches}+</div>
                 <p className="text-xs text-muted-foreground">Monthly Searches</p>

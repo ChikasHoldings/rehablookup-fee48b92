@@ -73,7 +73,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
 
       // Enrich with facility names
       const facilityIds = [...new Set(pluckNonNull(data as { facility_id: string | null }[], "facility_id"))];
-      let fMap: Record<string, any> = {};
+      const fMap: Record<string, any> = {};
       if (facilityIds.length > 0) {
         const { data: facilities } = await supabase
           .from("facilities")
@@ -131,7 +131,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
   if (loading) {
     return (
       <div className="p-5 space-y-4">
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
         </div>
         {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}

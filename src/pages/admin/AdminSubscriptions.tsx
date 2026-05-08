@@ -188,13 +188,13 @@ export default function AdminSubscriptions() {
     setSearchParams(tab === "overview" ? {} : { tab }, { replace: true });
   };
 
-  // Sync URL → state on nav
+  // Sync URL → state on nav — activeTab and setActiveTab are stable
   useEffect(() => {
     const t = searchParams.get("tab") as ValidTab | null;
     if (t && VALID_TABS.includes(t) && t !== activeTab) {
       setActiveTab(t);
     }
-  }, [searchParams]);
+  }, [searchParams, activeTab, setActiveTab]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 350);
@@ -380,7 +380,8 @@ export default function AdminSubscriptions() {
     setCurrentPage(1);
   };
 
-  useEffect(() => { setCurrentPage(1); }, [debouncedSearch, planFilter, statusFilter]);
+  // setCurrentPage is a stable setter from usePagination
+  useEffect(() => { setCurrentPage(1); }, [debouncedSearch, planFilter, statusFilter, setCurrentPage]);
 
   /* ───── Pagination ───── */
   const { page: currentPage, pageSize: itemsPerPage, totalPages, setPage: setCurrentPage, setPageSize: setItemsPerPage } = usePagination({

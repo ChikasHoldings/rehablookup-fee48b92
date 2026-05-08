@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   Mail, 
@@ -503,8 +503,8 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
     [selectedTemplate]
   );
 
-  // Render template with variables using the tag resolver
-  const renderTemplate = (text: string): string => {
+  // Render template with variables using the tag resolver — wrapped in useCallback for stable reference
+  const renderTemplate = useCallback((text: string): string => {
     if (!templateContext || templateTags.length === 0) {
       if (!lead || !providerData) return text;
       
@@ -522,7 +522,7 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
     
     const { result } = resolveTemplate(text, templateContext, templateTags);
     return result;
-  };
+  }, [lead, providerData, templateContext, templateTags]);
 
   // Validate current template
   const templateValidation = useMemo(() => {
@@ -535,13 +535,23 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
 
   const renderedSubject = useMemo(() => 
     selectedTemplateInfo ? renderTemplate(selectedTemplateInfo.subject) : "",
-    [selectedTemplateInfo, templateContext, templateTags]
+    [selectedTemplateInfo, renderTemplate]
   );
 
   const renderedBody = useMemo(() => 
     selectedTemplateInfo ? renderTemplate(selectedTemplateInfo.body) : "",
-    [selectedTemplateInfo, templateContext, templateTags]
+    [selectedTemplateInfo, renderTemplate]
   );
+
+  // Group templates by category for display — must be before early return (Rules of Hooks)
+  const templatesByCategory = useMemo(() => {
+    const grouped: Record<string, EmailTemplate[]> = {};
+    availableTemplates.forEach(t => {
+      if (!grouped[t.category]) grouped[t.category] = [];
+      grouped[t.category].push(t);
+    });
+    return grouped;
+  }, [availableTemplates]);
 
   const handleSend = () => {
     if (!selectedTemplate) {
@@ -584,16 +594,6 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
 
   const firstName = lead.name.split(" ")[0];
   const providerName = providerData?.facility?.name || "Your Facility";
-
-  // Group templates by category for display
-  const templatesByCategory = useMemo(() => {
-    const grouped: Record<string, EmailTemplate[]> = {};
-    availableTemplates.forEach(t => {
-      if (!grouped[t.category]) grouped[t.category] = [];
-      grouped[t.category].push(t);
-    });
-    return grouped;
-  }, [availableTemplates]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

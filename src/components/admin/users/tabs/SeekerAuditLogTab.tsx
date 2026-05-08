@@ -95,7 +95,7 @@ export function SeekerAuditLogTab({ userId }: SeekerAuditLogTabProps) {
   return (
     <div className="p-5 space-y-4">
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-3 rounded-xl border bg-card text-center">
           <p className="text-xl font-bold tabular-nums">{auditEntries.length}</p>
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Entries</p>

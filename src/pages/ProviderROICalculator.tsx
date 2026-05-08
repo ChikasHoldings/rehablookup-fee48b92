@@ -255,7 +255,7 @@ const ProviderROICalculator = () => {
           </h2>
 
           {/* Desktop Table */}
-          <div className="hidden md:block overflow-hidden rounded-2xl border border-border shadow-lg">
+          <div className="hidden md:block overflow-x-auto overflow-hidden rounded-2xl border border-border shadow-lg">
             <table className="w-full">
               <thead>
                 <tr className="bg-muted/50">

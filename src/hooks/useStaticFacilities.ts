@@ -8,7 +8,7 @@ import {
   type PublicFacilitySnapshot,
 } from "@/lib/publicFacilitiesSnapshot";
 
-export interface StaticFacility extends PublicFacilitySnapshot {}
+export type StaticFacility = PublicFacilitySnapshot;
 
 export interface PublicFacility extends TreatmentCenter {
   slug: string | null;
