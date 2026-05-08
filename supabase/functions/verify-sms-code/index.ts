@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
     // Find the verification code
     const { data: verificationCode, error: fetchError } = await supabase
       .from("phone_verification_codes")
-      .select("*")
+      .select("id, code, attempts, expires_at, created_at")
       .eq("phone", phone)
       .eq("verified", false)
       .gt("expires_at", new Date().toISOString())

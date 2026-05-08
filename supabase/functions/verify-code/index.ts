@@ -81,7 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Find the MOST RECENT unverified, unexpired code for this email
     const { data: verificationRecord, error: fetchError } = await supabase
       .from("email_verification_codes")
-      .select("*")
+      .select("id, code, attempts, expires_at, created_at")
       .eq("email", normalizedEmail)
       .eq("verified", false)
       .gt("expires_at", now)
