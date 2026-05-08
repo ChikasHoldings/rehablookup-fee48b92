@@ -97,6 +97,9 @@ function classify(href) {
   if (!href) return { kind: "skip" };
   if (href.startsWith("#")) return { kind: "skip" };
   if (/^(mailto:|tel:|javascript:|data:|sms:|blob:)/i.test(href)) return { kind: "skip" };
+  // Skip source-file references (e.g. /src/main.tsx in SPA dev-mode shells,
+  // plus static assets that are not HTML routes).
+  if (/\.(tsx?|jsx?|css|scss|less|svg|png|jpe?g|gif|webp|ico|woff2?|ttf|eot|map|json)$/i.test(href.split(/[?#]/)[0])) return { kind: "skip" };
 
   if (href.startsWith("//")) {
     try {
