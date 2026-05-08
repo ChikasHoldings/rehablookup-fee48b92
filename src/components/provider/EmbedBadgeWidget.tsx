@@ -44,7 +44,8 @@ export function EmbedBadgeWidget({
   }, [badgeData, selectedBadgeId]);
 
   const baseUrl = "https://rehablookup.com";
-  const edgeFunctionUrl = `https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-badge/${facilityId}?style=${badgeStyle}&size=${badgeSize}&type=${selectedBadgeId}&tier=${selectedBadge?.tier || "gold"}`;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  const edgeFunctionUrl = `${supabaseUrl}/functions/v1/serve-badge/${facilityId}?style=${badgeStyle}&size=${badgeSize}&type=${selectedBadgeId}&tier=${selectedBadge?.tier || "gold"}`;
   const badgeUrl = `${baseUrl}/api/badge/${facilityId}?style=${badgeStyle}&size=${badgeSize}&type=${selectedBadgeId}&tier=${selectedBadge?.tier || "gold"}`;
   const profileUrl = `${baseUrl}/center/${facilitySlug}?utm_source=badge&utm_medium=embed`;
 
