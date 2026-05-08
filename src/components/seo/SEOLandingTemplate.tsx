@@ -6,6 +6,7 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TrustBar } from "@/components/seo/TrustBar";
+import { StickyConversionBar } from "@/components/seo/StickyConversionBar";
 import { ConversionSection } from "@/components/seo/ConversionSection";
 import { ComparisonSection } from "@/components/seo/ComparisonSection";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
@@ -140,6 +141,8 @@ export function SEOLandingTemplate({
 
   return (
     <Layout>
+      {/* Sticky bottom bar — appears after 150px scroll, hidden on concierge/provider/admin */}
+      <StickyConversionBar />
       <SEO
         title={metaTitle}
         description={metaDescription}
@@ -420,6 +423,14 @@ export function SEOLandingTemplate({
 
       {/* Comparison */}
       <ComparisonSection facilities={facilities} location={heroLocation} />
+
+      {/* Mid-page inline intake — catches visitors who scrolled past the hero */}
+      <section className="py-10 bg-muted/30">
+        <div className="container max-w-2xl">
+          <p className="text-center text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">Get Personalized Help — Free &amp; Confidential</p>
+          <InlineMiniIntake source="seo_landing_mid" defaultTreatment="" />
+        </div>
+      </section>
 
       {/* Conversion Section */}
       <ConversionSection location={heroLocation} />
