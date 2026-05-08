@@ -19,7 +19,7 @@ export function CookieConsentBanner() {
   const [showDetails, setShowDetails] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>({
     necessary: true,
-    analytics: false,
+    analytics: true,   // opt-OUT model: analytics on by default, user can turn off
     marketing: false,
     version: COOKIE_CONSENT_VERSION,
     timestamp: "",
@@ -56,8 +56,10 @@ export function CookieConsentBanner() {
   const applyPreferences = (prefs: CookiePreferences) => {
     // Update GA4 Consent Mode v2. We retry up to 10 times (1 second total)
     // in case gtag hasn't loaded yet (e.g. slow network on first visit).
+    // Under the opt-OUT model, analytics defaults to granted — this update
+    // only matters when the user explicitly opts out (clicks Decline).
     const consentPayload = {
-      analytics_storage: prefs.analytics ? ("granted" as const) : ("denied" as const),
+      analytics_storage: prefs.analytics !== false ? ("granted" as const) : ("denied" as const),
       ad_storage: prefs.marketing ? ("granted" as const) : ("denied" as const),
       ad_user_data: prefs.marketing ? ("granted" as const) : ("denied" as const),
       ad_personalization: prefs.marketing ? ("granted" as const) : ("denied" as const),
@@ -65,8 +67,7 @@ export function CookieConsentBanner() {
     const tryUpdate = (attempts: number) => {
       if (window.gtag) {
         window.gtag("consent", "update", consentPayload);
-        // Dispatch a custom event so other components (e.g. RouteChangeTracker)
-        // can react to consent changes without prop drilling.
+        // Dispatch a custom event so other components can react to consent changes.
         window.dispatchEvent(
           new CustomEvent("rehablookup:consent-updated", { detail: prefs })
         );
@@ -88,6 +89,8 @@ export function CookieConsentBanner() {
     saveConsent({ necessary: true, analytics: true, marketing: true, version: COOKIE_CONSENT_VERSION, timestamp: "" });
 
   const rejectNonEssential = () =>
+    // Explicit opt-out: user clicked Decline — set analytics to false so GA4
+    // consent update sets analytics_storage = 'denied' and suppresses all hits.
     saveConsent({ necessary: true, analytics: false, marketing: false, version: COOKIE_CONSENT_VERSION, timestamp: "" });
 
   if (!isVisible || isAppShellRoute) return null;

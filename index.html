@@ -48,21 +48,24 @@
         gtag('js', new Date());
 
         // 3) Consent Mode v2 — MUST be set BEFORE the first gtag('config') call.
-        //    Without this, GA4 fires the initial page_view with no consent signal
-        //    and discards it in privacy-regulated regions (EU, UK, etc.).
-        //    We read localStorage immediately so returning visitors who already
-        //    accepted get their consent applied BEFORE the page_view fires —
-        //    not after React hydrates (which is too late for the first hit).
+        //    RehabLookup is a US-based site. Under US law (no federal opt-in
+        //    requirement), analytics tracking is opt-OUT by default.
+        //    We default to 'granted' for all visitors and honour any explicit
+        //    opt-out stored in localStorage (set when user clicks "Decline").
+        //    Returning visitors who already made a choice get that choice applied
+        //    immediately before the first page_view fires.
         (function () {
-          var analyticsConsent = 'denied';
-          var marketingConsent = 'denied';
+          // Default to granted (US opt-out model)
+          var analyticsConsent = 'granted';
+          var marketingConsent = 'denied'; // marketing still opt-in
           try {
             var saved = localStorage.getItem('rehablookup_cookie_consent');
             if (saved) {
               var parsed = JSON.parse(saved);
               if (parsed && parsed.version === '1.0') {
-                if (parsed.analytics === true) analyticsConsent = 'granted';
-                if (parsed.marketing === true) marketingConsent = 'granted';
+                // Honour explicit opt-out — if user clicked Decline, analytics === false
+                analyticsConsent = (parsed.analytics === false) ? 'denied' : 'granted';
+                marketingConsent = (parsed.marketing === true) ? 'granted' : 'denied';
               }
             }
           } catch (e) {}
