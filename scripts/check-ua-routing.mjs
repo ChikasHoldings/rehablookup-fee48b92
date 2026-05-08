@@ -9,6 +9,13 @@
  *     so `gtag('event','page_view')` actually fires and Google Analytics
  *     traffic doesn't silently flatline.
  *
+ * NOTE on GA4 config assertion (line ~99):
+ *   index.html stores the measurement ID in a `GA_ID` variable and calls
+ *   `gtag('config', GA_ID, {...})` — NOT `gtag('config', 'G-2VB6C1X2MQ', ...)`
+ *   directly. The regex must accept both the variable form and the literal
+ *   string form so the test doesn't produce false negatives after a future
+ *   refactor that inlines the ID.
+ *
  *   • Crawlers (UA = Googlebot) get the prerendered SEO HTML — i.e. a
  *     descriptive <h1>, the canonical <link>, and JSON-LD — so SEO is
  *     preserved.
@@ -96,7 +103,13 @@ for (const path of ROUTES) {
     assert(status === 200, `status ${status}`);
     assert(/<div\s+id=["']root["']/i.test(body), 'missing <div id="root">');
     assert(body.includes("G-2VB6C1X2MQ"), "missing GA4 tag G-2VB6C1X2MQ");
-    assert(/gtag\(\s*['"]config['"]\s*,\s*['"]G-2VB6C1X2MQ['"]/.test(body), "missing immediate GA4 config call");
+    // Accept both the variable form `gtag('config', GA_ID, ...)` used in
+    // index.html and the literal form `gtag('config', 'G-2VB6C1X2MQ', ...)`
+    // in case a future refactor inlines the ID directly.
+    assert(
+      /gtag\s*\(\s*['"](config)['"]\s*,\s*(?:GA_ID|['"]G-2VB6C1X2MQ['"])/.test(body),
+      "missing immediate GA4 config call (expected gtag('config', GA_ID, ...) or gtag('config', 'G-2VB6C1X2MQ', ...))",
+    );
     assert(/fbq\s*\(\s*['"]init['"]/.test(body), "missing Meta Pixel init");
     // The crawler stub has no <script type="module" src="/assets/...">.
     assert(/<script[^>]+src=["']\/assets\//i.test(body), "missing Vite bundle <script src>");

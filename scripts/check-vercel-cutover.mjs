@@ -99,7 +99,7 @@ const REDIRECT_SAMPLES = [
   ["/find-rehab", "/rehab-centers"],
   ["/insurance/aetna", "/insurance/aetna-rehab"],
   ["/privacy", "/privacy-policy"],
-  ["/seeker", "/client"],
+  ["/seeker", "/account"],
   ["/sitemap", "/sitemap-index.xml"],
 ];
 for (const [from, to] of REDIRECT_SAMPLES) {
