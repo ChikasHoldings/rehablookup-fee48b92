@@ -202,12 +202,17 @@ jobs:
       - name: Send webhook notification (if configured)
         # Only runs if NOTIFY_WEBHOOK_URL secret is set
         # Compatible with Slack incoming webhooks, Discord, or any HTTP endpoint
-        if: ${{ secrets.NOTIFY_WEBHOOK_URL != '' }}
+        # Note: secrets context cannot be used in step 'if' conditions directly;
+        # instead we check the env var is non-empty inside the run script.
         env:
           WEBHOOK_URL: ${{ secrets.NOTIFY_WEBHOOK_URL }}
           RUN_URL: ${{ steps.summary.outputs.run_url }}
           FAILED_JOBS: ${{ steps.summary.outputs.failed_jobs }}
         run: |
+          if [ -z "${WEBHOOK_URL}" ]; then
+            echo "No NOTIFY_WEBHOOK_URL configured — skipping webhook notification."
+            exit 0
+          fi
           PAYLOAD=$(cat <<JSONEOF
           {
             "text": "❌ *404 / Broken Route Crawler failed* on \`${{ github.repository }}\`\n\n*Failed jobs:*\n${FAILED_JOBS}\n\n*Triggered by:* ${{ github.event_name }}\n*View run:* ${RUN_URL}"
