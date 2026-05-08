@@ -9,7 +9,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { RouteChangeTracker } from "@/components/RouteChangeTracker";
 import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
 import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
-import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+// CookieConsentBanner removed — US site, no opt-in required. GA4 tracks unconditionally.
 import { ExitIntentPopup } from "@/components/conversion/ExitIntentPopup";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
@@ -526,7 +526,7 @@ const AppInner = () => {
               <NavigationProvider>
                 <ScrollToTop />
         <RouteChangeTracker />
-        <CookieConsentBanner />
+
         <ExitIntentPopup />
         <Suspense fallback={null}>
           <TrailingSlashRedirect>

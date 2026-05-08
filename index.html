@@ -47,36 +47,16 @@
         var gtag = window.gtag;
         gtag('js', new Date());
 
-        // 3) Consent Mode v2 — MUST be set BEFORE the first gtag('config') call.
-        //    RehabLookup is a US-based site. Under US law (no federal opt-in
-        //    requirement), analytics tracking is opt-OUT by default.
-        //    We default to 'granted' for all visitors and honour any explicit
-        //    opt-out stored in localStorage (set when user clicks "Decline").
-        //    Returning visitors who already made a choice get that choice applied
-        //    immediately before the first page_view fires.
-        (function () {
-          // Default to granted (US opt-out model)
-          var analyticsConsent = 'granted';
-          var marketingConsent = 'denied'; // marketing still opt-in
-          try {
-            var saved = localStorage.getItem('rehablookup_cookie_consent');
-            if (saved) {
-              var parsed = JSON.parse(saved);
-              if (parsed && parsed.version === '1.0') {
-                // Honour explicit opt-out — if user clicked Decline, analytics === false
-                analyticsConsent = (parsed.analytics === false) ? 'denied' : 'granted';
-                marketingConsent = (parsed.marketing === true) ? 'granted' : 'denied';
-              }
-            }
-          } catch (e) {}
-          gtag('consent', 'default', {
-            analytics_storage: analyticsConsent,
-            ad_storage: marketingConsent,
-            ad_user_data: marketingConsent,
-            ad_personalization: marketingConsent,
-            wait_for_update: 500,
-          });
-        })();
+        // 3) Consent Mode v2 — analytics always granted.
+        //    RehabLookup is a US-based site. No opt-in required.
+        //    Cookie consent banner has been removed. All visitors are
+        //    tracked unconditionally. No localStorage checks needed.
+        gtag('consent', 'default', {
+          analytics_storage: 'granted',
+          ad_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+        });
 
         // 4) Optional debug logging — opt-in via ?ga_debug=1, #ga_debug,
         //    ?gtm_debug, or localStorage('ga_debug'='1'). Off by default

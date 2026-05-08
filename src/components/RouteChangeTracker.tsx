@@ -56,9 +56,8 @@ export function RouteChangeTracker() {
       const pageReferrer = lastUrlRef.current || document.referrer || "";
       const pageTitle = document.title;
 
-      // Fire page_view unconditionally — GA4 Consent Mode v2 handles suppression
-      // automatically when analytics_storage = "denied" (set by CookieConsentBanner
-      // when user clicks Decline). No client-side gating needed.
+      // Fire page_view unconditionally — no consent gating.
+      // Cookie banner removed; analytics_storage is always 'granted'.
       window.gtag("event", "page_view", {
         page_path: path,
         page_title: pageTitle,
