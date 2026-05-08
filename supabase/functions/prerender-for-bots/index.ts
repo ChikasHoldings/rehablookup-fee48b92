@@ -178,17 +178,75 @@ interface BlogArticleRow {
   published_at: string | null;
   category_label: string | null;
   seo_keywords: string[] | null;
+  content: any[] | null;
 }
 
 // Fetch blog article metadata from DB
 async function fetchBlogArticle(supabase: ReturnType<typeof createClient>, slug: string): Promise<BlogArticleRow | null> {
   const { data } = await supabase
     .from('blog_articles')
-    .select('title, excerpt, meta_title, meta_description, image_url, author, published_at, category_label, seo_keywords')
+    .select('title, excerpt, meta_title, meta_description, image_url, author, published_at, category_label, seo_keywords, content')
     .eq('slug', slug)
     .eq('status', 'published')
     .single();
   return (data as BlogArticleRow | null) ?? null;
+}
+
+// Parse inline Markdown: [text](url) and **bold** to HTML
+function parseInlineMd(text: string): string {
+  if (!text) return '';
+  const pattern = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
+  let result = '';
+  let lastIndex = 0;
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    result += escHtml(text.substring(lastIndex, match.index));
+    if (match[1] !== undefined) {
+      result += `<a href="${escHtml(match[2])}">${escHtml(match[1])}</a>`;
+    } else if (match[3] !== undefined) {
+      result += `<strong>${escHtml(match[3])}</strong>`;
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  result += escHtml(text.substring(lastIndex));
+  return result;
+}
+
+function renderArticleContent(content: any[] | null): string {
+  if (!content || !Array.isArray(content)) return '';
+  
+  return content.map(block => {
+    if (typeof block === 'string') {
+      const text = block.trim();
+      if (!text) return '';
+      if (text.startsWith('### ')) return `<h3>${parseInlineMd(text.slice(4))}</h3>`;
+      if (text.startsWith('## ')) return `<h2>${parseInlineMd(text.slice(3))}</h2>`;
+      if (text.startsWith('- ')) {
+        const lines = text.split('\n').filter((l: string) => l.trim().startsWith('- '));
+        if (lines.length > 0) {
+          return `<ul>${lines.map((l: string) => `<li>${parseInlineMd(l.replace(/^-\s*/, ''))}</li>`).join('')}</ul>`;
+        }
+        return `<ul><li>${parseInlineMd(text.slice(2))}</li></ul>`;
+      }
+      if (text.startsWith('> ')) return `<blockquote>${parseInlineMd(text.slice(2))}</blockquote>`;
+      return `<p>${parseInlineMd(text)}</p>`;
+    }
+    
+    if (block.type === 'heading') {
+      const tag = block.level === 3 ? 'h3' : 'h2';
+      return `<${tag}>${parseInlineMd(block.content || '')}</${tag}>`;
+    }
+    
+    if (block.type === 'list' && Array.isArray(block.items)) {
+      return `<ul>${block.items.map((item: string) => `<li>${parseInlineMd(item)}</li>`).join('')}</ul>`;
+    }
+    
+    if (block.type === 'quote' || block.type === 'callout') {
+      return `<blockquote>${parseInlineMd(block.content || block.text || '')}</blockquote>`;
+    }
+    
+    return `<p>${parseInlineMd(block.content || '')}</p>`;
+  }).join('\n    ');
 }
 
 interface OgMeta {
@@ -559,7 +617,8 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
             section: article.category_label || 'Health',
           },
           `<h1>${escHtml(article.title)}</h1>
-    <p>${escHtml(article.excerpt)}</p>
+    <p><strong>${escHtml(article.excerpt)}</strong></p>
+    ${renderArticleContent(article.content)}
     <p><a href="/resources">Browse all resources</a></p>`
         );
       }

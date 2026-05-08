@@ -88,6 +88,7 @@ async function fetchArticles() {
     "image_url",
     "read_time",
     "featured",
+    "content",
   ].join(",");
 
   let all = [];
@@ -127,6 +128,94 @@ async function fetchArticles() {
   }
 
   return all;
+}
+
+// ---------------------------------------------------------------------------
+// Inline Markdown parser — converts [text](url) and **bold** to HTML
+// Processes text BEFORE escaping to preserve link structure
+// ---------------------------------------------------------------------------
+function parseInlineMarkdown(text) {
+  if (!text) return "";
+  // Process in a single pass: Markdown links | bold
+  const pattern = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
+  let result = "";
+  let lastIndex = 0;
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    // Append escaped plain text before this match
+    result += escapeHtml(text.substring(lastIndex, match.index));
+    if (match[1] !== undefined) {
+      // [link text](url)
+      const linkText = escapeHtml(match[1]);
+      const href = escapeHtml(match[2]);
+      result += `<a href="${href}">${linkText}</a>`;
+    } else if (match[3] !== undefined) {
+      // **bold**
+      result += `<strong>${escapeHtml(match[3])}</strong>`;
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  result += escapeHtml(text.substring(lastIndex));
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Content block renderer — converts JSONB content array to HTML
+// ---------------------------------------------------------------------------
+function renderContentBlocks(content) {
+  if (!content || !Array.isArray(content)) return "";
+
+  return content
+    .map((block) => {
+      // Legacy string-based content (Markdown-like strings)
+      if (typeof block === "string") {
+        const text = block.trim();
+        if (!text) return "";
+        if (text.startsWith("### "))
+          return `<h3>${escapeHtml(text.slice(4))}</h3>`;
+        if (text.startsWith("## "))
+          return `<h2>${escapeHtml(text.slice(3))}</h2>`;
+        if (text.startsWith("- ")) {
+          // Multi-line bullet list stored as a single string with \n separators
+          const lines = text.split("\n").filter((l) => l.trim().startsWith("- "));
+          if (lines.length > 0) {
+            const items = lines
+              .map((l) => `<li>${parseInlineMarkdown(l.replace(/^-\s*/, ""))}</li>`)
+              .join("");
+            return `<ul>${items}</ul>`;
+          }
+          // Single bullet
+          return `<ul><li>${parseInlineMarkdown(text.slice(2))}</li></ul>`;
+        }
+        if (text.startsWith("> "))
+          return `<blockquote>${parseInlineMarkdown(text.slice(2))}</blockquote>`;
+        // Regular paragraph — parse inline Markdown (links, bold)
+        return `<p>${parseInlineMarkdown(text)}</p>`;
+      }
+
+      // Structured heading block
+      if (block.type === "heading") {
+        const tag = block.level === 3 ? "h3" : "h2";
+        return `<${tag}>${parseInlineMarkdown(block.content || "")}</${tag}>`;
+      }
+
+      // Structured list block
+      if (block.type === "list" && Array.isArray(block.items)) {
+        const items = block.items
+          .map((item) => `<li>${parseInlineMarkdown(item)}</li>`)
+          .join("");
+        return `<ul>${items}</ul>`;
+      }
+
+      // Quote / callout block
+      if (block.type === "quote" || block.type === "callout") {
+        return `<blockquote>${parseInlineMarkdown(block.content || block.text || "")}</blockquote>`;
+      }
+
+      // Default: paragraph
+      return `<p>${parseInlineMarkdown(block.content || "")}</p>`;
+    })
+    .join("\n    ");
 }
 
 // ---------------------------------------------------------------------------
@@ -271,6 +360,14 @@ function renderArticleHtml(article) {
     .related li a:hover { background: #dbeafe; color: #1d4ed8; }
     footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; font-size: 0.8125rem; color: #9ca3af; text-align: center; }
     footer a { color: #6b7280; text-decoration: none; }
+    .article-body { margin: 1.5rem 0; }
+    .article-body h2 { font-size: 1.375rem; font-weight: 700; color: #111827; margin: 2rem 0 0.75rem; }
+    .article-body h3 { font-size: 1.125rem; font-weight: 600; color: #1f2937; margin: 1.5rem 0 0.5rem; }
+    .article-body p { color: #374151; margin: 0 0 1rem; }
+    .article-body ul { color: #374151; margin: 0 0 1rem; padding-left: 1.5rem; }
+    .article-body li { margin-bottom: 0.35rem; }
+    .article-body blockquote { border-left: 4px solid #2563eb; padding: 0.75rem 1rem; background: #f9fafb; margin: 1.25rem 0; color: #4b5563; font-style: italic; }
+    .article-body a { color: #2563eb; }
   </style>
 </head>
 <body>
@@ -288,6 +385,9 @@ function renderArticleHtml(article) {
   </header>
   <main>
     ${displayExcerpt ? `<div class="excerpt">${displayExcerpt}</div>` : ""}
+    ${article.content ? `<div class="article-body">
+    ${renderContentBlocks(article.content)}
+    </div>` : ""}
     <div class="cta">
       <h2>Find the Right Treatment Program</h2>
       <p>Our free matching service connects you with verified addiction treatment centers that meet your specific needs.</p>
