@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { checkRateLimit, logRateLimitAttempt, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,6 +42,17 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limiting: max 10 code verification attempts per email per 15 minutes
+    const rateLimitResult = await checkRateLimit(supabase, {
+      identifier: `email:${normalizedEmail}`,
+      actionType: 'verify_code',
+      maxAttempts: 10,
+      windowMinutes: 15,
+    });
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(corsHeaders);
+    }
 
     const now = new Date().toISOString();
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

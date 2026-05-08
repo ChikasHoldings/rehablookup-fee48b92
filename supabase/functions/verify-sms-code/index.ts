@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,6 +53,21 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "Phone and code are required", requestId }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Rate limiting: max 10 SMS code verification attempts per phone per 15 minutes
+    const supabaseRL = createClient(supabaseUrl, supabaseServiceKey);
+    const normalizedPhone = (phone || "").replace(/\D/g, "");
+    if (normalizedPhone) {
+      const rateLimitResult = await checkRateLimit(supabaseRL, {
+        identifier: `phone:${normalizedPhone}`,
+        actionType: 'verify_sms_code',
+        maxAttempts: 10,
+        windowMinutes: 15,
+      });
+      if (!rateLimitResult.allowed) {
+        return rateLimitResponse(corsHeaders);
+      }
     }
 
     // Validate code format (6 digits)

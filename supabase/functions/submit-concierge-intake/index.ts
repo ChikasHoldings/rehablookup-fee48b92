@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const VERSION = "2.0.0";
 
@@ -249,6 +250,17 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+    // Rate limiting: max 10 concierge intake submissions per email per hour
+    const rateLimitResult = await checkRateLimit(supabase, {
+      identifier: `email:${sanitizedEmail}`,
+      actionType: 'submit_concierge_intake',
+      maxAttempts: 10,
+      windowMinutes: 60,
+    });
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(corsHeaders);
+    }
+
     const sanitizedName = sanitizeString(decisionMakerName, 100);
     const sanitizedPhone = sanitizePhone(intakeData.phone);
 

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { checkRateLimit, logRateLimitAttempt, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,6 +34,17 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Rate limiting: max 30 login risk assessments per user per 10 minutes
+    const rateLimitResult = await checkRateLimit(supabase, {
+      identifier: `user:${userId}`,
+      actionType: 'assess_login_risk',
+      maxAttempts: 30,
+      windowMinutes: 10,
+    });
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(corsHeaders);
+    }
+
     const { data, error } = await supabase.rpc('assess_login_risk', {
       p_user_id: userId,
       p_device_token_hash: deviceTokenHash || null,
@@ -40,6 +52,8 @@ Deno.serve(async (req) => {
       p_os: os || null,
       p_ip_address: clientIp,
     });
+
+    await logRateLimitAttempt(supabase, `user:${userId}`, 'assess_login_risk', !error);
 
     if (error) {
       console.error('[ASSESS-LOGIN-RISK] RPC error:', error);

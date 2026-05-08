@@ -339,13 +339,15 @@ interface GenericNearMePageProps {
 export default function GenericNearMePage({ configSlug }: GenericNearMePageProps) {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
   const config = genericNearMeConfigs.find((c) => c.slug === configSlug);
-
-  if (!config) return null;
-
+  // NOTE: Hook must be called unconditionally before any early returns (Rules of Hooks).
+  // We pass a fallback basePath when config is undefined; the early return below
+  // ensures we never render with an invalid config.
   const { facilities, stateData, nearbyStates, locationString, isLoading } = useNearMeFacilities({
     stateSlug,
-    basePath: `/${config.slug}`,
+    basePath: config ? `/${config.slug}` : "",
   });
+
+  if (!config) return null;
 
   const faqs = stateData
     ? config.faqs.map((f) => ({

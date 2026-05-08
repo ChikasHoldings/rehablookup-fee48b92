@@ -2,6 +2,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
+import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -121,6 +122,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+
+    // Rate limiting: max 5 contact form submissions per email per hour
+    const rateLimitResult = await checkRateLimit(supabaseAdmin, {
+      identifier: `email:${email}`,
+      actionType: 'send_contact_form',
+      maxAttempts: 5,
+      windowMinutes: 60,
+    });
+    if (!rateLimitResult.allowed) {
+      return rateLimitResponse(corsHeaders);
+    }
 
     const { data: ticketData, error: ticketError } = await supabaseAdmin.from('support_tickets').insert({
       source: 'public_contact',
