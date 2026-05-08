@@ -310,6 +310,16 @@
       "source": "/providers",
       "destination": "/for-providers",
       "permanent": true
+    },
+    {
+      "source": "/alcohol-rehab",
+      "destination": "/alcohol-rehab-centers",
+      "statusCode": 301
+    },
+    {
+      "source": "/drug-rehab",
+      "destination": "/drug-rehab-centers",
+      "statusCode": 301
     }
   ],
   "buildCommand": "npm run build:vercel",

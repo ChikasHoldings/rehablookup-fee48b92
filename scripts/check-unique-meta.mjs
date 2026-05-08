@@ -120,10 +120,22 @@ for (const file of files) {
     });
   }
   const canonicalHref = canonicalTags[0] ? getAttr(canonicalTags[0][0], "href") : null;
-  if (canonicalHref) {
+
+  // Detect pages where canonical points to a DIFFERENT URL (intentional canonical redirect).
+  // These are alias/redirect pages (e.g. /alcohol-rehab → /alcohol-rehab-centers).
+  // Skip them from the canonical uniqueness check to avoid false positives.
+  const BASE_URL = "https://rehablookup.com";
+  const ownCanonical = `${BASE_URL}/${route}`;
+  const isCanonicalRedirect = canonicalHref && canonicalHref !== ownCanonical;
+
+  if (canonicalHref && !isCanonicalRedirect) {
     if (!canonicalIndex.has(canonicalHref)) canonicalIndex.set(canonicalHref, new Set());
     canonicalIndex.get(canonicalHref).add(route);
   }
+
+  // Skip title/description uniqueness checks for canonical-redirect pages
+  // (they intentionally defer to the canonical target page).
+  if (isCanonicalRedirect) continue;
 
   // ---- title (cross-page) ----
   const titleMatch = head.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
