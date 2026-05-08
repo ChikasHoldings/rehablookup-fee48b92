@@ -320,7 +320,7 @@ export default function ProviderInquiriesPage() {
         setSearchParams(newParams, { replace: true });
       }
     }
-  }, [filteredInquiries, isMobile, selectedInquiry, highlightLeadId, searchParams, setSearchParams];
+  }, [filteredInquiries, isMobile, selectedInquiry, highlightLeadId, searchParams, setSearchParams]);
 
   // Keep selected inquiry updated
   useEffect(() => {
