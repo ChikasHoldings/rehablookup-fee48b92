@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getCachedSession } from "@/lib/sessionCache";
 import { toast } from "sonner";
+import { analytics } from "@/lib/analytics";
 
 export interface LeadUnlock {
   id: string;
@@ -73,7 +74,17 @@ export function useLeadUnlocks(facilityId?: string) {
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
+      // Track lead unlock in GA4
+      const priceCents = typeof data?.priceCents === 'number' ? data.priceCents : 0;
+      analytics.leadUnlocked(
+        variables.leadId,
+        variables.facilityId,
+        priceCents,
+        variables.paymentMethod || 'credits',
+        data?.discountApplied
+      );
+
       queryClient.invalidateQueries({ queryKey: ["lead-unlocks"] });
       queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
       queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });

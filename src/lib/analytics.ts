@@ -479,4 +479,169 @@ export const analytics = {
       item_id: planId,
     });
   },
+
+  // ========== CREDIT PURCHASE TRACKING ==========
+
+  // Begin credit purchase checkout
+  beginCreditPurchase: (amountCents: number, facilityId: string) => {
+    const amountDollars = amountCents / 100;
+    trackEvent('begin_checkout', {
+      currency: 'USD',
+      value: amountDollars,
+      items: [{
+        item_id: `credits_${amountCents}`,
+        item_name: `${amountDollars} Credits`,
+        item_category: 'Credits',
+        price: amountDollars,
+        quantity: 1,
+      }] as EcommerceItem[],
+      facility_id: facilityId,
+    });
+  },
+
+  // Credit purchase completed (user returns from Stripe)
+  creditPurchaseComplete: (amountCents: number) => {
+    const amountDollars = amountCents / 100;
+    trackEvent('purchase', {
+      transaction_id: `credits_${Date.now()}`,
+      currency: 'USD',
+      value: amountDollars,
+      items: [{
+        item_id: `credits_${amountCents}`,
+        item_name: `${amountDollars} Credits`,
+        item_category: 'Credits',
+        price: amountDollars,
+        quantity: 1,
+      }] as EcommerceItem[],
+    });
+  },
+
+  // ========== LEAD UNLOCK TRACKING ==========
+
+  // Lead unlocked (deducts credits or charges Stripe)
+  leadUnlocked: (leadId: string, facilityId: string, priceCents: number, paymentMethod: string, discountApplied?: boolean) => {
+    const priceDollars = priceCents / 100;
+    trackEvent('purchase', {
+      transaction_id: `unlock_${leadId}_${Date.now()}`,
+      currency: 'USD',
+      value: priceDollars,
+      items: [{
+        item_id: leadId,
+        item_name: 'Lead Unlock',
+        item_category: 'Lead',
+        item_variant: paymentMethod,
+        price: priceDollars,
+        quantity: 1,
+      }] as EcommerceItem[],
+      facility_id: facilityId,
+      payment_method: paymentMethod,
+      discount_applied: discountApplied || false,
+    });
+  },
+
+  // ========== CONCIERGE PAYMENT TRACKING ==========
+
+  // Concierge checkout initiated
+  beginConciergeCheckout: (amountCents: number) => {
+    const amountDollars = amountCents / 100;
+    trackEvent('begin_checkout', {
+      currency: 'USD',
+      value: amountDollars,
+      items: [{
+        item_id: 'concierge_intake',
+        item_name: 'Concierge Matching Service',
+        item_category: 'Concierge',
+        price: amountDollars,
+        quantity: 1,
+      }] as EcommerceItem[],
+    });
+  },
+
+  // Concierge payment verified
+  conciergePaymentComplete: (sessionId: string, amountCents?: number) => {
+    const amountDollars = (amountCents || 9900) / 100;
+    trackEvent('purchase', {
+      transaction_id: sessionId || `concierge_${Date.now()}`,
+      currency: 'USD',
+      value: amountDollars,
+      items: [{
+        item_id: 'concierge_intake',
+        item_name: 'Concierge Matching Service',
+        item_category: 'Concierge',
+        price: amountDollars,
+        quantity: 1,
+      }] as EcommerceItem[],
+    });
+  },
+
+  // ========== INTERNATIONAL PLACEMENT TRACKING ==========
+
+  // International placement checkout initiated
+  beginInternationalCheckout: (country: string) => {
+    trackEvent('begin_checkout', {
+      currency: 'USD',
+      value: 0, // price determined server-side
+      items: [{
+        item_id: 'international_placement',
+        item_name: 'International Placement Service',
+        item_category: 'International',
+        item_variant: country,
+        quantity: 1,
+      }] as EcommerceItem[],
+    });
+  },
+
+  // International placement payment verified
+  internationalPaymentComplete: (sessionId: string, amountCents?: number) => {
+    const amountDollars = (amountCents || 0) / 100;
+    trackEvent('purchase', {
+      transaction_id: sessionId || `intl_${Date.now()}`,
+      currency: 'USD',
+      value: amountDollars,
+      items: [{
+        item_id: 'international_placement',
+        item_name: 'International Placement Service',
+        item_category: 'International',
+        quantity: 1,
+      }] as EcommerceItem[],
+    });
+  },
+
+  // ========== PLACEMENT FEE TRACKING ==========
+
+  // Placement fee charged to provider
+  placementFeeCharged: (facilityId: string, amountCents: number, caseId: string) => {
+    const amountDollars = amountCents / 100;
+    trackEvent('purchase', {
+      transaction_id: `placement_${caseId}_${Date.now()}`,
+      currency: 'USD',
+      value: amountDollars,
+      items: [{
+        item_id: caseId,
+        item_name: 'Placement Fee',
+        item_category: 'Placement',
+        price: amountDollars,
+        quantity: 1,
+      }] as EcommerceItem[],
+      facility_id: facilityId,
+    });
+  },
+
+  // ========== SIGNUP CONVERSION TRACKING ==========
+
+  signupComplete: (role: 'seeker' | 'provider', method: string) => {
+    trackEvent('sign_up', {
+      event_category: 'Auth',
+      event_label: role,
+      method: method,
+    });
+  },
+
+  loginComplete: (role: string, method: string) => {
+    trackEvent('login', {
+      event_category: 'Auth',
+      event_label: role,
+      method: method,
+    });
+  },
 };

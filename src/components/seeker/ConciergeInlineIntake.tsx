@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { analytics } from "@/lib/analytics";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -243,6 +244,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
       const sanitize = (s: string, max = 200) => s.replace(/<[^>]*>/g, '').replace(/javascript:/gi, '').trim().slice(0, max);
       const cleanPhone = (formData.phone || userPhone || "").replace(/[^\d+\-() ]/g, '').slice(0, 20);
 
+      analytics.beginConciergeCheckout(9900); // $99 concierge fee
       const { data, error } = await supabase.functions.invoke("create-concierge-checkout", {
         body: {
           email: userEmail,

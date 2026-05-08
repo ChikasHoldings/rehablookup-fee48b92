@@ -52,6 +52,7 @@ import {
 import { lazy, Suspense } from "react";
 const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
 import { AutoReloadSettings } from "@/components/provider/AutoReloadSettings";
+import { analytics } from "@/lib/analytics";
 
 const CREDIT_PACKAGES = [
   { amountCents: 20000, label: "$200", credits: 200, bonusCents: 0, badge: null, savingsNote: null, perLead: "~4-13 leads" },
@@ -156,6 +157,7 @@ export default function ProviderBillingPage() {
     handledParamsRef.current.add(paramKey);
 
     if (proSuccess === "true") {
+      analytics.subscriptionPurchase('pro_monthly', 4900, 'USD'); // $49/month Pro plan
       toast.success("Welcome to Pro! Your benefits are now active.", { duration: 5000 });
       refetchProStatus();
       startPostCheckoutPolling(() => refetchProStatus());
@@ -171,6 +173,7 @@ export default function ProviderBillingPage() {
 
     if (creditsSuccess === "true") {
       // Don't display amounts from URL (could be spoofed) — just confirm and let polling update balance
+      analytics.creditPurchaseComplete(0); // amount unknown client-side after redirect
       toast.success("Credits have been added to your account!", { duration: 6000 });
       refetchCredits();
       startPostCheckoutPolling(() => refetchCredits(), 10); // poll more aggressively
@@ -207,6 +210,7 @@ export default function ProviderBillingPage() {
 
     setPurchaseLoading(amountCents);
     try {
+      analytics.beginCreditPurchase(amountCents, facilityId);
       const { data, error } = await supabase.functions.invoke("purchase-credits", {
         body: { amountCents, facilityId },
       });

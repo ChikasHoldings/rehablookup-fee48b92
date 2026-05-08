@@ -26,6 +26,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProStatus } from "@/hooks/useProStatus";
+import { analytics } from "@/lib/analytics";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -146,6 +147,7 @@ export default function ProUpgradePage() {
     const proCanceled = searchParams.get("pro_canceled");
 
     if (proSuccess === "true") {
+      analytics.subscriptionPurchase('pro_monthly', 'Pro Plan', 399);
       toast.success("🎉 Welcome to Pro! Your benefits are now active.", { duration: 6000 });
       refetchProStatus();
       startPostCheckoutPolling();
@@ -167,6 +169,7 @@ export default function ProUpgradePage() {
     }
     setUpgradeLoading(true);
     try {
+      analytics.beginSubscriptionCheckout('pro_monthly', 'Pro Plan', 399);
       const { data, error } = await supabase.functions.invoke("subscribe-pro", {
         body: { facilityId },
       });

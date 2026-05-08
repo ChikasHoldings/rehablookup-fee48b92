@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
+import { analytics } from "@/lib/analytics";
 
 import { IntakeProgress } from "@/components/international/IntakeProgress";
 import { StepContact } from "@/components/international/steps/StepContact";
@@ -245,6 +246,7 @@ export default function InternationalApplication() {
       }
 
       // Create checkout session
+      analytics.beginInternationalCheckout(data.country || 'unknown');
       const { data: response, error } = await supabase.functions.invoke("create-international-checkout", {
         body: {
           name: `${data.first_name} ${data.last_name}`.trim(),

@@ -12,6 +12,7 @@ import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { analytics } from "@/lib/analytics";
 import { EmailVerificationStep } from "@/components/provider/EmailVerificationStep";
 import {
   Select,
@@ -676,6 +677,7 @@ export default function ProviderSignup() {
       }
 
       // 13. Redirect to dashboard
+      analytics.signupComplete('provider', 'email');
       toast({
         title: "Welcome to RehabLookup!",
         description: "Your account has been created. Your listing is pending review and will be live shortly.",

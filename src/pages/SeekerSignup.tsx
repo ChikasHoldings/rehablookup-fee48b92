@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { analytics } from '@/lib/analytics';
 import { Mail, Lock, User, Phone, MapPin, Eye, EyeOff, Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 import { PhoneInput } from '@/components/ui/phone-input';
@@ -269,6 +270,7 @@ export default function SeekerSignup() {
           toast.success('Account created! We\'ll send you a verification code.');
         }
         
+        analytics.signupComplete('seeker', 'email');
         setSignupEmail(trimmedEmail);
         setShowVerification(true);
         setResendCooldown(60);

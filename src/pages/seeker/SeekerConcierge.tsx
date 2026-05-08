@@ -45,6 +45,7 @@ import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 
 import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
 import { ConciergePaymentRecovery } from "@/components/seeker/ConciergePaymentRecovery";
+import { analytics } from "@/lib/analytics";
 
 interface ConciergeInquiry {
   id: string;
@@ -205,6 +206,7 @@ export default function SeekerConcierge() {
       }
 
       if (verifyData?.paid) {
+        analytics.conciergePaymentComplete(sessionId);
         const pendingIntake = localStorage.getItem("concierge_pending_intake");
         if (pendingIntake) {
           const { formData, userName, userEmail, userPhone } = JSON.parse(pendingIntake);
