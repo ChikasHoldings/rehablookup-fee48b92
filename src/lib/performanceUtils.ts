@@ -243,7 +243,7 @@ export function isSlowConnection(): boolean {
  */
 export function preloadHomepageCriticalResources(): void {
   // Preconnect to Supabase
-  preconnectOrigin("https://plckxokpyiubuekvodtc.supabase.co");
+  preconnectOrigin("https://mldbxpntzcjalgjmwnqa.supabase.co");
   
   // DNS prefetch for fonts
   dnsPrefetch("https://fonts.googleapis.com");
