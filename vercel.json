@@ -295,6 +295,21 @@
       "source": "/what-is-intensive-outpatient",
       "destination": "/what-is-iop",
       "statusCode": 301
+    },
+    {
+      "source": "/medicaid-rehab",
+      "destination": "/insurance/medicaid-rehab",
+      "permanent": true
+    },
+    {
+      "source": "/medicare-rehab",
+      "destination": "/insurance/medicare-rehab",
+      "permanent": true
+    },
+    {
+      "source": "/providers",
+      "destination": "/for-providers",
+      "permanent": true
     }
   ],
   "buildCommand": "npm run build:vercel",

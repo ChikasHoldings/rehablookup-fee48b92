@@ -198,7 +198,7 @@ function scanHtmlLinks(dir, base = '') {
           raw.startsWith('/static/') ||
           raw.startsWith('/fonts/') ||
           raw === '/' ||
-          /\.(png|jpe?g|webp|svg|ico|css|js|xml|txt|pdf|woff2?|ttf|map|json)$/i.test(raw)
+          /\.(png|jpe?g|webp|svg|ico|css|js|xml|txt|pdf|woff2?|ttf|map|json|webmanifest)$/i.test(raw)
         ) {
           continue;
         }
