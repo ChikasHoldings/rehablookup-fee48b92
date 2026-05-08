@@ -21,7 +21,7 @@ const NOTIFICATION_SOUND_URL = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA
 function getStoredUserId(): string | null {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-    const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'plckxokpyiubuekvodtc';
+    const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'mldbxpntzcjalgjmwnqa';
     const storageKey = `sb-${projectRef}-auth-token`;
     const stored = localStorage.getItem(storageKey);
     if (!stored) return null;

@@ -31,7 +31,7 @@ export function useFavorites() {
     // Restore user from localStorage synchronously to avoid getSession deadlock
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-      const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'plckxokpyiubuekvodtc';
+      const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'mldbxpntzcjalgjmwnqa';
       const storageKey = `sb-${projectRef}-auth-token`;
       const stored = localStorage.getItem(storageKey);
       if (stored && mounted) {

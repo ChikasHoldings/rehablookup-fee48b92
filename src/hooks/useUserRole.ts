@@ -24,7 +24,7 @@ const CACHE_TTL = 60000; // 1 minute - short enough to be safe, long enough to f
 
 function getSupabaseStorageKey() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const projectRef = supabaseUrl?.split("//")[1]?.split(".")[0] || "plckxokpyiubuekvodtc";
+  const projectRef = supabaseUrl?.split("//")[1]?.split(".")[0] || "mldbxpntzcjalgjmwnqa";
   return `sb-${projectRef}-auth-token`;
 }
 

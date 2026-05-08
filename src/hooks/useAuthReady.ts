@@ -15,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 function getSupabaseStorageKey() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'plckxokpyiubuekvodtc';
+  const projectRef = supabaseUrl?.split('//')[1]?.split('.')[0] || 'mldbxpntzcjalgjmwnqa';
   return `sb-${projectRef}-auth-token`;
 }
 
