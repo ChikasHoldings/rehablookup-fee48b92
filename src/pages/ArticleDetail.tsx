@@ -67,37 +67,83 @@ interface DBArticle {
   seo_keywords: string[] | null;
 }
 
-// Helper function to parse content with internal links
-// Link format: [[article-id|link text]]
+// Helper function to parse content with internal links and Markdown formatting.
+// Supports three patterns (processed in a single left-to-right pass):
+//   1. [[article-slug|link text]]  — wiki-style internal article link
+//   2. [link text](url)            — standard Markdown link (internal or external)
+//   3. **bold text**               — Markdown bold
 const parseContentWithLinks = (text: string): ReactNode => {
-  const linkPattern = /\[\[([^\]|]+)\|([^\]]+)\]\]/g;
+  // Combined regex: wiki links | markdown links | bold
+  const pattern = /\[\[([^\]|]+)\|([^\]]+)\]\]|\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
   const parts: ReactNode[] = [];
   let lastIndex = 0;
   let match;
 
-  while ((match = linkPattern.exec(text)) !== null) {
+  while ((match = pattern.exec(text)) !== null) {
+    // Push any plain text before this match
     if (match.index > lastIndex) {
       parts.push(text.substring(lastIndex, match.index));
     }
-    
-    const [, articleId, linkText] = match;
-    parts.push(
-      <Link
-        key={match.index}
-        to={`/resources/${articleId}`}
-        className="text-primary hover:text-primary/80 underline underline-offset-2 decoration-primary/30 hover:decoration-primary/60 transition-colors font-medium"
-      >
-        {linkText}
-      </Link>
-    );
-    
+
+    if (match[1] !== undefined) {
+      // Pattern 1: [[article-slug|link text]]
+      const [, articleId, linkText] = match;
+      parts.push(
+        <Link
+          key={match.index}
+          to={`/resources/${articleId}`}
+          className="text-primary hover:text-primary/80 underline underline-offset-2 decoration-primary/30 hover:decoration-primary/60 transition-colors font-medium"
+        >
+          {linkText}
+        </Link>
+      );
+    } else if (match[3] !== undefined) {
+      // Pattern 2: [link text](url) — standard Markdown link
+      const linkText = match[3];
+      const href = match[4];
+      const isInternal = href.startsWith("/") || href.startsWith("#") || href.includes("rehablookup.com");
+      if (isInternal) {
+        // Strip domain prefix if present so React Router handles it
+        const to = href.replace(/^https?:\/\/(www\.)?rehablookup\.com/, "");
+        parts.push(
+          <Link
+            key={match.index}
+            to={to}
+            className="text-primary hover:text-primary/80 underline underline-offset-2 decoration-primary/30 hover:decoration-primary/60 transition-colors font-medium"
+          >
+            {linkText}
+          </Link>
+        );
+      } else {
+        parts.push(
+          <a
+            key={match.index}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:text-primary/80 underline underline-offset-2 decoration-primary/30 hover:decoration-primary/60 transition-colors font-medium"
+          >
+            {linkText}
+          </a>
+        );
+      }
+    } else if (match[5] !== undefined) {
+      // Pattern 3: **bold text**
+      parts.push(
+        <strong key={match.index} className="font-semibold text-foreground">
+          {match[5]}
+        </strong>
+      );
+    }
+
     lastIndex = match.index + match[0].length;
   }
-  
+
+  // Push any remaining plain text after the last match
   if (lastIndex < text.length) {
     parts.push(text.substring(lastIndex));
   }
-  
+
   return parts.length > 0 ? parts : text;
 };
 

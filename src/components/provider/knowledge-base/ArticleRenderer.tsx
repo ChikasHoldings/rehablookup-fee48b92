@@ -1,25 +1,60 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 interface InlineTextProps {
   text: string;
 }
 
-/** Renders inline bold (**text**) within a string */
+/**
+ * Renders inline Markdown formatting within a string.
+ * Supports: **bold**, [text](url) links (internal and external).
+ */
 function InlineText({ text }: InlineTextProps) {
-  const parts = text.split(/\*\*(.*?)\*\*/);
-  return (
-    <>
-      {parts.map((part, i) =>
-        i % 2 === 1 ? (
-          <strong key={i} className="font-semibold text-foreground">
-            {part}
-          </strong>
-        ) : (
-          <React.Fragment key={i}>{part}</React.Fragment>
-        )
-      )}
-    </>
-  );
+  // Combined regex: markdown links | bold
+  const pattern = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(<React.Fragment key={`t-${lastIndex}`}>{text.substring(lastIndex, match.index)}</React.Fragment>);
+    }
+    if (match[1] !== undefined) {
+      // [link text](url)
+      const linkText = match[1];
+      const href = match[2];
+      const isInternal = href.startsWith("/") || href.startsWith("#") || href.includes("rehablookup.com");
+      if (isInternal) {
+        const to = href.replace(/^https?:\/\/(www\.)?rehablookup\.com/, "");
+        parts.push(
+          <Link key={match.index} to={to} className="text-primary hover:text-primary/80 underline underline-offset-2 font-medium">
+            {linkText}
+          </Link>
+        );
+      } else {
+        parts.push(
+          <a key={match.index} href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 underline underline-offset-2 font-medium">
+            {linkText}
+          </a>
+        );
+      }
+    } else if (match[3] !== undefined) {
+      // **bold**
+      parts.push(
+        <strong key={match.index} className="font-semibold text-foreground">
+          {match[3]}
+        </strong>
+      );
+    }
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(<React.Fragment key={`t-${lastIndex}`}>{text.substring(lastIndex)}</React.Fragment>);
+  }
+
+  return <>{parts.length > 0 ? parts : text}</>;
 }
 
 interface ArticleRendererProps {
