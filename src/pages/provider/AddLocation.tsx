@@ -68,7 +68,7 @@ export default function AddLocationPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { facilities } = useProviderFacilities();
-  const { limit: locationLimit, used: usedLocations, canAddMore, planTier } = useFacilityLimits();
+  const { limit: locationLimit, used: usedLocations, canAddMore, planTier, isLoading: limitsLoading } = useFacilityLimits();
   const isPro = planTier === "pro";
   
   const [formData, setFormData] = useState<FacilityFormData>(initialFormData);
@@ -246,8 +246,9 @@ export default function AddLocationPage() {
     // NOTE: No finally block - each path explicitly handles setIsSubmitting(false)
   };
 
-  // If can't add more, show upgrade message
-  if (!canAddMore) {
+  // If can't add more, show upgrade message — but only after limits have loaded to prevent
+  // a false "Location Limit Reached" flash during the initial data-fetch on refresh.
+  if (!limitsLoading && !canAddMore) {
     return (
       <div className="p-4 md:p-6 lg:p-8">
         <div className="max-w-2xl mx-auto">

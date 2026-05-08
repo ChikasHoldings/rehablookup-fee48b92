@@ -113,7 +113,7 @@ export default function ProviderDashboardPage() {
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
   
-  const { data: providerData, isLoading } = useProviderData(facilityId);
+  const { data: providerData, isLoading, isPlaceholderData } = useProviderData(facilityId);
   const { facilities } = useProviderFacilities();
   const { data: creditsData, isLoading: creditsLoading } = useProviderCredits(facilityId);
   const { limit: locationLimit, used: usedLocations, planTier, isLoading: proLoading } = useFacilityLimits();
@@ -125,8 +125,11 @@ export default function ProviderDashboardPage() {
   const userName = profile?.first_name || "";
   const facilityIds = facilities?.map(f => f.id) ?? [];
 
-  // Welcome modal - show for first-time providers (check for falsy value since null = not yet celebrated)
-  const showWelcomeModal = providerData?.facility && !providerData.facility.profile_completion_celebrated;
+  // Welcome modal - show for first-time providers (check for falsy value since null = not yet celebrated).
+  // Guard against isPlaceholderData: when useProviderData returns placeholder (localStorage cache),
+  // isLoading is false but the real DB response hasn't arrived yet. Using isPlaceholderData prevents
+  // the modal from flashing open on refresh when the cached data has profile_completion_celebrated=false.
+  const showWelcomeModal = !isLoading && !isPlaceholderData && providerData?.facility && !providerData.facility.profile_completion_celebrated;
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
