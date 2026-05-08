@@ -10,6 +10,7 @@ import { RouteChangeTracker } from "@/components/RouteChangeTracker";
 import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
 import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { ExitIntentPopup } from "@/components/conversion/ExitIntentPopup";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
@@ -526,6 +527,7 @@ const AppInner = () => {
                 <ScrollToTop />
         <RouteChangeTracker />
         <CookieConsentBanner />
+        <ExitIntentPopup />
         <Suspense fallback={null}>
           <TrailingSlashRedirect>
           <SEORouteBoundary>

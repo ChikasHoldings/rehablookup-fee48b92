@@ -10,6 +10,7 @@ import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { buildConciergeHref } from "@/lib/conciergeHref";
 import { analytics } from "@/lib/analytics";
+import { SocialProofBar } from "@/components/conversion/SocialProofBar";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
@@ -313,6 +314,8 @@ const Index = () => {
       </section>
 
       {/* TrustStrip moved to /concierge — see ConciergeLanding.tsx */}
+      {/* Social Proof Stats Bar */}
+      <SocialProofBar className="container px-4 md:px-6 lg:px-8 border-b" />
 
       {/* Featured Centers - Premium Horizontal Scroll */}
       <HomepageFeaturedSection />

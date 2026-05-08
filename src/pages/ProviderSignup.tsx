@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Header } from "@/components/layout/Header";
+import { ProviderValueProp } from "@/components/conversion/ProviderValueProp";
 import { Footer } from "@/components/layout/Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { useToast } from "@/hooks/use-toast";
@@ -825,6 +826,10 @@ export default function ProviderSignup() {
 
       <main className="flex-1 py-8 md:py-16">
         <div className="container px-4 md:px-6">
+          {/* Value proposition — shown only on step 1 to motivate sign-up */}
+          {currentStep === 1 && (
+            <ProviderValueProp className="mb-8 mx-auto max-w-4xl" />
+          )}
           <div className="mx-auto max-w-xl">
             {/* Header & Progress */}
             <div className="mb-8">
