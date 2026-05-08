@@ -99,7 +99,7 @@ export default function ProviderInquiriesPage() {
       setSearchParams(newParams, { replace: true });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional run-once effect on mount; reads URL params to seed state
-  }, [];
+  }, []);
 
   // ── M1: Stripe-paid unlock reconciliation ───────────────────────────────
   // After Stripe Checkout redirects back with ?unlock_success=true&session_id=…
