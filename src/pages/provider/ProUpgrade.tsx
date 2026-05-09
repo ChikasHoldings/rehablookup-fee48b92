@@ -121,6 +121,8 @@ export default function ProUpgradePage() {
   const isPro = proStatus?.isPro ?? false;
   const isPastDue = proStatus?.status === 'past_due';
   const [upgradeLoading, setUpgradeLoading] = useState(false);
+  // BUGFIX: Ref-based double-submit guard — survives React StrictMode double-invoke
+  const upgradeRef = useRef(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef = useRef(0);
 
@@ -168,6 +170,9 @@ export default function ProUpgradePage() {
       toast.error("No facility selected");
       return;
     }
+    // BUGFIX: Prevent double-submit on rapid clicks or StrictMode double-invoke
+    if (upgradeRef.current) return;
+    upgradeRef.current = true;
     setUpgradeLoading(true);
     try {
       analytics.beginSubscriptionCheckout('pro_monthly', 'Pro Plan', 399);
@@ -191,6 +196,8 @@ export default function ProUpgradePage() {
       toast.error("Failed to start upgrade. Please try again.");
     } finally {
       setUpgradeLoading(false);
+      // 5-second cooldown to prevent rapid re-clicks after checkout tab opens
+      setTimeout(() => { upgradeRef.current = false; }, 5000);
     }
   };
 

@@ -68,6 +68,9 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
   
   const updateStatus = useMutation({
     mutationFn: async ({ status, notes }: { status: ResponseStatus; notes?: string }) => {
+      // BUGFIX: Scope update to both lead id AND facility_id for defence-in-depth.
+      // RLS enforces this at the DB level, but explicit client-side scoping prevents
+      // accidental cross-facility mutations if RLS policies are ever misconfigured.
       const { error } = await supabase
         .from("leads")
         .update({
@@ -75,7 +78,8 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
           provider_responded_at: status !== 'pending' ? new Date().toISOString() : null,
           ...(notes !== undefined ? { provider_response_notes: notes || null } : {}),
         })
-        .eq("id", inquiry.id);
+        .eq("id", inquiry.id)
+        .eq("facility_id", inquiry.facility_id);
       if (error) throw error;
     },
     onSuccess: (_, { status }) => {

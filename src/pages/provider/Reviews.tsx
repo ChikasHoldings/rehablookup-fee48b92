@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
 
+import { useSelectedFacility } from '@/contexts/SelectedFacilityContext';
 import { useProStatus } from '@/hooks/useProStatus';
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
@@ -36,13 +37,16 @@ import { usePagination } from '@/hooks/usePagination';
 
 export default function ProviderReviews() {
   const navigate = useNavigate();
-  const { data: proStatus } = useProStatus();
+  const { selectedFacility } = useSelectedFacility();
+  // BUGFIX: Scope Pro status to the currently selected facility, not account-wide.
+  const { data: proStatus } = useProStatus(selectedFacility?.id ?? undefined);
   const isPro = proStatus?.isPro ?? false;
 
   const { 
     reviews, 
     facilities,
-    isLoading, 
+    isLoading,
+    isError,
     stats, 
     submitResponse, 
     updateResponse, 
@@ -108,6 +112,24 @@ export default function ProviderReviews() {
     return flagReview(reviewId, reason, details);
   };
 
+  // BUGFIX: Show error state when reviews fetch fails instead of silent empty state
+  if (isError && !isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+          <Flag className="h-7 w-7 text-destructive" />
+        </div>
+        <h2 className="text-xl font-semibold text-foreground mb-2">Failed to Load Reviews</h2>
+        <p className="text-muted-foreground text-center max-w-md mb-4">
+          There was a problem loading your reviews. Please try again.
+        </p>
+        <Button variant="outline" onClick={refetch}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Try Again
+        </Button>
+      </div>
+    );
+  }
   if (facilities.length === 0 && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4">

@@ -1,5 +1,6 @@
-import { useState, useCallback, useMemo } from "react";
-import { Building2, Loader2, Lock } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Building2, Loader2, Lock, AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -18,7 +19,7 @@ interface PreviewState {
 }
 
 export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLandingPageProps) {
-  const { facilities, isLoading, refetch: refetchFacilities } = useProviderFacilities();
+  const { facilities, isLoading, isError, refetch: refetchFacilities } = useProviderFacilities();
   const { limit, used, canAddMore, canPurchaseSlot, planTier, isLoading: limitsLoading, refetch: refetchLimits } = useFacilityLimits();
   const { setSelectedFacility } = useSelectedFacility();
   
@@ -57,6 +58,29 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
         <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // BUGFIX: Show error state when facilities fail to load instead of rendering an empty list
+  if (isError) {
+    return (
+      <div className="min-h-full bg-background">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="h-14 w-14 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="h-7 w-7 text-destructive" />
+            </div>
+            <div className="text-center">
+              <h3 className="font-semibold text-foreground mb-1">Failed to Load Listings</h3>
+              <p className="text-sm text-muted-foreground">There was a problem loading your facilities. Please try again.</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetchFacilities()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
           </div>
         </div>
       </div>

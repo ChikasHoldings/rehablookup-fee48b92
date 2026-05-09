@@ -145,6 +145,9 @@ export function useProviderFacilities() {
   return {
     facilities: query.data || cachedFacilities || [],
     isLoading: isAuthLoading || query.isLoading,
+    // BUGFIX: Expose isError so consumers can render an error state instead of
+    // silently showing an empty facilities list when the DB query fails.
+    isError: query.isError,
     error: query.error,
     refetch: query.refetch,
   };

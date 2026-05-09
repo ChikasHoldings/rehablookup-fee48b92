@@ -45,6 +45,7 @@ export function DashboardMissedLeads({ facilityId, isPro }: DashboardMissedLeads
     },
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 5,
+    retry: 2,
   });
 
   if (isLoading) {

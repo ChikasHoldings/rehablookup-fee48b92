@@ -144,13 +144,16 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
     selectedFacility,
     setSelectedFacility,
     requestFacilitySwitch,
-    isLoading: false, // Never block - we use cached data
+    // BUGFIX: Expose the real facilities loading state so consumers (e.g. Analytics page)
+    // can show a skeleton while facilities are being fetched on first load, rather than
+    // rendering with a null selectedFacility and then re-rendering once facilities arrive.
+    isLoading: facilitiesLoading,
     hasUnsavedChanges,
     setHasUnsavedChanges,
     pendingFacilitySwitch,
     confirmFacilitySwitch,
     cancelFacilitySwitch,
-  }), [selectedFacility, setSelectedFacility, requestFacilitySwitch, hasUnsavedChanges, pendingFacilitySwitch, confirmFacilitySwitch, cancelFacilitySwitch]);
+  }), [selectedFacility, setSelectedFacility, requestFacilitySwitch, facilitiesLoading, hasUnsavedChanges, pendingFacilitySwitch, confirmFacilitySwitch, cancelFacilitySwitch]);
 
   return (
     <SelectedFacilityContext.Provider value={value}>

@@ -62,6 +62,7 @@ export function useProviderReviews() {
   const { facilities } = useProviderFacilities();
   const [reviews, setReviews] = useState<ProviderReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
 
   // Get all facility IDs
   const facilityIds = useMemo(() => facilities.map(f => f.id), [facilities]);
@@ -83,7 +84,7 @@ export function useProviderReviews() {
     }
 
     setIsLoading(true);
-
+    setIsError(false);
     try {
       // Fetch all data in parallel for better performance
       const [reviewsResult, responsesResult, disputesResult] = await Promise.all([
@@ -106,6 +107,7 @@ export function useProviderReviews() {
 
       if (reviewsResult.error) {
         console.error('Error fetching reviews:', reviewsResult.error);
+        setIsError(true);
         setIsLoading(false);
         return;
       }
@@ -163,6 +165,7 @@ export function useProviderReviews() {
       setReviews(enrichedReviews);
     } catch (error) {
       console.error('Error fetching reviews:', error);
+      setIsError(true);
     } finally {
       setIsLoading(false);
     }
@@ -304,6 +307,7 @@ export function useProviderReviews() {
     reviews,
     facilities,
     isLoading,
+    isError,
     stats,
     submitResponse,
     updateResponse,
