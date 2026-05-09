@@ -125,8 +125,10 @@ Deno.serve(async (req) => {
       endDate: subscriptionEnd 
     });
 
-    // Check if this is a Pro subscription (any paid subscription is now "Pro")
-    const isPro = PRO_PRODUCT_IDS.includes(productId) || !!subscription;
+    // Check if this is a Pro subscription.
+    // BUGFIX: The previous `|| !!subscription` made every subscriber appear as Pro
+    // regardless of product. Now we strictly check the product ID list.
+    const isPro = PRO_PRODUCT_IDS.includes(productId);
 
     logStep("Determined subscription status", { 
       isPro,

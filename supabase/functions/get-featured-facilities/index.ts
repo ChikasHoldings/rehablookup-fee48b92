@@ -84,7 +84,8 @@ async function sendFeaturedEmail(
   providerEmail: string,
   providerName: string,
   facilityName: string,
-  adminRecipients: string[]
+  adminRecipients: string[],
+  facilityId: string
 ) {
   if (!resend) return;
 
@@ -425,7 +426,7 @@ Deno.serve(async (req) => {
       Promise.all(
         newlyFeaturedFacilities
           .filter(f => f.provider_email)
-          .map(f => sendFeaturedEmail(supabaseClient, resend, f.provider_email!, f.provider_name || "", f.facility_name || "Your facility", notificationSettings.admin_email_recipients))
+          .map(f => sendFeaturedEmail(supabaseClient, resend, f.provider_email!, f.provider_name || "", f.facility_name || "Your facility", notificationSettings.admin_email_recipients, f.id))
       ).catch(err => logStep("Email batch error", { error: String(err) }));
     }
 

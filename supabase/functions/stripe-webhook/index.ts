@@ -974,15 +974,52 @@ Deno.serve(async (req) => {
       } else {
         logStep("Subscription updated successfully", { status: mappedStatus, currentPeriodEnd, cancelAtPeriodEnd: subscription.cancel_at_period_end });
 
-        // Notify provider on status transitions (past_due, cancel_at_period_end)
-        if (mappedStatus === "past_due" || subscription.cancel_at_period_end) {
-          const { data: proSub } = await supabaseAdmin
-            .from("pro_subscriptions")
-            .select("provider_id, facility_id")
-            .eq("stripe_subscription_id", subscription.id)
-            .maybeSingle();
+        // Fetch the pro_subscription record for all status-change handling below
+        const { data: proSub } = await supabaseAdmin
+          .from("pro_subscriptions")
+          .select("provider_id, facility_id")
+          .eq("stripe_subscription_id", subscription.id)
+          .maybeSingle();
 
-          if (proSub) {
+        // BUGFIX: Restore Pro benefits when a past_due subscription is paid and returns to active.
+        // Previously, benefits were only applied at checkout.session.completed and never re-applied
+        // on recovery from past_due, leaving providers without featured/ranking boost after recovery.
+        const previousStatus = (event.data.previous_attributes as Record<string, unknown>)?.status as string | undefined;
+        if (mappedStatus === "active" && previousStatus === "past_due" && proSub) {
+          logStep("Subscription recovered from past_due — restoring Pro benefits", { facilityId: proSub.facility_id });
+          const { data: allFacilities } = await supabaseAdmin
+            .from("facilities")
+            .select("id, calculated_ranking_score, featured")
+            .eq("user_id", proSub.provider_id);
+          if (allFacilities) {
+            for (const f of allFacilities) {
+              // Only add the +50 boost if it wasn't already applied (featured=true means boost is active)
+              const alreadyBoosted = f.featured === true;
+              const currentScore = f.calculated_ranking_score ?? 0;
+              await supabaseAdmin
+                .from("facilities")
+                .update({
+                  featured: true,
+                  calculated_ranking_score: alreadyBoosted ? currentScore : currentScore + 50,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", f.id);
+            }
+            logStep("Pro benefits restored on all provider facilities", { count: allFacilities.length });
+          }
+          await supabaseAdmin.from("provider_notifications").insert({
+            user_id: proSub.provider_id,
+            facility_id: proSub.facility_id,
+            type: "subscription_recovered",
+            title: "Pro Subscription Restored",
+            message: "Your payment was received and your Pro benefits have been fully restored — featured placement, ranking boost, and lead discounts are all active again.",
+            metadata: { subscription_id: subscription.id },
+          });
+          logStep("Recovery notification sent to provider");
+        }
+
+        // Notify provider on status transitions (past_due, cancel_at_period_end)
+        if ((mappedStatus === "past_due" || subscription.cancel_at_period_end) && proSub) {
             if (mappedStatus === "past_due") {
               await supabaseAdmin.from("provider_notifications").insert({
                 user_id: proSub.provider_id,
@@ -1007,7 +1044,6 @@ Deno.serve(async (req) => {
               });
               logStep("Pending cancellation notification sent to provider");
             }
-          }
         }
       }
     }

@@ -94,7 +94,10 @@ export default function ProviderBillingPage() {
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
   const { balanceFormatted, balance, transactions, isLoading, refetchCredits } = useProviderCredits(facilityId);
-  const { data: proStatus, isLoading: proLoading, refetch: refetchProStatus } = useProStatus();
+  // BUGFIX: Previously called useProStatus() with no facilityId, causing the billing page to show
+  // the subscription status of whichever facility had the most recent period_end rather than the
+  // currently selected facility. Now scoped to the selected facility.
+  const { data: proStatus, isLoading: proLoading, refetch: refetchProStatus } = useProStatus(facilityId ?? undefined);
   const { 
     paymentMethods: allPaymentMethods, 
     isLoading: paymentMethodsLoading,

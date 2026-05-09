@@ -181,8 +181,10 @@ Deno.serve(async (req) => {
         }
       }
       
-      // All paid subscriptions are now "Pro"
-      if (productId && (PRO_PRODUCT_IDS.includes(productId) || productId)) {
+      // Determine plan tier strictly by product ID list.
+      // BUGFIX: The previous `|| productId` short-circuit made every subscription appear as Pro
+      // in admin reports, corrupting revenue analytics. Now strictly checking the allowlist.
+      if (productId && PRO_PRODUCT_IDS.includes(productId)) {
         plan = "pro";
         planName = "Pro";
       }
@@ -311,9 +313,10 @@ Deno.serve(async (req) => {
 
 function getPlanFromSubscription(sub: any): string {
   const productId = sub.items?.data?.[0]?.price?.product;
-  if (typeof productId === "string") {
-    if (PRO_PRODUCT_IDS.includes(productId)) return "Pro";
+  if (typeof productId === "string" && PRO_PRODUCT_IDS.includes(productId)) {
+    return "Pro";
   }
-  // Any active subscription is Pro
-  return sub.status === "active" ? "Pro" : "Free";
+  // BUGFIX: Previously returned "Pro" for any active subscription.
+  // Now returns "Free" for subscriptions with unrecognised product IDs.
+  return "Free";
 }

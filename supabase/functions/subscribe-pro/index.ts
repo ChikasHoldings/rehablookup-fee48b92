@@ -169,18 +169,25 @@ Deno.serve(async (req) => {
 
     logStep(requestId, "Facility verified", { facilityId, facilityName: facility.name });
 
-    // Check if already has active Pro subscription
+    // Check if already has active OR past_due Pro subscription.
+    // BUGFIX: Previously only checked for 'active' status, allowing a provider with a past_due
+    // subscription to create a second checkout session and get double-billed.
     const { data: existingPro } = await supabaseAdmin
       .from("pro_subscriptions")
       .select("id, status, current_period_end")
       .eq("facility_id", facilityId)
-      .eq("status", "active")
+      .in("status", ["active", "past_due", "trialing"])
       .maybeSingle();
 
     if (existingPro) {
-      logStep(requestId, "ERROR - Already has active Pro subscription", { existingProId: existingPro.id });
+      const isPastDue = existingPro.status === "past_due";
+      const errorMsg = isPastDue
+        ? "Your Pro subscription is past due. Please update your payment method in Billing settings instead of starting a new subscription."
+        : "Already has active Pro subscription";
+      logStep(requestId, `ERROR - Existing Pro subscription (${existingPro.status})`, { existingProId: existingPro.id });
       return new Response(JSON.stringify({ 
-        error: "Already has active Pro subscription", 
+        error: errorMsg,
+        existingStatus: existingPro.status,
         requestId,
         _version: VERSION 
       }), {

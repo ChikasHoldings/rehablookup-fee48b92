@@ -119,6 +119,7 @@ export default function ProUpgradePage() {
   const facilityId = selectedFacility?.id;
   const { data: proStatus, refetch: refetchProStatus } = useProStatus(facilityId ?? undefined);
   const isPro = proStatus?.isPro ?? false;
+  const isPastDue = proStatus?.status === 'past_due';
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef = useRef(0);
@@ -199,6 +200,18 @@ export default function ProUpgradePage() {
         <CheckCircle className="h-4 w-4 mr-1.5" />
         You're a Pro Member
       </Badge>
+    ) : isPastDue ? (
+      <Button
+        size="lg"
+        onClick={() => navigate("/provider/billing")}
+        className={cn(
+          "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg h-11 text-sm font-semibold",
+          className
+        )}
+      >
+        <Shield className="h-4 w-4 mr-2" />
+        Fix Payment to Restore Pro
+      </Button>
     ) : (
       <Button
         size="lg"
