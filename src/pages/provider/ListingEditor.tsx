@@ -164,6 +164,14 @@ const validateField = (field: string, value: string | null): string | null => {
         }
       }
       return null;
+    case "bed_count":
+      if (trimmedValue) {
+        const beds = parseInt(trimmedValue, 10);
+        if (isNaN(beds) || beds < 1 || beds > 9999) {
+          return "Bed count must be a number between 1 and 9999";
+        }
+      }
+      return null;
     case "year_established":
       if (trimmedValue) {
         const year = parseInt(trimmedValue, 10);
@@ -498,43 +506,47 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       return;
     }
     
-    const { error } = await supabase
-      .from("facilities")
-      .update({
-        name: sanitizeFacilityName(facility.name),
-        address: sanitizeText(facility.address).slice(0, 200),
-        city: sanitizeText(facility.city).slice(0, 100),
-        state: facility.state,
-        zip_code: facility.zip_code.trim(),
-        phone: facility.phone.trim(),
-        email: validateEmail(facility.email) ?? null,
-        reply_email: facility.reply_email?.trim() || null,
-        website: sanitizeWebsite(facility.website),
-        description: sanitizeDescription(facility.description),
-        facility_type: facility.facility_type,
-        gender_served: facility.gender_served,
-        bed_count: facility.bed_count,
-        logo_url: facility.logo_url,
-        gallery_urls: facility.gallery_urls,
-        year_established: facility.year_established,
-        accepts_international_patients: facility.accepts_international_patients,
-      })
-      .eq("id", facility.id)
-      .eq("user_id", autoSaveSession.user.id);
+    try {
+      const { error } = await supabase
+        .from("facilities")
+        .update({
+          name: sanitizeFacilityName(facility.name),
+          address: sanitizeText(facility.address).slice(0, 200),
+          city: sanitizeText(facility.city).slice(0, 100),
+          state: facility.state,
+          zip_code: facility.zip_code.trim(),
+          phone: facility.phone.trim(),
+          email: validateEmail(facility.email) ?? null,
+          reply_email: facility.reply_email?.trim() || null,
+          website: sanitizeWebsite(facility.website),
+          description: sanitizeDescription(facility.description),
+          facility_type: facility.facility_type,
+          gender_served: facility.gender_served,
+          bed_count: facility.bed_count,
+          logo_url: facility.logo_url,
+          gallery_urls: facility.gallery_urls,
+          year_established: facility.year_established,
+          accepts_international_patients: facility.accepts_international_patients,
+        })
+        .eq("id", facility.id)
+        .eq("user_id", autoSaveSession.user.id);
 
-    setIsAutoSaving(false);
-
-    if (!error) {
-      queryClient.setQueryData(["facility-listing", currentFacilityId], facility);
-      queryClient.invalidateQueries({ queryKey: ["provider-data"] });
-      queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
-      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
-      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
-      setHasChanges(false);
-      setShowSaved(true);
-      setTimeout(() => setShowSaved(false), 2000);
-    } else {
-      console.error("[ListingEditor] Auto-save failed:", error.message);
+      if (!error) {
+        queryClient.setQueryData(["facility-listing", currentFacilityId], facility);
+        queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+        queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
+        queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
+        setHasChanges(false);
+        setShowSaved(true);
+        setTimeout(() => setShowSaved(false), 2000);
+      } else {
+        console.error("[ListingEditor] Auto-save failed:", error.message);
+      }
+    } catch (networkErr) {
+      console.error("[ListingEditor] Auto-save network error:", networkErr);
+    } finally {
+      setIsAutoSaving(false);
     }
   }, [facility, isSaving, currentFacilityId, queryClient]); // toast is stable from useToast; removing it silences the unnecessary-dep warning
 
@@ -626,61 +638,75 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       return;
     }
 
-    const { error } = await supabase
-      .from("facilities")
-      .update({
-        name: sanitizeFacilityName(facility.name),
-        address: sanitizeText(facility.address).slice(0, 200),
-        city: sanitizeText(facility.city).slice(0, 100),
-        state: facility.state,
-        zip_code: facility.zip_code.trim(),
-        phone: facility.phone.trim(),
-        email: validateEmail(facility.email) ?? null,
-        reply_email: facility.reply_email?.trim() || null,
-        website: sanitizeWebsite(facility.website),
-        description: sanitizeDescription(facility.description),
-        facility_type: facility.facility_type,
-        gender_served: facility.gender_served,
-        bed_count: facility.bed_count,
-        logo_url: facility.logo_url,
-        gallery_urls: facility.gallery_urls,
-        year_established: facility.year_established,
-        accepts_international_patients: facility.accepts_international_patients,
-      })
-      .eq("id", facility.id)
-      .eq("user_id", saveSession.user.id);
+    try {
+      const { error } = await supabase
+        .from("facilities")
+        .update({
+          name: sanitizeFacilityName(facility.name),
+          address: sanitizeText(facility.address).slice(0, 200),
+          city: sanitizeText(facility.city).slice(0, 100),
+          state: facility.state,
+          zip_code: facility.zip_code.trim(),
+          phone: facility.phone.trim(),
+          email: validateEmail(facility.email) ?? null,
+          reply_email: facility.reply_email?.trim() || null,
+          website: sanitizeWebsite(facility.website),
+          description: sanitizeDescription(facility.description),
+          facility_type: facility.facility_type,
+          gender_served: facility.gender_served,
+          bed_count: facility.bed_count,
+          logo_url: facility.logo_url,
+          gallery_urls: facility.gallery_urls,
+          year_established: facility.year_established,
+          accepts_international_patients: facility.accepts_international_patients,
+        })
+        .eq("id", facility.id)
+        .eq("user_id", saveSession.user.id);
 
-    setIsSaving(false);
-
-    if (error) {
+      if (error) {
+        queryClient.setQueryData(["facility-listing", currentFacilityId], previousData);
+        setFacility(previousData as Facility | null);
+        setHasChanges(true);
+        setShowSaved(false);
+        toast({
+          title: "Error saving",
+          description: "Failed to save changes. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+        queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
+        queryClient.invalidateQueries({ queryKey: ["facility-services-count", currentFacilityId] });
+        queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", currentFacilityId] });
+        queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
+        setTimeout(() => setShowSaved(false), 2000);
+        toast({
+          title: "Profile updated",
+          description: "Your public profile is now live with the latest changes.",
+          action: facility.slug ? (
+            <ToastAction altText="View Public Profile" asChild>
+              <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
+                View Profile
+              </a>
+            </ToastAction>
+          ) : undefined,
+        });
+      }
+    } catch (networkErr) {
+      // Network-level throw (e.g. fetch abort, offline) — restore optimistic state
+      console.error("[ListingEditor] handleSave network error:", networkErr);
       queryClient.setQueryData(["facility-listing", currentFacilityId], previousData);
       setFacility(previousData as Facility | null);
       setHasChanges(true);
       setShowSaved(false);
       toast({
-        title: "Error saving",
-        description: "Failed to save changes. Please try again.",
+        title: "Network error",
+        description: "Could not reach the server. Please check your connection and try again.",
         variant: "destructive",
       });
-    } else {
-      queryClient.invalidateQueries({ queryKey: ["provider-data"] });
-      queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
-      queryClient.invalidateQueries({ queryKey: ["facility-services-count", currentFacilityId] });
-      queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", currentFacilityId] });
-      queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
-      queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
-      setTimeout(() => setShowSaved(false), 2000);
-      toast({
-        title: "Profile updated",
-        description: "Your public profile is now live with the latest changes.",
-        action: facility.slug ? (
-          <ToastAction altText="View Public Profile" asChild>
-            <a href={`/center/${facility.slug}`} target="_blank" rel="noopener noreferrer">
-              View Profile
-            </a>
-          </ToastAction>
-        ) : undefined,
-      });
+    } finally {
+      setIsSaving(false);
     }
   }, [facility, validateAllFields, toast, queryClient, currentFacilityId, setFacility]);
 
@@ -1403,7 +1429,16 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                     <div className="flex gap-2">
                       <div className="relative flex-1">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input type="email" value={facility.reply_email || ""} onChange={(e) => { updateField("reply_email", e.target.value); if (e.target.value !== facilityData?.reply_email) { setCodeSent(false); setVerificationCode(""); setVerificationError(null); } }} onBlur={(e) => handleFieldBlur("reply_email", e.target.value)} className={cn("h-11 pl-10", fieldErrors.reply_email && touchedFields.has("reply_email") && "border-destructive")} placeholder={profileEmail || "replies@facility.com"} />
+                        <Input type="email" value={facility.reply_email || ""} onChange={(e) => {
+                          updateField("reply_email", e.target.value);
+                          if (e.target.value !== facilityData?.reply_email) {
+                            // New email address — revoke the old verified status so it cannot be saved as verified
+                            setFacility(prev => prev ? { ...prev, reply_email: e.target.value, reply_email_verified: false, reply_email_verified_at: null } : prev);
+                            setCodeSent(false);
+                            setVerificationCode("");
+                            setVerificationError(null);
+                          }
+                        }} onBlur={(e) => handleFieldBlur("reply_email", e.target.value)} className={cn("h-11 pl-10", fieldErrors.reply_email && touchedFields.has("reply_email") && "border-destructive")} placeholder={profileEmail || "replies@facility.com"} />
                       </div>
                       {needsReplyEmailVerification && !fieldErrors.reply_email && (
                         <Button type="button" variant="outline" onClick={handleSendVerificationCode} disabled={isSendingCode} className="h-11 gap-2">
@@ -1451,7 +1486,26 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                     <FormField label="Bed Count / Capacity" hint="How many clients can you serve at once?">
                       <div className="relative">
                         <Bed className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input value={facility.bed_count || ""} onChange={(e) => updateField("bed_count", e.target.value)} placeholder="e.g., 24" className="h-11 pl-10" />
+                        <Input
+                          type="number"
+                          min="1"
+                          max="9999"
+                          value={facility.bed_count || ""}
+                          onChange={(e) => {
+                            // Only allow positive integers
+                            const raw = e.target.value.replace(/[^0-9]/g, "");
+                            updateField("bed_count", raw);
+                            if (touchedFields.has("bed_count")) {
+                              setFieldErrors(prev => ({ ...prev, bed_count: validateField("bed_count", raw) }));
+                            }
+                          }}
+                          onBlur={(e) => handleFieldBlur("bed_count", e.target.value)}
+                          placeholder="e.g., 24"
+                          className={cn("h-11 pl-10", fieldErrors.bed_count && touchedFields.has("bed_count") && "border-destructive")}
+                        />
+                        {fieldErrors.bed_count && touchedFields.has("bed_count") && (
+                          <p className="text-xs text-destructive mt-1">{fieldErrors.bed_count}</p>
+                        )}
                       </div>
                     </FormField>
                   </div>

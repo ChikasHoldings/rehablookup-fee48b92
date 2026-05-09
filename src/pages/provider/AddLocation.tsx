@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { 
@@ -74,6 +74,9 @@ export default function AddLocationPage() {
   const [formData, setFormData] = useState<FacilityFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  // Ref-based guard prevents double-submit in React 18 concurrent mode where
+  // the same event handler can fire before the state update commits.
+  const submittingRef = useRef(false);
   
   // Zipcode auto-detection
   const { data: zipcodeData, isLoading: isLookingUp, error: lookupError, lookup } = useZipcodeLookup();
@@ -128,8 +131,9 @@ export default function AddLocationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Prevent double submissions
-    if (isSubmitting) return;
+    // Ref-based guard is checked first to prevent double-submit in React 18
+    // concurrent mode where state updates may not have committed yet.
+    if (submittingRef.current || isSubmitting) return;
     
     if (!canAddMore) {
       toast({
@@ -151,6 +155,9 @@ export default function AddLocationPage() {
       return;
     }
 
+    // Set both the ref (synchronous, immediate) and state (triggers re-render to
+    // disable the submit button). The ref is the authoritative guard; state drives UI.
+    submittingRef.current = true;
     setIsSubmitting(true);
 
     try {
@@ -162,7 +169,6 @@ export default function AddLocationPage() {
           title: "Authentication Error",
           description: "Please log in again to continue.",
         });
-        setIsSubmitting(false);
         navigate("/login");
         return;
       }
@@ -188,7 +194,6 @@ export default function AddLocationPage() {
           title: "Validation Error",
           description: validationErr.message || "Please check your facility information.",
         });
-        setIsSubmitting(false);
         return;
       }
 
@@ -222,7 +227,6 @@ export default function AddLocationPage() {
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
 
       setSuccess(true);
-      setIsSubmitting(false);
       
       toast({
         title: "Location Added!",
@@ -241,9 +245,12 @@ export default function AddLocationPage() {
         title: "Error",
         description: err?.message || "Failed to add location. Please try again.",
       });
+    } finally {
+      // Always reset both guards so the form is never permanently locked,
+      // regardless of which code path (success, validation error, network error) was taken.
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
-    // NOTE: No finally block - each path explicitly handles setIsSubmitting(false)
   };
 
   // If can't add more, show upgrade message — but only after limits have loaded to prevent
@@ -297,14 +304,14 @@ export default function AddLocationPage() {
               <div className="h-16 w-16 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
-              <CardTitle className="text-xl">Location Submitted!</CardTitle>
+              <CardTitle className="text-xl">Location Added Successfully!</CardTitle>
               <CardDescription className="text-base">
-                Your new facility has been submitted for review. Our team will review it within 24-48 hours.
+                Your new facility has been submitted for review. We'll notify you once it's approved.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
               <Button onClick={() => navigate("/provider/listings")}>
-                Return to Listings
+                View My Listings
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </CardContent>
@@ -315,256 +322,244 @@ export default function AddLocationPage() {
   }
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 lg:p-8">
+      <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
+        <div className="mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate(-1)}
+            className="mb-4 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
           </Button>
-          <div>
-            <h1 className="font-display text-xl md:text-2xl lg:text-3xl font-bold text-foreground">Add New Location</h1>
-            <p className="text-muted-foreground">
-              Add another facility to your account ({usedLocations + 1} of {locationLimit})
+          <h1 className="text-2xl font-bold">Add New Location</h1>
+          <p className="text-muted-foreground mt-1">
+            Add a new facility location to your provider account.
+          </p>
+          {!limitsLoading && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {usedLocations} of {locationLimit} location{locationLimit !== 1 ? 's' : ''} used
             </p>
-          </div>
+          )}
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Basic Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Building2 className="h-5 w-5 text-primary" />
-                Facility Information
+                <Building2 className="h-5 w-5" />
+                Basic Information
               </CardTitle>
-              <CardDescription>
-                Enter the details for your new facility location.
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Basic Info */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Facility Name *</Label>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Facility Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder="e.g., Sunrise Recovery Center"
+                  maxLength={200}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="facility_type">Facility Type *</Label>
+                <Select
+                  value={formData.facility_type}
+                  onValueChange={(value) => handleInputChange("facility_type", value)}
+                >
+                  <SelectTrigger id="facility_type">
+                    <SelectValue placeholder="Select facility type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FACILITY_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  placeholder="Brief description of your facility..."
+                  rows={3}
+                  maxLength={2000}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Location */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <MapPin className="h-5 w-5" />
+                Location
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="address">Street Address *</Label>
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
+                  placeholder="123 Main Street"
+                  maxLength={300}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="zip_code">ZIP Code *</Label>
+                <div className="relative">
                   <Input
-                    id="name"
-                    placeholder="e.g., Recovery Center of California"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    id="zip_code"
+                    value={formData.zip_code}
+                    onChange={(e) => handleZipcodeChange(e.target.value)}
+                    placeholder="12345"
+                    maxLength={5}
+                    required
+                  />
+                  {isLookingUp && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                {hasAutoFilled && (
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    City and state auto-filled
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">City *</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => handleInputChange("city", e.target.value)}
+                    placeholder="City"
+                    maxLength={100}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="facility_type">Facility Type *</Label>
+                  <Label htmlFor="state">State *</Label>
                   <Select
-                    value={formData.facility_type}
-                    onValueChange={(value) => handleInputChange("facility_type", value)}
+                    value={formData.state}
+                    onValueChange={(value) => handleInputChange("state", value)}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select facility type" />
+                    <SelectTrigger id="state">
+                      <SelectValue placeholder="State" />
                     </SelectTrigger>
                     <SelectContent>
-                      {FACILITY_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
+                      {US_STATES.map((state) => (
+                        <SelectItem key={state.value} value={state.value}>
+                          {state.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Address */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  Location
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Street Address *</Label>
-                  <Input
-                    id="address"
-                    placeholder="123 Main Street"
-                    value={formData.address}
-                    onChange={(e) => handleInputChange("address", e.target.value)}
-                    required
-                  />
-                </div>
-
-                {/* Enhanced ZIP Code with Auto-Detection */}
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="zip_code" className="flex items-center gap-2">
-                      ZIP Code *
-                      {isLookingUp && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="zip_code"
-                        placeholder="Enter ZIP"
-                        value={formData.zip_code}
-                        onChange={(e) => handleZipcodeChange(e.target.value)}
-                        className={cn(
-                          "pr-10",
-                          hasAutoFilled && "border-green-300"
-                        )}
-                        inputMode="numeric"
-                        maxLength={5}
-                        required
-                      />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        {isLookingUp ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                        ) : hasAutoFilled ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <MapPin className="h-4 w-4 text-muted-foreground/50" />
-                        )}
-                      </div>
-                    </div>
-                    {lookupError && (
-                      <p className="text-xs text-amber-600">Enter city/state manually</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="city" className="flex items-center gap-2">
-                      City *
-                      {hasAutoFilled && <span className="text-xs text-green-600 font-normal">(auto-detected)</span>}
-                    </Label>
-                    <Input
-                      id="city"
-                      placeholder={isLookingUp ? "Detecting..." : "City"}
-                      value={formData.city}
-                      onChange={(e) => {
-                        handleInputChange("city", e.target.value);
-                        setHasAutoFilled(false);
-                      }}
-                      className={cn(
-                        hasAutoFilled && "bg-green-50/50 border-green-200 dark:bg-green-950/20"
-                      )}
-                      disabled={isLookingUp}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state" className="flex items-center gap-2">
-                      State *
-                      {hasAutoFilled && <span className="text-xs text-green-600 font-normal">(auto-detected)</span>}
-                    </Label>
-                    <Select
-                      value={formData.state}
-                      onValueChange={(value) => {
-                        handleInputChange("state", value);
-                        setHasAutoFilled(false);
-                      }}
-                      disabled={isLookingUp}
-                    >
-                      <SelectTrigger className={cn(
-                        hasAutoFilled && "bg-green-50/50 border-green-200 dark:bg-green-950/20"
-                      )}>
-                        <SelectValue placeholder={isLookingUp ? "Detecting..." : "Select state"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {US_STATES.map((state) => (
-                          <SelectItem key={state} value={state}>
-                            {state}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                {hasAutoFilled && (
-                  <p className="text-xs text-green-600 flex items-center gap-1 animate-fade-in">
-                    <CheckCircle2 className="h-3 w-3" />
-                    City and state auto-detected from ZIP code
-                  </p>
-                )}
-              </div>
-
-              {/* Contact Info */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Phone className="h-4 w-4" />
-                  Contact Information
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <PhoneInput
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(value) => handleInputChange("phone", value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email (optional)</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="info@facility.com"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website (optional)</Label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="website"
-                      placeholder="https://www.yourfacility.com"
-                      className="pl-10"
-                      value={formData.website}
-                      onChange={(e) => handleInputChange("website", e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
+          {/* Contact Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Phone className="h-5 w-5" />
+                Contact Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="description">Description (optional)</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Tell families about this facility, its programs, and what makes it unique..."
-                  rows={4}
-                  value={formData.description}
-                  onChange={(e) => handleInputChange("description", e.target.value)}
+                <Label htmlFor="phone">Phone Number *</Label>
+                <PhoneInput
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(value) => handleInputChange("phone", value)}
+                  placeholder="(555) 123-4567"
                 />
-                <p className="text-xs text-muted-foreground">
-                  You can add more details like services, insurance, and images after the facility is approved.
-                </p>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-between pt-4 border-t">
-                <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      Add Location
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </>
-                  )}
-                </Button>
+              <div className="space-y-2">
+                <Label htmlFor="email">
+                  <Mail className="h-4 w-4 inline mr-1" />
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  placeholder="contact@facility.com"
+                  maxLength={254}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="website">
+                  <Globe className="h-4 w-4 inline mr-1" />
+                  Website
+                </Label>
+                <Input
+                  id="website"
+                  type="url"
+                  value={formData.website}
+                  onChange={(e) => handleInputChange("website", e.target.value)}
+                  placeholder="https://www.facility.com"
+                  maxLength={500}
+                />
               </div>
             </CardContent>
           </Card>
+
+          {/* Submit */}
+          <div className="flex gap-3 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate(-1)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || limitsLoading}
+              className="min-w-[140px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  Add Location
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+          </div>
         </form>
       </div>
     </div>

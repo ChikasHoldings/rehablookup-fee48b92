@@ -44,7 +44,7 @@ export function StaffManagementSection({
   isExpanded,
   onToggle,
 }: StaffManagementSectionProps) {
-  const { data: proStatus } = useProStatus();
+  const { data: proStatus } = useProStatus(facilityId);
   const { 
     staff, 
     isLoading, 
