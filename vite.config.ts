@@ -23,32 +23,26 @@ export default defineConfig(({ mode }) => ({
     minify: "esbuild",
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Core React vendor chunk - loaded immediately
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          // UI library chunk - loaded on first interaction
-          'vendor-ui': [
-            '@radix-ui/react-dialog', 
-            '@radix-ui/react-dropdown-menu', 
-            '@radix-ui/react-popover', 
-            '@radix-ui/react-tabs', 
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-select',
-            '@radix-ui/react-accordion',
-          ],
-          // Data fetching chunk
-          'vendor-query': ['@tanstack/react-query', '@supabase/supabase-js'],
-          // Form handling (loaded on form pages)
-          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          // Stripe (only loaded when payment modal opens)
-          'vendor-stripe': ['@stripe/stripe-js', '@stripe/react-stripe-js'],
-          // NOTE: recharts, framer-motion are NOT in manual chunks
-          // so they naturally code-split and only load with the lazy routes that use them
-        },
+        // IMPORTANT: Do NOT use manualChunks with React + Radix UI.
+        //
+        // Root cause of the blank-page bug:
+        //   Radix UI components (e.g. @radix-ui/react-dialog) import React
+        //   directly. When React is placed in a separate 'vendor-react' chunk
+        //   and Radix UI in 'vendor-ui', Rollup creates a circular module
+        //   dependency: vendor-react imports vendor-ui (for router/react-dom
+        //   peer deps), and vendor-ui imports vendor-react (for React itself).
+        //   At runtime the browser resolves one chunk before the other, leaving
+        //   React as `undefined` when createContext() is called — which throws
+        //   a TypeError that prevents React from ever mounting, resulting in a
+        //   completely blank page.
+        //
+        // Fix: let Rollup's automatic chunk-splitting algorithm decide how to
+        //   group modules. It correctly tracks the dependency graph and never
+        //   produces circular chunk imports.
       },
     },
     // Increase chunk size warning limit
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 600,
     // Disable source maps in production for smaller bundles & faster load
     sourcemap: false,
     // CSS code splitting for smaller initial CSS
@@ -59,8 +53,8 @@ export default defineConfig(({ mode }) => ({
   // Optimize deps for faster cold starts
   optimizeDeps: {
     include: [
-      'react', 
-      'react-dom', 
+      'react',
+      'react-dom',
       'react-router-dom',
       '@tanstack/react-query',
     ],
