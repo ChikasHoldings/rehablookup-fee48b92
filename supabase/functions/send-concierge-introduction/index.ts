@@ -28,7 +28,8 @@ const isValidUUID = (str: string): boolean => {
 interface IntroductionRequest {
   inquiryId: string;
   facilityId: string;
-  introductionId: string;
+  introductionId?: string; // Optional for auto-introduction (system will create the row)
+  responseDeadline?: string; // ISO timestamp for provider response deadline
 }
 
 Deno.serve(async (req) => {
@@ -61,70 +62,114 @@ Deno.serve(async (req) => {
       throw new Error("Supabase configuration missing");
     }
 
-    // Authenticate caller - must be admin
+    // Authenticate caller - must be admin OR service_role (for automated introductions)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       logStep(requestId, "Unauthorized: missing Authorization header");
       throw new ApiError("UNAUTHORIZED", "Missing Authorization header", 401);
     }
 
-    const anonClient = createClient(supabaseUrl, supabaseAnonKey);
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await anonClient.auth.getUser(token);
-    if (userError || !userData.user) {
-      logStep(requestId, "Unauthorized: invalid token", { error: userError?.message });
-      throw new ApiError("UNAUTHORIZED", "Authentication failed", 401);
-    }
-
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const token = authHeader.replace("Bearer ", "");
+    let actorType = 'system';
+    let isServiceRole = false;
+    let callerUserId: string | null = null;
 
-    // Verify admin role
-    const { data: adminRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userData.user.id)
-      .eq('role', 'admin')
-      .maybeSingle();
+    // Check if this is a service_role call (from other edge functions)
+    if (token === supabaseKey) {
+      isServiceRole = true;
+      actorType = 'system';
+      logStep(requestId, "Service-role call (automated introduction)");
+    } else {
+      // Verify as admin user
+      const anonClient = createClient(supabaseUrl, supabaseAnonKey);
+      const { data: userData, error: userError } = await anonClient.auth.getUser(token);
+      if (userError || !userData.user) {
+        logStep(requestId, "Unauthorized: invalid token", { error: userError?.message });
+        throw new ApiError("UNAUTHORIZED", "Authentication failed", 401);
+      }
 
-    // Resolve granular admin role for actor_type attribution
-    // (super_admin / manager / customer_rep / advisor — never the legacy "admin" literal).
-    const { data: adminProfile } = await supabase
-      .from("admin_user_profiles")
-      .select("admin_role")
-      .eq("user_id", userData.user.id)
-      .maybeSingle();
-    const actorType = getCaseEventActorType(adminProfile?.admin_role ?? null);
+      // Verify admin role
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userData.user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
 
-    if (!adminRole) {
-      throw new ApiError("FORBIDDEN", "Only administrators can send introductions", 403);
+      // Resolve granular admin role for actor_type attribution
+      const { data: adminProfile } = await supabase
+        .from("admin_user_profiles")
+        .select("admin_role")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+      actorType = getCaseEventActorType(adminProfile?.admin_role ?? null);
+
+      if (!adminRole) {
+        throw new ApiError("FORBIDDEN", "Only administrators can send introductions", 403);
+      }
+
+      callerUserId = userData.user.id;
+      logStep(requestId, "Admin authenticated", { adminId: callerUserId });
     }
-
-    logStep(requestId, "Admin authenticated", { adminId: userData.user.id });
 
     const resend = new Resend(resendKey);
     
     const body = await req.json();
-    const { inquiryId, facilityId, introductionId }: IntroductionRequest = body;
+    const { inquiryId, facilityId, introductionId, responseDeadline }: IntroductionRequest = body;
 
-    // Per-field validation so smoke tests / clients can pinpoint the missing input.
-    if (!inquiryId)      throw new ApiError("MISSING_FIELD_INQUIRY_ID", "inquiryId is required", 400);
-    if (!facilityId)     throw new ApiError("MISSING_FIELD_FACILITY_ID", "facilityId is required", 400);
-    if (!introductionId) throw new ApiError("MISSING_FIELD_INTRODUCTION_ID", "introductionId is required", 400);
-    if (!isValidUUID(inquiryId))      throw new ApiError("INVALID_INQUIRY_ID", "Invalid inquiryId format", 400);
-    if (!isValidUUID(facilityId))     throw new ApiError("INVALID_FACILITY_ID", "Invalid facilityId format", 400);
-    if (!isValidUUID(introductionId)) throw new ApiError("INVALID_INTRODUCTION_ID", "Invalid introductionId format", 400);
+    // Per-field validation
+    if (!inquiryId)  throw new ApiError("MISSING_FIELD_INQUIRY_ID", "inquiryId is required", 400);
+    if (!facilityId) throw new ApiError("MISSING_FIELD_FACILITY_ID", "facilityId is required", 400);
+    if (!isValidUUID(inquiryId))  throw new ApiError("INVALID_INQUIRY_ID", "Invalid inquiryId format", 400);
+    if (!isValidUUID(facilityId)) throw new ApiError("INVALID_FACILITY_ID", "Invalid facilityId format", 400);
 
-    logStep(requestId, "Processing", { inquiryId, facilityId, introductionId });
+    // introductionId is optional for auto-introductions (system creates the row)
+    let resolvedIntroductionId = introductionId;
+    if (!resolvedIntroductionId) {
+      // Auto-create the introduction row (system-initiated)
+      const { data: newIntro, error: insertErr } = await supabase
+        .from('concierge_introductions')
+        .insert({
+          inquiry_id: inquiryId,
+          facility_id: facilityId,
+          provider_response: 'pending',
+          response_deadline_at: responseDeadline || null,
+        })
+        .select('id')
+        .single();
+      if (insertErr || !newIntro) {
+        // Check if it already exists (idempotency)
+        const { data: existing } = await supabase
+          .from('concierge_introductions')
+          .select('id')
+          .eq('inquiry_id', inquiryId)
+          .eq('facility_id', facilityId)
+          .maybeSingle();
+        if (existing) {
+          resolvedIntroductionId = existing.id;
+        } else {
+          throw new ApiError("INSERT_FAILED", `Failed to create introduction: ${insertErr?.message}`, 500);
+        }
+      } else {
+        resolvedIntroductionId = newIntro.id;
+      }
+      logStep(requestId, "Auto-created introduction row", { introductionId: resolvedIntroductionId });
+    } else {
+      if (!isValidUUID(resolvedIntroductionId)) throw new ApiError("INVALID_INTRODUCTION_ID", "Invalid introductionId format", 400);
+    }
+
+    logStep(requestId, "Processing", { inquiryId, facilityId, introductionId: resolvedIntroductionId });
 
     // Idempotency: check if introduction already sent
     const { data: existingIntro } = await supabase
       .from("concierge_introductions")
       .select("id, sent_at")
-      .eq("id", introductionId)
+      .eq("id", resolvedIntroductionId)
       .single();
 
     if (existingIntro?.sent_at) {
-      logStep(requestId, "Introduction already sent - idempotent return", { introductionId });
+      logStep(requestId, "Introduction already sent - idempotent return", { introductionId: resolvedIntroductionId });
       return new Response(JSON.stringify({ 
         success: true, 
         alreadySent: true, 
@@ -331,8 +376,8 @@ Deno.serve(async (req) => {
       replyTo: "concierge@rehablookup.com",
     }, {
       emailType: "concierge_introduction",
-      idempotencyKey: `intro-${introductionId}`,
-      metadata: { inquiryId, facilityId, introductionId },
+      idempotencyKey: `intro-${resolvedIntroductionId}`,
+      metadata: { inquiryId, facilityId, introductionId: resolvedIntroductionId },
     });
 
     if (!result.success) {
@@ -345,15 +390,15 @@ Deno.serve(async (req) => {
     // Mark the introduction as sent (idempotency key for future calls)
     await supabase
       .from("concierge_introductions")
-      .update({ sent_at: new Date().toISOString(), sent_by: userData.user.id })
-      .eq("id", introductionId);
+      .update({ sent_at: new Date().toISOString(), ...(callerUserId ? { sent_by: callerUserId } : {}) })
+      .eq("id", resolvedIntroductionId);
 
     // Log case event for introduction sent
     await supabase.from("concierge_case_events").insert({
       inquiry_id: inquiryId,
       event_type: "introduction_sent",
       event_data: { facility_id: facilityId, facility_name: facility.name },
-      actor_id: userData.user.id,
+      actor_id: callerUserId,
       actor_type: actorType,
     });
 
@@ -371,7 +416,7 @@ Deno.serve(async (req) => {
         title: "New Placement Introduction",
         message: `A potential client (${levelOfCare}) has been matched to your facility. Review and respond in your Placement Network.`,
         link: "/provider/placement-network",
-        metadata: { inquiry_id: inquiryId, introduction_id: introductionId },
+        metadata: { inquiry_id: inquiryId, introduction_id: resolvedIntroductionId },
       });
     }
 

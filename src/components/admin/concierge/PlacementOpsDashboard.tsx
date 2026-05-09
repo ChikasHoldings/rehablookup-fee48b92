@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AlertTriangle, Clock, Users, Send, Eye, Building2, DollarSign,
-  CheckCircle2, XCircle, ChevronRight, Flame, Timer, UserCheck,
+  CheckCircle2, XCircle, ChevronRight, Flame, Timer, UserCheck, Zap, Bot,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { getStageConfig, STATUS_CONFIG } from "./placementPipelineConfig";
@@ -47,6 +47,7 @@ const STUCK_THRESHOLDS: Record<string, number> = {
   intake_reviewed: 8,
   advisor_assigned: 12,
   matching_providers: 24,
+  matched: 24,
   provider_prequalification: 48,
   providers_accepted: 24,
   presented_to_seeker: 72,
@@ -88,7 +89,7 @@ export function PlacementOpsDashboard({
   const buckets = useMemo((): CaseBucket[] => {
     const stuck = activeCases.filter(c => isStuck(c));
     const awaitingProvider = activeCases.filter(c =>
-      ["provider_prequalification", "providers_accepted"].includes(c.status)
+      ["matched", "provider_prequalification", "providers_accepted"].includes(c.status)
     );
     const awaitingSeeker = activeCases.filter(c =>
       ["presented_to_seeker"].includes(c.status)
@@ -155,11 +156,14 @@ export function PlacementOpsDashboard({
     return action.priority === "blocker" || action.priority === "high";
   }).length;
   const billedPending = activeCases.filter(c => c.status === "billed").length;
+  const autoProcessing = activeCases.filter(c =>
+    ["intake_submitted", "matching_providers", "matched"].includes(c.status)
+  ).length;
 
   return (
     <div className="space-y-4">
       {/* Summary Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <SummaryCard
           label="Active Placements"
           value={totalActive}
@@ -185,6 +189,12 @@ export function PlacementOpsDashboard({
           value={billedPending}
           icon={DollarSign}
           color="text-amber-600"
+        />
+        <SummaryCard
+          label="Auto-Processing"
+          value={autoProcessing}
+          icon={Bot}
+          color="text-violet-600"
         />
       </div>
 

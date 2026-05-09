@@ -13,6 +13,8 @@ import {
   DollarSign,
   Activity,
   ChevronDown,
+  AlertTriangle,
+  Timer,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -84,6 +86,12 @@ export function IntroductionCard({
 
   const caseId = `Case #${inquiry?.id?.slice(0, 8).toUpperCase() || introduction.id.slice(0, 8).toUpperCase()}`;
   const firstName = inquiry?.user_name?.split(" ")[0] || "Client";
+
+  // Response deadline (72h from introduction)
+  const deadlineMs = new Date(introduction.created_at).getTime() + 72 * 60 * 60 * 1000;
+  const hoursRemaining = Math.max(0, Math.round((deadlineMs - Date.now()) / (1000 * 60 * 60)));
+  const isUrgentDeadline = hoursRemaining <= 12 && hoursRemaining > 0;
+  const isExpired = hoursRemaining === 0 && (!introduction.provider_response || introduction.provider_response === "pending");
 
   const fmt = (value: string | null | undefined, fallback = "—") => {
     if (!value) return fallback;
@@ -244,11 +252,21 @@ export function IntroductionCard({
           </div>
         ) : (
           <>
-            {/* ─── Speed Nudge ─── */}
+            {/* ─── Response Deadline & Speed Nudge ─── */}
             {(!introduction.provider_response || introduction.provider_response === "pending") && (
-              <div className="px-4 sm:px-5 py-1.5 bg-primary/5 border-t flex items-center gap-1.5 text-xs text-primary font-medium">
-                <span>⚡</span>
-                <span>Faster response increases admission chances</span>
+              <div className={cn(
+                "px-4 sm:px-5 py-1.5 border-t flex items-center gap-1.5 text-xs font-medium",
+                isExpired ? "bg-destructive/10 text-destructive" :
+                isUrgentDeadline ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" :
+                "bg-primary/5 text-primary"
+              )}>
+                {isExpired ? (
+                  <><AlertTriangle className="h-3 w-3" /><span>Response window expired — will auto-decline</span></>
+                ) : isUrgentDeadline ? (
+                  <><Timer className="h-3 w-3" /><span>{hoursRemaining}h remaining to respond — faster response increases admission chances</span></>
+                ) : (
+                  <><span>⚡</span><span>Respond within {hoursRemaining}h — faster response increases admission chances</span></>
+                )}
               </div>
             )}
 

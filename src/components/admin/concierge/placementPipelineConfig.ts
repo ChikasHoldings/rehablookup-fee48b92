@@ -15,6 +15,7 @@ export type PlacementStage =
   | "intake_reviewed"
   | "advisor_assigned"
   | "matching_providers"
+  | "matched"
   | "provider_prequalification"
   | "providers_accepted"
   | "presented_to_seeker"
@@ -60,7 +61,7 @@ export const VISUAL_STAGES: VisualStageConfig[] = [
     icon: Users,
     color: "border-t-purple-500",
     badgeColor: "bg-purple-500/10 text-purple-600 border-purple-500/30",
-    dbStatuses: ["matching_providers", "provider_prequalification", "providers_accepted"],
+    dbStatuses: ["matching_providers", "matched", "provider_prequalification", "providers_accepted"],
   },
   {
     key: "presented",
@@ -126,6 +127,7 @@ export const PIPELINE_STAGES: StageConfig[] = [
   { key: "intake_reviewed", label: "Reviewed", shortLabel: "Reviewed", description: "Reviewed — assign advisor", icon: Search, color: "border-t-amber-500", badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/30", nextAction: "Assign advisor", actionOwner: "admin", tabTarget: "actions" },
   { key: "advisor_assigned", label: "Advisor Assigned", shortLabel: "Assigned", description: "Advisor assigned — begin matching", icon: UserCheck, color: "border-t-violet-500", badgeColor: "bg-violet-500/10 text-violet-600 border-violet-500/30", nextAction: "Run matching", actionOwner: "advisor", tabTarget: "matching" },
   { key: "matching_providers", label: "Finding Matches", shortLabel: "Matching", description: "Finding matching facilities", icon: Users, color: "border-t-purple-500", badgeColor: "bg-purple-500/10 text-purple-600 border-purple-500/30", nextAction: "Review matches", actionOwner: "advisor", tabTarget: "matching" },
+  { key: "matched", label: "Matched", shortLabel: "Matched", description: "Facilities matched — sending introductions", icon: CheckCircle, color: "border-t-green-500", badgeColor: "bg-green-500/10 text-green-600 border-green-500/30", nextAction: "Send introductions", actionOwner: "system", tabTarget: "intros" },
   { key: "provider_prequalification", label: "Pre-Qualifying", shortLabel: "Pre-Qual", description: "Verifying facility fit", icon: Shield, color: "border-t-orange-500", badgeColor: "bg-orange-500/10 text-orange-600 border-orange-500/30", nextAction: "Send introductions", actionOwner: "advisor", tabTarget: "intros" },
   { key: "providers_accepted", label: "Providers Ready", shortLabel: "Ready", description: "Facilities confirmed — present to client", icon: CheckCircle, color: "border-t-teal-500", badgeColor: "bg-teal-500/10 text-teal-600 border-teal-500/30", nextAction: "Present to client", actionOwner: "advisor", tabTarget: "intros" },
   { key: "presented_to_seeker", label: "Awaiting Decision", shortLabel: "Awaiting", description: "Options sent — awaiting client decision", icon: Send, color: "border-t-indigo-500", badgeColor: "bg-indigo-500/10 text-indigo-600 border-indigo-500/30", nextAction: "Follow up with client", actionOwner: "seeker", tabTarget: "decision" },

@@ -585,6 +585,123 @@ Deno.serve(async (req) => {
       logStep(requestId, "Warning: Failed to auto-assign advisor", { error: String(advisorErr) });
     }
 
+    // ─── AUTO-MATCHING & AUTO-INTRODUCTION ─────────────────────────────────────
+    // Fully automated placement pipeline:
+    // 1. Match facilities immediately based on intake criteria
+    // 2. Auto-send introductions to top matches
+    // 3. Set response deadlines for providers (72h default)
+    // If any step fails, the placement-cron will retry and admin can intervene.
+    try {
+      // Check if auto-matching is enabled
+      const { data: autoMatchSetting } = await supabase
+        .from('platform_settings')
+        .select('value')
+        .eq('key', 'placement_auto_match_enabled')
+        .single();
+      const autoMatchEnabled = autoMatchSetting?.value !== 'false';
+
+      if (!autoMatchEnabled) {
+        logStep(requestId, "Auto-matching disabled — case will need manual matching");
+      } else {
+        const matchResponse = await fetch(`${supabaseUrl}/functions/v1/match-concierge-intake`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({ inquiryId }),
+        });
+        const matchResult = await matchResponse.json();
+
+        if (matchResult?.matched && matchResult.matchedFacilityIds?.length > 0) {
+          logStep(requestId, "Auto-matching completed", {
+            matchedCount: matchResult.matchedFacilityIds.length,
+            facilityIds: matchResult.matchedFacilityIds,
+          });
+
+          // Mark case as auto-matched and advance status
+          await supabase
+            .from('concierge_inquiries')
+            .update({
+              status: 'matched',
+              auto_matched: true,
+              auto_matched_at: new Date().toISOString(),
+            })
+            .eq('id', inquiryId);
+
+          // ─── AUTO-INTRODUCE: Send introductions to top matches ─────────────
+          const { data: introSetting } = await supabase
+            .from('platform_settings')
+            .select('value')
+            .eq('key', 'placement_auto_introduce_enabled')
+            .single();
+          const autoIntroEnabled = introSetting?.value !== 'false';
+
+          if (autoIntroEnabled) {
+            const { data: maxSetting } = await supabase
+              .from('platform_settings')
+              .select('value')
+              .eq('key', 'placement_auto_introduce_max')
+              .single();
+            const maxIntros = parseInt(maxSetting?.value || '5', 10);
+            const facilityIds = matchResult.matchedFacilityIds.slice(0, maxIntros);
+
+            // Calculate response deadline (default 72h)
+            const { data: timeoutSetting } = await supabase
+              .from('platform_settings')
+              .select('value')
+              .eq('key', 'placement_provider_response_timeout_hours')
+              .single();
+            const timeoutHours = parseInt(timeoutSetting?.value || '72', 10);
+            const responseDeadline = new Date(Date.now() + timeoutHours * 60 * 60 * 1000).toISOString();
+
+            let sentCount = 0;
+            for (const facilityId of facilityIds) {
+              try {
+                const introResponse = await fetch(`${supabaseUrl}/functions/v1/send-concierge-introduction`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${supabaseServiceKey}`,
+                  },
+                  body: JSON.stringify({
+                    inquiryId,
+                    facilityId,
+                    responseDeadline,
+                  }),
+                });
+                if (introResponse.ok) sentCount++;
+              } catch (introErr) {
+                logStep(requestId, `Warning: Failed to send introduction to facility ${facilityId}`, { error: String(introErr) });
+              }
+            }
+
+            if (sentCount > 0) {
+              // Update case with auto-introduction stats and advance status
+              await supabase
+                .from('concierge_inquiries')
+                .update({
+                  auto_introductions_sent_at: new Date().toISOString(),
+                  auto_introduction_count: sentCount,
+                  status: 'provider_prequalification', // Introductions sent, awaiting provider responses
+                })
+                .eq('id', inquiryId);
+
+              logStep(requestId, `Auto-introductions sent: ${sentCount}/${facilityIds.length}`, { sentCount, responseDeadline });
+            } else {
+              logStep(requestId, "Warning: All auto-introductions failed — placement-cron will retry");
+            }
+          } else {
+            logStep(requestId, "Auto-introduce disabled — admin will send introductions manually");
+          }
+        } else {
+          logStep(requestId, "Auto-matching returned no results — case will need manual matching", { result: matchResult });
+        }
+      }
+    } catch (matchErr) {
+      logStep(requestId, "Warning: Auto-matching failed — admin will need to match manually", { error: String(matchErr) });
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
