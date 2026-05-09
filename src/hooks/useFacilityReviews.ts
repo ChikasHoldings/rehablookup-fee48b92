@@ -12,7 +12,9 @@ export interface FacilityReview {
   helpful_count: number;
   created_at: string;
   updated_at: string;
-  // Joined data
+  // Stored snapshot of reviewer name at time of submission
+  reviewer_display_name?: string | null;
+  // Derived display fields
   user_display_name?: string;
   reviewer_first_name?: string;
   reviewer_last_initial?: string;
@@ -85,21 +87,25 @@ export function useFacilityReviews(facilityId: string) {
     }
 
     const enrichedReviews: FacilityReview[] = (reviewsData || []).map(review => {
-      const storedName = (review as any).reviewer_display_name as string | null;
-      const firstName = storedName?.split(' ')[0] || '';
-      const lastInitial = storedName?.split(' ')[1]?.charAt(0) || '';
+      const storedName = review.reviewer_display_name as string | null;
+      // Use full stored name; fall back to 'Verified Reviewer' so no review is hidden
+      const displayName = storedName?.trim() || 'Verified Reviewer';
+      const nameParts = displayName.split(' ');
+      const firstName = nameParts[0] || 'Verified';
+      // Show full last name (not just initial) per product requirement
+      const lastName = nameParts.slice(1).join(' ') || '';
 
       return {
         ...review,
         user_id: '', // not exposed publicly anymore
-        user_display_name: storedName || null,
+        user_display_name: displayName,
         reviewer_first_name: firstName,
-        reviewer_last_initial: lastInitial,
+        reviewer_last_initial: lastName ? lastName.charAt(0) : '',
         reviewer_city: null,
         reviewer_state: null,
         has_voted_helpful: votedReviewIds.includes(review.id),
       };
-    }).filter(r => !!r.user_display_name);
+    });
 
     setReviews(enrichedReviews);
     setReviewCount(enrichedReviews.length);
@@ -170,17 +176,18 @@ export function useFacilityReviews(facilityId: string) {
       .maybeSingle();
     
     if (profile) {
-      const fn = profile.first_name || profile.display_name?.split(' ')[0] || '';
-      const li = profile.last_name?.charAt(0) || profile.display_name?.split(' ')[1]?.charAt(0) || '';
-      if (fn) reviewerDisplayName = fn + (li ? ` ${li}.` : '');
+      const fn = (profile.first_name || profile.display_name?.split(' ')[0] || '').trim();
+      // Store full last name (not just initial) so public page shows full name
+      const ln = (profile.last_name || profile.display_name?.split(' ').slice(1).join(' ') || '').trim();
+      if (fn) reviewerDisplayName = fn + (ln ? ` ${ln}` : '');
     }
     
     // 2. Fallback to auth user_metadata (covers edge cases)
     if (!reviewerDisplayName) {
       const meta = user.user_metadata;
-      const fn = meta?.first_name || meta?.full_name?.split(' ')[0] || '';
-      const li = meta?.last_name?.charAt(0) || meta?.full_name?.split(' ')[1]?.charAt(0) || '';
-      if (fn) reviewerDisplayName = fn + (li ? ` ${li}.` : '');
+      const fn = (meta?.first_name || meta?.full_name?.split(' ')[0] || '').trim();
+      const ln = (meta?.last_name || meta?.full_name?.split(' ').slice(1).join(' ') || '').trim();
+      if (fn) reviewerDisplayName = fn + (ln ? ` ${ln}` : '');
     }
 
     // Block submission if name cannot be resolved
@@ -221,13 +228,40 @@ export function useFacilityReviews(facilityId: string) {
   const updateReview = async (rating: number, reviewText: string) => {
     if (!user || !userReview) return { error: new Error('No review to update') };
 
+    // Re-resolve reviewer display name (fixes legacy reviews with NULL names)
+    let reviewerDisplayName: string | null = userReview.reviewer_display_name || null;
+    if (!reviewerDisplayName) {
+      const { data: profile } = await supabase
+        .from('seeker_profiles')
+        .select('first_name, last_name, display_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (profile) {
+        const fn = (profile.first_name || profile.display_name?.split(' ')[0] || '').trim();
+        const ln = (profile.last_name || profile.display_name?.split(' ').slice(1).join(' ') || '').trim();
+        if (fn) reviewerDisplayName = fn + (ln ? ` ${ln}` : '');
+      }
+      if (!reviewerDisplayName) {
+        const meta = user.user_metadata;
+        const fn = (meta?.first_name || meta?.full_name?.split(' ')[0] || '').trim();
+        const ln = (meta?.last_name || meta?.full_name?.split(' ').slice(1).join(' ') || '').trim();
+        if (fn) reviewerDisplayName = fn + (ln ? ` ${ln}` : '');
+      }
+    }
+
+    const updatePayload: Record<string, unknown> = {
+      rating,
+      review_text: reviewText.trim() || null,
+      status: 'pending', // Reset to pending after edit
+    };
+    // Only update reviewer_display_name if we have a value (don't clear existing names)
+    if (reviewerDisplayName) {
+      updatePayload.reviewer_display_name = reviewerDisplayName;
+    }
+
     const { data, error } = await supabase
       .from('facility_reviews')
-      .update({
-        rating,
-        review_text: reviewText.trim() || null,
-        status: 'pending' // Reset to pending after edit
-      })
+      .update(updatePayload as any)
       .eq('id', userReview.id)
       .select()
       .single();

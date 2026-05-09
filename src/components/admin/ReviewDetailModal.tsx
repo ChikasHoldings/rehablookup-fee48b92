@@ -205,7 +205,7 @@ export function ReviewDetailModal({ review, open, onOpenChange, onRefresh }: Rev
               <div className="p-3 rounded-lg border space-y-2">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{review.reviewer_name || "Anonymous"}</span>
+                  <span className="text-sm font-medium">{review.reviewer_name || "Verified Reviewer"}</span>
                 </div>
                 {(review.reviewer_city || review.reviewer_state) && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">

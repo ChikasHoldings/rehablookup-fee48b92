@@ -147,7 +147,7 @@ export default function AdminReviews() {
     
     const { data, error } = await supabase
       .from('facility_reviews')
-      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, disputed, admin_notes, reviewed_at, reviewed_by, created_at, updated_at')
+      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, disputed, admin_notes, reviewed_at, reviewed_by, created_at, updated_at, reviewer_display_name')
       .order('created_at', { ascending: false })
       .limit(1000);
 
@@ -179,11 +179,16 @@ export default function AdminReviews() {
 
     const enrichedReviews: ReviewWithDetails[] = (data || []).map(review => {
       const profile = profileMap.get(review.user_id);
-      const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || '';
-      const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
-      const displayName = firstName
-        ? firstName + (lastInitial ? ` ${lastInitial}.` : '')
-        : 'Verified User';
+      // Prefer stored snapshot name (name at time of review)
+      const storedName = (review as any).reviewer_display_name as string | null;
+      let displayName = storedName?.trim() || null;
+      if (!displayName) {
+        // Build full name from live profile (first + full last name)
+        const firstName = (profile?.first_name || profile?.display_name?.split(' ')[0] || '').trim();
+        const lastName = (profile?.last_name || profile?.display_name?.split(' ').slice(1).join(' ') || '').trim();
+        displayName = firstName ? (firstName + (lastName ? ` ${lastName}` : '')) : null;
+      }
+      displayName = displayName || 'Verified Reviewer';
       
       return {
         ...review,
@@ -221,7 +226,7 @@ export default function AdminReviews() {
     const [reviewsResult, facilitiesResult] = await Promise.all([
       supabase
         .from('facility_reviews')
-        .select('id, facility_id, user_id, rating, review_text, status, helpful_count, admin_notes, created_at, updated_at')
+        .select('id, facility_id, user_id, rating, review_text, status, helpful_count, admin_notes, created_at, updated_at, reviewer_display_name')
         .in('id', reviewIds),
       supabase.from('facilities').select('id, name').in('id', facilityIds),
     ]);
@@ -236,11 +241,14 @@ export default function AdminReviews() {
     
     const reviewMap = new Map(reviewsResult.data?.map(r => {
       const profile = profileMap.get(r.user_id);
-      const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || '';
-      const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
-      const displayName = firstName
-        ? firstName + (lastInitial ? ` ${lastInitial}.` : '')
-        : 'Verified User';
+      const storedName = (r as any).reviewer_display_name as string | null;
+      let displayName = storedName?.trim() || null;
+      if (!displayName) {
+        const firstName = (profile?.first_name || profile?.display_name?.split(' ')[0] || '').trim();
+        const lastName = (profile?.last_name || profile?.display_name?.split(' ').slice(1).join(' ') || '').trim();
+        displayName = firstName ? (firstName + (lastName ? ` ${lastName}` : '')) : null;
+      }
+      displayName = displayName || 'Verified Reviewer';
       
       return [r.id, {
         ...r,
@@ -491,10 +499,19 @@ export default function AdminReviews() {
           <h1 className="text-2xl font-bold text-foreground">Review Moderation</h1>
           <p className="text-muted-foreground">Manage user reviews and disputes</p>
         </div>
-        <Button variant="outline" onClick={() => { fetchReviews(); fetchDisputes(); }} disabled={isLoading}>
-          <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={async () => {
+            const { data, error } = await (supabase.rpc as any)('admin_backfill_reviewer_names');
+            if (error) { toast.error('Backfill failed: ' + error.message); }
+            else { toast.success(`Backfilled names for ${data ?? 0} review(s)`); fetchReviews(); }
+          }}>
+            Backfill Names
+          </Button>
+          <Button variant="outline" onClick={() => { fetchReviews(); fetchDisputes(); }} disabled={isLoading}>
+            <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* KPI Stats */}
@@ -624,7 +641,7 @@ export default function AdminReviews() {
                             <User className="h-4 w-4 text-primary" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium">{dispute.review.reviewer_name || 'Verified User'}</p>
+                            <p className="text-sm font-medium">{dispute.review.reviewer_name || 'Verified Reviewer'}</p>
                             {(dispute.review.reviewer_city || dispute.review.reviewer_state) && (
                               <p className="text-xs text-muted-foreground flex items-center gap-1">
                                 <MapPin className="h-3 w-3" />
@@ -727,7 +744,7 @@ export default function AdminReviews() {
                                 <User className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-sm font-medium">{review.reviewer_name || 'Verified User'}</p>
+                                <p className="text-sm font-medium">{review.reviewer_name || 'Verified Reviewer'}</p>
                                 {(review.reviewer_city || review.reviewer_state) && (
                                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                                     <MapPin className="h-3 w-3" />

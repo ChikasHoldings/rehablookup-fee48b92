@@ -129,21 +129,27 @@ export function useProviderReviews() {
 
       const enrichedReviews: ProviderReview[] = reviewsData.map(review => {
         const profile = profileMap.get(review.user_id);
-        const storedName = (review as any).reviewer_display_name;
-        const firstName = profile?.first_name || profile?.display_name?.split(' ')[0] || '';
-        const lastInitial = profile?.last_name?.charAt(0) || profile?.display_name?.split(' ')[1]?.charAt(0) || '';
-        const builtName = firstName ? firstName + (lastInitial ? ` ${lastInitial}.` : '') : '';
-        
-        const displayName = storedName || builtName || null;
+        // Prefer stored snapshot name (name at time of review)
+        const storedName = (review as any).reviewer_display_name as string | null;
+        let displayName = storedName?.trim() || null;
+        if (!displayName) {
+          // Build full name from live profile (first + full last name, not just initial)
+          const fn = (profile?.first_name || profile?.display_name?.split(' ')[0] || '').trim();
+          const ln = (profile?.last_name || profile?.display_name?.split(' ').slice(1).join(' ') || '').trim();
+          if (fn) displayName = fn + (ln ? ` ${ln}` : '');
+        }
+        displayName = displayName || 'Verified Reviewer';
+        const nameParts = displayName.split(' ');
+        const firstName = nameParts[0] || 'Verified';
+        const lastName = nameParts.slice(1).join(' ') || '';
         const facilityInfo = facilityMap.get(review.facility_id);
-        const safeName = displayName || '';
         
         return {
           ...review,
           disputed: review.disputed || false,
-          user_display_name: displayName || 'Anonymous',
-          reviewer_first_name: firstName || safeName.charAt(0) || 'A',
-          reviewer_last_initial: lastInitial || '',
+          user_display_name: displayName,
+          reviewer_first_name: firstName,
+          reviewer_last_initial: lastName ? lastName.charAt(0) : '',
           reviewer_city: profile?.city || null,
           reviewer_state: profile?.state || null,
           response: responseMap.get(review.id) || null,

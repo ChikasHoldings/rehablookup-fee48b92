@@ -97,7 +97,7 @@ export function ProviderReviewsTab({ provider, providerFacilities }: ProviderRev
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium text-sm">{review.reviewer_display_name || "Anonymous"}</span>
+                    <span className="font-medium text-sm">{review.reviewer_display_name || "Verified Reviewer"}</span>
                     <div className="flex items-center gap-0.5">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <Star key={i} className={`h-3.5 w-3.5 ${i < review.rating ? "text-amber-500 fill-amber-500" : "text-muted-foreground/20"}`} />
