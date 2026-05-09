@@ -8,7 +8,7 @@
  *   ?location=<city,state | zip | "city, state zip">
  *   ?treatment=<keyword>   (matched loosely → levelOfCare)
  *   ?insurance=<carrier>
- *   ?from=<source>         (attribution only — emitted in GA4 + Pixel)
+ *   ?from=<source>         (attribution source tag)
  *
  * All inputs are trimmed; empty values are dropped so the resulting URL stays
  * clean for SEO/canonicalization.

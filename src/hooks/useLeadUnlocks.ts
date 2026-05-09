@@ -75,7 +75,7 @@ export function useLeadUnlocks(facilityId?: string) {
       return data;
     },
     onSuccess: (data, variables) => {
-      // Track lead unlock in GA4
+      // Track lead unlock (analytics.leadUnlocked — provider removed)
       const priceCents = typeof data?.priceCents === 'number' ? data.priceCents : 0;
       analytics.leadUnlocked(
         variables.leadId,

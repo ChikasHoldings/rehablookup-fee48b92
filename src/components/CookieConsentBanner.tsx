@@ -19,13 +19,13 @@ export function CookieConsentBanner() {
   const [showDetails, setShowDetails] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>({
     necessary: true,
-    analytics: true,   // opt-OUT model: analytics on by default, user can turn off
+    analytics: true,
     marketing: false,
     version: COOKIE_CONSENT_VERSION,
     timestamp: "",
   });
-  const { pathname } = useLocation();
 
+  const { pathname } = useLocation();
   const isAppShellRoute =
     pathname === "/provider" ||
     pathname.startsWith("/provider/") ||
@@ -54,28 +54,11 @@ export function CookieConsentBanner() {
   }, []);
 
   const applyPreferences = (prefs: CookiePreferences) => {
-    // Update GA4 Consent Mode v2. We retry up to 10 times (1 second total)
-    // in case gtag hasn't loaded yet (e.g. slow network on first visit).
-    // Under the opt-OUT model, analytics defaults to granted — this update
-    // only matters when the user explicitly opts out (clicks Decline).
-    const consentPayload = {
-      analytics_storage: prefs.analytics !== false ? ("granted" as const) : ("denied" as const),
-      ad_storage: prefs.marketing ? ("granted" as const) : ("denied" as const),
-      ad_user_data: prefs.marketing ? ("granted" as const) : ("denied" as const),
-      ad_personalization: prefs.marketing ? ("granted" as const) : ("denied" as const),
-    };
-    const tryUpdate = (attempts: number) => {
-      if (window.gtag) {
-        window.gtag("consent", "update", consentPayload);
-        // Dispatch a custom event so other components can react to consent changes.
-        window.dispatchEvent(
-          new CustomEvent("rehablookup:consent-updated", { detail: prefs })
-        );
-      } else if (attempts > 0) {
-        setTimeout(() => tryUpdate(attempts - 1), 100);
-      }
-    };
-    tryUpdate(10);
+    // Dispatch a custom event so other components can react to consent changes.
+    // No GA4 consent mode calls — analytics provider has been removed.
+    window.dispatchEvent(
+      new CustomEvent("rehablookup:consent-updated", { detail: prefs })
+    );
   };
 
   const saveConsent = (prefs: CookiePreferences) => {
@@ -89,8 +72,6 @@ export function CookieConsentBanner() {
     saveConsent({ necessary: true, analytics: true, marketing: true, version: COOKIE_CONSENT_VERSION, timestamp: "" });
 
   const rejectNonEssential = () =>
-    // Explicit opt-out: user clicked Decline — set analytics to false so GA4
-    // consent update sets analytics_storage = 'denied' and suppresses all hits.
     saveConsent({ necessary: true, analytics: false, marketing: false, version: COOKIE_CONSENT_VERSION, timestamp: "" });
 
   if (!isVisible || isAppShellRoute) return null;
@@ -102,7 +83,6 @@ export function CookieConsentBanner() {
       aria-label="Cookie consent"
     >
       <div className="rounded-lg border border-border bg-background/95 backdrop-blur-sm shadow-lg">
-        {/* Compact main view */}
         {!showDetails ? (
           <div className="p-3.5">
             <div className="flex items-start gap-2.5 mb-3">
@@ -133,7 +113,6 @@ export function CookieConsentBanner() {
             </div>
           </div>
         ) : (
-          /* Expanded preferences */
           <div className="p-3.5">
             <p className="text-xs font-medium text-foreground mb-2.5">Cookie Preferences</p>
             <div className="space-y-2 mb-3">

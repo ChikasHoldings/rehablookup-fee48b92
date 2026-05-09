@@ -670,19 +670,7 @@ const SearchResults = () => {
     reportedSearchKeyRef.current = key;
 
     analytics.search(queryParam || location || "(empty)", filteredCenters.length);
-    if (filteredCenters.length === 0) {
-      // Custom event captured server-side via gtag — surfaces as
-      // `search_zero_results` in GA4.
-      if (typeof window !== "undefined" && window.gtag) {
-        window.gtag("event", "search_zero_results", {
-          event_category: "Search",
-          search_location: location || undefined,
-          search_treatment: treatment || undefined,
-          search_insurance: insurance || undefined,
-          query: queryParam || undefined,
-        });
-      }
-    }
+    // Analytics provider removed — zero-result searches tracked via analytics.search() above.
   }, [isLoading, filteredCenters.length, location, treatment, insurance, queryParam]);
 
   // Determine display title (used in the page header). The SEO <title> below

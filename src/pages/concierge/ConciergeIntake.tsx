@@ -766,7 +766,7 @@ export default function ConciergeIntake() {
   const handleNext = async () => {
     if (validateStep(currentStep)) {
       if (currentStep === 1) fireStartedEvent();
-      // Per-step funnel telemetry (GA4 + Meta Pixel) — measures abandonment
+      // Per-step funnel telemetry — measures abandonment
       // between every step in the wizard so we can see exactly where users drop.
       trackEvent("concierge_intake_step_complete", {
         event_category: "ConciergeFunnel",
@@ -774,11 +774,7 @@ export default function ConciergeIntake() {
         step_number: currentStep,
         total_steps: TOTAL_STEPS,
       });
-      (window as unknown as { fbq?: (...a: unknown[]) => void })?.fbq?.(
-        "trackCustom",
-        "ConciergeIntakeStepComplete",
-        { step_number: currentStep, total_steps: TOTAL_STEPS },
-      );
+      // Analytics provider removed — Meta Pixel call removed.
       if (currentStep < TOTAL_STEPS) {
         // Auto-save draft to DB when leaving contact step (step 4)
         if (currentStep === 4) {

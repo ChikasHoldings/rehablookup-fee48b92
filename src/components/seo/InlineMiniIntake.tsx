@@ -14,7 +14,7 @@ import { emitConciergeFunnelEvent } from "@/lib/conciergeAnalytics";
  * Submits by routing to /concierge with prefill params (no PII transmitted
  * here; the full intake form on /concierge collects PII under its own
  * validation + RLS rules). Analytics events fire on submit so the funnel
- * can attribute SEO landing → concierge starts in GA4 / Meta Pixel.
+ * can attribute SEO landing → concierge starts (analytics provider removed).
  */
 
 const schema = z.object({

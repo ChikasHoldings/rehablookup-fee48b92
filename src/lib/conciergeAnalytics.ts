@@ -1,25 +1,17 @@
 /**
- * Concierge funnel analytics — shared payload shape so dashboards can join
- * `concierge_intake_prefilled → concierge_intake_started → concierge_intake_submitted`
- * by `dedup_key` without bespoke logic per event.
+ * Concierge funnel analytics utilities.
  *
- * No PII is ever sent. Only:
- *   • presence flags (`has_*`)
- *   • applied-field flags (`applied_*`)
- *   • sanitized treatment/insurance hints (allow-listed chars, ≤32, no PII)
- *   • attribution `source` from `?from=` (allow-listed chars, ≤40)
- *   • channel ("checkout" | "sms") for the submitted event
+ * Google Analytics and Meta Pixel have been removed from this platform.
+ * `emitConciergeFunnelEvent` is now a no-op stub.
  *
- * Hardening (PII defense-in-depth):
- *   • `sanitizeHint` / `sanitizeSource` enforce a strict allow-list and length
- *     before values land in any payload field.
- *   • `emitConciergeFunnelEvent` runs every outgoing payload through a final
- *     recursive scrubber (`scrubPayload`) that drops any string value matching
- *     email, phone, SSN, long-digit, or street-address patterns — even if a
- *     future caller forgets to pre-sanitize.
+ * The PII sanitizers (`sanitizeHint`, `sanitizeSource`), deduplication
+ * helpers (`fnv1a32`, `getOrCreateConciergeSessionId`), and the
+ * `ConciergePrefillContext` / `ConciergeFunnelEvent` types are retained
+ * because they are used by the intake form for dedup-key generation and
+ * input hardening — independent of any analytics provider.
  *
- * Dispatches GA4 (`gtag`) and Meta Pixel (`fbq`) custom events. Both are
- * best-effort — caller should not block on failures.
+ * To integrate a new analytics provider, replace the body of
+ * `emitConciergeFunnelEvent` below.
  */
 
 import { z } from "zod";
@@ -48,7 +40,9 @@ export type ConciergeFunnelEvent =
   | "concierge_intake_started"
   | "concierge_intake_submitted";
 
-const META_PIXEL_NAMES: Record<ConciergeFunnelEvent, string> = {
+// META_PIXEL_NAMES retained for future provider integration reference.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _META_PIXEL_NAMES: Record<ConciergeFunnelEvent, string> = {
   concierge_intake_prefilled: "ConciergeIntakePrefilled",
   concierge_intake_started: "ConciergeIntakeStarted",
   concierge_intake_submitted: "ConciergeIntakeSubmitted",
@@ -160,25 +154,13 @@ function scrubPayload(input: Record<string, unknown>): Record<string, unknown> {
   return out;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function emitConciergeFunnelEvent(
-  event: ConciergeFunnelEvent,
-  payload: Record<string, unknown>,
+  _event: ConciergeFunnelEvent,
+  _payload: Record<string, unknown>,
 ): void {
-  try {
-    const safe = scrubPayload(payload);
-    (window as unknown as { gtag?: (...a: unknown[]) => void })?.gtag?.(
-      "event",
-      event,
-      safe,
-    );
-    (window as unknown as { fbq?: (...a: unknown[]) => void })?.fbq?.(
-      "trackCustom",
-      META_PIXEL_NAMES[event],
-      safe,
-    );
-  } catch {
-    // analytics is best-effort; never block intake flow
-  }
+  // no-op — GA4 and Meta Pixel have been removed.
+  // Replace this body to integrate a new analytics provider.
 }
 
 /**

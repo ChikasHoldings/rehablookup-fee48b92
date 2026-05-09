@@ -394,9 +394,6 @@ export function SEO({
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       <meta name="apple-mobile-web-app-title" content={SITE_NAME} />
 
-      {/* DNS prefetch for analytics (preconnects already in index.html) */}
-      <link rel="dns-prefetch" href="https://www.google-analytics.com" />
-
       {/* Structured Data */}
       <script type="application/ld+json">
         {JSON.stringify(organizationSchema)}

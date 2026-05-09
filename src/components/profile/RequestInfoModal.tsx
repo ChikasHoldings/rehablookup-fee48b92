@@ -74,7 +74,7 @@ interface RequestInfoModalProps {
   };
 }
 
-// Track capacity warning analytics → GA4 + Meta Pixel (no PII)
+// Track capacity warning analytics (no PII)
 async function trackCapacityEvent(eventType: string, facilityId: string, metadata?: Record<string, unknown>) {
   try {
     trackEvent(eventType, {
@@ -82,11 +82,7 @@ async function trackCapacityEvent(eventType: string, facilityId: string, metadat
       event_label: facilityId,
       ...metadata,
     });
-    (window as unknown as { fbq?: (...a: unknown[]) => void })?.fbq?.(
-      "trackCustom",
-      eventType,
-      { facility_id: facilityId },
-    );
+    // Analytics provider removed — Meta Pixel call removed.
   } catch {
     // best-effort
   }
@@ -182,7 +178,7 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-// Lead-form analytics → GA4 + Meta Pixel (no PII; only facility id + flags)
+// Lead-form analytics (no PII; only facility id + flags)
 const trackAnalyticsEvent = async (
   eventType: string,
   facilityId: string,
@@ -194,11 +190,7 @@ const trackAnalyticsEvent = async (
       event_label: facilityId,
       ...metadata,
     });
-    (window as unknown as { fbq?: (...a: unknown[]) => void })?.fbq?.(
-      "trackCustom",
-      eventType,
-      { facility_id: facilityId },
-    );
+    // Analytics provider removed — Meta Pixel call removed.
   } catch {
     // best-effort
   }

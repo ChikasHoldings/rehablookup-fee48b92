@@ -545,31 +545,14 @@ const CenterProfile = () => {
     } else {
       trackWebsiteClick(facility.id, "profile");
     }
-    // Mirror to GA4 so funnel reports can correlate Call Now clicks with
-    // sessions/sources without joining provider_events.
-    if (typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", type === "call" ? "facility_call_now" : "facility_website", {
-        event_category: "Facility",
-        event_label: facility.name || facility.slug || facility.id,
-        facility_id: facility.id,
-        facility_slug: facility.slug || null,
-        cta_location: "profile",
-      });
-    }
+    // Analytics provider removed — events tracked via provider_events table only.
   }, [facility?.id, facility?.name, facility?.slug, trackClickToCall, trackWebsiteClick]);
 
   const handleRequestInfoOpen = useCallback((cta_location: string) => {
     setRequestModalOpen(true);
-    if (typeof window !== "undefined" && window.gtag && facility?.id) {
-      window.gtag("event", "facility_request_info", {
-        event_category: "Facility",
-        event_label: facility.name || facility.slug || facility.id,
-        facility_id: facility.id,
-        facility_slug: facility.slug || null,
-        cta_location,
-      });
-    }
-  }, [facility?.id, facility?.name, facility?.slug]);
+    // Analytics provider removed — request info tracked via provider_events table.
+    void cta_location;
+  }, []);
 
   // Show skeleton while:
   // - the slug isn't ready yet (route param still resolving), OR

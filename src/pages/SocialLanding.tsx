@@ -47,11 +47,7 @@ export default function SocialLanding() {
       }
     };
     trackPageView();
-    
-    // Fire Meta Pixel PageView
-    if (typeof window !== "undefined" && (window as any).fbq) {
-      (window as any).fbq("track", "PageView");
-    }
+    // Analytics provider removed — Meta Pixel PageView removed.
     
     // Fire TikTok Pixel PageView
     if (typeof window !== "undefined" && (window as any).ttq) {
