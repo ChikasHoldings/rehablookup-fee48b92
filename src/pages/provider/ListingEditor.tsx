@@ -150,11 +150,18 @@ const validateField = (field: string, value: string | null): string | null => {
       }
       return null;
     case "website":
-      if (trimmedValue && !/^(https?:\/\/)?[\w\-]+(\.[\w\-]+)+/.test(trimmedValue)) {
-        return "Enter a valid website URL";
-      }
-      if (trimmedValue && /^(javascript|data):/i.test(trimmedValue)) {
-        return "Invalid URL protocol";
+      if (trimmedValue) {
+        if (/^(javascript|data):/i.test(trimmedValue)) {
+          return "Invalid URL protocol";
+        }
+        // Normalize bare domains to https:// before validating
+        const normalized = /^https?:\/\//i.test(trimmedValue) ? trimmedValue : `https://${trimmedValue}`;
+        try {
+          const parsed = new URL(normalized);
+          if (!['http:', 'https:'].includes(parsed.protocol)) return "Enter a valid website URL";
+        } catch {
+          return "Enter a valid website URL (e.g. https://www.yourfacility.com)";
+        }
       }
       return null;
     case "year_established":
@@ -484,6 +491,12 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     }
     
     setIsAutoSaving(true);
+
+    const autoSaveSession = await getCachedSession();
+    if (!autoSaveSession) {
+      setIsAutoSaving(false);
+      return;
+    }
     
     const { error } = await supabase
       .from("facilities")
@@ -506,7 +519,8 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         year_established: facility.year_established,
         accepts_international_patients: facility.accepts_international_patients,
       })
-      .eq("id", facility.id);
+      .eq("id", facility.id)
+      .eq("user_id", autoSaveSession.user.id);
 
     setIsAutoSaving(false);
 
@@ -599,6 +613,19 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       return;
     }
 
+    const saveSession = await getCachedSession();
+    if (!saveSession) {
+      toast({
+        title: "Session Expired",
+        description: "Please refresh the page and sign in again.",
+        variant: "destructive",
+      });
+      setHasChanges(true);
+      setShowSaved(false);
+      setIsSaving(false);
+      return;
+    }
+
     const { error } = await supabase
       .from("facilities")
       .update({
@@ -620,7 +647,8 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         year_established: facility.year_established,
         accepts_international_patients: facility.accepts_international_patients,
       })
-      .eq("id", facility.id);
+      .eq("id", facility.id)
+      .eq("user_id", saveSession.user.id);
 
     setIsSaving(false);
 

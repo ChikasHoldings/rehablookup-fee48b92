@@ -266,20 +266,20 @@ export default function ProviderSignup() {
           description: "This email is registered as a personal account. Please use the seeker login or use a different email for your facility.",
           variant: "destructive",
         });
+        submittingRef.current = false;
         setIsSubmitting(false);
         return;
       }
-
       if (!adminResult.error && adminResult.data) {
         toast({
           title: "Account Exists",
           description: "This email is associated with an administrative account. Please use a different email.",
           variant: "destructive",
         });
+        submittingRef.current = false;
         setIsSubmitting(false);
         return;
       }
-
     // Clear any stale caches before creating new account
     clearProviderCaches();
 
@@ -310,9 +310,10 @@ export default function ProviderSignup() {
           toast({
             title: "Signup Failed",
             description: authError.message,
-            variant: "destructive",
-          });
+          variant: "destructive",
+        });
         }
+        submittingRef.current = false;
         setIsSubmitting(false);
         return;
       }
@@ -324,6 +325,7 @@ export default function ProviderSignup() {
           description: "Unable to create account. Please try again.",
           variant: "destructive",
         });
+        submittingRef.current = false;
         setIsSubmitting(false);
         return;
       }
@@ -335,9 +337,10 @@ export default function ProviderSignup() {
           await supabase.auth.signOut();
           toast({
             title: "Account Conflict",
-            description: "This email is already associated with another account type. Please use a different email.",
-            variant: "destructive",
-          });
+          description: "This email is already associated with another account type. Please use a different email.",
+          variant: "destructive",
+        });
+          submittingRef.current = false;
           setIsSubmitting(false);
           return;
         }
@@ -394,6 +397,7 @@ export default function ProviderSignup() {
           description: validationError.message || "Please check your facility information.",
           variant: "destructive",
         });
+        submittingRef.current = false;
         setIsSubmitting(false);
         return;
       }
@@ -742,7 +746,7 @@ export default function ProviderSignup() {
       case 5:
         return formData.selectedTreatments.length > 0;
       case 6:
-        return formData.selectedInsurance.length > 0;
+        return true; // Insurance is optional — some facilities are self-pay only
       case 7:
         return formData.agreeToTerms;
       default:
@@ -1096,11 +1100,15 @@ export default function ProviderSignup() {
                           id="facilityEmail"
                           type="email"
                           value={formData.facilityEmail}
-                          onChange={(e) => updateFormData("facilityEmail", e.target.value)}
+                          onChange={(e) => updateFormData("facilityEmail", e.target.value.slice(0, 255).toLowerCase().trim())}
                           placeholder="info@facility.com"
+                          maxLength={255}
                           className="pl-10 h-10"
                         />
                       </div>
+                      {formData.facilityEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.facilityEmail) && (
+                        <p className="text-xs text-destructive">Please enter a valid email address</p>
+                      )}
                     </div>
                   </div>
 
@@ -1118,6 +1126,9 @@ export default function ProviderSignup() {
                           className="pl-10 h-10"
                         />
                       </div>
+                      {formData.website && /^(javascript|data):/i.test(formData.website.trim()) && (
+                        <p className="text-xs text-destructive">Invalid URL — blocked protocol</p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="yearEstablished" className="text-sm font-medium">Year Established</Label>
@@ -1125,12 +1136,27 @@ export default function ProviderSignup() {
                         id="yearEstablished"
                         type="number"
                         value={formData.yearEstablished}
-                        onChange={(e) => updateFormData("yearEstablished", e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          // Only allow 4-digit years within valid range
+                          if (val === "" || (val.length <= 4 && /^\d{0,4}$/.test(val))) {
+                            updateFormData("yearEstablished", val);
+                          }
+                        }}
                         placeholder="2010"
                         min="1900"
                         max={new Date().getFullYear()}
                         className="h-10"
                       />
+                      {formData.yearEstablished && (
+                        (() => {
+                          const yr = parseInt(formData.yearEstablished, 10);
+                          if (isNaN(yr) || yr < 1900 || yr > new Date().getFullYear()) {
+                            return <p className="text-xs text-destructive">Year must be between 1900 and {new Date().getFullYear()}</p>;
+                          }
+                          return null;
+                        })()
+                      )}
                     </div>
                   </div>
 
@@ -1409,7 +1435,10 @@ export default function ProviderSignup() {
               <div key="step-6" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
                 <div className="space-y-5">
                   <div className="space-y-3">
-                    <Label className="text-sm font-medium">Accepted Insurance *</Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Accepted Insurance</Label>
+                      <span className="text-xs text-muted-foreground">Optional — skip if self-pay only</span>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {insuranceProviders.map((insurance) => (
                         <div
@@ -1494,7 +1523,7 @@ export default function ProviderSignup() {
                     </h3>
                     <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
                       <p><span className="text-muted-foreground">Name:</span> {formData.firstName} {formData.lastName}</p>
-                      <p><span className="text-muted-foreground">Email:</span> {formData.email} <span className="text-accent text-xs">✓ Verified</span></p>
+                      <p><span className="text-muted-foreground">Email:</span> {formData.email} {emailVerified && <span className="text-accent text-xs">✓ Verified</span>}</p>
                       <p><span className="text-muted-foreground">Phone:</span> {formData.phone}</p>
                       {formData.jobTitle && <p><span className="text-muted-foreground">Title:</span> {formData.jobTitle}</p>}
                     </div>
@@ -1537,11 +1566,13 @@ export default function ProviderSignup() {
                     </h3>
                     <div className="bg-muted/50 rounded-lg p-3">
                       <div className="flex flex-wrap gap-1.5">
-                        {formData.selectedInsurance.map((i) => (
+                        {formData.selectedInsurance.length > 0 ? formData.selectedInsurance.map((i) => (
                           <span key={i} className="bg-accent/10 text-accent px-2 py-0.5 rounded text-xs">
                             {i}
                           </span>
-                        ))}
+                        )) : (
+                          <span className="text-muted-foreground text-xs italic">Self-pay / Not specified — you can update this later</span>
+                        )}
                       </div>
                     </div>
                   </div>

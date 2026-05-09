@@ -122,6 +122,7 @@ export function sanitizeDescription(desc: string | null | undefined, maxLength =
 
 /**
  * Sanitize and validate a website URL.
+ * Normalizes bare domains (e.g. "www.facility.com") to "https://www.facility.com".
  */
 export function sanitizeWebsite(url: string | null | undefined): string | null {
   if (!url || url.trim() === "") return null;
@@ -130,7 +131,16 @@ export function sanitizeWebsite(url: string | null | undefined): string | null {
   if (/^javascript:/i.test(trimmed) || /^data:/i.test(trimmed)) {
     return null;
   }
-  return trimmed;
+  // Normalize: if no protocol is present, prepend https://
+  const normalized = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  // Validate it looks like a real URL
+  try {
+    const parsed = new URL(normalized);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+    return normalized;
+  } catch {
+    return null;
+  }
 }
 
 /**
