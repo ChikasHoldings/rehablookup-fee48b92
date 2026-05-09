@@ -1,0 +1,348 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useSeekerSession } from './useSeekerSession';
+
+export interface FacilityReview {
+  id: string;
+  user_id: string;
+  facility_id: string;
+  rating: number;
+  review_text: string | null;
+  status: string;
+  helpful_count: number;
+  created_at: string;
+  updated_at: string;
+  // Stored snapshot of reviewer name at time of submission
+  reviewer_display_name?: string | null;
+  // Derived display fields
+  user_display_name?: string;
+  reviewer_first_name?: string;
+  reviewer_last_initial?: string;
+  reviewer_city?: string;
+  reviewer_state?: string;
+  has_voted_helpful?: boolean;
+}
+
+const REVIEW_COOLDOWN_MS = 30_000; // 30-second cooldown between submissions
+
+export function useFacilityReviews(facilityId: string) {
+  const [reviews, setReviews] = useState<FacilityReview[]>([]);
+  const [userReview, setUserReview] = useState<FacilityReview | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [averageRating, setAverageRating] = useState<number | null>(null);
+  const [reviewCount, setReviewCount] = useState(0);
+  const lastSubmitRef = useRef<number>(0);
+  const { user, isAuthenticated, isReady } = useSeekerSession();
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+
+  // Check email verification status non-blockingly
+  useEffect(() => {
+    if (!user?.email) { setIsEmailVerified(false); return; }
+    supabase.rpc('is_email_verified', { p_email: user.email })
+      .then(({ data }) => setIsEmailVerified(!!data));
+  }, [user?.email]);
+
+  const resendVerificationEmail = useCallback(async () => {
+    if (!user?.email) return { error: new Error('No email') };
+    try {
+      const { data, error } = await supabase.functions.invoke('send-verification-code', {
+        body: { email: user.email }
+      });
+      if (error || data?.error) return { error: new Error(data?.error || 'Failed') };
+      return { error: null };
+    } catch (e: any) { return { error: e }; }
+  }, [user?.email]);
+
+  const fetchReviews = useCallback(async () => {
+    setIsLoading(true);
+
+    // Fetch approved reviews. NOTE: user_id and seeker_profiles are no longer
+    // joined here — exposing reviewer identity (and reviewer city/state) to
+    // anonymous visitors lets anyone correlate a real person to a treatment
+    // facility they reviewed. Display name is sourced exclusively from the
+    // persisted `reviewer_display_name` snapshot the reviewer chose at
+    // submission time.
+    const { data: reviewsData, error } = await supabase
+      .from('facility_reviews')
+      .select('id, facility_id, rating, review_text, status, helpful_count, created_at, updated_at, reviewer_display_name')
+      .eq('facility_id', facilityId)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching reviews:', error);
+      setIsLoading(false);
+      return;
+    }
+
+    // If user is logged in, check which reviews they've voted helpful
+    let votedReviewIds: string[] = [];
+    if (user) {
+      const { data: votes } = await supabase
+        .from('review_helpful_votes')
+        .select('review_id')
+        .eq('user_id', user.id);
+      
+      votedReviewIds = votes?.map(v => v.review_id) || [];
+    }
+
+    const enrichedReviews: FacilityReview[] = (reviewsData || []).map(review => {
+      const storedName = review.reviewer_display_name as string | null;
+      // Use full stored name; fall back to 'Verified Reviewer' so no review is hidden
+      const displayName = storedName?.trim() || 'Verified Reviewer';
+      const nameParts = displayName.split(' ');
+      const firstName = nameParts[0] || 'Verified';
+      // Show full last name (not just initial) per product requirement
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      return {
+        ...review,
+        user_id: '', // not exposed publicly anymore
+        user_display_name: displayName,
+        reviewer_first_name: firstName,
+        reviewer_last_initial: lastName ? lastName.charAt(0) : '',
+        reviewer_city: null,
+        reviewer_state: null,
+        has_voted_helpful: votedReviewIds.includes(review.id),
+      };
+    });
+
+    setReviews(enrichedReviews);
+    setReviewCount(enrichedReviews.length);
+    
+    if (enrichedReviews.length > 0) {
+      const avg = enrichedReviews.reduce((sum, r) => sum + r.rating, 0) / enrichedReviews.length;
+      setAverageRating(Math.round(avg * 10) / 10);
+    }
+
+    setIsLoading(false);
+  }, [facilityId, user]);
+
+  // Fetch user's own review (including pending)
+  const fetchUserReview = useCallback(async () => {
+    if (!user) {
+      setUserReview(null);
+      return;
+    }
+
+    const { data } = await supabase
+      .from('facility_reviews')
+      .select('id, facility_id, user_id, rating, review_text, status, helpful_count, created_at, updated_at')
+      .eq('facility_id', facilityId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    setUserReview(data);
+  }, [facilityId, user]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
+
+  useEffect(() => {
+    fetchUserReview();
+  }, [fetchUserReview]);
+
+  const isReviewAuthReady = isReady;
+
+  const submitReview = async (rating: number, reviewText: string) => {
+    if (!user) return { error: new Error('Not authenticated') };
+    if (!isEmailVerified) return { error: new Error('Please verify your email before submitting a review.') };
+
+    // Client-side cooldown to prevent rapid submissions
+    const now = Date.now();
+    if (now - lastSubmitRef.current < REVIEW_COOLDOWN_MS) {
+      return { error: new Error('Please wait a moment before submitting another review.') };
+    }
+
+    if (!reviewText || reviewText.trim().length < 10) return { error: new Error('Review text is required (minimum 10 characters)') };
+    if (reviewText.length > 2000) return { error: new Error('Review text must be 2000 characters or less') };
+
+    // Sanitize review text client-side (server also validates)
+    const sanitized = reviewText
+      .replace(/<[^>]*>/g, '')
+      .replace(/javascript:/gi, '')
+      .replace(/data:/gi, '')
+      .trim();
+
+    // Resolve reviewer display name — required, not optional
+    let reviewerDisplayName: string | null = null;
+    
+    // 1. Try seeker_profiles (primary source — name is required at signup)
+    const { data: profile } = await supabase
+      .from('seeker_profiles')
+      .select('first_name, last_name, display_name')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    
+    if (profile) {
+      const fn = (profile.first_name || profile.display_name?.split(' ')[0] || '').trim();
+      // Store full last name (not just initial) so public page shows full name
+      const ln = (profile.last_name || profile.display_name?.split(' ').slice(1).join(' ') || '').trim();
+      if (fn) reviewerDisplayName = fn + (ln ? ` ${ln}` : '');
+    }
+    
+    // 2. Fallback to auth user_metadata (covers edge cases)
+    if (!reviewerDisplayName) {
+      const meta = user.user_metadata;
+      const fn = (meta?.first_name || meta?.full_name?.split(' ')[0] || '').trim();
+      const ln = (meta?.last_name || meta?.full_name?.split(' ').slice(1).join(' ') || '').trim();
+      if (fn) reviewerDisplayName = fn + (ln ? ` ${ln}` : '');
+    }
+
+    // Block submission if name cannot be resolved
+    if (!reviewerDisplayName) {
+      return { error: new Error('Unable to resolve your name. Please update your profile before leaving a review.') };
+    }
+
+    const { data, error } = await supabase
+      .from('facility_reviews')
+      .insert({
+        user_id: user.id,
+        facility_id: facilityId,
+        rating,
+        review_text: sanitized || null,
+        reviewer_display_name: reviewerDisplayName
+      } as any)
+      .select()
+      .single();
+
+    if (!error && data) {
+      lastSubmitRef.current = Date.now();
+      setUserReview(data);
+      
+      // Notify admins about new review
+      supabase.functions.invoke('send-review-notification', {
+        body: {
+          type: 'review_submitted',
+          reviewId: data.id,
+          facilityId,
+          seekerId: user.id,
+        }
+      }).catch(err => console.error('Failed to send review notification:', err));
+    }
+
+    return { data, error };
+  };
+
+  const updateReview = async (rating: number, reviewText: string) => {
+    if (!user || !userReview) return { error: new Error('No review to update') };
+
+    // Re-resolve reviewer display name (fixes legacy reviews with NULL names)
+    let reviewerDisplayName: string | null = userReview.reviewer_display_name || null;
+    if (!reviewerDisplayName) {
+      const { data: profile } = await supabase
+        .from('seeker_profiles')
+        .select('first_name, last_name, display_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (profile) {
+        const fn = (profile.first_name || profile.display_name?.split(' ')[0] || '').trim();
+        const ln = (profile.last_name || profile.display_name?.split(' ').slice(1).join(' ') || '').trim();
+        if (fn) reviewerDisplayName = fn + (ln ? ` ${ln}` : '');
+      }
+      if (!reviewerDisplayName) {
+        const meta = user.user_metadata;
+        const fn = (meta?.first_name || meta?.full_name?.split(' ')[0] || '').trim();
+        const ln = (meta?.last_name || meta?.full_name?.split(' ').slice(1).join(' ') || '').trim();
+        if (fn) reviewerDisplayName = fn + (ln ? ` ${ln}` : '');
+      }
+    }
+
+    const updatePayload: Record<string, unknown> = {
+      rating,
+      review_text: reviewText.trim() || null,
+      status: 'pending', // Reset to pending after edit
+    };
+    // Only update reviewer_display_name if we have a value (don't clear existing names)
+    if (reviewerDisplayName) {
+      updatePayload.reviewer_display_name = reviewerDisplayName;
+    }
+
+    const { data, error } = await supabase
+      .from('facility_reviews')
+      .update(updatePayload as any)
+      .eq('id', userReview.id)
+      .select()
+      .single();
+
+    if (!error && data) {
+      setUserReview(data);
+    }
+
+    return { data, error };
+  };
+
+  const deleteReview = async () => {
+    if (!user || !userReview) return { error: new Error('No review to delete') };
+
+    const { error } = await supabase
+      .from('facility_reviews')
+      .delete()
+      .eq('id', userReview.id);
+
+    if (!error) {
+      setUserReview(null);
+      fetchReviews();
+    }
+
+    return { error };
+  };
+
+  const toggleHelpful = async (reviewId: string) => {
+    if (!user) return { error: new Error('Not authenticated') };
+
+    const review = reviews.find(r => r.id === reviewId);
+    if (!review) return { error: new Error('Review not found') };
+
+    if (review.has_voted_helpful) {
+      // Remove vote
+      const { error } = await supabase
+        .from('review_helpful_votes')
+        .delete()
+        .eq('review_id', reviewId)
+        .eq('user_id', user.id);
+
+      if (!error) {
+        setReviews(prev => prev.map(r => 
+          r.id === reviewId 
+            ? { ...r, helpful_count: r.helpful_count - 1, has_voted_helpful: false }
+            : r
+        ));
+      }
+      return { error };
+    } else {
+      // Add vote
+      const { error } = await supabase
+        .from('review_helpful_votes')
+        .insert({ review_id: reviewId, user_id: user.id });
+
+      if (!error) {
+        setReviews(prev => prev.map(r => 
+          r.id === reviewId 
+            ? { ...r, helpful_count: r.helpful_count + 1, has_voted_helpful: true }
+            : r
+        ));
+      }
+      return { error };
+    }
+  };
+
+  return {
+    reviews,
+    userReview,
+    isLoading,
+    averageRating,
+    reviewCount,
+    isAuthenticated,
+    isEmailVerified,
+    isAuthLoading: !isReady,
+    isReviewAuthReady,
+    submitReview,
+    updateReview,
+    deleteReview,
+    toggleHelpful,
+    resendVerificationEmail,
+    refetch: fetchReviews
+  };
+}

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+
+    <script>
+      if (location.hostname === 'www.rehablookup.com') {
+        location.replace('https://rehablookup.com' + location.pathname + location.search + location.hash);
+      }
+    </script>
+    
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Find Trusted Addiction Treatment Centers | RehabLookup</title>
+    <meta name="title" content="Find Trusted Addiction Treatment Centers | RehabLookup" />
+    <meta name="description" content="Search 15,000+ verified rehab centers near you. Compare detox, inpatient, outpatient &amp; dual diagnosis programs. Free insurance verification. 24/7 confidential help." />
+    <meta name="author" content="RehabLookup" />
+    <meta name="keywords" content="rehab near me, drug rehab near me, alcohol rehab near me, addiction treatment centers, detox centers near me, inpatient rehab, outpatient treatment, dual diagnosis treatment, free rehab near me, luxury rehab, womens rehab, mens rehab, fentanyl addiction treatment, opioid rehab, heroin rehab, suboxone treatment, MAT treatment, sober living near me, recovery programs, substance abuse treatment, PHP program, IOP treatment, residential treatment, alcohol detox, drug detox, rehab centers California, rehab centers Florida, rehab centers Texas, affordable rehab, state funded rehab, medicaid rehab, veterans rehab, teen rehab, young adult treatment" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <!-- Homepage canonical + og:url. This is ONLY served for the homepage ("/").
+         All other routes are handled by the Vercel Edge Middleware (middleware.ts):
+         - Pre-rendered routes (/resources/*, /center/*, /rehab-centers/*, etc.):
+           Middleware returns next() → Vercel serves the static .html file from
+           public/<route>.html which has the correct page-specific canonical.
+         - Non-prerendered routes: Middleware returns next() → Vercel applies
+           the catch-all rewrite to index.html → React + react-helmet-async
+           sets the correct canonical via the <SEO /> component on hydration.
+         DO NOT change this canonical to a relative URL — it must be absolute
+         for the homepage. Per-route canonicals are set by the SEO component. -->
+    <link rel="canonical" href="https://rehablookup.com/" />
+    <meta property="og:url" content="https://rehablookup.com/" />
+    <meta property="og:title" content="Find Trusted Addiction Treatment Centers | RehabLookup" />
+    <meta property="og:description" content="Search 15,000+ verified rehab centers near you. Compare detox, inpatient, outpatient &amp; dual diagnosis programs. Free insurance verification. 24/7 confidential help." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://rehablookup.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="RehabLookup - Find addiction treatment centers" />
+    <meta property="og:site_name" content="RehabLookup" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter defaults (per-route values overridden by <SEO />) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Find Trusted Addiction Treatment Centers | RehabLookup" />
+    <meta name="twitter:description" content="Search 15,000+ verified rehab centers near you. Compare detox, inpatient, outpatient &amp; dual diagnosis programs. Free insurance verification. 24/7 confidential help." />
+    <meta name="twitter:url" content="https://rehablookup.com/" />
+    <meta name="twitter:image" content="https://rehablookup.com/og-image.jpg" />
+    <meta name="twitter:image:alt" content="RehabLookup - Find addiction treatment centers" />
+    <meta name="twitter:site" content="@rehablookup" />
+    <meta name="twitter:creator" content="@rehablookup" />
+
+    <!-- Additional Meta Tags -->
+    <meta name="theme-color" content="#1B365D" />
+    <meta name="msapplication-TileColor" content="#1B365D" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="RehabLookup" />
+    <meta name="format-detection" content="telephone=yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Geo Tags -->
+    <meta name="geo.region" content="US" />
+    <meta name="geo.placename" content="United States" />
+    <meta name="ICBM" content="39.8283, -98.5795" />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Preconnect to important origins (fonts, API, Stripe, geolocation) - establish early connections -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://mldbxpntzcjalgjmwnqa.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://js.stripe.com" />
+    <link rel="dns-prefetch" href="https://ipapi.co" />
+    
+    <!-- DNS prefetch for secondary resources -->
+    <link rel="dns-prefetch" href="https://m.stripe.network" />
+    
+    <!-- Preload critical resources for instant LCP -->
+    <link rel="preload" as="image" href="/hero-recovery.webp" fetchpriority="high" type="image/webp" />
+    
+    <!-- Preload font files directly to eliminate Google Fonts CSS round-trip -->
+    <link rel="preload" as="font" href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2" type="font/woff2" crossorigin />
+    <link rel="preload" as="font" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2" type="font/woff2" crossorigin />
+    
+    <!-- Load Google Fonts CSS asynchronously (non-render-blocking) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" /></noscript>
+    
+    <!-- Note: modulepreload hints are added by Vite during build -->
+    
+    <!-- Critical CSS for above-the-fold content (prevents FOUC) -->
+    <style>
+      /* Critical CSS - inlined for instant render */
+      /* Inline font-face to eliminate render-blocking Google Fonts CSS */
+      @font-face {
+        font-family: 'Inter';
+        font-style: normal;
+        font-weight: 400 700;
+        font-display: swap;
+        src: url(https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: 'Plus Jakarta Sans';
+        font-style: normal;
+        font-weight: 500 800;
+        font-display: swap;
+        src: url(https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      :root {
+        --background: 220 30% 97%;
+        --foreground: 222 47% 11%;
+        --primary: 216 55% 24%;
+        --muted: 220 20% 96%;
+      }
+      html { scroll-behavior: smooth; }
+      body { 
+        margin: 0; 
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background-color: hsl(220 30% 97%);
+        color: hsl(222 47% 11%);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      #root { min-height: 100vh; }
+      .loading-skeleton {
+        background: linear-gradient(90deg, hsl(220 20% 96%) 25%, hsl(220 20% 92%) 50%, hsl(220 20% 96%) 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+      }
+      @keyframes skeleton-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+      img { content-visibility: auto; }
+      /* No opacity transitions - render instantly */
+      /* Noscript layout styles */
+      .ns-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 20px; font-family: 'Inter', sans-serif; color: #1a1a2e; }
+      .ns-header { text-align: center; margin-bottom: 40px; }
+      .ns-h1 { font-size: 2.5rem; color: #1B365D; margin-bottom: 16px; line-height: 1.2; }
+      .ns-lead { font-size: 1.25rem; color: #555; max-width: 700px; margin: 0 auto; line-height: 1.6; }
+      .ns-section { margin-bottom: 40px; padding: 24px; background: #f8fafc; border-radius: 12px; }
+      .ns-h2 { font-size: 1.5rem; color: #1B365D; margin-bottom: 16px; }
+      .ns-h3 { font-size: 1.125rem; color: #333; margin-bottom: 12px; }
+      .ns-list { list-style: disc; padding-left: 24px; color: #333; line-height: 1.8; }
+      .ns-grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+      .ns-grid-sm { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+      .ns-card { display: block; padding: 12px 16px; background: #f5f5f5; border-radius: 8px; color: #1B365D; text-decoration: none; }
+      .ns-link { color: #2563eb; }
+      .ns-faq-q { font-weight: 600; color: #1B365D; margin-bottom: 8px; font-size: 1.05rem; }
+      .ns-faq-a { color: #444; line-height: 1.7; margin-bottom: 20px; }
+      .ns-cta { display: inline-block; padding: 14px 32px; background: #16a34a; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.1rem; }
+      .ns-phone { font-size: 1.25rem; font-weight: 700; color: #1B365D; }
+      .ns-footer { border-top: 1px solid #e5e5e5; padding-top: 24px; margin-top: 40px; text-align: center; color: #666; }
+    </style>
+
+    <!-- Structured Data - Organization with enhanced details -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": "https://rehablookup.com/#organization",
+      "name": "RehabLookup",
+      "legalName": "RehabLookup, Inc.",
+      "url": "https://rehablookup.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://rehablookup.com/logo.svg",
+        "width": 512,
+        "height": 512
+      },
+      "image": "https://rehablookup.com/og-image.jpg",
+      "description": "RehabLookup is a trusted directory service connecting individuals and families with verified addiction treatment centers across the United States. We help people find drug rehab, alcohol treatment, detox programs, and mental health services.",
+      "foundingDate": "2024",
+      "slogan": "Find the Right Path to Recovery",
+      "knowsAbout": ["Addiction Treatment", "Drug Rehabilitation", "Alcohol Recovery", "Mental Health Services", "Detox Programs", "Dual Diagnosis Treatment"],
+      "areaServed": {
+        "@type": "Country",
+        "name": "United States"
+      },
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "email": "help@rehablookup.com",
+          "contactType": "customer service",
+          "availableLanguage": ["English", "Spanish"],
+          "areaServed": "US",
+          "hoursAvailable": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+            "opens": "00:00",
+            "closes": "23:59"
+          }
+        }
+      ],
+      "sameAs": [
+        "https://facebook.com/rehablookup",
+        "https://twitter.com/rehablookup",
+        "https://linkedin.com/company/rehablookup",
+        "https://instagram.com/rehablookup"
+      ]
+    }
+    </script>
+
+    <!-- Structured Data - Website with Search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": "https://rehablookup.com/#website",
+      "name": "RehabLookup",
+      "url": "https://rehablookup.com",
+      "description": "Find trusted addiction treatment centers near you. Search 15,000+ verified rehab facilities, compare programs, and get help today.",
+      "publisher": {"@id": "https://rehablookup.com/#organization"},
+      "inLanguage": "en-US",
+      "potentialAction": [
+        {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://rehablookup.com/rehab-centers?location={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Structured Data - MedicalWebPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalWebPage",
+      "name": "Find Addiction Treatment Centers Near You",
+      "description": "Search 15,000+ verified drug and alcohol rehab centers. Compare treatment options and find the right recovery program.",
+      "about": {
+        "@type": "MedicalCondition",
+        "name": "Substance Use Disorder",
+        "alternateName": ["Drug Addiction", "Alcohol Addiction", "Chemical Dependency", "Substance Abuse"]
+      },
+      "audience": {
+        "@type": "PeopleAudience",
+        "audienceType": "Patients and families seeking addiction treatment"
+      },
+      "specialty": ["Addiction Medicine", "Psychiatry", "Behavioral Health"],
+      "lastReviewed": "2026-04-05",
+      "reviewedBy": {
+        "@type": "Organization",
+        "name": "RehabLookup Medical Advisory Board"
+      }
+    }
+    </script>
+
+    <!-- Structured Data - Service -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": "Addiction Treatment Center Directory",
+      "serviceType": "Healthcare Directory",
+      "provider": {"@id": "https://rehablookup.com/#organization"},
+      "description": "Free service connecting individuals with verified addiction treatment centers nationwide. Compare facilities, verify insurance, and get confidential help 24/7.",
+      "areaServed": {
+        "@type": "Country",
+        "name": "United States"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Treatment Options",
+        "itemListElement": [
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Drug Rehabilitation"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Alcohol Treatment"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Detox Programs"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Inpatient Rehab"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Outpatient Programs"}},
+          {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Dual Diagnosis Treatment"}}
+        ]
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Free treatment center matching and insurance verification"
+      }
+    }
+    </script>
+
+    <!-- Structured Data - Breadcrumb for Homepage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://rehablookup.com"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Meta Pixel Code - deferred to avoid blocking FCP -->
+    <script>
+    // Define fbq stub immediately so any early calls are safely queued (prevents "fbq is not defined" errors)
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    function loadMetaPixel(){if(window._fbqLoaded)return;window._fbqLoaded=!0;var t=document.createElement('script');t.async=!0;t.src='https://connect.facebook.net/en_US/fbevents.js';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(t,s);t.onload=function(){try{fbq('init','4282740695271005');fbq('track','PageView')}catch(e){}}}
+    if('requestIdleCallback' in window){requestIdleCallback(loadMetaPixel,{timeout:4000})}else{setTimeout(loadMetaPixel,2000)}
+    </script>
+    <!-- End Meta Pixel Code -->
+  </head>
+
+  <body>
+    <!-- Meta Pixel noscript fallback (must be in body) -->
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=4282740695271005&ev=PageView&noscript=1"
+    /></noscript>
+    <div id="root">
+      <!-- Minimal skeleton – just matches page background to avoid any flash -->
+      <div id="ssr-skeleton" aria-hidden="true" style="min-height:100vh;background:hsl(220 30% 97%)"></div>
+      <!-- SEO Content for Crawlers - Homepage Only (Clean, Focused) -->
+      <!-- Legal pages served as static files: /privacy-policy.html, /terms-of-service.html -->
+      <noscript>
+        <div class="ns-wrap">
+          <article id="seo-homepage" itemscope itemtype="https://schema.org/WebPage">
+            <header class="ns-header">
+              <h1 class="ns-h1">Find Trusted Addiction Treatment Centers Near You</h1>
+              <p class="ns-lead">RehabLookup connects individuals and families with 15,000+ verified drug and alcohol rehabilitation centers across all 50 states. Search by location, treatment type, or insurance to find the right program for your recovery journey.</p>
+              <p style="margin-top: 16px;"><a href="tel:+18005551234" class="ns-phone">📞 Call Now: 1-800-555-1234</a> — Confidential, 24/7</p>
+            </header>
+
+            <section class="ns-section">
+              <h2 class="ns-h2">Why Choose RehabLookup?</h2>
+              <p style="color: #444; line-height: 1.7; margin-bottom: 16px;">RehabLookup is the nation's most comprehensive addiction treatment directory, trusted by thousands of families seeking recovery resources. Our platform was built with one mission: to make finding quality substance abuse treatment simple, transparent, and accessible to everyone — regardless of insurance, location, or financial situation.</p>
+              <ul class="ns-list">
+                <li><strong>Verified Facilities:</strong> Every treatment center is verified for licensing, accreditation, and quality of care by our dedicated verification team</li>
+                <li><strong>Insurance Verification:</strong> Instantly check if your insurance covers treatment at specific facilities — we support Aetna, Blue Cross Blue Shield, Cigna, United Healthcare, Medicaid, Medicare, and more</li>
+                <li><strong>24/7 Concierge Support:</strong> Confidential help available around the clock via our free concierge placement service staffed by trained recovery advocates</li>
+                <li><strong>Free Service:</strong> Our directory and matching services are completely free for individuals seeking help — we believe cost should never be a barrier to finding treatment</li>
+                <li><strong>Comprehensive Search:</strong> Filter by treatment type, location, amenities, specialized programs, gender-specific options, and accepted insurance carriers</li>
+                <li><strong>Evidence-Based Programs:</strong> Find facilities offering proven treatment modalities including CBT, DBT, MAT, 12-step, holistic therapies, and dual diagnosis care</li>
+              </ul>
+            </section>
+
+            <section class="ns-section">
+              <h2 class="ns-h2">Types of Addiction Treatment Programs</h2>
+              <p style="color: #444; line-height: 1.7; margin-bottom: 16px;">Understanding the different levels of care is essential to finding the right treatment path. RehabLookup helps you compare these options side-by-side so you can make an informed decision for yourself or your loved one.</p>
+              
+              <h3 class="ns-h3">Medical Detox Programs</h3>
+              <p style="color: #444; line-height: 1.7; margin-bottom: 16px;">Medical detoxification is often the first step in recovery. Under 24/7 medical supervision, patients safely manage withdrawal symptoms from alcohol, opioids, benzodiazepines, and other substances. Detox typically lasts 3–10 days and prepares individuals for ongoing treatment.</p>
+
+              <h3 class="ns-h3">Inpatient &amp; Residential Rehabilitation</h3>
+              <p style="color: #444; line-height: 1.7; margin-bottom: 16px;">Inpatient rehab provides immersive, round-the-clock care in a structured environment. Programs typically last 28–90 days and include individual therapy, group counseling, family sessions, and relapse prevention education. Residential treatment is ideal for individuals with severe addiction or co-occurring mental health disorders.</p>
+
+              <h3 class="ns-h3">Outpatient Treatment Programs (IOP &amp; PHP)</h3>
+              <p style="color: #444; line-height: 1.7; margin-bottom: 16px;">Outpatient programs allow patients to receive treatment while living at home. Intensive Outpatient Programs (IOP) typically involve 9–15 hours of therapy per week, while Partial Hospitalization Programs (PHP) offer 20+ hours. These are ideal for individuals stepping down from inpatient care or those with mild to moderate substance use disorders.</p>
+
+              <h3 class="ns-h3">Dual Diagnosis Treatment</h3>
+              <p style="color: #444; line-height: 1.7; margin-bottom: 16px;">Many people struggling with addiction also face co-occurring mental health conditions such as depression, anxiety, PTSD, or bipolar disorder. Dual diagnosis programs treat both conditions simultaneously using integrated, evidence-based approaches for better long-term outcomes.</p>
+
+              <h3 class="ns-h3">Medication-Assisted Treatment (MAT)</h3>
+              <p style="color: #444; line-height: 1.7; margin-bottom: 16px;">MAT combines FDA-approved medications like Suboxone (buprenorphine), methadone, or naltrexone with behavioral therapy. MAT is considered the gold standard for treating opioid use disorder and has been shown to reduce relapse rates, overdose deaths, and criminal activity.</p>
+            </section>
+
+            <section class="ns-section">
+              <h2 class="ns-h2">How RehabLookup Works</h2>
+              <ol style="padding-left: 24px; color: #333; line-height: 2;">
+                <li><strong>Search:</strong> Enter your location, preferred treatment type, or insurance provider to browse verified facilities near you</li>
+                <li><strong>Compare:</strong> Review detailed facility profiles including treatment specialties, amenities, photos, accreditations, and patient reviews</li>
+                <li><strong>Connect:</strong> Contact facilities directly or use our free concierge service for personalized placement assistance</li>
+                <li><strong>Verify Insurance:</strong> Check your coverage instantly — our team can help verify benefits with your insurance carrier at no cost</li>
+              </ol>
+            </section>
+
+            <section class="ns-section">
+              <h2 class="ns-h2">Frequently Asked Questions About Addiction Treatment</h2>
+              
+              <p class="ns-faq-q">How much does rehab cost?</p>
+              <p class="ns-faq-a">The cost of rehab varies widely depending on the type of program, length of stay, and location. Many insurance plans cover substance abuse treatment under the Mental Health Parity Act. Free and state-funded programs are also available. RehabLookup helps you find options that fit your budget, including facilities that accept Medicaid, Medicare, and sliding-scale fees.</p>
+
+              <p class="ns-faq-q">How long does rehab take?</p>
+              <p class="ns-faq-a">Treatment duration depends on the severity of addiction and the type of program. Detox typically lasts 3–10 days, while inpatient rehab programs range from 28 to 90 days. Outpatient programs may continue for 3–6 months or longer. Research shows that longer treatment durations are associated with better long-term recovery outcomes.</p>
+
+              <p class="ns-faq-q">Does insurance cover addiction treatment?</p>
+              <p class="ns-faq-a">Yes. Under the Affordable Care Act and Mental Health Parity Act, most insurance plans are required to cover substance abuse treatment. Major insurers including Aetna, Blue Cross Blue Shield, Cigna, United Healthcare, Humana, and Kaiser Permanente provide coverage for detox, inpatient, and outpatient programs. Medicaid and Medicare also cover treatment in many states.</p>
+
+              <p class="ns-faq-q">What is the difference between inpatient and outpatient rehab?</p>
+              <p class="ns-faq-a">Inpatient rehab requires patients to live at the treatment facility full-time, providing 24/7 structured care and supervision. Outpatient rehab allows patients to attend therapy sessions while continuing to live at home. Inpatient is recommended for severe addictions, while outpatient works well for mild to moderate cases or as a step-down from residential care.</p>
+
+              <p class="ns-faq-q">Can I find free rehab near me?</p>
+              <p class="ns-faq-a">Yes. Many states offer publicly funded treatment centers that provide free or low-cost services. SAMHSA-funded programs, faith-based organizations, and non-profit treatment centers also offer free options. Use RehabLookup to filter by "free" or "Medicaid-accepted" to find affordable options near you.</p>
+            </section>
+
+            <section style="text-align: center; padding: 32px; margin-bottom: 40px;">
+              <h2 class="ns-h2">Get Help Today — It's Free &amp; Confidential</h2>
+              <p style="color: #444; margin-bottom: 20px; font-size: 1.1rem;">Our recovery advocates are standing by 24/7. Take the first step toward a healthier life.</p>
+              <a href="/concierge" class="ns-cta">Find Treatment Now →</a>
+              <p style="margin-top: 16px;"><a href="tel:+18005551234" class="ns-phone">📞 1-800-555-1234</a></p>
+            </section>
+          </article>
+
+          <nav style="border-top: 2px solid #e5e5e5; padding-top: 40px; margin-top: 20px;">
+            <h2 class="ns-h2">Browse Our Directory</h2>
+            
+            <section style="margin-bottom: 32px;">
+              <h3 class="ns-h3">Treatment Types</h3>
+              <ul class="ns-grid">
+                <li><a href="/treatment-types/detox-programs" class="ns-card">Medical Detox Programs</a></li>
+                <li><a href="/treatment-types/residential-inpatient" class="ns-card">Inpatient Rehabilitation</a></li>
+                <li><a href="/treatment-types/outpatient-programs" class="ns-card">Outpatient Programs</a></li>
+                <li><a href="/treatment-types/dual-diagnosis-treatment" class="ns-card">Dual Diagnosis Treatment</a></li>
+                <li><a href="/treatment-types/alcohol-rehabilitation" class="ns-card">Alcohol Rehabilitation</a></li>
+                <li><a href="/treatment-types/drug-addiction-treatment" class="ns-card">Drug Addiction Treatment</a></li>
+              </ul>
+            </section>
+
+            <section style="margin-bottom: 32px;">
+              <h3 class="ns-h3">Find Treatment Near You</h3>
+              <ul class="ns-grid-sm">
+                <li><a href="/drug-rehab-near-me" class="ns-link">Drug Rehab Near Me</a></li>
+                <li><a href="/alcohol-rehab-near-me" class="ns-link">Alcohol Rehab Near Me</a></li>
+                <li><a href="/detox-near-me" class="ns-link">Detox Centers Near Me</a></li>
+                <li><a href="/inpatient-rehab-near-me" class="ns-link">Inpatient Rehab Near Me</a></li>
+                <li><a href="/outpatient-near-me" class="ns-link">Outpatient Programs Near Me</a></li>
+                <li><a href="/outpatient-rehab-near-me" class="ns-link">Outpatient Rehab Near Me</a></li>
+                <li><a href="/dual-diagnosis-near-me" class="ns-link">Dual Diagnosis Near Me</a></li>
+                <li><a href="/dual-diagnosis-rehab-near-me" class="ns-link">Dual Diagnosis Rehab Near Me</a></li>
+                <li><a href="/free-rehab-near-me" class="ns-link">Free Rehab Near Me</a></li>
+                <li><a href="/luxury-rehab-near-me" class="ns-link">Luxury Rehab Centers</a></li>
+                <li><a href="/faith-based-rehab-near-me" class="ns-link">Faith-Based Rehab Near Me</a></li>
+                <li><a href="/fentanyl-rehab-near-me" class="ns-link">Fentanyl Rehab Near Me</a></li>
+                <li><a href="/veterans-rehab-near-me" class="ns-link">Veterans Rehab Near Me</a></li>
+                <li><a href="/womens-rehab-near-me" class="ns-link">Women's Rehab Near Me</a></li>
+                <li><a href="/mens-rehab-near-me" class="ns-link">Men's Rehab Near Me</a></li>
+                <li><a href="/teen-rehab-near-me" class="ns-link">Teen Rehab Near Me</a></li>
+                <li><a href="/sober-living-near-me" class="ns-link">Sober Living Near Me</a></li>
+                <li><a href="/medicaid-rehab-near-me" class="ns-link">Medicaid Rehab Near Me</a></li>
+                <li><a href="/court-ordered-rehab-near-me" class="ns-link">Court-Ordered Rehab Near Me</a></li>
+                <li><a href="/methadone-clinic-near-me" class="ns-link">Methadone Clinic Near Me</a></li>
+                <li><a href="/suboxone-clinic-near-me" class="ns-link">Suboxone Clinic Near Me</a></li>
+                <li><a href="/affordable-rehab-near-me" class="ns-link">Affordable Rehab Near Me</a></li>
+                <li><a href="/iop-near-me" class="ns-link">IOP Near Me</a></li>
+                <li><a href="/php-near-me" class="ns-link">PHP Near Me</a></li>
+              </ul>
+            </section>
+
+            <section style="margin-bottom: 32px;">
+              <h3 class="ns-h3">Insurance Coverage</h3>
+              <ul class="ns-grid-sm">
+                <li><a href="/insurance/aetna-rehab" class="ns-link">Aetna Rehab Coverage</a></li>
+                <li><a href="/insurance/bcbs-treatment" class="ns-link">Blue Cross Blue Shield</a></li>
+                <li><a href="/insurance/cigna-rehab" class="ns-link">Cigna Rehab Coverage</a></li>
+                <li><a href="/insurance/united-healthcare-rehab" class="ns-link">United Healthcare</a></li>
+                <li><a href="/insurance/medicaid-rehab" class="ns-link">Medicaid Rehab</a></li>
+                <li><a href="/insurance/medicare-rehab" class="ns-link">Medicare Rehab</a></li>
+                <li><a href="/insurance/anthem-rehab" class="ns-link">Anthem Rehab Coverage</a></li>
+                <li><a href="/insurance/kaiser-rehab" class="ns-link">Kaiser Permanente</a></li>
+                <li><a href="/insurance/humana-rehab" class="ns-link">Humana Rehab Coverage</a></li>
+                <li><a href="/insurance/tricare-rehab" class="ns-link">TRICARE Rehab Coverage</a></li>
+              </ul>
+            </section>
+
+            <section style="margin-bottom: 32px;">
+              <h3 class="ns-h3">Recovery Resources &amp; Guides</h3>
+              <ul class="ns-grid-sm">
+                <li><a href="/resources/signs-of-addiction" class="ns-link">Signs of Addiction</a></li>
+                <li><a href="/resources/relapse-prevention" class="ns-link">Relapse Prevention</a></li>
+                <li><a href="/resources/insurance-coverage-guide" class="ns-link">Insurance Coverage Guide</a></li>
+                <li><a href="/resources/free-low-cost-rehab-options" class="ns-link">Free &amp; Low-Cost Rehab Options</a></li>
+                <li><a href="/resources/understanding-levels-of-care" class="ns-link">Understanding Levels of Care</a></li>
+                <li><a href="/resources/lgbtq-addiction-treatment" class="ns-link">LGBTQ+ Addiction Treatment</a></li>
+                <li><a href="/resources/addiction-recovery-success-stories" class="ns-link">Recovery Success Stories</a></li>
+                <li><a href="/resources/how-to-verify-rehab-center" class="ns-link">How to Verify a Rehab Center</a></li>
+                <li><a href="/resources/questions-to-ask-before-choosing-rehab" class="ns-link">Questions to Ask Before Choosing Rehab</a></li>
+                <li><a href="/resources/how-to-convince-someone-to-go-to-rehab" class="ns-link">How to Convince Someone to Go to Rehab</a></li>
+                <li><a href="/resources/what-happens-after-rehab" class="ns-link">What Happens After Rehab</a></li>
+                <li><a href="/resources/does-rehab-actually-work" class="ns-link">Does Rehab Actually Work?</a></li>
+                <li><a href="/resources/intervention-guide-how-to-plan" class="ns-link">Intervention Guide: How to Plan</a></li>
+                <li><a href="/resources/how-long-does-alcohol-detox-take" class="ns-link">How Long Does Alcohol Detox Take</a></li>
+                <li><a href="/resources/rehab-program-length-30-60-90-days" class="ns-link">Rehab Program Length: 30/60/90 Days</a></li>
+                <li><a href="/resources/sober-living-vs-halfway-house" class="ns-link">Sober Living vs Halfway House</a></li>
+                <li><a href="/resources/marijuana-addiction-is-it-real" class="ns-link">Marijuana Addiction: Is It Real?</a></li>
+                <li><a href="/xanax-addiction-treatment" class="ns-link">Xanax Addiction Treatment</a></li>
+                <li><a href="/heroin-addiction-treatment" class="ns-link">Heroin Addiction Treatment</a></li>
+                <li><a href="/adderall-addiction-treatment" class="ns-link">Adderall Addiction Treatment</a></li>
+                <li><a href="/marijuana-addiction-treatment" class="ns-link">Marijuana Addiction Treatment</a></li>
+                <li><a href="/fentanyl-addiction-treatment" class="ns-link">Fentanyl Addiction Treatment</a></li>
+              </ul>
+            </section>
+
+            <section style="margin-bottom: 32px;">
+              <h3 class="ns-h3">Specialty Treatment Pages</h3>
+              <ul class="ns-grid-sm">
+                <li><a href="/sober-living-homes" class="ns-link">Sober Living Homes</a></li>
+                <li><a href="/faith-based-rehab" class="ns-link">Faith-Based Rehab</a></li>
+                <li><a href="/fentanyl-rehab" class="ns-link">Fentanyl Rehab</a></li>
+                <li><a href="/veterans-rehab" class="ns-link">Veterans Rehab</a></li>
+                <li><a href="/womens-rehab" class="ns-link">Women's Rehab</a></li>
+                <li><a href="/mens-rehab" class="ns-link">Men's Rehab</a></li>
+                <li><a href="/free-rehab-options" class="ns-link">Free Rehab Options</a></li>
+                <li><a href="/us-rehab/international-patients" class="ns-link">International Patients</a></li>
+                <li><a href="/us-rehab/malibu-rehab" class="ns-link">Malibu Rehab Centers</a></li>
+              </ul>
+            </section>
+
+            <section style="margin-bottom: 32px;">
+              <h3 class="ns-h3">Top States for Treatment</h3>
+              <ul class="ns-grid-sm">
+                <li><a href="/best-rehab-centers-in-california" class="ns-link">Best Rehab in California</a></li>
+                <li><a href="/best-rehab-centers-in-florida" class="ns-link">Best Rehab in Florida</a></li>
+                <li><a href="/best-rehab-centers-in-texas" class="ns-link">Best Rehab in Texas</a></li>
+                <li><a href="/best-rehab-centers-in-new-york" class="ns-link">Best Rehab in New York</a></li>
+                <li><a href="/best-rehab-centers-in-pennsylvania" class="ns-link">Best Rehab in Pennsylvania</a></li>
+                <li><a href="/best-rehab-centers-in-ohio" class="ns-link">Best Rehab in Ohio</a></li>
+                <li><a href="/best-rehab-centers-in-illinois" class="ns-link">Best Rehab in Illinois</a></li>
+                <li><a href="/best-rehab-centers-in-arizona" class="ns-link">Best Rehab in Arizona</a></li>
+                <li><a href="/best-rehab-centers-in-colorado" class="ns-link">Best Rehab in Colorado</a></li>
+                <li><a href="/best-rehab-centers-in-massachusetts" class="ns-link">Best Rehab in Massachusetts</a></li>
+              </ul>
+            </section>
+
+            <section style="margin-bottom: 32px;">
+              <h3 class="ns-h3">Browse by State</h3>
+              <ul class="ns-grid-sm">
+                <li><a href="/rehab-centers/alabama" class="ns-link">Alabama</a></li>
+                <li><a href="/rehab-centers/alaska" class="ns-link">Alaska</a></li>
+                <li><a href="/rehab-centers/arizona" class="ns-link">Arizona</a></li>
+                <li><a href="/rehab-centers/arkansas" class="ns-link">Arkansas</a></li>
+                <li><a href="/rehab-centers/california" class="ns-link">California</a></li>
+                <li><a href="/rehab-centers/colorado" class="ns-link">Colorado</a></li>
+                <li><a href="/rehab-centers/connecticut" class="ns-link">Connecticut</a></li>
+                <li><a href="/rehab-centers/delaware" class="ns-link">Delaware</a></li>
+                <li><a href="/rehab-centers/florida" class="ns-link">Florida</a></li>
+                <li><a href="/rehab-centers/georgia" class="ns-link">Georgia</a></li>
+                <li><a href="/rehab-centers/hawaii" class="ns-link">Hawaii</a></li>
+                <li><a href="/rehab-centers/idaho" class="ns-link">Idaho</a></li>
+                <li><a href="/rehab-centers/illinois" class="ns-link">Illinois</a></li>
+                <li><a href="/rehab-centers/indiana" class="ns-link">Indiana</a></li>
+                <li><a href="/rehab-centers/iowa" class="ns-link">Iowa</a></li>
+                <li><a href="/rehab-centers/kansas" class="ns-link">Kansas</a></li>
+                <li><a href="/rehab-centers/kentucky" class="ns-link">Kentucky</a></li>
+                <li><a href="/rehab-centers/louisiana" class="ns-link">Louisiana</a></li>
+                <li><a href="/rehab-centers/maine" class="ns-link">Maine</a></li>
+                <li><a href="/rehab-centers/maryland" class="ns-link">Maryland</a></li>
+                <li><a href="/rehab-centers/massachusetts" class="ns-link">Massachusetts</a></li>
+                <li><a href="/rehab-centers/michigan" class="ns-link">Michigan</a></li>
+                <li><a href="/rehab-centers/minnesota" class="ns-link">Minnesota</a></li>
+                <li><a href="/rehab-centers/mississippi" class="ns-link">Mississippi</a></li>
+                <li><a href="/rehab-centers/missouri" class="ns-link">Missouri</a></li>
+                <li><a href="/rehab-centers/montana" class="ns-link">Montana</a></li>
+                <li><a href="/rehab-centers/nebraska" class="ns-link">Nebraska</a></li>
+                <li><a href="/rehab-centers/nevada" class="ns-link">Nevada</a></li>
+                <li><a href="/rehab-centers/new-hampshire" class="ns-link">New Hampshire</a></li>
+                <li><a href="/rehab-centers/new-jersey" class="ns-link">New Jersey</a></li>
+                <li><a href="/rehab-centers/new-mexico" class="ns-link">New Mexico</a></li>
+                <li><a href="/rehab-centers/new-york" class="ns-link">New York</a></li>
+                <li><a href="/rehab-centers/north-carolina" class="ns-link">North Carolina</a></li>
+                <li><a href="/rehab-centers/north-dakota" class="ns-link">North Dakota</a></li>
+                <li><a href="/rehab-centers/ohio" class="ns-link">Ohio</a></li>
+                <li><a href="/rehab-centers/oklahoma" class="ns-link">Oklahoma</a></li>
+                <li><a href="/rehab-centers/oregon" class="ns-link">Oregon</a></li>
+                <li><a href="/rehab-centers/pennsylvania" class="ns-link">Pennsylvania</a></li>
+                <li><a href="/rehab-centers/rhode-island" class="ns-link">Rhode Island</a></li>
+                <li><a href="/rehab-centers/south-carolina" class="ns-link">South Carolina</a></li>
+                <li><a href="/rehab-centers/south-dakota" class="ns-link">South Dakota</a></li>
+                <li><a href="/rehab-centers/tennessee" class="ns-link">Tennessee</a></li>
+                <li><a href="/rehab-centers/texas" class="ns-link">Texas</a></li>
+                <li><a href="/rehab-centers/utah" class="ns-link">Utah</a></li>
+                <li><a href="/rehab-centers/vermont" class="ns-link">Vermont</a></li>
+                <li><a href="/rehab-centers/virginia" class="ns-link">Virginia</a></li>
+                <li><a href="/rehab-centers/washington" class="ns-link">Washington</a></li>
+                <li><a href="/rehab-centers/west-virginia" class="ns-link">West Virginia</a></li>
+                <li><a href="/rehab-centers/wisconsin" class="ns-link">Wisconsin</a></li>
+                <li><a href="/rehab-centers/wyoming" class="ns-link">Wyoming</a></li>
+              </ul>
+            </section>
+          </nav>
+
+          <footer class="ns-footer">
+            <p style="margin-bottom: 8px;">RehabLookup — United States | <a href="mailto:help@rehablookup.com" class="ns-link">help@rehablookup.com</a> | <a href="tel:+18005551234" class="ns-link">1-800-555-1234</a></p>
+            <p>© 2026 RehabLookup. All rights reserved.</p>
+            <p style="font-size: 0.875rem; margin-top: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">RehabLookup is a directory service connecting individuals with addiction treatment facilities. We are not a treatment provider and do not provide medical advice. If you are experiencing a medical emergency, call 911 immediately.</p>
+            <nav style="margin-top: 16px;">
+              <a href="/about" class="ns-link" style="margin: 0 12px;">About Us</a>
+              <a href="/contact" class="ns-link" style="margin: 0 12px;">Contact</a>
+              <a href="/for-providers" class="ns-link" style="margin: 0 12px;">For Providers</a>
+              <a href="/privacy-policy" class="ns-link" style="margin: 0 12px;">Privacy Policy</a>
+              <a href="/terms-of-service" class="ns-link" style="margin: 0 12px;">Terms of Service</a>
+            </nav>
+          </footer>
+        </div>
+      </noscript>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Mark as loaded once React hydrates
+      document.getElementById('root').classList.add('js-loaded');
+      document.getElementById('root').classList.remove('js-loading');
+    </script>
+    <!-- Prefetch likely next pages for instant navigation -->
+    <link rel="prefetch" href="/rehab-centers" as="document" />
+    <link rel="prefetch" href="/concierge" as="document" />
+  </body>
+</html>

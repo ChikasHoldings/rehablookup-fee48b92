@@ -1,0 +1,278 @@
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useProviderReviews, ProviderReview } from '@/hooks/useProviderReviews';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  MessageSquare, 
+  Clock, 
+  Flag, 
+  Loader2,
+  RefreshCw,
+  Inbox,
+  Building2,
+  Star
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+
+
+import { useProStatus } from '@/hooks/useProStatus';
+import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
+import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
+import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
+import { PaginationFooter } from '@/components/common/PaginationFooter';
+import { usePagination } from '@/hooks/usePagination';
+
+
+
+export default function ProviderReviews() {
+  const navigate = useNavigate();
+  const { data: proStatus } = useProStatus();
+  const isPro = proStatus?.isPro ?? false;
+
+  const { 
+    reviews, 
+    facilities,
+    isLoading, 
+    stats, 
+    submitResponse, 
+    updateResponse, 
+    deleteResponse, 
+    flagReview, 
+    refetch 
+  } = useProviderReviews();
+  
+  const [selectedTab, setSelectedTab] = useState('all');
+  const [facilityFilter, setFacilityFilter] = useState<string>("all");
+  const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
+  const [selectedReviewForDispute, setSelectedReviewForDispute] = useState<ProviderReview | null>(null);
+  
+  
+
+  // Get the active facility ID for modals
+  const activeFacilityId = facilityFilter !== "all" ? facilityFilter : facilities[0]?.id || null;
+  
+  
+
+  const filteredReviews = useMemo(() => {
+    return reviews.filter(r => {
+      // Facility filter
+      if (facilityFilter !== "all" && r.facility_id !== facilityFilter) return false;
+      // Tab filter
+      if (selectedTab === 'needs-response') return !r.response;
+      if (selectedTab === 'disputed') return r.dispute;
+      return true;
+    });
+  }, [reviews, selectedTab, facilityFilter]);
+
+  const reviewsPagination = usePagination({
+    tableId: "provider-reviews",
+    defaultPageSize: 25,
+    totalItems: filteredReviews.length,
+  });
+  const visibleReviews = reviewsPagination.paginate(filteredReviews);
+
+  // Reset to page 1 on tab/facility filter change.
+  useEffect(() => {
+    reviewsPagination.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTab, facilityFilter]);
+
+  // Calculate filtered stats
+  const filteredStats = useMemo(() => {
+    const filtered = facilityFilter === "all" ? reviews : reviews.filter(r => r.facility_id === facilityFilter);
+    const totalReviews = filtered.length;
+    const averageRating = totalReviews > 0
+      ? Math.round((filtered.reduce((sum, r) => sum + r.rating, 0) / totalReviews) * 10) / 10
+      : null;
+    const needsResponse = filtered.filter(r => !r.response).length;
+    const disputed = filtered.filter(r => r.dispute && r.dispute.status === 'pending').length;
+    return { totalReviews, averageRating, needsResponse, disputed };
+  }, [reviews, facilityFilter]);
+
+  const handleFlagReview = (review: ProviderReview) => {
+    setSelectedReviewForDispute(review);
+    setDisputeDialogOpen(true);
+  };
+
+  const handleSubmitDispute = async (reviewId: string, reason: string, details?: string) => {
+    return flagReview(reviewId, reason, details);
+  };
+
+  if (facilities.length === 0 && !isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <Building2 className="h-16 w-16 text-muted-foreground/30 mb-4" />
+        <h2 className="text-xl font-semibold text-foreground mb-2">No Facilities Found</h2>
+        <p className="text-muted-foreground text-center max-w-md">
+          You need to have at least one facility to view reviews.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 overflow-x-hidden">
+      <div className="max-w-5xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">Reviews</h1>
+          <p className="text-muted-foreground mt-1">
+            {facilities.length > 1 
+              ? `Manage reviews across ${facilities.length} locations`
+              : facilities[0]?.name ? `Manage reviews for ${facilities[0].name}` : 'Manage your reviews'
+            }
+          </p>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Facility Filter */}
+          {facilities.length > 1 && (
+            <Select value={facilityFilter} onValueChange={setFacilityFilter}>
+              <SelectTrigger className={cn("w-[180px]", facilityFilter !== "all" && "border-primary text-primary")}>
+                <Building2 className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="All Locations" />
+              </SelectTrigger>
+              <SelectContent className="bg-background">
+                <SelectItem value="all">All Locations</SelectItem>
+                {facilities.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    <span className="truncate">{f.name}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button 
+            variant="outline" 
+            onClick={refetch} 
+            disabled={isLoading}
+            className="shrink-0"
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+
+
+      {/* Stats Cards */}
+      <ReviewStatsCards stats={filteredStats} />
+
+      {/* Reviews Tabs */}
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0">
+            <TabsTrigger value="all" className="flex-1 sm:flex-none gap-1.5 text-xs sm:text-sm">
+              <MessageSquare className="h-4 w-4" />
+              <span>All</span>
+              <span className="bg-muted px-1.5 py-0.5 rounded text-xs">
+                {facilityFilter === "all" ? reviews.length : reviews.filter(r => r.facility_id === facilityFilter).length}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="needs-response" className="flex-1 sm:flex-none gap-1.5 text-xs sm:text-sm">
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">Needs Response</span>
+              <span className="sm:hidden">Pending</span>
+              {filteredStats.needsResponse > 0 && (
+                <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded text-xs">
+                  {filteredStats.needsResponse}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="disputed" className="flex-1 sm:flex-none gap-1.5 text-xs sm:text-sm">
+              <Flag className="h-4 w-4" />
+              <span>Disputed</span>
+              {filteredStats.disputed > 0 && (
+                <span className="bg-red-500 text-white px-1.5 py-0.5 rounded text-xs">
+                  {filteredStats.disputed}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value={selectedTab} className="mt-4 space-y-4">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+              <p className="text-muted-foreground">Loading reviews...</p>
+            </div>
+          ) : filteredReviews.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="py-12 text-center">
+                <div className="mx-auto w-14 h-14 rounded-full bg-muted flex items-center justify-center mb-4">
+                  {selectedTab === 'needs-response' ? (
+                    <Clock className="h-7 w-7 text-muted-foreground" />
+                  ) : selectedTab === 'disputed' ? (
+                    <Flag className="h-7 w-7 text-muted-foreground" />
+                  ) : (
+                    <Inbox className="h-7 w-7 text-muted-foreground" />
+                  )}
+                </div>
+                <h3 className="text-lg font-semibold mb-1">
+                  {selectedTab === 'needs-response' 
+                    ? 'All caught up!' 
+                    : selectedTab === 'disputed' 
+                    ? 'No disputed reviews'
+                    : 'No reviews yet'}
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                  {selectedTab === 'needs-response'
+                    ? "You've responded to all reviews."
+                    : selectedTab === 'disputed'
+                    ? "No reviews have been flagged."
+                    : "Reviews will appear here when clients leave them."}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {visibleReviews.map((review) => (
+                <ProviderReviewCard
+                  key={review.id}
+                  review={review}
+                  showFacility={facilities.length > 1}
+                  onSubmitResponse={submitResponse}
+                  onUpdateResponse={updateResponse}
+                  onDeleteResponse={deleteResponse}
+                  onFlagReview={handleFlagReview}
+                />
+              ))}
+              <PaginationFooter
+                page={reviewsPagination.page}
+                pageSize={reviewsPagination.pageSize}
+                totalPages={reviewsPagination.totalPages}
+                totalItems={filteredReviews.length}
+                onPageChange={reviewsPagination.setPage}
+                onPageSizeChange={reviewsPagination.setPageSize}
+                itemLabel="review"
+              />
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Flag Review Dialog */}
+      <FlagReviewDialog
+        review={selectedReviewForDispute}
+        open={disputeDialogOpen}
+        onOpenChange={setDisputeDialogOpen}
+        onSubmit={handleSubmitDispute}
+      />
+
+
+      </div>
+    </div>
+  );
+}
