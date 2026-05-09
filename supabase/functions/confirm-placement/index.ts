@@ -40,6 +40,8 @@ class ApiError extends Error {
  * This map defines the canonical path to `admitted`.
  */
 const PATH_TO_ADMITTED: Record<string, string[]> = {
+  matched:                ["provider_prequalification", "providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "admitted"],
+  provider_prequalification: ["providers_accepted", "presented_to_seeker", "seeker_selected", "admission_in_progress", "admitted"],
   providers_accepted:     ["presented_to_seeker", "seeker_selected", "admission_in_progress", "admitted"],
   presented_to_seeker:    ["seeker_selected", "admission_in_progress", "admitted"],
   seeker_selected:        ["admission_in_progress", "admitted"],
@@ -233,6 +235,26 @@ Deno.serve(async (req) => {
       actor_id: userData.user.id,
       actor_type: actorType,
     });
+    // ── Create/update admission verification record for revenue tracking ──
+    try {
+      await supabaseService.from("admission_verifications").upsert({
+        inquiry_id: inquiryId,
+        facility_id: facilityId,
+        admin_confirmed: true,
+        admin_confirmed_at: now,
+        admin_confirmed_by: userData.user.id,
+        verification_status: "admin_override",
+        billing_status: "confirmed",
+        billing_amount_cents: inquiry.payment_amount_cents || 100000, // Default $1000
+        billing_due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        provider_reported: true,
+        provider_reported_at: now,
+        provider_report_method: "admin_confirmed",
+        provider_admission_date: admittedAt ? admittedAt.split("T")[0] : now.split("T")[0],
+      }, { onConflict: "inquiry_id,facility_id" });
+    } catch (avErr) {
+      logStep(requestId, "Warning: Failed to create admission verification", { error: String(avErr) });
+    }
 
     // Send notification (best-effort)
     try {

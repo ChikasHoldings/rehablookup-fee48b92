@@ -93,7 +93,8 @@ export function DomesticCandidatesTab({ hasPro = false }: DomesticCandidatesTabP
         .from("concierge_introductions")
         .select(`
           id, facility_id, inquiry_id, created_at,
-          provider_response, provider_responded_at, provider_notes, admin_disclosed_pii_at
+          provider_response, provider_responded_at, provider_notes, admin_disclosed_pii_at,
+          admission_report_deadline, provider_admission_reported, provider_admission_reported_at
         `)
         .eq("facility_id", selectedFacility.id)
         .order("created_at", { ascending: false });

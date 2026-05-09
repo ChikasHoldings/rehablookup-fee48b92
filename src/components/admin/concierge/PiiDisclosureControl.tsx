@@ -82,7 +82,7 @@ export function PiiDisclosureControl({ caseId, introductions, onRefresh }: PiiDi
         .from("concierge_introductions")
         .update({
           admin_disclosed_pii_at: now.toISOString(),
-          disclosed_by_admin_id: user.id,
+          disclosed_by_admin_user_id: user.id,
           pii_disclosure_level: level,
           pii_disclosure_expires_at: expiresAt.toISOString(),
           pii_disclosure_reason: reason || null,
@@ -109,11 +109,11 @@ export function PiiDisclosureControl({ caseId, introductions, onRefresh }: PiiDi
 
       // Create audit log
       await supabase.from("admin_audit_log").insert({
-        admin_id: user.id,
-        action: "pii_disclosure",
-        resource_type: "concierge_introduction",
-        resource_id: introId,
-        reason: `PII disclosed (${level}) for concierge case ${caseId}`,
+        admin_user_id: user.id,
+        action_type: "pii_disclosure",
+        target_type: "concierge_introduction",
+        target_id: introId,
+        details: { reason: `PII disclosed (${level}) for concierge case ${caseId}` },
       });
     },
     onSuccess: () => {

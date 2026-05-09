@@ -264,7 +264,7 @@ Deno.serve(async (req) => {
 
     if (!facilities || facilities.length === 0) {
       return new Response(
-        JSON.stringify({ matches: [], message: "No matching facilities available", requestId, _version: VERSION }),
+        JSON.stringify({ matched: false, matchedFacilityIds: [], matches: [], message: "No matching facilities available", requestId, _version: VERSION }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
@@ -460,6 +460,8 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
+        matched: true,
+        matchedFacilityIds: topMatches.map(m => m.facilityId),
         matches: topMatches,
         matchCount: topMatches.length,
         requestId,
