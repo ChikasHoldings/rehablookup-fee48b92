@@ -15,6 +15,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const CONCIERGE_STATUSES = [
+  "new",
   "pending_intake",
   "intake_submitted",
   "intake_reviewed",
@@ -34,6 +35,7 @@ export type ConciergeStatus = (typeof CONCIERGE_STATUSES)[number];
 
 /** Valid forward transitions for concierge_inquiries.status. */
 export const CONCIERGE_TRANSITIONS: Record<ConciergeStatus, ConciergeStatus[]> = {
+  new: ["intake_submitted", "closed"],
   pending_intake: ["intake_submitted", "closed"],
   intake_submitted: ["intake_reviewed", "closed"],
   intake_reviewed: ["advisor_assigned", "closed"],

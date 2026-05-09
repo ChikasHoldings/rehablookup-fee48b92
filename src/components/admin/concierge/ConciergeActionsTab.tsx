@@ -217,7 +217,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
     },
   });
 
-  const isUnpaid = caseData.payment_status !== 'paid' && caseData.payment_status !== 'succeeded';
+  const isUnpaid = caseData.payment_status !== 'paid' && caseData.payment_status !== 'succeeded' && caseData.payment_status !== 'free';
   const statusOptions = getStatusOptions(caseData.status, isAdvisor);
   const isAssignedToMe = caseData.assigned_advisor_id === user?.id;
   const isUnassigned = !caseData.assigned_advisor_id;

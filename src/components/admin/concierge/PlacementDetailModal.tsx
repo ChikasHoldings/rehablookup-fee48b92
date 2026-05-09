@@ -71,7 +71,7 @@ export function PlacementDetailModal({
   // the actual admin classification (super_admin / manager / customer_rep /
   // advisor) instead of collapsing to the generic "admin" literal.
   useEffect(() => {
-    if (open && caseData?.status === "intake_submitted") {
+    if (open && (caseData?.status === "intake_submitted" || caseData?.status === "new")) {
       supabase.functions.invoke("auto-status-transition", {
         body: {
           inquiryId: caseData.id,
@@ -85,7 +85,7 @@ export function PlacementDetailModal({
 
   if (!caseData) return null;
 
-  const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded";
+  const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded" || caseData.payment_status === "free";
   const advisorName = caseData.assigned_advisor_id ? advisorNames[caseData.assigned_advisor_id] || "Assigned" : "Unassigned";
   const placedFacility = caseData.placed_facility_id ? facilityMap[caseData.placed_facility_id] : null;
   const isAdmitted = caseData.admission_status === "admitted" || caseData.placement_confirmed;
@@ -133,7 +133,7 @@ export function PlacementDetailModal({
                   </span>
                   <Separator orientation="vertical" className="h-3" />
                   <span className={cn("flex items-center gap-1", isPaid ? "text-success" : "text-destructive font-medium")}>
-                    <DollarSign className="h-3 w-3" />{isPaid ? "Paid" : "Unpaid"}
+                    <DollarSign className="h-3 w-3" />{caseData.payment_status === "free" ? "Free" : isPaid ? "Paid" : "Unpaid"}
                   </span>
                   <Separator orientation="vertical" className="h-3" />
                   <span className="flex items-center gap-1">

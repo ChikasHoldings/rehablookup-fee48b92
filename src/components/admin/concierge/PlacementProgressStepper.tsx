@@ -25,7 +25,7 @@ interface PlacementProgressStepperProps {
 export function PlacementProgressStepper({ caseData, compact }: PlacementProgressStepperProps) {
   const isClosed = caseData.status === "closed";
   const currentVisualIdx = getVisualStageIndex(caseData.status);
-  const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded";
+  const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded" || caseData.payment_status === "free";
   const hasBlocker = (!isPaid && currentVisualIdx > 0) || (!caseData.assigned_advisor_id && currentVisualIdx >= 1);
 
   if (isClosed) {

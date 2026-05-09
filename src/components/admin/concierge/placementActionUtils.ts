@@ -40,7 +40,7 @@ export function getCaseNextAction(c: CaseSnapshot): { label: string; priority: A
     return { label: "Complete", priority: "done", owner: "system" };
   }
 
-  const isPaid = c.payment_status === "paid" || c.payment_status === "succeeded";
+  const isPaid = c.payment_status === "paid" || c.payment_status === "succeeded" || c.payment_status === "free";
 
   // Blockers
   if (!isPaid && c.status !== "intake_submitted" && c.status !== "pending_intake") {
@@ -66,7 +66,7 @@ export function getCaseNextAction(c: CaseSnapshot): { label: string; priority: A
 /** Returns a blocker label if present, null otherwise */
 export function getCaseBlocker(c: CaseSnapshot): string | null {
   if (c.status === "closed" || c.status === "completed") return null;
-  const isPaid = c.payment_status === "paid" || c.payment_status === "succeeded";
+  const isPaid = c.payment_status === "paid" || c.payment_status === "succeeded" || c.payment_status === "free";
   if (!isPaid && c.status !== "intake_submitted" && c.status !== "pending_intake") return "Payment pending";
   if (!c.assigned_advisor_id && getStageIndex(c.status) >= 2) return "No advisor";
   return null;
@@ -79,7 +79,7 @@ export function getCaseNextSteps(
   toursCount: number
 ): CaseAction[] {
   const steps: CaseAction[] = [];
-  const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded";
+  const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded" || caseData.payment_status === "free";
 
   // Blockers always first
   if (!isPaid && caseData.status !== "intake_submitted" && caseData.status !== "pending_intake") {

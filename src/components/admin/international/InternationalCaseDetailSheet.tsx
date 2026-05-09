@@ -229,7 +229,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
               <Badge variant={STATUS_CONFIG[caseData.status]?.variant || "secondary"}>
                 {STATUS_CONFIG[caseData.status]?.label || caseData.status}
               </Badge>
-              <Badge variant={(caseData.payment_status === "paid" || caseData.payment_status === "succeeded") ? "default" : "outline"}>
+              <Badge variant={(caseData.payment_status === "paid" || caseData.payment_status === "succeeded" || caseData.payment_status === "free") ? "default" : "outline"}>
                 ${(caseData.payment_amount_cents / 100).toFixed(0)} {caseData.payment_status}
               </Badge>
               {caseData.refund_type && <Badge variant="secondary">Fee {caseData.refund_type}</Badge>}
@@ -321,7 +321,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
                       <Building2 className="h-3.5 w-3.5 mr-1" /> Confirm Admission
                     </Button>
                   )}
-                  {(caseData.payment_status === "paid" || caseData.payment_status === "succeeded") && !caseData.refund_type && (
+                  {(caseData.payment_status === "paid" || caseData.payment_status === "succeeded" || caseData.payment_status === "free") && !caseData.refund_type && (
                     <Button size="sm" variant="outline" onClick={() => setActionDialog("refund")}>
                       <CreditCard className="h-3.5 w-3.5 mr-1" /> Refund/Credit $99
                     </Button>

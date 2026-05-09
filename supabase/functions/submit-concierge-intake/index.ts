@@ -370,7 +370,7 @@ Deno.serve(async (req) => {
       preferred_city: sanitizeString(intakeData.desiredCity || currentCity, 100),
       payment_status: skipPayment ? 'free' : 'paid',
       payment_amount_cents: 0, // Domestic concierge is free for clients ($0).
-      status: 'new',
+      status: 'intake_submitted',
       checkout_session_id: sessionId ?? null,
       stripe_payment_intent_id: session && typeof session.payment_intent === 'string' ? session.payment_intent : null,
       stripe_customer_id: session && typeof session.customer === 'string' ? session.customer : null,
@@ -522,7 +522,7 @@ Deno.serve(async (req) => {
         event_type: 'case_created',
         event_data: { 
           source: effectiveUserId ? 'account_concierge' : 'public_concierge',
-          payment_status: 'paid',
+          payment_status: skipPayment ? 'free' : 'paid',
         },
         actor_type: effectiveUserId ? 'seeker' : 'system',
         actor_id: effectiveUserId || null,
@@ -547,6 +547,42 @@ Deno.serve(async (req) => {
       logStep(requestId, "Intake received notification sent");
     } catch (notifError) {
       logStep(requestId, "Warning: Failed to send notification", { error: String(notifError) });
+    }
+
+    // Auto-assign advisor (round-robin) to reduce admin manual work
+    try {
+      const { data: advisors } = await supabase
+        .from('admin_user_profiles')
+        .select('user_id')
+        .eq('admin_role', 'advisor')
+        .eq('status', 'active');
+      if (advisors && advisors.length > 0) {
+        // Round-robin: pick advisor with fewest active cases
+        const { data: caseLoads } = await supabase
+          .from('concierge_inquiries')
+          .select('assigned_advisor_id')
+          .not('status', 'in', '("closed","completed")')
+          .not('assigned_advisor_id', 'is', null);
+        const loadMap = new Map<string, number>();
+        for (const a of advisors) loadMap.set(a.user_id, 0);
+        for (const c of (caseLoads || [])) {
+          if (c.assigned_advisor_id && loadMap.has(c.assigned_advisor_id)) {
+            loadMap.set(c.assigned_advisor_id, (loadMap.get(c.assigned_advisor_id) || 0) + 1);
+          }
+        }
+        const sorted = [...loadMap.entries()].sort((a, b) => a[1] - b[1]);
+        const pickedAdvisor = sorted[0]?.[0];
+        if (pickedAdvisor) {
+          await supabase
+            .from('concierge_inquiries')
+            .update({ assigned_advisor_id: pickedAdvisor })
+            .eq('id', inquiryId)
+            .is('assigned_advisor_id', null);
+          logStep(requestId, "Auto-assigned advisor", { advisorId: pickedAdvisor, caseLoad: sorted[0]?.[1] });
+        }
+      }
+    } catch (advisorErr) {
+      logStep(requestId, "Warning: Failed to auto-assign advisor", { error: String(advisorErr) });
     }
 
     return new Response(

@@ -927,7 +927,7 @@ export function MarketingLeadProfileModal({
                             </div>
                             <Badge variant="outline" className={cn(
                               "text-xs",
-                              (inquiry.payment_status === "paid" || inquiry.payment_status === "succeeded")
+                              (inquiry.payment_status === "paid" || inquiry.payment_status === "succeeded" || inquiry.payment_status === "free")
                                 ? "bg-success/10 text-success"
                                 : "bg-warning/10 text-warning"
                             )}>

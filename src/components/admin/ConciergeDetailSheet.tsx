@@ -141,12 +141,12 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
               <Badge 
                 variant="outline" 
                 className={
-                  (caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded') 
+                  (caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded' || caseData.payment_status === 'free') 
                     ? "bg-success/10 text-success border-success/30" 
                     : "bg-destructive/10 text-destructive border-destructive/30"
                 }
               >
-                {(caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded') ? '✓ Paid' : '⚠ Unpaid'}
+                {(caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded' || caseData.payment_status === 'free') ? '✓ Paid' : '⚠ Unpaid'}
               </Badge>
               <Badge variant="outline" className={PIPELINE_STATUS_CONFIG[caseData.status]?.color || "bg-muted text-muted-foreground"}>
                 {PIPELINE_STATUS_CONFIG[caseData.status]?.label || caseData.status}

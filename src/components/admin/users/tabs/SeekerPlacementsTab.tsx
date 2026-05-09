@@ -325,7 +325,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
             <div>
               <p className="text-muted-foreground">Payment</p>
               <Badge variant="outline" className={cn("text-xs mt-0.5",
-                (placement.payment_status === "paid" || placement.payment_status === "succeeded") && "bg-success/10 text-success border-success/30"
+                (placement.payment_status === "paid" || placement.payment_status === "succeeded" || placement.payment_status === "free") && "bg-success/10 text-success border-success/30"
               )}>{placement.payment_status || "—"}</Badge>
             </div>
             <div>

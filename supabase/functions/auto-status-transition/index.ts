@@ -25,12 +25,14 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
  *   admin_viewed:        intake_submitted → intake_reviewed
  *   matches_completed:   advisor_assigned → matching_providers → provider_prequalification
  *   introduction_sent:   → providers_accepted → presented_to_seeker
- *   provider_interested: → providers_accepted → presented_to_seeker → seeker_selected
+ *   provider_interested: → providers_accepted → presented_to_seeker
+ *   seeker_confirmed:    → seeker_selected → admission_in_progress
+ *   placement_confirmed: → admission_in_progress → admitted
  */
 
 interface TransitionRequest {
   inquiryId: string;
-  trigger: "admin_viewed" | "matches_completed" | "introduction_sent" | "provider_interested";
+  trigger: "admin_viewed" | "matches_completed" | "introduction_sent" | "provider_interested" | "seeker_confirmed" | "placement_confirmed";
   actorId?: string;
   /**
    * Granular actor classification used to attribute the resulting case event.
@@ -43,6 +45,7 @@ interface TransitionRequest {
 
 // The canonical forward path (must match the DB trigger exactly)
 const FORWARD_PATH = [
+  "new",
   "pending_intake",
   "intake_submitted",
   "intake_reviewed",
@@ -63,7 +66,9 @@ const TRIGGER_TARGET: Record<string, string> = {
   admin_viewed: "intake_reviewed",
   matches_completed: "provider_prequalification",
   introduction_sent: "presented_to_seeker",
-  provider_interested: "seeker_selected",
+  provider_interested: "presented_to_seeker",
+  seeker_confirmed: "admission_in_progress",
+  placement_confirmed: "admitted",
 };
 
 // Only attempt the transition if current status is in one of these
@@ -71,7 +76,9 @@ const TRIGGER_VALID_FROM: Record<string, string[]> = {
   admin_viewed: ["intake_submitted", "new"],
   matches_completed: ["advisor_assigned", "matching_providers"],
   introduction_sent: ["matching_providers", "provider_prequalification", "providers_accepted"],
-  provider_interested: ["provider_prequalification", "providers_accepted", "presented_to_seeker"],
+  provider_interested: ["provider_prequalification", "providers_accepted"],
+  seeker_confirmed: ["presented_to_seeker", "seeker_selected"],
+  placement_confirmed: ["seeker_selected", "admission_in_progress"],
 };
 
 // Extra fields to set based on the final target status

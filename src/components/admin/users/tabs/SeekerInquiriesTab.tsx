@@ -275,7 +275,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
                         {inquiry.timeline_urgency && <Badge variant="secondary" className="text-xs">Urgency: {inquiry.timeline_urgency}</Badge>}
                         {inquiry.payment_status && (
                           <Badge variant="outline" className={cn("text-xs",
-                            (inquiry.payment_status === "paid" || inquiry.payment_status === "succeeded") && "bg-success/10 text-success border-success/30"
+                            (inquiry.payment_status === "paid" || inquiry.payment_status === "succeeded" || inquiry.payment_status === "free") && "bg-success/10 text-success border-success/30"
                           )}>{inquiry.payment_status}</Badge>
                         )}
                         {inquiry.matched_facility_ids?.length > 0 && (

@@ -83,7 +83,7 @@ export function ConciergeOverviewTab({ caseData }: ConciergeOverviewTabProps) {
     enabled: !!caseData.placed_facility_id,
   });
 
-  const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded";
+  const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded" || caseData.payment_status === "free";
   const isPlaced = ["admitted", "billed", "completed"].includes(caseData.status);
   const isClosed = caseData.status === "closed";
   const hoursSinceUpdate = (Date.now() - new Date(caseData.updated_at).getTime()) / (1000 * 60 * 60);

@@ -197,6 +197,13 @@ export function SeekerProviderReviewCard({ inquiryId, onConfirmed }: SeekerProvi
       await supabase.functions.invoke("send-concierge-notifications", {
         body: { type: "seeker_confirmed", inquiryId, facilityId: facility.id },
       });
+
+      // Auto-advance pipeline: presented_to_seeker → seeker_selected → admission_in_progress
+      try {
+        await supabase.functions.invoke("auto-status-transition", {
+          body: { inquiryId, trigger: "seeker_confirmed", actorType: "seeker" },
+        });
+      } catch (e) { console.error("Auto-transition failed:", e); }
     },
     onSuccess: () => {
       toast.success("You've confirmed your choice! Your advisor will finalize admission.");

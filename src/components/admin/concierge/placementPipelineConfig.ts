@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 export type PlacementStage =
+  | "new"
   | "pending_intake"
   | "intake_submitted"
   | "intake_reviewed"
@@ -43,7 +44,7 @@ export const VISUAL_STAGES: VisualStageConfig[] = [
     icon: ClipboardCheck,
     color: "border-t-primary",
     badgeColor: "bg-blue-500/10 text-blue-600 border-blue-500/30",
-    dbStatuses: ["pending_intake", "intake_submitted"],
+    dbStatuses: ["new", "pending_intake", "intake_submitted"],
   },
   {
     key: "reviewing",
