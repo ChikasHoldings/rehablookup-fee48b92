@@ -12,6 +12,8 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
 const VERSION = "1.0.0";
 const corsHeaders = {
@@ -59,6 +61,7 @@ Deno.serve(async (req) => {
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
   // Load platform settings
   const { data: settingsRows } = await supabase
@@ -110,12 +113,10 @@ Deno.serve(async (req) => {
       const facility = intro.facility as any;
       const email = facility?.concierge_admissions_email;
 
-      if (email && resendApiKey) {
+      if (email && resend) {
         try {
-          await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
+          if (resend) {
+            const result = await sendEmailWithRetry(supabase, resend, {
               from: "RehabLookup Placements <placements@rehablookup.com>",
               to: [email],
               subject: `Action Required: Report Admission Status — Case #${intro.inquiry_id.slice(0, 8)}`,
@@ -129,9 +130,9 @@ Deno.serve(async (req) => {
                 <p>If the client was not admitted or is still in the assessment phase, please update us so we can assist.</p>
                 <p style="color:#666;font-size:12px;">Failure to report may affect your placement network standing.</p>
               `,
-            }),
-          });
-          remindersSent++;
+            }, { emailType: "admission_reminder", idempotencyKey: `admission-reminder-${intro.id}` });
+            if (result.success || result.deduplicated) remindersSent++;
+          }
         } catch (e) {
           log("ADMISSION_REMINDERS", "Email send failed", { introId: intro.id, error: String(e) });
         }
@@ -274,15 +275,13 @@ Deno.serve(async (req) => {
         const facility = v.facility as any;
         const seekerEmail = inquiry?.user_email;
 
-        if (seekerEmail && resendApiKey) {
+        if (seekerEmail && resend) {
           const verifyUrl = `https://rehablookup.com/verify-admission?token=${v.seeker_verification_token}`;
 
           try {
-            await fetch("https://api.resend.com/emails", {
-              method: "POST",
-              headers: { "Authorization": `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
-              body: JSON.stringify({
-                from: "RehabLookup <support@rehablookup.com>",
+            if (resend) {
+              const result = await sendEmailWithRetry(supabase, resend, {
+                from: "RehabLookup <no-reply@rehablookup.com>",
                 to: [seekerEmail],
                 subject: "Quick Check-In: How's Your Treatment Going?",
                 html: `
@@ -296,9 +295,9 @@ Deno.serve(async (req) => {
                   </p>
                   <p style="color:#666;font-size:13px;">If you need any help or have questions about your options, reply to this email and our concierge team will assist you.</p>
                 `,
-              }),
-            });
-            verificationsSent++;
+              }, { emailType: "seeker_verification", idempotencyKey: `seeker-verify-${v.id}` });
+              if (result.success || result.deduplicated) verificationsSent++;
+            }
           } catch (e) {
             log("SEEKER_VERIFICATION", "Email failed", { verificationId: v.id, error: String(e) });
           }
@@ -349,18 +348,16 @@ Deno.serve(async (req) => {
       const email = facility?.concierge_admissions_email;
       const amountStr = v.billing_amount_cents ? `$${(v.billing_amount_cents / 100).toLocaleString()}` : "your placement fee";
 
-      if (email && resendApiKey) {
+      if (email && resend) {
         const isOverdue = v.billing_due_date && new Date(v.billing_due_date) < new Date();
         const subject = isOverdue
           ? `OVERDUE: Placement Fee Payment Required — ${amountStr}`
           : `Reminder: Placement Fee Due — ${amountStr}`;
 
         try {
-          await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              from: "RehabLookup Billing <billing@rehablookup.com>",
+          if (resend) {
+            const result = await sendEmailWithRetry(supabase, resend, {
+              from: "RehabLookup Billing <no-reply@rehablookup.com>",
               to: [email],
               subject,
               html: `
@@ -372,9 +369,9 @@ Deno.serve(async (req) => {
                 <p><a href="https://rehablookup.com/provider/billing" style="background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Pay Now</a></p>
                 <p style="color:#666;font-size:12px;">If you believe this is an error or wish to dispute, please contact us at billing@rehablookup.com</p>
               `,
-            }),
-          });
-          billingRemindersSent++;
+            }, { emailType: "billing_reminder", idempotencyKey: `billing-reminder-${v.id}` });
+            if (result.success || result.deduplicated) billingRemindersSent++;
+          }
         } catch (e) {
           log("BILLING_REMINDERS", "Email failed", { verificationId: v.id, error: String(e) });
         }

@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
           to: [facilityEmail],
           subject: `New Inquiry for ${facility.name}`,
           html: getFacilityNotificationEmail(marketingLead.first_name, facility.name),
-        });
+        }, { emailType: "marketing_lead_facility_notification", idempotencyKey: `mktg-lead-${newLead.id}` });
         log(requestId, "INFO", "Facility notification sent", { facilityEmail });
       } catch (emailError) {
         log(requestId, "WARN", "Failed to send facility email", { error: String(emailError) });

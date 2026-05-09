@@ -286,7 +286,7 @@ Deno.serve(async (req) => {
                 </div>
               </div>
             `,
-          });
+          }, { emailType: "admin_invoice_reminder", idempotencyKey: `invoice-reminder-${invoice.id}` });
           logStep("Payment reminder sent", { facilityEmail });
         }
 

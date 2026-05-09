@@ -876,6 +876,9 @@ async function sendProviderInterestedNotification(
     to: [inquiry.user_email],
     subject: `Progress Update on Your Case - Case #${caseId}`,
     html: seekerHtml,
+  }, {
+    emailType: "concierge_provider_interested",
+    idempotencyKey: `concierge-provider-interested-${inquiry.id}-${facility?.id || "unknown"}`,
   });
 
   if (!emailError) {
@@ -967,6 +970,9 @@ async function sendSignupPromptEmail(
     to: [inquiry.user_email],
     subject: `Create Your Account to Track Case #${caseId}`,
     html,
+  }, {
+    emailType: "concierge_signup_prompt",
+    idempotencyKey: `concierge-signup-prompt-${inquiry.id}`,
   });
 
   if (!emailError) {

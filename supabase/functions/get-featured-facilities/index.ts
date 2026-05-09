@@ -123,14 +123,14 @@ async function sendFeaturedEmail(
       to: [providerEmail],
       subject: `🌟 ${facilityName} is Featured on Homepage Today!`,
       html: emailHtml,
-    });
+    }, { emailType: "featured_facility_provider", idempotencyKey: `featured-provider-${facilityId}-${new Date().toISOString().slice(0,10)}` });
     if (adminRecipients.length > 0) {
       await sendEmailWithRetry(supabaseClient, resend, {
         from: "RehabLookup <no-reply@rehablookup.com>",
         to: adminRecipients,
         subject: `[Admin] Featured Rotation: ${facilityName}`,
         html: `<div style="background:#FEF3C7;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;"><strong>Admin Copy:</strong> Sent to ${providerEmail} for "${facilityName}"</div>${emailHtml}`,
-      });
+      }, { emailType: "featured_facility_admin", idempotencyKey: `featured-admin-${facilityId}-${new Date().toISOString().slice(0,10)}` });
     }
   } catch (emailError) {
     logStep("Error sending featured email", { error: String(emailError) });

@@ -1,7 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
+import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
-const VERSION = "3.0.0"; // Bumped: migrated from leads → marketing_leads table
+const VERSION = "4.0.0"; // Migrated from Lovable gateway → sendEmailWithRetry
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +11,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 const ADMIN_EMAIL = "chikasholdings@gmail.com";
 const FROM_EMAIL = "RehabLookup <no-reply@rehablookup.com>";
 const MAX_BODY_SIZE = 50000; // 50KB
@@ -213,27 +214,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Send emails via Resend (non-blocking)
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    // Send emails via resilient sender (non-blocking)
     const resendKey = Deno.env.get("RESEND_API_KEY");
+    if (resendKey) {
+      const resend = new Resend(resendKey);
 
-    if (lovableKey && resendKey) {
-      const sendEmail = (to: string, subject: string, html: string) =>
-        fetch(`${RESEND_GATEWAY}/emails`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${lovableKey}`,
-            "X-Connection-Api-Key": resendKey,
-          },
-          body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html }),
-        }).catch((e) => console.warn("Email send failed:", e.message));
-
-      // Admin notification
-      sendEmail(
-        ADMIN_EMAIL,
-        `New Exit-Intent Lead: ${firstName}`,
-        `
+      const adminHtml = `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
           <div style="background:#1B365D;padding:20px 25px;border-radius:8px 8px 0 0">
             <h1 style="color:#ffffff;font-size:20px;margin:0">New Exit-Intent Lead</h1>
@@ -247,38 +233,52 @@ Deno.serve(async (req) => {
             <p style="margin:0 0 12px"><strong>Page:</strong> ${pageUrl}</p>
             <p style="margin:0;color:#6b7280;font-size:13px">Source: Exit Intent Capture</p>
           </div>
-        </div>`
-      );
+        </div>`;
 
-      // User confirmation (only if email provided)
-      if (email) {
-        sendEmail(
-          email,
-          "We're Here to Help — RehabLookup",
-          `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-            <div style="background:#1B365D;padding:20px 25px;border-radius:8px 8px 0 0">
-              <h1 style="color:#ffffff;font-size:20px;margin:0">Thank You, ${firstName}</h1>
+      const userHtml = `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+          <div style="background:#1B365D;padding:20px 25px;border-radius:8px 8px 0 0">
+            <h1 style="color:#ffffff;font-size:20px;margin:0">Thank You, ${firstName}</h1>
+          </div>
+          <div style="padding:25px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+            <p style="color:#374151;line-height:1.6;margin:0 0 16px">
+              Thank you for reaching out. A treatment specialist will contact you soon to help find the right options for your situation.
+            </p>
+            <p style="color:#374151;line-height:1.6;margin:0 0 16px">
+              Everything is 100% free and confidential. You are not alone, and help is available.
+            </p>
+            <div style="text-align:center;margin:24px 0">
+              <a href="https://rehablookup.com/search" style="background:#1B365D;color:#ffffff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block">
+                Browse Treatment Centers
+              </a>
             </div>
-            <div style="padding:25px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
-              <p style="color:#374151;line-height:1.6;margin:0 0 16px">
-                Thank you for reaching out. A treatment specialist will contact you soon to help find the right options for your situation.
-              </p>
-              <p style="color:#374151;line-height:1.6;margin:0 0 16px">
-                Everything is 100% free and confidential. You are not alone, and help is available.
-              </p>
-              <div style="text-align:center;margin:24px 0">
-                <a href="https://rehablookup.com/search" style="background:#1B365D;color:#ffffff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block">
-                  Browse Treatment Centers
-                </a>
-              </div>
-              <p style="color:#9ca3af;font-size:12px;margin:20px 0 0;text-align:center">
-                RehabLookup.com — Helping you find the right path to recovery
-              </p>
-            </div>
-          </div>`
-        );
-      }
+            <p style="color:#9ca3af;font-size:12px;margin:20px 0 0;text-align:center">
+              RehabLookup.com — Helping you find the right path to recovery
+            </p>
+          </div>
+        </div>`;
+
+      // Admin notification (fire-and-forget)
+      sendEmailWithRetry(supabase, resend, {
+        from: FROM_EMAIL,
+        to: [ADMIN_EMAIL],
+        subject: `New Exit-Intent Lead: ${firstName}`,
+        html: adminHtml,
+      }, {
+        emailType: "exit_intent_admin",
+        idempotencyKey: `exit-intent-admin-${lead.id}`,
+      }).catch((e) => console.warn(`[EXIT-INTENT v${VERSION}] Admin email failed:`, e.message));
+
+      // User confirmation (fire-and-forget)
+      sendEmailWithRetry(supabase, resend, {
+        from: FROM_EMAIL,
+        to: [email],
+        subject: "We're Here to Help — RehabLookup",
+        html: userHtml,
+      }, {
+        emailType: "exit_intent_confirmation",
+        idempotencyKey: `exit-intent-user-${lead.id}`,
+      }).catch((e) => console.warn(`[EXIT-INTENT v${VERSION}] User email failed:`, e.message));
     }
 
     return new Response(

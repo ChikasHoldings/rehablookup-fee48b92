@@ -169,12 +169,12 @@ Deno.serve(async (req) => {
             for (const admin of (admins || [])) {
               if (admin.email) {
                 try {
-                  await sendEmailWithRetry(resend, {
+                  await sendEmailWithRetry(supabase, resend, {
                     from: "RehabLookup Alerts <alerts@rehablookup.com>",
                     to: [admin.email],
                     subject: `⚠️ ${alertData.length} Placement Case(s) Stalled — Action Required`,
                     html: slaAlertEmail(alertData),
-                  });
+                  }, { emailType: "sla_alert", idempotencyKey: `sla-alert-${admin.email}-${new Date().toISOString().slice(0,10)}` });
                 } catch (e) {
                   log("WARN", "Failed to send SLA alert email", { email: admin.email, error: String(e) });
                 }
@@ -301,12 +301,12 @@ Deno.serve(async (req) => {
           // Send reminder email
           if (resend && inquiry.email) {
             const firstName = inquiry.user_name?.split(' ')[0] || 'there';
-            await sendEmailWithRetry(resend, {
+            await sendEmailWithRetry(supabase, resend, {
               from: "RehabLookup Concierge <concierge@rehablookup.com>",
               to: [inquiry.email],
               subject: `${firstName}, your treatment options are waiting`,
               html: seekerReminderEmail(firstName, facilitiesCount),
-            });
+            }, { emailType: "seeker_reminder", idempotencyKey: `seeker-reminder-${inquiry.id}` });
           }
 
           // Mark reminder as sent
