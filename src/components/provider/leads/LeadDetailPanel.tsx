@@ -121,6 +121,7 @@ export interface Lead {
   original_facility_id: string | null;
   provider_response_status: string | null;
   provider_responded_at: string | null;
+  provider_response_notes: string | null;
   inquiry_type: string | null;
   is_unlocked?: boolean;
 }

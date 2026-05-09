@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, format } from "date-fns";
 import {
@@ -9,6 +10,7 @@ import { ResponseTemplatesDrawer } from "@/components/provider/inquiries/Respons
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +37,7 @@ interface InquiryDetailPanelProps {
     inquiry_type: InquiryType | null;
     provider_response_status: string | null;
     provider_responded_at: string | null;
+    provider_response_notes: string | null;
     created_at: string;
     message: string | null;
     source: string | null;
@@ -61,19 +64,21 @@ interface InquiryDetailPanelProps {
 
 export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: InquiryDetailPanelProps) {
   const queryClient = useQueryClient();
+  const [responseNotes, setResponseNotes] = useState("");
   
   const updateStatus = useMutation({
-    mutationFn: async (status: ResponseStatus) => {
+    mutationFn: async ({ status, notes }: { status: ResponseStatus; notes?: string }) => {
       const { error } = await supabase
         .from("leads")
         .update({
           provider_response_status: status === 'pending' ? null : status,
           provider_responded_at: status !== 'pending' ? new Date().toISOString() : null,
+          ...(notes !== undefined ? { provider_response_notes: notes || null } : {}),
         })
         .eq("id", inquiry.id);
       if (error) throw error;
     },
-    onSuccess: (_, status) => {
+    onSuccess: (_, { status }) => {
       queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
       toast.success(`Status updated to ${status}`);
     },
@@ -252,7 +257,7 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
                     "gap-1.5 transition-all",
                     currentStatus === status && activeClass
                   )}
-                  onClick={() => updateStatus.mutate(status)}
+                  onClick={() => updateStatus.mutate({ status, notes: responseNotes || undefined })}
                   disabled={updateStatus.isPending}
                 >
                   {updateStatus.isPending && currentStatus !== status ? (
@@ -269,6 +274,22 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
                 Last updated {formatDistanceToNow(new Date(inquiry.provider_responded_at), { addSuffix: true })}
               </p>
             )}
+            {/* Optional notes for status update */}
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">Notes (optional)</label>
+              <Textarea
+                placeholder="Add notes about your response or outcome..."
+                value={responseNotes}
+                onChange={(e) => setResponseNotes(e.target.value)}
+                className="text-sm min-h-[60px] resize-none"
+                rows={2}
+              />
+              {inquiry.provider_response_notes && (
+                <p className="text-xs text-muted-foreground italic">
+                  Previous note: {inquiry.provider_response_notes}
+                </p>
+              )}
+            </div>
           </div>
         )}
 

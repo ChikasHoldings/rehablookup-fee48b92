@@ -138,7 +138,8 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
       const previousFacilityId = lead.facility_id ?? null;
       const updates: Record<string, unknown> = {
         facility_id: facilityId,
-        redistribution_status: "redistributed",
+        redistribution_status: "redistributed", // admin manual reassign (valid per constraint)
+        assignment_status: "reassigned",
         assigned_at: new Date().toISOString(),
       };
       // Only stamp original_facility_id the first time we redistribute, so
@@ -216,7 +217,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
   const assignedFacility = lead?.facility_id ? facilityMap.get(lead.facility_id) : providerInfo?.facility;
   const originalFacility = lead?.original_facility_id ? facilityMap.get(lead.original_facility_id) : null;
   const isUnlocked = (unlockData?.length || 0) > 0;
-  const isRedistributed = lead?.redistribution_status === "extended";
+  const isRedistributed = lead?.redistribution_status === "extended" || lead?.redistribution_status === "redistributed";
   const getInitials = () => lead?.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
 
   // Build activity timeline

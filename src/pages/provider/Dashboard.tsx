@@ -152,7 +152,7 @@ export default function ProviderDashboardPage() {
       if (!facilityId) return [];
       const { data, error } = await supabase
         .from("leads_provider_view")
-        .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, preferred_contact, snooze_until")
+        .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, insurance_provider, message, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, provider_response_notes, preferred_contact, snooze_until, employment_status, veteran_status, legal_involvement, age_range, gender, co_occurring_conditions, readiness_level, dual_diagnosis, budget_preference, special_needs, redistribution_status, exclusive_until, extended_until, original_facility_id, assignment_status, assignment_reason, assigned_at, quality_flag, shared_with")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(4);

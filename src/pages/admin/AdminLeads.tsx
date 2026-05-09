@@ -103,10 +103,11 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function LeadStatusBadge({ lead, unlocked }: { lead: Lead; unlocked: boolean }) {
-  if (lead.redistribution_status === "extended") {
+  if (lead.redistribution_status === "extended" || lead.redistribution_status === "redistributed") {
+    const badgeLabel = lead.redistribution_status === "redistributed" ? "Reassigned" : "Shared";
     return (
       <Badge variant="outline" className="bg-info/10 text-info border-info/30 gap-1 text-xs">
-        <Share2 className="h-3 w-3" />Shared
+        <Share2 className="h-3 w-3" />{badgeLabel}
       </Badge>
     );
   }
@@ -201,7 +202,7 @@ export default function AdminLeads() {
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "contacted"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "converted"),
         supabase.from("lead_unlocks").select("id", { count: "exact", head: true }),
-        supabase.from("leads").select("id", { count: "exact", head: true }).eq("redistribution_status", "extended"),
+        supabase.from("leads").select("id", { count: "exact", head: true }).in("redistribution_status", ["extended", "redistributed"]),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("inquiry_type", "request_info"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("inquiry_type", "request_callback"),
       ]);
@@ -222,7 +223,7 @@ export default function AdminLeads() {
       let query = supabase.from("leads").select("id", { count: "exact", head: true });
       if (statusFilter !== "all") query = query.eq("status", statusFilter);
       if (inquiryTypeFilter !== "all") query = query.eq("inquiry_type", inquiryTypeFilter);
-      if (redistributionFilter === "redistributed") query = query.eq("redistribution_status", "extended");
+      if (redistributionFilter === "redistributed") query = query.in("redistribution_status", ["extended", "redistributed"]);
       else if (redistributionFilter === "not_redistributed") query = query.or("redistribution_status.is.null,redistribution_status.eq.exclusive");
       else if (redistributionFilter !== "all") query = query.eq("redistribution_status", redistributionFilter);
       if (searchQuery) query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
@@ -254,7 +255,7 @@ export default function AdminLeads() {
 
       if (statusFilter !== "all") query = query.eq("status", statusFilter);
       if (inquiryTypeFilter !== "all") query = query.eq("inquiry_type", inquiryTypeFilter);
-      if (redistributionFilter === "redistributed") query = query.eq("redistribution_status", "extended");
+      if (redistributionFilter === "redistributed") query = query.in("redistribution_status", ["extended", "redistributed"]);
       else if (redistributionFilter === "not_redistributed") query = query.or("redistribution_status.is.null,redistribution_status.eq.exclusive");
       else if (redistributionFilter !== "all") query = query.eq("redistribution_status", redistributionFilter);
       if (searchQuery) query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
