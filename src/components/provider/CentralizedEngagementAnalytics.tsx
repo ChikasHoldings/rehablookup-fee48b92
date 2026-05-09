@@ -4,7 +4,7 @@ import {
 } from "recharts";
 import { 
   Phone, Globe, TrendingUp, ArrowUpRight, ArrowDownRight, Eye, Building2,
-  MousePointerClick, MessageSquare, Star, Search,
+  MousePointerClick, MessageSquare, Star, Search, AlertCircle, RefreshCw,
 } from "lucide-react";
 import { useCentralizedEngagementAnalytics } from "@/hooks/useCentralizedEngagementAnalytics";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
@@ -23,8 +23,8 @@ interface CentralizedEngagementAnalyticsProps {
 }
 
 export function CentralizedEngagementAnalytics({ dateRange, facilityId }: CentralizedEngagementAnalyticsProps) {
-  const { data: analytics, isLoading } = useCentralizedEngagementAnalytics(dateRange, facilityId);
-  const { data: leadAnalytics, isLoading: leadsLoading } = useCentralizedLeadAnalytics(dateRange, facilityId);
+  const { data: analytics, isLoading, isError: engError, refetch: refetchEng } = useCentralizedEngagementAnalytics(dateRange, facilityId);
+  const { data: leadAnalytics, isLoading: leadsLoading, isError: leadsError, refetch: refetchLeads } = useCentralizedLeadAnalytics(dateRange, facilityId);
   const { data: proStatus } = useProStatus();
   const { facilities } = useProviderFacilities();
 
@@ -32,6 +32,24 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
   const hasApprovedListing = facilities.some(f => f.status === "approved");
 
   if (isLoading || leadsLoading) return <EngagementSkeleton />;
+
+  // Show error state with retry button if either query failed
+  if (engError || leadsError) {
+    return (
+      <div className="py-14 flex flex-col items-center text-center">
+        <div className="h-12 w-12 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
+          <AlertCircle className="h-6 w-6 text-destructive" />
+        </div>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Failed to Load Analytics</h3>
+        <p className="text-xs text-muted-foreground max-w-sm mb-4">
+          There was an error loading your engagement data. Please try again.
+        </p>
+        <Button variant="outline" size="sm" onClick={() => { void refetchEng(); void refetchLeads(); }}>
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+        </Button>
+      </div>
+    );
+  }
 
   const periodImpressions = analytics?.periodImpressions || 0;
   const periodProfileViews = analytics?.periodProfileViews || 0;
@@ -149,10 +167,13 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
       {/* Trends Chart */}
       {analytics && analytics.dailyTrends.length > 0 && (
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-1.5">
               <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs font-semibold text-foreground">Daily Trends</span>
+              {analytics.dailyTrends.length === 30 && (
+                <span className="text-[10px] text-muted-foreground/70 ml-1">(last 30 days)</span>
+              )}
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap">
               <LegendDot color="hsl(217, 91%, 60%)" label="Impressions" />

@@ -738,6 +738,7 @@ export default function SeekerFacilityProfile() {
                       href={facility.website} 
                       target="_blank" 
                       rel="noopener noreferrer"
+                      onClick={() => facility?.id && trackWebsiteClick(facility.id, "profile")}
                       className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors py-2"
                     >
                       <Globe className="h-4 w-4" />

@@ -5,10 +5,9 @@ import {
 } from "recharts";
 import { 
   TrendingUp, Users, Target, ArrowUpRight, ArrowDownRight, BarChart3,
-  PieChart as PieChartIcon, Building2, MessageSquare, Unlock,
+  PieChart as PieChartIcon, Building2, MessageSquare, Unlock, AlertCircle, RefreshCw,
 } from "lucide-react";
 import { useCentralizedLeadAnalytics } from "@/hooks/useCentralizedLeadAnalytics";
-import { useProStatus } from "@/hooks/useProStatus";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -46,14 +45,34 @@ const FUNNEL_STAGES = [
 ];
 
 export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: CentralizedLeadAnalyticsDashboardProps) {
-  const { data: analytics, isLoading } = useCentralizedLeadAnalytics(dateRange, facilityId);
-  const { data: proStatus } = useProStatus();
+  const { data: analytics, isLoading, isError, refetch } = useCentralizedLeadAnalytics(dateRange, facilityId);
+  // NOTE: useProStatus is intentionally removed here — lead analytics are shown to all
+  // providers regardless of plan; Pro gating is handled at the inquiry unlock level.
   const { facilities } = useProviderFacilities();
 
-  const isPro = proStatus?.isPro || false;
   const hasApprovedListing = facilities.some(f => f.status === "approved");
 
-  if (isLoading || !analytics) return <AnalyticsSkeleton />;
+  if (isLoading) return <AnalyticsSkeleton />;
+
+  // Show error state with retry button if query failed
+  if (isError) {
+    return (
+      <div className="py-14 flex flex-col items-center text-center">
+        <div className="h-12 w-12 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
+          <AlertCircle className="h-6 w-6 text-destructive" />
+        </div>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Failed to Load Inquiry Analytics</h3>
+        <p className="text-xs text-muted-foreground max-w-sm mb-4">
+          There was an error loading your inquiry data. Please try again.
+        </p>
+        <Button variant="outline" size="sm" onClick={() => void refetch()}>
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (!analytics) return <AnalyticsSkeleton />;
 
   if (analytics.totalLeads === 0) {
     return (

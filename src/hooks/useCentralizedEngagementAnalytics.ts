@@ -61,9 +61,13 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
   const queryClient = useQueryClient();
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
 
+  // Only include approved facilities — pending/rejected facilities never appear in
+  // provider_events (the edge function rejects non-approved facility IDs), so
+  // including them just bloats the .in() filter with IDs that will never match.
+  const approvedFacilities = facilities.filter(f => f.status === "approved");
   const facilityIds = filterFacilityId 
-    ? facilities.filter(f => f.id === filterFacilityId).map(f => f.id)
-    : facilities.map((f) => f.id);
+    ? approvedFacilities.filter(f => f.id === filterFacilityId).map(f => f.id)
+    : approvedFacilities.map((f) => f.id);
 
   // Stable string key derived from the array — avoids a complex expression in the dep array
   const facilityIdsKey = facilityIds.join(",");
@@ -130,7 +134,7 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
       }
 
       const allEvents = allEventsData;
-      const facilityMap = new Map(facilities.map((f) => [f.id, f.name]));
+      const facilityMap = new Map(approvedFacilities.map((f) => [f.id, f.name]));
 
       // Split events by type
       const viewEvents = allEvents.filter(e => e.event_type === "profile_view" || e.event_type === "listing_impression");
@@ -247,6 +251,8 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
     enabled: !facilitiesLoading && facilityIds.length > 0,
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: true,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
   });
 }
 

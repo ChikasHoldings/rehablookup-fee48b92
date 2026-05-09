@@ -53,7 +53,7 @@ export default function ProviderAnalyticsPage() {
   // Temporary range state for calendar selection (only committed on Apply)
   const [tempRange, setTempRange] = useState<{ from?: Date; to?: Date }>({});
 
-  const { facilities } = useProviderFacilities();
+  const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
   const approvedFacilities = useMemo(
     () => facilities.filter(f => f.status === "approved"),
     [facilities]
@@ -157,10 +157,40 @@ export default function ProviderAnalyticsPage() {
     setIsCalendarOpen(false);
   };
 
+  // Show a helpful empty state while facilities are loading or if none are approved yet
+  if (!facilitiesLoading && approvedFacilities.length === 0) {
+    return (
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <BarChart3 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-foreground">Analytics</h1>
+              <p className="text-sm text-muted-foreground">Track performance across your listings</p>
+            </div>
+          </div>
+          <div className="py-20 flex flex-col items-center text-center">
+            <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+              <BarChart3 className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h2 className="text-base font-semibold text-foreground mb-2">No Approved Listings Yet</h2>
+            <p className="text-sm text-muted-foreground max-w-sm mb-6">
+              Analytics will appear here once your listing is approved and starts receiving views.
+            </p>
+            <Button asChild size="sm">
+              <a href="/provider/listings">Manage Listings</a>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
       <div className="max-w-5xl mx-auto space-y-5">
-
         {/* ── Page Header ── */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">

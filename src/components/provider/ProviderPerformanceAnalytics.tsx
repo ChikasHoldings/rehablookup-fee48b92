@@ -1,6 +1,6 @@
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { Trophy, TrendingUp, ArrowUpRight, Eye, MessageSquare, Target, Building2 } from "lucide-react";
+import { Trophy, TrendingUp, ArrowUpRight, Eye, MessageSquare, Target, Building2, AlertCircle, RefreshCw } from "lucide-react";
 import { useCentralizedEngagementAnalytics } from "@/hooks/useCentralizedEngagementAnalytics";
 import { useCentralizedLeadAnalytics } from "@/hooks/useCentralizedLeadAnalytics";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
@@ -23,8 +23,8 @@ const BAR_COLORS = [
 ];
 
 export function ProviderPerformanceAnalytics({ dateRange, facilityId }: ProviderPerformanceAnalyticsProps) {
-  const { data: engagement, isLoading: engLoading } = useCentralizedEngagementAnalytics(dateRange, facilityId);
-  const { data: leads, isLoading: leadsLoading } = useCentralizedLeadAnalytics(dateRange, facilityId);
+  const { data: engagement, isLoading: engLoading, isError: engError, refetch: refetchEng } = useCentralizedEngagementAnalytics(dateRange, facilityId);
+  const { data: leads, isLoading: leadsLoading, isError: leadsError, refetch: refetchLeads } = useCentralizedLeadAnalytics(dateRange, facilityId);
   const { facilities } = useProviderFacilities();
 
   if (engLoading || leadsLoading) {
@@ -38,13 +38,38 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
     );
   }
 
-  const totalViews = engagement?.periodImpressions || 0;
+  // Show error state with retry button if either query failed
+  if (engError || leadsError) {
+    return (
+      <div className="py-14 flex flex-col items-center text-center">
+        <div className="h-12 w-12 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
+          <AlertCircle className="h-6 w-6 text-destructive" />
+        </div>
+        <h3 className="text-sm font-semibold text-foreground mb-1">Failed to Load Performance Data</h3>
+        <p className="text-xs text-muted-foreground max-w-sm mb-4">
+          There was an error loading your performance metrics. Please try again.
+        </p>
+        <button
+          className="inline-flex items-center gap-1.5 text-xs font-medium border rounded-md px-3 py-1.5 hover:bg-muted/50 transition-colors"
+          onClick={() => { void refetchEng(); void refetchLeads(); }}
+        >
+          <RefreshCw className="h-3.5 w-3.5" /> Retry
+        </button>
+      </div>
+    );
+  }
+
+  const totalImpressions = engagement?.periodImpressions || 0;
+  const totalProfileViews = engagement?.periodProfileViews || 0;
   const totalLeads = leads?.thisMonthLeads || 0;
   const converted = leads?.conversionFunnel.converted || 0;
-  const viewToLeadRate = totalViews > 0 ? Math.round((totalLeads / totalViews) * 100) : 0;
+  // Use profile views (not impressions) as the denominator — a "View → Lead" rate
+  // measures how many people who actually viewed the profile then submitted an inquiry.
+  // Using impressions (search appearances) would give a misleadingly low rate.
+  const viewToLeadRate = totalProfileViews > 0 ? Math.round((totalLeads / totalProfileViews) * 100) : 0;
   const leadToConversionRate = totalLeads > 0 ? Math.round((converted / totalLeads) * 100) : 0;
 
-  const hasData = totalViews > 0 || totalLeads > 0;
+  const hasData = totalImpressions > 0 || totalLeads > 0;
 
   if (!hasData) {
     return (
@@ -84,9 +109,10 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
     <div className="space-y-5">
       {/* Performance KPIs */}
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-        <PerfCard title="Impressions" value={totalViews} icon={Eye} color="primary" />
+        <PerfCard title="Search Appearances" value={totalImpressions} icon={Eye} color="primary" />
         <PerfCard title="Total Leads" value={totalLeads} icon={MessageSquare} color="blue" />
-        <PerfCard title="View → Lead" value={`${viewToLeadRate}%`} icon={TrendingUp} color="purple" />
+        {/* Rate uses profile views as denominator — measures how many viewers became leads */}
+        <PerfCard title="View → Lead" value={`${viewToLeadRate}%`} icon={TrendingUp} color="purple" tooltip="Profile views that resulted in an inquiry" />
         <PerfCard title="Lead → Convert" value={`${leadToConversionRate}%`} icon={Target} color="emerald" />
       </div>
 
@@ -192,12 +218,12 @@ const PERF_COLOR_MAP: Record<string, { bg: string; text: string }> = {
   purple: { bg: "bg-purple-500/10", text: "text-purple-600" },
 };
 
-function PerfCard({ title, value, icon: Icon, color }: {
-  title: string; value: number | string; icon: React.ComponentType<{ className?: string }>; color: string;
+function PerfCard({ title, value, icon: Icon, color, tooltip }: {
+  title: string; value: number | string; icon: React.ComponentType<{ className?: string }>; color: string; tooltip?: string;
 }) {
   const c = PERF_COLOR_MAP[color] || PERF_COLOR_MAP.primary;
   return (
-    <div className="rounded-md border px-2.5 py-2 bg-card hover:shadow-sm transition-shadow">
+    <div className="rounded-md border px-2.5 py-2 bg-card hover:shadow-sm transition-shadow" title={tooltip}>
       <div className="flex items-center gap-1.5 mb-1">
         <div className={cn("h-5 w-5 rounded flex items-center justify-center shrink-0", c.bg)}>
           <Icon className={cn("h-3 w-3", c.text)} />

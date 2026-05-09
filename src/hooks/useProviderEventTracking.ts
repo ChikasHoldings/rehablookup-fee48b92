@@ -38,10 +38,14 @@ export function useProviderEventTracking() {
   const trackEvent = useCallback(async ({ facilityId, eventType, pageContext = "other" }: TrackEventOptions) => {
     if (!facilityId) return;
 
-    // Create unique key for de-duplication within session
-    const eventKey = `${facilityId}-${eventType}-${pageContext}`;
+    // Create unique key for de-duplication within session.
+    // Key includes facilityId so that visiting two different facility pages in
+    // the same session correctly fires a profile_view for each facility.
+    // The server-side 30-second window dedup handles true duplicates (e.g. hot
+    // reloads or double-mounts in React Strict Mode).
+    const eventKey = `${facilityId}-${eventType}`;
     
-    // For impressions and profile views, only fire once per session
+    // For impressions and profile views, only fire once per session per facility
     if ((eventType === "listing_impression" || eventType === "profile_view") && firedEvents.current.has(eventKey)) {
       return;
     }

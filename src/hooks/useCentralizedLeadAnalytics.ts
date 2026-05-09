@@ -60,9 +60,12 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange, filterFacilit
   const queryClient = useQueryClient();
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
 
+  // Only include approved facilities — leads are only routed to approved facilities,
+  // so including pending/rejected IDs just bloats the .in() filter with no-match IDs.
+  const approvedFacilities = facilities.filter(f => f.status === "approved");
   const facilityIds = filterFacilityId
-    ? facilities.filter(f => f.id === filterFacilityId).map(f => f.id)
-    : facilities.map((f) => f.id);
+    ? approvedFacilities.filter(f => f.id === filterFacilityId).map(f => f.id)
+    : approvedFacilities.map((f) => f.id);
 
   // Stable string key derived from the array — avoids a complex expression in the dep array
   const facilityIdsKey = facilityIds.join(",");
@@ -93,7 +96,7 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange, filterFacilit
 
       const { data: allLeads, error: leadsError } = await supabase
         .from("leads_provider_view")
-        .select("id, facility_id, name, status, created_at, urgency, level_of_care, source, location_city_state, insurance_type, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, primary_substance")
+        .select("id, facility_id, name, status, created_at, urgency, level_of_care, source, location_city_state, insurance_type, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, primary_substance, exclusivity, preferred_contact")
         .in("facility_id", facilityIds)
         .order("created_at", { ascending: true })
         .limit(2000);
@@ -101,7 +104,7 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange, filterFacilit
       if (leadsError) throw leadsError;
 
       const leads = allLeads || [];
-      const facilityMap = new Map(facilities.map((f) => [f.id, f.name]));
+      const facilityMap = new Map(approvedFacilities.map((f) => [f.id, f.name]));
 
       const leadsWithFacilityNames = leads.map((lead) => ({
         ...lead,
@@ -142,6 +145,8 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange, filterFacilit
     enabled: !facilitiesLoading && facilityIds.length > 0,
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: true,
+    retry: 2,
+    retryDelay: (attempt: number) => Math.min(1000 * 2 ** attempt, 10000),
   });
 }
 
