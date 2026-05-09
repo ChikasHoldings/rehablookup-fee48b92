@@ -469,9 +469,9 @@ function getFacilityNotificationEmail(
                       <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Preferred contact</td><td style="padding: 6px 0;">${preferredDisplay}</td></tr>
                     </table>
                     ${messageExcerpt ? `
-                    <div style="margin-top: 16px; padding: 14px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;">
-                      <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Message from prospect</p>
-                      <p style="margin: 0; font-size: 14px; color: #334155; line-height: 1.6; white-space: pre-wrap;">${messageExcerpt}</p>
+                    <div style="margin-top: 16px; padding: 14px 16px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
+                      <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">📝 Personal message included</p>
+                      <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.5;">This lead included a personal message. Unlock the lead in your dashboard to read it.</p>
                     </div>
                     ` : ""}
                   </td>

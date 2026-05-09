@@ -491,7 +491,7 @@ export function RequestInfoModal({
 
         const { count, error } = await supabase
           .from("leads")
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact", head: true })
           .eq("facility_id", safeFacilityId)
           .gte("created_at", startOfMonth.toISOString());
 

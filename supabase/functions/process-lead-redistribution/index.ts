@@ -375,7 +375,7 @@ Deno.serve(async (req) => {
       if (!anyUnlock) {
         await supabase
           .from("leads")
-          .update({ redistribution_status: "expired" })
+          .update({ redistribution_status: "expired", lead_expired_at: now.toISOString() })
           .eq("id", lead.id);
         expiredCount++;
       }
