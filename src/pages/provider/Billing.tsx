@@ -157,7 +157,7 @@ export default function ProviderBillingPage() {
     handledParamsRef.current.add(paramKey);
 
     if (proSuccess === "true") {
-      analytics.subscriptionPurchase('pro_monthly', 4900, 'USD'); // $49/month Pro plan
+      analytics.subscriptionPurchase('pro_monthly', 'RehabLookup Pro', 399); // $399/month Pro plan
       toast.success("Welcome to Pro! Your benefits are now active.", { duration: 5000 });
       refetchProStatus();
       startPostCheckoutPolling(() => refetchProStatus());

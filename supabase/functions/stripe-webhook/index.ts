@@ -234,7 +234,9 @@ Deno.serve(async (req) => {
         });
       }
 
-      // DOMESTIC CONCIERGE PAYMENT (safety net for abandoned intake forms)
+      // DEPRECATED: Domestic concierge is now FREE. This handler is retained only as a
+      // safety net for any legacy in-flight Stripe sessions that may still resolve.
+      // No new checkout sessions are created — create-concierge-checkout has been removed.
       if (session.mode === "payment" && session.metadata?.service === "concierge_placement") {
         const email = session.customer_email || "";
         const userId = session.metadata?.user_id || null;

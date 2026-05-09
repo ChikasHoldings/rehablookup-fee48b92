@@ -609,7 +609,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
           <DialogHeader>
             <DialogTitle>Confirm Admission</DialogTitle>
             <DialogDescription>
-              This will mark the case as admitted, create a $4,500 facility invoice, and process the client's $99 fee.
+              This will mark the case as admitted, create a $3,000 facility invoice, and process the client's $99 fee.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -657,7 +657,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
             <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
               <p className="text-sm text-amber-800 dark:text-amber-200 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
-                This action will also create a $4,500 facility invoice
+                This action will also create a $3,000 facility invoice
               </p>
             </div>
           </div>
@@ -849,7 +849,7 @@ function FacilityInvoiceSection({ caseId, invoiceId, feeStatus, feeCents, onActi
     <>
       <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
         <h4 className="font-medium mb-3 flex items-center gap-2">
-          <Receipt className="h-4 w-4" /> Facility Invoice ($4,500)
+          <Receipt className="h-4 w-4" /> Facility Invoice ($3,000)
         </h4>
         
         {isLoading ? (
@@ -884,7 +884,7 @@ function FacilityInvoiceSection({ caseId, invoiceId, feeStatus, feeCents, onActi
                   disabled={isPending}
                 >
                   {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Send className="h-3.5 w-3.5 mr-1" />}
-                  Issue $4,500 Invoice
+                  Issue $3,000 Invoice
                 </Button>
               )}
 
@@ -953,7 +953,7 @@ function FacilityInvoiceSection({ caseId, invoiceId, feeStatus, feeCents, onActi
           <DialogHeader>
             <DialogTitle>Void Invoice</DialogTitle>
             <DialogDescription>
-              This will mark the $4,500 facility invoice as void and cancel it in Stripe.
+              This will mark the $3,000 facility invoice as void and cancel it in Stripe.
             </DialogDescription>
           </DialogHeader>
           <div>

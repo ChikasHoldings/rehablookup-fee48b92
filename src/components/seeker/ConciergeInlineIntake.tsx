@@ -18,7 +18,6 @@ import {
   ArrowRight, 
   ArrowLeft,
   Shield,
-  CreditCard,
   User,
   MapPin,
   Heart,
@@ -244,10 +243,10 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
       const sanitize = (s: string, max = 200) => s.replace(/<[^>]*>/g, '').replace(/javascript:/gi, '').trim().slice(0, max);
       const cleanPhone = (formData.phone || userPhone || "").replace(/[^\d+\-() ]/g, '').slice(0, 20);
 
-      analytics.beginConciergeCheckout(9900); // $99 concierge fee
-      const { data, error } = await supabase.functions.invoke("create-concierge-checkout", {
+      analytics.conciergeIntakeSubmitted();
+      const { data, error } = await supabase.functions.invoke("submit-concierge-intake", {
         body: {
-          email: userEmail,
+          skipPayment: true,
           intakeData: {
             ...formData,
             currentCity: sanitize(formData.currentCity, 100),
@@ -258,33 +257,24 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
             email: userEmail,
             phone: cleanPhone,
           },
-          isAuthenticated: true,
           userId: userId,
         },
       });
 
       if (error) throw error;
 
-      if (data?.url) {
-        localStorage.setItem("concierge_pending_intake", JSON.stringify({
-          formData,
-          userName,
-          userEmail,
-          userPhone: cleanPhone,
-          sessionId: data.sessionId,
-        }));
-        
-        if (data.url.startsWith("https://checkout.stripe.com") || data.url.startsWith("https://billing.stripe.com")) {
-          window.location.href = data.url;
-        } else {
-          throw new Error("Invalid checkout URL");
-        }
+      if (data?.success || data?.id) {
+        toast.success("Your placement request has been submitted! Our team will be in touch soon.", { duration: 6000 });
+        queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
+        navigate("/account/concierge");
+      } else if (data?.error) {
+        throw new Error(data.error);
       } else {
-        throw new Error("No checkout URL returned");
+        throw new Error("Submission failed");
       }
     } catch (err) {
-      console.error("Checkout error:", err);
-      toast.error("Failed to start checkout. Please try again.");
+      console.error("Submission error:", err);
+      toast.error("Failed to submit your request. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -687,7 +677,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <CreditCard className="h-5 w-5 text-primary" />
+              <CheckCircle className="h-5 w-5 text-primary" />
               <div>
                 <p className="font-semibold">Concierge Placement</p>
                 <p className="text-sm text-muted-foreground">Personalized placement assistance</p>
@@ -750,7 +740,7 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
 
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Shield className="h-3 w-3" />
-          <span>Secure payment powered by Stripe</span>
+          <span>Your information is protected and confidential</span>
         </div>
       </CardContent>
     </Card>

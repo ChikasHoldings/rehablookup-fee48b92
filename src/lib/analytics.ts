@@ -541,67 +541,44 @@ export const analytics = {
 
   // ========== CONCIERGE PAYMENT TRACKING ==========
 
-  // Concierge checkout initiated
-  beginConciergeCheckout: (amountCents: number) => {
-    const amountDollars = amountCents / 100;
-    trackEvent('begin_checkout', {
-      currency: 'USD',
-      value: amountDollars,
-      items: [{
-        item_id: 'concierge_intake',
-        item_name: 'Concierge Matching Service',
-        item_category: 'Concierge',
-        price: amountDollars,
-        quantity: 1,
-      }] as EcommerceItem[],
-    });
-  },
-
-  // Concierge payment verified
-  conciergePaymentComplete: (sessionId: string, amountCents?: number) => {
-    const amountDollars = (amountCents || 9900) / 100;
-    trackEvent('purchase', {
-      transaction_id: sessionId || `concierge_${Date.now()}`,
-      currency: 'USD',
-      value: amountDollars,
-      items: [{
-        item_id: 'concierge_intake',
-        item_name: 'Concierge Matching Service',
-        item_category: 'Concierge',
-        price: amountDollars,
-        quantity: 1,
-      }] as EcommerceItem[],
+  // Concierge intake submitted (domestic US placement is FREE)
+  conciergeIntakeSubmitted: () => {
+    trackEvent('generate_lead', {
+      event_category: 'Concierge',
+      event_label: 'Domestic Placement Intake',
+      value: 0,
     });
   },
 
   // ========== INTERNATIONAL PLACEMENT TRACKING ==========
 
-  // International placement checkout initiated
+  // International placement checkout initiated ($99 refundable fee)
   beginInternationalCheckout: (country: string) => {
     trackEvent('begin_checkout', {
       currency: 'USD',
-      value: 0, // price determined server-side
+      value: 99.00,
       items: [{
         item_id: 'international_placement',
         item_name: 'International Placement Service',
         item_category: 'International',
         item_variant: country,
+        price: 99.00,
         quantity: 1,
       }] as EcommerceItem[],
     });
   },
 
-  // International placement payment verified
-  internationalPaymentComplete: (sessionId: string, amountCents?: number) => {
-    const amountDollars = (amountCents || 0) / 100;
+  // International placement payment verified ($99)
+  internationalPaymentComplete: (sessionId: string) => {
     trackEvent('purchase', {
       transaction_id: sessionId || `intl_${Date.now()}`,
       currency: 'USD',
-      value: amountDollars,
+      value: 99.00,
       items: [{
         item_id: 'international_placement',
         item_name: 'International Placement Service',
         item_category: 'International',
+        price: 99.00,
         quantity: 1,
       }] as EcommerceItem[],
     });
@@ -609,8 +586,8 @@ export const analytics = {
 
   // ========== PLACEMENT FEE TRACKING ==========
 
-  // Placement fee charged to provider
-  placementFeeCharged: (facilityId: string, amountCents: number, caseId: string) => {
+  // Placement fee charged to provider (Domestic: $1,000, Pro: $800 | International: $3,000)
+  placementFeeCharged: (facilityId: string, amountCents: number, caseId: string, isInternational?: boolean) => {
     const amountDollars = amountCents / 100;
     trackEvent('purchase', {
       transaction_id: `placement_${caseId}_${Date.now()}`,
@@ -618,7 +595,7 @@ export const analytics = {
       value: amountDollars,
       items: [{
         item_id: caseId,
-        item_name: 'Placement Fee',
+        item_name: isInternational ? 'International Admission Fee' : 'Domestic Placement Fee',
         item_category: 'Placement',
         price: amountDollars,
         quantity: 1,

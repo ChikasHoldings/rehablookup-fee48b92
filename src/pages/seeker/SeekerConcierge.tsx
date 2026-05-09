@@ -116,7 +116,7 @@ export default function SeekerConcierge() {
           .select("id")
           .eq("user_email", userEmail.toLowerCase())
           .is("user_id", null)
-          .in("payment_status", ["paid", "succeeded"]);
+          .in("payment_status", ["paid", "succeeded", "free"]);
         
         if (unlinked && unlinked.length > 0) {
           for (const inquiry of unlinked) {
@@ -154,7 +154,7 @@ export default function SeekerConcierge() {
           assigned_advisor_id
         `)
         .eq("user_id", userId)
-        .in("payment_status", ["paid", "succeeded"])
+        .in("payment_status", ["paid", "succeeded", "free"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -206,7 +206,7 @@ export default function SeekerConcierge() {
       }
 
       if (verifyData?.paid) {
-        analytics.conciergePaymentComplete(sessionId);
+        analytics.conciergeIntakeSubmitted();
         const pendingIntake = localStorage.getItem("concierge_pending_intake");
         if (pendingIntake) {
           const { formData, userName, userEmail, userPhone } = JSON.parse(pendingIntake);

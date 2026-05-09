@@ -103,6 +103,7 @@ export default function InternationalApplication() {
 
   const handlePaymentSuccess = async (sessionId: string) => {
     try {
+      analytics.internationalPaymentComplete(sessionId);
       // Get stored intake data
       const storedData = localStorage.getItem("international_intake_data");
       const intakeData = storedData ? JSON.parse(storedData) : data;

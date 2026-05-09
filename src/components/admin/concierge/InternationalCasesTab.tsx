@@ -492,7 +492,7 @@ export function InternationalCasesTab() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5" />
-              International Facility Invoices ($4,500 per admission)
+              International Facility Invoices ($3,000 per admission)
             </CardTitle>
           </CardHeader>
           <CardContent>

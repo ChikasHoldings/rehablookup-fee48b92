@@ -116,7 +116,7 @@ export const PLAN_DETAILS = {
     features: [
       "1 facility listing",
       "Receive locked inquiries",
-      "Pay per unlock ($39-49)",
+      "Pay per unlock (dynamic pricing)",
       "Basic dashboard",
     ],
     notIncluded: [
@@ -136,7 +136,7 @@ export const PLAN_DETAILS = {
     features: [
       "Up to 5 facility listings",
       "20% off lead unlocks",
-      "Placement fee: $800 (save $200)",
+      "Placement fee: $1,000 (Pro: $800, save $200)",
       "Featured homepage placement",
       "Priority search ranking",
       "Pro badge on profile",
