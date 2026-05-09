@@ -23,6 +23,7 @@ import { PlacementOpsDashboard } from "@/components/admin/concierge/PlacementOps
 import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvidersTab";
 import { AllInvoicesTab } from "@/components/admin/concierge/AllInvoicesTab";
 import { InternationalCasesTab } from "@/components/admin/concierge/InternationalCasesTab";
+import { RevenueProtectionDashboard } from "@/components/admin/concierge/RevenueProtectionDashboard";
 import { PlacementDetailModal } from "@/components/admin/concierge/PlacementDetailModal";
 import { getCaseNextAction } from "@/components/admin/concierge/placementActionUtils";
 import { CaseAlertIcons } from "@/components/admin/concierge/CaseSlaAlerts";
@@ -216,6 +217,10 @@ export default function AdminConcierge() {
                   <Receipt className="h-3.5 w-3.5" />
                   <span className="text-xs sm:text-sm">Invoices</span>
                 </TabsTrigger>
+                <TabsTrigger value="revenue" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  <span className="text-xs sm:text-sm">Revenue</span>
+                </TabsTrigger>
               </>
             )}
           </TabsList>
@@ -386,6 +391,10 @@ export default function AdminConcierge() {
 
         <TabsContent value="invoices">
           <AllInvoicesTab />
+        </TabsContent>
+
+        <TabsContent value="revenue">
+          <RevenueProtectionDashboard />
         </TabsContent>
       </Tabs>
 

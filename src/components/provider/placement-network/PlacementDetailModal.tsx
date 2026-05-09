@@ -38,6 +38,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useSelectedFacilityOptional } from "@/contexts/SelectedFacilityContext";
 import { useMatchScore, MatchScoreBadge } from "./MatchScoreUtils";
+import { AdmissionReportCard } from "./AdmissionReportCard";
 
 // ── PII-safe field lists ───────────────────────────────
 
@@ -126,6 +127,9 @@ interface Introduction {
   provider_responded_at?: string | null;
   provider_notes?: string | null;
   admin_disclosed_pii_at?: string | null;
+  admission_report_deadline?: string | null;
+  provider_admission_reported?: boolean;
+  provider_admission_reported_at?: string | null;
   concierge_inquiries?: ConciergeInquiry | null;
 }
 
@@ -725,6 +729,17 @@ export function PlacementDetailModal({
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{seekerPii.notes}</p>
                   </SectionCard>
                 )}
+                {/* ── Admission Report ── */}
+                <AdmissionReportCard
+                  introductionId={introduction?.id || ""}
+                  facilityId={facilityId || ""}
+                  inquiryId={introduction?.inquiry_id || ""}
+                  piiDisclosed={!!introduction?.admin_disclosed_pii_at}
+                  admissionReportDeadline={introduction?.admission_report_deadline || null}
+                  alreadyReported={!!introduction?.provider_admission_reported}
+                  reportedDate={introduction?.provider_admission_reported_at || null}
+                  seekerFirstName={seekerPii?.user_name?.split(" ")[0] || "the client"}
+                />
               </div>
             )}
           </TabPanel>
