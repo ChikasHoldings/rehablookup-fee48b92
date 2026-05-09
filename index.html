@@ -325,6 +325,17 @@
     if('requestIdleCallback' in window){requestIdleCallback(loadMetaPixel,{timeout:4000})}else{setTimeout(loadMetaPixel,2000)}
     </script>
     <!-- End Meta Pixel Code -->
+
+    <!-- Google Analytics 4 (G-MM5K8398LY) -->
+    <!-- Loaded async to avoid blocking FCP; covers the full React SPA -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MM5K8398LY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-MM5K8398LY');
+    </script>
+    <!-- End Google Analytics 4 -->
   </head>
 
   <body>
