@@ -61,8 +61,7 @@ const STANDING_CONFIG: Record<string, {
 };
 
 export function ComplianceStandingBanner() {
-  const { selectedFacility } = useSelectedFacilityOptional() || {};
-  const selectedFacilityId = selectedFacility?.id;
+  const { selectedFacilityId } = useSelectedFacilityOptional() || {};
 
   const { data: facilityStanding } = useQuery({
     queryKey: ["provider-facility-standing", selectedFacilityId],

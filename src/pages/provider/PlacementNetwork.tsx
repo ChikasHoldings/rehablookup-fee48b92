@@ -137,7 +137,7 @@ export default function ProviderPlacementNetworkPage() {
         supabase
           .from("concierge_introductions")
           .select(
-            "id, inquiry_id, facility_id, sent_at, sent_by, provider_response, provider_responded_at, provider_notes, seeker_contacted, seeker_contacted_at, created_at, admin_disclosed_pii_at, admission_report_deadline, provider_admission_reported, provider_admission_reported_at"
+            "id, inquiry_id, facility_id, sent_at, sent_by, provider_response, provider_responded_at, provider_notes, seeker_contacted, seeker_contacted_at, created_at, admin_disclosed_pii_at"
           )
           .eq("facility_id", selectedFacility.id)
           .order("created_at", { ascending: false }),
