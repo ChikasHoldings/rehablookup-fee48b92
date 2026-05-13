@@ -57,6 +57,14 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { WizardStepper } from "@/components/provider/WizardStepper";
 import { useFacilityBySlug, type FacilityBaseData } from "@/hooks/useFacilityBySlug";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,14 +74,19 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Database,
   FileText,
+  Image as ImageIcon,
   Loader2,
   Mail,
   MapPin,
   MessageSquare,
   Phone,
+  Plus,
   ShieldCheck,
+  Trash2,
   Upload,
   X,
 } from "lucide-react";
@@ -110,6 +123,26 @@ interface UploadedDoc {
   name: string;
 }
 
+interface StoredFile {
+  path: string;
+  name: string;
+}
+
+interface CorrectedContact {
+  phone: string;
+  email: string;
+  website: string;
+}
+
+interface AccreditationEntry {
+  id: string; // client-side, stable across renders / sessionStorage
+  type: string;
+  number: string;
+  issuing_authority: string;
+  document_path?: string;
+  document_name?: string;
+}
+
 interface WizardState {
   currentStep: number;
   claimRequestId: string | null;
@@ -123,6 +156,15 @@ interface WizardState {
   verificationMethod: VerificationMethod | null;
   verificationEmail: string;
   uploadedDocs: UploadedDoc[];
+  // Step 4 state (enrichment) — all optional, persisted on step transition
+  step4Seeded: boolean;
+  description: string;
+  correctedContact: CorrectedContact;
+  logo: StoredFile | null;
+  photos: StoredFile[];
+  services: string[];
+  insurances: string[];
+  accreditations: AccreditationEntry[];
 }
 
 function emptyState(): WizardState {
@@ -138,8 +180,61 @@ function emptyState(): WizardState {
     verificationMethod: null,
     verificationEmail: "",
     uploadedDocs: [],
+    step4Seeded: false,
+    description: "",
+    correctedContact: { phone: "", email: "", website: "" },
+    logo: null,
+    photos: [],
+    services: [],
+    insurances: [],
+    accreditations: [],
   };
 }
+
+const SERVICE_OPTIONS: Array<{ slug: string; label: string }> = [
+  { slug: "detox", label: "Detox" },
+  { slug: "residential", label: "Residential" },
+  { slug: "php", label: "Partial Hospitalization (PHP)" },
+  { slug: "iop", label: "Intensive Outpatient (IOP)" },
+  { slug: "outpatient", label: "Outpatient" },
+  { slug: "mat_moud", label: "MAT / MOUD" },
+  { slug: "individual_therapy", label: "Individual Therapy" },
+  { slug: "group_therapy", label: "Group Therapy" },
+  { slug: "family_therapy", label: "Family Therapy" },
+  { slug: "dual_diagnosis", label: "Dual Diagnosis" },
+  { slug: "trauma_informed", label: "Trauma-Informed Care" },
+];
+
+const INSURANCE_OPTIONS: Array<{ slug: string; label: string }> = [
+  { slug: "aetna", label: "Aetna" },
+  { slug: "anthem", label: "Anthem" },
+  { slug: "bcbs", label: "Blue Cross Blue Shield" },
+  { slug: "cigna", label: "Cigna" },
+  { slug: "humana", label: "Humana" },
+  { slug: "kaiser", label: "Kaiser" },
+  { slug: "medicare", label: "Medicare" },
+  { slug: "medicaid", label: "Medicaid" },
+  { slug: "optum", label: "Optum" },
+  { slug: "unitedhealthcare", label: "UnitedHealthcare" },
+  { slug: "tricare", label: "TRICARE" },
+  { slug: "self_pay", label: "Self-pay" },
+];
+
+const ACCREDITATION_TYPES = [
+  "JCAHO",
+  "CARF",
+  "COA",
+  "NAATP",
+  "LegitScript",
+  "State License",
+  "DEA",
+  "Other",
+] as const;
+
+const PHOTO_MAX_COUNT = 8;
+const DESCRIPTION_MAX = 5000;
+const PHOTO_MAX_BYTES = 10 * 1024 * 1024;
+const PHOTO_ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif,image/svg+xml";
 
 function storageKey(slug: string) {
   return `claim-wizard-${slug}`;
@@ -339,7 +434,19 @@ export default function ClaimWizard() {
               />
             )}
 
-            {state.currentStep >= 4 && (
+            {state.currentStep === 4 && state.claimRequestId && currentUserId && (
+              <Step4Enrichment
+                state={state}
+                setState={setState}
+                facility={facility}
+                claimRequestId={state.claimRequestId}
+                currentUserId={currentUserId}
+                onBack={() => setStep(3)}
+                onComplete={() => setStep(5)}
+              />
+            )}
+
+            {state.currentStep >= 5 && (
               <ComingSoonState stepName={WIZARD_STEP_LABELS[state.currentStep - 1]} />
             )}
           </>
@@ -1548,6 +1655,939 @@ function DocUploadView({
           )}
         </Button>
       </div>
+    </div>
+  );
+}
+
+// ─── Step 4 ───────────────────────────────────────────────────────────────
+
+interface Step4Props {
+  state: WizardState;
+  setState: React.Dispatch<React.SetStateAction<WizardState>>;
+  facility: FacilityBaseData;
+  claimRequestId: string;
+  currentUserId: string;
+  onBack: () => void;
+  onComplete: () => void;
+}
+
+function publicClaimPhotoUrl(path: string): string {
+  return supabase.storage.from("claim-photos").getPublicUrl(path).data.publicUrl;
+}
+
+function buildPendingEnrichments(state: WizardState) {
+  // Strip empty/falsy values so the JSONB column stays tidy.
+  const correctedEntries = Object.entries(state.correctedContact).filter(
+    ([, v]) => v.trim().length > 0,
+  );
+  const corrected_contact = correctedEntries.length
+    ? Object.fromEntries(correctedEntries.map(([k, v]) => [k, v.trim()]))
+    : undefined;
+
+  return {
+    description: state.description.trim() || undefined,
+    corrected_contact,
+    logo_path: state.logo?.path || undefined,
+    photo_paths: state.photos.length ? state.photos.map((p) => p.path) : undefined,
+    services: state.services.length ? state.services : undefined,
+    insurances: state.insurances.length ? state.insurances : undefined,
+    accreditations: state.accreditations.length
+      ? state.accreditations.map((a) => ({
+          type: a.type || "Other",
+          number: a.number.trim() || undefined,
+          issuing_authority: a.issuing_authority.trim() || undefined,
+          document_path: a.document_path,
+          document_name: a.document_name,
+        }))
+      : undefined,
+  };
+}
+
+function Step4Enrichment({
+  state,
+  setState,
+  facility,
+  claimRequestId: _claimRequestId,
+  currentUserId,
+  onBack,
+  onComplete,
+}: Step4Props) {
+  const [saving, setSaving] = useState(false);
+
+  // One-time seed: pull doc-upload entries from step 3 into the accreditations
+  // list so the user can flesh them out (type, number, issuing authority).
+  // Also pre-fill the corrected-contact website with whatever the view has.
+  useEffect(() => {
+    if (state.step4Seeded) return;
+    setState((p) => {
+      const seededAccreditations: AccreditationEntry[] =
+        p.accreditations.length === 0 && p.uploadedDocs.length > 0
+          ? p.uploadedDocs.map((doc) => ({
+              id:
+                typeof crypto !== "undefined" && "randomUUID" in crypto
+                  ? crypto.randomUUID()
+                  : `${Date.now()}-${Math.random()}`,
+              type: "",
+              number: "",
+              issuing_authority: "",
+              document_path: doc.path,
+              document_name: doc.name,
+            }))
+          : p.accreditations;
+
+      const seededContact: CorrectedContact =
+        p.correctedContact.phone || p.correctedContact.email || p.correctedContact.website
+          ? p.correctedContact
+          : {
+              phone: facility.phone ?? "",
+              email: "",
+              website: facility.website ?? "",
+            };
+
+      return {
+        ...p,
+        step4Seeded: true,
+        accreditations: seededAccreditations,
+        correctedContact: seededContact,
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time seed
+  }, []);
+
+  async function persistAndNavigate(navigate: () => void) {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const pendingEnrichments = buildPendingEnrichments(state);
+      const effectiveRole =
+        state.claimantRole === "Other"
+          ? state.claimantRoleOther.trim()
+          : state.claimantRole;
+      const { error } = await supabase.functions.invoke("submit-facility-claim", {
+        body: {
+          facilityId: facility.id,
+          claimantName: state.claimantName.trim(),
+          claimantEmail: state.claimantEmail.trim().toLowerCase(),
+          claimantRole: effectiveRole,
+          claimantPhone: state.claimantPhone.trim() || undefined,
+          verificationMethod: state.verificationMethod ?? undefined,
+          pendingEnrichments,
+        },
+      });
+      if (error) {
+        const ctx = (error as { context?: { error?: string; code?: string } })
+          .context;
+        toast.error(ctx?.error ?? error.message ?? "Could not save your details.");
+        setSaving(false);
+        return;
+      }
+      navigate();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Save failed.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="p-6 md:p-7 space-y-5">
+      <header className="space-y-1.5">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-5 w-5 text-primary" aria-hidden />
+          <h1 className="font-display text-xl md:text-2xl font-bold text-foreground">
+            Add details
+          </h1>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Every section is optional. Completing them now means your listing
+          goes live the moment your claim is approved — otherwise you can fill
+          them in afterward from your dashboard.
+        </p>
+      </header>
+
+      <Accordion type="multiple" className="border-y divide-y -mx-1">
+        <AccordionItem value="logo" className="border-0">
+          <AccordionTrigger className="px-1">
+            <SectionLabel
+              icon={ImageIcon}
+              title="Logo"
+              status={state.logo ? "Uploaded" : "Not added"}
+            />
+          </AccordionTrigger>
+          <AccordionContent className="px-1 pt-2">
+            <LogoSection
+              state={state}
+              setState={setState}
+              currentUserId={currentUserId}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="photos" className="border-0">
+          <AccordionTrigger className="px-1">
+            <SectionLabel
+              icon={ImageIcon}
+              title="Photo gallery"
+              status={
+                state.photos.length === 0
+                  ? "Not added"
+                  : `${state.photos.length} of ${PHOTO_MAX_COUNT}`
+              }
+            />
+          </AccordionTrigger>
+          <AccordionContent className="px-1 pt-2">
+            <PhotosSection
+              state={state}
+              setState={setState}
+              currentUserId={currentUserId}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="services" className="border-0">
+          <AccordionTrigger className="px-1">
+            <SectionLabel
+              icon={CheckCircle2}
+              title="Services offered"
+              status={
+                state.services.length === 0
+                  ? "Not added"
+                  : `${state.services.length} selected`
+              }
+            />
+          </AccordionTrigger>
+          <AccordionContent className="px-1 pt-2">
+            <CheckboxGrid
+              options={SERVICE_OPTIONS}
+              value={state.services}
+              onChange={(next) =>
+                setState((p) => ({ ...p, services: next }))
+              }
+              fieldName="services"
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="insurance" className="border-0">
+          <AccordionTrigger className="px-1">
+            <SectionLabel
+              icon={CheckCircle2}
+              title="Insurance accepted"
+              status={
+                state.insurances.length === 0
+                  ? "Not added"
+                  : `${state.insurances.length} selected`
+              }
+            />
+          </AccordionTrigger>
+          <AccordionContent className="px-1 pt-2">
+            <CheckboxGrid
+              options={INSURANCE_OPTIONS}
+              value={state.insurances}
+              onChange={(next) =>
+                setState((p) => ({ ...p, insurances: next }))
+              }
+              fieldName="insurances"
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="accreditations" className="border-0">
+          <AccordionTrigger className="px-1">
+            <SectionLabel
+              icon={ShieldCheck}
+              title="Accreditations & licenses"
+              status={
+                state.accreditations.length === 0
+                  ? "Not added"
+                  : `${state.accreditations.length} on file`
+              }
+            />
+          </AccordionTrigger>
+          <AccordionContent className="px-1 pt-2">
+            <AccreditationsSection
+              state={state}
+              setState={setState}
+              currentUserId={currentUserId}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="contact" className="border-0">
+          <AccordionTrigger className="px-1">
+            <SectionLabel
+              icon={Phone}
+              title="Corrected contact info"
+              status={
+                state.correctedContact.phone ||
+                state.correctedContact.email ||
+                state.correctedContact.website
+                  ? "Edited"
+                  : "Not added"
+              }
+            />
+          </AccordionTrigger>
+          <AccordionContent className="px-1 pt-2">
+            <ContactSection state={state} setState={setState} />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="description" className="border-0">
+          <AccordionTrigger className="px-1">
+            <SectionLabel
+              icon={FileText}
+              title="About the facility"
+              status={
+                state.description.length === 0
+                  ? "Not added"
+                  : `${state.description.length} characters`
+              }
+            />
+          </AccordionTrigger>
+          <AccordionContent className="px-1 pt-2">
+            <DescriptionSection state={state} setState={setState} />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-between pt-2 border-t">
+        <Button
+          variant="outline"
+          onClick={() => persistAndNavigate(onBack)}
+          disabled={saving}
+          size="sm"
+        >
+          {saving ? (
+            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" aria-hidden />
+          ) : (
+            <ArrowLeft className="h-4 w-4 mr-1.5" aria-hidden />
+          )}
+          Back
+        </Button>
+        <Button
+          onClick={() => persistAndNavigate(onComplete)}
+          disabled={saving}
+        >
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" aria-hidden />
+              Saving…
+            </>
+          ) : (
+            <>
+              Continue
+              <ArrowRight className="h-4 w-4 ml-1.5" aria-hidden />
+            </>
+          )}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function SectionLabel({
+  icon: Icon,
+  title,
+  status,
+}: {
+  icon: typeof Mail;
+  title: string;
+  status: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 flex-1">
+      <Icon className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
+      <span className="font-medium text-sm text-foreground">{title}</span>
+      <span className="ml-auto text-xs text-muted-foreground font-normal">
+        {status}
+      </span>
+    </div>
+  );
+}
+
+interface LogoSectionProps {
+  state: WizardState;
+  setState: React.Dispatch<React.SetStateAction<WizardState>>;
+  currentUserId: string;
+}
+
+function LogoSection({ state, setState, currentUserId }: LogoSectionProps) {
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > PHOTO_MAX_BYTES) {
+      toast.error("Logo must be under 10 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.includes(".")
+        ? file.name.slice(file.name.lastIndexOf(".") + 1).toLowerCase()
+        : "png";
+      const path = `${currentUserId}/logo-${Date.now()}.${ext}`;
+      // Remove the prior logo if any (best-effort).
+      if (state.logo?.path) {
+        await supabase.storage.from("claim-photos").remove([state.logo.path]).catch(() => {});
+      }
+      const { error } = await supabase.storage
+        .from("claim-photos")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (error) {
+        toast.error(`Logo upload failed: ${error.message}`);
+        return;
+      }
+      setState((p) => ({ ...p, logo: { path, name: file.name } }));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleRemove() {
+    if (!state.logo) return;
+    try {
+      await supabase.storage.from("claim-photos").remove([state.logo.path]).catch(() => {});
+    } finally {
+      setState((p) => ({ ...p, logo: null }));
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {state.logo ? (
+        <div className="flex items-center gap-3 rounded-md border bg-card p-3">
+          <img
+            src={publicClaimPhotoUrl(state.logo.path)}
+            alt="Logo preview"
+            className="h-16 w-16 object-contain rounded bg-muted"
+            loading="lazy"
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{state.logo.name}</p>
+            <p className="text-xs text-muted-foreground">Uploaded</p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={handleRemove}>
+            <Trash2 className="h-4 w-4 mr-1.5" aria-hidden />
+            Remove
+          </Button>
+        </div>
+      ) : (
+        <label
+          htmlFor="logo-upload"
+          className="block rounded-md border-2 border-dashed border-border hover:border-primary/40 transition-colors cursor-pointer p-5 text-center"
+        >
+          {uploading ? (
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              Uploading…
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
+              <Upload className="h-5 w-5" aria-hidden />
+              <span>
+                <span className="text-primary font-medium">Click to upload</span>{" "}
+                a logo
+              </span>
+              <span className="text-xs">JPEG, PNG, WEBP, SVG · up to 10 MB</span>
+            </div>
+          )}
+          <input
+            id="logo-upload"
+            type="file"
+            accept={PHOTO_ACCEPT}
+            onChange={handleFile}
+            disabled={uploading}
+            className="sr-only"
+          />
+        </label>
+      )}
+    </div>
+  );
+}
+
+interface PhotosSectionProps {
+  state: WizardState;
+  setState: React.Dispatch<React.SetStateAction<WizardState>>;
+  currentUserId: string;
+}
+
+function PhotosSection({ state, setState, currentUserId }: PhotosSectionProps) {
+  const [uploading, setUploading] = useState(false);
+  const atCap = state.photos.length >= PHOTO_MAX_COUNT;
+
+  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      for (const file of files) {
+        if (state.photos.length >= PHOTO_MAX_COUNT) {
+          toast.warning(`Up to ${PHOTO_MAX_COUNT} photos. Remove one to add more.`);
+          break;
+        }
+        if (file.size > PHOTO_MAX_BYTES) {
+          toast.error(`${file.name} exceeds the 10 MB limit.`);
+          continue;
+        }
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${currentUserId}/photos/${Date.now()}-${safeName}`;
+        const { error } = await supabase.storage
+          .from("claim-photos")
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (error) {
+          toast.error(`Upload failed for ${file.name}: ${error.message}`);
+          continue;
+        }
+        // Functional update so we don't race against a stale closure when
+        // uploading multiple files in a single batch.
+        setState((p) => ({
+          ...p,
+          photos: [...p.photos, { path, name: file.name }],
+        }));
+      }
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function move(idx: number, direction: -1 | 1) {
+    setState((p) => {
+      const next = [...p.photos];
+      const target = idx + direction;
+      if (target < 0 || target >= next.length) return p;
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return { ...p, photos: next };
+    });
+  }
+
+  async function remove(idx: number) {
+    const doomed = state.photos[idx];
+    if (!doomed) return;
+    try {
+      await supabase.storage.from("claim-photos").remove([doomed.path]).catch(() => {});
+    } finally {
+      setState((p) => ({
+        ...p,
+        photos: p.photos.filter((_, i) => i !== idx),
+      }));
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {state.photos.length > 0 && (
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {state.photos.map((photo, idx) => (
+            <li
+              key={photo.path}
+              className="flex items-center gap-2 rounded-md border bg-card p-2"
+            >
+              <img
+                src={publicClaimPhotoUrl(photo.path)}
+                alt={photo.name}
+                className="h-12 w-12 object-cover rounded bg-muted shrink-0"
+                loading="lazy"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate">{photo.name}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Position {idx + 1}
+                </p>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => move(idx, -1)}
+                  disabled={idx === 0}
+                  aria-label="Move up"
+                >
+                  <ChevronUp className="h-4 w-4" aria-hidden />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => move(idx, 1)}
+                  disabled={idx === state.photos.length - 1}
+                  aria-label="Move down"
+                >
+                  <ChevronDown className="h-4 w-4" aria-hidden />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  onClick={() => remove(idx)}
+                  aria-label={`Remove ${photo.name}`}
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <label
+        htmlFor="photos-upload"
+        className={
+          "block rounded-md border-2 border-dashed transition-colors p-4 text-center " +
+          (atCap || uploading
+            ? "border-border bg-muted/30 cursor-not-allowed opacity-60"
+            : "border-border hover:border-primary/40 cursor-pointer")
+        }
+      >
+        {uploading ? (
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            Uploading…
+          </div>
+        ) : atCap ? (
+          <div className="text-sm text-muted-foreground">
+            Maximum of {PHOTO_MAX_COUNT} photos reached.
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
+            <Upload className="h-5 w-5" aria-hidden />
+            <span>
+              <span className="text-primary font-medium">Click to upload</span>{" "}
+              photos
+            </span>
+            <span className="text-xs">
+              JPEG, PNG, WEBP, SVG, HEIC · up to {PHOTO_MAX_COUNT} total, 10 MB each
+            </span>
+          </div>
+        )}
+        <input
+          id="photos-upload"
+          type="file"
+          multiple
+          accept={PHOTO_ACCEPT}
+          onChange={handleFiles}
+          disabled={atCap || uploading}
+          className="sr-only"
+        />
+      </label>
+    </div>
+  );
+}
+
+interface CheckboxGridProps {
+  options: Array<{ slug: string; label: string }>;
+  value: string[];
+  onChange: (next: string[]) => void;
+  fieldName: string;
+}
+
+function CheckboxGrid({ options, value, onChange, fieldName }: CheckboxGridProps) {
+  function toggle(slug: string, checked: boolean) {
+    if (checked) {
+      if (value.includes(slug)) return;
+      onChange([...value, slug]);
+    } else {
+      onChange(value.filter((s) => s !== slug));
+    }
+  }
+  return (
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {options.map((opt) => {
+        const id = `${fieldName}-${opt.slug}`;
+        const checked = value.includes(opt.slug);
+        return (
+          <label
+            key={opt.slug}
+            htmlFor={id}
+            className="flex items-center gap-2 rounded-md border bg-card p-2.5 text-sm cursor-pointer hover:bg-muted/40"
+          >
+            <Checkbox
+              id={id}
+              checked={checked}
+              onCheckedChange={(v) => toggle(opt.slug, v === true)}
+            />
+            <span>{opt.label}</span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+interface AccreditationsSectionProps {
+  state: WizardState;
+  setState: React.Dispatch<React.SetStateAction<WizardState>>;
+  currentUserId: string;
+}
+
+function AccreditationsSection({
+  state,
+  setState,
+  currentUserId,
+}: AccreditationsSectionProps) {
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+
+  function addRow() {
+    const id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`;
+    setState((p) => ({
+      ...p,
+      accreditations: [
+        ...p.accreditations,
+        { id, type: "", number: "", issuing_authority: "" },
+      ],
+    }));
+  }
+
+  function updateRow(id: string, patch: Partial<AccreditationEntry>) {
+    setState((p) => ({
+      ...p,
+      accreditations: p.accreditations.map((row) =>
+        row.id === id ? { ...row, ...patch } : row,
+      ),
+    }));
+  }
+
+  async function removeRow(id: string) {
+    const row = state.accreditations.find((r) => r.id === id);
+    if (row?.document_path) {
+      try {
+        await supabase.storage.from("claim-evidence").remove([row.document_path]);
+      } catch {
+        // best-effort
+      }
+    }
+    setState((p) => ({
+      ...p,
+      accreditations: p.accreditations.filter((r) => r.id !== id),
+    }));
+  }
+
+  async function attachDoc(id: string, file: File) {
+    if (file.size > PHOTO_MAX_BYTES) {
+      toast.error("Document must be under 10 MB.");
+      return;
+    }
+    setUploadingId(id);
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${currentUserId}/${Date.now()}-${safeName}`;
+      const { error } = await supabase.storage
+        .from("claim-evidence")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (error) {
+        toast.error(`Upload failed: ${error.message}`);
+        return;
+      }
+      // Drop the prior doc for this row (best-effort).
+      const prior = state.accreditations.find((r) => r.id === id)?.document_path;
+      if (prior && prior !== path) {
+        await supabase.storage.from("claim-evidence").remove([prior]).catch(() => {});
+      }
+      updateRow(id, { document_path: path, document_name: file.name });
+    } finally {
+      setUploadingId(null);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {state.accreditations.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          Add any accreditations or state licenses you'd like surfaced on your
+          listing. Each row needs a type; the rest is optional.
+        </p>
+      )}
+
+      <ul className="space-y-3">
+        {state.accreditations.map((row) => (
+          <li key={row.id} className="rounded-md border bg-card p-3 space-y-2.5">
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Type</Label>
+                <Select
+                  value={row.type || undefined}
+                  onValueChange={(v) => updateRow(row.id, { type: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ACCREDITATION_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Number / ID</Label>
+                <Input
+                  value={row.number}
+                  onChange={(e) => updateRow(row.id, { number: e.target.value })}
+                  placeholder="Optional"
+                  maxLength={120}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Issuing authority</Label>
+              <Input
+                value={row.issuing_authority}
+                onChange={(e) =>
+                  updateRow(row.id, { issuing_authority: e.target.value })
+                }
+                placeholder="e.g. Texas Department of State Health Services"
+                maxLength={200}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-2 pt-1 border-t">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <FileText className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
+                {row.document_name ? (
+                  <span className="text-xs truncate">{row.document_name}</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    No document attached
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <label
+                  htmlFor={`doc-${row.id}`}
+                  className="text-xs text-primary hover:underline cursor-pointer"
+                >
+                  {uploadingId === row.id
+                    ? "Uploading…"
+                    : row.document_path
+                    ? "Replace"
+                    : "Attach"}
+                  <input
+                    id={`doc-${row.id}`}
+                    type="file"
+                    accept="application/pdf,image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    disabled={uploadingId === row.id}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (f) attachDoc(row.id, f);
+                    }}
+                  />
+                </label>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  onClick={() => removeRow(row.id)}
+                  aria-label="Remove accreditation"
+                >
+                  <Trash2 className="h-4 w-4" aria-hidden />
+                </Button>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <Button variant="outline" size="sm" onClick={addRow}>
+        <Plus className="h-4 w-4 mr-1.5" aria-hidden />
+        Add accreditation
+      </Button>
+    </div>
+  );
+}
+
+function ContactSection({
+  state,
+  setState,
+}: {
+  state: WizardState;
+  setState: React.Dispatch<React.SetStateAction<WizardState>>;
+}) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="space-y-1">
+        <Label htmlFor="contact-phone">Phone</Label>
+        <Input
+          id="contact-phone"
+          type="tel"
+          value={state.correctedContact.phone}
+          onChange={(e) =>
+            setState((p) => ({
+              ...p,
+              correctedContact: { ...p.correctedContact, phone: e.target.value },
+            }))
+          }
+          maxLength={30}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="contact-email">Email</Label>
+        <Input
+          id="contact-email"
+          type="email"
+          value={state.correctedContact.email}
+          onChange={(e) =>
+            setState((p) => ({
+              ...p,
+              correctedContact: { ...p.correctedContact, email: e.target.value },
+            }))
+          }
+          maxLength={255}
+        />
+      </div>
+      <div className="space-y-1 sm:col-span-2">
+        <Label htmlFor="contact-website">Website</Label>
+        <Input
+          id="contact-website"
+          type="url"
+          value={state.correctedContact.website}
+          onChange={(e) =>
+            setState((p) => ({
+              ...p,
+              correctedContact: { ...p.correctedContact, website: e.target.value },
+            }))
+          }
+          maxLength={500}
+        />
+      </div>
+      <p className="text-xs text-muted-foreground sm:col-span-2">
+        These overwrite the public-records values once your claim is approved.
+      </p>
+    </div>
+  );
+}
+
+function DescriptionSection({
+  state,
+  setState,
+}: {
+  state: WizardState;
+  setState: React.Dispatch<React.SetStateAction<WizardState>>;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor="claim-description">About the facility</Label>
+      <Textarea
+        id="claim-description"
+        value={state.description}
+        onChange={(e) =>
+          setState((p) => ({ ...p, description: e.target.value }))
+        }
+        placeholder="What makes your program distinctive? Who do you serve best? What should families know before reaching out?"
+        rows={6}
+        maxLength={DESCRIPTION_MAX}
+      />
+      <p className="text-xs text-muted-foreground">
+        {state.description.length} / {DESCRIPTION_MAX}
+      </p>
     </div>
   );
 }
