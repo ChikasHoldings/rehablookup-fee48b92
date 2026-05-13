@@ -1,4 +1,4 @@
-import { useParams, Link, useLocation, Navigate } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import CenterNotFound from "@/pages/CenterNotFound";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,7 +13,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { RatingBadge } from "@/components/ui/RatingBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
-import { ClaimListingModal } from "@/components/facility/ClaimListingModal";
 import { ProfileConciergeRescue } from "@/components/profile/ProfileConciergeRescue";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
 import {
@@ -218,6 +217,7 @@ function TruncatedDescription({ text }: { text: string }) {
 const CenterProfile = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const contactFormRef = useRef<HTMLDivElement>(null);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
@@ -226,7 +226,6 @@ const CenterProfile = () => {
   const [logoError, setLogoError] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
-  const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [reportImageOpen, setReportImageOpen] = useState(false);
   const [reportImageUrl, setReportImageUrl] = useState<string>("");
   const [reportImageType, setReportImageType] = useState<"logo" | "gallery">("gallery");
@@ -292,18 +291,9 @@ const CenterProfile = () => {
   // after handling so the canonical URL stays clean for analytics + sharing.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    let mutated = false;
     if (params.get("action") === "request-info") {
       setRequestModalOpen(true);
       params.delete("action");
-      mutated = true;
-    }
-    if (params.get("claim") === "1") {
-      setClaimModalOpen(true);
-      params.delete("claim");
-      mutated = true;
-    }
-    if (mutated) {
       const cleanSearch = params.toString();
       const cleanUrl = location.pathname + (cleanSearch ? `?${cleanSearch}` : "");
       window.history.replaceState({}, document.title, cleanUrl);
@@ -441,6 +431,19 @@ const CenterProfile = () => {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
+
+  // Route the "Claim This Listing" affordances through the wizard. Signed-out
+  // visitors detour via /auth/signup with a returnTo back to the wizard.
+  const handleClaimClick = useCallback(() => {
+    if (!facility?.slug) return;
+    const target = `/provider/claim/${facility.slug}`;
+    if (!currentUserId) {
+      const search = new URLSearchParams({ returnTo: target, claim: "1" }).toString();
+      navigate(`/auth/signup?${search}`);
+      return;
+    }
+    navigate(target);
+  }, [facility?.slug, currentUserId, navigate]);
 
   // Claim-state flags are now sourced directly from the shared loader's
   // result (baked into `facility` by the queryFn above). When the flags
@@ -880,7 +883,7 @@ const CenterProfile = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setClaimModalOpen(true)}
+                    onClick={handleClaimClick}
                     className="bg-white/90 hover:bg-white text-foreground border-white/60 backdrop-blur-sm shadow-md"
                   >
                     <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
@@ -1626,19 +1629,6 @@ const CenterProfile = () => {
           state: facility.state,
         }}
       />
-
-      {/* Claim flow — only mount once we know the facility is unclaimed.
-          While `claimFlags` is still loading we render neither this nor
-          the inquiry form to avoid a flash of the wrong CTA. */}
-      {claimFlags && !claimFlags.is_claimed && (
-        <ClaimListingModal
-          facilityId={facility.id}
-          facilityName={facility.name}
-          open={claimModalOpen}
-          onOpenChange={setClaimModalOpen}
-          currentUserId={currentUserId}
-        />
-      )}
 
       {/* Request Info Modal — gated on claimed-state. Unclaimed listings
           surface the "Unclaimed listing" badge + "Claim This Listing"

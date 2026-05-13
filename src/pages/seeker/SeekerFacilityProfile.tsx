@@ -10,7 +10,6 @@ import { RatingBadge } from "@/components/ui/RatingBadge";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { FacilityPhotoGallery } from "@/components/facility/FacilityPhotoGallery";
 import { FacilityTourRequestModal } from "@/components/facility/FacilityTourRequestModal";
-import { ClaimListingModal } from "@/components/facility/ClaimListingModal";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFacilityReviews } from "@/hooks/useFacilityReviews";
@@ -167,7 +166,6 @@ export default function SeekerFacilityProfile() {
   const [tourModalOpen, setTourModalOpen] = useState(false);
   const [showAllServices, setShowAllServices] = useState(false);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
-  const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Get stored user synchronously to avoid getSession deadlocks
@@ -279,6 +277,19 @@ export default function SeekerFacilityProfile() {
     retry: 2,
     staleTime: 1000 * 60 * 5,
   });
+
+  // Route "Claim This Listing" through the wizard. Signed-out visitors
+  // detour via /auth/signup with a returnTo back to the wizard.
+  const handleClaimClick = useCallback(() => {
+    if (!facility?.slug) return;
+    const target = `/provider/claim/${facility.slug}`;
+    if (!currentUserId) {
+      const search = new URLSearchParams({ returnTo: target, claim: "1" }).toString();
+      navigate(`/auth/signup?${search}`);
+      return;
+    }
+    navigate(target);
+  }, [facility?.slug, currentUserId, navigate]);
 
   const { data: facilityPlan = "free" } = useQuery({
     queryKey: ["facility-plan", facility?.id],
@@ -541,7 +552,7 @@ export default function SeekerFacilityProfile() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => setClaimModalOpen(true)}
+                          onClick={handleClaimClick}
                           className="ml-auto h-7 px-2.5 text-xs gap-1"
                         >
                           <ShieldCheck className="h-3 w-3" />
@@ -860,17 +871,6 @@ export default function SeekerFacilityProfile() {
       </div>
 
       {/* Modals */}
-      {/* Claim flow — only mount once we know the facility is unclaimed. */}
-      {claimFlags && !claimFlags.is_claimed && (
-        <ClaimListingModal
-          facilityId={facility.id}
-          facilityName={facility.name}
-          open={claimModalOpen}
-          onOpenChange={setClaimModalOpen}
-          currentUserId={currentUserId}
-        />
-      )}
-
       {/* Inquiry + tour modals — gated on claimed-state. Unclaimed listings
           surface the "Unclaimed listing" badge + "Claim This Listing"
           button instead of an inquiry path. */}

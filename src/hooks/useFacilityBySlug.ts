@@ -52,6 +52,10 @@ export interface FacilityBaseData {
   status: string;
   updated_at: string;
   accepts_international_patients: boolean | null;
+  /** Provenance tag from the `public_facilities` view (e.g. 'samhsa_import',
+   *  'manual'). Populated when the row was loaded via the fallback path;
+   *  undefined when sourced from the static snapshot, which doesn't carry it. */
+  data_source?: string | null;
 }
 
 export interface ClaimFlags {
@@ -125,6 +129,7 @@ function viewRowToBase(row: Record<string, unknown>): FacilityBaseData {
       row.accepts_international_patients == null
         ? null
         : !!row.accepts_international_patients,
+    data_source: (row.data_source as string | null) ?? null,
   };
 }
 
