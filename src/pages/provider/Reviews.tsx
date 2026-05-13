@@ -26,7 +26,6 @@ import { Badge } from '@/components/ui/badge';
 
 
 import { useSelectedFacility } from '@/contexts/SelectedFacilityContext';
-import { useProStatus } from '@/hooks/useProStatus';
 import { ReviewStatsCards } from '@/components/provider/reviews/ReviewStatsCards';
 import { ProviderReviewCard } from '@/components/provider/reviews/ProviderReviewCard';
 import { FlagReviewDialog } from '@/components/provider/reviews/FlagReviewDialog';
@@ -37,12 +36,10 @@ import { usePagination } from '@/hooks/usePagination';
 
 export default function ProviderReviews() {
   const navigate = useNavigate();
-  const { selectedFacility } = useSelectedFacility();
-  // BUGFIX: Scope Pro status to the currently selected facility, not account-wide.
-  const { data: proStatus } = useProStatus(selectedFacility?.id ?? undefined);
-  const isPro = proStatus?.isPro ?? false;
+  const { selectedFacility: _selectedFacility } = useSelectedFacility();
+  void _selectedFacility;
 
-  const { 
+  const {
     reviews, 
     facilities,
     isLoading,
@@ -99,7 +96,10 @@ export default function ProviderReviews() {
       ? Math.round((filtered.reduce((sum, r) => sum + r.rating, 0) / totalReviews) * 10) / 10
       : null;
     const needsResponse = filtered.filter(r => !r.response).length;
-    const disputed = filtered.filter(r => r.dispute && r.dispute.status === 'pending').length;
+    // Stat card and Disputed tab must use the same predicate — `r.dispute`
+    // truthy. Previously the stat counted only `status='pending'`, which made
+    // the tab badge and the stat card drift.
+    const disputed = filtered.filter(r => !!r.dispute).length;
     return { totalReviews, averageRating, needsResponse, disputed };
   }, [reviews, facilityFilter]);
 

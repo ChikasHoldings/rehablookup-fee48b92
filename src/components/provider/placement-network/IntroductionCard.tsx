@@ -54,6 +54,7 @@ interface Introduction {
   facility_id: string;
   inquiry_id: string;
   created_at: string;
+  admin_disclosed_pii_at?: string | null;
   provider_response?: string | null;
   provider_responded_at?: string | null;
   provider_notes?: string | null;
@@ -87,8 +88,15 @@ export function IntroductionCard({
   const caseId = `Case #${inquiry?.id?.slice(0, 8).toUpperCase() || introduction.id.slice(0, 8).toUpperCase()}`;
   const firstName = inquiry?.user_name?.split(" ")[0] || "Client";
 
-  // Response deadline (72h from introduction)
-  const deadlineMs = new Date(introduction.created_at).getTime() + 72 * 60 * 60 * 1000;
+  // Response deadline: 72h from whichever happened LATER — the introduction
+  // record creation, or the moment the admin disclosed PII. If admin presents
+  // the intro long before disclosing PII, the deadline must reset from PII
+  // disclosure so the provider has the full 72h to respond once they can act.
+  const disclosedMs = introduction.admin_disclosed_pii_at
+    ? new Date(introduction.admin_disclosed_pii_at).getTime()
+    : 0;
+  const createdMs = new Date(introduction.created_at).getTime();
+  const deadlineMs = Math.max(createdMs, disclosedMs) + 72 * 60 * 60 * 1000;
   const hoursRemaining = Math.max(0, Math.round((deadlineMs - Date.now()) / (1000 * 60 * 60)));
   const isUrgentDeadline = hoursRemaining <= 12 && hoursRemaining > 0;
   const isExpired = hoursRemaining === 0 && (!introduction.provider_response || introduction.provider_response === "pending");
@@ -261,7 +269,7 @@ export function IntroductionCard({
                 "bg-primary/5 text-primary"
               )}>
                 {isExpired ? (
-                  <><AlertTriangle className="h-3 w-3" /><span>Response window expired — will auto-decline</span></>
+                  <><AlertTriangle className="h-3 w-3" /><span>Response window expired — please reply if still interested</span></>
                 ) : isUrgentDeadline ? (
                   <><Timer className="h-3 w-3" /><span>{hoursRemaining}h remaining to respond — faster response increases admission chances</span></>
                 ) : (

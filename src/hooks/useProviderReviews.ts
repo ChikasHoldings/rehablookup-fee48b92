@@ -98,11 +98,13 @@ export function useProviderReviews() {
         supabase
           .from('review_responses')
           .select('id, review_id, facility_id, responder_user_id, response_text, status, created_at, updated_at')
-          .in('facility_id', facilityIds),
+          .in('facility_id', facilityIds)
+          .limit(5000),
         supabase
           .from('review_disputes')
           .select('id, review_id, facility_id, disputed_by, reason, details, status, admin_notes, resolved_by, resolved_at, created_at')
           .in('facility_id', facilityIds)
+          .limit(5000)
       ]);
 
       if (reviewsResult.error) {
@@ -174,6 +176,34 @@ export function useProviderReviews() {
   useEffect(() => {
     fetchReviews();
   }, [fetchReviews]);
+
+  // Realtime: re-fetch when a review (or response/dispute) for any of the
+  // provider's facilities changes. Server only emits messages that the JWT
+  // can see, so this is safe without additional filtering. We re-fetch the
+  // whole list rather than mutating in-place to keep the join enrichment
+  // logic in one place.
+  useEffect(() => {
+    if (facilityIds.length === 0) return;
+    const channel = supabase
+      .channel(`provider-reviews-${facilityIds.join(",")}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "facility_reviews" },
+        () => { fetchReviews(); },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "review_responses" },
+        () => { fetchReviews(); },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "review_disputes" },
+        () => { fetchReviews(); },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [facilityIds, fetchReviews]);
 
   // Calculate stats from reviews using useMemo to prevent recalculation
   const stats = useMemo<ReviewStats>(() => {
@@ -279,14 +309,12 @@ export function useProviderReviews() {
 
     if (disputeError) return { error: disputeError };
 
-    const { error: updateError } = await supabase
-      .from('facility_reviews')
-      .update({ disputed: true })
-      .eq('id', reviewId);
-
-    if (!updateError) {
-      // Notify admins about the dispute
-      supabase.functions.invoke('send-review-notification', {
+    // Flipping facility_reviews.disputed=true is now done by a DB trigger on
+    // review_disputes insert; the client-side UPDATE here historically only
+    // succeeded under permissive RLS and silently failed otherwise. Notify
+    // admins + refresh.
+    supabase.functions
+      .invoke('send-review-notification', {
         body: {
           type: 'review_disputed',
           reviewId,
@@ -294,13 +322,12 @@ export function useProviderReviews() {
           providerId: user.id,
           reason,
           details: details?.trim() || null,
-        }
-      }).catch(err => console.error('Failed to send dispute notification:', err));
-      
-      fetchReviews();
-    }
+        },
+      })
+      .catch((err) => console.error('Failed to send dispute notification:', err));
 
-    return { error: updateError };
+    fetchReviews();
+    return { error: null };
   }, [reviews, fetchReviews]);
 
   return {

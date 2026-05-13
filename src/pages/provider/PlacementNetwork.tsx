@@ -71,10 +71,6 @@ import {
 import { InternationalCandidatesTab } from "@/components/provider/international/InternationalCandidatesTab";
 import { cn } from "@/lib/utils";
 
-const PLACEMENT_FEES = {
-  flat_fee: { standard: 1000, pro: 800 },
-};
-
 const CARE_TYPES = [
   { value: "detox", label: "Detox" },
   { value: "inpatient", label: "Residential Inpatient" },
@@ -304,8 +300,10 @@ export default function ProviderPlacementNetworkPage() {
         throw new Error("Invalid availability status");
       }
 
-      // Validate agreement preference whitelist
-      const validPrefs = ["either", "flat_fee", "percentage"];
+      // Validate agreement preference whitelist. Keep the list in sync with
+      // the Select options below; "percentage" was removed from the UI in
+      // favor of flat-fee only, so it's no longer accepted here.
+      const validPrefs = ["either", "flat_fee"];
       if (!validPrefs.includes(profileForm.agreementPreference)) {
         throw new Error("Invalid agreement preference");
       }

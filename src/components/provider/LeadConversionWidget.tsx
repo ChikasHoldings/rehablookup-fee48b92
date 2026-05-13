@@ -37,10 +37,14 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
       
       const startOfLastMonth = startOfMonth(subMonths(new Date(), 1));
       
-      // Use leads_provider_view for accurate data (RLS on leads blocks non-unlocked)
+      // Scope to the caller's selected facilities. The view's RLS already
+      // narrows to facilities the caller owns, but explicit `.in(facility_id)`
+      // prevents accidentally aggregating across unrelated facilities when
+      // a future view change broadens the row set.
       const { data, error } = await supabase
         .from("leads_provider_view")
-        .select("id, status, created_at, provider_responded_at, qualified")
+        .select("id, status, created_at, provider_responded_at, qualified, facility_id")
+        .in("facility_id", facilityIds)
         .gte("created_at", startOfLastMonth.toISOString())
         .order("created_at", { ascending: false })
         .limit(500);

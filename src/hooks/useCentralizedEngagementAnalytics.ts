@@ -276,17 +276,29 @@ function buildDailyTrends(
 ): CentralizedEngagementAnalytics["dailyTrends"] {
   const trends: CentralizedEngagementAnalytics["dailyTrends"] = [];
   const dayCount = Math.ceil((endOfDay(rangeEnd).getTime() - startOfDay(rangeStart).getTime()) / DAY_IN_MS) + 1;
-  const daysToShow = Math.min(dayCount, 30);
+  // Previously capped at 30 days regardless of selected range. For ranges
+  // longer than 60 days, bucket weekly so the chart still fits ~12-15 bars.
+  // For <= 60 days, render daily up to the actual day count.
+  const useWeeklyBucket = dayCount > 60;
+  const bucketSize = useWeeklyBucket ? 7 : 1;
+  const bucketCount = Math.ceil(dayCount / bucketSize);
 
-  for (let i = 0; i < daysToShow; i++) {
-    const date = subDays(endOfDay(rangeEnd), daysToShow - 1 - i);
-    const dateStr = format(date, "yyyy-MM-dd");
+  for (let i = 0; i < bucketCount; i++) {
+    const bucketEnd = subDays(endOfDay(rangeEnd), (bucketCount - 1 - i) * bucketSize);
+    const bucketStart = subDays(bucketEnd, bucketSize - 1);
+    const bucketStartStr = format(startOfDay(bucketStart), "yyyy-MM-dd");
+    const bucketEndStr = format(endOfDay(bucketEnd), "yyyy-MM-dd");
 
-    const dayViews = viewEvents.filter((e) => format(parseISO(e.created_at), "yyyy-MM-dd") === dateStr);
-    const dayClicks = clickEvents.filter((e) => format(parseISO(e.created_at), "yyyy-MM-dd") === dateStr);
+    const inBucket = (e: ProviderEvent) => {
+      const ds = format(parseISO(e.created_at), "yyyy-MM-dd");
+      return ds >= bucketStartStr && ds <= bucketEndStr;
+    };
+
+    const dayViews = viewEvents.filter(inBucket);
+    const dayClicks = clickEvents.filter(inBucket);
 
     trends.push({
-      date: format(date, "MMM d"),
+      date: format(bucketEnd, useWeeklyBucket ? "MMM d" : "MMM d"),
       impressions: dayViews.filter(e => e.event_type === "listing_impression").length,
       profileViews: dayViews.filter(e => e.event_type === "profile_view").length,
       listingViews: dayViews.length,

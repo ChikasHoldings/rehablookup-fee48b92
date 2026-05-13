@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Crown, Lock, Handshake, Clock, CheckCircle, ArrowRight } from "lucide-react";
+import { Handshake, Clock, CheckCircle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,11 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   admitted: { label: "Admitted", color: "bg-primary/10 text-primary border-primary/30" },
 };
 
-export function DashboardPlacementPanel({ facilityIds, isPro }: DashboardPlacementPanelProps) {
+export function DashboardPlacementPanel({ facilityIds, isPro: _isPro }: DashboardPlacementPanelProps) {
+  // `isPro` is kept on the interface for callers that already pass it but is
+  // no longer used to gate the panel — placements are open to all providers,
+  // Pro only earns a 20% fee discount on the placement-fee charge itself.
+  void _isPro;
   const queryClient = useQueryClient();
 
   const { data: placements = [], isLoading } = useQuery({
@@ -75,47 +79,9 @@ export function DashboardPlacementPanel({ facilityIds, isPro }: DashboardPlaceme
     return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
   }, [facilityIds, queryClient]);
 
-  // Locked preview for free users
-  if (!isPro) {
-    return (
-      <Card className="relative overflow-hidden border-dashed border-muted-foreground/30">
-        <CardContent className="p-5">
-          <div className="absolute inset-0 bg-gradient-to-b from-background/60 to-background/90 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center text-center p-6">
-            <div className="h-12 w-12 rounded-xl bg-amber-500/10 flex items-center justify-center mb-3">
-              <Crown className="h-6 w-6 text-amber-500" />
-            </div>
-            <h3 className="text-sm font-bold text-foreground mb-1">
-              Priority Placement Matching
-            </h3>
-            <p className="text-xs text-muted-foreground max-w-xs mb-3">
-              Pro providers get priority placement matching + 20% discount on placement fees.
-            </p>
-            <Button
-              size="sm"
-              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md"
-              asChild
-            >
-              <Link to="/provider/pro-upgrade">
-                <Crown className="h-3.5 w-3.5 mr-1.5" />
-                Upgrade to Pro
-              </Link>
-            </Button>
-          </div>
-          {/* Blurred preview */}
-          <div className="space-y-3 opacity-40 select-none pointer-events-none" aria-hidden>
-            <div className="flex items-center gap-2">
-              <Handshake className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-semibold">Placement Opportunities</span>
-            </div>
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-14 rounded-md border bg-muted/20" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
+  // Placement network is open to all providers; Pro just gets a 20% fee
+  // discount. The full panel renders for free + Pro alike; the upgrade nudge
+  // appears as a small banner inside the panel (below) when not Pro.
   if (isLoading) {
     return <Skeleton className="h-48 rounded-lg" />;
   }
