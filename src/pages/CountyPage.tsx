@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import NotFound from "@/pages/NotFound";
+import { buildCountyOverview } from "@/lib/locationDescriptions";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
@@ -181,7 +182,11 @@ export default function CountyPage() {
               {pageTitle}
             </h1>
             <p className="text-lg md:text-xl opacity-90 mb-6 leading-relaxed">
-              {countyData.description}
+              {/* De-templated description from real per-state stats +
+                  verified-facility count, so each of the ~500 indexed
+                  county pages renders distinct hero copy instead of the
+                  shared factory string from countySeoData.ts. */}
+              {buildCountyOverview(stateData.slug, stateData.name, countyData.name, countyFacilities.length)}
             </p>
             <div className="flex flex-wrap gap-4">
               <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg">

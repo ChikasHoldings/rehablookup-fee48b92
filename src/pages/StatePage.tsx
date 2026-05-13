@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import NotFound from "@/pages/NotFound";
+import { buildStateOverview } from "@/lib/locationDescriptions";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
@@ -300,7 +301,15 @@ const StatePage = () => {
             </h1>
             
             <p className="mt-4 text-base md:text-lg text-white/85 leading-relaxed max-w-2xl">
-              {stateData.description}
+              {/* De-templated description: combines real per-state stats
+                  (CDC overdose mortality, SAMHSA facility count, Medicaid
+                  expansion status, regional context, signature note) with
+                  the verified-facility count we already have. Each state
+                  now ships substantively distinct hero copy to address the
+                  audit's "templated near-verbatim" finding. The original
+                  static description survives as the fallback meta line
+                  consumed by <SEO/>. */}
+              {buildStateOverview(stateData.slug, stateData.name, stateCenters.length)}
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-4 md:gap-6">

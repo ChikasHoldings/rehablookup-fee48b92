@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import NotFound from "@/pages/NotFound";
+import { buildCityOverview } from "@/lib/locationDescriptions";
 import {
   generateCityContentSections,
   generateCityWhatToExpect,
@@ -332,7 +333,14 @@ const CityPage = () => {
             </h1>
             
             <p className="mt-4 text-base md:text-lg text-white/85 leading-relaxed max-w-2xl">
-              {cityData.description}
+              {/* De-templated hero copy. The previous `cityData.description`
+                  was a one-line factory string repeated across every city
+                  with only the name swapped. buildCityOverview combines
+                  per-state CDC/SAMHSA stats + the city's population +
+                  verified-facility count into one of 4 prose variants
+                  picked deterministically from a slug hash, so two cities
+                  in the same state still ship distinct HTML. */}
+              {buildCityOverview(stateData.slug, stateData.name, cityData.name, cityCenters.length, cityData.population)}
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-4 md:gap-6">
