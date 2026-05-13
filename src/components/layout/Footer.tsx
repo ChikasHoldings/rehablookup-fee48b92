@@ -44,6 +44,7 @@ const treatmentLinks: FooterLink[] = [
 ];
 
 const insuranceLinks: FooterLink[] = [
+  { name: "Verify My Insurance", path: "/insurance-verification", badge: "Free" },
   { name: "Aetna Coverage", path: "/insurance/aetna-rehab" },
   { name: "Blue Cross Blue Shield", path: "/insurance/bcbs-treatment" },
   { name: "Cigna Rehab Coverage", path: "/insurance/cigna-rehab" },

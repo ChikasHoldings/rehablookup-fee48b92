@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
+import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import {
   Shield,
   CheckCircle,
@@ -307,6 +308,8 @@ export default function MedicaidRehab() {
       </section>
 
       {/* Featured Centers accepting Medicaid */}
+      <InsuranceVerifyCarrierCTA carrier="Medicaid" description="Tell us your Medicaid plan, state, and member ID and our care team will confirm what addiction-treatment services and providers are covered for you — usually within one business day. Free, no obligation." />
+
       <InsuranceFacilitiesSection insurerSlug="medicaid" title="Treatment Centers Accepting Medicaid" limit={8} className="border-t border-border" />
 
       {/* FAQs */}

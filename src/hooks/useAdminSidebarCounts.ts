@@ -9,6 +9,7 @@ export interface AdminSidebarCounts {
   placements: number;
   marketingLeads: number;
   openEscalations: number;
+  insuranceVerifications: number;
 }
 
 export function useAdminSidebarCounts() {
@@ -23,6 +24,7 @@ export function useAdminSidebarCounts() {
         placementsResult,
         marketingResult,
         escalationsResult,
+        insuranceVerificationsResult,
       ] = await Promise.all([
         supabase
           .from("leads")
@@ -52,6 +54,10 @@ export function useAdminSidebarCounts() {
           .from("admin_escalations")
           .select("id", { count: "exact", head: true })
           .in("status", ["open", "in_progress"]),
+        supabase
+          .from("insurance_verification_requests")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["new", "in_progress"]),
       ]);
 
       return {
@@ -62,6 +68,7 @@ export function useAdminSidebarCounts() {
         placements: placementsResult.count || 0,
         marketingLeads: marketingResult.count || 0,
         openEscalations: escalationsResult.count || 0,
+        insuranceVerifications: insuranceVerificationsResult.count || 0,
       };
     },
     staleTime: 30 * 1000,

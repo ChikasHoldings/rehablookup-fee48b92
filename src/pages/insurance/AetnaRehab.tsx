@@ -26,6 +26,7 @@ import {
   resourceLinks 
 } from "@/components/seo/InternalLinkingSection";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
+import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 
 const coverageDetails = [
   {
@@ -321,6 +322,8 @@ export default function AetnaRehab() {
       </section>
 
       {/* Featured Centers accepting Aetna */}
+      <InsuranceVerifyCarrierCTA carrier="Aetna" />
+
       <InsuranceFacilitiesSection insurerSlug="aetna" title="Treatment Centers Accepting Aetna" limit={8} className="border-t border-border" />
 
       {/* FAQs */}

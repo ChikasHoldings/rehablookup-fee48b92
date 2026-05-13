@@ -20,8 +20,9 @@ const guides = [
 ];
 
 const tools = [
+  { href: "/insurance-verification", label: "Verify Insurance (Free)", desc: "Free VOB by our care team", icon: Shield },
   { href: "/cost-estimator", label: "Cost Estimator", desc: "Get instant estimates", icon: Calculator },
-  { href: "/insurance", label: "Insurance Checker", desc: "Verify your coverage", icon: Shield },
+  { href: "/insurance", label: "Insurance Hub", desc: "Coverage by carrier", icon: Shield },
   { href: "/faq", label: "FAQ", desc: "Common questions", icon: HelpCircle },
   { href: "/how-it-works", label: "How It Works", desc: "Our matching process", icon: Info },
 ];

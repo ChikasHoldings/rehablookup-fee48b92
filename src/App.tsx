@@ -259,6 +259,7 @@ const SeekerSearch = lazy(() => import("./pages/seeker/SeekerSearch"));
 const SeekerHelp = lazy(() => import("./pages/seeker/SeekerHelp"));
 const SeekerConcierge = lazy(() => import("./pages/seeker/SeekerConcierge"));
 const SeekerInternationalCase = lazy(() => import("./pages/seeker/SeekerInternationalCase"));
+const SeekerInsuranceVerifications = lazy(() => import("./pages/seeker/SeekerInsuranceVerifications"));
 
 // Near Me SEO Pages - lazy load
 const DrugRehabNearMe = lazy(() => import("./pages/near-me/DrugRehabNearMe"));
@@ -353,6 +354,7 @@ const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProviders = lazy(() => import("./pages/admin/AdminProviders"));
 const AdminLeads = lazy(() => import("./pages/admin/AdminLeads"));
+const AdminInsuranceVerifications = lazy(() => import("./pages/admin/AdminInsuranceVerifications"));
 const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
 const AdminNotFoundEvents = lazy(() => import("./pages/admin/AdminNotFoundEvents"));
@@ -1186,6 +1188,7 @@ const AppInner = () => {
               <Route path="concierge" element={<SeekerConcierge />} />
               <Route path="concierge/:inquiryId" element={<SeekerConcierge />} />
               <Route path="international" element={<SeekerInternationalCase />} />
+              <Route path="insurance-verifications" element={<SeekerInsuranceVerifications />} />
               <Route path="*" element={<Navigate to="/account" replace />} />
             </Route>
             
@@ -1604,6 +1607,7 @@ const AppInner = () => {
               <Route path="providers" element={<AdminProviders />} />
               <Route path="claims" element={<AdminClaimsReviewPanel />} />
               <Route path="leads" element={<AdminLeads />} />
+              <Route path="insurance-verifications" element={<AdminInsuranceVerifications />} />
               <Route path="seekers" element={<AdminSeekers />} />
               <Route path="subscriptions" element={<AdminSubscriptions />} />
               <Route path="featured" element={<Navigate to="/admin/subscriptions?tab=featured" replace />} />

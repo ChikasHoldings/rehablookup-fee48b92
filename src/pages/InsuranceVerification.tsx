@@ -22,16 +22,21 @@ import { toast } from "sonner";
 // Top US health insurers families search for. Order = popularity-weighted.
 const CARRIERS = [
   "Aetna",
+  "Ambetter",
   "Anthem Blue Cross Blue Shield",
   "Blue Cross Blue Shield",
   "Cigna",
+  "Highmark",
   "Humana",
   "Kaiser Permanente",
   "Magellan",
   "Medicaid",
   "Medicare",
+  "Molina",
+  "Oscar Health",
   "Tricare",
   "United Healthcare",
+  "WellCare",
   "Other / I don't know",
 ];
 
