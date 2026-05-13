@@ -324,10 +324,12 @@ function Step1ConfirmFacility({
                 {facility.address}, {facility.city}, {facility.state} {facility.zip_code}
               </span>
             </p>
-            <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
-              <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span className="tabular-nums">{maskPhone(facility.phone)}</span>
-            </p>
+            {facility.phone && (
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
+                <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span className="tabular-nums">{maskPhone(facility.phone)}</span>
+              </p>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap gap-1.5">
