@@ -15,6 +15,7 @@ import {
   CheckCircle,
   Filter,
   ShieldCheck,
+  Bookmark,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -235,6 +236,7 @@ export default function SeekerRequests() {
   const [conciergeCount, setConciergeCount] = useState<number>(0);
   const [internationalCount, setInternationalCount] = useState<number>(0);
   const [vobCount, setVobCount] = useState<number>(0);
+  const [savedSearchCount, setSavedSearchCount] = useState<number>(0);
   const { toast } = useToast();
 
   // Load viewed lead IDs from localStorage
@@ -360,11 +362,12 @@ export default function SeekerRequests() {
       setConciergeCount(0);
       setInternationalCount(0);
       setVobCount(0);
+      setSavedSearchCount(0);
       return;
     }
     let cancelled = false;
     (async () => {
-      const [conc, intl, vob] = await Promise.all([
+      const [conc, intl, vob, saved] = await Promise.all([
         supabase
           .from("concierge_inquiries")
           .select("id", { count: "exact", head: true })
@@ -379,11 +382,16 @@ export default function SeekerRequests() {
           .from("insurance_verification_requests")
           .select("id", { count: "exact", head: true })
           .eq("linked_user_id", userId),
+        supabase
+          .from("saved_searches")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId),
       ]);
       if (cancelled) return;
       setConciergeCount(conc.count ?? 0);
       setInternationalCount(intl.count ?? 0);
       setVobCount(vob.count ?? 0);
+      setSavedSearchCount(saved.count ?? 0);
     })();
     return () => { cancelled = true; };
   }, [isAuthenticated, userId]);
@@ -528,8 +536,9 @@ export default function SeekerRequests() {
         </div>
 
         {/* Cross-link cards: surface the seeker's open concierge + international
-            + insurance-verification work so this page acts as a true inbox. */}
-        {(conciergeCount > 0 || internationalCount > 0 || vobCount > 0) && (
+            + insurance-verification + saved-search work so this page acts as a
+            true inbox. */}
+        {(conciergeCount > 0 || internationalCount > 0 || vobCount > 0 || savedSearchCount > 0) && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
             {conciergeCount > 0 && (
               <Link to="/account/concierge" className="block">
@@ -578,6 +587,24 @@ export default function SeekerRequests() {
                       <p className="text-sm font-semibold">Insurance verifications</p>
                       <p className="text-xs text-muted-foreground">
                         {vobCount} request{vobCount === 1 ? "" : "s"} on file
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
+            {savedSearchCount > 0 && (
+              <Link to="/account/saved-searches" className="block">
+                <Card className="hover:border-primary/40 transition-colors">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                      <Bookmark className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">Saved searches</p>
+                      <p className="text-xs text-muted-foreground">
+                        {savedSearchCount} pinned filter{savedSearchCount === 1 ? "" : "s"}
                       </p>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />

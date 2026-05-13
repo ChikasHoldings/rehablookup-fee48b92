@@ -8,6 +8,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import { SearchResultsForm } from "@/components/search/SearchResultsForm";
+import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 
 import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
@@ -610,6 +611,54 @@ const SearchResults = () => {
     setSearchParams(new URLSearchParams());
   };
 
+  // Snapshot of current filter state for /account/saved-searches.
+  // Only fields that materially affect the result set are included.
+  const savedSearchCriteria = useMemo<Record<string, unknown>>(() => {
+    const c: Record<string, unknown> = {};
+    if (location) c.location = location;
+    if (treatment) c.treatment = treatment;
+    if (insurance) c.insurance = insurance;
+    if (type) c.type = type;
+    if (stateParam) c.state = stateParam;
+    if (queryParam) c.q = queryParam;
+    if (selectedTreatmentTypes.length) c.treatmentTypes = selectedTreatmentTypes;
+    if (selectedAmenities.length) c.amenities = selectedAmenities;
+    if (selectedInsuranceTypes.length) c.insuranceTypes = selectedInsuranceTypes;
+    if (selectedDistance) c.distance = selectedDistance;
+    if (verifiedOnly) c.verified = true;
+    if (featuredOnly) c.featuredOnly = true;
+    return c;
+  }, [
+    location, treatment, insurance, type, stateParam, queryParam,
+    selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes,
+    selectedDistance, verifiedOnly, featuredOnly,
+  ]);
+
+  const savedSearchSuggestedName = useMemo<string>(() => {
+    const parts: string[] = [];
+    if (selectedTreatmentTypes.length) {
+      parts.push(selectedTreatmentTypes.slice(0, 2).join(" + "));
+    } else if (treatment) {
+      parts.push(treatment);
+    } else if (type) {
+      parts.push(type.replace(/-/g, " "));
+    }
+    if (location) parts.push(`in ${location}`);
+    else if (stateParam) parts.push(`in ${stateParam}`);
+    if (selectedInsuranceTypes.length) parts.push(`(${selectedInsuranceTypes[0]})`);
+    else if (insurance) parts.push(`(${insurance})`);
+    if (parts.length === 0) parts.push(queryParam || "Treatment centers");
+    const name = parts.join(" ").trim();
+    return name.length > 80 ? name.slice(0, 77) + "..." : name;
+  }, [
+    selectedTreatmentTypes, selectedInsuranceTypes, treatment, type,
+    location, stateParam, insurance, queryParam,
+  ]);
+
+  const savedSearchUrl = typeof window !== "undefined"
+    ? `${window.location.pathname}${window.location.search || ""}`
+    : "/search";
+
   // Build a shareable URL that preserves all current filters/location/sort/page
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}${window.location.pathname}${window.location.search}`;
@@ -1051,6 +1100,14 @@ const SearchResults = () => {
             )}
 
             <div className="flex items-center gap-2 shrink-0">
+              {/* Save this search — opens dialog with alert frequency */}
+              <SaveSearchButton
+                criteria={savedSearchCriteria}
+                suggestedName={savedSearchSuggestedName}
+                searchUrl={savedSearchUrl}
+                resultCount={filteredCenters.length}
+              />
+
               {/* Share search button — preserves all filters in URL */}
               <Button
                 variant="outline"
