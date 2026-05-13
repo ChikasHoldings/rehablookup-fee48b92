@@ -10,7 +10,7 @@ import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { FacilityPhotoGallery } from "@/components/facility/FacilityPhotoGallery";
 import { FacilityTourRequestModal } from "@/components/facility/FacilityTourRequestModal";
 import { ClaimListingModal } from "@/components/facility/ClaimListingModal";
-import { UnclaimedFacilityBanner } from "@/components/facility/UnclaimedFacilityBanner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFacilityReviews } from "@/hooks/useFacilityReviews";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
@@ -41,6 +41,8 @@ import {
   Award,
   Handshake,
   GlobeIcon,
+  Info,
+  ShieldCheck,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
@@ -269,7 +271,7 @@ export default function SeekerFacilityProfile() {
       // direct fetch above misses (e.g. SAMHSA-imported rows not surfaced
       // by status=eq.approved). The view enforces the same masking rules
       // for anon callers. Services/insurance joins are skipped — unclaimed
-      // rows have minimal data anyway and the UnclaimedFacilityBanner
+      // rows have minimal data anyway and the "Claim This Listing" CTA
       // invites the owner to claim and complete the profile.
       if (!base) {
         const { data: viewRow } = await supabase
@@ -553,21 +555,6 @@ export default function SeekerFacilityProfile() {
           Back
         </Button>
 
-        {/* Unclaimed listing banner — same YMYL safety mitigation as CenterProfile.
-            Hidden until the supplemental flags fetch resolves to avoid a flash. */}
-        {claimFlags && !claimFlags.is_claimed && (
-          <div className="mb-4">
-            <UnclaimedFacilityBanner
-              facilityName={facility.name}
-              facilityAddress={facility.address}
-              facilityCity={facility.city}
-              facilityState={facility.state}
-              onClaimClick={() => setClaimModalOpen(true)}
-              onConciergeClick={() => navigate("/concierge/intake")}
-            />
-          </div>
-        )}
-
         {/* Main Content Grid - Two Column Layout */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Main Content */}
@@ -626,11 +613,27 @@ export default function SeekerFacilityProfile() {
 
                     {/* Badges - Stack on mobile */}
                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3">
-                      <RatingBadge 
-                        rating={ratingData.averageRating} 
-                        reviewCount={ratingData.reviewCount} 
-                        size="sm" 
+                      <RatingBadge
+                        rating={ratingData.averageRating}
+                        reviewCount={ratingData.reviewCount}
+                        size="sm"
                       />
+                      {claimFlags && !claimFlags.is_claimed && (
+                        <Tooltip delayDuration={150}>
+                          <TooltipTrigger asChild>
+                            <Badge
+                              variant="secondary"
+                              className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs cursor-help"
+                            >
+                              <Info className="h-2.5 sm:h-3 w-2.5 sm:w-3" aria-hidden />
+                              Unclaimed listing
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-xs text-xs leading-snug">
+                            This listing was created from public SAMHSA records and hasn't been claimed by the facility yet. Contact information may be outdated. Need help? Call our concierge at 214-639-6420.
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                       {facility.featured && (
                         <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs sm:text-xs bg-warning/10 text-warning border-warning/20">
                           <Sparkles className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
@@ -654,6 +657,17 @@ export default function SeekerFacilityProfile() {
                           <GlobeIcon className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                           International
                         </Badge>
+                      )}
+                      {claimFlags && !claimFlags.is_claimed && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setClaimModalOpen(true)}
+                          className="ml-auto h-7 px-2.5 text-xs gap-1"
+                        >
+                          <ShieldCheck className="h-3 w-3" />
+                          Claim This Listing
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -979,7 +993,8 @@ export default function SeekerFacilityProfile() {
       )}
 
       {/* Inquiry + tour modals — gated on claimed-state. Unclaimed listings
-          route through the UnclaimedFacilityBanner / concierge intake. */}
+          surface the "Unclaimed listing" badge + "Claim This Listing"
+          button instead of an inquiry path. */}
       {(!claimFlags || claimFlags.is_claimed) && (
         <>
           <RequestInfoModal

@@ -1,4 +1,4 @@
-import { useParams, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
+import { useParams, Link, useLocation, Navigate } from "react-router-dom";
 import CenterNotFound from "@/pages/CenterNotFound";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,11 +9,11 @@ import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { buildProfileRelatedLinks } from "@/lib/profileRelatedLinks";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RatingBadge } from "@/components/ui/RatingBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { ClaimListingModal } from "@/components/facility/ClaimListingModal";
-import { UnclaimedFacilityBanner } from "@/components/facility/UnclaimedFacilityBanner";
 import { ProfileConciergeRescue } from "@/components/profile/ProfileConciergeRescue";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
 import {
@@ -48,6 +48,7 @@ import {
   Handshake,
   GlobeIcon,
   Scale,
+  Info,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -221,7 +222,6 @@ function TruncatedDescription({ text }: { text: string }) {
 const CenterProfile = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const contactFormRef = useRef<HTMLDivElement>(null);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
@@ -449,7 +449,7 @@ const CenterProfile = () => {
       // snapshot) and we have no owner read. The view enforces the same
       // masking rules as the snapshot path. Services/insurance/age groups
       // are skipped here — unclaimed rows have minimal data anyway and
-      // the UnclaimedFacilityBanner invites the owner to claim and fill
+      // the "Claim This Listing" CTA invites the owner to claim and fill
       // in the rest. Snapshot regeneration is the long-term fix.
       let fallbackFlags: {
         is_claimed?: boolean;
@@ -922,21 +922,6 @@ const CenterProfile = () => {
             </Alert>
           )}
 
-          {/* Unclaimed listing banner — YMYL safety mitigation. Shown when
-              the supplemental claim-state fetch has resolved AND the listing
-              is unclaimed. Routes seekers to the 24/7 concierge line and
-              gives owners a "Claim this listing" CTA. */}
-          {claimFlags && !claimFlags.is_claimed && (
-            <UnclaimedFacilityBanner
-              facilityName={facility.name}
-              facilityAddress={facility.address}
-              facilityCity={facility.city}
-              facilityState={facility.state}
-              onClaimClick={() => setClaimModalOpen(true)}
-              onConciergeClick={() => navigate("/concierge/intake")}
-            />
-          )}
-
           {/* Back Link */}
           {fromSearch && (
             <Link
@@ -1000,7 +985,23 @@ const CenterProfile = () => {
                   </Badge>
                 )}
               </div>
-              
+
+              {/* Claim CTA — top-right of hero, secondary style so it
+                  doesn't compete with the primary Request Info CTAs below. */}
+              {claimFlags && !claimFlags.is_claimed && (
+                <div className="absolute top-3 right-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setClaimModalOpen(true)}
+                    className="bg-white/90 hover:bg-white text-foreground border-white/60 backdrop-blur-sm shadow-md"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
+                    Claim This Listing
+                  </Button>
+                </div>
+              )}
+
               {/* Facility identity overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
                 <div className="flex items-end gap-3.5">
@@ -1027,6 +1028,24 @@ const CenterProfile = () => {
                       <MapPin className="h-3.5 w-3.5 text-white/70 shrink-0" />
                       <span className="text-sm text-white/85 font-medium truncate">{facility.city}, {facility.state}</span>
                     </div>
+                    {claimFlags && !claimFlags.is_claimed && (
+                      <div className="mt-1.5">
+                        <Tooltip delayDuration={150}>
+                          <TooltipTrigger asChild>
+                            <Badge
+                              variant="secondary"
+                              className="gap-1 cursor-help bg-white/15 text-white border-white/25 backdrop-blur-sm hover:bg-white/25"
+                            >
+                              <Info className="h-3 w-3" aria-hidden />
+                              Unclaimed listing
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-xs text-xs leading-snug">
+                            This listing was created from public SAMHSA records and hasn't been claimed by the facility yet. Contact information may be outdated. Need help? Call our concierge at 214-639-6420.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1735,8 +1754,8 @@ const CenterProfile = () => {
       )}
 
       {/* Request Info Modal — gated on claimed-state. Unclaimed listings
-          show the UnclaimedFacilityBanner above instead, which routes
-          seekers to the 24/7 concierge line. */}
+          surface the "Unclaimed listing" badge + "Claim This Listing"
+          button instead of an inquiry path. */}
       {(!claimFlags || claimFlags.is_claimed) && (
         <RequestInfoModal
           open={requestModalOpen}
