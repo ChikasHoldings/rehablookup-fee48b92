@@ -65,7 +65,9 @@ const ProviderForgotPassword = lazy(() => import("./pages/ProviderForgotPassword
 const ProviderResetPassword = lazy(() => import("./pages/ProviderResetPassword"));
 const ProviderSupport = lazy(() => import("./pages/ProviderSupport"));
 const ProviderFAQ = lazy(() => import("./pages/ProviderFAQ"));
-const ProviderSignup = lazy(() => import("./pages/ProviderSignup"));
+const AuthSignup = lazy(() => import("./pages/AuthSignup"));
+const ProviderOnboarding = lazy(() => import("./pages/provider/Onboarding"));
+const NewListingForm = lazy(() => import("./pages/provider/NewListingForm"));
 const ProviderROICalculator = lazy(() => import("./pages/ProviderROICalculator"));
 
 // SEO Landing Pages - City+Treatment, Comparisons, Treatment Hubs, Cost/Insurance
@@ -1188,7 +1190,14 @@ const AppInner = () => {
             <Route path="/provider-resources" element={<PublicRouteGuard><ProviderResources /></PublicRouteGuard>} />
             {/* /provider-guides hub — canonical redirect to /provider-resources (which lists all guides) */}
             <Route path="/provider-guides" element={<Navigate to="/provider-resources" replace />} />
-            <Route path="/provider-signup" element={<ProviderSignup />} />
+            {/* Phase 1: split signup from facility creation. Old signup
+                URL redirects to the new auth-only flow. The legacy multi-step
+                ProviderSignup component is reused at /provider/onboarding/new-listing
+                (mounted with initialStep={3} so it skips the auth steps). */}
+            <Route path="/provider-signup" element={<Navigate to="/auth/signup" replace />} />
+            <Route path="/auth/signup" element={<AuthSignup />} />
+            <Route path="/provider/onboarding" element={<ProviderOnboarding />} />
+            <Route path="/provider/onboarding/new-listing" element={<NewListingForm />} />
             <Route path="/provider-roi-calculator" element={<PublicRouteGuard><ProviderROICalculator /></PublicRouteGuard>} />
             <Route path="/provider-login" element={<Navigate to="/login" replace />} />
             <Route path="/provider-faq" element={<ProviderFAQ />} />

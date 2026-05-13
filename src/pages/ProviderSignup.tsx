@@ -120,8 +120,8 @@ const facilityTypes = FACILITY_TYPES.map(t => t.value);
 const accreditationOptions = [...ACCREDITATION_OPTIONS];
 const states = [...US_STATES];
 
-export default function ProviderSignup() {
-  const [currentStep, setCurrentStep] = useState(1);
+export default function ProviderSignup({ initialStep }: { initialStep?: number } = {}) {
+  const [currentStep, setCurrentStep] = useState(initialStep ?? 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const [emailVerified, setEmailVerified] = useState(false);
@@ -130,12 +130,17 @@ export default function ProviderSignup() {
 
   // Check if user is already logged in
   useEffect(() => {
+    // When mounted in "add another facility" mode (initialStep >= 3 via the
+    // /provider/onboarding/new-listing route), an existing session is the
+    // EXPECTED state — skip the redirect to dashboard and let the form
+    // collect facility info under the current user.
+    if (initialStep && initialStep >= 3) return;
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/provider/dashboard");
       }
     });
-  }, [navigate]);
+  }, [navigate, initialStep]);
 
   // Anti-bot honeypot
   const [honeypot, setHoneypot] = useState("");
@@ -250,9 +255,31 @@ export default function ProviderSignup() {
     
     submittingRef.current = true;
     setIsSubmitting(true);
-    if (import.meta.env.DEV) console.log("[ProviderSignup] Starting account creation for:", formData.email.substring(0, 3) + "***");
+    const isResumeMode = (initialStep ?? 1) >= 3;
+    if (import.meta.env.DEV) console.log("[ProviderSignup] Starting", isResumeMode ? "facility creation (resume)" : "account creation", "for:", formData.email.substring(0, 3) + "***");
 
     try {
+      let userId: string;
+
+      if (isResumeMode) {
+        // Resume mode: user was authed by /auth/signup before being routed
+        // here via /provider/onboarding/new-listing. Skip the auth signup +
+        // profile insert (already done) and proceed to facility creation.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          toast({
+            title: "Session expired",
+            description: "Please sign in again to add a new facility.",
+            variant: "destructive",
+          });
+          submittingRef.current = false;
+          setIsSubmitting(false);
+          navigate("/auth/signup");
+          return;
+        }
+        userId = session.user.id;
+        if (import.meta.env.DEV) console.log("[ProviderSignup] Resume mode, userId:", userId.substring(0, 8) + "...");
+      } else {
       // Check if email is already registered as a seeker or admin
       if (import.meta.env.DEV) console.log("[ProviderSignup] Checking for existing accounts...");
       const [seekerResult, adminResult] = await Promise.all([
@@ -346,7 +373,7 @@ export default function ProviderSignup() {
         }
       }
 
-      const userId = authData.user.id;
+      userId = authData.user.id;
       if (import.meta.env.DEV) console.log("[ProviderSignup] Auth account created, userId:", userId.substring(0, 8) + "...");
 
       // 2. Create profile (with sanitized personal fields)
@@ -370,6 +397,7 @@ export default function ProviderSignup() {
       } else {
         if (import.meta.env.DEV) console.log("[ProviderSignup] Profile created successfully");
       }
+      } // end !isResumeMode
 
       // 3. Create facility (with input sanitization)
       if (import.meta.env.DEV) console.log("[ProviderSignup] Creating facility...");
