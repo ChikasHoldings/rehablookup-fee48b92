@@ -3,6 +3,7 @@ import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
+import { loadFacilityBySlug } from "@/hooks/useFacilityBySlug";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/ui/RatingBadge";
@@ -44,7 +45,7 @@ import {
   Info,
   ShieldCheck,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 interface SeekerProfile {
   first_name: string | null;
@@ -167,11 +168,6 @@ export default function SeekerFacilityProfile() {
   const [showAllServices, setShowAllServices] = useState(false);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
   const [claimModalOpen, setClaimModalOpen] = useState(false);
-  const [claimFlags, setClaimFlags] = useState<{
-    is_claimed: boolean;
-    is_pro: boolean;
-    is_premium_visible: boolean;
-  } | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Get stored user synchronously to avoid getSession deadlocks
@@ -220,157 +216,64 @@ export default function SeekerFacilityProfile() {
   const { data: facility, isLoading, isError: facilityError, refetch: refetchFacility } = useQuery({
     queryKey: ["seeker-facility", slug],
     queryFn: async (): Promise<FacilityData | null> => {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      // Shared loader: snapshot → public_facilities fallback → claim flags.
+      // Replaces the previous direct REST fetch + inline fallback; the hook
+      // is the single source of truth across CenterProfile, this page, and
+      // the claim wizard.
+      const loaded = await loadFacilityBySlug(slug!);
+      if (!loaded.facility) return null;
 
-      // Try to get auth token if available (non-blocking)
-      let authToken = anonKey;
-      try {
-        const stored = localStorage.getItem(`sb-${import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed?.access_token) authToken = parsed.access_token;
-        }
-      } catch {
-        // Use anon key as fallback
-      }
+      const base = loaded.facility;
+      const fromFallback = !!loaded.flags; // fallback path always returns flags inline
 
-      const headers = {
-        "apikey": anonKey,
-        "Authorization": `Bearer ${authToken}`,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      };
-
-      // Fetch facility by slug using direct REST call
-      const facilityRes = await fetch(
-        `${supabaseUrl}/rest/v1/facilities?slug=eq.${encodeURIComponent(slug!)}&status=eq.approved&select=id,name,slug,city,state,zip_code,address,description,facility_type,gender_served,bed_count,featured,verified,year_established,logo_url,gallery_urls,status,user_id,updated_at,concierge_network_opted_in,accepts_international_patients`,
-        { headers: { ...headers, "Accept": "application/vnd.pgrst.object+json" } }
-      );
-
-      // 406 = no match; non-ok with any other status is a real error.
-      const directMissed =
-        !facilityRes.ok && facilityRes.status === 406;
-      if (!facilityRes.ok && !directMissed) {
-        throw new Error(`Failed to fetch facility: ${facilityRes.status}`);
-      }
-
-      let base: Record<string, unknown> | null = null;
-      let fallbackFlags: {
-        is_claimed?: boolean;
-        is_pro?: boolean;
-        is_premium_visible?: boolean;
-      } = {};
-
-      if (!directMissed) {
-        const parsed = await facilityRes.json();
-        if (parsed?.id) base = parsed;
-      }
-
-      // Fallback: query public_facilities directly when the approved-status
-      // direct fetch above misses (e.g. SAMHSA-imported rows not surfaced
-      // by status=eq.approved). The view enforces the same masking rules
-      // for anon callers. Services/insurance joins are skipped — unclaimed
-      // rows have minimal data anyway and the "Claim This Listing" CTA
-      // invites the owner to claim and complete the profile.
-      if (!base) {
-        const { data: viewRow } = await supabase
-          .from("public_facilities")
-          .select("*")
-          .eq("slug", slug!)
-          .maybeSingle();
-        if (viewRow) {
-          const row = viewRow as unknown as Record<string, unknown>;
-          base = {
-            id: row.id,
-            name: row.name,
-            slug: row.slug,
-            city: row.city,
-            state: row.state,
-            zip_code: row.zip_code,
-            address: row.address,
-            description: row.description,
-            facility_type: row.facility_type,
-            gender_served: row.gender_served,
-            bed_count: row.bed_count,
-            featured: row.featured,
-            verified: row.verified,
-            year_established: row.year_established,
-            logo_url: row.logo_url,
-            gallery_urls: row.gallery_urls,
-            status: row.status,
-            user_id: null,
-            updated_at: row.updated_at ?? new Date().toISOString(),
-            concierge_network_opted_in: null,
-            accepts_international_patients: row.accepts_international_patients ?? null,
-            phone: row.phone ?? null,
-            email: null,
-            website: row.website ?? null,
-          };
-          fallbackFlags = {
-            is_claimed: !!row.is_claimed,
-            is_pro: !!row.is_pro,
-            is_premium_visible: !!row.is_premium_visible,
-          };
-        }
-      }
-
-      if (!base) return null;
-
-      const cameFromFallback = Object.keys(fallbackFlags).length > 0;
-      const facilityId = base.id as string;
-
-      // For fallback rows we skip the joined-table fetches and the Pro
-      // contact-details RPC. Those tables are empty for SAMHSA-imported
-      // rows, and the view already returned phone/website with the right
-      // masking applied. The banner CTA invites the owner to claim and
-      // fill in services / insurance.
-      if (cameFromFallback) {
+      // For fallback rows (typically SAMHSA-imported, unclaimed) skip the
+      // joined-table fetches and the Pro contact-details RPC. Those tables
+      // are empty for those rows and the view already returned phone/website
+      // with the right masking applied.
+      if (fromFallback) {
         return {
           ...base,
+          email: null,
           facility_services: [],
           facility_insurance: [],
           facility_age_groups: [],
           facility_credentials: [],
           facility_accreditations: [],
-          ...fallbackFlags,
+          is_claimed: loaded.flags?.is_claimed,
+          is_pro: loaded.flags?.is_pro,
+          is_premium_visible: loaded.flags?.is_premium_visible,
         } as unknown as FacilityData;
       }
 
-      // Fetch related data in parallel using direct REST
-      const [servicesRes, insuranceRes, ageGroupsRes, credentialsRes, accreditationsRes] = await Promise.all([
-        fetch(`${supabaseUrl}/rest/v1/facility_services?facility_id=eq.${facilityId}&select=service_name`, { headers }),
-        fetch(`${supabaseUrl}/rest/v1/facility_insurance?facility_id=eq.${facilityId}&select=insurance_name`, { headers }),
-        fetch(`${supabaseUrl}/rest/v1/facility_age_groups?facility_id=eq.${facilityId}&select=age_group`, { headers }),
-        fetch(`${supabaseUrl}/rest/v1/facility_credentials?facility_id=eq.${facilityId}&select=accreditations,licensing_info`, { headers }),
-        fetch(`${supabaseUrl}/rest/v1/facility_accreditations?facility_id=eq.${facilityId}&select=accreditation_type,verified`, { headers }),
-      ]);
-
+      // Snapshot path — fetch joined detail tables + Pro-gated contact RPC.
+      const facilityId = base.id;
       const [services, insurance, ageGroups, credentials, accreditations] = await Promise.all([
-        servicesRes.ok ? servicesRes.json() : [],
-        insuranceRes.ok ? insuranceRes.json() : [],
-        ageGroupsRes.ok ? ageGroupsRes.json() : [],
-        credentialsRes.ok ? credentialsRes.json() : [],
-        accreditationsRes.ok ? accreditationsRes.json() : [],
+        supabase.from("facility_services").select("service_name").eq("facility_id", facilityId),
+        supabase.from("facility_insurance").select("insurance_name").eq("facility_id", facilityId),
+        supabase.from("facility_age_groups").select("age_group").eq("facility_id", facilityId),
+        supabase.from("facility_credentials").select("accreditations, licensing_info").eq("facility_id", facilityId),
+        supabase.from("facility_accreditations").select("accreditation_type, verified").eq("facility_id", facilityId),
       ]);
 
-      // Fetch Pro-gated contact details (phone/website) via security definer function
       const { data: publicData } = await supabase
         .rpc("get_public_facility_data", { facility_id: facilityId })
         .maybeSingle();
 
       return {
         ...base,
-        // Override phone/website with Pro-gated values from the security definer function
+        // Pro-gated values override the snapshot's masked defaults.
         phone: publicData?.phone || null,
-        email: publicData?.email || base.email || null,
+        email: publicData?.email || null,
         website: publicData?.website || null,
-        facility_services: services,
-        facility_insurance: insurance,
-        facility_age_groups: ageGroups,
-        facility_credentials: credentials,
-        facility_accreditations: accreditations,
-      } as FacilityData;
+        facility_services: services.data ?? [],
+        facility_insurance: insurance.data ?? [],
+        facility_age_groups: ageGroups.data ?? [],
+        facility_credentials: credentials.data ?? [],
+        facility_accreditations: accreditations.data ?? [],
+        is_claimed: loaded.flags?.is_claimed,
+        is_pro: loaded.flags?.is_pro,
+        is_premium_visible: loaded.flags?.is_premium_visible,
+      } as unknown as FacilityData;
     },
     enabled: !!slug,
     retry: 2,
@@ -390,43 +293,19 @@ export default function SeekerFacilityProfile() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Supplemental fetch for claim-state flags. Same pattern as CenterProfile —
-  // the direct-fetch path doesn't carry these flags, so we query the
-  // masking view by id and overlay them. If the facility came in through
-  // the public_facilities fallback path it already carries the flags, so
-  // we short-circuit to avoid a redundant round-trip.
-  useEffect(() => {
-    if (!facility?.id) {
-      setClaimFlags(null);
-      return;
-    }
-    if (facility.is_claimed !== undefined) {
-      setClaimFlags({
-        is_claimed: !!facility.is_claimed,
-        is_pro: !!facility.is_pro,
-        is_premium_visible: !!facility.is_premium_visible,
-      });
-      return;
-    }
-    let cancelled = false;
-    supabase
-      .from("public_facilities")
-      .select("is_claimed, is_pro, is_premium_visible")
-      .eq("id", facility.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled && data) {
-          setClaimFlags({
-            is_claimed: !!data.is_claimed,
-            is_pro: !!data.is_pro,
-            is_premium_visible: !!data.is_premium_visible,
-          });
-        }
-      });
-    return () => {
-      cancelled = true;
+  // Claim-state flags sourced directly from the shared loader's result
+  // (baked into `facility` by the queryFn above via `loaded.flags`).
+  const claimFlags = useMemo<
+    | { is_claimed: boolean; is_pro: boolean; is_premium_visible: boolean }
+    | null
+  >(() => {
+    if (!facility || facility.is_claimed === undefined) return null;
+    return {
+      is_claimed: !!facility.is_claimed,
+      is_pro: !!facility.is_pro,
+      is_premium_visible: !!facility.is_premium_visible,
     };
-  }, [facility?.id, facility?.is_claimed, facility?.is_pro, facility?.is_premium_visible]);
+  }, [facility]);
 
   // Track current user id for the claim modal's auth-gated CTA.
   useEffect(() => {

@@ -51,7 +51,7 @@ import {
   Info,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
 import { TrustBadgesInline } from "@/components/trust/TrustBadgesSection";
@@ -69,11 +69,7 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import {
-  fetchPublicFacilitiesSnapshot,
-  findPublicFacilityBySlug,
-  getCachedPublicFacilitiesSnapshot,
-} from "@/lib/publicFacilitiesSnapshot";
+import { loadFacilityBySlug } from "@/hooks/useFacilityBySlug";
 
 interface FacilityData {
   id: string;
@@ -231,11 +227,6 @@ const CenterProfile = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [claimModalOpen, setClaimModalOpen] = useState(false);
-  const [claimFlags, setClaimFlags] = useState<{
-    is_claimed: boolean;
-    is_pro: boolean;
-    is_premium_visible: boolean;
-  } | null>(null);
   const [reportImageOpen, setReportImageOpen] = useState(false);
   const [reportImageUrl, setReportImageUrl] = useState<string>("");
   const [reportImageType, setReportImageType] = useState<"logo" | "gallery">("gallery");
@@ -384,22 +375,14 @@ const CenterProfile = () => {
   const { data: facility, isLoading, isFetching, isFetched, error } = useQuery({
     queryKey: ["facility", slug, currentUserId],
     queryFn: async (): Promise<FacilityData | null> => {
-      const cachedFacilities = getCachedPublicFacilitiesSnapshot();
-      let snapshotRow = findPublicFacilityBySlug(cachedFacilities, slug);
-      let publicErr: Error | null = null;
+      // Shared loader: snapshot → public_facilities fallback → claim flags.
+      // The hook handles all three paths in one go; see useFacilityBySlug.
+      const loaded = await loadFacilityBySlug(slug!);
 
-      if (!snapshotRow) {
-        try {
-          const snapshotFacilities = await fetchPublicFacilitiesSnapshot();
-          snapshotRow = findPublicFacilityBySlug(snapshotFacilities, slug);
-        } catch (error) {
-          publicErr = error instanceof Error
-            ? error
-            : new Error("Failed to load public facility snapshot");
-        }
-      }
-
-      // 2) Owner-scoped read of the base table (RLS allows owners) — gets PII fields
+      // Owner-scoped read of the base table (RLS allows owners) — picks up
+      // PII fields the public path masks (email, user_id, etc.). When the
+      // current user IS the owner, this is the authoritative source; for
+      // anon visitors it returns null and we fall back to `loaded.facility`.
       let ownedRow: any = null;
       if (currentUserId) {
         const { data } = await supabase
@@ -416,91 +399,10 @@ const CenterProfile = () => {
         ownedRow = data;
       }
 
-      const publicRow = snapshotRow
-        ? {
-            id: snapshotRow.id,
-            name: snapshotRow.name,
-            slug: snapshotRow.slug,
-            city: snapshotRow.city,
-            state: snapshotRow.state,
-            zip_code: snapshotRow.zipCode,
-            address: snapshotRow.address,
-            phone: snapshotRow.phone,
-            website: snapshotRow.website,
-            description: snapshotRow.description,
-            facility_type: snapshotRow.facilityType,
-            gender_served: snapshotRow.genderServed,
-            bed_count: snapshotRow.bedCount,
-            featured: snapshotRow.featured,
-            verified: snapshotRow.verified,
-            year_established: snapshotRow.yearEstablished,
-            logo_url: snapshotRow.logoUrl,
-            gallery_urls: snapshotRow.galleryUrls,
-            status: snapshotRow.status,
-            updated_at: snapshotRow.updatedAt ?? new Date().toISOString(),
-            accepts_international_patients: snapshotRow.acceptsInternationalPatients,
-          }
-        : null;
+      const base = ownedRow ?? loaded.facility;
+      if (!base) return null;
 
-      let base = ownedRow ?? publicRow;
-
-      // 2b) Fallback: query public_facilities directly when the snapshot
-      // misses (e.g. SAMHSA-imported rows not yet in the build-time JSON
-      // snapshot) and we have no owner read. The view enforces the same
-      // masking rules as the snapshot path. Services/insurance/age groups
-      // are skipped here — unclaimed rows have minimal data anyway and
-      // the "Claim This Listing" CTA invites the owner to claim and fill
-      // in the rest. Snapshot regeneration is the long-term fix.
-      let fallbackFlags: {
-        is_claimed?: boolean;
-        is_pro?: boolean;
-        is_premium_visible?: boolean;
-      } = {};
-      if (!base) {
-        const { data: viewRow } = await supabase
-          .from("public_facilities")
-          .select("*")
-          .eq("slug", slug)
-          .maybeSingle();
-        if (viewRow) {
-          const row = viewRow as unknown as Record<string, unknown>;
-          base = {
-            id: row.id,
-            name: row.name,
-            slug: row.slug,
-            city: row.city,
-            state: row.state,
-            zip_code: row.zip_code,
-            address: row.address,
-            phone: row.phone,
-            website: row.website,
-            description: row.description,
-            facility_type: row.facility_type,
-            gender_served: row.gender_served,
-            bed_count: row.bed_count,
-            featured: row.featured,
-            verified: row.verified,
-            year_established: row.year_established,
-            logo_url: row.logo_url,
-            gallery_urls: row.gallery_urls,
-            status: row.status,
-            updated_at: row.updated_at ?? new Date().toISOString(),
-            accepts_international_patients: row.accepts_international_patients,
-          };
-          fallbackFlags = {
-            is_claimed: !!row.is_claimed,
-            is_pro: !!row.is_pro,
-            is_premium_visible: !!row.is_premium_visible,
-          };
-        }
-      }
-
-      if (!base) {
-        if (publicErr) throw publicErr;
-        return null;
-      }
-
-      // 3) Fetch joined detail tables (anon-readable) in parallel
+      // Joined detail tables (anon-readable) in parallel.
       const facilityId = base.id as string;
       const [services, insurance, ageGroups, credentials, accreditations] = await Promise.all([
         supabase.from("facility_services").select("service_name").eq("facility_id", facilityId),
@@ -512,17 +414,25 @@ const CenterProfile = () => {
 
       return {
         ...base,
-        // Ensure PII-only fields are at least defined for downstream typing
+        // Ensure PII-only fields are at least defined for downstream typing.
         email: ownedRow?.email ?? null,
         user_id: ownedRow?.user_id ?? null,
         concierge_network_opted_in: ownedRow?.concierge_network_opted_in ?? null,
-        accepts_international_patients: ownedRow?.accepts_international_patients ?? base.accepts_international_patients ?? null,
+        accepts_international_patients:
+          ownedRow?.accepts_international_patients ??
+          base.accepts_international_patients ??
+          null,
         facility_services: services.data ?? [],
         facility_insurance: insurance.data ?? [],
         facility_age_groups: ageGroups.data ?? [],
         facility_credentials: credentials.data ?? [],
         facility_accreditations: accreditations.data ?? [],
-        ...fallbackFlags,
+        // Claim flags are populated by the shared loader (either inline from
+        // the public_facilities fallback row, or via a supplemental fetch by
+        // id when the snapshot was the source).
+        is_claimed: loaded.flags?.is_claimed,
+        is_pro: loaded.flags?.is_pro,
+        is_premium_visible: loaded.flags?.is_premium_visible,
       } as FacilityData;
     },
     enabled: !!slug,
@@ -532,45 +442,22 @@ const CenterProfile = () => {
     refetchOnReconnect: false,
   });
 
-  // Supplemental fetch for claim-state flags. The static snapshot used by
-  // the public path doesn't carry these, so we query the masking view by id
-  // and overlay them onto the facility. While `claimFlags` is null the
-  // banner stays hidden — avoids a flash of unclaimed-state content on
-  // facilities that turn out to be claimed. If the facility came in
-  // through the public_facilities fallback path it already carries the
-  // flags, so we short-circuit to avoid a redundant round-trip.
-  useEffect(() => {
-    if (!facility?.id) {
-      setClaimFlags(null);
-      return;
-    }
-    if (facility.is_claimed !== undefined) {
-      setClaimFlags({
-        is_claimed: !!facility.is_claimed,
-        is_pro: !!facility.is_pro,
-        is_premium_visible: !!facility.is_premium_visible,
-      });
-      return;
-    }
-    let cancelled = false;
-    supabase
-      .from("public_facilities")
-      .select("is_claimed, is_pro, is_premium_visible")
-      .eq("id", facility.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled && data) {
-          setClaimFlags({
-            is_claimed: !!data.is_claimed,
-            is_pro: !!data.is_pro,
-            is_premium_visible: !!data.is_premium_visible,
-          });
-        }
-      });
-    return () => {
-      cancelled = true;
+  // Claim-state flags are now sourced directly from the shared loader's
+  // result (baked into `facility` by the queryFn above). When the flags
+  // haven't loaded yet — e.g. the rare case where the facility loaded via
+  // an owner-only read and no public_facilities row exists — `claimFlags`
+  // stays null and the unclaimed banner stays hidden.
+  const claimFlags = useMemo<
+    | { is_claimed: boolean; is_pro: boolean; is_premium_visible: boolean }
+    | null
+  >(() => {
+    if (!facility || facility.is_claimed === undefined) return null;
+    return {
+      is_claimed: !!facility.is_claimed,
+      is_pro: !!facility.is_pro,
+      is_premium_visible: !!facility.is_premium_visible,
     };
-  }, [facility?.id, facility?.is_claimed, facility?.is_pro, facility?.is_premium_visible]);
+  }, [facility]);
 
   const { data: hasFeaturedSubscription } = useQuery({
     queryKey: ["featured-subscription-check", facility?.id],
