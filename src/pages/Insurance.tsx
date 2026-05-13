@@ -602,9 +602,15 @@ export default function Insurance() {
             <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
               Insurance Coverage for Addiction Treatment
             </h1>
-            <p className="text-primary-foreground/80 text-sm md:text-base">
+            <p className="text-primary-foreground/80 text-sm md:text-base mb-4">
               Most health insurance plans cover addiction treatment. Learn what's typically covered and how to verify your benefits.
             </p>
+            <Button asChild size="lg" variant="secondary" className="font-semibold">
+              <Link to="/insurance-verification">
+                <Shield className="h-4 w-4 mr-2" />
+                Verify my insurance — free
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

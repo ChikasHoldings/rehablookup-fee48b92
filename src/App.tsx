@@ -213,6 +213,7 @@ const AdLanding = lazy(() => import("./pages/AdLanding"));
 const SocialLanding = lazy(() => import("./pages/SocialLanding"));
 const Resources = lazy(() => import("./pages/Resources"));
 const Insurance = lazy(() => import("./pages/Insurance"));
+const InsuranceVerification = lazy(() => import("./pages/InsuranceVerification"));
 const AetnaRehab = lazy(() => import("./pages/insurance/AetnaRehab"));
 const BCBSTreatment = lazy(() => import("./pages/insurance/BCBSTreatment"));
 const CignaRehab = lazy(() => import("./pages/insurance/CignaRehab"));
@@ -1119,6 +1120,9 @@ const AppInner = () => {
             <Route path="/blog" element={<Navigate to="/resources" replace />} />
             <Route path="/blog/:id" element={<BlogRedirect />} />
             <Route path="/insurance" element={<PublicRouteGuard><Insurance /></PublicRouteGuard>} />
+            <Route path="/insurance-verification" element={<PublicRouteGuard><InsuranceVerification /></PublicRouteGuard>} />
+            <Route path="/verify-insurance" element={<Navigate to="/insurance-verification" replace />} />
+            <Route path="/vob" element={<Navigate to="/insurance-verification" replace />} />
             {/* Insurance short URLs → redirect to canonical */}
             <Route path="/insurance/aetna" element={<Navigate to="/insurance/aetna-rehab" replace />} />
             <Route path="/insurance/bcbs" element={<Navigate to="/insurance/bcbs-treatment" replace />} />
