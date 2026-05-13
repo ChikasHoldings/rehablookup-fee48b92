@@ -425,7 +425,33 @@ function AdminClaimsReviewPanel() {
         })
         .eq("id", claim.id);
       if (updErr) throw updErr;
-      toast.success(`Claim approved — ${claim.facilities?.name ?? "facility"} transferred to ${claim.claimant_name}`);
+
+      // Side-effect: send approval email to the claimant. The DB trigger
+      // already handled ownership transfer + enrichment materialization
+      // by the time this resolves. If the email send fails (network, Resend
+      // hiccup, etc.) we surface a warning toast but don't unwind the
+      // approval — the DB state is the source of truth.
+      try {
+        const { error: mailErr } = await supabase.functions.invoke(
+          "send-claim-approval-email",
+          { body: { claimRequestId: claim.id } },
+        );
+        if (mailErr) {
+          console.warn("[AdminClaims] approval email failed", mailErr);
+          toast.warning(
+            "Approval saved but the notification email failed to send. You may want to message the claimant directly.",
+          );
+        }
+      } catch (mailErr) {
+        console.warn("[AdminClaims] approval email exception", mailErr);
+        toast.warning(
+          "Approval saved but the notification email failed to send. You may want to message the claimant directly.",
+        );
+      }
+
+      toast.success(
+        `Claim approved — ${claim.facilities?.name ?? "facility"} transferred to ${claim.claimant_name}`,
+      );
       setApproveTarget(null);
       await fetchClaims();
     } catch (err) {
@@ -455,6 +481,27 @@ function AdminClaimsReviewPanel() {
         })
         .eq("id", claim.id);
       if (updErr) throw updErr;
+
+      // Side-effect: send rejection email so the claimant understands why
+      // and can decide whether to retry. Non-fatal on failure.
+      try {
+        const { error: mailErr } = await supabase.functions.invoke(
+          "send-claim-rejection-email",
+          { body: { claimRequestId: claim.id } },
+        );
+        if (mailErr) {
+          console.warn("[AdminClaims] rejection email failed", mailErr);
+          toast.warning(
+            "Rejection saved but the notification email failed to send.",
+          );
+        }
+      } catch (mailErr) {
+        console.warn("[AdminClaims] rejection email exception", mailErr);
+        toast.warning(
+          "Rejection saved but the notification email failed to send.",
+        );
+      }
+
       toast.success("Claim rejected");
       setRejectTarget(null);
       setRejectionReason("");

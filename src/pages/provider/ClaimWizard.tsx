@@ -854,6 +854,85 @@ function Step3Verification({
   const setView = (view: VerificationView) =>
     setState((p) => ({ ...p, verificationView: view }));
 
+  // Re-mount safety: if the user navigates back to step 3 after already
+  // verifying (e.g. via the stepper dot from step 4), don't show the OTP
+  // entry — show a "you're verified" card with Continue + switch-method.
+  const [serverStatus, setServerStatus] = useState<
+    "loading" | "verified" | "other"
+  >("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("facility_claim_requests")
+      .select("verification_status")
+      .eq("id", claimRequestId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setServerStatus(
+          data?.verification_status === "verified" ? "verified" : "other",
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [claimRequestId]);
+
+  if (serverStatus === "loading") {
+    return (
+      <Card className="p-6 md:p-7 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        Checking verification status…
+      </Card>
+    );
+  }
+
+  if (serverStatus === "verified") {
+    return (
+      <Card className="p-6 md:p-7 space-y-5">
+        <header className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden />
+            <h1 className="font-display text-xl md:text-2xl font-bold text-foreground">
+              You're already verified
+            </h1>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Your identity is on file. You can continue to the next step, or
+            re-verify with a different method (this will reset your
+            verification).
+          </p>
+        </header>
+        <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-between pt-2 border-t">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              // User wants to switch methods — reset client view back to
+              // picker. The next initiate-* call will overwrite the
+              // verification row and reset verification_status to 'pending'.
+              setState((p) => ({
+                ...p,
+                verificationMethod: null,
+                verificationEmail: "",
+                verificationView: "picker",
+              }));
+              setServerStatus("other");
+            }}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1.5" aria-hidden />
+            Use a different method
+          </Button>
+          <Button onClick={onComplete}>
+            Continue
+            <ArrowRight className="h-4 w-4 ml-1.5" aria-hidden />
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-6 md:p-7 space-y-5">
       <header className="space-y-1.5">
