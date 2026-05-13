@@ -26,7 +26,7 @@ import { useProviderCredits } from "@/hooks/useProviderCredits";
 import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { differenceInHours, isPast, format } from "date-fns";
+import { format } from "date-fns";
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { LeadDetailDrawer } from "@/components/provider/leads/LeadDetailDrawer";
@@ -190,6 +190,31 @@ export default function ProviderDashboardPage() {
       const { data, error } = await supabase.rpc("get_facility_leads_count", { p_facility_id: facilityId });
       if (error) throw error;
       return Number(data?.[0]?.total_count) || 0;
+    },
+    enabled: !!facilityId,
+    staleTime: 1000 * 60 * 2,
+    refetchOnMount: true,
+  });
+
+  // Server-side count of urgent leads (status=new, created >24h ago, not
+  // snoozed). The recent-leads query above only loads the 4 most-recent rows
+  // for the dashboard feed, so without this dedicated count a provider with
+  // 50+ leads would see "0 need follow-up" while many are stale.
+  const { data: urgentLeadsCount = 0 } = useQuery({
+    queryKey: ["urgent-leads-count", facilityId],
+    queryFn: async (): Promise<number> => {
+      if (!facilityId) return 0;
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const nowIso = new Date().toISOString();
+      const { count, error } = await supabase
+        .from("leads_provider_view")
+        .select("id", { count: "exact", head: true })
+        .eq("facility_id", facilityId)
+        .eq("status", "new")
+        .lte("created_at", cutoff)
+        .or(`snooze_until.is.null,snooze_until.lt.${nowIso}`);
+      if (error) throw error;
+      return count ?? 0;
     },
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 2,
@@ -402,20 +427,9 @@ export default function ProviderDashboardPage() {
   // legacy URLs (/rehab-centers/{uuid}) which render a "Not Found" page.
   const profileUrl = facility?.slug ? `/center/${facility.slug}` : null;
 
-  // Calculate leads awaiting follow-up
-  const now = new Date();
-  const leadsAwaitingFollowup = recentLeads.filter(lead => {
-    if (lead.status !== 'new') return false;
-    const hoursSinceCreated = differenceInHours(now, new Date(lead.created_at));
-    return hoursSinceCreated >= 24;
-  });
-  
-  const snoozedLeads = leadsAwaitingFollowup.filter(
-    lead => lead.snooze_until && !isPast(new Date(lead.snooze_until))
-  );
-  const urgentLeads = leadsAwaitingFollowup.filter(
-    lead => !lead.snooze_until || isPast(new Date(lead.snooze_until))
-  );
+  // Note: urgent-leads counting moved to the server-side `urgentLeadsCount`
+  // query above so the alert reflects ALL stale leads (not just the 4 most
+  // recent loaded for the dashboard feed).
 
   return (
     <div className="min-h-full bg-background">
@@ -569,8 +583,10 @@ export default function ProviderDashboardPage() {
                 </Card>
               )}
 
-              {/* Urgent Leads Alert */}
-              {urgentLeads.length > 0 && (
+              {/* Urgent Leads Alert — uses the server-side count so providers
+                  with more than the 4 most-recent leads still see the real
+                  number waiting 24h+. */}
+              {urgentLeadsCount > 0 && (
                 <Card className="border-l-2 border-l-warning">
                   <CardContent className="p-3.5">
                     <div className="flex items-center gap-3">
@@ -579,7 +595,7 @@ export default function ProviderDashboardPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">
-                          <span className="tabular-nums">{urgentLeads.length}</span> Need Follow-up
+                          <span className="tabular-nums">{urgentLeadsCount}</span> Need Follow-up
                         </p>
                         <p className="text-xs text-muted-foreground">Waiting 24h+</p>
                       </div>

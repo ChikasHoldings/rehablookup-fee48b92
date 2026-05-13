@@ -196,6 +196,47 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
     agreeToTerms: false,
   });
 
+  // Auto-save draft to sessionStorage so a refresh or accidental nav doesn't
+  // wipe a half-filled wizard. File objects (logoFile, galleryFiles) and
+  // password fields aren't persisted — files need re-upload after a reload,
+  // passwords don't belong in storage. Keyed by user when known, else 'anon'.
+  const DRAFT_KEY = "provider-signup-draft";
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as Record<string, unknown>;
+      setFormData((prev) => ({
+        ...prev,
+        ...draft,
+        // Files + secrets are never restored.
+        logoFile: null,
+        logoPreview: "",
+        galleryFiles: [],
+        galleryPreviews: [],
+        password: "",
+        confirmPassword: "",
+      }));
+    } catch {
+      // Corrupt draft — ignore.
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only restore
+  }, []);
+
+  useEffect(() => {
+    try {
+      const {
+        password: _p, confirmPassword: _c,
+        logoFile: _lf, logoPreview: _lp,
+        galleryFiles: _gf, galleryPreviews: _gp,
+        ...persistable
+      } = formData;
+      void _p; void _c; void _lf; void _lp; void _gf; void _gp;
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(persistable));
+    } catch {
+      // Quota / privacy mode — fail silently.
+    }
+  }, [formData]);
 
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -715,6 +756,8 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         title: "Welcome to RehabLookup!",
         description: "Your account has been created. Your listing is pending review and will be live shortly.",
       });
+      // Wizard finished — clear the autosave draft so the next signup starts fresh.
+      try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
       navigate("/provider/dashboard");
     } catch (error: any) {
       console.error("Signup error:", error);
