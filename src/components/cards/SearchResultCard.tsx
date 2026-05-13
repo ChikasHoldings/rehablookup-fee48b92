@@ -29,6 +29,7 @@ import { buildConciergeHref } from "@/lib/conciergeHref";
 
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { useFavorites } from "@/hooks/useFavorites";
+import { CompareButton } from "@/components/comparison/CompareButton";
 import type { ProximityTier } from "@/lib/proximitySearch";
 
 
@@ -278,6 +279,8 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
               >
                 <Heart className={cn("h-6 w-6", isFavorite(center.id) && "fill-current")} aria-hidden="true" />
               </button>
+              {/* Compare toggle — mirrors the favorite-heart pattern */}
+              <CompareButton facilityId={center.id} facilityName={center.name} variant="icon" />
             </div>
 
             {/* Logo overlay */}

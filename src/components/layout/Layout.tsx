@@ -5,6 +5,7 @@ import { BackToTop } from "@/components/ui/back-to-top";
 import { FloatingHelpButton } from "@/components/ui/floating-help-button";
 import { StickyConversionBar } from "@/components/seo/StickyConversionBar";
 import { InternationalBanner } from "@/components/InternationalBanner";
+import { CompareTray } from "@/components/comparison/CompareTray";
 import { preloadPublicPages } from "@/lib/routePrefetch";
 
 interface LayoutProps {
@@ -32,6 +33,7 @@ export function Layout({ children }: LayoutProps) {
       <BackToTop />
       <FloatingHelpButton />
       <StickyConversionBar />
+      <CompareTray />
     </div>
   );
 }

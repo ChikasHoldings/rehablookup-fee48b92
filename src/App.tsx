@@ -76,6 +76,7 @@ const ProviderROICalculator = lazy(() => import("./pages/ProviderROICalculator")
 // SEO Landing Pages - City+Treatment, Comparisons, Treatment Hubs, Cost/Insurance
 // CityTreatmentPage routes handled by SmartCatchAll
 const ComparisonPage = lazy(() => import("./pages/seo/ComparisonPage"));
+const FacilityCompare = lazy(() => import("./pages/Comparison"));
 const TreatmentHubPage = lazy(() => import("./pages/seo/TreatmentHubPage"));
 const CostInsurancePage = lazy(() => import("./pages/seo/CostInsurancePage"));
 const SubstanceTreatmentPage = lazy(() => import("./pages/seo/SubstanceTreatmentPage"));
@@ -545,6 +546,7 @@ const AppInner = () => {
             <Route path="/" element={<PublicRouteGuard><Index /></PublicRouteGuard>} />
             <Route path="/locations" element={<PublicRouteGuard><Locations /></PublicRouteGuard>} />
             <Route path="/rehab-centers" element={<PublicRouteGuard><RehabCenters /></PublicRouteGuard>} />
+            <Route path="/compare" element={<PublicRouteGuard><FacilityCompare /></PublicRouteGuard>} />
             <Route path="/search-results" element={<PublicRouteGuard><SearchResults /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/articles/:articleSlug" element={<PublicRouteGuard><StateArticlePage /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/county/:countySlug/:treatmentSlug" element={<PublicRouteGuard><CountyTreatmentPage /></PublicRouteGuard>} />

@@ -87,6 +87,7 @@ const resourceLinks: FooterLink[] = [
   { name: "Paying for Rehab", path: "/resources/paying-for-rehab" },
   { name: "Detox Timeline", path: "/resources/detox-timeline" },
   { name: "Cost Estimator", path: "/cost-estimator" },
+  { name: "Compare Facilities", path: "/compare", badge: "New" },
   { name: "General FAQ", path: "/faq" },
 ];
 
