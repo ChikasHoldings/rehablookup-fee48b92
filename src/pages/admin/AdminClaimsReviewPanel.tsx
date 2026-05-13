@@ -65,11 +65,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronDown, ChevronRight, ExternalLink, RefreshCw, Search } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  Image as ImageIcon,
+  Mail,
+  MessageSquare,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type ClaimStatus = "pending" | "under_review" | "approved" | "rejected" | "withdrawn";
 type StatusFilter = "pending" | "under_review" | "resolved" | "all";
+type VerificationMethod = "email_domain" | "sms_phone" | "document_upload";
+type VerificationStatus =
+  | "not_started"
+  | "pending"
+  | "verified"
+  | "failed"
+  | "expired";
 
 interface FacilityRef {
   id: string;
@@ -77,6 +95,29 @@ interface FacilityRef {
   city: string | null;
   state: string | null;
   slug: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+}
+
+interface AccreditationEntry {
+  type?: string;
+  number?: string;
+  issuing_authority?: string;
+  document_path?: string;
+  document_name?: string;
+  verification_url?: string;
+  notes?: string;
+}
+
+interface PendingEnrichments {
+  description?: string;
+  corrected_contact?: { phone?: string; email?: string; website?: string };
+  logo_path?: string;
+  photo_paths?: string[];
+  services?: string[];
+  insurances?: string[];
+  accreditations?: AccreditationEntry[];
 }
 
 interface ClaimRow {
@@ -96,6 +137,12 @@ interface ClaimRow {
   rejection_reason: string | null;
   created_at: string;
   updated_at: string;
+  verification_method: VerificationMethod | null;
+  verification_status: VerificationStatus;
+  verified_at: string | null;
+  verification_email: string | null;
+  verification_phone: string | null;
+  pending_enrichments: PendingEnrichments | null;
   facilities: FacilityRef | null;
 }
 
@@ -114,6 +161,83 @@ const STATUS_VARIANTS: Record<ClaimStatus, "default" | "secondary" | "destructiv
   rejected: "destructive",
   withdrawn: "outline",
 };
+
+const VERIFICATION_METHOD_LABELS: Record<VerificationMethod, string> = {
+  email_domain: "Email",
+  sms_phone: "SMS",
+  document_upload: "Document",
+};
+
+const VERIFICATION_METHOD_ICONS: Record<
+  VerificationMethod,
+  typeof Mail
+> = {
+  email_domain: Mail,
+  sms_phone: MessageSquare,
+  document_upload: FileText,
+};
+
+const VERIFICATION_STATUS_LABELS: Record<VerificationStatus, string> = {
+  not_started: "Not started",
+  pending: "Pending",
+  verified: "Verified",
+  failed: "Failed",
+  expired: "Expired",
+};
+
+const SERVICE_LABELS: Record<string, string> = {
+  detox: "Detox",
+  residential: "Residential",
+  php: "PHP",
+  iop: "IOP",
+  outpatient: "Outpatient",
+  mat_moud: "MAT / MOUD",
+  individual_therapy: "Individual Therapy",
+  group_therapy: "Group Therapy",
+  family_therapy: "Family Therapy",
+  dual_diagnosis: "Dual Diagnosis",
+  trauma_informed: "Trauma-Informed",
+};
+
+const INSURANCE_LABELS: Record<string, string> = {
+  aetna: "Aetna",
+  anthem: "Anthem",
+  bcbs: "BCBS",
+  cigna: "Cigna",
+  humana: "Humana",
+  kaiser: "Kaiser",
+  medicare: "Medicare",
+  medicaid: "Medicaid",
+  optum: "Optum",
+  unitedhealthcare: "UHC",
+  tricare: "TRICARE",
+  self_pay: "Self-pay",
+};
+
+function maskEmail(email: string | null | undefined): string {
+  if (!email) return "—";
+  const [local, domain] = email.split("@");
+  if (!domain) return email;
+  const head = local.slice(0, 2);
+  return `${head}${"*".repeat(Math.max(3, local.length - 2))}@${domain}`;
+}
+
+function maskPhone(phone: string | null | undefined): string {
+  if (!phone) return "—";
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 7) return phone;
+  const local = digits.startsWith("1") && digits.length === 11 ? digits.slice(1) : digits;
+  return `(${local.slice(0, 3)}) •••-${local.slice(-4)}`;
+}
+
+function publicClaimPhotoUrl(path: string): string {
+  return supabase.storage.from("claim-photos").getPublicUrl(path).data.publicUrl;
+}
+
+function isImageDoc(name: string | undefined): boolean {
+  if (!name) return false;
+  return /\.(jpe?g|png|webp|heic|heif|gif|svg)$/i.test(name);
+}
 
 function formatTimestamp(iso: string): string {
   try {
@@ -145,6 +269,65 @@ function AdminClaimsReviewPanel() {
   const [rejectTarget, setRejectTarget] = useState<ClaimRow | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
 
+  // Cache of signed URLs for claim-evidence documents, keyed by storage path.
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+
+  async function ensureSignedUrlsFor(claim: ClaimRow) {
+    const paths = new Set<string>();
+    (claim.pending_enrichments?.accreditations ?? []).forEach((a) => {
+      if (a.document_path) paths.add(a.document_path);
+    });
+    const toFetch = Array.from(paths).filter((p) => !(p in signedUrls));
+    if (toFetch.length === 0) return;
+    const results = await Promise.all(
+      toFetch.map((path) =>
+        supabase.storage
+          .from("claim-evidence")
+          .createSignedUrl(path, 3600)
+          .then(({ data, error }) => ({ path, url: data?.signedUrl, error })),
+      ),
+    );
+    setSignedUrls((prev) => {
+      const next = { ...prev };
+      for (const r of results) {
+        if (r.url) next[r.path] = r.url;
+      }
+      return next;
+    });
+  }
+
+  function toggleExpand(claim: ClaimRow) {
+    const next = expandedId === claim.id ? null : claim.id;
+    setExpandedId(next);
+    if (next) {
+      ensureSignedUrlsFor(claim).catch(() => {
+        // Signed-URL failures are non-fatal — the doc link button will fall
+        // back to a fresh fetch on click.
+      });
+    }
+  }
+
+  async function markVerificationComplete(claim: ClaimRow) {
+    setActionPending(claim.id);
+    try {
+      const { error: updErr } = await supabase
+        .from("facility_claim_requests")
+        .update({
+          verification_status: "verified",
+          verified_at: new Date().toISOString(),
+        })
+        .eq("id", claim.id);
+      if (updErr) throw updErr;
+      toast.success("Verification marked complete");
+      await fetchClaims();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Update failed";
+      toast.error(msg);
+    } finally {
+      setActionPending(null);
+    }
+  }
+
   async function fetchClaims() {
     setLoading(true);
     setError(null);
@@ -157,7 +340,9 @@ function AdminClaimsReviewPanel() {
         claimant_name, claimant_role, evidence_url, evidence_notes,
         status, reviewed_by, reviewed_at, decision_notes, rejection_reason,
         created_at, updated_at,
-        facilities ( id, name, city, state, slug )
+        verification_method, verification_status, verified_at,
+        verification_email, verification_phone, pending_enrichments,
+        facilities ( id, name, city, state, slug, phone, email, website )
       `
       )
       .order("created_at", { ascending: false })
@@ -367,7 +552,7 @@ function AdminClaimsReviewPanel() {
                   <TableRow
                     key={claim.id}
                     className="cursor-pointer hover:bg-muted/40"
-                    onClick={() => setExpandedId(isExpanded ? null : claim.id)}
+                    onClick={() => toggleExpand(claim)}
                   >
                     <TableCell>
                       {isExpanded ? (
@@ -488,6 +673,10 @@ function AdminClaimsReviewPanel() {
                             </div>
                           )}
 
+                          <VerificationPanel claim={claim} signedUrls={signedUrls} />
+
+                          <EnrichmentPreview claim={claim} />
+
                           {!isResolved && (
                             <div className="flex flex-wrap gap-2 pt-2 border-t">
                               {claim.status === "pending" && (
@@ -500,10 +689,30 @@ function AdminClaimsReviewPanel() {
                                   Mark under review
                                 </Button>
                               )}
+                              {claim.verification_method === "document_upload" &&
+                                claim.verification_status !== "verified" && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={actionPending === claim.id}
+                                    onClick={() => markVerificationComplete(claim)}
+                                  >
+                                    <ShieldCheck className="h-4 w-4 mr-1.5" aria-hidden />
+                                    Mark verification complete
+                                  </Button>
+                                )}
                               <Button
                                 size="sm"
-                                disabled={actionPending === claim.id}
+                                disabled={
+                                  actionPending === claim.id ||
+                                  claim.verification_status !== "verified"
+                                }
                                 onClick={() => setApproveTarget(claim)}
+                                title={
+                                  claim.verification_status === "verified"
+                                    ? undefined
+                                    : "Verification must be complete before approving."
+                                }
                               >
                                 Approve
                               </Button>
@@ -604,6 +813,315 @@ function AdminClaimsReviewPanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function VerificationPanel({
+  claim,
+  signedUrls,
+}: {
+  claim: ClaimRow;
+  signedUrls: Record<string, string>;
+}) {
+  const method = claim.verification_method;
+  const status = claim.verification_status;
+  if (!method && status === "not_started") {
+    return (
+      <div className="rounded-md border bg-muted/30 p-3 text-sm">
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+          Verification
+        </Label>
+        <p className="text-muted-foreground mt-1 text-xs">
+          Claimant hasn't picked a verification method yet.
+        </p>
+      </div>
+    );
+  }
+
+  const MethodIcon = method ? VERIFICATION_METHOD_ICONS[method] : ShieldCheck;
+  const accreditationDocs =
+    method === "document_upload"
+      ? (claim.pending_enrichments?.accreditations ?? []).filter(
+          (a) => !!a.document_path,
+        )
+      : [];
+
+  return (
+    <div className="rounded-md border bg-muted/30 p-3 space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+          Verification
+        </Label>
+        <Badge variant="outline" className="gap-1">
+          <MethodIcon className="h-3 w-3" aria-hidden />
+          {method ? VERIFICATION_METHOD_LABELS[method] : "Not set"}
+        </Badge>
+        <Badge
+          variant={
+            status === "verified"
+              ? "outline"
+              : status === "failed" || status === "expired"
+              ? "destructive"
+              : "secondary"
+          }
+          className={
+            status === "verified"
+              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+              : undefined
+          }
+        >
+          {VERIFICATION_STATUS_LABELS[status]}
+        </Badge>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2 text-sm">
+        {method === "email_domain" && claim.verification_email && (
+          <div>
+            <div className="text-xs text-muted-foreground">Verified email</div>
+            <div className="font-mono text-xs break-all">
+              {maskEmail(claim.verification_email)}
+            </div>
+          </div>
+        )}
+        {method === "sms_phone" && claim.verification_phone && (
+          <div>
+            <div className="text-xs text-muted-foreground">Verified phone</div>
+            <div className="font-mono text-xs tabular-nums">
+              {maskPhone(claim.verification_phone)}
+            </div>
+          </div>
+        )}
+        {status === "verified" && claim.verified_at && (
+          <div>
+            <div className="text-xs text-muted-foreground">Verified at</div>
+            <div className="text-xs">{formatTimestamp(claim.verified_at)}</div>
+          </div>
+        )}
+      </div>
+
+      {accreditationDocs.length > 0 && (
+        <div className="space-y-2">
+          <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+            Submitted documents
+          </Label>
+          <ul className="space-y-1.5">
+            {accreditationDocs.map((doc, idx) => {
+              const url = doc.document_path
+                ? signedUrls[doc.document_path]
+                : undefined;
+              return (
+                <li
+                  key={`${doc.document_path}-${idx}`}
+                  className="flex items-center gap-2 rounded-md border bg-background p-2 text-sm"
+                >
+                  <FileText className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
+                  <span className="truncate flex-1">
+                    {doc.document_name ?? "Document"}
+                  </span>
+                  {url ? (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      View
+                      <ExternalLink className="h-3 w-3" aria-hidden />
+                    </a>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      Loading…
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EnrichmentPreview({ claim }: { claim: ClaimRow }) {
+  const enrich = claim.pending_enrichments;
+  if (!enrich) return null;
+
+  const hasAny =
+    enrich.logo_path ||
+    (enrich.photo_paths?.length ?? 0) > 0 ||
+    (enrich.services?.length ?? 0) > 0 ||
+    (enrich.insurances?.length ?? 0) > 0 ||
+    (enrich.accreditations?.length ?? 0) > 0 ||
+    enrich.corrected_contact ||
+    enrich.description;
+  if (!hasAny) return null;
+
+  const facility = claim.facilities;
+  const contactDiff: Array<{ label: string; current: string; proposed: string }> = [];
+  if (enrich.corrected_contact) {
+    const cc = enrich.corrected_contact;
+    if (cc.phone && cc.phone !== (facility?.phone ?? "")) {
+      contactDiff.push({
+        label: "Phone",
+        current: facility?.phone ?? "—",
+        proposed: cc.phone,
+      });
+    }
+    if (cc.email && cc.email !== (facility?.email ?? "")) {
+      contactDiff.push({
+        label: "Email",
+        current: facility?.email ?? "—",
+        proposed: cc.email,
+      });
+    }
+    if (cc.website && cc.website !== (facility?.website ?? "")) {
+      contactDiff.push({
+        label: "Website",
+        current: facility?.website ?? "—",
+        proposed: cc.website,
+      });
+    }
+  }
+
+  return (
+    <div className="rounded-md border bg-muted/30 p-3 space-y-3">
+      <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+        Enrichment preview
+      </Label>
+
+      {enrich.logo_path && (
+        <div className="flex items-center gap-3">
+          <img
+            src={publicClaimPhotoUrl(enrich.logo_path)}
+            alt="Proposed logo"
+            className="h-14 w-14 object-contain rounded bg-background border"
+            loading="lazy"
+          />
+          <div>
+            <div className="text-xs text-muted-foreground">Logo</div>
+            <div className="text-xs font-mono break-all">{enrich.logo_path}</div>
+          </div>
+        </div>
+      )}
+
+      {enrich.photo_paths && enrich.photo_paths.length > 0 && (
+        <div>
+          <div className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5">
+            <ImageIcon className="h-3.5 w-3.5" aria-hidden />
+            Photos ({enrich.photo_paths.length})
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {enrich.photo_paths.slice(0, 12).map((path) => (
+              <img
+                key={path}
+                src={publicClaimPhotoUrl(path)}
+                alt={path}
+                className="h-14 w-14 object-cover rounded bg-background border"
+                loading="lazy"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {enrich.services && enrich.services.length > 0 && (
+        <div>
+          <div className="text-xs text-muted-foreground mb-1">Services</div>
+          <div className="flex flex-wrap gap-1">
+            {enrich.services.map((slug) => (
+              <Badge key={slug} variant="secondary" className="text-xs">
+                {SERVICE_LABELS[slug] ?? slug}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {enrich.insurances && enrich.insurances.length > 0 && (
+        <div>
+          <div className="text-xs text-muted-foreground mb-1">Insurance</div>
+          <div className="flex flex-wrap gap-1">
+            {enrich.insurances.map((slug) => (
+              <Badge key={slug} variant="secondary" className="text-xs">
+                {INSURANCE_LABELS[slug] ?? slug}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {enrich.accreditations && enrich.accreditations.length > 0 && (
+        <div>
+          <div className="text-xs text-muted-foreground mb-1.5">
+            Accreditations ({enrich.accreditations.length})
+          </div>
+          <ul className="space-y-1.5">
+            {enrich.accreditations.map((a, idx) => (
+              <li
+                key={`${a.type}-${idx}`}
+                className="rounded-md border bg-background p-2 text-xs space-y-0.5"
+              >
+                <div className="font-medium">{a.type || "Untyped"}</div>
+                {a.number && (
+                  <div className="text-muted-foreground">
+                    Number: <span className="font-mono">{a.number}</span>
+                  </div>
+                )}
+                {a.issuing_authority && (
+                  <div className="text-muted-foreground">
+                    Issued by: {a.issuing_authority}
+                  </div>
+                )}
+                {a.document_name && (
+                  <div className="text-muted-foreground inline-flex items-center gap-1">
+                    <FileText className="h-3 w-3" aria-hidden />
+                    {a.document_name}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {contactDiff.length > 0 && (
+        <div>
+          <div className="text-xs text-muted-foreground mb-1.5">Contact changes</div>
+          <div className="rounded-md border overflow-hidden">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/40">
+                <tr>
+                  <th className="text-left p-2 font-medium">Field</th>
+                  <th className="text-left p-2 font-medium">Current</th>
+                  <th className="text-left p-2 font-medium">Proposed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contactDiff.map((row) => (
+                  <tr key={row.label} className="border-t">
+                    <td className="p-2">{row.label}</td>
+                    <td className="p-2 text-muted-foreground line-through">
+                      {row.current}
+                    </td>
+                    <td className="p-2 font-medium">{row.proposed}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {enrich.description && (
+        <div>
+          <div className="text-xs text-muted-foreground mb-1">Description</div>
+          <p className="text-sm whitespace-pre-wrap rounded-md bg-background p-2 border max-h-40 overflow-y-auto">
+            {enrich.description}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
