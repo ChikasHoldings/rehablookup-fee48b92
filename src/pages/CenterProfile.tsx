@@ -1158,13 +1158,25 @@ const CenterProfile = () => {
                       </div>
                     </a>
                   ) : (
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40">
-                      <Phone className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    // Non-Pro facilities don't expose their direct phone, but we
+                    // still need a one-tap dial option for mobile users so we
+                    // route them to our placement helpline. The number lives in
+                    // env (VITE_CONCIERGE_HELPLINE) with a stable fallback so
+                    // the link works even before the env is set.
+                    <a
+                      href={`tel:${(import.meta.env.VITE_CONCIERGE_HELPLINE as string | undefined) || "+18006624357"}`}
+                      onClick={() => trackInteraction("call")}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-primary/5 transition-colors group"
+                    >
+                      <Phone className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Phone</p>
-                        <p className="text-sm text-muted-foreground">Use contact form to request a call</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Call our helpline</p>
+                        <p className="text-sm text-primary font-semibold group-hover:underline">
+                          {(import.meta.env.VITE_CONCIERGE_HELPLINE_DISPLAY as string | undefined) || "1-800-662-4357"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Free, confidential — we'll route you to the right team.</p>
                       </div>
-                    </div>
+                    </a>
                   )}
 
                   {/* Website */}

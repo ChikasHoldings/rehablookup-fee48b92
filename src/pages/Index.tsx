@@ -83,7 +83,10 @@ const treatmentOptions = [
     icon: Pill,
     title: "Drug Addiction",
     description: "Evidence-based programs for substance abuse including opioids, stimulants, and more.",
-    link: "/treatment-types/drug-addiction",
+    // Align with Footer + canonical SEO target slug (`drug-addiction-treatment`).
+    // Previously this tile pointed at `/treatment-types/drug-addiction` which
+    // was a dead route on its own and only resolved if a redirect was set.
+    link: "/treatment-types/drug-addiction-treatment",
   },
   {
     icon: Activity,

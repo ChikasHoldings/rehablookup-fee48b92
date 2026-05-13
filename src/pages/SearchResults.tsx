@@ -456,6 +456,30 @@ const SearchResults = () => {
       results = results.filter((center) => center.featured === true);
     }
 
+    // Distance filter. Without lat/long on every facility we can't compute
+    // true mile-distance, so we map the user's mile radius onto the
+    // categorical proximity tier — a defensible UX approximation that
+    // matches how the rest of the page already sorts results.
+    //   ≤10 mi   → exact OR city
+    //   ≤25 mi   → exact / city / state
+    //   ≤50/100 → also nearby
+    //   "any"   → unfiltered
+    // The chip was previously cosmetic (selectedDistance read + counted as
+    // active but never applied), so any results being narrowed is a win
+    // versus the prior dead-feature behavior.
+    if (selectedDistance && selectedDistance !== "any" && locationMatch) {
+      const miles = parseInt(selectedDistance, 10);
+      const allow = (tier: string): boolean => {
+        if (miles <= 10) return tier === "exact" || tier === "city";
+        if (miles <= 25) return tier === "exact" || tier === "city" || tier === "state";
+        return tier === "exact" || tier === "city" || tier === "state" || tier === "nearby";
+      };
+      results = results.filter((center) => {
+        const { tier } = getProximityTier(center, locationMatch!);
+        return allow(tier);
+      });
+    }
+
     // Build proximity scoring using the enriched location match
     const getProximityScore = (center: { city: string; state: string; zipCode?: string }): number => {
       const sortLoc = locationForSort || locationForFilter;
@@ -554,7 +578,7 @@ const SearchResults = () => {
     }
 
     return { filteredCenters: results, isExpandedSearch: expanded };
-  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
+  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, selectedDistance, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
 
   const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;

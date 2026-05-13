@@ -73,9 +73,10 @@ Disallow: /lp/
 Disallow: /api/
 Disallow: /functions/
 Disallow: /search?
-Disallow: /search-results
-Disallow: /search-results?*
-Disallow: /search-results/
+# NOTE: /search-results is intentionally NOT disallowed here. The page emits
+# <meta name="robots" content="noindex">, and Disallow would prevent Google
+# from seeing that directive — Google would treat stale URL entries as
+# orphaned. Keep the noindex; drop the Disallow.
 Disallow: /404
 Disallow: /404/
 Disallow: /*?utm_source=
@@ -381,6 +382,7 @@ Crawl-delay: 2
 Sitemap: https://rehablookup.com/sitemap-index.xml
 Sitemap: https://rehablookup.com/sitemap.xml
 Sitemap: https://rehablookup.com/sitemap-facilities.xml
-Sitemap: https://rehablookup.com/sitemap-extras.xml
 
-Host: https://rehablookup.com
+# Host: directive removed — deprecated by Google + Bing. www → apex is
+# enforced at the edge (Vercel domain config) and via the canonical link
+# in our SEO component, so no protocol-level directive is needed here.

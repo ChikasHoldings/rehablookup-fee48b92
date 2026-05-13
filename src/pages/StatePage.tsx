@@ -1,7 +1,8 @@
 import { lazy, Suspense, useMemo, useState } from "react";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
+import NotFound from "@/pages/NotFound";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
@@ -48,12 +49,15 @@ import {
 
 // Treatment types for internal linking
 const treatmentTypesData = [
-  { icon: Pill, title: "Drug Addiction", link: "/treatment-types", param: "?type=drug" },
-  { icon: Activity, title: "Alcohol Rehab", link: "/treatment-types", param: "?type=alcohol" },
-  { icon: Brain, title: "Dual Diagnosis", link: "/treatment-types", param: "?type=dual-diagnosis" },
-  { icon: Home, title: "Residential Inpatient", link: "/treatment-types", param: "?type=inpatient" },
-  { icon: Stethoscope, title: "Outpatient Programs", link: "/treatment-types", param: "?type=outpatient" },
-  { icon: Sparkles, title: "Holistic Therapy", link: "/treatment-types", param: "?type=holistic" },
+  // Link directly to the canonical /treatment-types/<slug> SEO pages rather
+  // than /treatment-types?type=…. The query-string variant is non-canonical;
+  // every state/city/county page leaked PageRank into a non-target URL.
+  { icon: Pill, title: "Drug Addiction", link: "/treatment-types/drug-addiction-treatment", param: "" },
+  { icon: Activity, title: "Alcohol Rehab", link: "/treatment-types/alcohol-rehabilitation", param: "" },
+  { icon: Brain, title: "Dual Diagnosis", link: "/treatment-types/dual-diagnosis-treatment", param: "" },
+  { icon: Home, title: "Residential Inpatient", link: "/treatment-types/residential-inpatient", param: "" },
+  { icon: Stethoscope, title: "Outpatient Programs", link: "/treatment-types/outpatient-programs", param: "" },
+  { icon: Sparkles, title: "Holistic Therapy", link: "/treatment-types/holistic-therapy", param: "" },
 ];
 import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
@@ -203,7 +207,11 @@ const StatePage = () => {
   }
 
   if (!stateData) {
-    return <Navigate to="/rehab-centers" replace />;
+    // Render the NotFound page in place (200 in SPA, noindex/HTTP 404
+    // semantics in the prerendered HTML). Previously we Navigate-redirected
+    // to /rehab-centers — a 200 redirect — which made Google see invalid
+    // state slugs as soft-404s and waste crawl budget on the redirect chain.
+    return <NotFound />;
   }
 
   const faqSchema = {

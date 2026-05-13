@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import NotFound from "@/pages/NotFound";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -97,7 +98,8 @@ export default function CountyTreatmentPage() {
   }, [approvedFacilities, stateData, countyData, treatment]);
 
   if (!stateData || !countyData || !treatment) {
-    return <Navigate to="/rehab-centers" replace />;
+    // Render NotFound in place — preserves URL + stops soft-404 reports.
+    return <NotFound />;
   }
 
   const pageTitle = `${treatment.pluralLabel} in ${countyData.name} County, ${stateData.abbreviation}`;
