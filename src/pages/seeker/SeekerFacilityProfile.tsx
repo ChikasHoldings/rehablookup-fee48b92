@@ -414,7 +414,11 @@ export default function SeekerFacilityProfile() {
   const hasValidLogo = facility.logo_url && !logoError;
   const yearsInBusiness = getYearsInBusiness(facility.year_established);
   // Pro members only: show phone and website on facility page
-  const showContactDetails = facilityPlan === "pro" || facilityPlan === "professional" || facilityPlan === "featured";
+  // Align with CenterProfile + get-facility-plan, which only emit "pro" or
+  // "free". The legacy "professional"/"featured" tier strings were never
+  // returned by the edge function; keeping them here caused the same listing
+  // to show phone in one view and not the other.
+  const showContactDetails = facilityPlan === "pro";
   const accreditations = facility.facility_accreditations.filter(a => a.verified);
 
   const genderLabel = facility.gender_served === "male" ? "Men Only" 
@@ -888,7 +892,7 @@ export default function SeekerFacilityProfile() {
               logo_url: facility.logo_url,
               featured: facility.featured,
             }}
-            facilityPlan={facilityPlan === "pro" || facilityPlan === "professional" || facilityPlan === "featured" ? "pro" : "free"}
+            facilityPlan={facilityPlan === "pro" ? "pro" : "free"}
             prefillData={prefillData}
           />
 

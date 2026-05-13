@@ -42,19 +42,24 @@ export function useSeekerNotifications() {
   const previousNotificationsRef = useRef<string[]>([]);
   const userIdRef = useRef<string | null>(getStoredUserId());
 
-  // Initialize audio element on mount
+  // Initialize audio element on mount. Browser-notification permission is
+  // NO LONGER auto-requested here — Chrome/Firefox both penalize sites that
+  // ask immediately. Surface a user-gesture-triggered "Enable notifications"
+  // button instead via `requestNotificationPermission()` returned from the
+  // hook so consumers can wire it to a settings toggle or the bell icon.
   useEffect(() => {
     audioRef.current = new Audio(NOTIFICATION_SOUND_URL);
     audioRef.current.volume = 0.5;
-
-    // Request notification permission
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-
     return () => {
       audioRef.current = null;
     };
+  }, []);
+
+  const requestNotificationPermission = useCallback(async () => {
+    if (!("Notification" in window)) return "unsupported" as const;
+    if (Notification.permission === "granted") return "granted" as const;
+    if (Notification.permission === "denied") return "denied" as const;
+    return await Notification.requestPermission();
   }, []);
 
   const playNotificationSound = useCallback(() => {
@@ -321,5 +326,6 @@ export function useSeekerNotifications() {
     markAllAsRead,
     deleteNotification,
     refetch: fetchNotifications,
+    requestNotificationPermission,
   };
 }

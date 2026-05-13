@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Heart, Bookmark, RefreshCw, Search } from "lucide-react";
@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFavorites } from "@/hooks/useFavorites";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { supabase } from "@/integrations/supabase/client";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
@@ -87,6 +89,18 @@ export default function SeekerSaved() {
       description: "Facility has been removed from your saved list.",
     });
   };
+
+  // Paginate the saved list rather than silently truncating at the fetch
+  // limit. Page size persisted per-user via the usePagination hook.
+  const pagination = usePagination({
+    tableId: "seeker-saved",
+    defaultPageSize: 10,
+    totalItems: facilities.length,
+  });
+  const visibleFacilities = useMemo(
+    () => pagination.paginate(facilities),
+    [facilities, pagination],
+  );
 
   // Show auth prompt if not authenticated
   if (!isAuthenticated && !favoritesLoading) {
@@ -182,16 +196,29 @@ export default function SeekerSaved() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {facilities.map((facility) => (
-            <FacilityCard 
-              key={facility.id} 
-              facility={facility} 
-              onRemove={handleRemove}
-              showRemoveButton
+        <>
+          <div className="grid gap-4">
+            {visibleFacilities.map((facility) => (
+              <FacilityCard
+                key={facility.id}
+                facility={facility}
+                onRemove={handleRemove}
+                showRemoveButton
+              />
+            ))}
+          </div>
+          {facilities.length > pagination.pageSize && (
+            <PaginationFooter
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              pageSize={pagination.pageSize}
+              totalItems={facilities.length}
+              onPageChange={pagination.setPage}
+              onPageSizeChange={pagination.setPageSize}
+              className="mt-4"
             />
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
     </>

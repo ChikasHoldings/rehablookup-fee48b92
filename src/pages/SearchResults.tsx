@@ -519,6 +519,18 @@ const SearchResults = () => {
           return diff !== 0 ? diff : a.id.localeCompare(b.id);
         }
         case "reviews": {
+          // Real "Most Reviews" sort using googleReviewCount from the
+          // public snapshot (which already merges Google + platform review
+          // signals into a single count). Previous version was a no-op
+          // localeCompare stub. Falls back to ranking score for ties so
+          // the sort stays stable when many facilities share the same
+          // count (very common for zero-review small towns).
+          const ra = (a as { googleReviewCount?: number | null }).googleReviewCount ?? 0;
+          const rb = (b as { googleReviewCount?: number | null }).googleReviewCount ?? 0;
+          if (ra !== rb) return rb - ra;
+          const scoreA = ((a as { calculatedRankingScore?: number }).calculatedRankingScore) ?? 0;
+          const scoreB = ((b as { calculatedRankingScore?: number }).calculatedRankingScore) ?? 0;
+          if (scoreA !== scoreB) return scoreB - scoreA;
           return a.id.localeCompare(b.id);
         }
         case "name-asc": return a.name.localeCompare(b.name);

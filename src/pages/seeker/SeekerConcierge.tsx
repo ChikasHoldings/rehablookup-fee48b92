@@ -44,7 +44,8 @@ import {
 import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 
 import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
-import { ConciergePaymentRecovery } from "@/components/seeker/ConciergePaymentRecovery";
+// ConciergePaymentRecovery was tied to the retired $29 paid concierge flow.
+// Domestic concierge is now free; this recovery surface no longer fires.
 import { analytics } from "@/lib/analytics";
 
 interface ConciergeInquiry {
@@ -494,8 +495,6 @@ export default function SeekerConcierge() {
             <meta name="robots" content="noindex, nofollow" />
           </Helmet>
           <div className="container max-w-4xl py-6 space-y-6">
-            <ConciergePaymentRecovery userId={currentUser.id} onRecoveryComplete={() => refetch()} />
-            
             <AnimatePresence mode="wait">
               {showIntakeFlow ? (
                 <motion.div

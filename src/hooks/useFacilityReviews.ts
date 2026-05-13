@@ -21,6 +21,14 @@ export interface FacilityReview {
   reviewer_city?: string;
   reviewer_state?: string;
   has_voted_helpful?: boolean;
+  // Provider's public reply to this review, if any. Joined here so the
+  // public profile + seeker /account/reviews page render the same surface.
+  response?: {
+    id: string;
+    response_text: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
 }
 
 const REVIEW_COOLDOWN_MS = 30_000; // 30-second cooldown between submissions
@@ -82,17 +90,36 @@ export function useFacilityReviews(facilityId: string) {
         .from('review_helpful_votes')
         .select('review_id')
         .eq('user_id', user.id);
-      
+
       votedReviewIds = votes?.map(v => v.review_id) || [];
+    }
+
+    // Join provider responses so the public profile shows the facility's
+    // reply right next to the original review. Same surface the seeker
+    // already gets on /account/reviews (which uses a separate hook).
+    const reviewIds = (reviewsData || []).map((r) => r.id);
+    let responseByReview = new Map<string, { id: string; response_text: string; created_at: string; updated_at: string }>();
+    if (reviewIds.length > 0) {
+      const { data: respRows } = await supabase
+        .from('review_responses')
+        .select('id, review_id, response_text, status, created_at, updated_at')
+        .in('review_id', reviewIds)
+        .eq('status', 'active');
+      for (const r of respRows ?? []) {
+        responseByReview.set(r.review_id as string, {
+          id: r.id as string,
+          response_text: (r.response_text as string) ?? '',
+          created_at: r.created_at as string,
+          updated_at: r.updated_at as string,
+        });
+      }
     }
 
     const enrichedReviews: FacilityReview[] = (reviewsData || []).map(review => {
       const storedName = review.reviewer_display_name as string | null;
-      // Use full stored name; fall back to 'Verified Reviewer' so no review is hidden
       const displayName = storedName?.trim() || 'Verified Reviewer';
       const nameParts = displayName.split(' ');
       const firstName = nameParts[0] || 'Verified';
-      // Show full last name (not just initial) per product requirement
       const lastName = nameParts.slice(1).join(' ') || '';
 
       return {
@@ -104,6 +131,7 @@ export function useFacilityReviews(facilityId: string) {
         reviewer_city: null,
         reviewer_state: null,
         has_voted_helpful: votedReviewIds.includes(review.id),
+        response: responseByReview.get(review.id) ?? null,
       };
     });
 

@@ -92,15 +92,43 @@ const facilityTypeFilters = [
   { value: "sober-living", label: "Sober Living" },
 ];
 
+// Insurance filters — common insurers families search for. Match is a
+// case-insensitive `includes` against the facility's `insuranceAccepted`
+// list to absorb minor name variations ("Aetna" vs "Aetna PPO").
+const insuranceFilters = [
+  { value: "aetna", label: "Aetna" },
+  { value: "anthem", label: "Anthem" },
+  { value: "bluecross", label: "Blue Cross" },
+  { value: "cigna", label: "Cigna" },
+  { value: "humana", label: "Humana" },
+  { value: "kaiser", label: "Kaiser" },
+  { value: "magellan", label: "Magellan" },
+  { value: "medicaid", label: "Medicaid" },
+  { value: "medicare", label: "Medicare" },
+  { value: "tricare", label: "Tricare" },
+  { value: "united", label: "UnitedHealthcare" },
+];
+
+// Gender-served filters — matched against the snapshot's `genderServed`
+// field. "All" / "co-ed" facilities always pass regardless of selection.
+const genderFilters = [
+  { value: "male", label: "Men" },
+  { value: "female", label: "Women" },
+  { value: "co-ed", label: "Co-ed / All" },
+];
+
 export default function SeekerSearch() {
   const { data: facilities, isLoading: facilitiesLoading } = useStaticFacilities();
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [locationInput, setLocationInput] = useState("");
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [selectedTreatmentTypes, setSelectedTreatmentTypes] = useState<string[]>([]);
   const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>([]);
+  const [selectedInsurance, setSelectedInsurance] = useState<string[]>([]);
+  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -138,14 +166,30 @@ export default function SeekerSearch() {
 
   // Handle search submission
   const handleSearch = () => {
-    if (searchQuery.trim() || locationInput.trim() || selectedTreatmentTypes.length > 0 || selectedFacilityTypes.length > 0) {
+    if (
+      searchQuery.trim()
+      || locationInput.trim()
+      || selectedTreatmentTypes.length > 0
+      || selectedFacilityTypes.length > 0
+      || selectedInsurance.length > 0
+      || selectedGenders.length > 0
+      || verifiedOnly
+    ) {
       setHasSearched(true);
       setCurrentPage(1);
     }
   };
 
   // Check if there's an active search
-  const hasActiveSearch = searchQuery.trim() || locationInput.trim() || selectedTreatmentTypes.length > 0 || selectedFacilityTypes.length > 0;
+  const hasActiveSearch = !!(
+    searchQuery.trim()
+    || locationInput.trim()
+    || selectedTreatmentTypes.length > 0
+    || selectedFacilityTypes.length > 0
+    || selectedInsurance.length > 0
+    || selectedGenders.length > 0
+    || verifiedOnly
+  );
   
   // Filter, sort with proximity, and search facilities
   const filteredFacilities = useMemo(() => {
@@ -190,6 +234,33 @@ export default function SeekerSearch() {
         return selectedFacilityTypes.some(type => facilityType.includes(type));
       });
     }
+
+    // Filter by insurance accepted (substring match against the snapshot
+    // list — absorbs name variations like "Aetna" vs "Aetna PPO").
+    if (selectedInsurance.length > 0) {
+      results = results.filter((f) => {
+        const accepted = (f.insuranceAccepted || []).map((i) => i.toLowerCase());
+        return selectedInsurance.some((sel) => accepted.some((a) => a.includes(sel)));
+      });
+    }
+
+    // Filter by gender served. Facilities marked "all" / "co-ed" always pass
+    // since they admit everyone.
+    if (selectedGenders.length > 0) {
+      results = results.filter((f) => {
+        const g = (f.genderServed || "").toLowerCase();
+        if (!g || g.includes("all") || g.includes("co-ed") || g.includes("coed")) return true;
+        return selectedGenders.some((sel) => {
+          if (sel === "co-ed") return g.includes("co-ed") || g.includes("coed") || g.includes("all");
+          return g.includes(sel);
+        });
+      });
+    }
+
+    // Verified-only toggle.
+    if (verifiedOnly) {
+      results = results.filter((f) => !!f.verified);
+    }
     
     // Sort: proximity first (if location), then Pro, then rating, then stable by ID
     results.sort((a, b) => {
@@ -213,7 +284,7 @@ export default function SeekerSearch() {
     });
     
     return results;
-  }, [facilities, searchQuery, locationInput, selectedTreatmentTypes, selectedFacilityTypes, hasSearched]);
+  }, [facilities, searchQuery, locationInput, selectedTreatmentTypes, selectedFacilityTypes, selectedInsurance, selectedGenders, verifiedOnly, hasSearched]);
   
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredFacilities.length / SEARCH_PAGE_SIZE));
@@ -258,18 +329,38 @@ export default function SeekerSearch() {
         : [...prev, value]
     );
   };
-  
+
+  const toggleInsurance = (value: string) => {
+    setSelectedInsurance((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+    );
+  };
+
+  const toggleGender = (value: string) => {
+    setSelectedGenders((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+    );
+  };
+
   // Clear all filters
   const clearFilters = () => {
     setSelectedTreatmentTypes([]);
     setSelectedFacilityTypes([]);
+    setSelectedInsurance([]);
+    setSelectedGenders([]);
+    setVerifiedOnly(false);
     setLocationInput("");
     setSearchQuery("");
     setHasSearched(false);
     setCurrentPage(1);
   };
-  
-  const activeFilterCount = selectedTreatmentTypes.length + selectedFacilityTypes.length;
+
+  const activeFilterCount =
+    selectedTreatmentTypes.length
+    + selectedFacilityTypes.length
+    + selectedInsurance.length
+    + selectedGenders.length
+    + (verifiedOnly ? 1 : 0);
   
   return (
     <>
@@ -431,7 +522,7 @@ export default function SeekerSearch() {
                                   checked={selectedFacilityTypes.includes(filter.value)}
                                   onCheckedChange={() => toggleFacilityType(filter.value)}
                                 />
-                                <Label 
+                                <Label
                                   htmlFor={`facility-${filter.value}`}
                                   className="text-sm font-normal cursor-pointer text-foreground"
                                 >
@@ -439,6 +530,89 @@ export default function SeekerSearch() {
                                 </Label>
                               </div>
                             ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      <AccordionItem value="insurance" className="border-border">
+                        <AccordionTrigger className="text-base font-medium text-foreground">
+                          Insurance
+                          {selectedInsurance.length > 0 && (
+                            <span className="ml-2 text-xs font-normal text-muted-foreground">
+                              ({selectedInsurance.length})
+                            </span>
+                          )}
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="grid grid-cols-2 gap-2 pt-2">
+                            {insuranceFilters.map((filter) => (
+                              <div key={filter.value} className="flex items-center space-x-3">
+                                <Checkbox
+                                  id={`insurance-${filter.value}`}
+                                  checked={selectedInsurance.includes(filter.value)}
+                                  onCheckedChange={() => toggleInsurance(filter.value)}
+                                />
+                                <Label
+                                  htmlFor={`insurance-${filter.value}`}
+                                  className="text-sm font-normal cursor-pointer text-foreground"
+                                >
+                                  {filter.label}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      <AccordionItem value="gender" className="border-border">
+                        <AccordionTrigger className="text-base font-medium text-foreground">
+                          Gender Served
+                          {selectedGenders.length > 0 && (
+                            <span className="ml-2 text-xs font-normal text-muted-foreground">
+                              ({selectedGenders.length})
+                            </span>
+                          )}
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-3 pt-2">
+                            {genderFilters.map((filter) => (
+                              <div key={filter.value} className="flex items-center space-x-3">
+                                <Checkbox
+                                  id={`gender-${filter.value}`}
+                                  checked={selectedGenders.includes(filter.value)}
+                                  onCheckedChange={() => toggleGender(filter.value)}
+                                />
+                                <Label
+                                  htmlFor={`gender-${filter.value}`}
+                                  className="text-sm font-normal cursor-pointer text-foreground"
+                                >
+                                  {filter.label}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      <AccordionItem value="trust" className="border-border">
+                        <AccordionTrigger className="text-base font-medium text-foreground">
+                          Trust & Verification
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-3 pt-2">
+                            <div className="flex items-center space-x-3">
+                              <Checkbox
+                                id="verified-only"
+                                checked={verifiedOnly}
+                                onCheckedChange={(c) => setVerifiedOnly(c === true)}
+                              />
+                              <Label
+                                htmlFor="verified-only"
+                                className="text-sm font-normal cursor-pointer text-foreground"
+                              >
+                                Verified listings only
+                              </Label>
+                            </div>
                           </div>
                         </AccordionContent>
                       </AccordionItem>

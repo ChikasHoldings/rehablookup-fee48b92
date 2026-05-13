@@ -382,7 +382,11 @@ export default function SeekerSettings() {
   };
 
   const sanitizePersonName = (str: string): string => {
-    return sanitizeText(str, 50).replace(/[^a-zA-Z\s\-'.]/g, '');
+    // Unicode-aware letter class so accented characters (José, Núñez,
+    // O'Connell, María, etc.) are preserved. The previous [a-zA-Z]
+    // class silently stripped them, mangling names. Hyphen, apostrophe,
+    // dot, and whitespace remain allowed; everything else gets dropped.
+    return sanitizeText(str, 50).replace(/[^\p{L}\s\-'.]/gu, '');
   };
 
   const handleSaveProfile = async () => {
@@ -666,15 +670,23 @@ export default function SeekerSettings() {
         throw new Error("Not authenticated");
       }
 
-      const response = await supabase.functions.invoke("delete-seeker-account");
+      const response = await supabase.functions.invoke("delete-seeker-account", {
+        // Default soft-delete: account is signed out + scheduled for purge in
+        // 30 days. The user can recover by signing back in within that window.
+        body: {},
+      });
 
       if (response.error) {
         throw new Error(response.error.message || "Failed to delete account");
       }
 
+      const purgeAfter = (response.data as { purgeAfter?: string } | null)?.purgeAfter;
+      const recoveryDate = purgeAfter ? new Date(purgeAfter) : null;
       toast({
-        title: "Account deleted",
-        description: "Your account has been permanently deleted."
+        title: "Account scheduled for deletion",
+        description: recoveryDate
+          ? `Your account will be permanently deleted on ${recoveryDate.toLocaleDateString()}. Sign back in before then to recover it.`
+          : "Your account has been scheduled for deletion. Sign back in within 30 days to recover it.",
       });
 
       await supabase.auth.signOut();

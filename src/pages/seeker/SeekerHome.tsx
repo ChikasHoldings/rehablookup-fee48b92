@@ -1,13 +1,13 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { pluckNonNull } from "@/lib/nullableRows";
 import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { 
-  Search, 
-  MapPin, 
-  FileText, 
-  HelpCircle, 
-  Shield, 
+import {
+  Search,
+  MapPin,
+  FileText,
+  HelpCircle,
+  Shield,
   Phone,
   Heart,
   Building2,
@@ -21,7 +21,9 @@ import {
   SlidersHorizontal,
   ArrowUpDown,
   ArrowRight,
-  Compass
+  Compass,
+  Mail,
+  Bell
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -107,6 +109,67 @@ export default function SeekerHome() {
   const { favoritesCount } = useFavorites();
   const { data: featuredData } = useFeaturedFacilityIds();
   const seekerLocation = useSeekerLocation();
+
+  // Returning-seeker KPIs + intake-resume card.
+  // Fetch counts and the most-recent active concierge inquiry so we can
+  // greet a returning user with "you have N open inquiries" / "resume your
+  // intake" instead of a pure-discovery feed.
+  const [seekerKpis, setSeekerKpis] = useState<{
+    inquiriesOpen: number;
+    inquiriesUnread: number;
+    conciergeOpen: number;
+    intlOpen: number;
+    resumeInquiry: { id: string; primary_concern: string | null; level_of_care: string | null; updated_at: string } | null;
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (cancelled || !user) {
+        setSeekerKpis(null);
+        return;
+      }
+      const [leadsRes, conciergeRes, intlRes, draftRes, notifRes] = await Promise.all([
+        supabase
+          .rpc("get_seeker_submitted_leads", { p_email: user.email })
+          .then((r) => r, () => ({ data: [] as Array<{ id: string; status: string }> })),
+        supabase
+          .from("concierge_inquiries")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .not("status", "in", "(closed,completed)"),
+        supabase
+          .from("international_placement_cases")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .not("status", "in", "(closed,completed)"),
+        supabase
+          .from("concierge_inquiries")
+          .select("id, primary_concern, level_of_care, updated_at, intake_submitted_at, status")
+          .eq("user_id", user.id)
+          .is("intake_submitted_at", null)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("seeker_notifications")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("read", false),
+      ]);
+      if (cancelled) return;
+      const leadRows = ((leadsRes as { data?: Array<{ id: string; status: string }> }).data ?? []);
+      const inquiriesOpen = leadRows.filter((l) => l.status !== "closed" && l.status !== "completed").length;
+      setSeekerKpis({
+        inquiriesOpen,
+        inquiriesUnread: notifRes.count ?? 0,
+        conciergeOpen: conciergeRes.count ?? 0,
+        intlOpen: intlRes.count ?? 0,
+        resumeInquiry: draftRes.data ?? null,
+      });
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const { data: staticFacilities = [], isLoading, error: facilitiesError, refetch } = useStaticFacilities();
 
@@ -539,6 +602,88 @@ export default function SeekerHome() {
           )}
         </div>
       </div>
+
+      {/* Returning-seeker KPI strip + intake-resume card.
+          Only renders for signed-in users with at least one signal worth
+          surfacing; pure anon discovery flow is unaffected. */}
+      {seekerKpis && (seekerKpis.inquiriesOpen > 0 || seekerKpis.conciergeOpen > 0 || seekerKpis.intlOpen > 0 || seekerKpis.resumeInquiry || seekerKpis.inquiriesUnread > 0) && (
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-4 sm:pt-5">
+          {seekerKpis.resumeInquiry && (
+            <Card className="mb-3 border-amber-500/30 bg-amber-500/5">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <Phone className="h-5 w-5 text-amber-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">Resume your placement intake</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {seekerKpis.resumeInquiry.primary_concern
+                      ? `Started: ${seekerKpis.resumeInquiry.primary_concern}`
+                      : "You have an unfinished intake — pick up where you left off."}
+                  </p>
+                </div>
+                <Button size="sm" asChild>
+                  <Link to={`/account/concierge/${seekerKpis.resumeInquiry.id}`}>Resume</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+            <Link to="/account/requests" className="block">
+              <Card className="hover:border-primary/40 transition-colors">
+                <CardContent className="p-3 flex items-center gap-2">
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Mail className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground leading-tight">Inquiries</p>
+                    <p className="text-base font-semibold tabular-nums">{seekerKpis.inquiriesOpen}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/account/notifications" className="block">
+              <Card className="hover:border-primary/40 transition-colors">
+                <CardContent className="p-3 flex items-center gap-2">
+                  <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                    <Bell className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground leading-tight">Unread</p>
+                    <p className="text-base font-semibold tabular-nums">{seekerKpis.inquiriesUnread}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/account/saved" className="block">
+              <Card className="hover:border-primary/40 transition-colors">
+                <CardContent className="p-3 flex items-center gap-2">
+                  <div className="h-9 w-9 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0">
+                    <Heart className="h-4 w-4 text-rose-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground leading-tight">Saved</p>
+                    <p className="text-base font-semibold tabular-nums">{favoritesCount}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/account/concierge" className="block">
+              <Card className="hover:border-primary/40 transition-colors">
+                <CardContent className="p-3 flex items-center gap-2">
+                  <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <HelpCircle className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground leading-tight">Placements</p>
+                    <p className="text-base font-semibold tabular-nums">{seekerKpis.conciergeOpen + seekerKpis.intlOpen}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Main Content with Sidebar */}
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
