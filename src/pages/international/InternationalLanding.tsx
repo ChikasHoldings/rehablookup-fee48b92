@@ -167,20 +167,37 @@ export default function InternationalLanding() {
                   Your Gateway to American Rehab
                 </h1>
                 
-                <p className="text-base md:text-lg text-white/85 mb-8 leading-relaxed max-w-2xl mx-auto px-2">
+                <p className="text-base md:text-lg text-white/85 mb-4 leading-relaxed max-w-2xl mx-auto px-2">
                   Expert placement into America's finest treatment centers. We handle everything—from placement to admission—so you can focus on recovery.
                 </p>
 
-                <Button 
-                  size="lg" 
+                {/* Price disclosure surfaced above the fold. Previously the
+                    $99 fee was buried in FAQ #1, so seekers completed the
+                    11-step intake before discovering the cost — high drop-off
+                    + trust risk. */}
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-6 text-sm text-white/80">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1">
+                    <span className="font-semibold text-white">$99</span>
+                    <span>placement deposit</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 border border-emerald-400/30 px-3 py-1 text-emerald-100">
+                    Fully refunded on admission
+                  </span>
+                </div>
+
+                <Button
+                  size="lg"
                   className="h-12 md:h-14 px-6 md:px-10 text-base font-semibold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/25 w-full sm:w-auto"
                   asChild
                 >
                   <Link to="/international/apply">
-                    Find Treatment
+                    Start application
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
+                <p className="mt-3 text-xs text-white/60">
+                  Pay $99 to reserve placement. We refund the full amount the day you check in.
+                </p>
               </motion.div>
             </div>
           </section>

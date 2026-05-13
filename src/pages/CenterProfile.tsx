@@ -562,10 +562,24 @@ const CenterProfile = () => {
   }, [facility?.id, facility?.name, facility?.slug, trackClickToCall, trackWebsiteClick]);
 
   const handleRequestInfoOpen = useCallback((cta_location: string) => {
+    // Unclaimed listings have no provider to inquire to. Previously the
+    // modal was gated on `is_claimed` so clicking these CTAs silently did
+    // nothing. Route the seeker to the free concierge intake instead with
+    // state/city/treatment prefill so the funnel still converts.
+    if (claimFlags && !claimFlags.is_claimed && facility) {
+      const params = new URLSearchParams();
+      if (facility.state) params.set("state", facility.state);
+      if (facility.city) params.set("city", facility.city);
+      if (facility.facility_type) params.set("treatment", facility.facility_type);
+      params.set("ref", "unclaimed_profile");
+      params.set("facility_slug", facility.slug);
+      navigate(`/concierge?${params.toString()}`);
+      void cta_location;
+      return;
+    }
     setRequestModalOpen(true);
-    // Analytics provider removed — request info tracked via provider_events table.
     void cta_location;
-  }, []);
+  }, [claimFlags, facility, navigate]);
 
   // Show skeleton while:
   // - the slug isn't ready yet (route param still resolving), OR

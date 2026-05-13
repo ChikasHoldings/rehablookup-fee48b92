@@ -165,20 +165,36 @@ export default function ConciergeLanding() {
                     <HeartHandshake className="h-4 w-4 text-accent" />
                     <span className="text-sm font-medium text-white/90">Personalized Placement</span>
                   </div>
-                  
+
                   <h1 className="text-[1.625rem] sm:text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-white mb-3 tracking-tight leading-tight">
                     Find the Right Treatment
                   </h1>
-                  
-                  <p className="text-base md:text-lg text-white/85 mb-8 leading-relaxed max-w-2xl mx-auto px-2">
+
+                  <p className="text-base md:text-lg text-white/85 mb-4 leading-relaxed max-w-2xl mx-auto px-2">
                     Our specialists connect you with programs that fit your needs, insurance, and location.
                   </p>
-                  
+
+                  {/* "Free for families" chip surfaces the strongest selling
+                      point above the fold. The Service schema already sets
+                      price=0; the hero copy didn't. */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 mb-6 text-sm text-white/80">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 border border-emerald-400/30 px-3 py-1 text-emerald-100">
+                      <span className="font-semibold">$0</span>
+                      <span>to families</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1">
+                      Confidential
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1">
+                      No obligation
+                    </span>
+                  </div>
+
                   {/* CTA */}
                   <div className="flex flex-col items-center">
                     <Button asChild size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-base font-semibold shadow-lg shadow-primary/25 rounded-xl group">
                       <Link to="/concierge/intake">
-                        Get Started
+                        Get matched, free
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </Link>
                     </Button>

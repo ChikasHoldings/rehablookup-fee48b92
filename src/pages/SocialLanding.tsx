@@ -5,10 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/logo-header.webp";
 import { LeadIntakeForm } from "@/components/lead-intake";
 
-// Configure your vertical video here (9:16 aspect ratio recommended)
+// Configure your vertical video here (9:16 aspect ratio recommended). Leave
+// `videoId` empty to hide the video block entirely. Previously held a
+// Rick-Astley placeholder which would have shipped "Never Gonna Give You Up"
+// to anyone hitting /go/:slug — removed to avoid the brand-safety risk.
 const VIDEO_CONFIG = {
-  // For vertical video, use a 9:16 YouTube Short or TikTok-style video
-  videoId: "dQw4w9WgXcQ", // Replace with your actual vertical video ID
+  videoId: "", // Set to a real YouTube short / vertical video ID to enable.
 };
 
 interface UTMParams {
@@ -99,24 +101,25 @@ export default function SocialLanding() {
             </p>
           </section>
           
-          {/* Vertical Video Section (9:16) */}
-          <section className="relative mx-auto" style={{ maxWidth: "280px" }}>
-            <div className="relative rounded-2xl overflow-hidden bg-muted" style={{ aspectRatio: "9/16" }}>
-              {/* YouTube embed with autoplay, muted, loop */}
-              <iframe
-                src={`https://www.youtube.com/embed/${VIDEO_CONFIG.videoId}?autoplay=1&mute=1&loop=1&playlist=${VIDEO_CONFIG.videoId}&controls=0&modestbranding=1&rel=0&showinfo=0&playsinline=1`}
-                title="Treatment information video"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full"
-                loading="lazy"
-                onLoad={() => trackVideoPlay()}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground text-center mt-3">
-              A brief explanation of how we help people explore treatment options privately and respectfully.
-            </p>
-          </section>
+          {/* Vertical Video Section (9:16) — only renders when configured. */}
+          {VIDEO_CONFIG.videoId && (
+            <section className="relative mx-auto" style={{ maxWidth: "280px" }}>
+              <div className="relative rounded-2xl overflow-hidden bg-muted" style={{ aspectRatio: "9/16" }}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${VIDEO_CONFIG.videoId}?autoplay=1&mute=1&loop=1&playlist=${VIDEO_CONFIG.videoId}&controls=0&modestbranding=1&rel=0&showinfo=0&playsinline=1`}
+                  title="Treatment information video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                  loading="lazy"
+                  onLoad={() => trackVideoPlay()}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                A brief explanation of how we help people explore treatment options privately and respectfully.
+              </p>
+            </section>
+          )}
           
           {/* Lead Intake Form - Same as Get Help page */}
           <section>
