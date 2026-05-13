@@ -27,30 +27,34 @@ export default function SeekerSaved() {
     }
 
     try {
+      // Use `public_facilities` view so SAMHSA-imported / unclaimed listings
+      // (which live with `status='approved'` but no claim) still resolve.
+      // Querying `facilities` directly with `.eq('status','approved')` works
+      // for most rows but the view also applies the same Pro-masking + claim
+      // flags everywhere else in the app uses.
       const { data, error: queryError } = await supabase
-        .from('facilities')
+        .from('public_facilities')
         .select('id, name, city, state, phone, facility_type, slug, description, logo_url, gallery_urls, verified, year_established')
         .in('id', favorites)
-        .eq('status', 'approved')
-        .limit(200);
+        .limit(500);
 
       if (queryError) {
         setError('Failed to load saved facilities');
         setFacilities([]);
       } else {
-        const mappedFacilities: FacilityCardData[] = (data || []).map(f => ({
-          id: f.id,
-          name: f.name,
-          city: f.city,
-          state: f.state,
-          phone: f.phone,
-          facility_type: f.facility_type,
-          slug: f.slug,
-          description: f.description,
-          logo_url: f.logo_url,
-          gallery_urls: f.gallery_urls,
-          verified: f.verified,
-          year_established: f.year_established
+        const mappedFacilities: FacilityCardData[] = (data || []).map((f) => ({
+          id: f.id as string,
+          name: (f.name as string) ?? "",
+          city: (f.city as string) ?? "",
+          state: (f.state as string) ?? "",
+          phone: (f.phone as string | null) ?? null,
+          facility_type: (f.facility_type as string) ?? "",
+          slug: (f.slug as string) ?? "",
+          description: (f.description as string | null) ?? null,
+          logo_url: (f.logo_url as string | null) ?? null,
+          gallery_urls: (f.gallery_urls as string[] | null) ?? null,
+          verified: (f.verified as boolean | null) ?? null,
+          year_established: (f.year_established as number | null) ?? null,
         }));
         setFacilities(mappedFacilities);
         setError(null);

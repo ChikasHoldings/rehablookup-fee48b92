@@ -73,18 +73,49 @@ export default function InternationalThankYou() {
     frame();
 
     // Try to get data from localStorage if not in state
+    let intakeDataParsed: Record<string, unknown> | null = null;
     if (!firstName || !email) {
       try {
         const intakeData = localStorage.getItem("international_intake_data");
         if (intakeData) {
-          const parsed = JSON.parse(intakeData);
-          if (parsed.first_name && !firstName) setFirstName(parsed.first_name);
-          if (parsed.email && !email) setEmail(parsed.email);
+          intakeDataParsed = JSON.parse(intakeData) as Record<string, unknown>;
+          if (intakeDataParsed.first_name && !firstName) setFirstName(String(intakeDataParsed.first_name));
+          if (intakeDataParsed.email && !email) setEmail(String(intakeDataParsed.email));
           localStorage.removeItem("international_intake_data");
         }
       } catch (e) {
         console.error("Error parsing intake data:", e);
       }
+    } else {
+      try {
+        const intakeData = localStorage.getItem("international_intake_data");
+        if (intakeData) {
+          intakeDataParsed = JSON.parse(intakeData) as Record<string, unknown>;
+          localStorage.removeItem("international_intake_data");
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Recovery path: if Stripe redirected us back with session_id (the
+    // configured Stripe success_url is /international/thank-you), the intake
+    // payload may not have been submitted to the server yet. Invoke
+    // submit-international-intake now so the case row exists even if the
+    // Stripe webhook is delayed. Idempotent on the server.
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get("session_id");
+    const payment = params.get("payment");
+    if (sessionId && (payment === "success" || !payment) && intakeDataParsed) {
+      void supabase.functions
+        .invoke("submit-international-intake", {
+          body: {
+            sessionId,
+            intakeData: intakeDataParsed,
+            paymentVerified: true,
+          },
+        })
+        .catch((err) =>
+          console.warn("[InternationalThankYou] submit-international-intake failed (will rely on webhook)", err),
+        );
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional run-once effect on mount; email/firstName are only read as guards to avoid overwriting user input
   }, []);

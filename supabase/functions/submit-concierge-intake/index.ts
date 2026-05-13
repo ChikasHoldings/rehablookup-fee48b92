@@ -197,6 +197,33 @@ Deno.serve(async (req) => {
       throw new Error("Session ID is required");
     }
 
+    // For the free path (skipPayment), phone verification is the only proof
+    // we have that the seeker controls the contact channel — enforce it here
+    // so the browser-side step can't be skipped via direct API call.
+    if (skipPayment) {
+      const phoneOk = (() => {
+        if (!phoneVerifiedAt || typeof phoneVerifiedAt !== "string") return false;
+        const t = Date.parse(phoneVerifiedAt);
+        if (Number.isNaN(t)) return false;
+        // Accept anything within the last 60 minutes.
+        return Date.now() - t <= 60 * 60 * 1000;
+      })();
+      if (!phoneOk) {
+        const code = "phone_verification_required";
+        logStep(requestId, code, { phoneVerifiedAtPresent: !!phoneVerifiedAt });
+        return new Response(
+          JSON.stringify({
+            error: { code, message: "Phone verification is required and must be recent." },
+            code,
+            reason: "Phone verification is required and must be recent.",
+            requestId,
+            _version: VERSION,
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     // Validate and sanitize critical intake fields
     if (!intakeData.email || typeof intakeData.email !== "string" || intakeData.email.trim().length === 0) {
       const code = "email_required";
@@ -378,6 +405,7 @@ Deno.serve(async (req) => {
       intake_submitted_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       email_verified_at: emailVerifiedAt || new Date().toISOString(),
+      phone_verified_at: phoneVerifiedAt || (skipPayment ? new Date().toISOString() : null),
       age_range: sanitizeString(intakeData.ageRange, 50),
       gender: sanitizeString(intakeData.gender, 50),
       preferred_language: sanitizeString((intakeData as FullIntakeData).preferredLanguage, 50) || null,

@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { ProfileConciergeRescue } from "@/components/profile/ProfileConciergeRescue";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
+import { useFavorites } from "@/hooks/useFavorites";
 import {
   MapPin,
   Phone,
@@ -226,6 +227,10 @@ const CenterProfile = () => {
   const [logoError, setLogoError] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
+  // Anon and authed visitors can save a facility from the public profile.
+  // Guest favorites are kept in localStorage and migrated to user_favorites
+  // on signin via the useFavorites hook.
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [reportImageOpen, setReportImageOpen] = useState(false);
   const [reportImageUrl, setReportImageUrl] = useState<string>("");
   const [reportImageType, setReportImageType] = useState<"logo" | "gallery">("gallery");
@@ -989,16 +994,16 @@ const CenterProfile = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col xs:flex-row items-stretch gap-2 px-3 py-3 sm:px-4 md:px-6 border-t border-border/30 bg-card">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold shadow-sm"
                 onClick={() => handleRequestInfoOpen("hero_request_call")}
               >
                 <Phone className="h-4 w-4 shrink-0" />
                 <span className="truncate">Request Call</span>
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="lg"
                 className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold"
                 onClick={() => handleRequestInfoOpen("hero_request_info")}
@@ -1006,10 +1011,25 @@ const CenterProfile = () => {
                 <MessageSquare className="h-4 w-4 shrink-0" />
                 <span className="truncate">Request Info</span>
               </Button>
+              {/* Save / favorite — guest favorites persist to localStorage and
+                  migrate to user_favorites on signin; authed seekers update the
+                  DB directly. Works for anon + authed without an extra prompt. */}
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2 h-11 text-sm font-semibold"
+                aria-label={isFavorite(facility.id) ? "Remove from saved" : "Save to favorites"}
+                onClick={() => toggleFavorite(facility.id)}
+              >
+                <Heart
+                  className={cn("h-4 w-4 shrink-0", isFavorite(facility.id) && "fill-current text-rose-500")}
+                />
+                <span className="truncate">{isFavorite(facility.id) ? "Saved" : "Save"}</span>
+              </Button>
               {showContactDetails && facility.website && (
-                <a 
-                  href={facility.website} 
-                  target="_blank" 
+                <a
+                  href={facility.website}
+                  target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackInteraction("website")}
                   className="hidden sm:block"
