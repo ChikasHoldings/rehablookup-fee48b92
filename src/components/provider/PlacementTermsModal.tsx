@@ -58,19 +58,24 @@ export function PlacementTermsModal({
 
   const acceptTermsMutation = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { error } = await supabase
-        .from("facilities")
-        .update({
-          concierge_terms_accepted_at: new Date().toISOString(),
-          concierge_terms_version: TERMS_VERSION,
-          concierge_terms_accepted_by: user.id,
-        })
-        .eq("id", facilityId);
-
+      // Server-side: inserts a `placement_agreements` row with the typed
+      // signature name + signer IP + versioned document URL, then updates
+      // the facility's `concierge_terms_accepted_*` columns. The agreement
+      // row is the legal audit record; the facility columns are a hot
+      // cache used by dashboard surfaces and joined queries.
+      const { data, error } = await supabase.functions.invoke(
+        "record-placement-agreement",
+        {
+          body: {
+            facilityId,
+            signatureName: signatureName.trim(),
+            termsVersion: TERMS_VERSION,
+          },
+        },
+      );
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["facility-concierge"] });

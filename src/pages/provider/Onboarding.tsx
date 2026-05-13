@@ -5,12 +5,14 @@
  * choose between listing a brand-new facility or claiming an existing
  * (SAMHSA-imported / unverified) listing.
  *
- * Auth gate: if the visitor isn't signed in, kick them to /auth/signup
- * (preserving `?returnTo` if present so they end up where they started).
+ * Auth gate: if the visitor isn't signed in, kick them to /login?type=provider
+ * (preserving `?returnTo` if present). Already-registered providers landing
+ * here while signed out are sent to login — not signup — to keep entry
+ * paths consistent with the rest of the provider panel.
  *
- * Phase 1: "Claim an existing listing" is a placeholder that navigates to
- * the home page. Phase 2 of the wizard will replace it with the claim
- * lookup flow.
+ * "Claim an existing listing" routes to the public rehab-centers search
+ * page with ?intent=claim — that mode highlights the "Claim This Listing"
+ * CTA on each facility profile and skips seeker conversion prompts.
  */
 
 import { useEffect, useState } from "react";
@@ -34,8 +36,8 @@ export default function ProviderOnboarding() {
       if (cancelled) return;
       if (!session?.user) {
         const returnTo = searchParams.get("returnTo") ?? "/provider/onboarding";
-        const search = new URLSearchParams({ returnTo }).toString();
-        navigate(`/auth/signup?${search}`, { replace: true });
+        const search = new URLSearchParams({ type: "provider", returnTo }).toString();
+        navigate(`/login?${search}`, { replace: true });
         return;
       }
       setChecking(false);
@@ -107,11 +109,16 @@ export default function ProviderOnboarding() {
             <Button
               variant="secondary"
               className="mt-auto w-full gap-2"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/rehab-centers?intent=claim")}
             >
               Find my facility
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Button>
+            <p className="text-xs text-muted-foreground">
+              Tip: search by your facility name or city, then click
+              <span className="font-medium text-foreground"> &ldquo;Claim This Listing&rdquo; </span>
+              on its profile.
+            </p>
           </Card>
         </div>
       </main>

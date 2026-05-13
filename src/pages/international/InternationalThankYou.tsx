@@ -150,37 +150,54 @@ export default function InternationalThankYou() {
         return;
       }
 
-      // Create user account
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/account`,
-          data: {
-            first_name: firstName,
-            account_type: 'seeker',
+      // Create user account via register-provider-account edge function.
+      // accountType=seeker + autoConfirm=true: email_confirm is set server-side
+      // and Supabase never sends a magic-link confirmation email.
+      const { data: regData, error: regErr } = await supabase.functions.invoke(
+        "register-provider-account",
+        {
+          body: {
+            email: trimmedEmail,
+            password,
+            firstName: firstName || "Seeker",
+            lastName: "User",
+            accountType: "seeker",
+            autoConfirm: true,
           },
         },
+      );
+      if (regErr || regData?.error) {
+        const msg = regData?.error ?? regErr?.message ?? "Failed to create account.";
+        toast({ title: "Signup Failed", description: msg, variant: "destructive" });
+        setIsCreatingAccount(false);
+        return;
+      }
+      if (!regData?.userId) {
+        toast({
+          title: "Signup Failed",
+          description: "Unable to create account. Please try again.",
+          variant: "destructive",
+        });
+        setIsCreatingAccount(false);
+        return;
+      }
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password,
       });
-
-      if (signUpError) throw signUpError;
+      if (signInErr) {
+        toast({
+          title: "Account Created",
+          description: "Please sign in to continue.",
+        });
+        navigate("/login");
+        return;
+      }
+      const signUpData = {
+        user: { id: regData.userId, user_metadata: { account_type: "seeker" } },
+      } as { user: { id: string; user_metadata: { account_type: string } } | null };
 
       if (signUpData.user) {
-        // Guard: if signUp returned an existing session with wrong account type, sign out
-        if (signUpData.session) {
-          const accountType = signUpData.user.user_metadata?.account_type;
-          if (accountType && accountType !== 'seeker') {
-            await supabase.auth.signOut();
-            toast({
-              title: "Account Conflict",
-              description: "This email is already associated with another account type. Please use a different email.",
-              variant: "destructive",
-            });
-            setIsCreatingAccount(false);
-            return;
-          }
-        }
-
         // Create seeker profile
         await supabase.from("seeker_profiles").insert({
           user_id: signUpData.user.id,

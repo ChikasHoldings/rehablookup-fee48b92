@@ -279,106 +279,99 @@ Deno.serve(async (req) => {
 
     let stripePaymentIntentId: string | null = null;
 
+    // unlock_lead_atomic RPC populates this for the credits path. The Stripe
+    // path returns early with a checkout URL; the actual unlock for stripe
+    // payments is created in verify-unlock-payment after the webhook lands.
+    let atomicUnlock: { id: string; lead_id: string; provider_id: string; facility_id: string; unlock_price_cents: number; payment_method: string; stripe_payment_intent_id: string | null } | null = null;
+
     if (paymentMethod === 'credits') {
-      // Check credit balance
-      const { data: credits } = await supabaseAdmin
-        .from("provider_credits")
-        .select("balance_cents")
-        .eq("provider_id", user.id)
-        .maybeSingle();
+      // Single-transaction debit + ledger + lead_unlocks insert via the
+      // unlock_lead_atomic RPC. Replaces the previous 3-statement flow that
+      // had to manage its own rollback safety net. The function locks the
+      // provider_credits row FOR UPDATE before checking balance, so concurrent
+      // unlocks from the same provider serialize and cannot double-debit.
+      const { data: atomicRes, error: atomicErr } = await supabaseAdmin.rpc(
+        "unlock_lead_atomic",
+        {
+          p_provider_id: user.id,
+          p_facility_id: facilityId,
+          p_lead_id: leadId,
+          p_unlock_price_cents: unlockPrice,
+          p_base_price_cents: basePrice,
+          p_inquiry_type: inquiryType,
+          p_discount_applied: isPro,
+          p_discount_amount_cents: discountAmount,
+          p_payment_method: "credits",
+        },
+      );
 
-      const currentBalance = credits?.balance_cents ?? 0;
-
-      if (currentBalance < unlockPrice) {
-        logStep(requestId, "Insufficient credits", { currentBalance, required: unlockPrice });
-        return new Response(JSON.stringify({ 
-          error: "Insufficient credits",
-          required: unlockPrice,
-          current: currentBalance,
-          needsCredits: unlockPrice - currentBalance,
-          requestId,
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (atomicErr) {
+        logStep(requestId, "ERROR - unlock_lead_atomic threw", { error: atomicErr.message });
+        return new Response(
+          JSON.stringify({ error: "Unable to process unlock. Please try again.", requestId }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
 
-      // Re-check for existing unlock (race condition protection)
-      const { data: raceCheckUnlock } = await supabaseAdmin
-        .from("lead_unlocks")
-        .select("id")
-        .eq("lead_id", leadId)
-        .eq("facility_id", facilityId)
-        .maybeSingle();
-
-      if (raceCheckUnlock) {
-        logStep(requestId, "Lead already unlocked (race condition)", { existingUnlockId: raceCheckUnlock.id });
-        return new Response(JSON.stringify({ error: "Lead already unlocked", requestId }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      // deno-lint-ignore no-explicit-any
+      const result = atomicRes as any;
+      if (!result?.success) {
+        const code = String(result?.error_code ?? "");
+        if (code === "INSUFFICIENT_CREDITS") {
+          const currentBalance = Number(result?.new_balance_cents ?? 0);
+          return new Response(
+            JSON.stringify({
+              error: "Insufficient credits",
+              required: unlockPrice,
+              current: currentBalance,
+              needsCredits: unlockPrice - currentBalance,
+              requestId,
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        if (code === "CREDITS_ROW_MISSING") {
+          return new Response(
+            JSON.stringify({
+              error: "Insufficient credits",
+              required: unlockPrice,
+              current: 0,
+              needsCredits: unlockPrice,
+              requestId,
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        return new Response(
+          JSON.stringify({ error: "Unable to process unlock. Please try again.", requestId, code }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
 
-      // Atomic balance update with conditional check to prevent race conditions
-      // This ensures balance doesn't go below what we need
-      const newBalance = currentBalance - unlockPrice;
-      const { data: updateResult, error: updateError } = await supabaseAdmin
-        .from("provider_credits")
-        .update({
-          balance_cents: newBalance,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("provider_id", user.id)
-        .gte("balance_cents", unlockPrice) // Only update if balance is still sufficient
-        .select("balance_cents")
-        .maybeSingle();
-
-      if (updateError || !updateResult) {
-        logStep(requestId, "Credit deduction failed - possible race condition or insufficient funds", { 
-          error: updateError?.message,
-          hadResult: !!updateResult
-        });
-        return new Response(JSON.stringify({ 
-          error: "Unable to process payment. Please try again.",
-          requestId
-        }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (result.already_unlocked === true) {
+        return new Response(
+          JSON.stringify({ error: "Lead already unlocked", requestId }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
 
-      logStep(requestId, "Credits deducted successfully", { 
-        previousBalance: currentBalance, 
-        newBalance: updateResult.balance_cents,
-        deducted: unlockPrice 
+      logStep(requestId, "Credits debited atomically", {
+        newBalance: Number(result.new_balance_cents ?? 0),
+        unlockId: result.unlock_id,
       });
 
-      // Mark for outer-catch rollback safety net (H1)
-      creditsDeducted = true;
-      deductedAmount = unlockPrice;
-      deductedProviderId = user.id;
-      deductedFacilityId = facilityId;
-      deductedLeadId = leadId;
-
-      // Log the credit transaction with enhanced details
-      const { error: txError } = await supabaseAdmin.from("credit_transactions").insert({
+      // Set the outer-scoped unlock object so the post-unlock notification /
+      // email / lead-status-update path can run. The RPC already wrote the
+      // lead_unlocks + credit_transactions rows in one transaction.
+      atomicUnlock = {
+        id: String(result.unlock_id),
+        lead_id: leadId,
         provider_id: user.id,
         facility_id: facilityId,
-        amount_cents: -unlockPrice,
-        transaction_type: "unlock",
-        reference_id: leadId,
-        description: `Unlocked ${inquiryType.replace('_', ' ')} inquiry`,
-        inquiry_type: inquiryType,
-        base_price_cents: basePrice,
-        discount_applied: isPro,
-        discount_amount_cents: discountAmount,
-      });
-
-      if (txError) {
-        logStep(requestId, "WARN - Failed to log credit transaction", { error: txError.message });
-        // Continue anyway - the deduction succeeded, this is just logging
-      }
-
+        unlock_price_cents: unlockPrice,
+        payment_method: "credits",
+        stripe_payment_intent_id: null,
+      };
     } else if (paymentMethod === 'stripe') {
       // Create Stripe PaymentIntent for direct card payment
       const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
@@ -435,80 +428,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create the unlock record
-    const { data: unlock, error: unlockError } = await supabaseAdmin
-      .from("lead_unlocks")
-      .insert({
-        lead_id: leadId,
-        provider_id: user.id,
-        facility_id: facilityId,
-        unlock_price_cents: unlockPrice,
-        payment_method: paymentMethod,
-        stripe_payment_intent_id: stripePaymentIntentId,
-      })
-      .select()
-      .single();
-
-    if (unlockError) {
-      logStep(requestId, "ERROR - Unlock record creation failed, rolling back credits", { error: unlockError.message });
-
-      // ROLLBACK: refund the deducted credits if payment was via credits
-      if (paymentMethod === 'credits') {
-        // ATOMIC rollback via increment RPC — eliminates read-then-write race condition
-        const { error: rollbackError } = await supabaseAdmin.rpc("increment_provider_credits", {
-          p_provider_id: user.id,
-          p_facility_id: facilityId,
-          p_amount_cents: unlockPrice,
-        });
-
-        if (!rollbackError) {
-
-          // Log the rollback transaction
-          await supabaseAdmin.from("credit_transactions").insert({
-            provider_id: user.id,
-            facility_id: facilityId,
-            amount_cents: unlockPrice,
-            transaction_type: "refund",
-            reference_id: leadId,
-            description: "Automatic refund - unlock record creation failed",
-          });
-
-          logStep(requestId, "Credits rolled back successfully", { refunded: unlockPrice });
-        } else {
-          logStep(requestId, "CRITICAL - Could not rollback credits", { error: rollbackError.message });
-          // Surface to admins so they can manually reconcile (H3).
-          try {
-            await supabaseAdmin.from("admin_notifications").insert({
-              type: "unlock_rollback_failed",
-              title: "Unlock rollback failed — credits stuck",
-              message: `Provider ${user.id} was charged ${unlockPrice} cents for lead ${leadId} but the unlock record failed AND the credit refund RPC also failed. Manual reconciliation required.`,
-              metadata: {
-                provider_id: user.id,
-                facility_id: facilityId,
-                lead_id: leadId,
-                amount_cents: unlockPrice,
-                rollback_error: rollbackError.message,
-                request_id: requestId,
-              },
-            });
-          } catch (alertErr) {
-            logStep(requestId, "ALSO FAILED - Could not insert admin_notifications row", { error: String(alertErr) });
-          }
-        }
-        // Disarm outer-catch safety net regardless of rollback outcome —
-        // we've already attempted refund (and notified admins on failure).
-        creditsDeducted = false;
-      }
-
-      return new Response(JSON.stringify({ error: "Failed to unlock lead", requestId }), {
+    // Credits path: unlock + ledger were both inserted atomically by the RPC.
+    // Stripe path returned early above with a checkout URL. Anything reaching
+    // here without atomicUnlock indicates a programming error.
+    if (!atomicUnlock) {
+      logStep(requestId, "ERROR - reached post-unlock block with no atomicUnlock", { paymentMethod });
+      return new Response(JSON.stringify({ error: "Internal error", requestId }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Unlock row is committed — credits are now correctly attributed.
-    // Disarm the outer-catch rollback safety net (H1).
-    creditsDeducted = false;
+    const unlock = atomicUnlock;
 
     // Update lead status to 'unlocked' — only valid from 'new' or 'expired' (redistributed leads may be expired)
     const unlockTimestamp = new Date().toISOString();

@@ -681,6 +681,23 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
         queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
         setTimeout(() => setShowSaved(false), 2000);
+
+        // First-time 100%-complete celebration: fire-and-forget the
+        // congratulatory email (deployed function had no callers).
+        if (
+          profileCompletion.percentage === 100 &&
+          !(facility as { profile_completion_celebrated?: boolean })
+            .profile_completion_celebrated
+        ) {
+          void supabase.functions
+            .invoke("send-profile-complete-email", {
+              body: { facilityId: currentFacilityId },
+            })
+            .catch((err) =>
+              console.warn("[ListingEditor] profile-complete email failed", err),
+            );
+        }
+
         toast({
           title: "Profile updated",
           description: "Your public profile is now live with the latest changes.",

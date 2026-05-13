@@ -1,14 +1,16 @@
 /**
  * AuthSignup — minimal provider signup
  * ────────────────────────────────────
- * Creates the auth account + provider profile. After email verification,
- * routes the user to /provider/onboarding (or `?returnTo=...` if the caller
- * passed a destination — e.g. /provider/claim/:slug from the "Claim This
- * Listing" entry point on facility pages).
+ * Creates the auth account via the `register-provider-account` edge function
+ * (which uses admin.createUser with email_confirm:false, so Supabase never
+ * sends a magic-link email). The user then enters a 6-digit code from
+ * `send-verification-code`, which `verify-code` validates and flips
+ * email_confirmed_at on auth.users. The client signs in with password to mint
+ * a session, then routes to /provider/onboarding.
  *
- * Replaces the auth steps of the old monolithic /provider-signup. The
- * facility-creation portion now lives at /provider/onboarding/new-listing
- * which delegates back to ProviderSignup at step 3.
+ * Welcome email + admin notification fire here on account creation — not
+ * later in the facility wizard — so providers who switch to the claim flow
+ * still get acknowledged.
  */
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -46,9 +48,7 @@ export default function AuthSignup() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [authUserId, setAuthUserId] = useState<string | null>(null);
 
-  // If the visitor already has a session, skip the form entirely.
   useEffect(() => {
     let cancelled = false;
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -71,68 +71,44 @@ export default function AuthSignup() {
     e.preventDefault();
     if (!formValid || submitting) return;
 
-    // Local sanity check on the email before sending it through signUp.
     try {
       validateEmail(email);
-    } catch (err) {
+    } catch {
       toast.error("Please enter a valid email address.");
       return;
     }
 
     setSubmitting(true);
     try {
-      const [seekerResult, adminResult] = await Promise.all([
-        supabase.rpc("is_email_seeker", { p_email: email }),
-        supabase.rpc("is_email_admin", { p_email: email }),
-      ]);
-
-      if (!seekerResult.error && seekerResult.data) {
-        toast.error(
-          "This email is registered as a personal account. Use a different email for your facility."
-        );
-        setSubmitting(false);
-        return;
-      }
-      if (!adminResult.error && adminResult.data) {
-        toast.error(
-          "This email is associated with an administrative account. Use a different email."
-        );
-        setSubmitting(false);
-        return;
-      }
-
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/provider/onboarding`,
-          data: {
-            account_type: "provider",
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
+      const { data, error } = await supabase.functions.invoke(
+        "register-provider-account",
+        {
+          body: {
+            email: email.trim(),
+            password,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            accountType: "provider",
           },
         },
-      });
+      );
 
       if (error) {
-        if (error.message.toLowerCase().includes("already registered")) {
-          toast.error(
-            "An account with this email already exists. Try signing in instead."
-          );
-        } else {
-          toast.error(error.message || "Sign-up failed. Please try again.");
-        }
+        toast.error(error.message || "Sign-up failed. Please try again.");
         setSubmitting(false);
         return;
       }
-
-      if (!data.user) {
+      if (data?.error) {
+        toast.error(data.error);
+        setSubmitting(false);
+        return;
+      }
+      if (!data?.userId) {
         toast.error("Unable to create your account. Please try again.");
         setSubmitting(false);
         return;
       }
 
-      setAuthUserId(data.user.id);
       setStage("verify");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign-up failed.");
@@ -144,20 +120,25 @@ export default function AuthSignup() {
   async function finalizeAfterVerification() {
     setStage("finalizing");
     try {
-      // The auth session is established by EmailVerificationStep's OTP verify.
-      // Resolve the canonical userId from the live session to avoid trusting
-      // any stale value.
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id ?? authUserId;
-      if (!userId) {
-        toast.error("Session not established. Please sign in.");
+      // OTP succeeded → auth.users.email_confirmed_at is now true (server-side
+      // via verify-code). Sign in with the password the user just typed.
+      const { data: signInRes, error: signInErr } =
+        await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+      if (signInErr || !signInRes?.user) {
+        toast.error(
+          signInErr?.message ??
+            "Account is verified — please sign in to continue.",
+        );
         navigate("/login", { replace: true });
         return;
       }
 
-      // Insert (or upsert) the provider profile row. Best-effort: if a row
-      // already exists for this user (rare; would mean an interrupted prior
-      // signup), don't block the redirect.
+      const userId = signInRes.user.id;
+
+      // Best-effort profile row insert (race-safe: duplicate is fine).
       const { error: profileError } = await supabase.from("profiles").insert({
         user_id: userId,
         first_name: sanitizePersonName(firstName),
@@ -165,11 +146,36 @@ export default function AuthSignup() {
         email: email.trim().slice(0, 255),
       });
       if (profileError && !profileError.message.includes("duplicate")) {
-        // Soft-warn: account is created and verified, profile is best-effort.
         toast.warning(
-          "Your account is created, but we couldn't save profile details. You can update them in settings."
+          "Your account is created, but we couldn't save profile details. You can update them in settings.",
         );
       }
+
+      // Fire welcome email + admin notification at account creation, not at
+      // facility creation. Both are best-effort and must NEVER block signup.
+      void supabase.functions
+        .invoke("send-provider-welcome-email", {
+          body: {
+            providerEmail: email.trim(),
+            firstName: firstName.trim(),
+            providerId: userId,
+          },
+        })
+        .catch((e) =>
+          console.warn("[AuthSignup] welcome email failed", e),
+        );
+      void supabase.functions
+        .invoke("notify-admin-provider-signup", {
+          body: {
+            providerEmail: email.trim(),
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            providerId: userId,
+          },
+        })
+        .catch((e) =>
+          console.warn("[AuthSignup] admin notification failed", e),
+        );
 
       toast.success("Account created — welcome aboard!");
       navigate(returnTo ?? "/provider/onboarding", { replace: true });

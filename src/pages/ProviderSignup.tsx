@@ -310,43 +310,42 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
     // Clear any stale caches before creating new account
     clearProviderCaches();
 
-      // 1. Create the user account
-      if (import.meta.env.DEV) console.log("[ProviderSignup] Creating auth account...");
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/provider/dashboard`,
-          data: {
-            account_type: "provider",
-            first_name: formData.firstName.trim(),
-            last_name: formData.lastName.trim(),
+      // 1. Create the user account via register-provider-account edge function.
+      // Uses admin.createUser(email_confirm:false), so Supabase NEVER sends a
+      // magic-link confirmation email. The 6-digit OTP that was verified in
+      // step 2 already flipped email_confirmed_at via the updated verify-code.
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Creating auth account via register-provider-account...");
+      const { data: regData, error: regErr } = await supabase.functions.invoke(
+        "register-provider-account",
+        {
+          body: {
+            email: formData.email,
+            password: formData.password,
+            firstName: formData.firstName.trim(),
+            lastName: formData.lastName.trim(),
+            accountType: "provider",
           },
         },
-      });
+      );
 
-      if (authError) {
-        console.error("[ProviderSignup] Auth signup error:", authError.message);
-        if (authError.message.includes("already registered")) {
+      if (regErr || regData?.error) {
+        const msg = regData?.error ?? regErr?.message ?? "Signup failed.";
+        const code = regData?.code;
+        if (code === "USER_EXISTS") {
           toast({
             title: "Account Exists",
             description: "An account with this email already exists. Please sign in instead.",
             variant: "destructive",
           });
         } else {
-          toast({
-            title: "Signup Failed",
-            description: authError.message,
-          variant: "destructive",
-        });
+          toast({ title: "Signup Failed", description: msg, variant: "destructive" });
         }
         submittingRef.current = false;
         setIsSubmitting(false);
         return;
       }
 
-      if (!authData.user) {
-        console.error("[ProviderSignup] No user returned from auth.signUp");
+      if (!regData?.userId) {
         toast({
           title: "Signup Failed",
           description: "Unable to create account. Please try again.",
@@ -357,24 +356,26 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         return;
       }
 
-      // CRITICAL: Verify the returned user is actually a provider, not cross-account
-      if (authData.session) {
-        const accountType = authData.user.user_metadata?.account_type;
-        if (accountType && accountType !== 'provider') {
-          await supabase.auth.signOut();
-          toast({
-            title: "Account Conflict",
-          description: "This email is already associated with another account type. Please use a different email.",
-          variant: "destructive",
-        });
-          submittingRef.current = false;
-          setIsSubmitting(false);
-          return;
-        }
-      }
+      userId = regData.userId;
+      if (import.meta.env.DEV) console.log("[ProviderSignup] Account created, userId:", userId.substring(0, 8) + "...");
 
-      userId = authData.user.id;
-      if (import.meta.env.DEV) console.log("[ProviderSignup] Auth account created, userId:", userId.substring(0, 8) + "...");
+      // Sign in with password to mint a session. email_confirmed_at is already
+      // true (set by verify-code in step 2), so signInWithPassword succeeds.
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+      if (signInErr) {
+        console.error("[ProviderSignup] signInWithPassword failed", signInErr.message);
+        toast({
+          title: "Account created — please sign in",
+          description: "Your account is ready. Please sign in to continue.",
+        });
+        submittingRef.current = false;
+        setIsSubmitting(false);
+        navigate("/login");
+        return;
+      }
 
       // 2. Create profile (with sanitized personal fields)
       if (import.meta.env.DEV) console.log("[ProviderSignup] Creating provider profile...");
