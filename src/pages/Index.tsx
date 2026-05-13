@@ -42,6 +42,10 @@ import {
   ClipboardList,
   ShieldCheck,
   Star,
+  Building2,
+  Globe,
+  UserCheck,
+  Award,
 } from "lucide-react";
 
 const blogArticles = [
@@ -291,33 +295,48 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Trust Bar - Consolidated and Updated */}
+      {/* Trust Bar - Consolidated and Updated with Gold Icons */}
       <section className="relative bg-primary border-y border-primary-foreground/10">
         <div className="container py-3 md:py-4 px-4 md:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-x-8 lg:gap-x-12">
-            <div className="flex items-center gap-1.5 group">
-              <strong className="text-sm md:text-base font-bold text-white">15,000+</strong>
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Verified Facilities</span>
+            <div className="flex items-center gap-2 group">
+              <Building2 className="h-4 w-4 text-accent" aria-hidden="true" />
+              <div className="flex items-center gap-1.5">
+                <strong className="text-sm md:text-base font-bold text-white">15,000+</strong>
+                <span className="text-sm md:text-base font-medium text-primary-foreground/90">Verified Facilities</span>
+              </div>
             </div>
             <span className="hidden sm:inline text-primary-foreground/30" aria-hidden>·</span>
-            <div className="flex items-center gap-1.5 group">
-              <strong className="text-sm md:text-base font-bold text-white">All 50</strong>
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">States Covered</span>
+            <div className="flex items-center gap-2 group">
+              <Globe className="h-4 w-4 text-accent" aria-hidden="true" />
+              <div className="flex items-center gap-1.5">
+                <strong className="text-sm md:text-base font-bold text-white">All 50</strong>
+                <span className="text-sm md:text-base font-medium text-primary-foreground/90">States Covered</span>
+              </div>
             </div>
             <span className="hidden sm:inline text-primary-foreground/30" aria-hidden>·</span>
-            <div className="flex items-center gap-1.5 group">
-              <strong className="text-sm md:text-base font-bold text-white">Free</strong>
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">For Clients</span>
+            <div className="flex items-center gap-2 group">
+              <UserCheck className="h-4 w-4 text-accent" aria-hidden="true" />
+              <div className="flex items-center gap-1.5">
+                <strong className="text-sm md:text-base font-bold text-white">Free</strong>
+                <span className="text-sm md:text-base font-medium text-primary-foreground/90">For Clients</span>
+              </div>
             </div>
             <span className="hidden sm:inline text-primary-foreground/30" aria-hidden>·</span>
-            <div className="flex items-center gap-1.5 group">
-              <strong className="text-sm md:text-base font-bold text-white">HIPAA</strong>
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Compliant</span>
+            <div className="flex items-center gap-2 group">
+              <ShieldCheck className="h-4 w-4 text-accent" aria-hidden="true" />
+              <div className="flex items-center gap-1.5">
+                <strong className="text-sm md:text-base font-bold text-white">HIPAA</strong>
+                <span className="text-sm md:text-base font-medium text-primary-foreground/90">Compliant</span>
+              </div>
             </div>
             <span className="hidden sm:inline text-primary-foreground/30" aria-hidden>·</span>
-            <div className="flex items-center gap-1.5 group">
-              <strong className="text-sm md:text-base font-bold text-white">4.8★</strong>
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Advisor Rating</span>
+            <div className="flex items-center gap-2 group">
+              <Award className="h-4 w-4 text-accent" aria-hidden="true" />
+              <div className="flex items-center gap-1.5">
+                <strong className="text-sm md:text-base font-bold text-white">4.8★</strong>
+                <span className="text-sm md:text-base font-medium text-primary-foreground/90">Advisor Rating</span>
+              </div>
             </div>
           </div>
         </div>
