@@ -9,22 +9,31 @@
         location.replace('https://rehablookup.com' + location.pathname + location.search + location.hash);
       }
     </script>
-    
+
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-    
+    <!--
+      NOTE: Cache-Control / Pragma / Expires meta tags removed — they were vestigial.
+      Vercel's response header `cache-control: public, max-age=0, must-revalidate`
+      already forces revalidation; the meta tags duplicated that without effect on
+      the CDN. Per HTML spec, the http-equiv pragma directives are advisory only and
+      can confuse some clients.
+    -->
+
     <!-- Primary Meta Tags -->
     <title>Find Trusted Addiction Treatment Centers | RehabLookup</title>
     <meta name="title" content="Find Trusted Addiction Treatment Centers | RehabLookup" />
-    <meta name="description" content="Search 15,000+ verified rehab centers near you. Compare detox, inpatient, outpatient &amp; dual diagnosis programs. Free insurance verification. 24/7 confidential help." />
+    <meta name="description" content="Search and connect with verified addiction treatment centers across the United States. Compare detox, inpatient, outpatient & dual diagnosis programs. Free insurance verification. Confidential help." />
     <meta name="author" content="RehabLookup" />
-    <meta name="keywords" content="rehab near me, drug rehab near me, alcohol rehab near me, addiction treatment centers, detox centers near me, inpatient rehab, outpatient treatment, dual diagnosis treatment, free rehab near me, luxury rehab, womens rehab, mens rehab, fentanyl addiction treatment, opioid rehab, heroin rehab, suboxone treatment, MAT treatment, sober living near me, recovery programs, substance abuse treatment, PHP program, IOP treatment, residential treatment, alcohol detox, drug detox, rehab centers California, rehab centers Florida, rehab centers Texas, affordable rehab, state funded rehab, medicaid rehab, veterans rehab, teen rehab, young adult treatment" />
+    <!--
+      NOTE: meta keywords removed. Google has ignored this signal since 2009 and
+      stuffed keyword lists can be interpreted as a low-quality / spam signal in
+      manual review. Page topicality is established by titles, headings, on-page
+      copy, and structured data — none of which require this tag.
+    -->
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow" />
     <!-- Homepage canonical + og:url. This is ONLY served for the homepage ("/").
@@ -40,7 +49,7 @@
     <link rel="canonical" href="https://rehablookup.com/" />
     <meta property="og:url" content="https://rehablookup.com/" />
     <meta property="og:title" content="Find Trusted Addiction Treatment Centers | RehabLookup" />
-    <meta property="og:description" content="Search 15,000+ verified rehab centers near you. Compare detox, inpatient, outpatient &amp; dual diagnosis programs. Free insurance verification. 24/7 confidential help." />
+    <meta property="og:description" content="Search and connect with verified addiction treatment centers across the United States. Compare detox, inpatient, outpatient & dual diagnosis programs. Free insurance verification. Confidential help." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://rehablookup.com/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
@@ -52,7 +61,7 @@
     <!-- Twitter defaults (per-route values overridden by <SEO />) -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Find Trusted Addiction Treatment Centers | RehabLookup" />
-    <meta name="twitter:description" content="Search 15,000+ verified rehab centers near you. Compare detox, inpatient, outpatient &amp; dual diagnosis programs. Free insurance verification. 24/7 confidential help." />
+    <meta name="twitter:description" content="Search and connect with verified addiction treatment centers across the United States. Compare detox, inpatient, outpatient & dual diagnosis programs. Free insurance verification. Confidential help." />
     <meta name="twitter:url" content="https://rehablookup.com/" />
     <meta name="twitter:image" content="https://rehablookup.com/og-image.jpg" />
     <meta name="twitter:image:alt" content="RehabLookup - Find addiction treatment centers" />
@@ -86,23 +95,23 @@
     <link rel="preconnect" href="https://mldbxpntzcjalgjmwnqa.supabase.co" crossorigin />
     <link rel="dns-prefetch" href="https://js.stripe.com" />
     <link rel="dns-prefetch" href="https://ipapi.co" />
-    
+
     <!-- DNS prefetch for secondary resources -->
     <link rel="dns-prefetch" href="https://m.stripe.network" />
-    
+
     <!-- Preload critical resources for instant LCP -->
     <link rel="preload" as="image" href="/hero-recovery.webp" fetchpriority="high" type="image/webp" />
-    
+
     <!-- Preload font files directly to eliminate Google Fonts CSS round-trip -->
     <link rel="preload" as="font" href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2" type="font/woff2" crossorigin />
     <link rel="preload" as="font" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2" type="font/woff2" crossorigin />
-    
+
     <!-- Load Google Fonts CSS asynchronously (non-render-blocking) -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" /></noscript>
-    
+
     <!-- Note: modulepreload hints are added by Vite during build -->
-    
+
     <!-- Critical CSS for above-the-fold content (prevents FOUC) -->
     <style>
       /* Critical CSS - inlined for instant render */
@@ -130,8 +139,8 @@
         --muted: 220 20% 96%;
       }
       html { scroll-behavior: smooth; }
-      body { 
-        margin: 0; 
+      body {
+        margin: 0;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         background-color: hsl(220 30% 97%);
         color: hsl(222 47% 11%);
@@ -197,6 +206,7 @@
       "contactPoint": [
         {
           "@type": "ContactPoint",
+          "telephone": "+12146396420",
           "email": "help@rehablookup.com",
           "contactType": "customer service",
           "availableLanguage": ["English", "Spanish"],
@@ -226,7 +236,7 @@
       "@id": "https://rehablookup.com/#website",
       "name": "RehabLookup",
       "url": "https://rehablookup.com",
-      "description": "Find trusted addiction treatment centers near you. Search 15,000+ verified rehab facilities, compare programs, and get help today.",
+      "description": "Find trusted addiction treatment centers near you. Search verified rehab facilities across the United States, compare programs, and get help today.",
       "publisher": {"@id": "https://rehablookup.com/#organization"},
       "inLanguage": "en-US",
       "potentialAction": [
@@ -248,7 +258,7 @@
       "@context": "https://schema.org",
       "@type": "MedicalWebPage",
       "name": "Find Addiction Treatment Centers Near You",
-      "description": "Search 15,000+ verified drug and alcohol rehab centers. Compare treatment options and find the right recovery program.",
+      "description": "Search verified drug and alcohol rehab centers across the United States. Compare treatment options and find the right recovery program.",
       "about": {
         "@type": "MedicalCondition",
         "name": "Substance Use Disorder",
@@ -275,7 +285,7 @@
       "name": "Addiction Treatment Center Directory",
       "serviceType": "Healthcare Directory",
       "provider": {"@id": "https://rehablookup.com/#organization"},
-      "description": "Free service connecting individuals with verified addiction treatment centers nationwide. Compare facilities, verify insurance, and get confidential help 24/7.",
+      "description": "Free service connecting individuals with verified addiction treatment centers nationwide. Compare facilities, verify insurance, and get confidential help.",
       "areaServed": {
         "@type": "Country",
         "name": "United States"
@@ -353,13 +363,13 @@
           <article id="seo-homepage" itemscope itemtype="https://schema.org/WebPage">
             <header class="ns-header">
               <h1 class="ns-h1">Find Trusted Addiction Treatment Centers Near You</h1>
-              <p class="ns-lead">RehabLookup connects individuals and families with 15,000+ verified drug and alcohol rehabilitation centers across all 50 states. Search by location, treatment type, or insurance to find the right program for your recovery journey.</p>
-              <p style="margin-top: 16px;"><a href="tel:+18005551234" class="ns-phone">📞 Call Now: 1-800-555-1234</a> — Confidential, 24/7</p>
+              <p class="ns-lead">RehabLookup connects individuals and families with verified drug and alcohol rehabilitation centers across all 50 states. Search by location, treatment type, or insurance to find the right program for your recovery journey.</p>
+              <p style="margin-top: 16px;"><a href="tel:+12146396420" class="ns-phone">📞 Call Now: 214-639-6420</a> — Confidential, 24/7</p>
             </header>
 
             <section class="ns-section">
               <h2 class="ns-h2">Why Choose RehabLookup?</h2>
-              <p style="color: #444; line-height: 1.7; margin-bottom: 16px;">RehabLookup is the nation's most comprehensive addiction treatment directory, trusted by thousands of families seeking recovery resources. Our platform was built with one mission: to make finding quality substance abuse treatment simple, transparent, and accessible to everyone — regardless of insurance, location, or financial situation.</p>
+              <p style="color: #444; line-height: 1.7; margin-bottom: 16px;">RehabLookup is a comprehensive addiction treatment directory, trusted by families seeking recovery resources. Our platform was built with one mission: to make finding quality substance abuse treatment simple, transparent, and accessible to everyone — regardless of insurance, location, or financial situation.</p>
               <ul class="ns-list">
                 <li><strong>Verified Facilities:</strong> Every treatment center is verified for licensing, accreditation, and quality of care by our dedicated verification team</li>
                 <li><strong>Insurance Verification:</strong> Instantly check if your insurance covers treatment at specific facilities — we support Aetna, Blue Cross Blue Shield, Cigna, United Healthcare, Medicaid, Medicare, and more</li>
@@ -373,7 +383,7 @@
             <section class="ns-section">
               <h2 class="ns-h2">Types of Addiction Treatment Programs</h2>
               <p style="color: #444; line-height: 1.7; margin-bottom: 16px;">Understanding the different levels of care is essential to finding the right treatment path. RehabLookup helps you compare these options side-by-side so you can make an informed decision for yourself or your loved one.</p>
-              
+
               <h3 class="ns-h3">Medical Detox Programs</h3>
               <p style="color: #444; line-height: 1.7; margin-bottom: 16px;">Medical detoxification is often the first step in recovery. Under 24/7 medical supervision, patients safely manage withdrawal symptoms from alcohol, opioids, benzodiazepines, and other substances. Detox typically lasts 3–10 days and prepares individuals for ongoing treatment.</p>
 
@@ -402,7 +412,7 @@
 
             <section class="ns-section">
               <h2 class="ns-h2">Frequently Asked Questions About Addiction Treatment</h2>
-              
+
               <p class="ns-faq-q">How much does rehab cost?</p>
               <p class="ns-faq-a">The cost of rehab varies widely depending on the type of program, length of stay, and location. Many insurance plans cover substance abuse treatment under the Mental Health Parity Act. Free and state-funded programs are also available. RehabLookup helps you find options that fit your budget, including facilities that accept Medicaid, Medicare, and sliding-scale fees.</p>
 
@@ -423,13 +433,13 @@
               <h2 class="ns-h2">Get Help Today — It's Free &amp; Confidential</h2>
               <p style="color: #444; margin-bottom: 20px; font-size: 1.1rem;">Our recovery advocates are standing by 24/7. Take the first step toward a healthier life.</p>
               <a href="/concierge" class="ns-cta">Find Treatment Now →</a>
-              <p style="margin-top: 16px;"><a href="tel:+18005551234" class="ns-phone">📞 1-800-555-1234</a></p>
+              <p style="margin-top: 16px;"><a href="tel:+12146396420" class="ns-phone">📞 214-639-6420</a></p>
             </section>
           </article>
 
           <nav style="border-top: 2px solid #e5e5e5; padding-top: 40px; margin-top: 20px;">
             <h2 class="ns-h2">Browse Our Directory</h2>
-            
+
             <section style="margin-bottom: 32px;">
               <h3 class="ns-h3">Treatment Types</h3>
               <ul class="ns-grid">
@@ -605,7 +615,7 @@
           </nav>
 
           <footer class="ns-footer">
-            <p style="margin-bottom: 8px;">RehabLookup — United States | <a href="mailto:help@rehablookup.com" class="ns-link">help@rehablookup.com</a> | <a href="tel:+18005551234" class="ns-link">1-800-555-1234</a></p>
+            <p style="margin-bottom: 8px;">RehabLookup — United States | <a href="mailto:help@rehablookup.com" class="ns-link">help@rehablookup.com</a> | <a href="tel:+12146396420" class="ns-link">214-639-6420</a></p>
             <p>© 2026 RehabLookup. All rights reserved.</p>
             <p style="font-size: 0.875rem; margin-top: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">RehabLookup is a directory service connecting individuals with addiction treatment facilities. We are not a treatment provider and do not provide medical advice. If you are experiencing a medical emergency, call 911 immediately.</p>
             <nav style="margin-top: 16px;">
@@ -613,6 +623,7 @@
               <a href="/contact" class="ns-link" style="margin: 0 12px;">Contact</a>
               <a href="/for-providers" class="ns-link" style="margin: 0 12px;">For Providers</a>
               <a href="/privacy-policy" class="ns-link" style="margin: 0 12px;">Privacy Policy</a>
+              <a href="/notice-of-privacy-practices" class="ns-link" style="margin: 0 12px;">HIPAA Notice</a>
               <a href="/terms-of-service" class="ns-link" style="margin: 0 12px;">Terms of Service</a>
             </nav>
           </footer>
