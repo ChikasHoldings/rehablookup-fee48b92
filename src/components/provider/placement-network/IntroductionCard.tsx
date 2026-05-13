@@ -269,7 +269,7 @@ export function IntroductionCard({
                 "bg-primary/5 text-primary"
               )}>
                 {isExpired ? (
-                  <><AlertTriangle className="h-3 w-3" /><span>Response window expired — please reply if still interested</span></>
+                  <><AlertTriangle className="h-3 w-3" /><span>Response window expired — will auto-decline</span></>
                 ) : isUrgentDeadline ? (
                   <><Timer className="h-3 w-3" /><span>{hoursRemaining}h remaining to respond — faster response increases admission chances</span></>
                 ) : (
