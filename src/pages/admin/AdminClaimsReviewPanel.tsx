@@ -129,7 +129,7 @@ function formatTimestamp(iso: string): string {
   }
 }
 
-export function AdminClaimsReviewPanel() {
+function AdminClaimsReviewPanel() {
   const [claims, setClaims] = useState<ClaimRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -607,3 +607,5 @@ export function AdminClaimsReviewPanel() {
     </div>
   );
 }
+
+export default AdminClaimsReviewPanel;

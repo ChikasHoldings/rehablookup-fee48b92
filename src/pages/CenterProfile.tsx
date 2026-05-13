@@ -1,4 +1,4 @@
-import { useParams, Link, useLocation, Navigate } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import CenterNotFound from "@/pages/CenterNotFound";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/ui/RatingBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
+import { ClaimListingModal } from "@/components/facility/ClaimListingModal";
+import { UnclaimedFacilityBanner } from "@/components/facility/UnclaimedFacilityBanner";
 import { ProfileConciergeRescue } from "@/components/profile/ProfileConciergeRescue";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
 import {
@@ -212,6 +214,7 @@ function TruncatedDescription({ text }: { text: string }) {
 const CenterProfile = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const contactFormRef = useRef<HTMLDivElement>(null);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
@@ -220,6 +223,12 @@ const CenterProfile = () => {
   const [logoError, setLogoError] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [claimFlags, setClaimFlags] = useState<{
+    is_claimed: boolean;
+    is_pro: boolean;
+    is_premium_visible: boolean;
+  } | null>(null);
   const [reportImageOpen, setReportImageOpen] = useState(false);
   const [reportImageUrl, setReportImageUrl] = useState<string>("");
   const [reportImageType, setReportImageType] = useState<"logo" | "gallery">("gallery");
@@ -285,9 +294,18 @@ const CenterProfile = () => {
   // after handling so the canonical URL stays clean for analytics + sharing.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+    let mutated = false;
     if (params.get("action") === "request-info") {
       setRequestModalOpen(true);
       params.delete("action");
+      mutated = true;
+    }
+    if (params.get("claim") === "1") {
+      setClaimModalOpen(true);
+      params.delete("claim");
+      mutated = true;
+    }
+    if (mutated) {
       const cleanSearch = params.toString();
       const cleanUrl = location.pathname + (cleanSearch ? `?${cleanSearch}` : "");
       window.history.replaceState({}, document.title, cleanUrl);
@@ -453,6 +471,36 @@ const CenterProfile = () => {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
+
+  // Supplemental fetch for claim-state flags. The static snapshot used by
+  // the public path doesn't carry these, so we query the masking view by id
+  // and overlay them onto the facility. While `claimFlags` is null the
+  // banner stays hidden — avoids a flash of unclaimed-state content on
+  // facilities that turn out to be claimed.
+  useEffect(() => {
+    if (!facility?.id) {
+      setClaimFlags(null);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from("public_facilities")
+      .select("is_claimed, is_pro, is_premium_visible")
+      .eq("id", facility.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && data) {
+          setClaimFlags({
+            is_claimed: !!data.is_claimed,
+            is_pro: !!data.is_pro,
+            is_premium_visible: !!data.is_premium_visible,
+          });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [facility?.id]);
 
   const { data: hasFeaturedSubscription } = useQuery({
     queryKey: ["featured-subscription-check", facility?.id],
@@ -798,10 +846,25 @@ const CenterProfile = () => {
             <Alert className="mb-6 border-amber-300/50 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 shadow-sm">
               <Clock className="h-5 w-5 text-amber-600" />
               <AlertDescription className="text-amber-800 dark:text-amber-200">
-                <strong>Preview Mode:</strong> Your listing is under review and only visible to you. 
+                <strong>Preview Mode:</strong> Your listing is under review and only visible to you.
                 It will be publicly visible once approved (usually within 24-48 hours).
               </AlertDescription>
             </Alert>
+          )}
+
+          {/* Unclaimed listing banner — YMYL safety mitigation. Shown when
+              the supplemental claim-state fetch has resolved AND the listing
+              is unclaimed. Routes seekers to the 24/7 concierge line and
+              gives owners a "Claim this listing" CTA. */}
+          {claimFlags && !claimFlags.is_claimed && (
+            <UnclaimedFacilityBanner
+              facilityName={facility.name}
+              facilityAddress={facility.address}
+              facilityCity={facility.city}
+              facilityState={facility.state}
+              onClaimClick={() => setClaimModalOpen(true)}
+              onConciergeClick={() => navigate("/concierge/intake")}
+            />
           )}
 
           {/* Back Link */}
@@ -1588,22 +1651,39 @@ const CenterProfile = () => {
         }}
       />
 
-      {/* Request Info Modal */}
-      <RequestInfoModal
-        open={requestModalOpen}
-        onOpenChange={setRequestModalOpen}
-        facility={{
-          id: facility.id,
-          name: facility.name,
-          city: facility.city,
-          state: facility.state,
-          slug: facility.slug,
-          logo_url: facility.logo_url,
-          featured: facility.featured,
-        }}
-        facilityPlan={facilityPlan === "pro" ? "pro" : "free"}
-        prefillData={prefillDataFromNav}
-      />
+      {/* Claim flow — only mount once we know the facility is unclaimed.
+          While `claimFlags` is still loading we render neither this nor
+          the inquiry form to avoid a flash of the wrong CTA. */}
+      {claimFlags && !claimFlags.is_claimed && (
+        <ClaimListingModal
+          facilityId={facility.id}
+          facilityName={facility.name}
+          open={claimModalOpen}
+          onOpenChange={setClaimModalOpen}
+          currentUserId={currentUserId}
+        />
+      )}
+
+      {/* Request Info Modal — gated on claimed-state. Unclaimed listings
+          show the UnclaimedFacilityBanner above instead, which routes
+          seekers to the 24/7 concierge line. */}
+      {(!claimFlags || claimFlags.is_claimed) && (
+        <RequestInfoModal
+          open={requestModalOpen}
+          onOpenChange={setRequestModalOpen}
+          facility={{
+            id: facility.id,
+            name: facility.name,
+            city: facility.city,
+            state: facility.state,
+            slug: facility.slug,
+            logo_url: facility.logo_url,
+            featured: facility.featured,
+          }}
+          facilityPlan={facilityPlan === "pro" ? "pro" : "free"}
+          prefillData={prefillDataFromNav}
+        />
+      )}
 
       {/* Report Image Dialog */}
       <ReportImageDialog

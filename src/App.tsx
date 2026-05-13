@@ -355,6 +355,7 @@ const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminStaff"));
 const AdminSeekers = lazy(() => import("./pages/admin/AdminSeekers"));
+const AdminClaimsReviewPanel = lazy(() => import("./pages/admin/AdminClaimsReviewPanel"));
 const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminSecurityLogs = lazy(() => import("./pages/admin/AdminSecurityLogs"));
@@ -1582,6 +1583,7 @@ const AppInner = () => {
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="providers" element={<AdminProviders />} />
+              <Route path="claims" element={<AdminClaimsReviewPanel />} />
               <Route path="leads" element={<AdminLeads />} />
               <Route path="seekers" element={<AdminSeekers />} />
               <Route path="subscriptions" element={<AdminSubscriptions />} />

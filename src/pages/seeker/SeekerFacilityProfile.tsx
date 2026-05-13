@@ -9,6 +9,8 @@ import { RatingBadge } from "@/components/ui/RatingBadge";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { FacilityPhotoGallery } from "@/components/facility/FacilityPhotoGallery";
 import { FacilityTourRequestModal } from "@/components/facility/FacilityTourRequestModal";
+import { ClaimListingModal } from "@/components/facility/ClaimListingModal";
+import { UnclaimedFacilityBanner } from "@/components/facility/UnclaimedFacilityBanner";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFacilityReviews } from "@/hooks/useFacilityReviews";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
@@ -155,6 +157,13 @@ export default function SeekerFacilityProfile() {
   const [tourModalOpen, setTourModalOpen] = useState(false);
   const [showAllServices, setShowAllServices] = useState(false);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [claimFlags, setClaimFlags] = useState<{
+    is_claimed: boolean;
+    is_pro: boolean;
+    is_premium_visible: boolean;
+  } | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Get stored user synchronously to avoid getSession deadlocks
   const getStoredSession = useCallback(() => {
@@ -293,6 +302,45 @@ export default function SeekerFacilityProfile() {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Supplemental fetch for claim-state flags. Same pattern as CenterProfile —
+  // the static snapshot used by the main facility query doesn't carry these,
+  // so we hit the masking view by id and overlay them.
+  useEffect(() => {
+    if (!facility?.id) {
+      setClaimFlags(null);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from("public_facilities")
+      .select("is_claimed, is_pro, is_premium_visible")
+      .eq("id", facility.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && data) {
+          setClaimFlags({
+            is_claimed: !!data.is_claimed,
+            is_pro: !!data.is_pro,
+            is_premium_visible: !!data.is_premium_visible,
+          });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [facility?.id]);
+
+  // Track current user id for the claim modal's auth-gated CTA.
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!cancelled) setCurrentUserId(session?.user?.id ?? null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const ratingData = useFacilityRating(facility?.id);
 
   const { trackProfileView, trackClickToCall, trackWebsiteClick } = useProviderEventTracking();
@@ -408,6 +456,21 @@ export default function SeekerFacilityProfile() {
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
+
+        {/* Unclaimed listing banner — same YMYL safety mitigation as CenterProfile.
+            Hidden until the supplemental flags fetch resolves to avoid a flash. */}
+        {claimFlags && !claimFlags.is_claimed && (
+          <div className="mb-4">
+            <UnclaimedFacilityBanner
+              facilityName={facility.name}
+              facilityAddress={facility.address}
+              facilityCity={facility.city}
+              facilityState={facility.state}
+              onClaimClick={() => setClaimModalOpen(true)}
+              onConciergeClick={() => navigate("/concierge/intake")}
+            />
+          </div>
+        )}
 
         {/* Main Content Grid - Two Column Layout */}
         <div className="grid lg:grid-cols-3 gap-6">
@@ -808,29 +871,46 @@ export default function SeekerFacilityProfile() {
       </div>
 
       {/* Modals */}
-      <RequestInfoModal
-        open={requestModalOpen}
-        onOpenChange={setRequestModalOpen}
-        facility={{
-          id: facility.id,
-          name: facility.name,
-          city: facility.city,
-          state: facility.state,
-          slug: facility.slug,
-          logo_url: facility.logo_url,
-          featured: facility.featured,
-        }}
-        facilityPlan={facilityPlan === "pro" || facilityPlan === "professional" || facilityPlan === "featured" ? "pro" : "free"}
-        prefillData={prefillData}
-      />
+      {/* Claim flow — only mount once we know the facility is unclaimed. */}
+      {claimFlags && !claimFlags.is_claimed && (
+        <ClaimListingModal
+          facilityId={facility.id}
+          facilityName={facility.name}
+          open={claimModalOpen}
+          onOpenChange={setClaimModalOpen}
+          currentUserId={currentUserId}
+        />
+      )}
 
-      <FacilityTourRequestModal
-        open={tourModalOpen}
-        onClose={() => setTourModalOpen(false)}
-        facilityId={facility.id}
-        facilityName={facility.name}
-        prefillData={prefillData}
-      />
+      {/* Inquiry + tour modals — gated on claimed-state. Unclaimed listings
+          route through the UnclaimedFacilityBanner / concierge intake. */}
+      {(!claimFlags || claimFlags.is_claimed) && (
+        <>
+          <RequestInfoModal
+            open={requestModalOpen}
+            onOpenChange={setRequestModalOpen}
+            facility={{
+              id: facility.id,
+              name: facility.name,
+              city: facility.city,
+              state: facility.state,
+              slug: facility.slug,
+              logo_url: facility.logo_url,
+              featured: facility.featured,
+            }}
+            facilityPlan={facilityPlan === "pro" || facilityPlan === "professional" || facilityPlan === "featured" ? "pro" : "free"}
+            prefillData={prefillData}
+          />
+
+          <FacilityTourRequestModal
+            open={tourModalOpen}
+            onClose={() => setTourModalOpen(false)}
+            facilityId={facility.id}
+            facilityName={facility.name}
+            prefillData={prefillData}
+          />
+        </>
+      )}
       </div>
     </>
   );
