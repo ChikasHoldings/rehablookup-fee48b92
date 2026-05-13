@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { RatingBadge } from "@/components/ui/RatingBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
+import { FacilityTourRequestModal } from "@/components/facility/FacilityTourRequestModal";
 import { ProfileConciergeRescue } from "@/components/profile/ProfileConciergeRescue";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -35,6 +36,7 @@ import {
   MessageSquare,
   Flag,
   Calendar,
+  CalendarCheck,
   Bed,
   Mail,
   Award,
@@ -227,6 +229,7 @@ const CenterProfile = () => {
   const [logoError, setLogoError] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [tourModalOpen, setTourModalOpen] = useState(false);
   // Anon and authed visitors can save a facility from the public profile.
   // Guest favorites are kept in localStorage and migrated to user_favorites
   // on signin via the useFavorites hook.
@@ -1696,6 +1699,75 @@ const CenterProfile = () => {
           prefillData={prefillDataFromNav}
         />
       )}
+
+      {/* Tour Request Modal — schedule a visit. Reachable from the sticky
+          mobile CTA bar below + the "Schedule a Tour" link on the sidebar.
+          Routes seekers with an active concierge inquiry through the
+          concierge_tour_requests path, others through submit-qualified-lead. */}
+      <FacilityTourRequestModal
+        open={tourModalOpen}
+        onClose={() => setTourModalOpen(false)}
+        facilityId={facility.id}
+        facilityName={facility.name}
+      />
+
+      {/* Sticky mobile CTA bar — persistent at the viewport bottom on mobile
+          so seekers always have a one-tap path to convert without scrolling
+          back to the hero. Hidden on md+ where the hero/sidebar CTAs are
+          already visible. */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.15)]">
+        <div className="grid grid-cols-3 gap-2 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          {/* Phone — Pro listings dial direct; non-Pro dial the helpline. */}
+          <a
+            href={showContactDetails && facility.phone
+              ? `tel:${facility.phone}`
+              : `tel:${(import.meta.env.VITE_CONCIERGE_HELPLINE as string | undefined) || "+18006624357"}`}
+            onClick={() => trackInteraction("call")}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-2 transition-colors"
+            aria-label={showContactDetails ? "Call this facility" : "Call our helpline"}
+          >
+            <Phone className="h-5 w-5 text-emerald-600" />
+            <span className="text-[11px] font-semibold text-emerald-700">Call</span>
+          </a>
+          {/* Request info / Get matched (unclaimed routes to concierge). */}
+          <button
+            type="button"
+            onClick={() => handleRequestInfoOpen("sticky_mobile_request")}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 px-2 py-2 transition-colors"
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span className="text-[11px] font-semibold">
+              {claimFlags && !claimFlags.is_claimed ? "Get matched" : "Request"}
+            </span>
+          </button>
+          {/* Tour. Only for claimed listings — unclaimed have no provider
+              to tour with. */}
+          {(!claimFlags || claimFlags.is_claimed) ? (
+            <button
+              type="button"
+              onClick={() => setTourModalOpen(true)}
+              className="flex flex-col items-center justify-center gap-0.5 rounded-lg border border-border hover:bg-muted/40 px-2 py-2 transition-colors"
+            >
+              <CalendarCheck className="h-5 w-5 text-foreground" />
+              <span className="text-[11px] font-semibold text-foreground">Tour</span>
+            </button>
+          ) : (
+            // For unclaimed listings, the third slot becomes a Save button so
+            // the bar isn't lopsided.
+            <button
+              type="button"
+              onClick={() => toggleFavorite(facility.id)}
+              className="flex flex-col items-center justify-center gap-0.5 rounded-lg border border-border hover:bg-muted/40 px-2 py-2 transition-colors"
+              aria-label={isFavorite(facility.id) ? "Remove from saved" : "Save to favorites"}
+            >
+              <Heart className={cn("h-5 w-5", isFavorite(facility.id) && "fill-rose-500 text-rose-500")} />
+              <span className="text-[11px] font-semibold text-foreground">
+                {isFavorite(facility.id) ? "Saved" : "Save"}
+              </span>
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Report Image Dialog */}
       <ReportImageDialog

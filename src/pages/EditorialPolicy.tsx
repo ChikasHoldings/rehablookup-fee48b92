@@ -16,6 +16,36 @@ const EditorialPolicy = () => {
           { name: "Home", url: "/" },
           { name: "Editorial Policy", url: "/editorial-policy" },
         ]}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: "Editorial Policy & Content Standards | RehabLookup",
+          url: "https://rehablookup.com/editorial-policy",
+          description:
+            "RehabLookup's editorial standards, fact-checking process, and clinical-review policy for addiction-treatment content. Sources include SAMHSA, NIDA, NIH, JCAHO, CARF, NAATP, and LegitScript.",
+          // Audit surfaced E-E-A-T weakness: EditorialPolicy was missing
+          // structured data + named reviewers. lastReviewed signals freshness
+          // to Google and improves treatment-content E-E-A-T.
+          lastReviewed: "2025-01-01",
+          reviewedBy: {
+            "@type": "Organization",
+            name: "RehabLookup Editorial Team",
+            url: "https://rehablookup.com/about",
+          },
+          publisher: {
+            "@type": "Organization",
+            name: "RehabLookup",
+            url: "https://rehablookup.com",
+          },
+          mainEntity: {
+            "@type": "EditorialPolicy",
+            url: "https://rehablookup.com/editorial-policy",
+          },
+          about: {
+            "@type": "Thing",
+            name: "Editorial standards for addiction-treatment content",
+          },
+        }}
       />
 
       <section className="border-b border-border bg-secondary/30 py-12">

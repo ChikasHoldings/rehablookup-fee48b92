@@ -355,6 +355,35 @@ export function Header({
             </DropdownMenu>
           </nav>
 
+          {/* Global desktop search — visible on lg+ so users deep in
+              resources/profile pages can re-enter the funnel without two
+              nav clicks. Submits to /search-results with the q param.
+              Mobile already has the search-icon button in the right rail. */}
+          <form
+            role="search"
+            className="hidden lg:flex items-center mx-3 max-w-xs flex-1"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              const q = String(fd.get("q") ?? "").trim();
+              if (!q) return;
+              navigate(`/search-results?q=${encodeURIComponent(q)}`);
+            }}
+          >
+            <label htmlFor="header-search-q" className="sr-only">Search treatment centers</label>
+            <div className="relative w-full">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                id="header-search-q"
+                name="q"
+                type="search"
+                placeholder="Search city, treatment, insurance…"
+                className="w-full h-8 rounded-md border border-border bg-background pl-8 pr-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                autoComplete="off"
+              />
+            </div>
+          </form>
+
           {/* CTA & Mobile Actions */}
           <div className="flex items-center gap-2 md:gap-3">
             <PrefetchLink

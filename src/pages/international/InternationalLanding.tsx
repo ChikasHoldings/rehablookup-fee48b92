@@ -125,6 +125,38 @@ export default function InternationalLanding() {
         description="Private placement service for international patients seeking treatment in the United States. Vetted facilities, discreet coordination, 24-hour response."
         canonical="/international"
         keywords={["international rehab", "US addiction treatment", "global rehab placement", "travel for treatment", "executive rehab", "luxury rehab USA"]}
+        structuredData={[
+          // Service schema with the actual $99 deposit so Google sees the
+          // price-disclosure pattern. Mirrors the Concierge landing's
+          // Service+Offer setup (which advertises price=0).
+          {
+            "@context": "https://schema.org",
+            "@type": "Service",
+            name: "International Treatment Placement",
+            serviceType: "Addiction Treatment Placement",
+            description:
+              "Concierge placement service that matches international clients with vetted U.S. addiction treatment centers. $99 placement deposit, fully refunded on admission.",
+            provider: {
+              "@type": "Organization",
+              name: "RehabLookup",
+              url: "https://rehablookup.com",
+            },
+            areaServed: { "@type": "Place", name: "Worldwide" },
+            audience: {
+              "@type": "PeopleAudience",
+              audienceType: "International patients and families",
+            },
+            offers: {
+              "@type": "Offer",
+              price: "99",
+              priceCurrency: "USD",
+              availability: "https://schema.org/InStock",
+              description:
+                "Placement deposit. Fully refunded the day the client checks in to the recommended facility.",
+              url: "https://rehablookup.com/international/apply",
+            },
+          },
+        ]}
       />
       
       <div className="min-h-screen flex flex-col bg-background">

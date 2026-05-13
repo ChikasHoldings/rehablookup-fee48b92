@@ -482,7 +482,10 @@ const ArticleDetail = () => {
           description: article.excerpt,
           image: articleImage,
           datePublished: article.published_at || new Date().toISOString(),
-          dateModified: article.published_at || new Date().toISOString(),
+          // Use the row's actual updated_at so dateModified reflects content
+          // edits, not just first-publish. Previously both fields used
+          // published_at, so Google never saw modifications.
+          dateModified: article.updated_at || article.published_at || new Date().toISOString(),
           author: article.author,
           url: `https://rehablookup.com/resources/${article.slug}`,
           keywords: article.seo_keywords || undefined,
