@@ -69,6 +69,7 @@ const AuthSignup = lazy(() => import("./pages/AuthSignup"));
 const ProviderOnboarding = lazy(() => import("./pages/provider/Onboarding"));
 const NewListingForm = lazy(() => import("./pages/provider/NewListingForm"));
 const ClaimWizard = lazy(() => import("./pages/provider/ClaimWizard"));
+const ClaimSubmitted = lazy(() => import("./pages/provider/ClaimSubmitted"));
 const ProviderROICalculator = lazy(() => import("./pages/ProviderROICalculator"));
 
 // SEO Landing Pages - City+Treatment, Comparisons, Treatment Hubs, Cost/Insurance
@@ -1200,6 +1201,7 @@ const AppInner = () => {
             <Route path="/provider/onboarding" element={<ProviderOnboarding />} />
             <Route path="/provider/onboarding/new-listing" element={<NewListingForm />} />
             <Route path="/provider/claim/:slug" element={<ClaimWizard />} />
+            <Route path="/provider/claim/:slug/submitted" element={<ClaimSubmitted />} />
             <Route path="/provider-roi-calculator" element={<PublicRouteGuard><ProviderROICalculator /></PublicRouteGuard>} />
             <Route path="/provider-login" element={<Navigate to="/login" replace />} />
             <Route path="/provider-faq" element={<ProviderFAQ />} />

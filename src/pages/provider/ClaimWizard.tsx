@@ -446,8 +446,19 @@ export default function ClaimWizard() {
               />
             )}
 
-            {state.currentStep >= 5 && (
-              <ComingSoonState stepName={WIZARD_STEP_LABELS[state.currentStep - 1]} />
+            {state.currentStep === 5 && state.claimRequestId && currentUserId && (
+              <Step5Review
+                state={state}
+                facility={facility}
+                claimRequestId={state.claimRequestId}
+                onJump={setStep}
+                onBack={() => setStep(4)}
+                onSubmitted={() =>
+                  navigate(`/provider/claim/${facility.slug}/submitted`, {
+                    replace: true,
+                  })
+                }
+              />
             )}
           </>
         )}
@@ -2588,6 +2599,307 @@ function DescriptionSection({
       <p className="text-xs text-muted-foreground">
         {state.description.length} / {DESCRIPTION_MAX}
       </p>
+    </div>
+  );
+}
+
+// ─── Step 5 ───────────────────────────────────────────────────────────────
+
+interface Step5Props {
+  state: WizardState;
+  facility: FacilityBaseData;
+  claimRequestId: string;
+  onJump: (step: number) => void;
+  onBack: () => void;
+  onSubmitted: () => void;
+}
+
+function Step5Review({
+  state,
+  facility,
+  claimRequestId: _claimRequestId,
+  onJump,
+  onBack,
+  onSubmitted,
+}: Step5Props) {
+  const [submitting, setSubmitting] = useState(false);
+
+  const effectiveRole =
+    state.claimantRole === "Other"
+      ? state.claimantRoleOther.trim()
+      : state.claimantRole;
+
+  const verificationMethodLabel: Record<VerificationMethod | "none", string> = {
+    email_domain: "Work email",
+    sms_phone: "SMS to facility phone",
+    document_upload: "Document upload",
+    none: "Not selected",
+  };
+
+  const verificationStatusCopy = state.verificationMethod === "document_upload"
+    ? "Pending admin review of your documents (1–2 business days)."
+    : state.verificationMethod
+    ? "Code verified."
+    : "Not yet started.";
+
+  const serviceLabels = state.services
+    .map((s) => SERVICE_OPTIONS.find((o) => o.slug === s)?.label ?? s)
+    .sort();
+  const insuranceLabels = state.insurances
+    .map((s) => INSURANCE_OPTIONS.find((o) => o.slug === s)?.label ?? s)
+    .sort();
+
+  const contactDiff = [
+    state.correctedContact.phone &&
+      state.correctedContact.phone !== facility.phone &&
+      `Phone: ${state.correctedContact.phone}`,
+    state.correctedContact.email && `Email: ${state.correctedContact.email}`,
+    state.correctedContact.website &&
+      state.correctedContact.website !== facility.website &&
+      `Website: ${state.correctedContact.website}`,
+  ].filter(Boolean) as string[];
+
+  async function handleSubmit() {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      // Final save — ensures pendingEnrichments is current on the claim row.
+      // The edge function is idempotent on (claimant_user_id, facility_id).
+      const { error } = await supabase.functions.invoke("submit-facility-claim", {
+        body: {
+          facilityId: facility.id,
+          claimantName: state.claimantName.trim(),
+          claimantEmail: state.claimantEmail.trim().toLowerCase(),
+          claimantRole: effectiveRole,
+          claimantPhone: state.claimantPhone.trim() || undefined,
+          verificationMethod: state.verificationMethod ?? undefined,
+          pendingEnrichments: buildPendingEnrichments(state),
+        },
+      });
+      if (error) {
+        const ctx = (error as { context?: { error?: string; code?: string } })
+          .context;
+        toast.error(ctx?.error ?? error.message ?? "Could not submit your claim.");
+        setSubmitting(false);
+        return;
+      }
+      toast.success("Claim submitted — we'll be in touch.");
+      onSubmitted();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Submission failed.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Card className="p-6 md:p-7 space-y-5">
+      <header className="space-y-1.5">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden />
+          <h1 className="font-display text-xl md:text-2xl font-bold text-foreground">
+            Review and submit
+          </h1>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          One last look. Use the Edit link next to any section to go back
+          and change something.
+        </p>
+      </header>
+
+      {/* Facility — informational, not editable */}
+      <div className="rounded-md border bg-muted/30 p-3">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground">
+          Facility
+        </div>
+        <div className="mt-0.5 font-medium text-foreground text-sm">
+          {facility.name}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {facility.city}, {facility.state}
+        </div>
+      </div>
+
+      <ReviewSection title="Your role" onEdit={() => onJump(2)}>
+        <ReviewKV label="Name" value={state.claimantName} />
+        <ReviewKV label="Email" value={state.claimantEmail} />
+        {state.claimantPhone && (
+          <ReviewKV label="Phone" value={state.claimantPhone} />
+        )}
+        <ReviewKV label="Role" value={effectiveRole || "—"} />
+      </ReviewSection>
+
+      <ReviewSection title="Verification" onEdit={() => onJump(3)}>
+        <ReviewKV
+          label="Method"
+          value={
+            verificationMethodLabel[state.verificationMethod ?? "none"]
+          }
+        />
+        <ReviewKV label="Status" value={verificationStatusCopy} />
+        {state.verificationMethod === "email_domain" && state.verificationEmail && (
+          <ReviewKV label="Verified email" value={state.verificationEmail} />
+        )}
+        {state.verificationMethod === "document_upload" &&
+          state.uploadedDocs.length > 0 && (
+            <ReviewKV
+              label="Documents"
+              value={`${state.uploadedDocs.length} uploaded`}
+            />
+          )}
+      </ReviewSection>
+
+      <ReviewSection title="Listing details" onEdit={() => onJump(4)}>
+        {state.logo ? (
+          <div className="flex items-center gap-3">
+            <img
+              src={publicClaimPhotoUrl(state.logo.path)}
+              alt="Logo"
+              className="h-14 w-14 object-contain rounded bg-muted"
+              loading="lazy"
+            />
+            <div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                Logo
+              </div>
+              <div className="text-sm">{state.logo.name}</div>
+            </div>
+          </div>
+        ) : (
+          <ReviewKV label="Logo" value="Not added" muted />
+        )}
+
+        <div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">
+            Photos
+          </div>
+          {state.photos.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Not added</div>
+          ) : (
+            <div className="flex gap-1.5 flex-wrap">
+              {state.photos.slice(0, 8).map((photo) => (
+                <img
+                  key={photo.path}
+                  src={publicClaimPhotoUrl(photo.path)}
+                  alt={photo.name}
+                  className="h-14 w-14 object-cover rounded bg-muted border"
+                  loading="lazy"
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <ReviewKV
+          label="Services"
+          value={serviceLabels.length ? serviceLabels.join(", ") : "Not added"}
+          muted={serviceLabels.length === 0}
+        />
+        <ReviewKV
+          label="Insurance accepted"
+          value={
+            insuranceLabels.length ? insuranceLabels.join(", ") : "Not added"
+          }
+          muted={insuranceLabels.length === 0}
+        />
+        <ReviewKV
+          label="Accreditations"
+          value={
+            state.accreditations.length === 0
+              ? "Not added"
+              : state.accreditations
+                  .map((a) => a.type || "Untyped")
+                  .join(", ")
+          }
+          muted={state.accreditations.length === 0}
+        />
+        <ReviewKV
+          label="Contact changes"
+          value={contactDiff.length ? contactDiff.join(" · ") : "None"}
+          muted={contactDiff.length === 0}
+        />
+        {state.description ? (
+          <div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+              About
+            </div>
+            <p className="text-sm whitespace-pre-wrap line-clamp-4">
+              {state.description}
+            </p>
+          </div>
+        ) : (
+          <ReviewKV label="About" value="Not added" muted />
+        )}
+      </ReviewSection>
+
+      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-between pt-3 border-t">
+        <Button variant="outline" onClick={onBack} disabled={submitting} size="sm">
+          <ArrowLeft className="h-4 w-4 mr-1.5" aria-hidden />
+          Back
+        </Button>
+        <Button onClick={handleSubmit} disabled={submitting}>
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" aria-hidden />
+              Submitting…
+            </>
+          ) : (
+            <>
+              Submit claim for review
+              <ArrowRight className="h-4 w-4 ml-1.5" aria-hidden />
+            </>
+          )}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function ReviewSection({
+  title,
+  onEdit,
+  children,
+}: {
+  title: string;
+  onEdit: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-md border bg-card p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="font-semibold text-sm text-foreground">{title}</h2>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-xs text-primary hover:underline"
+        >
+          Edit
+        </button>
+      </div>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function ReviewKV({
+  label,
+  value,
+  muted = false,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-[7.5rem_1fr] gap-3 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span
+        className={
+          muted ? "text-muted-foreground italic" : "text-foreground"
+        }
+      >
+        {value}
+      </span>
     </div>
   );
 }
