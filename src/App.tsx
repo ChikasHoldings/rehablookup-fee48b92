@@ -213,6 +213,7 @@ const InternationalThankYou = lazy(() => import("./pages/international/Internati
 const AdLanding = lazy(() => import("./pages/AdLanding"));
 const SocialLanding = lazy(() => import("./pages/SocialLanding"));
 const Resources = lazy(() => import("./pages/Resources"));
+const CategoryHub = lazy(() => import("./pages/CategoryHub"));
 const Insurance = lazy(() => import("./pages/Insurance"));
 const InsuranceVerification = lazy(() => import("./pages/InsuranceVerification"));
 const AetnaRehab = lazy(() => import("./pages/insurance/AetnaRehab"));
@@ -1119,6 +1120,8 @@ const AppInner = () => {
             {/* Static Pages */}
             <Route path="/how-it-works" element={<PublicRouteGuard><HowItWorks /></PublicRouteGuard>} />
             <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
+            {/* Category hub MUST come before /resources/:id so it doesn't match the article slug catch-all */}
+            <Route path="/resources/category/:slug" element={<PublicRouteGuard><CategoryHub /></PublicRouteGuard>} />
             <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
             <Route path="/news" element={<PublicRouteGuard><News /></PublicRouteGuard>} />
             <Route path="/news/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />

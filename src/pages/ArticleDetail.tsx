@@ -29,6 +29,7 @@ import {
 } from "@/components/seo/InternalLinkingSection";
 import { ArticleCategoryLinks } from "@/components/seo/ArticleCategoryLinks";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { getCanonicalCategoryFor } from "@/data/blogCategories";
 import { 
   PillarContentLinks, 
   CrossCategoryLinks,
@@ -330,11 +331,18 @@ const ArticleDetail = () => {
   const defaultImage = "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&h=600&fit=crop";
   const articleImage = article.image_url || defaultImage;
 
-  // Breadcrumbs for SEO
+  // Breadcrumbs — point the category step at the canonical hub URL when one
+  // exists so we ladder link equity into the new /resources/category/<slug>
+  // hubs instead of the legacy ?category= facet.
+  const canonicalCategory = getCanonicalCategoryFor(article.category);
+  const categoryHref = canonicalCategory
+    ? `/resources/category/${canonicalCategory.slug}`
+    : `/resources?category=${article.category}`;
+  const categoryName = canonicalCategory?.label || article.category_label;
   const breadcrumbs = [
     { name: "Home", url: "/" },
     { name: "Resources", url: "/resources" },
-    { name: article.category_label, url: `/resources?category=${article.category}` },
+    { name: categoryName, url: categoryHref },
     { name: article.title, url: `/resources/${article.slug}` },
   ];
 
