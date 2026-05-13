@@ -256,12 +256,21 @@ const StatePage = () => {
     faqSchema
   ];
 
+  // Per-state social card rendered on-demand by the og-state-image edge
+  // function. Falls back to the default site OG image if VITE_SUPABASE_URL
+  // is not present at build/runtime (e.g., during certain SSG flows).
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const ogImageUrl = supabaseUrl
+    ? `${supabaseUrl}/functions/v1/og-state-image?slug=${encodeURIComponent(stateData.slug)}`
+    : undefined;
+
   return (
     <Layout>
       <SEO
         title={`Drug & Alcohol Rehab Centers in ${stateData.name} | Find Treatment`}
         description={stateData.metaDescription}
         canonical={`/rehab-centers/${stateData.slug}`}
+        image={ogImageUrl}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },
