@@ -40,11 +40,10 @@ import {
   MapPin,
   Navigation,
   ClipboardList,
-  ShieldCheck,
-  Star,
   Building2,
   Globe,
   UserCheck,
+  ShieldCheck,
   Award,
 } from "lucide-react";
 
@@ -183,6 +182,8 @@ const Index = () => {
           "outpatient treatment",
           "dual diagnosis treatment",
           "addiction help",
+          "find rehab",
+          "alcohol rehab",
           "find rehab",
           "alcohol rehab",
         ]}
@@ -343,7 +344,8 @@ const Index = () => {
       </section>
 
       {/* TrustStrip moved to /concierge — see ConciergeLanding.tsx */}
-      {/* Social Proof Stats Bar removed as it was redundant with the new consolidated trust bar */}
+      {/* Social Proof Stats Bar */}
+      <SocialProofBar className="container px-4 md:px-6 lg:px-8 border-b" />
 
       {/* Featured Centers - Premium Horizontal Scroll */}
       <HomepageFeaturedSection />
