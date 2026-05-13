@@ -95,7 +95,7 @@ interface FacilityData {
   logo_url: string | null;
   gallery_urls: string[] | null;
   status: string;
-  user_id: string;
+  user_id: string | null;
   updated_at: string;
   concierge_network_opted_in: boolean | null;
   accepts_international_patients: boolean | null;
@@ -104,6 +104,13 @@ interface FacilityData {
   facility_age_groups: { age_group: string }[];
   facility_credentials: { accreditations: string | null; licensing_info: string | null }[];
   facility_accreditations: { accreditation_type: string; verified: boolean }[];
+  // Optional claim-state flags. Populated when the row comes from the
+  // public_facilities fallback path (slug not present in the static
+  // snapshot, e.g. SAMHSA-imported listings). When set, the supplemental
+  // claim-flags useEffect short-circuits to avoid a duplicate fetch.
+  is_claimed?: boolean;
+  is_pro?: boolean;
+  is_premium_visible?: boolean;
 }
 
 function getInitials(name: string): string {
@@ -435,7 +442,59 @@ const CenterProfile = () => {
           }
         : null;
 
-      const base = ownedRow ?? publicRow;
+      let base = ownedRow ?? publicRow;
+
+      // 2b) Fallback: query public_facilities directly when the snapshot
+      // misses (e.g. SAMHSA-imported rows not yet in the build-time JSON
+      // snapshot) and we have no owner read. The view enforces the same
+      // masking rules as the snapshot path. Services/insurance/age groups
+      // are skipped here — unclaimed rows have minimal data anyway and
+      // the UnclaimedFacilityBanner invites the owner to claim and fill
+      // in the rest. Snapshot regeneration is the long-term fix.
+      let fallbackFlags: {
+        is_claimed?: boolean;
+        is_pro?: boolean;
+        is_premium_visible?: boolean;
+      } = {};
+      if (!base) {
+        const { data: viewRow } = await supabase
+          .from("public_facilities")
+          .select("*")
+          .eq("slug", slug)
+          .maybeSingle();
+        if (viewRow) {
+          const row = viewRow as unknown as Record<string, unknown>;
+          base = {
+            id: row.id,
+            name: row.name,
+            slug: row.slug,
+            city: row.city,
+            state: row.state,
+            zip_code: row.zip_code,
+            address: row.address,
+            phone: row.phone,
+            website: row.website,
+            description: row.description,
+            facility_type: row.facility_type,
+            gender_served: row.gender_served,
+            bed_count: row.bed_count,
+            featured: row.featured,
+            verified: row.verified,
+            year_established: row.year_established,
+            logo_url: row.logo_url,
+            gallery_urls: row.gallery_urls,
+            status: row.status,
+            updated_at: row.updated_at ?? new Date().toISOString(),
+            accepts_international_patients: row.accepts_international_patients,
+          };
+          fallbackFlags = {
+            is_claimed: !!row.is_claimed,
+            is_pro: !!row.is_pro,
+            is_premium_visible: !!row.is_premium_visible,
+          };
+        }
+      }
+
       if (!base) {
         if (publicErr) throw publicErr;
         return null;
@@ -457,12 +516,13 @@ const CenterProfile = () => {
         email: ownedRow?.email ?? null,
         user_id: ownedRow?.user_id ?? null,
         concierge_network_opted_in: ownedRow?.concierge_network_opted_in ?? null,
-        accepts_international_patients: ownedRow?.accepts_international_patients ?? null,
+        accepts_international_patients: ownedRow?.accepts_international_patients ?? base.accepts_international_patients ?? null,
         facility_services: services.data ?? [],
         facility_insurance: insurance.data ?? [],
         facility_age_groups: ageGroups.data ?? [],
         facility_credentials: credentials.data ?? [],
         facility_accreditations: accreditations.data ?? [],
+        ...fallbackFlags,
       } as FacilityData;
     },
     enabled: !!slug,
@@ -476,10 +536,20 @@ const CenterProfile = () => {
   // the public path doesn't carry these, so we query the masking view by id
   // and overlay them onto the facility. While `claimFlags` is null the
   // banner stays hidden — avoids a flash of unclaimed-state content on
-  // facilities that turn out to be claimed.
+  // facilities that turn out to be claimed. If the facility came in
+  // through the public_facilities fallback path it already carries the
+  // flags, so we short-circuit to avoid a redundant round-trip.
   useEffect(() => {
     if (!facility?.id) {
       setClaimFlags(null);
+      return;
+    }
+    if (facility.is_claimed !== undefined) {
+      setClaimFlags({
+        is_claimed: !!facility.is_claimed,
+        is_pro: !!facility.is_pro,
+        is_premium_visible: !!facility.is_premium_visible,
+      });
       return;
     }
     let cancelled = false;
@@ -500,7 +570,7 @@ const CenterProfile = () => {
     return () => {
       cancelled = true;
     };
-  }, [facility?.id]);
+  }, [facility?.id, facility?.is_claimed, facility?.is_pro, facility?.is_premium_visible]);
 
   const { data: hasFeaturedSubscription } = useQuery({
     queryKey: ["featured-subscription-check", facility?.id],
