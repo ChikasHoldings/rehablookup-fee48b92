@@ -140,13 +140,8 @@ async function exists(p) {
 
 async function write(filePath, contents) {
   await mkdir(path.dirname(filePath), { recursive: true });
-  // Hybrid layout: write /path.html AND /path/index.html (see generate-seo-html.mjs)
+  // Single flat .html — see generate-seo-html.mjs for rationale.
   await writeFile(filePath, contents, "utf8");
-  if (filePath.endsWith(".html") && !filePath.endsWith("/index.html")) {
-    const nestedDir = filePath.slice(0, -".html".length);
-    await mkdir(nestedDir, { recursive: true });
-    await writeFile(path.join(nestedDir, "index.html"), contents, "utf8");
-  }
   count++;
 }
 

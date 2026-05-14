@@ -139,10 +139,9 @@ function buildHtml(slug, title, desc) {
 async function writePage(slug, title, desc) {
   const html = buildHtml(slug, title, desc);
   const flatPath = path.join(publicDir, `${slug}.html`);
-  const nestedDir = path.join(publicDir, slug);
-  await mkdir(nestedDir, { recursive: true });
+  await mkdir(path.dirname(flatPath), { recursive: true });
   await writeFile(flatPath, html, "utf8");
-  await writeFile(path.join(nestedDir, "index.html"), html, "utf8");
+  // Single flat .html — see generate-seo-html.mjs for rationale.
 }
 
 let count = 0;

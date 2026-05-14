@@ -40,11 +40,8 @@ async function writePage(filePath, html) {
   const dir = path.dirname(filePath);
   await mkdir(dir, { recursive: true });
   await writeFile(filePath, html, "utf8");
-  if (filePath.endsWith(".html") && !filePath.endsWith("/index.html")) {
-    const nested = filePath.slice(0, -".html".length);
-    await mkdir(nested, { recursive: true });
-    await writeFile(path.join(nested, "index.html"), html, "utf8");
-  }
+  // Single flat .html — Vercel cleanUrls serves it at /path. Previously
+  // also emitted /path/index.html which Google was treating as a duplicate.
   pagesGenerated++;
 }
 

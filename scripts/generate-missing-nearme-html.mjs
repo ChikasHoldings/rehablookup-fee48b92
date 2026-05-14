@@ -139,14 +139,11 @@ function buildHtml({ urlPath, title, metaDesc, h1, content, breadcrumbs }) {
 
 function writePage(urlPath, pageData) {
   const html = buildHtml({ urlPath, ...pageData });
-  // Flat .html file
+  // Single flat .html — see generate-seo-html.mjs for rationale on dropping
+  // the redundant nested /index.html.
   const flatPath = join(PUBLIC_DIR, urlPath.replace(/^\//, '') + '.html');
   mkdirSync(dirname(flatPath), { recursive: true });
   writeFileSync(flatPath, html, 'utf8');
-  // Nested /index.html for Vercel cleanUrls compat
-  const nestedPath = join(PUBLIC_DIR, urlPath.replace(/^\//, ''), 'index.html');
-  mkdirSync(dirname(nestedPath), { recursive: true });
-  writeFileSync(nestedPath, html, 'utf8');
 }
 
 let count = 0;

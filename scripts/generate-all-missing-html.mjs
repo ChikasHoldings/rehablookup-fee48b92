@@ -171,12 +171,13 @@ function buildHtml({ urlPath, title, metaTitle, metaDesc, h1, content, breadcrum
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Write page (flat .html + nested /index.html for Vercel cleanUrls compat)
+// Write page (single flat .html — Vercel cleanUrls serves it at /path).
+// Previously also emitted /path/index.html as a soft-404 guard but Google
+// was treating both URL forms as duplicates; see generate-seo-html.mjs.
 // ─────────────────────────────────────────────────────────────────────────────
 async function writePage(urlPath, pageData) {
   const htmlContent = buildHtml({ urlPath, ...pageData });
   const flatPath = path.join(publicDir, urlPath.replace(/^\//, "") + ".html");
-  const nestedPath = path.join(publicDir, urlPath.replace(/^\//, ""), "index.html");
 
   // Skip if already exists and not forcing
   if (!FORCE && existsSync(flatPath)) {
@@ -187,10 +188,6 @@ async function writePage(urlPath, pageData) {
   try {
     await mkdir(path.dirname(flatPath), { recursive: true });
     await writeFile(flatPath, htmlContent, "utf8");
-
-    await mkdir(path.dirname(nestedPath), { recursive: true });
-    await writeFile(nestedPath, htmlContent, "utf8");
-
     generated++;
   } catch (err) {
     errors++;
