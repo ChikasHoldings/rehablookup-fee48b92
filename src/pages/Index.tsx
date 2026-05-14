@@ -665,7 +665,7 @@ const Index = () => {
       </section>
 
       <LazySection fallbackHeight="400px">
-        <Suspense fallback={null}>
+        <Suspense fallback={<div style={{ minHeight: "400px" }} aria-hidden="true" />}>
           <TestimonialsSection
             testimonials={seekerTestimonials}
             title="Real Stories from Families We've Helped"
@@ -676,7 +676,7 @@ const Index = () => {
 
       {/* International Patients CTA */}
       <LazySection fallbackHeight="200px">
-        <Suspense fallback={null}>
+        <Suspense fallback={<div style={{ minHeight: "200px" }} aria-hidden="true" />}>
           <InternationalCTA />
         </Suspense>
       </LazySection>
@@ -909,21 +909,21 @@ const Index = () => {
               </div>
             </div>
 
-            <Suspense fallback={null}>
-              <InternalLinkBlock 
-                title="Find Treatment by State" 
-                variant="states" 
+            <Suspense fallback={<div style={{ minHeight: "600px" }} aria-hidden="true" />}>
+              <InternalLinkBlock
+                title="Find Treatment by State"
+                variant="states"
               />
-              <InternalLinkBlock 
-                title="Treatment Programs" 
+              <InternalLinkBlock
+                title="Treatment Programs"
                 variant="treatments"
               />
-              <InternalLinkBlock 
-                title="Insurance Coverage Guides" 
+              <InternalLinkBlock
+                title="Insurance Coverage Guides"
                 variant="insurance"
               />
-              <InternalLinkBlock 
-                title="Find Treatment Near You" 
+              <InternalLinkBlock
+                title="Find Treatment Near You"
                 variant="nearme"
               />
             </Suspense>
@@ -963,7 +963,7 @@ const Index = () => {
       </section>
 
       <LazySection fallbackHeight="300px">
-        <Suspense fallback={null}>
+        <Suspense fallback={<div style={{ minHeight: "300px" }} aria-hidden="true" />}>
           {homeFaqs.length > 0 && <PageFAQ faqs={homeFaqs} className="border-t border-border bg-muted/30" />}
         </Suspense>
       </LazySection>
