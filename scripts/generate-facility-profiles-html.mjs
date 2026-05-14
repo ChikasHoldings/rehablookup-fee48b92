@@ -36,13 +36,13 @@ const BASE_URL = "https://rehablookup.com";
 const PROJECT_URL = (
   process.env.SUPABASE_URL ??
   process.env.VITE_SUPABASE_URL ??
-  "https://plckxokpyiubuekvodtc.supabase.co"
+  "https://mldbxpntzcjalgjmwnqa.supabase.co"
 ).replace(/\/$/, "");
 const ANON_KEY =
   process.env.SUPABASE_ANON_KEY ??
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
   // Project anon key — safe to commit; matches src/integrations/supabase/client.ts
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsY2t4b2tweWl1YnVla3ZvZHRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MjU5NjUsImV4cCI6MjA4MTMwMTk2NX0.vuHH51JTLDT3fVmHQeEBKsGZqu5qkCUjCtPiF_NOQx0";
+  "sb_publishable_tHLCRbeUrsu7EmMlCR0n6g_ygNXmMYP";
 
 // ---------------------------------------------------------------------------
 // Helpers

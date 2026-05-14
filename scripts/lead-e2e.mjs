@@ -19,9 +19,9 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = "https://plckxokpyiubuekvodtc.supabase.co";
+const SUPABASE_URL = "https://mldbxpntzcjalgjmwnqa.supabase.co";
 const ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsY2t4b2tweWl1YnVla3ZvZHRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MjU5NjUsImV4cCI6MjA4MTMwMTk2NX0.vuHH51JTLDT3fVmHQeEBKsGZqu5qkCUjCtPiF_NOQx0";
+  "sb_publishable_tHLCRbeUrsu7EmMlCR0n6g_ygNXmMYP";
 
 const anon = createClient(SUPABASE_URL, ANON_KEY);
 const ANON_HEADERS = {

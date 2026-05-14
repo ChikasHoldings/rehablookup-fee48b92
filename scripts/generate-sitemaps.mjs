@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const publicDir = path.resolve(__dirname, "../public");
 const CANONICAL_HOST = "https://rehablookup.com";
 
-const projectUrl = (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "https://plckxokpyiubuekvodtc.supabase.co").replace(/\/$/, "");
+const projectUrl = (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "https://mldbxpntzcjalgjmwnqa.supabase.co").replace(/\/$/, "");
 const sitemapFunctionUrl = `${projectUrl}/functions/v1/sitemap-facilities`;
 
 const targets = [
