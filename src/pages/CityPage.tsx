@@ -305,10 +305,19 @@ const CityPage = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-10 md:py-14">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${cityImage})` }}
-        />
+        {cityImage && (
+          <img
+            src={cityImage}
+            alt=""
+            aria-hidden="true"
+            width={1600}
+            height={520}
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
         <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-transparent to-primary/40" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent" />

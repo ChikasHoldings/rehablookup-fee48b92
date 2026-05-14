@@ -41,8 +41,11 @@ export default defineConfig(({ mode }) => ({
         //   produces circular chunk imports.
       },
     },
-    // Increase chunk size warning limit
-    chunkSizeWarningLimit: 600,
+    // chunkSizeWarningLimit is set above the largest legitimate chunk
+    // (locationSeoData / countySeoData / homepage shell). These are
+    // already split out by Vite's automatic chunking and only load on
+    // pages that need them. Bumping to 1000 silences the noise.
+    chunkSizeWarningLimit: 1000,
     // Disable source maps in production for smaller bundles & faster load
     sourcemap: false,
     // CSS code splitting for smaller initial CSS

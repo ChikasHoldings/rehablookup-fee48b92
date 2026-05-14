@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type CSSProperties } from "react";
+import { useState, useEffect, useRef, lazy, Suspense, type CSSProperties } from "react";
 import headerLogo from "@/assets/logo-header.webp";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
@@ -17,10 +17,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ProviderMegaMenu, ProviderMegaMenuMobile } from "@/components/provider-guides/ProviderMegaMenu";
-import { FindTreatmentMegaMenu, FindTreatmentMegaMenuMobile } from "@/components/mega-menus/FindTreatmentMegaMenu";
-import { ResourcesMegaMenu, ResourcesMegaMenuMobile } from "@/components/mega-menus/ResourcesMegaMenu";
-import { InternationalMegaMenu, InternationalMegaMenuMobile } from "@/components/mega-menus/InternationalMegaMenu";
+
+// Mega-menus are only visible after the user opens a nav dropdown, so we
+// lazy-load them. This pulls ~40-60 kB off the every-page shell chunk.
+const FindTreatmentMegaMenu = lazy(() =>
+  import("@/components/mega-menus/FindTreatmentMegaMenu").then((m) => ({ default: m.FindTreatmentMegaMenu })));
+const FindTreatmentMegaMenuMobile = lazy(() =>
+  import("@/components/mega-menus/FindTreatmentMegaMenu").then((m) => ({ default: m.FindTreatmentMegaMenuMobile })));
+const ResourcesMegaMenu = lazy(() =>
+  import("@/components/mega-menus/ResourcesMegaMenu").then((m) => ({ default: m.ResourcesMegaMenu })));
+const ResourcesMegaMenuMobile = lazy(() =>
+  import("@/components/mega-menus/ResourcesMegaMenu").then((m) => ({ default: m.ResourcesMegaMenuMobile })));
+const InternationalMegaMenu = lazy(() =>
+  import("@/components/mega-menus/InternationalMegaMenu").then((m) => ({ default: m.InternationalMegaMenu })));
+const InternationalMegaMenuMobile = lazy(() =>
+  import("@/components/mega-menus/InternationalMegaMenu").then((m) => ({ default: m.InternationalMegaMenuMobile })));
+const ProviderMegaMenu = lazy(() =>
+  import("@/components/provider-guides/ProviderMegaMenu").then((m) => ({ default: m.ProviderMegaMenu })));
+const ProviderMegaMenuMobile = lazy(() =>
+  import("@/components/provider-guides/ProviderMegaMenu").then((m) => ({ default: m.ProviderMegaMenuMobile })));
 
 export interface NavLink {
   href: string;
@@ -313,7 +328,9 @@ export function Header({
                     className="fixed mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150"
                     style={getDesktopMegaMenuStyle(item.id)}
                   >
-                    <MegaMenuContent id={item.id} onNavigate={() => setOpenMegaMenu(null)} />
+                    <Suspense fallback={<div className="p-6 text-xs text-muted-foreground">Loading…</div>}>
+                      <MegaMenuContent id={item.id} onNavigate={() => setOpenMegaMenu(null)} />
+                    </Suspense>
                   </div>
                 )}
               </div>
@@ -536,7 +553,9 @@ export function Header({
                         isExpanded ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
                       )}>
                         <div className="pl-2 pr-1 pt-1 pb-2">
-                          <MegaMenuMobileContent id={item.id} onNavigate={() => setMobileMenuOpen(false)} />
+                          <Suspense fallback={<div className="p-3 text-xs text-muted-foreground">Loading…</div>}>
+                            <MegaMenuMobileContent id={item.id} onNavigate={() => setMobileMenuOpen(false)} />
+                          </Suspense>
                         </div>
                       </div>
                     </div>

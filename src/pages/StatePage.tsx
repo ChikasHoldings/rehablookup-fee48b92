@@ -281,10 +281,20 @@ const StatePage = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
+        {/* Hero is rendered as an <img> rather than a background-image so the
+            browser can attribute it as the LCP element + fetch with high
+            priority. Width/height eliminate CLS while the image streams in. */}
         {capitalImage && (
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${capitalImage})` }}
+          <img
+            src={capitalImage}
+            alt=""
+            aria-hidden="true"
+            width={1600}
+            height={520}
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
