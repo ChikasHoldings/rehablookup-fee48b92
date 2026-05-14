@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Facility, ProSubscription } from "../ProviderListItem";
+import { getSourceBadge, getClaimBadge } from "../ProviderListItem";
 
 interface ProviderOverviewTabProps {
   provider: Facility;
@@ -236,6 +237,50 @@ export function ProviderOverviewTab({
             <p className="text-xs text-muted-foreground flex items-center gap-1"><LayoutList className="h-3 w-3" />Facility Type</p>
             <p className="font-medium text-sm truncate">{provider.facility_type}</p>
           </div>
+        </div>
+      </div>
+
+      {/* Listing Provenance — surfaces where this facility came from
+          (SAMHSA bulk import vs provider signup vs admin manual entry) and
+          its claim status. Critical for admin moderation: SAMHSA stubs
+          should not be treated the same as a paying provider's listing. */}
+      <div>
+        <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide text-muted-foreground">Listing Provenance</h3>
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {getSourceBadge(provider) ?? (
+            <Badge variant="outline" className="text-muted-foreground">Source: unspecified</Badge>
+          )}
+          {getClaimBadge(provider)}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground">Data source</p>
+            <p className="font-medium text-sm truncate">
+              {provider.data_source === "samhsa_import"
+                ? "SAMHSA bulk import"
+                : provider.data_source === "provider"
+                  ? "Provider self-submission"
+                  : provider.data_source === "manual"
+                    ? "Admin manual entry"
+                    : (provider.data_source || "—")}
+            </p>
+          </div>
+          {provider.samhsa_facility_id && (
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="text-xs text-muted-foreground">SAMHSA facility ID</p>
+              <p className="font-mono text-xs truncate">{provider.samhsa_facility_id}</p>
+            </div>
+          )}
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground">Owning provider account</p>
+            <p className="font-mono text-xs truncate">{provider.user_id || "— unclaimed —"}</p>
+          </div>
+          {provider.claimed_at && (
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="text-xs text-muted-foreground">Claimed at</p>
+              <p className="font-medium text-sm">{format(new Date(provider.claimed_at), "PPP")}</p>
+            </div>
+          )}
         </div>
       </div>
 

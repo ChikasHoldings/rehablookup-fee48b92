@@ -111,6 +111,17 @@ export default function AdminProviders() {
       State: p.state,
       "Facility Type": p.facility_type,
       Status: p.suspended ? "Suspended" : p.status,
+      Source: p.data_source === "samhsa_import"
+        ? "SAMHSA"
+        : p.data_source === "provider"
+          ? "Provider"
+          : p.data_source === "manual"
+            ? "Manual"
+            : (p.data_source || ""),
+      "SAMHSA ID": p.samhsa_facility_id || "",
+      "Claim Status": p.user_id ? "Claimed" : "Unclaimed",
+      "Claimed At": p.claimed_at ? new Date(p.claimed_at).toLocaleDateString() : "",
+      "Pending Claims": String(pendingClaimCounts?.[p.id] || 0),
       Email: p.email || "",
       Phone: p.phone,
       Verified: p.verified ? "Yes" : "No",
@@ -144,6 +155,7 @@ export default function AdminProviders() {
     queryClient.invalidateQueries({ queryKey: ["admin-providers-status-counts"] });
     queryClient.invalidateQueries({ queryKey: ["admin-providers-count"] });
     queryClient.invalidateQueries({ queryKey: ["admin-provider-lead-counts"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-provider-pending-claim-counts"] });
     queryClient.invalidateQueries({ queryKey: ["admin-pro-subscriptions"] });
     queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
   }, [queryClient]);
@@ -180,13 +192,28 @@ export default function AdminProviders() {
     queryKey: ["admin-providers-status-counts"],
     queryFn: async () => {
       try {
-        const [allResult, approvedResult, pendingResult, suspendedResult, proResult, placementResult] = await Promise.all([
+        const [
+          allResult,
+          approvedResult,
+          pendingResult,
+          suspendedResult,
+          proResult,
+          placementResult,
+          samhsaResult,
+          unclaimedResult,
+          claimedResult,
+          pendingClaimResult,
+        ] = await Promise.all([
           supabase.from("facilities").select("id", { count: "exact", head: true }),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved").neq("suspended", true),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
           supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("concierge_network_opted_in", true),
+          supabase.from("facilities").select("id", { count: "exact", head: true }).eq("data_source", "samhsa_import"),
+          supabase.from("facilities").select("id", { count: "exact", head: true }).is("user_id", null),
+          supabase.from("facilities").select("id", { count: "exact", head: true }).not("user_id", "is", null),
+          supabase.from("facility_claim_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
         ]);
 
         return {
@@ -196,6 +223,10 @@ export default function AdminProviders() {
           suspended: suspendedResult.count || 0,
           pro: proResult.count || 0,
           placement: placementResult.count || 0,
+          samhsa: samhsaResult.count || 0,
+          unclaimed: unclaimedResult.count || 0,
+          claimed: claimedResult.count || 0,
+          pendingClaims: pendingClaimResult.count || 0,
         };
       } catch (error) {
         logError("fetch_status_counts", error);
@@ -253,6 +284,28 @@ export default function AdminProviders() {
         return proCount || 0;
       } else if (activeTab === "placement") {
         query = query.eq("concierge_network_opted_in", true);
+      } else if (activeTab === "samhsa") {
+        query = query.eq("data_source", "samhsa_import");
+      } else if (activeTab === "unclaimed") {
+        query = query.is("user_id", null);
+      } else if (activeTab === "claimed") {
+        query = query.not("user_id", "is", null);
+      } else if (activeTab === "pending_claims") {
+        const { data: pendingClaims } = await supabase
+          .from("facility_claim_requests")
+          .select("facility_id")
+          .eq("status", "pending");
+        const pendingIds = [...new Set((pendingClaims || []).map((r) => r.facility_id))];
+        if (pendingIds.length === 0) return 0;
+        let pcQuery = supabase.from("facilities").select("id", { count: "exact", head: true }).in("id", pendingIds);
+        if (searchQuery) {
+          const sanitized = searchQuery.replace(/[%_\\]/g, "");
+          if (sanitized) {
+            pcQuery = pcQuery.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
+          }
+        }
+        const { count: pcCount } = await pcQuery;
+        return pcCount || 0;
       }
 
       if (searchQuery) {
@@ -284,7 +337,7 @@ export default function AdminProviders() {
 
         let query = supabase
           .from("facilities")
-          .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id")
+          .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id, data_source, claimed_at, samhsa_facility_id")
           .order("created_at", { ascending: false })
           .range(from, to);
 
@@ -303,12 +356,37 @@ export default function AdminProviders() {
           if (proIds.length === 0) return [];
           query = supabase
             .from("facilities")
-            .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id")
+            .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id, data_source, claimed_at, samhsa_facility_id")
             .in("id", proIds)
             .order("created_at", { ascending: false })
             .range(from, to);
         } else if (activeTab === "placement") {
           query = query.eq("concierge_network_opted_in", true);
+        } else if (activeTab === "samhsa") {
+          // Bulk-imported SAMHSA listings — unclaimed by default.
+          query = query.eq("data_source", "samhsa_import");
+        } else if (activeTab === "unclaimed") {
+          // Any facility with no owning provider, regardless of source.
+          query = query.is("user_id", null);
+        } else if (activeTab === "claimed") {
+          // Facilities transferred to a provider through the claim flow OR
+          // submitted by a provider with user_id from the start.
+          query = query.not("user_id", "is", null);
+        } else if (activeTab === "pending_claims") {
+          // Facilities with at least one pending claim request — the admin
+          // queue for the claim review panel.
+          const { data: pendingClaims } = await supabase
+            .from("facility_claim_requests")
+            .select("facility_id")
+            .eq("status", "pending");
+          const pendingIds = [...new Set((pendingClaims || []).map((r) => r.facility_id))];
+          if (pendingIds.length === 0) return [];
+          query = supabase
+            .from("facilities")
+            .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id, data_source, claimed_at, samhsa_facility_id")
+            .in("id", pendingIds)
+            .order("created_at", { ascending: false })
+            .range(from, to);
         }
 
         if (searchQuery) {
@@ -348,6 +426,28 @@ export default function AdminProviders() {
       // Batch in groups of 10 to limit concurrency
       for (let i = 0; i < promises.length; i += 10) {
         await Promise.all(promises.slice(i, i + 10));
+      }
+      return counts;
+    },
+    enabled: !!providers?.length,
+  });
+
+  // Pending claim-request counts per visible facility — drives the "N pending
+  // claims" bell badge on each row in the list. Single query for all visible
+  // rows; we tally client-side to avoid one round-trip per facility.
+  const { data: pendingClaimCounts } = useQuery({
+    queryKey: ["admin-provider-pending-claim-counts", providers?.map((p) => p.id)],
+    queryFn: async () => {
+      if (!providers?.length) return {};
+      const facilityIds = providers.map((p) => p.id);
+      const { data } = await supabase
+        .from("facility_claim_requests")
+        .select("facility_id")
+        .eq("status", "pending")
+        .in("facility_id", facilityIds);
+      const counts: Record<string, number> = {};
+      for (const row of data || []) {
+        counts[row.facility_id] = (counts[row.facility_id] || 0) + 1;
       }
       return counts;
     },
@@ -647,6 +747,7 @@ export default function AdminProviders() {
                       provider={provider}
                       isPro={!!proSubscriptions?.[provider.id]}
                       leadCount={leadCounts?.[provider.id] || 0}
+                      pendingClaimCount={pendingClaimCounts?.[provider.id] || 0}
                       canModerate={canModerate}
                       onOpenDetail={openProviderDetail}
                       onStatusChange={handleStatusChange}
