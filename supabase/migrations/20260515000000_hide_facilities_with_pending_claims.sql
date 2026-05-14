@@ -25,6 +25,12 @@
 -- (sets facilities.user_id, claimed_at) — at that point the NOT EXISTS
 -- clause is true again and the listing reappears in the public view
 -- with its new owner attached.
+--
+-- IMPORTANT: this migration also preserves the live view's computed
+-- columns — is_claimed, is_pro, is_premium_visible, data_source,
+-- email, accepts_international_patients — that the React snapshot
+-- loader and useFacilityBySlug hook expect. An earlier draft of this
+-- migration dropped them, which would have broken /center/<slug>.
 
 DROP VIEW IF EXISTS public.public_facilities;
 
@@ -39,6 +45,7 @@ SELECT
   f.zip_code,
   f.address,
   f.phone,
+  f.email,
   f.website,
   f.description,
   f.facility_type,
@@ -52,12 +59,41 @@ SELECT
   f.logo_url,
   f.gallery_urls,
   f.status,
+  f.data_source,
   f.calculated_ranking_score,
   f.listing_completeness_score,
   f.response_rate_score,
   f.accepts_international_patients,
   f.created_at,
-  f.updated_at
+  f.updated_at,
+  -- ── Computed flags consumed by useFacilityBySlug / CenterProfile ──
+  -- is_claimed: a facility is "claimed" once a provider account owns it.
+  -- This covers two cases:
+  --   1. SAMHSA-imported listing that a provider claimed and an admin
+  --      approved → claimed_at is set + user_id is set.
+  --   2. Provider self-submission → user_id is set from day one (no
+  --      claimed_at, since there was nothing to claim).
+  -- Both should drive the "Claim This Listing" CTA off the public profile.
+  (f.user_id IS NOT NULL) AS is_claimed,
+  -- is_pro: facility has an active pro_subscription (paid plan). The
+  --   inner predicate matches the existing pro_subscriptions check used
+  --   elsewhere — status='active' AND not-yet-expired.
+  EXISTS (
+    SELECT 1 FROM public.pro_subscriptions ps
+    WHERE ps.facility_id = f.id
+      AND ps.status = 'active'
+      AND (ps.current_period_end IS NULL OR ps.current_period_end > now())
+  ) AS is_pro,
+  -- is_premium_visible: drives premium placement in browse results.
+  --   featured rows are admin-curated; pro subscribers also count.
+  (
+    f.featured OR EXISTS (
+      SELECT 1 FROM public.pro_subscriptions ps
+      WHERE ps.facility_id = f.id
+        AND ps.status = 'active'
+        AND (ps.current_period_end IS NULL OR ps.current_period_end > now())
+    )
+  ) AS is_premium_visible
 FROM public.facilities f
 WHERE f.status = 'approved'
   AND COALESCE(f.suspended, false) = false
@@ -71,4 +107,4 @@ WHERE f.status = 'approved'
 GRANT SELECT ON public.public_facilities TO anon, authenticated;
 
 COMMENT ON VIEW public.public_facilities IS
-  'Public-facing facility directory. Hides facilities that are pending admin approval (status != ''approved''), suspended, or under an active claim review. Used by the SPA and SEO endpoints to render the public listings.';
+  'Public-facing facility directory. Hides facilities pending admin approval, suspended, or under active claim review. Exposes computed flags is_claimed (user_id set), is_pro (active pro_subscription), and is_premium_visible (featured OR pro) consumed by the SPA.';

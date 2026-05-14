@@ -117,9 +117,13 @@ async function fetchFacilities() {
   ].join(",");
 
   const url =
-    `${PROJECT_URL}/rest/v1/facilities` +
+    // Query the public_facilities view (not the base facilities table) so
+    // that the filter rules — status='approved', not suspended, no pending
+    // claim — are applied consistently. The generator's job is to mirror
+    // exactly what the SPA shows public users; if a facility isn't in the
+    // view, it shouldn't have a prerendered HTML file either.
+    `${PROJECT_URL}/rest/v1/public_facilities` +
     `?select=${encodeURIComponent(cols)}` +
-    `&status=eq.approved` +
     `&slug=not.is.null` +
     `&order=updated_at.desc`;
 
