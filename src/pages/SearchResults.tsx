@@ -1154,18 +1154,35 @@ const SearchResults = () => {
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileFiltersOpen(false)} />
-          <div className="absolute right-0 top-0 h-full w-[320px] max-w-[85vw] bg-card border-l border-border shadow-2xl overflow-y-auto">
-            <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-border bg-card">
+          {/* Flex column with overflow-hidden so the sticky header + scrollable
+              middle + sticky footer all coexist correctly. Previously the whole
+              panel scrolled which meant the "Show results" footer couldn't sit
+              fixed at the bottom of the viewport. */}
+          <div className="absolute right-0 top-0 h-full w-[320px] max-w-[85vw] bg-card border-l border-border shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-border bg-card shrink-0">
               <h2 className="font-semibold text-foreground flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4 text-primary" />
                 Filters & Sort
               </h2>
-              <Button variant="ghost" size="sm" onClick={() => setMobileFiltersOpen(false)}>
+              <Button variant="ghost" size="sm" onClick={() => setMobileFiltersOpen(false)} aria-label="Close filters">
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="p-4">
+            <div className="p-4 flex-1 overflow-y-auto">
               <FilterSidebar />
+            </div>
+            {/* Sticky "Show results" footer — closes the sheet and confirms the
+                filter set is applied. Matches iOS / Android filter-sheet
+                pattern. (Phase 6C) */}
+            <div className="shrink-0 p-3 border-t border-border bg-card pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <Button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="w-full h-11 font-semibold"
+              >
+                {filteredCenters.length === 0
+                  ? "No matches — adjust filters"
+                  : `Show ${filteredCenters.length} ${filteredCenters.length === 1 ? "result" : "results"}`}
+              </Button>
             </div>
           </div>
         </div>
@@ -1209,6 +1226,94 @@ const SearchResults = () => {
                         <p className="text-xs text-muted-foreground mt-0.5">
                           Showing the closest facilities nationwide, sorted by proximity. Results nearest to your search appear first.
                         </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Active-filter chips — mobile-only. Lets seekers see and
+                      remove individual filters without re-opening the slide-
+                      out sheet. Desktop has the always-visible FilterSidebar
+                      so chips would be redundant there. (Phase 6C) */}
+                  {activeFiltersCount > 0 && (
+                    <div className="lg:hidden mb-3 -mx-3 px-3 overflow-x-auto no-scrollbar">
+                      <div className="flex items-center gap-1.5 min-w-min">
+                        {selectedTreatmentTypes.map((value) => (
+                          <button
+                            key={`tt-${value}`}
+                            type="button"
+                            onClick={() => toggleFilter("treatmentTypes", value, selectedTreatmentTypes)}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label={`Remove ${value} filter`}
+                          >
+                            <span className="truncate max-w-[140px]">{value}</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        ))}
+                        {selectedInsuranceTypes.map((value) => (
+                          <button
+                            key={`ins-${value}`}
+                            type="button"
+                            onClick={() => toggleFilter("insuranceTypes", value, selectedInsuranceTypes)}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label={`Remove ${value} filter`}
+                          >
+                            <span className="truncate max-w-[140px]">{value}</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        ))}
+                        {selectedAmenities.map((value) => (
+                          <button
+                            key={`am-${value}`}
+                            type="button"
+                            onClick={() => toggleFilter("amenities", value, selectedAmenities)}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label={`Remove ${value} filter`}
+                          >
+                            <span className="truncate max-w-[140px]">{value}</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        ))}
+                        {selectedDistance && (
+                          <button
+                            type="button"
+                            onClick={() => setSingleFilter("distance", "")}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label="Remove distance filter"
+                          >
+                            <span>Within {selectedDistance} mi</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                        {verifiedOnly && (
+                          <button
+                            type="button"
+                            onClick={() => toggleBooleanFilter("verified", true)}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label="Remove verified-only filter"
+                          >
+                            <span>Verified only</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                        {featuredOnly && (
+                          <button
+                            type="button"
+                            onClick={() => toggleBooleanFilter("featuredOnly", true)}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label="Remove featured-only filter"
+                          >
+                            <span>Featured only</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={clearAllFilters}
+                          className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40"
+                          aria-label="Clear all filters"
+                        >
+                          Clear all
+                        </button>
                       </div>
                     </div>
                   )}

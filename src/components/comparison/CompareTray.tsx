@@ -44,7 +44,13 @@ export function CompareTray() {
   }, [location.pathname]);
 
   const onCompare = location.pathname === "/compare";
-  const visible = !dismissed && compareCount > 0 && !onCompare;
+  // The facility profile already pins its own 3-button CTA bar to the
+  // bottom on mobile, so the tray would visually stack on top of it.
+  // Hide the tray on /center/* to keep the profile's primary CTA the
+  // sole bottom affordance there. Users still get back to /compare
+  // via the footer link + Resources mega-menu. (Phase 6C)
+  const onFacilityProfile = location.pathname.startsWith("/center/");
+  const visible = !dismissed && compareCount > 0 && !onCompare && !onFacilityProfile;
 
   const { data: facilities = [] } = useQuery({
     queryKey: ["compare-tray-facilities", compareIds],
