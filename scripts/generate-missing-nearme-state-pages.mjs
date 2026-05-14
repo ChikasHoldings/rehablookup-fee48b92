@@ -1,43 +1,49 @@
 #!/usr/bin/env node
 /**
- * Backfill prerendered HTML for every (near-me-type × state) combination
- * that has a React route but no static HTML file.
+ * Generate prerendered HTML for every (near-me-type × state) combination.
  *
- * scripts/generate-missing-nearme-html.mjs ships ~45 hardcoded near-me
- * types, but src/data/nearMeTypes.ts defines 58. The 13-type delta —
- * seniors-rehab-near-me, first-responder-rehab-near-me,
- * prescription-drug-rehab-near-me, xanax-rehab-near-me,
- * kratom-rehab-near-me, tricare-rehab-near-me, humana-rehab-near-me,
- * 60-day-rehab-near-me, short-term-rehab-near-me, cocaine-rehab-near-me,
- * heroin-rehab-near-me, meth-rehab-near-me, benzo-rehab-near-me — had no
- * state-level prerender. SmartCatchAll renders the React page, but
- * Googlebot saw the unmounted SPA shell with the homepage canonical,
- * so all 646 missing pages indexed as duplicate-of-/.
+ * Each page is a state-level directory entry tied to a specific near-me
+ * intent (e.g. "Seniors Rehab Near Me in Oregon"). To avoid templated
+ * near-duplicates, every page pulls in:
+ *   - state-specific fact box (population, overdose rate, opioid share,
+ *     SAMHSA facility count, Medicaid status, primary metro) from
+ *     stateAddictionStats.ts.
+ *   - state signature line (180-char per-state human-written sentence).
+ *   - state licensing/regulator box.
+ *   - per-near-me-type "what this covers" copy keyed off the treatment
+ *     category, with different language per intent.
  *
- * Template style matches the existing prerendered near-me/state pages
- * 1:1 (header, breadcrumb nav, blue CTA card, footer). GA snippet
- * added because the older generator omitted it.
+ * Result: 50 pages per near-me type share a treatment-intent paragraph
+ * but never share the state fact box, signature line, or regulator —
+ * and 58 near-me types per state share state data but never share the
+ * intent paragraph. Net: each indexed URL is substantively distinct.
  *
- * Idempotent: skips files that already exist (won't overwrite existing
- * generator output).
+ * Overwrites existing files — re-run to refresh content.
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
+import {
+  escHtml,
+  renderStateFactBox,
+  renderStateSignature,
+  renderTreatmentLevels,
+  renderInsuranceDirectory,
+  renderLicensingBox,
+  renderCta,
+  SHARED_DIRECTORY_CSS,
+  SHARED_HEADER_HTML,
+  SHARED_FOOTER_HTML,
+} from "./_unique-content.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const publicDir = path.join(repoRoot, "public");
 const BASE_URL = "https://rehablookup.com";
 
-function escHtml(s) {
-  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
 function parseNearMeTypes() {
   const txt = fs.readFileSync(path.join(repoRoot, "src/data/nearMeTypes.ts"), "utf8");
-  // { slug: "X", label: "Y", treatmentType: "Z" }
   const re = /\{\s*slug:\s*"([a-z0-9-]+-near-me)",\s*label:\s*"([^"]+)",\s*treatmentType:\s*"([^"]+)"\s*\}/g;
   const out = [];
   let m;
@@ -46,32 +52,103 @@ function parseNearMeTypes() {
 }
 
 function parseStates() {
-  // usStates.ts has `{ name, slug }`; abbreviations live in locationSeoData.ts.
-  // Cross-reference both so the rendered copy can use the state abbreviation
-  // where appropriate.
   const txt = fs.readFileSync(path.join(repoRoot, "src/data/usStates.ts"), "utf8");
-  const baseRe = /\{\s*name:\s*"([^"]+)",\s*slug:\s*"([a-z-]+)"\s*\}/g;
+  const re = /\{\s*name:\s*"([^"]+)",\s*slug:\s*"([a-z-]+)"\s*\}/g;
   const out = [];
   let m;
-  while ((m = baseRe.exec(txt))) out.push({ name: m[1], slug: m[2], abbr: "" });
-
+  while ((m = re.exec(txt))) out.push({ name: m[1], slug: m[2], abbr: "" });
   const loc = fs.readFileSync(path.join(repoRoot, "src/data/locationSeoData.ts"), "utf8");
-  const abbrRe = /\{\s*name:\s*"([^"]+)",\s*slug:\s*"([a-z-]+)",\s*abbreviation:\s*"([A-Z]{2})"/g;
-  const slugToAbbr = new Map();
+  const ar = /\{\s*name:\s*"([^"]+)",\s*slug:\s*"([a-z-]+)",\s*abbreviation:\s*"([A-Z]{2})"/g;
+  const map = new Map();
   let a;
-  while ((a = abbrRe.exec(loc))) slugToAbbr.set(a[2], a[3]);
-  for (const s of out) s.abbr = slugToAbbr.get(s.slug) || "";
+  while ((a = ar.exec(loc))) map.set(a[2], a[3]);
+  for (const s of out) s.abbr = map.get(s.slug) || "";
   return out;
+}
+
+// Per-near-me-type intent paragraph. Categories share copy across the 50
+// states they apply to, but each near-me-type's paragraph is distinct.
+function intentParagraph(nm) {
+  const s = nm.slug;
+  if (/^seniors-/.test(s))
+    return `Senior-focused programs adapt detox protocols and pacing for older adults, manage age-related comorbidities (cardiac, diabetic, polypharmacy), and integrate Medicare coverage planning. Many providers run dedicated 55+ cohorts.`;
+  if (/^teen-|^young-adult-/.test(s))
+    return `Adolescent and young-adult tracks pair clinical care with academic continuity, family therapy, and developmentally appropriate group work. Look for programs offering on-site schooling and parent/caregiver participation.`;
+  if (/^first-responder-/.test(s))
+    return `First-responder programs serve police, fire, EMS, and corrections personnel — typically with peer-led groups, trauma-focused therapy (EMDR / CPT), and confidentiality protocols designed around department reporting.`;
+  if (/^veterans-/.test(s))
+    return `Veteran-focused programs treat co-occurring PTSD, traumatic-brain-injury sequelae, and military sexual trauma alongside substance use; many accept TRICARE, VA Community Care, and CHAMPVA.`;
+  if (/^mens-/.test(s))
+    return `Men's-only programs build a clinical environment around shared issues — fatherhood, work identity, anger, and stigma. Group composition is typically all-male; clinicians use gender-responsive curricula.`;
+  if (/^womens-/.test(s))
+    return `Women's-only programs prioritize trauma-informed care, pregnancy- and parenting-safe protocols, child-care logistics, and intimate-partner-violence screening.`;
+  if (/^lgbtq-/.test(s))
+    return `LGBTQ+ affirming programs use inclusive intake forms, avoid conversion-style content, and tailor group composition. Clinicians are trained in minority-stress models and gender-affirming care.`;
+  if (/^couples-/.test(s))
+    return `Couples-rehab tracks accept admissions as a pair where appropriate, combining individual care with behavioral-couples therapy (BCT) and joint relapse-prevention planning.`;
+  if (/^executive-/.test(s))
+    return `Executive tracks emphasize private rooms, on-site work accommodation (secure office, encrypted Wi-Fi), and discreet admissions. Expect higher self-pay and limited insurance participation.`;
+  if (/^court-ordered-/.test(s))
+    return `Court-mandated programs meet probation/parole reporting requirements and DUI-court protocols. Look for state-licensed providers willing to coordinate documentation with your attorney and court.`;
+  if (/^christian-|^faith-based-/.test(s))
+    return `Faith-based programs integrate scripture-grounded counseling with evidence-based clinical care; ask whether MAT is offered alongside spiritual programming or only as an alternative.`;
+  if (/^holistic-/.test(s))
+    return `Holistic programs supplement evidence-based therapy with mind-body modalities (yoga, mindfulness, acupuncture, equine therapy). Verify the program also offers MAT and standard medical detox where indicated.`;
+  if (/^luxury-/.test(s))
+    return `Luxury programs combine clinical care with private accommodation, chef-prepared meals, and concierge logistics. Most are private-pay or out-of-network, with limited Medicaid participation.`;
+  if (/^free-|^affordable-|^low-cost-|^sliding-scale-/.test(s))
+    return `Low-barrier programs include state-funded, county-funded, Medicaid-accepting, and sliding-scale providers. Eligibility is income-based; SAMHSA's helpline (1-800-662-4357) can route to no-cost local options.`;
+  if (/^medicaid-/.test(s))
+    return `Medicaid-participating programs are subject to your state Medicaid agency's level-of-care criteria and prior-authorization windows. Most state plans cover detox, residential, IOP, and MAT.`;
+  if (/^medicare-/.test(s))
+    return `Medicare typically covers inpatient detox (Part A), MAT in OTPs (Part B), and outpatient counseling. Coverage is age- or disability-based; supplemental plans handle copays.`;
+  if (/^tricare-/.test(s))
+    return `TRICARE covers detox, residential, PHP, IOP, and MAT through in-network providers; out-of-network admissions need pre-authorization. Specific coverage depends on your TRICARE plan (Prime, Select, For Life).`;
+  if (/^humana-|^cigna-|^aetna-|^blue-cross-|^united-healthcare-/.test(s))
+    return `In-network coverage varies by plan. Verify deductibles, copays, day-limits, and prior-authorization requirements directly with your insurer's behavioral-health line before admission.`;
+  if (/^iop-/.test(s))
+    return `IOPs run 9–15 clinical hours weekly across three to five sessions, combining group therapy, individual counseling, and family work. They suit people stepping down from residential or stepping up from outpatient.`;
+  if (/^php-/.test(s))
+    return `PHPs run 5–6 days per week, typically 5–6 clinical hours per day, returning home evenings. Common as a residential step-down or for stable patients who can't take 28 days off work.`;
+  if (/^long-term-|^short-term-|^30-day-|^60-day-|^90-day-/.test(s))
+    return `Length-of-stay programs match clinical need. Short-term (28–30 days) targets acute stabilization; medium (60 days) extends therapy depth; long-term (90+ days) suits repeated relapse, polysubstance use, or unstable housing.`;
+  if (/^emergency-|^same-day-|^immediate-|^24-7-detox-|^crisis-/.test(s))
+    return `Same-day and emergency admissions bypass standard intake delays for acute risk: severe withdrawal, suicidality with substance use, or post-overdose. Call ahead — bed availability changes by the hour.`;
+  if (/^walk-in-/.test(s))
+    return `Walk-in services accept new patients without a scheduled appointment. Common at MAT clinics offering low-barrier buprenorphine inductions and at county detox-receiving centers.`;
+  if (/^suboxone-|^methadone-|^mat-clinic-/.test(s))
+    return `MAT programs prescribe buprenorphine, methadone, or naltrexone under DEA-registered clinicians. Methadone requires daily-dosing OTPs; buprenorphine can be prescribed in office settings.`;
+  if (/^fentanyl-|^opioid-|^heroin-/.test(s))
+    return `Opioid-specific tracks pair medical detox with rapid MAT induction, naloxone training, and chronic-pain assessment. Fentanyl-tolerance complicates buprenorphine induction — ask about microdosing or extended-release protocols.`;
+  if (/^benzo-|^xanax-/.test(s))
+    return `Benzodiazepine withdrawal requires medically supervised tapering — abrupt cessation can be life-threatening. Specialized programs use long-acting benzos (diazepam, clonazepam) for symptom-managed cross-titration.`;
+  if (/^cocaine-|^meth-|^stimulant-/.test(s))
+    return `Stimulant-focused care emphasizes contingency management (CM), behavioral activation, and structured exercise alongside trauma work. MAT options are limited; vivitrol and bupropion show mixed evidence.`;
+  if (/^marijuana-|^cannabis-/.test(s))
+    return `Cannabis-focused programs use CBT, contingency management, and motivational enhancement. Severe cases may need short residential stabilization, especially with co-occurring anxiety or psychosis.`;
+  if (/^prescription-drug-/.test(s))
+    return `Prescription-drug programs treat opioid, benzodiazepine, stimulant, and Z-drug dependence. Look for providers fluent in dual diagnosis — chronic pain, ADHD, or anxiety are often the underlying drivers.`;
+  if (/^kratom-/.test(s))
+    return `Kratom withdrawal resembles short-acting opioid withdrawal and responds to buprenorphine where indicated. Few residential programs specialize; outpatient MAT plus counseling is the typical pathway.`;
+  if (/^dual-diagnosis-/.test(s))
+    return `Dual-diagnosis programs treat mental-health and substance-use disorders concurrently — depression, anxiety, PTSD, bipolar, ADHD, and psychotic disorders alongside addiction. Look for psychiatric medication management plus addiction-specific therapy.`;
+  if (/^outpatient-|^drug-rehab-|^alcohol-rehab-/.test(s))
+    return `Outpatient programs let patients live at home while attending structured clinical sessions. IOP and PHP are the higher-acuity options; standard outpatient is appropriate for maintenance and step-down.`;
+  if (/^inpatient-|^residential-/.test(s))
+    return `Inpatient and residential programs provide 24/7 structured care, removing patients from triggers for 28–90 days. Best fit for severe withdrawal risk, unstable housing, or repeated outpatient failure.`;
+  if (/^detox-|^24-7-detox-/.test(s))
+    return `Detox programs medically manage acute withdrawal — typically 3–7 days for opioids, 5–10 for alcohol, longer for benzodiazepines. Detox alone is not treatment; planned continuum-of-care is essential.`;
+  if (/^sober-living-/.test(s))
+    return `Sober-living homes provide structured, drug-free housing post-treatment. Most require active program participation, drug testing, and house-meeting attendance. Costs are out-of-pocket but lower than treatment.`;
+  return `Programs in this category accept new patients seeking ${escHtml(nm.treatmentType.toLowerCase())}. Coverage, intake timeline, and clinical fit vary by provider.`;
 }
 
 function renderPage({ nm, state }) {
   const urlPath = `/${nm.slug}/${state.slug}`;
   const canonical = `${BASE_URL}${urlPath}`;
-  const labelLc = nm.label.toLowerCase();
-  const treatmentTypeLc = nm.treatmentType.toLowerCase();
   const title = `${nm.label} Near Me in ${state.name}`;
-  const metaTitle = `${title} — Find Local Treatment | RehabLookup`;
-  const desc = `Find ${labelLc} near you in ${state.name}. Compare verified, accredited addiction treatment facilities. Verify insurance and get help today.`;
+  const metaTitle = `${title} — Treatment Directory | RehabLookup`;
+  const desc = `Find ${nm.label.toLowerCase()} programs in ${state.name}. Verified facility directory with treatment levels, insurance coverage, and state licensing for ${state.abbr}.`;
   const safeTitle = escHtml(metaTitle);
   const safeDesc = escHtml(desc);
 
@@ -80,7 +157,7 @@ function renderPage({ nm, state }) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: BASE_URL + "/" },
-      { "@type": "ListItem", position: 2, name: nm.label + " Near Me", item: BASE_URL + "/" + nm.slug },
+      { "@type": "ListItem", position: 2, name: `${nm.label} Near Me`, item: `${BASE_URL}/${nm.slug}` },
       { "@type": "ListItem", position: 3, name: state.name, item: canonical },
     ],
   });
@@ -123,44 +200,41 @@ function renderPage({ nm, state }) {
   <link rel="icon" type="image/png" href="/favicon.png">
   <script type="application/ld+json">${breadcrumbSchema}</script>
   <script type="application/ld+json">${pageSchema}</script>
-  <style>
-    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:32px 20px;color:#1a2b4a;line-height:1.7}
-    h1{font-size:2rem;color:#1B365D;margin-bottom:12px}
-    h2{font-size:1.4rem;color:#1B365D;margin-top:28px}
-    p{color:#333;margin-bottom:16px}
-    a{color:#2563eb;text-decoration:none}
-    a:hover{text-decoration:underline}
-    .bc{font-size:.85rem;color:#666;margin-bottom:20px}
-    .cta{background:#eff6ff;border:1px solid #bfdbfe;border-radius:.75rem;padding:1.5rem;margin:2rem 0;text-align:center}
-    .cta h2{font-size:1.25rem;color:#1e40af;margin:0 0 .5rem}
-    .btn{display:inline-block;padding:.6rem 1.4rem;border-radius:.5rem;font-weight:600;text-decoration:none;font-size:.9rem;background:#2563eb;color:#fff;margin:.25rem}
-    footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
-  </style>
+  <style>${SHARED_DIRECTORY_CSS}</style>
   <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
-  <header style="padding:12px 0 20px;border-bottom:1px solid #e5e7eb;margin-bottom:20px">
-    <a href="/" style="font-weight:700;font-size:1.25rem;color:#1B365D;text-decoration:none">RehabLookup</a>
-  </header>
-  <nav class="bc" aria-label="Breadcrumb"><a href="/">Home</a> &rsaquo; <a href="/${nm.slug}">${escHtml(nm.label)} Near Me</a> &rsaquo; ${escHtml(state.name)}</nav>
+  ${SHARED_HEADER_HTML}
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><ul><li><a href="/">Home</a> &rsaquo; </li><li><a href="/${nm.slug}">${escHtml(nm.label)} Near Me</a> &rsaquo; </li><li>${escHtml(state.name)}</li></ul></nav>
   <main>
     <h1>${escHtml(title)}</h1>
-    <p>Find accredited ${escHtml(labelLc)} programs in ${escHtml(state.name)}. RehabLookup's verified directory covers facilities across every county in ${escHtml(state.name)}, with detailed information on treatment approaches, insurance acceptance, and amenities.</p>
-    <h2>How to Find Treatment in ${escHtml(state.name)}</h2>
-    <p>Use our search tool to filter by city, zip code, insurance provider, and treatment type. All listed facilities are verified for state licensure and accreditation. ${escHtml(state.name)} has a network of providers offering ${escHtml(treatmentTypeLc)} for adults, adolescents, and families.</p>
-    <h2>Insurance Coverage in ${escHtml(state.name)}</h2>
-    <p>Most major insurance plans — including Aetna, Blue Cross Blue Shield, Cigna, UnitedHealthcare, Humana, and Medicaid — cover addiction treatment in ${escHtml(state.name)} under the Mental Health Parity and Addiction Equity Act.</p>
-    <p><a href="/rehab-centers/${state.slug}">Browse all rehab centers in ${escHtml(state.name)}</a> &middot; <a href="/${nm.slug}">Back to ${escHtml(nm.label)} Near Me</a></p>
-    <div class="cta">
-      <h2>Find Treatment Centers Now</h2>
-      <p>Search our verified directory of accredited rehab facilities across all 50 states.</p>
-      <a href="/search-results" class="btn">Search Centers</a>
-      <a href="/concierge" class="btn" style="background:#fff;color:#2563eb;border:1px solid #2563eb">Get Free Help</a>
-    </div>
-    <p><a href="/rehab-centers">Browse All States</a> &middot; <a href="/resources">Recovery Resources</a> &middot; <a href="/">Home</a></p>
+    <p>Directory of ${escHtml(nm.label.toLowerCase())} options in ${escHtml(state.name)} (${state.abbr}). Compare programs by level of care, insurance accepted, and state licensure.</p>
+
+    <section aria-label="About ${escHtml(nm.label)}">
+      <h2>About ${escHtml(nm.label)} Programs</h2>
+      <p>${intentParagraph(nm)}</p>
+    </section>
+
+    ${renderStateFactBox(state.name, state.slug)}
+    ${renderStateSignature(state.name, state.slug)}
+
+    ${renderTreatmentLevels(state.name)}
+
+    ${renderInsuranceDirectory(state.name, state.slug)}
+
+    ${renderLicensingBox(state.name, state.slug)}
+
+    <p class="small"><a href="/rehab-centers/${state.slug}">All rehab centers in ${escHtml(state.name)}</a> &middot; <a href="/${nm.slug}">All ${escHtml(nm.label.toLowerCase())} states</a></p>
+
+    ${renderCta(
+      `Find ${nm.label.toLowerCase()} in ${state.name}`,
+      `Free, confidential placement help from licensed coordinators familiar with ${state.name} providers.`,
+    )}
+
+    <p class="small"><a href="/rehab-centers">Browse All States</a> &middot; <a href="/resources">Recovery Resources</a> &middot; <a href="/">Home</a></p>
   </main>
-  <footer><p>&copy; 2026 RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy Policy</a> &middot; <a href="/terms-of-service">Terms of Service</a></p></footer>
+  ${SHARED_FOOTER_HTML}
 </body>
 </html>`;
 }
@@ -169,22 +243,17 @@ function main() {
   const nearMeTypes = parseNearMeTypes();
   const states = parseStates();
   let written = 0;
-  let skipped = 0;
   for (const nm of nearMeTypes) {
     const dir = path.join(publicDir, nm.slug);
     fs.mkdirSync(dir, { recursive: true });
     for (const state of states) {
       const outPath = path.join(dir, `${state.slug}.html`);
-      if (fs.existsSync(outPath)) {
-        skipped++;
-        continue;
-      }
       fs.writeFileSync(outPath, renderPage({ nm, state }));
       written++;
     }
   }
   console.log(
-    `near-me/state backfill: types=${nearMeTypes.length}, states=${states.length}, written=${written}, skipped=${skipped}`,
+    `near-me/state backfill: types=${nearMeTypes.length}, states=${states.length}, written=${written}.`,
   );
 }
 
