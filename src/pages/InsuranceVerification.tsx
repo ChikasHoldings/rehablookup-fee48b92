@@ -18,6 +18,7 @@ import {
 import { CheckCircle2, ShieldCheck, Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { analytics } from "@/lib/analytics";
 
 // Top US health insurers families search for. Order = popularity-weighted.
 const CARRIERS = [
@@ -144,6 +145,7 @@ export default function InsuranceVerification() {
       }
       setRequestRef(String(data?.requestId ?? "").slice(0, 8).toUpperCase());
       setStage("success");
+      analytics.ctaClick("vob_submitted", `carrier:${carrier}`);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not submit. Please try again.");

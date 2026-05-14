@@ -124,6 +124,11 @@ export default function ProUpgradePage() {
   }, [refetchProStatus]);
 
   useEffect(() => {
+    // Page-view event so we can measure the top of the Pro funnel
+    // separately from "begin checkout" and "purchase". Fires once per
+    // mount, intentionally not gated on selectedFacility — the page
+    // is sometimes visited before a facility is selected.
+    analytics.viewSubscriptionPlan('pro_monthly', 'Pro Plan', 399);
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };

@@ -28,6 +28,7 @@ import {
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { analytics } from "@/lib/analytics";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
@@ -631,6 +632,7 @@ function Step2YourRole({
         return;
       }
 
+      analytics.ctaClick("claim_submitted_step2", "claim_wizard");
       toast.success("Saved — let's verify your ownership.");
       onSubmitted(claimRequestId);
     } catch (err) {

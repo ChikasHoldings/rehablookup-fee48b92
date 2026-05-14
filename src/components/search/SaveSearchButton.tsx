@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useSavedSearches, AlertFrequency } from "@/hooks/useSavedSearches";
+import { analytics } from "@/lib/analytics";
 
 interface SaveSearchButtonProps {
   /** Current filter state captured as plain JSON */
@@ -65,6 +66,7 @@ export function SaveSearchButton({
         search_url: searchUrl,
         alert_frequency: frequency,
       });
+      analytics.ctaClick("save_search_created", `frequency:${frequency}`);
       toast.success(
         frequency === "off"
           ? "Search saved"

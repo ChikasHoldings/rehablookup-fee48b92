@@ -2,6 +2,7 @@ import { GitCompare } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useCompareList } from "@/hooks/useCompareList";
+import { analytics } from "@/lib/analytics";
 
 interface CompareButtonProps {
   facilityId: string;
@@ -28,15 +29,18 @@ export function CompareButton({
     e.stopPropagation();
     const result = await toggleCompare(facilityId);
     if (result === "full") {
+      analytics.ctaClick("compare_cap_hit", `facility:${facilityId}`);
       toast.error(`You can compare up to ${max} facilities at a time. Remove one before adding another.`);
       return;
     }
     if (result === "added") {
+      analytics.ctaClick("compare_added", `facility:${facilityId}`);
       toast.success(`Added ${facilityName} to compare`, {
         description: "Open the compare tray to view side-by-side.",
       });
+    } else if (result === "removed") {
+      analytics.ctaClick("compare_removed", `facility:${facilityId}`);
     }
-    // Silent on "removed" — the toggle state in the button is feedback enough.
   };
 
   if (variant === "chip") {
