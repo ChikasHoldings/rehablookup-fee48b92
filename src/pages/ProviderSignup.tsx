@@ -496,9 +496,11 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
 
       if (facilityError) {
         // Hardening: a failed facility insert leaves an orphan auth user +
-        // profile with no facility. Loud failure (not "partial success"),
-        // ping admin_notifications so support can reach out, and keep the
-        // submitting state OFF so the user can fix and retry.
+        // profile with no facility. We now call the signup-rollback-cleanup
+        // edge function which deletes the auth user + profile so the email
+        // is freed and the user can retry signup. The admin_notifications
+        // entry stays as a backup audit trail in case the cleanup itself
+        // fails (in which case the dashboard banner becomes the safety net).
         console.error("[ProviderSignup] Facility creation error:", facilityError);
         try {
           await supabase.from("admin_notifications").insert({
@@ -518,10 +520,45 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         } catch (notifyErr) {
           console.warn("[ProviderSignup] admin_notifications insert failed", notifyErr);
         }
+
+        // Try the rollback. If it succeeds, the email is free and we can
+        // tell the user to retry signup. If it fails, we fall back to the
+        // dashboard recovery flow. Either way the user is never stuck.
+        let cleanupSucceeded = false;
+        try {
+          const { error: cleanupErr } = await supabase.functions.invoke(
+            "signup-rollback-cleanup",
+            { body: {} },
+          );
+          if (cleanupErr) {
+            console.warn("[ProviderSignup] cleanup edge fn returned error", cleanupErr);
+          } else {
+            cleanupSucceeded = true;
+          }
+        } catch (cleanupExc) {
+          console.warn("[ProviderSignup] cleanup edge fn exception", cleanupExc);
+        }
+
+        if (cleanupSucceeded) {
+          // Clean state — sign out so the dead session doesn't linger and
+          // tell the user they can try again right here.
+          await supabase.auth.signOut().catch(() => {});
+          toast({
+            title: "Couldn't save your facility — try again",
+            description:
+              "We couldn't save your facility details. Your account has been reset so you can re-submit the form below. If this keeps happening, contact support@rehablookup.com.",
+            variant: "destructive",
+          });
+          submittingRef.current = false;
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Cleanup failed → fall back to dashboard recovery banner.
         toast({
           title: "Account created — facility save failed",
           description:
-            "Your account is set up but we couldn't save your facility right now. Our team has been notified and will contact you shortly. You can also retry from your dashboard.",
+            "Your account is set up but we couldn't save your facility right now. Our team has been notified. You can also retry from your dashboard.",
           variant: "destructive",
         });
         navigate("/provider/dashboard?signup_facility_failed=1");
