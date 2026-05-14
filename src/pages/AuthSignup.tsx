@@ -177,6 +177,16 @@ export default function AuthSignup() {
           console.warn("[AuthSignup] admin notification failed", e),
         );
 
+      // Symmetry with SeekerSignup: bulk-link any pre-signup inquiry rows
+      // matching this email. Rare for providers (they usually arrive with
+      // no prior seeker activity), but harmless and free if the user
+      // happened to fill out a seeker form first. (Phase 4I)
+      try {
+        await supabase.functions.invoke("link-inquiry-to-user", { body: {} });
+      } catch (linkErr) {
+        console.warn("[AuthSignup] inquiry bulk-link failed", linkErr);
+      }
+
       toast.success("Account created — welcome aboard!");
       navigate(returnTo ?? "/provider/onboarding", { replace: true });
     } catch (err) {

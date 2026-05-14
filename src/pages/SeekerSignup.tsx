@@ -360,7 +360,19 @@ export default function SeekerSignup() {
         inputRefs.current[0]?.focus();
         return;
       }
-      
+
+      // Bulk-link any pre-signup concierge / international / VOB rows that
+      // were submitted as a guest with this email so they show up in
+      // /account/requests + /account/insurance-verifications immediately
+      // after first login. Fire-and-forget; we never block the redirect on
+      // the link call since the rows aren't lost — just unattached until
+      // the next sign-in if this attempt fails. (Phase 4I)
+      try {
+        await supabase.functions.invoke('link-inquiry-to-user', { body: {} });
+      } catch (linkErr) {
+        console.warn('[SeekerSignup] inquiry bulk-link failed', linkErr);
+      }
+
       toast.success('Email verified successfully!');
       navigate('/account', { replace: true });
     } catch {
