@@ -50,11 +50,14 @@ export function SocialProofBar({ className, variant = "bar" }: SocialProofBarPro
     );
   }
 
-  // Default: compact horizontal bar
+  // Default: compact horizontal bar.
+  // min-h reserves vertical space BEFORE the icons + numbers paint, so the
+  // homepage doesn't shift the Featured-Facilities section downward as this
+  // bar hydrates. Was contributing to CLS on slow connections.
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center justify-center gap-x-6 gap-y-2 py-3",
+        "flex flex-wrap items-center justify-center gap-x-6 gap-y-2 py-3 min-h-[52px]",
         className
       )}
       aria-label="Platform statistics"

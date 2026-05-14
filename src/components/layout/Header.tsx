@@ -276,7 +276,18 @@ export function Header({
                   className="fixed mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150"
                   style={getDesktopMegaMenuStyle("find-treatment")}
                 >
-                  <FindTreatmentMegaMenu onNavigate={() => setOpenMegaMenu(null)} />
+                  {/* Suspense is REQUIRED — FindTreatmentMegaMenu is lazy()
+                      (Phase 5A code-split). Without a fallback boundary here,
+                      React throws "A component suspended while rendering, but
+                      no fallback UI was specified" the first time a user
+                      opens the Find Treatment desktop dropdown, which crashes
+                      the header. The standard nav-item path lower in this file
+                      already wraps MegaMenuContent in Suspense (search for
+                      `<MegaMenuContent`); this is the standalone path for the
+                      Find Treatment item and needs the same wrapper. */}
+                  <Suspense fallback={<div className="p-6 text-xs text-muted-foreground">Loading…</div>}>
+                    <FindTreatmentMegaMenu onNavigate={() => setOpenMegaMenu(null)} />
+                  </Suspense>
                 </div>
               )}
             </div>
