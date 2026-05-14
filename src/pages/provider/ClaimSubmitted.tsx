@@ -24,10 +24,12 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   CheckCircle2,
   Clock,
   Loader2,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
 type VerificationMethod =
@@ -195,6 +197,37 @@ export default function ClaimSubmitted() {
                 <StatusRow claim={claim} />
                 <Timeline claim={claim} />
               </>
+            )}
+
+            {/* While the operator is in claim-submitted mode, surface the Pro
+                pitch. They're already converted on the "this directory is real
+                and I want my listing" idea — this is the moment of highest
+                intent to also evaluate Pro. (Phase 5C) */}
+            {claim && (
+              <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/[0.05] to-amber-500/[0.05] p-4 sm:p-5">
+                <div className="flex items-start gap-3 sm:gap-4 flex-wrap">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm sm:text-base font-semibold text-foreground">
+                      While you wait — preview Pro
+                    </p>
+                    <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                      The moment your claim is approved you'll be able to activate Pro and unlock
+                      a 20% discount on every lead unlock, featured placement on state &amp; city
+                      pages, and a search-ranking boost. Most facilities see Pro pay for itself
+                      after ~50 lead unlocks.
+                    </p>
+                  </div>
+                  <Button asChild className="gap-1.5 shrink-0">
+                    <Link to="/provider/pro-upgrade">
+                      See Pro pricing
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             )}
 
             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:items-center sm:justify-between pt-3 border-t">

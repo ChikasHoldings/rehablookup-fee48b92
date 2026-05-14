@@ -951,6 +951,7 @@ function Step3Verification({
       {state.verificationView === "picker" && (
         <MethodPicker
           facility={facility}
+          claimantEmail={state.claimantEmail}
           onPick={(method) => {
             setState((p) => ({ ...p, verificationMethod: method }));
             if (method === "email_domain") setView("email-input");
@@ -1010,14 +1011,41 @@ function Step3Verification({
 
 interface MethodPickerProps {
   facility: FacilityBaseData;
+  /** Optional — when present, used to surface a "Recommended" badge on the
+   *  email-domain method if the user's email matches the facility's web
+   *  domain. */
+  claimantEmail?: string;
   onPick: (method: VerificationMethod) => void;
   claimRequestId: string;
   onSmsCodeSent: () => void;
   onBack: () => void;
 }
 
+/**
+ * Extracts a normalized hostname from a URL string. Returns null for
+ * unparseable input. Strips a leading "www.".
+ */
+function hostnameFromUrl(url?: string | null): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  try {
+    const u = new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
+    return u.hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+/** Returns the apex domain (last two labels) of a hostname. */
+function apexDomain(host: string): string {
+  const parts = host.split(".").filter(Boolean);
+  return parts.length >= 2 ? parts.slice(-2).join(".") : host;
+}
+
 function MethodPicker({
   facility,
+  claimantEmail,
   onPick,
   claimRequestId,
   onSmsCodeSent,
@@ -1025,6 +1053,18 @@ function MethodPicker({
 }: MethodPickerProps) {
   const hasWebsite = !!facility.website?.trim();
   const hasPhone = !!facility.phone?.trim();
+  // Recommend email_domain when the signed-in claimant's email already lives
+  // on the facility's web apex domain — that path is single-click verifiable.
+  const emailDomainRecommended = (() => {
+    if (!hasWebsite || !claimantEmail) return false;
+    const facilityHost = hostnameFromUrl(facility.website);
+    if (!facilityHost) return false;
+    const emailHost = claimantEmail.includes("@")
+      ? claimantEmail.split("@")[1]?.toLowerCase().trim()
+      : "";
+    if (!emailHost) return false;
+    return apexDomain(emailHost) === apexDomain(facilityHost);
+  })();
   const [smsConfirmOpen, setSmsConfirmOpen] = useState(false);
   const [smsSending, setSmsSending] = useState(false);
 
@@ -1068,12 +1108,17 @@ function MethodPicker({
         <MethodCard
           icon={Mail}
           heading="Verify with work email"
-          subtext="Send a 6-digit code to your email at the facility's web domain. Fastest method."
+          subtext={
+            emailDomainRecommended
+              ? "Your signed-in email already lives on this facility's domain — this will be near-instant."
+              : "Send a 6-digit code to your email at the facility's web domain. Fastest method."
+          }
           available={hasWebsite}
           unavailableReason={
             hasWebsite ? undefined : "This facility doesn't have a website on file."
           }
           ctaLabel="Use email"
+          recommended={emailDomainRecommended}
           onSelect={() => onPick("email_domain")}
         />
         <MethodCard
@@ -1142,6 +1187,7 @@ interface MethodCardProps {
   available: boolean;
   unavailableReason?: string;
   ctaLabel: string;
+  recommended?: boolean;
   onSelect: () => void;
 }
 
@@ -1152,15 +1198,25 @@ function MethodCard({
   available,
   unavailableReason,
   ctaLabel,
+  recommended,
   onSelect,
 }: MethodCardProps) {
   return (
     <div
       className={
-        "rounded-md border p-4 flex flex-col gap-3 " +
-        (available ? "bg-card" : "bg-muted/30 opacity-75")
+        "relative rounded-md border p-4 flex flex-col gap-3 " +
+        (recommended && available
+          ? "border-primary/50 bg-primary/[0.04] shadow-sm"
+          : available
+          ? "bg-card"
+          : "bg-muted/30 opacity-75")
       }
     >
+      {recommended && available && (
+        <div className="absolute -top-2 right-3 inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-foreground">
+          Recommended
+        </div>
+      )}
       <div className="flex items-center gap-2">
         <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
           <Icon className="h-4 w-4 text-primary" aria-hidden />

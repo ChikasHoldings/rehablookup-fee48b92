@@ -933,9 +933,23 @@ const CenterProfile = () => {
                     )}
                   </div>
                   <div className="flex-1 min-w-0 pb-0.5">
-                    <h1 className="speakable-headline font-display text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight line-clamp-2 break-words drop-shadow-lg">
-                      {facility.name}
-                    </h1>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 className="speakable-headline font-display text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight line-clamp-2 break-words drop-shadow-lg">
+                        {facility.name}
+                      </h1>
+                      {/* Pro badge — signals to other providers researching the
+                          directory that competing facilities are paying, and
+                          gives Pro subscribers a visible benefit. */}
+                      {claimFlags?.is_pro && (
+                        <Badge
+                          className="gap-1 bg-amber-400 text-amber-950 hover:bg-amber-400/90 border-0 shadow-md"
+                          aria-label="This facility is a Pro provider"
+                        >
+                          <Crown className="h-3 w-3" />
+                          Pro
+                        </Badge>
+                      )}
+                    </div>
                     <div className="speakable-contact flex items-center gap-1.5 mt-1 min-w-0">
                       <MapPin className="h-3.5 w-3.5 text-white/70 shrink-0" />
                       <span className="text-sm text-white/85 font-medium truncate">{facility.city}, {facility.state}</span>
@@ -1060,6 +1074,44 @@ const CenterProfile = () => {
               )}
             </div>
           </div>
+
+          {/* Owner banner — only renders for unclaimed listings. Surfaces
+              the claim CTA + the Pro discount/featured-placement benefits
+              so a facility operator browsing their own page sees the
+              business case immediately. (Phase 5C) */}
+          {claimFlags && !claimFlags.is_claimed && (
+            <div className="mt-4 sm:mt-5">
+              <div className="rounded-xl border border-primary/25 bg-gradient-to-br from-primary/[0.04] to-amber-500/[0.04] p-4 sm:p-5">
+                <div className="flex items-start gap-3 sm:gap-4 flex-wrap">
+                  <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm sm:text-base font-semibold text-foreground">
+                      Are you the owner of {facility.name}?
+                    </p>
+                    <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                      Claim this listing free in 2 minutes — keep your contact details up to date,
+                      respond to leads, and unlock featured placement + a 20% discount on every lead
+                      unlock with a Pro membership.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                    <Button onClick={handleClaimClick} className="gap-1.5 h-10">
+                      <ShieldCheck className="h-4 w-4" />
+                      Claim free
+                    </Button>
+                    <Button asChild variant="outline" size="sm" className="gap-1 h-10">
+                      <Link to="/for-providers#pricing">
+                        See Pro pricing
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Main Content Grid */}
           <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr,380px]">
