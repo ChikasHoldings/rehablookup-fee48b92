@@ -7,8 +7,8 @@
   },
   "servers": [
     {
-      "url": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1",
-      "description": "Lovable Cloud edge functions"
+      "url": "https://mldbxpntzcjalgjmwnqa.supabase.co/functions/v1",
+      "description": "Production Supabase Edge Functions"
     }
   ],
   "paths": {
