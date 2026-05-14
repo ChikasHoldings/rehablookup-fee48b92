@@ -85,7 +85,7 @@ export default function SocialLanding() {
       
       {/* Minimal header with small logo */}
       <header className="py-4 px-4">
-        <img src={logoImage} alt="RehabLookup" className="h-7 opacity-70" />
+        <img src={logoImage} alt="RehabLookup" width={150} height={36} className="h-7 w-auto opacity-70" />
       </header>
       
       <main className="flex-1 px-4 pb-8">

@@ -25,7 +25,14 @@ export function Layout({ children }: LayoutProps) {
   // Public layout — no role checks, no redirects.
   // Admin and Provider portals have their own shells (AdminShell, ProviderShell).
   return (
-    <div className="flex min-h-screen flex-col w-full max-w-[100vw] overflow-x-hidden">
+    // overflow-x: clip (not hidden) on the outer flex container.
+    // `overflow-x: hidden` would establish a scroll context that breaks
+    // `position: sticky` on the descendant <Header> (the header scrolled
+    // away with the page). `overflow-x: clip` has the same horizontal-
+    // overflow-clipping effect WITHOUT creating a scroll container, so
+    // sticky inside it works correctly. Modern-browser-only — supported
+    // in Chrome 90+, Firefox 81+, Safari 16+ (2.5+ years).
+    <div className="flex min-h-screen flex-col w-full max-w-[100vw] [overflow-x:clip]">
       <InternationalBanner />
       <MemoizedHeader />
       <main id="main" className="flex-1 w-full min-w-0">{children}</main>

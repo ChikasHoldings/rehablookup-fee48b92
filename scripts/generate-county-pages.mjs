@@ -17,6 +17,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { fetchAllFacilities, renderFacilityList, citySlug } from "./_facility-data.mjs";
+import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 
 // Direct TS import — Node 22 strip-types makes this safe at build time.
 const { stateCountyData } = await import("../src/data/countySeoData.ts");
@@ -150,41 +151,32 @@ function buildHtml({ state, county, urlPath, facilities = [] }) {
   <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(collectionSchema)}</script>
   <script type="application/ld+json">${JSON.stringify(faqSchema)}</script>
-  <style>
-    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:32px 20px;color:#1a2b4a;line-height:1.7}
-    h1{font-size:2rem;color:#1B365D;margin-bottom:12px}
-    h2{font-size:1.4rem;color:#1B365D;margin-top:28px}
-    h3{font-size:1.1rem;color:#1B365D;margin-top:18px}
-    p{color:#333;margin-bottom:16px}
-    a{color:#2563eb;text-decoration:none}
-    a:hover{text-decoration:underline}
-    nav ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-    .breadcrumbs{font-size:.85rem;color:#666;margin-bottom:20px}
-    .breadcrumbs ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px}
-    footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
-  </style>
+  ${seoStyles()}
   <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
-  <header><a href="/" aria-label="RehabLookup Home">RehabLookup</a></header>
-  <nav class="breadcrumbs" aria-label="Breadcrumb"><ul>${breadcrumbHtml}</ul></nav>
-  <main>
-    <h1>${escHtml(title)}</h1>
-    <p>${escHtml(county.description)}</p>
-    <h2>Treatment Overview</h2>
-    <p>${escHtml(county.treatmentOverview)}</p>
-    <h2>Demographics &amp; Needs</h2>
-    <p>${escHtml(county.demographics)}</p>
-    <h2>Access &amp; Coverage</h2>
-    <p>${escHtml(county.accessNotes)}</p>
-    ${cityList ? `<h2>Cities in ${escHtml(county.name)} County</h2><ul style="columns:2;list-style:disc;padding-left:20px">${cityList}</ul>` : ""}
-    ${facilityList}
-    <h2>Frequently Asked Questions</h2>
-    ${faqHtml}
-    <p style="margin-top:24px"><a href="/rehab-centers/${state.stateSlug}">All ${escHtml(state.stateName)} Rehab Centers</a> &middot; <a href="/concierge">Get Personalized Help</a> &middot; <a href="/">Home</a></p>
+  ${seoHeader()}
+  <main class="rl-main">
+    <div class="rl-container">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><ul>${breadcrumbHtml}</ul></nav>
+      <h1>${escHtml(title)}</h1>
+      <p>${escHtml(county.description)}</p>
+      <h2>Treatment Overview</h2>
+      <p>${escHtml(county.treatmentOverview)}</p>
+      <h2>Demographics &amp; Needs</h2>
+      <p>${escHtml(county.demographics)}</p>
+      <h2>Access &amp; Coverage</h2>
+      <p>${escHtml(county.accessNotes)}</p>
+      ${cityList ? `<h2>Cities in ${escHtml(county.name)} County</h2><ul style="columns:2;list-style:disc;padding-left:20px">${cityList}</ul>` : ""}
+      ${facilityList}
+      <h2>Frequently Asked Questions</h2>
+      ${faqHtml}
+      ${seoCtaStrip({ blurb: `We'll help you find verified treatment in ${escHtml(state.stateName)}.` })}
+      <p style="margin-top:24px"><a href="/rehab-centers/${state.stateSlug}">All ${escHtml(state.stateName)} Rehab Centers</a> &middot; <a href="/">Home</a></p>
+    </div>
   </main>
-  <footer><p>&copy; 2026 RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy</a> &middot; <a href="/terms-of-service">Terms</a></p></footer>
+  ${seoFooter()}
 </body>
 </html>`;
 }

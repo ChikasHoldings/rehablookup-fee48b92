@@ -493,9 +493,11 @@ const InsuranceCard = ({
       <div className="flex items-start gap-4">
         {provider.logo ? (
           <div className="flex h-16 w-20 shrink-0 items-center justify-center">
-            <img 
-              src={provider.logo} 
-              alt={provider.name} 
+            <img
+              src={provider.logo}
+              alt={provider.name}
+              width={80}
+              height={56}
               className="h-14 w-20 object-contain"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
@@ -758,9 +760,11 @@ export default function Insurance() {
                         <div className="flex items-center gap-3">
                           {item.logo && (
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background border border-border p-1">
-                              <img 
-                                src={item.logo} 
-                                alt={item.insurer} 
+                              <img
+                                src={item.logo}
+                                alt={item.insurer}
+                                width={24}
+                                height={24}
                                 className="h-6 w-6 object-contain"
                                 onError={(e) => {
                                   e.currentTarget.style.display = 'none';

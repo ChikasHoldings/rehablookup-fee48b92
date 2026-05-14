@@ -1709,7 +1709,12 @@ const CenterProfile = () => {
                   key={idx}
                   onClick={() => setActiveGalleryIndex(idx)}
                   className={cn(
-                    "shrink-0 w-14 h-10 rounded overflow-hidden transition-all",
+                    // 64×48 (was 56×40) — closer to the 44px tap-target
+                    // minimum while keeping the strip compact. Hidden on
+                    // mobile so the strict 44px rule isn't strictly needed
+                    // here, but bigger thumbs are easier to click with a
+                    // mouse too.
+                    "shrink-0 w-16 h-12 rounded overflow-hidden transition-all",
                     idx === activeGalleryIndex ? "ring-2 ring-white opacity-100" : "opacity-50 hover:opacity-75"
                   )}
                 >

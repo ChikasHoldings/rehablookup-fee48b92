@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { InlineNotFound } from "@/components/InlineNotFound";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -47,7 +48,7 @@ export default function SubstanceTreatmentPage() {
   }, [substance]);
 
   if (!substance) {
-    return <Navigate to="/404" replace />;
+    return <InlineNotFound />;
   }
 
   const structuredData = [

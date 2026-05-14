@@ -573,7 +573,7 @@ export default function ProviderDashboardPage() {
                         </p>
                         <p className="text-xs text-muted-foreground">Unlock to view details</p>
                       </div>
-                      <Button size="sm" className="h-7 text-xs bg-success hover:bg-success/90" asChild>
+                      <Button size="sm" className="h-9 sm:h-8 text-xs bg-success hover:bg-success/90" asChild>
                         <Link to="/provider/inquiries">
                           View
                         </Link>
@@ -599,7 +599,7 @@ export default function ProviderDashboardPage() {
                         </p>
                         <p className="text-xs text-muted-foreground">Waiting 24h+</p>
                       </div>
-                      <Button size="sm" className="h-7 text-xs bg-warning hover:bg-warning/90 text-warning-foreground" asChild>
+                      <Button size="sm" className="h-9 sm:h-8 text-xs bg-warning hover:bg-warning/90 text-warning-foreground" asChild>
                         <Link to="/provider/inquiries?status=new">
                           <Phone className="h-3.5 w-3.5 mr-1" />
                           Call
@@ -626,7 +626,7 @@ export default function ProviderDashboardPage() {
                           <p className="text-sm font-medium text-foreground">Complete Profile</p>
                           <p className="text-xs text-muted-foreground">{missingFields.length} items missing</p>
                         </div>
-                        <Button size="sm" className="h-7 text-xs" asChild>
+                        <Button size="sm" className="h-9 sm:h-8 text-xs" asChild>
                           <Link to="/provider/listings">Add</Link>
                         </Button>
                         <button

@@ -419,9 +419,11 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
         {/* Left Section - Logo */}
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <img 
-              src={logoDarkBg} 
-              alt="RehabLookup" 
+            <img
+              src={logoDarkBg}
+              alt="RehabLookup"
+              width={150}
+              height={36}
               className="h-6 sm:h-7 md:h-8 w-auto flex-shrink-0"
             />
             <span className="text-[10px] sm:text-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md font-semibold uppercase tracking-wide shadow-sm flex-shrink-0">

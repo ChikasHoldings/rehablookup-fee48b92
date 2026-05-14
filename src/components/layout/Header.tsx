@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, lazy, Suspense, type CSSProperties } from "react";
 import headerLogo from "@/assets/logo-header.webp";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, ChevronRight, Heart, MapPin, Shield, BookOpen, Building2, Phone, HelpCircle, Info, User, ChevronDown, Search, Globe, ArrowRight } from "lucide-react";
@@ -125,7 +125,6 @@ export function Header({
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const megaMenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
-  const navigate = useNavigate();
   const { role, isLoading: roleLoading, isAuthenticated, userId } = useUserRole();
   const isSeekerLoggedIn = isAuthenticated && role === "seeker";
   const { favoritesCount } = useFavorites();
@@ -228,7 +227,13 @@ export function Header({
       {openMegaMenu && (
         <div className="fixed inset-0 z-40" onClick={() => setOpenMegaMenu(null)} />
       )}
-      <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background border-border will-change-transform" style={{ contain: 'layout style' }}>
+      {/* sticky (was: fixed) — sticky keeps the header in normal flow so the
+          InternationalBanner above it doesn't create a 44px gap between the
+          fixed header and the hero on non-US sessions. Behavior on scroll is
+          identical: header pins to viewport top. getBoundingClientRect()
+          still returns viewport-relative coordinates so the mega-menu
+          positioning below is unaffected. */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background border-border will-change-transform" style={{ contain: 'layout style' }}>
         <div className="container flex h-[68px] items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
@@ -276,7 +281,18 @@ export function Header({
                   className="fixed mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150"
                   style={getDesktopMegaMenuStyle("find-treatment")}
                 >
-                  <FindTreatmentMegaMenu onNavigate={() => setOpenMegaMenu(null)} />
+                  {/* Suspense is REQUIRED — FindTreatmentMegaMenu is lazy()
+                      (Phase 5A code-split). Without a fallback boundary here,
+                      React throws "A component suspended while rendering, but
+                      no fallback UI was specified" the first time a user
+                      opens the Find Treatment desktop dropdown, which crashes
+                      the header. The standard nav-item path lower in this file
+                      already wraps MegaMenuContent in Suspense (search for
+                      `<MegaMenuContent`); this is the standalone path for the
+                      Find Treatment item and needs the same wrapper. */}
+                  <Suspense fallback={<div className="p-6 text-xs text-muted-foreground">Loading…</div>}>
+                    <FindTreatmentMegaMenu onNavigate={() => setOpenMegaMenu(null)} />
+                  </Suspense>
                 </div>
               )}
             </div>
@@ -372,35 +388,6 @@ export function Header({
             </DropdownMenu>
           </nav>
 
-          {/* Global desktop search — visible on lg+ so users deep in
-              resources/profile pages can re-enter the funnel without two
-              nav clicks. Submits to /search-results with the q param.
-              Mobile already has the search-icon button in the right rail. */}
-          <form
-            role="search"
-            className="hidden lg:flex items-center mx-3 max-w-xs flex-1"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
-              const q = String(fd.get("q") ?? "").trim();
-              if (!q) return;
-              navigate(`/search-results?q=${encodeURIComponent(q)}`);
-            }}
-          >
-            <label htmlFor="header-search-q" className="sr-only">Search treatment centers</label>
-            <div className="relative w-full">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-              <input
-                id="header-search-q"
-                name="q"
-                type="search"
-                placeholder="Search city, treatment, insurance…"
-                className="w-full h-8 rounded-md border border-border bg-background pl-8 pr-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                autoComplete="off"
-              />
-            </div>
-          </form>
-
           {/* CTA & Mobile Actions */}
           <div className="flex items-center gap-2 md:gap-3">
             <PrefetchLink
@@ -462,8 +449,8 @@ export function Header({
           </div>
         </div>
       </header>
-      {/* Spacer to prevent content from being hidden behind fixed header */}
-      <div className="h-[68px] w-full" />
+      {/* No spacer needed — header is sticky and takes normal flow space.
+          (Was h-[68px] when header was position: fixed.) */}
 
       {/* Mobile Menu Overlay */}
       <div 
