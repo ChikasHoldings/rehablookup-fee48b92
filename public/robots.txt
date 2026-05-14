@@ -1,6 +1,10 @@
 # =============================================================================
 # robots.txt for RehabLookup
 # https://rehablookup.com
+# Last updated: 2026-05-14 — consolidated merge to main; 46081 URLs in sitemap.xml after backfilling 1004 city + 646 near-me state + 13110 city-treatment combo pages. Prerender coverage: hybrid <path>.html + <path>/index.html.
+# Last updated: 2026-05-14 — sitemap regenerated; 46081 URLs included (added 13110 city-treatment combo pages for 48 prefixes × 288 topCities). Prerender coverage: hybrid <path>.html + <path>/index.html.
+# Last updated: 2026-05-14 — sitemap regenerated; 32957 URLs included (added 646 near-me state pages + 700 net URLs after coverage backfill). Prerender coverage: hybrid <path>.html + <path>/index.html.
+# Last updated: 2026-05-14 — sitemap regenerated; 32257 URLs included (added 1004 missing city pages backfilled from src/data/locationSeoData.ts). Prerender coverage: hybrid <path>.html + <path>/index.html.
 # Last updated: 2026-05-14 — sitemap pruned; 31234 URLs included (removed 22 redirect-source URLs that produced "Page with redirect" GSC errors). Prerender coverage: hybrid <path>.html + <path>/index.html.
 # Last updated: 2026-05-09 — sitemap regenerated; 31256 URLs included (filtered from 32000). Prerender coverage: hybrid <path>.html + <path>/index.html.
 # Last updated: 2026-05-05 — sitemap regenerated; 31256 URLs included (filtered from 32000). Prerender coverage: hybrid <path>.html + <path>/index.html.
