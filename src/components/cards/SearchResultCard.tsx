@@ -260,7 +260,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                 </div>
               )}
 
-              {/* Favorite button */}
+              {/* Favorite button — min 44×44 tap target per WCAG 2.5.5 */}
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -268,11 +268,11 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                   toggleFavorite(center.id);
                 }}
                 className={cn(
-                  "transition-all duration-200 drop-shadow-lg",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded",
+                  "flex h-11 w-11 items-center justify-center rounded-md transition-all duration-200 drop-shadow-lg",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   isFavorite(center.id)
                     ? "text-rose-500"
-                    : "text-white/90 hover:text-rose-500"
+                    : "text-white/90 hover:text-rose-500 hover:bg-white/10"
                 )}
                 aria-label={isFavorite(center.id) ? `Remove ${center.name} from favorites` : `Add ${center.name} to favorites`}
                 aria-pressed={isFavorite(center.id)}

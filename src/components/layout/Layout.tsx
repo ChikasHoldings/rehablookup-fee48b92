@@ -28,7 +28,7 @@ export function Layout({ children }: LayoutProps) {
     <div className="flex min-h-screen flex-col w-full max-w-[100vw] overflow-x-hidden">
       <InternationalBanner />
       <MemoizedHeader />
-      <main className="flex-1 w-full min-w-0">{children}</main>
+      <main id="main" className="flex-1 w-full min-w-0">{children}</main>
       <MemoizedFooter />
       <BackToTop />
       <FloatingHelpButton />

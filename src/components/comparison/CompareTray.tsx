@@ -118,10 +118,10 @@ export function CompareTray() {
                 <button
                   type="button"
                   onClick={() => removeFromCompare(f.id)}
-                  className="opacity-60 hover:opacity-100 hover:text-rose-500 transition-opacity"
+                  className="flex h-8 w-8 items-center justify-center rounded-md opacity-60 hover:opacity-100 hover:text-rose-500 hover:bg-muted/40 transition-all"
                   aria-label={`Remove ${f.name} from compare`}
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                 </button>
               </li>
             ))}
@@ -148,7 +148,7 @@ export function CompareTray() {
                 setDismissed(true);
                 try { sessionStorage.setItem("compare-tray-dismissed", "1"); } catch { /* ignore */ }
               }}
-              className="text-muted-foreground hover:text-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
               aria-label="Hide compare tray"
             >
               <X className="h-4 w-4" />

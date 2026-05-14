@@ -212,6 +212,7 @@ const MobileAccordion = memo(function MobileAccordion({ title, links }: FooterSe
         onClick={toggle}
         className="flex w-full items-center justify-between py-3.5 text-left"
         aria-expanded={open}
+        aria-label={`Toggle ${title} menu`}
       >
         <span className="text-[15px] font-semibold text-primary-foreground/90">{title}</span>
         <ChevronDown

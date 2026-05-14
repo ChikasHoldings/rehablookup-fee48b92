@@ -66,9 +66,9 @@ export function CompareButton({
       type="button"
       onClick={handleClick}
       className={cn(
-        "transition-all duration-200 drop-shadow-lg",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded",
-        inCompare ? "text-primary" : "text-white/90 hover:text-primary",
+        "flex h-11 w-11 items-center justify-center rounded-md transition-all duration-200 drop-shadow-lg",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+        inCompare ? "text-primary" : "text-white/90 hover:text-primary hover:bg-white/10",
         className
       )}
       aria-pressed={inCompare}

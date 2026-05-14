@@ -405,7 +405,7 @@ export function Header({
           <div className="flex items-center gap-2 md:gap-3">
             <PrefetchLink
               to="/rehab-centers"
-              className="flex h-10 w-10 items-center justify-center rounded-lg md:hidden text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex h-11 w-11 items-center justify-center rounded-lg md:hidden text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               aria-label="Search facilities"
             >
               <Search className="h-5 w-5" />
@@ -413,7 +413,7 @@ export function Header({
 
             <button
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-lg md:hidden transition-all duration-200 bg-primary hover:bg-primary/90 active:scale-95",
+                "flex h-11 w-11 items-center justify-center rounded-lg md:hidden transition-all duration-200 bg-primary hover:bg-primary/90 active:scale-95",
                 mobileMenuOpen && "bg-primary/90"
               )}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -498,11 +498,11 @@ export function Header({
               <span className="font-display text-[15px] font-semibold tracking-tight text-foreground">Menu</span>
             </div>
             <button
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all active:scale-95"
+              className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all active:scale-95"
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close menu"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
