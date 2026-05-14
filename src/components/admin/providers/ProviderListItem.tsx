@@ -23,6 +23,9 @@ import {
   Unlock,
   Lock,
   Bell,
+  EyeOff,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -177,6 +180,47 @@ export function getStatusBadge(provider: Facility) {
   return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Rejected</Badge>;
 }
 
+/**
+ * Public-visibility badge — derived state showing whether the facility is
+ * actually live on the public directory right now. The public_facilities
+ * view hides any facility that is (1) not approved, (2) suspended, or
+ * (3) has a pending/under_review facility_claim_request. The two booleans
+ * we can see client-side are status and suspended; we pass in the pending-
+ * claim count from AdminProviders so the badge reflects all three.
+ */
+export function getVisibilityBadge(provider: Facility, pendingClaimCount: number) {
+  if (provider.suspended) {
+    return (
+      <Badge variant="outline" className="gap-1 text-rose-600 border-rose-200 bg-rose-50 dark:bg-rose-950/30">
+        <EyeOff className="h-3 w-3" />
+        Hidden — suspended
+      </Badge>
+    );
+  }
+  if (provider.status !== "approved") {
+    return (
+      <Badge variant="outline" className="gap-1 text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30">
+        <EyeOff className="h-3 w-3" />
+        Hidden — awaiting approval
+      </Badge>
+    );
+  }
+  if (pendingClaimCount > 0) {
+    return (
+      <Badge variant="outline" className="gap-1 text-rose-600 border-rose-200 bg-rose-50 dark:bg-rose-950/30">
+        <EyeOff className="h-3 w-3" />
+        Hidden — claim in review
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30">
+      <Eye className="h-3 w-3" />
+      Public
+    </Badge>
+  );
+}
+
 export function ProviderListItem({
   provider,
   isPro,
@@ -194,6 +238,12 @@ export function ProviderListItem({
   const isPlacement = provider.concierge_network_opted_in;
   const sourceBadge = getSourceBadge(provider);
   const claimBadge = getClaimBadge(provider);
+  const visibilityBadge = getVisibilityBadge(provider, pendingClaimCount);
+  // Inline approve/reject buttons appear next to the status pill when the
+  // facility is sitting in the approval queue (status='pending') AND the
+  // admin has moderator-or-above permission. Avoids the 3-click trip
+  // through the detail modal for the most common admin action.
+  const showInlineApprovalActions = canModerate && provider.status === "pending";
 
   return (
     <div
@@ -247,6 +297,7 @@ export function ProviderListItem({
             )}
             {sourceBadge}
             {claimBadge}
+            {visibilityBadge}
             {pendingClaimCount > 0 && (
               <Badge variant="outline" className="gap-1 text-rose-600 border-rose-200 bg-rose-50 dark:bg-rose-950/30">
                 <Bell className="h-3 w-3" />
@@ -271,8 +322,33 @@ export function ProviderListItem({
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {getStatusBadge(provider)}
+
+        {showInlineApprovalActions && (
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs gap-1 text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 dark:bg-emerald-950/30"
+              onClick={() => onStatusChange(provider.id, "approved")}
+              aria-label={`Approve ${provider.name} and publish to directory`}
+            >
+              <ThumbsUp className="h-3 w-3" />
+              Approve
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs gap-1 text-rose-700 border-rose-200 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 dark:bg-rose-950/30"
+              onClick={() => onStatusChange(provider.id, "rejected")}
+              aria-label={`Reject ${provider.name}`}
+            >
+              <ThumbsDown className="h-3 w-3" />
+              Reject
+            </Button>
+          </div>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>

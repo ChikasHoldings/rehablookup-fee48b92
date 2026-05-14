@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Download, Trash2, Loader2 } from "lucide-react";
+import { Search, Download, Trash2, Loader2, Info, ExternalLink, ShieldCheck, FileCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Button } from "@/components/ui/button";
@@ -593,11 +594,74 @@ export default function AdminProviders() {
       </div>
 
       {/* Interactive Stats Charts */}
-      <ProviderStatsCharts 
+      <ProviderStatsCharts
         statusCounts={statusCounts}
         onTabChange={handleTabChange}
         activeTab={activeTab}
       />
+
+      {/* Tab-specific workflow banner. Surfaces the moderation rules so
+          admins don't have to memorize them, and links the two action-queue
+          tabs to the canonical review surfaces. */}
+      {activeTab === "pending" && (
+        <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20">
+          <CardContent className="p-4 flex items-start gap-3">
+            <FileCheck className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                New facility submissions awaiting approval
+              </p>
+              <p className="text-xs text-amber-800/80 dark:text-amber-200/70 mt-0.5">
+                Each row below is a provider-submitted listing currently hidden from the public directory.
+                Approve to publish it, or reject to keep it hidden. Use the inline Approve / Reject buttons
+                for quick decisions, or open the row for the full review surface.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {activeTab === "pending_claims" && (
+        <Card className="border-rose-200 bg-rose-50/50 dark:bg-rose-950/20">
+          <CardContent className="p-4 flex items-start gap-3">
+            <ShieldCheck className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-rose-900 dark:text-rose-200">
+                SAMHSA listings under active claim review
+              </p>
+              <p className="text-xs text-rose-800/80 dark:text-rose-200/70 mt-0.5">
+                Each row below is currently <strong>hidden from the public directory</strong> because a
+                provider has filed a claim awaiting your review. Use the Claim Review Panel to inspect
+                evidence, verify the claimant, and approve or reject the claim — once approved, the
+                facility reappears in the public directory under the claimant's ownership.
+              </p>
+              <Button asChild size="sm" variant="default" className="gap-1.5 mt-2 bg-rose-600 hover:bg-rose-700">
+                <Link to="/admin/claims">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Open Claim Review Panel
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {activeTab === "samhsa" && (
+        <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+          <CardContent className="p-4 flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                SAMHSA bulk-imported listings
+              </p>
+              <p className="text-xs text-blue-800/80 dark:text-blue-200/70 mt-0.5">
+                These facilities were imported from the SAMHSA national directory and are
+                <strong> visible to the public</strong> so providers can find and claim them. When a
+                provider files a claim, the listing is hidden from the public directory until you
+                approve or reject the claim in the Claim Review Panel.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search + Actions */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
