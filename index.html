@@ -396,7 +396,15 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', '%VITE_GA_MEASUREMENT_ID%');
+      // send_page_view:false — middleware rewrites every human visitor to "/"
+      // so the SPA shell loads on every deep URL. gtag's default auto-page_view
+      // would fire here (URL: the user's deep path, title: still the index.html
+      // homepage title before React/helmet swap it), then RouteChangeTracker
+      // would fire a second page_view on mount once helmet has set the right
+      // title — double-counting every initial load. Disabling auto and letting
+      // RouteChangeTracker own page_view firing fixes the double-count and
+      // ensures every page_view ships with the correct page_title.
+      gtag('config', '%VITE_GA_MEASUREMENT_ID%', { send_page_view: false });
     </script>
     <!-- End Google Analytics 4 -->
   </head>

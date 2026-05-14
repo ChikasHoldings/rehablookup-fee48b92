@@ -4,28 +4,37 @@ import { useLocation } from "react-router-dom";
 /**
  * RouteChangeTracker
  *
- * Fires a GA4 `page_view` event on every client-side route change.
+ * Fires a GA4 `page_view` event on every navigation, including initial load.
  *
- * GA4's default `gtag('config', 'G-MM5K8398LY')` only fires once on the
- * initial hard page load. For a React SPA using client-side routing, we must
- * manually push a `page_view` event to the dataLayer on every navigation so
- * that GA4 records each virtual page view accurately.
+ * index.html disables gtag's auto-page_view via `send_page_view:false`, so
+ * this component is the SINGLE source of `page_view` events. That avoids
+ * double-counting (auto-fire + this effect) and lets us ship the correct
+ * `page_title` after react-helmet-async has committed the title swap.
  *
- * This component is rendered inside <BrowserRouter> in App.tsx so that
- * `useLocation` has access to the router context.
+ * The deferral (rAF + microtask) is intentional: useEffect runs after React
+ * commits, but helmet's mutation of <title> is itself a useEffect — when
+ * both useEffects run in the same flush, ordering between them is not
+ * guaranteed. Deferring to the next frame guarantees document.title has
+ * settled to the page-specific title before we read it for page_title.
+ *
+ * Mounted inside <BrowserRouter> in App.tsx so `useLocation` works.
  */
 export function RouteChangeTracker() {
   const location = useLocation();
 
   useEffect(() => {
-    // Guard: only fire if gtag is available (GA4 script loaded)
     if (typeof window.gtag !== "function") return;
 
-    window.gtag("event", "page_view", {
-      page_path: location.pathname + location.search,
-      page_location: window.location.href,
-      page_title: document.title,
+    const path = location.pathname + location.search;
+    const href = window.location.href;
+    const raf = requestAnimationFrame(() => {
+      window.gtag("event", "page_view", {
+        page_path: path,
+        page_location: href,
+        page_title: document.title,
+      });
     });
+    return () => cancelAnimationFrame(raf);
   }, [location.pathname, location.search]);
 
   return null;

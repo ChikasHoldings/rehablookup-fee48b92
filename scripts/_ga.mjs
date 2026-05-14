@@ -12,6 +12,10 @@ export const GA_MEASUREMENT_ID =
 
 // Inline snippet used in <head> of every prerendered SEO page. Standard
 // GA4 boilerplate.
+// NOTE: send_page_view stays at its default (true) here, unlike in
+// index.html. These prerendered pages are static HTML served to crawlers
+// and direct hits — they do NOT bootstrap React, so RouteChangeTracker
+// never mounts and the auto page_view is the only one we get.
 export const gtagSnippet = (id = GA_MEASUREMENT_ID) =>
   `  <script async src="https://www.googletagmanager.com/gtag/js?id=${id}"></script>\n` +
   `  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${id}');</script>`;
