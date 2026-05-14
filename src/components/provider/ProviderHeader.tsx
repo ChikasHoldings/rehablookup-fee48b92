@@ -219,6 +219,8 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           <img
             src={logoDarkBg}
             alt="RehabLookup"
+            width={150}
+            height={36}
             className="h-6 sm:h-7 md:h-8 w-auto"
           />
         </div>

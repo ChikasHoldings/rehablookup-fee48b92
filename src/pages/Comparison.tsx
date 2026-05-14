@@ -125,6 +125,8 @@ function FacilityHeader({
           <img
             src={facility.logo_url}
             alt={`${facility.name} logo`}
+            width={48}
+            height={48}
             className="h-10 w-10 sm:h-12 sm:w-12 rounded-md object-contain bg-white border border-border shrink-0"
             loading="lazy"
           />

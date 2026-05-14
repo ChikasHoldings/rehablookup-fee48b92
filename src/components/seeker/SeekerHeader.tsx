@@ -214,6 +214,8 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
             <img
               src={logoDarkBg}
               alt="RehabLookup"
+              width={150}
+              height={36}
               className="h-6 sm:h-7 md:h-9 w-auto"
             />
           </Link>
