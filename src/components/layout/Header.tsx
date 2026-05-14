@@ -227,7 +227,13 @@ export function Header({
       {openMegaMenu && (
         <div className="fixed inset-0 z-40" onClick={() => setOpenMegaMenu(null)} />
       )}
-      <header className="fixed top-0 left-0 right-0 z-50 w-full border-b bg-background border-border will-change-transform" style={{ contain: 'layout style' }}>
+      {/* sticky (was: fixed) — sticky keeps the header in normal flow so the
+          InternationalBanner above it doesn't create a 44px gap between the
+          fixed header and the hero on non-US sessions. Behavior on scroll is
+          identical: header pins to viewport top. getBoundingClientRect()
+          still returns viewport-relative coordinates so the mega-menu
+          positioning below is unaffected. */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background border-border will-change-transform" style={{ contain: 'layout style' }}>
         <div className="container flex h-[68px] items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
@@ -443,8 +449,8 @@ export function Header({
           </div>
         </div>
       </header>
-      {/* Spacer to prevent content from being hidden behind fixed header */}
-      <div className="h-[68px] w-full" />
+      {/* No spacer needed — header is sticky and takes normal flow space.
+          (Was h-[68px] when header was position: fixed.) */}
 
       {/* Mobile Menu Overlay */}
       <div 
