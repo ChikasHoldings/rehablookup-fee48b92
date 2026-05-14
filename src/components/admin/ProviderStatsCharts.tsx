@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, Cell } from "recharts";
-import { Building2, Crown, Shield, AlertTriangle, Handshake, CheckCircle } from "lucide-react";
+import { Building2, Crown, Shield, AlertTriangle, Handshake, CheckCircle, Database, Lock, Unlock, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
@@ -14,6 +14,14 @@ interface ProviderStatsChartsProps {
     suspended: number;
     pro: number;
     placement: number;
+    /** Bulk-imported SAMHSA facilities (data_source = "samhsa_import"). */
+    samhsa?: number;
+    /** Facilities with no owning provider account (user_id IS NULL). */
+    unclaimed?: number;
+    /** Facilities owned by a provider account (user_id IS NOT NULL). */
+    claimed?: number;
+    /** Open facility_claim_requests awaiting admin review. */
+    pendingClaims?: number;
   } | undefined;
   onTabChange: (tab: string) => void;
   activeTab: string;
@@ -149,6 +157,49 @@ export function ProviderStatsCharts({ statusCounts, onTabChange, activeTab }: Pr
               activeTab={activeTab}
               onTabChange={onTabChange}
               variant="primary"
+            />
+          </div>
+
+          <Separator orientation="vertical" className="h-auto" />
+
+          {/* Source & Claim Stats — distinguishes the bulk SAMHSA import from
+              provider-owned listings and surfaces the claim review queue. */}
+          <div className="flex items-center gap-0.5 p-3">
+            <StatItem
+              label="SAMHSA"
+              value={statusCounts?.samhsa || 0}
+              icon={Database}
+              tab="samhsa"
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+              variant="default"
+            />
+            <StatItem
+              label="Unclaimed"
+              value={statusCounts?.unclaimed || 0}
+              icon={Unlock}
+              tab="unclaimed"
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+              variant="warning"
+            />
+            <StatItem
+              label="Claimed"
+              value={statusCounts?.claimed || 0}
+              icon={Lock}
+              tab="claimed"
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+              variant="success"
+            />
+            <StatItem
+              label="Claim Queue"
+              value={statusCounts?.pendingClaims || 0}
+              icon={Bell}
+              tab="pending_claims"
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+              variant="destructive"
             />
           </div>
 
