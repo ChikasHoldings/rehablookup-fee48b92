@@ -90,22 +90,59 @@ export default function AdminProviders() {
     });
   };
 
+  // Bulk delete walks the selected facility IDs sequentially through the
+  // edge function. We track failures explicitly (not just silently dropping
+  // them from the success count) so the admin sees exactly which rows
+  // didn't delete — critical when a partial batch fails and the admin
+  // assumes everything succeeded.
   const handleBulkDelete = async () => {
     setBulkDeleting(true);
+    const results: { id: string; ok: boolean; message?: string }[] = [];
+    const ids = [...selectedIds];
+    const idToName: Record<string, string> = {};
+    for (const p of providers || []) idToName[p.id] = p.name;
     try {
-      let successCount = 0;
-      for (const facilityId of selectedIds) {
-        const { error } = await supabase.functions.invoke("admin-delete-provider", {
-          body: { facilityId, deleteUser: false },
-        });
-        if (!error) successCount++;
+      for (const facilityId of ids) {
+        try {
+          const { error } = await supabase.functions.invoke("admin-delete-provider", {
+            body: { facilityId, deleteUser: false },
+          });
+          results.push({
+            id: facilityId,
+            ok: !error,
+            message: error?.message,
+          });
+        } catch (err: any) {
+          results.push({ id: facilityId, ok: false, message: err?.message ?? "Unknown error" });
+        }
       }
-      toast.success(`Deleted ${successCount} provider(s)`);
-      setSelectedIds(new Set());
+
+      const successes = results.filter((r) => r.ok);
+      const failures = results.filter((r) => !r.ok);
+
+      if (failures.length === 0) {
+        toast.success(`Deleted ${successes.length} provider(s)`);
+        setSelectedIds(new Set());
+      } else if (successes.length === 0) {
+        toast.error(
+          `Bulk delete failed — 0 of ${ids.length} succeeded. First error: ${failures[0].message ?? "unknown"}`,
+          { duration: 10000 },
+        );
+        // Keep the selection so the admin can retry without re-selecting.
+      } else {
+        const failedNames = failures
+          .slice(0, 3)
+          .map((f) => idToName[f.id] || f.id.slice(0, 8))
+          .join(", ");
+        toast.warning(
+          `Partial delete: ${successes.length} succeeded, ${failures.length} failed (${failedNames}${failures.length > 3 ? `, +${failures.length - 3} more` : ""}). Retry the failed rows manually.`,
+          { duration: 10000 },
+        );
+        // Narrow the selection to the failed rows so the admin can retry.
+        setSelectedIds(new Set(failures.map((f) => f.id)));
+      }
       setBulkDeleteOpen(false);
       invalidateProviderQueries();
-    } catch (err: any) {
-      toast.error("Bulk delete failed: " + (err.message || "Unknown error"));
     } finally {
       setBulkDeleting(false);
     }
@@ -364,6 +401,13 @@ export default function AdminProviders() {
   });
 
   // Update provider mutation
+  // Provider mutation. Hardened to:
+  //   • Verify the acting admin is still signed in BEFORE the DB write so
+  //     we never produce an audit-log entry with no admin_user_id and
+  //     never silently lose attribution.
+  //   • Surface email-send failures so admins see when an approved provider
+  //     wasn't notified (was silently swallowed before).
+  //   • Return a status flag so onSuccess can craft the right toast.
   const updateProvider = useMutation({
     mutationFn: async ({
       id,
@@ -373,52 +417,73 @@ export default function AdminProviders() {
       id: string;
       updates: Partial<Facility>;
       actionType: string;
-    }) => {
-      const { data: facility } = await supabase
+    }): Promise<{ approvalEmailSent?: boolean }> => {
+      // 1. Capture acting admin upfront. If the session expired or RLS
+      //    will reject us, fail loudly here rather than after the write.
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw new Error(`Could not verify admin session: ${userErr.message}`);
+      const adminUserId = userData.user?.id;
+      if (!adminUserId) throw new Error("Sign-in expired — please log back in.");
+
+      const { data: facility, error: fetchErr } = await supabase
         .from("facilities")
         .select("name, user_id, status")
         .eq("id", id)
         .single();
+      if (fetchErr) throw fetchErr;
 
       const { error } = await supabase.from("facilities").update(updates).eq("id", id);
       if (error) throw error;
 
+      // 2. Send approval email when status transitions to approved. Return
+      //    the send status so onSuccess can warn admins on failure.
+      let approvalEmailSent: boolean | undefined;
       if (updates.status === "approved" && facility && facility.status !== "approved") {
         try {
-          await supabase.functions.invoke("send-approval-email", {
+          const { error: mailErr } = await supabase.functions.invoke("send-approval-email", {
             body: {
               facilityId: id,
               facilityName: facility.name,
               userId: facility.user_id,
             },
           });
+          approvalEmailSent = !mailErr;
+          if (mailErr) console.warn("[AdminProviders] approval email failed", mailErr);
         } catch (emailError) {
-          console.error("Failed to send approval email:", emailError);
+          approvalEmailSent = false;
+          console.warn("[AdminProviders] approval email exception", emailError);
         }
       }
 
+      // 3. Audit log — non-fatal on failure but we now know the admin id.
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) {
-          await supabase.from("admin_audit_log").insert({
-            admin_user_id: user.id,
-            action_type: actionType,
-            target_type: "facility",
-            target_id: id,
-            details: updates,
-          });
-        }
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: adminUserId,
+          action_type: actionType,
+          target_type: "facility",
+          target_id: id,
+          details: { ...updates, prev_status: facility?.status ?? null },
+        });
       } catch (auditError) {
-        console.error("Failed to log admin action:", auditError);
+        console.warn("[AdminProviders] audit log write failed", auditError);
       }
+
+      return { approvalEmailSent };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       invalidateProviderQueries();
-      toast.success("Provider updated successfully");
+      if (result.approvalEmailSent === false) {
+        toast.warning(
+          "Provider approved, but the notification email failed to send. The provider will not know they're approved until you message them directly.",
+          { duration: 10000 },
+        );
+      } else {
+        toast.success("Provider updated successfully");
+      }
     },
     onError: (error) => {
       console.error("Provider update failed:", error);
-      toast.error("Failed to update provider");
+      toast.error(error instanceof Error ? error.message : "Failed to update provider");
     },
   });
 

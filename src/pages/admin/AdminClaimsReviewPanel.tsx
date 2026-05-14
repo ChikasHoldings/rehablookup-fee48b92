@@ -268,6 +268,125 @@ function AdminClaimsReviewPanel() {
   // Reject modal
   const [rejectTarget, setRejectTarget] = useState<ClaimRow | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  // Claim IDs where the side-effect notification email failed. The DB write
+  // already committed, so we surface a per-row "Resend notification" button
+  // and let the admin retry. Cleared when fetchClaims() refreshes.
+  const [emailFailedForClaimId, setEmailFailedForClaimId] = useState<string | null>(null);
+  const [resendPending, setResendPending] = useState<string | null>(null);
+
+  /**
+   * Atomic state transition for a facility_claim_request.
+   *
+   * Hardened against four production failure modes:
+   *   1. Lost admin identity — fetches the acting admin BEFORE the update so
+   *      reviewed_by is always populated and the audit log records who acted.
+   *   2. Race conditions — uses an optimistic-concurrency `.in('status',
+   *      validFromStatuses)` predicate so the update only takes effect when
+   *      the row is still in an expected state. If a second admin got there
+   *      first, the update affects 0 rows and we throw a clear error
+   *      ("already actioned").
+   *   3. Missing audit trail — writes an admin_audit_log row for every
+   *      transition so we can reconstruct who approved/rejected which
+   *      claim for compliance + dispute resolution.
+   *   4. Email failure isolation — if the post-write email side-effect
+   *      fails, the DB transition is already committed; we return
+   *      `{ emailSent: false, mailErr }` and let the caller surface a
+   *      retry UI instead of failing the whole approval.
+   */
+  async function transitionClaim(opts: {
+    claim: ClaimRow;
+    toStatus: "under_review" | "approved" | "rejected" | "withdrawn";
+    validFromStatuses: string[];
+    extraFields?: Record<string, unknown>;
+    actionLabel: string;
+    sendEmailFn?: string;
+  }): Promise<{ emailSent?: boolean; mailErr?: unknown }> {
+    const { claim, toStatus, validFromStatuses, extraFields, actionLabel, sendEmailFn } = opts;
+
+    // 1. Capture acting admin BEFORE the mutation.
+    const { data: userData, error: userErr } = await supabase.auth.getUser();
+    if (userErr) throw new Error(`Could not verify admin session: ${userErr.message}`);
+    const adminUserId = userData.user?.id;
+    if (!adminUserId) throw new Error("Sign-in expired — please log back in.");
+
+    // 2. Conditional update with optimistic-concurrency guard. The `.in(...)`
+    //    predicate ensures we never blindly overwrite a row a second admin
+    //    already actioned. `.select('id')` lets us tell whether 0 rows
+    //    matched (which means: someone got here first or the claim was
+    //    withdrawn).
+    const { data: updated, error: updErr } = await supabase
+      .from("facility_claim_requests")
+      .update({
+        status: toStatus,
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: adminUserId,
+        ...(extraFields ?? {}),
+      })
+      .eq("id", claim.id)
+      .in("status", validFromStatuses)
+      .select("id");
+    if (updErr) throw updErr;
+    if (!updated || updated.length === 0) {
+      throw new Error(
+        "This claim was already actioned by another admin or is no longer in a reviewable state. Refresh to see the current status.",
+      );
+    }
+
+    // 3. Audit log — non-fatal on failure but logged because compliance
+    //    requires the trail. We DON'T await blockingly with a hard throw;
+    //    a failed audit-log insert shouldn't block the legitimate DB state.
+    try {
+      await supabase.from("admin_audit_log").insert({
+        admin_user_id: adminUserId,
+        action_type: actionLabel,
+        target_type: "facility_claim_request",
+        target_id: claim.id,
+        details: {
+          facility_id: claim.facility_id,
+          claimant_user_id: claim.claimant_user_id,
+          to_status: toStatus,
+          from_status: claim.status,
+          ...(extraFields ?? {}),
+        },
+      });
+    } catch (auditErr) {
+      console.warn("[AdminClaims] audit log write failed", auditErr);
+    }
+
+    // 4. Side-effect email. Caller chooses whether to surface a banner
+    //    when emailSent === false so the admin can manually resend.
+    if (sendEmailFn) {
+      try {
+        const { error: mailErr } = await supabase.functions.invoke(sendEmailFn, {
+          body: { claimRequestId: claim.id },
+        });
+        if (mailErr) return { emailSent: false, mailErr };
+        return { emailSent: true };
+      } catch (mailErr) {
+        return { emailSent: false, mailErr };
+      }
+    }
+    return {};
+  }
+
+  // Manually re-trigger the approval email for a claim where the side-effect
+  // failed during the original transition. Used by the "Resend" banner button.
+  async function resendApprovalEmail(claim: ClaimRow) {
+    setResendPending(claim.id);
+    try {
+      const fn = claim.status === "approved" ? "send-claim-approval-email" : "send-claim-rejection-email";
+      const { error } = await supabase.functions.invoke(fn, {
+        body: { claimRequestId: claim.id },
+      });
+      if (error) throw error;
+      toast.success("Notification email resent.");
+      setEmailFailedForClaimId(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Resend failed");
+    } finally {
+      setResendPending(null);
+    }
+  }
 
   // Cache of signed URLs for claim-evidence documents, keyed by storage path.
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
@@ -394,14 +513,12 @@ function AdminClaimsReviewPanel() {
   async function markUnderReview(claim: ClaimRow) {
     setActionPending(claim.id);
     try {
-      const { error: updErr } = await supabase
-        .from("facility_claim_requests")
-        .update({
-          status: "under_review",
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", claim.id);
-      if (updErr) throw updErr;
+      await transitionClaim({
+        claim,
+        toStatus: "under_review",
+        validFromStatuses: ["pending"],
+        actionLabel: "claim_under_review",
+      });
       toast.success("Marked under review");
       await fetchClaims();
     } catch (err) {
@@ -417,41 +534,28 @@ function AdminClaimsReviewPanel() {
     const claim = approveTarget;
     setActionPending(claim.id);
     try {
-      const { error: updErr } = await supabase
-        .from("facility_claim_requests")
-        .update({
-          status: "approved",
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", claim.id);
-      if (updErr) throw updErr;
-
-      // Side-effect: send approval email to the claimant. The DB trigger
-      // already handled ownership transfer + enrichment materialization
-      // by the time this resolves. If the email send fails (network, Resend
-      // hiccup, etc.) we surface a warning toast but don't unwind the
-      // approval — the DB state is the source of truth.
-      try {
-        const { error: mailErr } = await supabase.functions.invoke(
-          "send-claim-approval-email",
-          { body: { claimRequestId: claim.id } },
-        );
-        if (mailErr) {
-          console.warn("[AdminClaims] approval email failed", mailErr);
-          toast.warning(
-            "Approval saved but the notification email failed to send. You may want to message the claimant directly.",
-          );
-        }
-      } catch (mailErr) {
-        console.warn("[AdminClaims] approval email exception", mailErr);
+      const result = await transitionClaim({
+        claim,
+        toStatus: "approved",
+        validFromStatuses: ["pending", "under_review"],
+        actionLabel: "claim_approved",
+        // After the DB write, fire the approval email. The DB trigger has
+        // already transferred ownership by the time we get here.
+        sendEmailFn: "send-claim-approval-email",
+      });
+      if (result.emailSent === false) {
+        // Email failed but DB write committed — surface a persistent banner
+        // with a manual resend button instead of a transient warning toast.
+        setEmailFailedForClaimId(claim.id);
         toast.warning(
-          "Approval saved but the notification email failed to send. You may want to message the claimant directly.",
+          "Approval saved. The notification email could not be sent — use the Resend button on the claim row to retry.",
+          { duration: 8000 },
+        );
+      } else {
+        toast.success(
+          `Claim approved — ${claim.facilities?.name ?? "facility"} transferred to ${claim.claimant_name}`,
         );
       }
-
-      toast.success(
-        `Claim approved — ${claim.facilities?.name ?? "facility"} transferred to ${claim.claimant_name}`,
-      );
       setApproveTarget(null);
       await fetchClaims();
     } catch (err) {
@@ -472,37 +576,22 @@ function AdminClaimsReviewPanel() {
     }
     setActionPending(claim.id);
     try {
-      const { error: updErr } = await supabase
-        .from("facility_claim_requests")
-        .update({
-          status: "rejected",
-          rejection_reason: reason,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", claim.id);
-      if (updErr) throw updErr;
-
-      // Side-effect: send rejection email so the claimant understands why
-      // and can decide whether to retry. Non-fatal on failure.
-      try {
-        const { error: mailErr } = await supabase.functions.invoke(
-          "send-claim-rejection-email",
-          { body: { claimRequestId: claim.id } },
-        );
-        if (mailErr) {
-          console.warn("[AdminClaims] rejection email failed", mailErr);
-          toast.warning(
-            "Rejection saved but the notification email failed to send.",
-          );
-        }
-      } catch (mailErr) {
-        console.warn("[AdminClaims] rejection email exception", mailErr);
+      const result = await transitionClaim({
+        claim,
+        toStatus: "rejected",
+        validFromStatuses: ["pending", "under_review"],
+        extraFields: { rejection_reason: reason },
+        actionLabel: "claim_rejected",
+        sendEmailFn: "send-claim-rejection-email",
+      });
+      if (result.emailSent === false) {
         toast.warning(
           "Rejection saved but the notification email failed to send.",
+          { duration: 8000 },
         );
+      } else {
+        toast.success("Claim rejected");
       }
-
-      toast.success("Claim rejected");
       setRejectTarget(null);
       setRejectionReason("");
       await fetchClaims();
@@ -627,6 +716,21 @@ function AdminClaimsReviewPanel() {
                       <Badge variant={STATUS_VARIANTS[claim.status]}>
                         {STATUS_LABELS[claim.status]}
                       </Badge>
+                      {emailFailedForClaimId === claim.id && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="ml-2 h-7 text-xs gap-1 border-amber-300 text-amber-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            resendApprovalEmail(claim);
+                          }}
+                          disabled={resendPending === claim.id}
+                          aria-label={`Resend notification email to ${claim.claimant_name}`}
+                        >
+                          {resendPending === claim.id ? "Sending…" : "Resend email"}
+                        </Button>
+                      )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatTimestamp(claim.created_at)}
