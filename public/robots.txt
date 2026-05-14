@@ -386,6 +386,7 @@ Crawl-delay: 2
 
 Sitemap: https://rehablookup.com/sitemap-index.xml
 Sitemap: https://rehablookup.com/sitemap.xml
+Sitemap: https://rehablookup.com/sitemap-extras.xml
 Sitemap: https://rehablookup.com/sitemap-facilities.xml
 
 # Host: directive removed — deprecated by Google + Bing. www → apex is

@@ -142,6 +142,21 @@
       "statusCode": 301
     },
     {
+      "source": "/provider-signup",
+      "destination": "/auth/signup",
+      "statusCode": 301
+    },
+    {
+      "source": "/verify-insurance",
+      "destination": "/insurance-verification",
+      "statusCode": 301
+    },
+    {
+      "source": "/vob",
+      "destination": "/insurance-verification",
+      "statusCode": 301
+    },
+    {
       "source": "/provider-reset-password",
       "destination": "/provider/reset-password",
       "statusCode": 301
