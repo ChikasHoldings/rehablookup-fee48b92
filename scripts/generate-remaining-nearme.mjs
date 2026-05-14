@@ -8,6 +8,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
+import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
@@ -86,52 +87,36 @@ function buildHtml(slug, title, desc) {
   <meta name="twitter:image" content="https://rehablookup.com/og-image.jpg">
   <link rel="icon" type="image/png" href="/favicon.png">
   <script type="application/ld+json">${bcSchema}</script>
-  <style>
-    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:32px 20px;color:#1a2b4a;line-height:1.7}
-    h1{font-size:2rem;color:#1B365D;margin-bottom:12px}
-    h2{font-size:1.4rem;color:#1B365D;margin-top:28px}
-    p{color:#333;margin-bottom:16px}
-    a{color:#2563eb;text-decoration:none}
-    a:hover{text-decoration:underline}
-    .cta{background:#eff6ff;border:1px solid #bfdbfe;border-radius:.75rem;padding:1.5rem;margin:2rem 0;text-align:center}
-    .btn{display:inline-block;padding:.6rem 1.4rem;border-radius:.5rem;font-weight:600;background:#2563eb;color:#fff;margin:.25rem;text-decoration:none}
-    footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
-  </style>
+  ${seoStyles()}
   <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}',{send_page_view:true});</script>
 </head>
 <body>
-  <header style="padding:12px 0 20px;border-bottom:1px solid #e5e7eb;margin-bottom:20px">
-    <a href="/" style="font-weight:700;font-size:1.25rem;color:#1B365D;text-decoration:none">RehabLookup</a>
-  </header>
-  <main>
-    <h1>${safeTitle}</h1>
-    <p>${safeDesc}</p>
-    <h2>How to Find Treatment Near You</h2>
-    <p>Enter your city, zip code, or state to find nearby facilities. Filter by insurance, treatment type, and amenities to find the right program for your needs.</p>
-    <h2>Browse by State</h2>
-    <p>Select your state to find ${safeTitle.toLowerCase()} in your area:</p>
-    <p>
-      <a href="/${slug}/california">California</a> &middot;
-      <a href="/${slug}/florida">Florida</a> &middot;
-      <a href="/${slug}/texas">Texas</a> &middot;
-      <a href="/${slug}/new-york">New York</a> &middot;
-      <a href="/${slug}/ohio">Ohio</a> &middot;
-      <a href="/${slug}/pennsylvania">Pennsylvania</a> &middot;
-      <a href="/${slug}/illinois">Illinois</a> &middot;
-      <a href="/${slug}/georgia">Georgia</a>
-    </p>
-    <h2>Insurance Coverage</h2>
-    <p>Most major insurance plans cover addiction treatment under the Mental Health Parity and Addiction Equity Act. Use our free insurance verification tool to check your benefits before starting treatment.</p>
-    <div class="cta">
-      <h2>Search Treatment Centers Now</h2>
-      <p>Find accredited rehab centers in your area.</p>
-      <a href="/search-results" class="btn">Search Centers</a>
-      <a href="/concierge" class="btn" style="background:#fff;color:#2563eb;border:1px solid #2563eb">Get Free Help</a>
+  ${seoHeader()}
+  <main class="rl-main">
+    <div class="rl-container">
+      <h1>${safeTitle}</h1>
+      <p>${safeDesc}</p>
+      <h2>How to Find Treatment Near You</h2>
+      <p>Enter your city, zip code, or state to find nearby facilities. Filter by insurance, treatment type, and amenities to find the right program for your needs.</p>
+      <h2>Browse by State</h2>
+      <p>Select your state to find ${safeTitle.toLowerCase()} in your area:</p>
+      <p>
+        <a href="/${slug}/california">California</a> &middot;
+        <a href="/${slug}/florida">Florida</a> &middot;
+        <a href="/${slug}/texas">Texas</a> &middot;
+        <a href="/${slug}/new-york">New York</a> &middot;
+        <a href="/${slug}/ohio">Ohio</a> &middot;
+        <a href="/${slug}/pennsylvania">Pennsylvania</a> &middot;
+        <a href="/${slug}/illinois">Illinois</a> &middot;
+        <a href="/${slug}/georgia">Georgia</a>
+      </p>
+      <h2>Insurance Coverage</h2>
+      <p>Most major insurance plans cover addiction treatment under the Mental Health Parity and Addiction Equity Act. Use our free insurance verification tool to check your benefits before starting treatment.</p>
+      ${seoCtaStrip()}
     </div>
-    <p><a href="/rehab-centers">Browse All States</a> &middot; <a href="/resources">Recovery Resources</a> &middot; <a href="/">Home</a></p>
   </main>
-  <footer><p>&copy; 2026 RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy Policy</a> &middot; <a href="/terms-of-service">Terms of Service</a></p></footer>
+  ${seoFooter()}
 </body>
 </html>`;
 }
