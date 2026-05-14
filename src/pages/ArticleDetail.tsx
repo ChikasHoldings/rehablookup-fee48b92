@@ -30,6 +30,7 @@ import {
 import { ArticleCategoryLinks } from "@/components/seo/ArticleCategoryLinks";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { getCanonicalCategoryFor } from "@/data/blogCategories";
+import { ArticleByline } from "@/components/articles/ArticleByline";
 import { 
   PillarContentLinks, 
   CrossCategoryLinks,
@@ -225,13 +226,13 @@ const ArticleDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_articles")
-        .select("id, title, slug, excerpt, content, author, author_date, category, category_label, image_url, read_time, published_at, created_at, updated_at, meta_title, meta_description, seo_keywords, featured, status")
+        .select("id, title, slug, excerpt, content, author, author_date, category, category_label, image_url, read_time, published_at, created_at, updated_at, meta_title, meta_description, seo_keywords, featured, status, author_id, medical_reviewer_id, last_medically_reviewed_at")
         .eq("slug", normalizedSlug)
         .eq("status", "published")
         .single();
-      
+
       if (error) throw error;
-      
+
       // Cast content from Json to ContentBlock[]
       return {
         ...data,
@@ -240,6 +241,43 @@ const ArticleDetail = () => {
     },
     enabled: !!normalizedSlug && !needsRedirect,
   });
+
+  // Author + medical reviewer (E-E-A-T trust signals). Both are optional;
+  // legacy rows fall back to the article.author freeform string.
+  const articleAny = article as (DBArticle & {
+    author_id?: string | null;
+    medical_reviewer_id?: string | null;
+    last_medically_reviewed_at?: string | null;
+  }) | undefined;
+  const personIds = useMemo(() => {
+    const ids: string[] = [];
+    if (articleAny?.author_id) ids.push(articleAny.author_id);
+    if (articleAny?.medical_reviewer_id) ids.push(articleAny.medical_reviewer_id);
+    return ids;
+  }, [articleAny?.author_id, articleAny?.medical_reviewer_id]);
+
+  const { data: people } = useQuery({
+    queryKey: ["article-people", personIds],
+    enabled: personIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_authors")
+        .select("id, slug, name, credentials, role, title, photo_url")
+        .in("id", personIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const authorPerson = useMemo(() => {
+    if (!articleAny?.author_id || !people) return null;
+    return people.find((p) => p.id === articleAny.author_id) ?? null;
+  }, [people, articleAny?.author_id]);
+
+  const reviewerPerson = useMemo(() => {
+    if (!articleAny?.medical_reviewer_id || !people) return null;
+    return people.find((p) => p.id === articleAny.medical_reviewer_id) ?? null;
+  }, [people, articleAny?.medical_reviewer_id]);
 
   // ENHANCED: Smart related articles using keyword/topic matching
   const { data: smartRelatedArticles } = useRelatedArticles(
@@ -495,6 +533,21 @@ const ArticleDetail = () => {
           // published_at, so Google never saw modifications.
           dateModified: article.updated_at || article.published_at || new Date().toISOString(),
           author: article.author,
+          authorPerson: authorPerson ? {
+            name: authorPerson.name,
+            slug: authorPerson.slug,
+            credentials: authorPerson.credentials,
+            title: authorPerson.title,
+            photo: authorPerson.photo_url,
+          } : undefined,
+          reviewer: reviewerPerson ? {
+            name: reviewerPerson.name,
+            slug: reviewerPerson.slug,
+            credentials: reviewerPerson.credentials,
+            title: reviewerPerson.title,
+            photo: reviewerPerson.photo_url,
+          } : undefined,
+          lastReviewedAt: articleAny?.last_medically_reviewed_at || undefined,
           url: `https://rehablookup.com/resources/${article.slug}`,
           keywords: article.seo_keywords || undefined,
           category: article.category_label,
@@ -531,22 +584,27 @@ const ArticleDetail = () => {
               {article.title}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <User className="h-4 w-4" />
-                {article.author}
-              </span>
-              {article.author_date && (
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  {article.author_date}
-                </span>
-              )}
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4" />
-                {article.read_time}
-              </span>
-            </div>
+            <ArticleByline
+              author={authorPerson ? {
+                slug: authorPerson.slug,
+                name: authorPerson.name,
+                credentials: authorPerson.credentials,
+                title: authorPerson.title,
+                photo_url: authorPerson.photo_url,
+              } : null}
+              authorFallback={article.author}
+              reviewer={reviewerPerson ? {
+                slug: reviewerPerson.slug,
+                name: reviewerPerson.name,
+                credentials: reviewerPerson.credentials,
+                title: reviewerPerson.title,
+                photo_url: reviewerPerson.photo_url,
+              } : null}
+              publishedAt={article.published_at || article.author_date}
+              updatedAt={article.updated_at}
+              lastMedicallyReviewedAt={articleAny?.last_medically_reviewed_at || null}
+              readTime={article.read_time}
+            />
           </div>
         </div>
       </div>
