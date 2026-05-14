@@ -15,6 +15,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
+import { fetchAllFacilities, groupByState, renderFacilityList } from "./_facility-data.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -556,6 +557,13 @@ async function generateCostAndComparisonPages() {
 
 // --- State Directory Pages (/rehab-centers/{state}) ---
 async function generateStatePages() {
+  // Pull all facilities once and group by state. After SAMHSA import this
+  // gives every state page a real list of accredited centers in the static
+  // HTML — no React-hydrate dependency for Googlebot first-pass crawl.
+  const allFacilities = await fetchAllFacilities();
+  const facilitiesByState = groupByState(allFacilities);
+  console.log(`[seo-html] state generator: ${allFacilities.length} facilities loaded across ${facilitiesByState.size} states`);
+
   for (const state of usStates) {
     const slug = stateToSlug(state);
     const title = `Rehab Centers in ${state}`;
@@ -563,6 +571,8 @@ async function generateStatePages() {
     const cityLinks = citiesInState.length
       ? `<h2>Cities in ${state}</h2><ul style="columns:2;list-style:disc;padding-left:20px">${citiesInState.map((c) => `<li><a href="/rehab-centers/${slug}/${c.slug}">${c.city}</a></li>`).join("")}</ul>`
       : "";
+    const stateFacilities = facilitiesByState.get(slug) ?? [];
+    const facilityList = renderFacilityList(stateFacilities, state);
     const html = generatePage({
       urlPath: `/rehab-centers/${slug}`,
       title,
@@ -570,6 +580,7 @@ async function generateStatePages() {
       metaDescription: `Find accredited rehab centers in ${state}. Compare inpatient, outpatient, and detox programs. Verify insurance coverage and start recovery today.`,
       h1: title,
       content: `<p>Browse verified addiction treatment facilities in ${state}. RehabLookup lists accredited rehab centers offering detox, inpatient, outpatient, and dual diagnosis programs across the state.</p>
+        ${facilityList}
         <h2>Treatment Options in ${state}</h2>
         <p>${state} offers a range of substance abuse treatment programs including medical detox, residential inpatient, intensive outpatient (IOP), partial hospitalization (PHP), and medication-assisted treatment (MAT).</p>
         <h2>Insurance Coverage</h2>
