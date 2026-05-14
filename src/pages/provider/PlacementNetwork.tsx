@@ -71,10 +71,6 @@ import {
 import { InternationalCandidatesTab } from "@/components/provider/international/InternationalCandidatesTab";
 import { cn } from "@/lib/utils";
 
-const PLACEMENT_FEES = {
-  flat_fee: { standard: 1000, pro: 800 },
-};
-
 const CARE_TYPES = [
   { value: "detox", label: "Detox" },
   { value: "inpatient", label: "Residential Inpatient" },
@@ -304,8 +300,10 @@ export default function ProviderPlacementNetworkPage() {
         throw new Error("Invalid availability status");
       }
 
-      // Validate agreement preference whitelist
-      const validPrefs = ["either", "flat_fee", "percentage"];
+      // Validate agreement preference whitelist. Keep the list in sync with
+      // the Select options below; "percentage" was removed from the UI in
+      // favor of flat-fee only, so it's no longer accepted here.
+      const validPrefs = ["either", "flat_fee"];
       if (!validPrefs.includes(profileForm.agreementPreference)) {
         throw new Error("Invalid agreement preference");
       }
@@ -567,9 +565,19 @@ export default function ProviderPlacementNetworkPage() {
                                 <CheckCircle2 className="h-4 w-4 text-primary" />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-sm font-semibold truncate">Case #{p.id.slice(0, 8).toUpperCase()}</p>
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm font-semibold truncate">Case #{p.id.slice(0, 8).toUpperCase()}</p>
+                                  {/* Origin chip: international vs domestic concierge.
+                                      RPC returns case_kind so the UI can render either
+                                      data source with the same shape. */}
+                                  {p.case_kind === "international" && (
+                                    <Badge variant="outline" className="border-blue-500/30 text-blue-600 text-[10px] px-1.5 py-0">
+                                      🌍 Int'l
+                                    </Badge>
+                                  )}
+                                </div>
                                 <p className="text-xs text-muted-foreground">
-                                  {p.user_name?.split(" ")[0] || "Client"} · {p.level_of_care ? p.level_of_care.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()) : "—"}
+                                  {p.user_name?.split(" ")[0] || "Client"} · {p.level_of_care ? p.level_of_care.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()) : (p.case_kind === "international" ? "International placement" : "—")}
                                 </p>
                               </div>
                             </div>

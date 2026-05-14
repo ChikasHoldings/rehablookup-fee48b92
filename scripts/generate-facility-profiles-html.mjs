@@ -25,6 +25,7 @@
 import { writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,13 +36,13 @@ const BASE_URL = "https://rehablookup.com";
 const PROJECT_URL = (
   process.env.SUPABASE_URL ??
   process.env.VITE_SUPABASE_URL ??
-  "https://plckxokpyiubuekvodtc.supabase.co"
+  "https://mldbxpntzcjalgjmwnqa.supabase.co"
 ).replace(/\/$/, "");
 const ANON_KEY =
   process.env.SUPABASE_ANON_KEY ??
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
   // Project anon key — safe to commit; matches src/integrations/supabase/client.ts
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsY2t4b2tweWl1YnVla3ZvZHRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MjU5NjUsImV4cCI6MjA4MTMwMTk2NX0.vuHH51JTLDT3fVmHQeEBKsGZqu5qkCUjCtPiF_NOQx0";
+  "sb_publishable_tHLCRbeUrsu7EmMlCR0n6g_ygNXmMYP";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -417,8 +418,8 @@ a:hover{text-decoration:underline}
 .faq-item p{margin:0;color:#333}
 footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
 </style>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2VB6C1X2MQ');</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
 <header><a href="/" aria-label="RehabLookup Home">RehabLookup</a></header>

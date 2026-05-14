@@ -1,4 +1,4 @@
-import { useParams, Link, useLocation, Navigate } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import CenterNotFound from "@/pages/CenterNotFound";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,11 +9,14 @@ import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { buildProfileRelatedLinks } from "@/lib/profileRelatedLinks";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RatingBadge } from "@/components/ui/RatingBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
+import { FacilityTourRequestModal } from "@/components/facility/FacilityTourRequestModal";
 import { ProfileConciergeRescue } from "@/components/profile/ProfileConciergeRescue";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
+import { useFavorites } from "@/hooks/useFavorites";
 import {
   MapPin,
   Phone,
@@ -33,6 +36,7 @@ import {
   MessageSquare,
   Flag,
   Calendar,
+  CalendarCheck,
   Bed,
   Mail,
   Award,
@@ -46,9 +50,10 @@ import {
   Handshake,
   GlobeIcon,
   Scale,
+  Info,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
 import { TrustBadgesInline } from "@/components/trust/TrustBadgesSection";
@@ -66,11 +71,7 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import {
-  fetchPublicFacilitiesSnapshot,
-  findPublicFacilityBySlug,
-  getCachedPublicFacilitiesSnapshot,
-} from "@/lib/publicFacilitiesSnapshot";
+import { loadFacilityBySlug } from "@/hooks/useFacilityBySlug";
 
 interface FacilityData {
   id: string;
@@ -93,7 +94,7 @@ interface FacilityData {
   logo_url: string | null;
   gallery_urls: string[] | null;
   status: string;
-  user_id: string;
+  user_id: string | null;
   updated_at: string;
   concierge_network_opted_in: boolean | null;
   accepts_international_patients: boolean | null;
@@ -102,6 +103,13 @@ interface FacilityData {
   facility_age_groups: { age_group: string }[];
   facility_credentials: { accreditations: string | null; licensing_info: string | null }[];
   facility_accreditations: { accreditation_type: string; verified: boolean }[];
+  // Optional claim-state flags. Populated when the row comes from the
+  // public_facilities fallback path (slug not present in the static
+  // snapshot, e.g. SAMHSA-imported listings). When set, the supplemental
+  // claim-flags useEffect short-circuits to avoid a duplicate fetch.
+  is_claimed?: boolean;
+  is_pro?: boolean;
+  is_premium_visible?: boolean;
 }
 
 function getInitials(name: string): string {
@@ -212,6 +220,7 @@ function TruncatedDescription({ text }: { text: string }) {
 const CenterProfile = () => {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const contactFormRef = useRef<HTMLDivElement>(null);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
@@ -220,6 +229,11 @@ const CenterProfile = () => {
   const [logoError, setLogoError] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [tourModalOpen, setTourModalOpen] = useState(false);
+  // Anon and authed visitors can save a facility from the public profile.
+  // Guest favorites are kept in localStorage and migrated to user_favorites
+  // on signin via the useFavorites hook.
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [reportImageOpen, setReportImageOpen] = useState(false);
   const [reportImageUrl, setReportImageUrl] = useState<string>("");
   const [reportImageType, setReportImageType] = useState<"logo" | "gallery">("gallery");
@@ -359,22 +373,14 @@ const CenterProfile = () => {
   const { data: facility, isLoading, isFetching, isFetched, error } = useQuery({
     queryKey: ["facility", slug, currentUserId],
     queryFn: async (): Promise<FacilityData | null> => {
-      const cachedFacilities = getCachedPublicFacilitiesSnapshot();
-      let snapshotRow = findPublicFacilityBySlug(cachedFacilities, slug);
-      let publicErr: Error | null = null;
+      // Shared loader: snapshot → public_facilities fallback → claim flags.
+      // The hook handles all three paths in one go; see useFacilityBySlug.
+      const loaded = await loadFacilityBySlug(slug!);
 
-      if (!snapshotRow) {
-        try {
-          const snapshotFacilities = await fetchPublicFacilitiesSnapshot();
-          snapshotRow = findPublicFacilityBySlug(snapshotFacilities, slug);
-        } catch (error) {
-          publicErr = error instanceof Error
-            ? error
-            : new Error("Failed to load public facility snapshot");
-        }
-      }
-
-      // 2) Owner-scoped read of the base table (RLS allows owners) — gets PII fields
+      // Owner-scoped read of the base table (RLS allows owners) — picks up
+      // PII fields the public path masks (email, user_id, etc.). When the
+      // current user IS the owner, this is the authoritative source; for
+      // anon visitors it returns null and we fall back to `loaded.facility`.
       let ownedRow: any = null;
       if (currentUserId) {
         const { data } = await supabase
@@ -391,39 +397,10 @@ const CenterProfile = () => {
         ownedRow = data;
       }
 
-      const publicRow = snapshotRow
-        ? {
-            id: snapshotRow.id,
-            name: snapshotRow.name,
-            slug: snapshotRow.slug,
-            city: snapshotRow.city,
-            state: snapshotRow.state,
-            zip_code: snapshotRow.zipCode,
-            address: snapshotRow.address,
-            phone: snapshotRow.phone,
-            website: snapshotRow.website,
-            description: snapshotRow.description,
-            facility_type: snapshotRow.facilityType,
-            gender_served: snapshotRow.genderServed,
-            bed_count: snapshotRow.bedCount,
-            featured: snapshotRow.featured,
-            verified: snapshotRow.verified,
-            year_established: snapshotRow.yearEstablished,
-            logo_url: snapshotRow.logoUrl,
-            gallery_urls: snapshotRow.galleryUrls,
-            status: snapshotRow.status,
-            updated_at: snapshotRow.updatedAt ?? new Date().toISOString(),
-            accepts_international_patients: snapshotRow.acceptsInternationalPatients,
-          }
-        : null;
+      const base = ownedRow ?? loaded.facility;
+      if (!base) return null;
 
-      const base = ownedRow ?? publicRow;
-      if (!base) {
-        if (publicErr) throw publicErr;
-        return null;
-      }
-
-      // 3) Fetch joined detail tables (anon-readable) in parallel
+      // Joined detail tables (anon-readable) in parallel.
       const facilityId = base.id as string;
       const [services, insurance, ageGroups, credentials, accreditations] = await Promise.all([
         supabase.from("facility_services").select("service_name").eq("facility_id", facilityId),
@@ -435,16 +412,25 @@ const CenterProfile = () => {
 
       return {
         ...base,
-        // Ensure PII-only fields are at least defined for downstream typing
+        // Ensure PII-only fields are at least defined for downstream typing.
         email: ownedRow?.email ?? null,
         user_id: ownedRow?.user_id ?? null,
         concierge_network_opted_in: ownedRow?.concierge_network_opted_in ?? null,
-        accepts_international_patients: ownedRow?.accepts_international_patients ?? null,
+        accepts_international_patients:
+          ownedRow?.accepts_international_patients ??
+          base.accepts_international_patients ??
+          null,
         facility_services: services.data ?? [],
         facility_insurance: insurance.data ?? [],
         facility_age_groups: ageGroups.data ?? [],
         facility_credentials: credentials.data ?? [],
         facility_accreditations: accreditations.data ?? [],
+        // Claim flags are populated by the shared loader (either inline from
+        // the public_facilities fallback row, or via a supplemental fetch by
+        // id when the snapshot was the source).
+        is_claimed: loaded.flags?.is_claimed,
+        is_pro: loaded.flags?.is_pro,
+        is_premium_visible: loaded.flags?.is_premium_visible,
       } as FacilityData;
     },
     enabled: !!slug,
@@ -453,6 +439,36 @@ const CenterProfile = () => {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
+
+  // Route the "Claim This Listing" affordances through the wizard. Signed-out
+  // visitors detour via /auth/signup with a returnTo back to the wizard.
+  const handleClaimClick = useCallback(() => {
+    if (!facility?.slug) return;
+    const target = `/provider/claim/${facility.slug}`;
+    if (!currentUserId) {
+      const search = new URLSearchParams({ returnTo: target, claim: "1" }).toString();
+      navigate(`/auth/signup?${search}`);
+      return;
+    }
+    navigate(target);
+  }, [facility?.slug, currentUserId, navigate]);
+
+  // Claim-state flags are now sourced directly from the shared loader's
+  // result (baked into `facility` by the queryFn above). When the flags
+  // haven't loaded yet — e.g. the rare case where the facility loaded via
+  // an owner-only read and no public_facilities row exists — `claimFlags`
+  // stays null and the unclaimed banner stays hidden.
+  const claimFlags = useMemo<
+    | { is_claimed: boolean; is_pro: boolean; is_premium_visible: boolean }
+    | null
+  >(() => {
+    if (!facility || facility.is_claimed === undefined) return null;
+    return {
+      is_claimed: !!facility.is_claimed,
+      is_pro: !!facility.is_pro,
+      is_premium_visible: !!facility.is_premium_visible,
+    };
+  }, [facility]);
 
   const { data: hasFeaturedSubscription } = useQuery({
     queryKey: ["featured-subscription-check", facility?.id],
@@ -549,10 +565,24 @@ const CenterProfile = () => {
   }, [facility?.id, facility?.name, facility?.slug, trackClickToCall, trackWebsiteClick]);
 
   const handleRequestInfoOpen = useCallback((cta_location: string) => {
+    // Unclaimed listings have no provider to inquire to. Previously the
+    // modal was gated on `is_claimed` so clicking these CTAs silently did
+    // nothing. Route the seeker to the free concierge intake instead with
+    // state/city/treatment prefill so the funnel still converts.
+    if (claimFlags && !claimFlags.is_claimed && facility) {
+      const params = new URLSearchParams();
+      if (facility.state) params.set("state", facility.state);
+      if (facility.city) params.set("city", facility.city);
+      if (facility.facility_type) params.set("treatment", facility.facility_type);
+      params.set("ref", "unclaimed_profile");
+      params.set("facility_slug", facility.slug);
+      navigate(`/concierge?${params.toString()}`);
+      void cta_location;
+      return;
+    }
     setRequestModalOpen(true);
-    // Analytics provider removed — request info tracked via provider_events table.
     void cta_location;
-  }, []);
+  }, [claimFlags, facility, navigate]);
 
   // Show skeleton while:
   // - the slug isn't ready yet (route param still resolving), OR
@@ -798,7 +828,7 @@ const CenterProfile = () => {
             <Alert className="mb-6 border-amber-300/50 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 shadow-sm">
               <Clock className="h-5 w-5 text-amber-600" />
               <AlertDescription className="text-amber-800 dark:text-amber-200">
-                <strong>Preview Mode:</strong> Your listing is under review and only visible to you. 
+                <strong>Preview Mode:</strong> Your listing is under review and only visible to you.
                 It will be publicly visible once approved (usually within 24-48 hours).
               </AlertDescription>
             </Alert>
@@ -867,7 +897,23 @@ const CenterProfile = () => {
                   </Badge>
                 )}
               </div>
-              
+
+              {/* Claim CTA — top-right of hero, secondary style so it
+                  doesn't compete with the primary Request Info CTAs below. */}
+              {claimFlags && !claimFlags.is_claimed && (
+                <div className="absolute top-3 right-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleClaimClick}
+                    className="bg-white/90 hover:bg-white text-foreground border-white/60 backdrop-blur-sm shadow-md"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
+                    Claim This Listing
+                  </Button>
+                </div>
+              )}
+
               {/* Facility identity overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
                 <div className="flex items-end gap-3.5">
@@ -887,13 +933,45 @@ const CenterProfile = () => {
                     )}
                   </div>
                   <div className="flex-1 min-w-0 pb-0.5">
-                    <h1 className="speakable-headline font-display text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight line-clamp-2 break-words drop-shadow-lg">
-                      {facility.name}
-                    </h1>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 className="speakable-headline font-display text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white leading-tight line-clamp-2 break-words drop-shadow-lg">
+                        {facility.name}
+                      </h1>
+                      {/* Pro badge — signals to other providers researching the
+                          directory that competing facilities are paying, and
+                          gives Pro subscribers a visible benefit. */}
+                      {claimFlags?.is_pro && (
+                        <Badge
+                          className="gap-1 bg-amber-400 text-amber-950 hover:bg-amber-400/90 border-0 shadow-md"
+                          aria-label="This facility is a Pro provider"
+                        >
+                          <Crown className="h-3 w-3" />
+                          Pro
+                        </Badge>
+                      )}
+                    </div>
                     <div className="speakable-contact flex items-center gap-1.5 mt-1 min-w-0">
                       <MapPin className="h-3.5 w-3.5 text-white/70 shrink-0" />
                       <span className="text-sm text-white/85 font-medium truncate">{facility.city}, {facility.state}</span>
                     </div>
+                    {claimFlags && !claimFlags.is_claimed && (
+                      <div className="mt-1.5">
+                        <Tooltip delayDuration={150}>
+                          <TooltipTrigger asChild>
+                            <Badge
+                              variant="secondary"
+                              className="gap-1 cursor-help bg-white/15 text-white border-white/25 backdrop-blur-sm hover:bg-white/25"
+                            >
+                              <Info className="h-3 w-3" aria-hidden />
+                              Unclaimed listing
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-xs text-xs leading-snug">
+                            This listing was created from public SAMHSA records and hasn't been claimed by the facility yet. Contact information may be outdated. Need help? Call our concierge at 214-639-6420.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -947,16 +1025,16 @@ const CenterProfile = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col xs:flex-row items-stretch gap-2 px-3 py-3 sm:px-4 md:px-6 border-t border-border/30 bg-card">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold shadow-sm"
                 onClick={() => handleRequestInfoOpen("hero_request_call")}
               >
                 <Phone className="h-4 w-4 shrink-0" />
                 <span className="truncate">Request Call</span>
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="lg"
                 className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold"
                 onClick={() => handleRequestInfoOpen("hero_request_info")}
@@ -964,10 +1042,25 @@ const CenterProfile = () => {
                 <MessageSquare className="h-4 w-4 shrink-0" />
                 <span className="truncate">Request Info</span>
               </Button>
+              {/* Save / favorite — guest favorites persist to localStorage and
+                  migrate to user_favorites on signin; authed seekers update the
+                  DB directly. Works for anon + authed without an extra prompt. */}
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2 h-11 text-sm font-semibold"
+                aria-label={isFavorite(facility.id) ? "Remove from saved" : "Save to favorites"}
+                onClick={() => toggleFavorite(facility.id)}
+              >
+                <Heart
+                  className={cn("h-4 w-4 shrink-0", isFavorite(facility.id) && "fill-current text-rose-500")}
+                />
+                <span className="truncate">{isFavorite(facility.id) ? "Saved" : "Save"}</span>
+              </Button>
               {showContactDetails && facility.website && (
-                <a 
-                  href={facility.website} 
-                  target="_blank" 
+                <a
+                  href={facility.website}
+                  target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackInteraction("website")}
                   className="hidden sm:block"
@@ -981,6 +1074,44 @@ const CenterProfile = () => {
               )}
             </div>
           </div>
+
+          {/* Owner banner — only renders for unclaimed listings. Surfaces
+              the claim CTA + the Pro discount/featured-placement benefits
+              so a facility operator browsing their own page sees the
+              business case immediately. (Phase 5C) */}
+          {claimFlags && !claimFlags.is_claimed && (
+            <div className="mt-4 sm:mt-5">
+              <div className="rounded-xl border border-primary/25 bg-gradient-to-br from-primary/[0.04] to-amber-500/[0.04] p-4 sm:p-5">
+                <div className="flex items-start gap-3 sm:gap-4 flex-wrap">
+                  <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm sm:text-base font-semibold text-foreground">
+                      Are you the owner of {facility.name}?
+                    </p>
+                    <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                      Claim this listing free in 2 minutes — keep your contact details up to date,
+                      respond to leads, and unlock featured placement + a 20% discount on every lead
+                      unlock with a Pro membership.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                    <Button onClick={handleClaimClick} className="gap-1.5 h-10">
+                      <ShieldCheck className="h-4 w-4" />
+                      Claim free
+                    </Button>
+                    <Button asChild variant="outline" size="sm" className="gap-1 h-10">
+                      <Link to="/for-providers#pricing">
+                        See Pro pricing
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Main Content Grid */}
           <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr,380px]">
@@ -1082,13 +1213,25 @@ const CenterProfile = () => {
                       </div>
                     </a>
                   ) : (
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40">
-                      <Phone className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    // Non-Pro facilities don't expose their direct phone, but we
+                    // still need a one-tap dial option for mobile users so we
+                    // route them to our placement helpline. The number lives in
+                    // env (VITE_CONCIERGE_HELPLINE) with a stable fallback so
+                    // the link works even before the env is set.
+                    <a
+                      href={`tel:${(import.meta.env.VITE_CONCIERGE_HELPLINE as string | undefined) || "+18006624357"}`}
+                      onClick={() => trackInteraction("call")}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-primary/5 transition-colors group"
+                    >
+                      <Phone className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Phone</p>
-                        <p className="text-sm text-muted-foreground">Use contact form to request a call</p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Call our helpline</p>
+                        <p className="text-sm text-primary font-semibold group-hover:underline">
+                          {(import.meta.env.VITE_CONCIERGE_HELPLINE_DISPLAY as string | undefined) || "1-800-662-4357"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Free, confidential — we'll route you to the right team.</p>
                       </div>
-                    </div>
+                    </a>
                   )}
 
                   {/* Website */}
@@ -1588,22 +1731,95 @@ const CenterProfile = () => {
         }}
       />
 
-      {/* Request Info Modal */}
-      <RequestInfoModal
-        open={requestModalOpen}
-        onOpenChange={setRequestModalOpen}
-        facility={{
-          id: facility.id,
-          name: facility.name,
-          city: facility.city,
-          state: facility.state,
-          slug: facility.slug,
-          logo_url: facility.logo_url,
-          featured: facility.featured,
-        }}
-        facilityPlan={facilityPlan === "pro" ? "pro" : "free"}
-        prefillData={prefillDataFromNav}
+      {/* Request Info Modal — gated on claimed-state. Unclaimed listings
+          surface the "Unclaimed listing" badge + "Claim This Listing"
+          button instead of an inquiry path. */}
+      {(!claimFlags || claimFlags.is_claimed) && (
+        <RequestInfoModal
+          open={requestModalOpen}
+          onOpenChange={setRequestModalOpen}
+          facility={{
+            id: facility.id,
+            name: facility.name,
+            city: facility.city,
+            state: facility.state,
+            slug: facility.slug,
+            logo_url: facility.logo_url,
+            featured: facility.featured,
+          }}
+          facilityPlan={facilityPlan === "pro" ? "pro" : "free"}
+          prefillData={prefillDataFromNav}
+        />
+      )}
+
+      {/* Tour Request Modal — schedule a visit. Reachable from the sticky
+          mobile CTA bar below + the "Schedule a Tour" link on the sidebar.
+          Routes seekers with an active concierge inquiry through the
+          concierge_tour_requests path, others through submit-qualified-lead. */}
+      <FacilityTourRequestModal
+        open={tourModalOpen}
+        onClose={() => setTourModalOpen(false)}
+        facilityId={facility.id}
+        facilityName={facility.name}
       />
+
+      {/* Sticky mobile CTA bar — persistent at the viewport bottom on mobile
+          so seekers always have a one-tap path to convert without scrolling
+          back to the hero. Hidden on md+ where the hero/sidebar CTAs are
+          already visible. */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.15)]">
+        <div className="grid grid-cols-3 gap-2 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          {/* Phone — Pro listings dial direct; non-Pro dial the helpline. */}
+          <a
+            href={showContactDetails && facility.phone
+              ? `tel:${facility.phone}`
+              : `tel:${(import.meta.env.VITE_CONCIERGE_HELPLINE as string | undefined) || "+18006624357"}`}
+            onClick={() => trackInteraction("call")}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-2 transition-colors"
+            aria-label={showContactDetails ? "Call this facility" : "Call our helpline"}
+          >
+            <Phone className="h-5 w-5 text-emerald-600" />
+            <span className="text-[11px] font-semibold text-emerald-700">Call</span>
+          </a>
+          {/* Request info / Get matched (unclaimed routes to concierge). */}
+          <button
+            type="button"
+            onClick={() => handleRequestInfoOpen("sticky_mobile_request")}
+            className="flex flex-col items-center justify-center gap-0.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 px-2 py-2 transition-colors"
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span className="text-[11px] font-semibold">
+              {claimFlags && !claimFlags.is_claimed ? "Get matched" : "Request"}
+            </span>
+          </button>
+          {/* Tour. Only for claimed listings — unclaimed have no provider
+              to tour with. */}
+          {(!claimFlags || claimFlags.is_claimed) ? (
+            <button
+              type="button"
+              onClick={() => setTourModalOpen(true)}
+              className="flex flex-col items-center justify-center gap-0.5 rounded-lg border border-border hover:bg-muted/40 px-2 py-2 transition-colors"
+            >
+              <CalendarCheck className="h-5 w-5 text-foreground" />
+              <span className="text-[11px] font-semibold text-foreground">Tour</span>
+            </button>
+          ) : (
+            // For unclaimed listings, the third slot becomes a Save button so
+            // the bar isn't lopsided.
+            <button
+              type="button"
+              onClick={() => toggleFavorite(facility.id)}
+              className="flex flex-col items-center justify-center gap-0.5 rounded-lg border border-border hover:bg-muted/40 px-2 py-2 transition-colors"
+              aria-label={isFavorite(facility.id) ? "Remove from saved" : "Save to favorites"}
+            >
+              <Heart className={cn("h-5 w-5", isFavorite(facility.id) && "fill-rose-500 text-rose-500")} />
+              <span className="text-[11px] font-semibold text-foreground">
+                {isFavorite(facility.id) ? "Saved" : "Save"}
+              </span>
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Report Image Dialog */}
       <ReportImageDialog

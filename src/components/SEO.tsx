@@ -676,6 +676,24 @@ export function generateArticleSchema(article: {
   title: string;
   description: string;
   author: string;
+  /** Structured author when available — overrides the legacy `author` string for schema. */
+  authorPerson?: {
+    name: string;
+    slug: string;
+    credentials?: string | null;
+    title?: string | null;
+    photo?: string | null;
+  };
+  /** Medical reviewer for YMYL E-E-A-T trust signals. */
+  reviewer?: {
+    name: string;
+    slug: string;
+    credentials?: string | null;
+    title?: string | null;
+    photo?: string | null;
+  };
+  /** ISO datetime the article was last medically reviewed. */
+  lastReviewedAt?: string;
   datePublished: string;
   dateModified?: string;
   image?: string;
@@ -689,7 +707,51 @@ export function generateArticleSchema(article: {
 }) {
   const SITE_URL = "https://rehablookup.com";
   const currentYear = new Date().getFullYear();
-  
+
+  const authorNode = article.authorPerson
+    ? {
+        "@type": "Person",
+        name: article.authorPerson.credentials
+          ? `${article.authorPerson.name}, ${article.authorPerson.credentials}`
+          : article.authorPerson.name,
+        url: `${SITE_URL}/authors/${article.authorPerson.slug}`,
+        image: article.authorPerson.photo || undefined,
+        jobTitle: article.authorPerson.title || "Health Content Specialist",
+        worksFor: {
+          "@type": "Organization",
+          name: "RehabLookup",
+          url: SITE_URL,
+        },
+      }
+    : {
+        "@type": "Person",
+        name: article.author,
+        url: `${SITE_URL}/authors`,
+        jobTitle: "Health Content Specialist",
+        worksFor: {
+          "@type": "Organization",
+          name: "RehabLookup",
+          url: SITE_URL,
+        },
+      };
+
+  const reviewerNode = article.reviewer
+    ? {
+        "@type": "Person",
+        name: article.reviewer.credentials
+          ? `${article.reviewer.name}, ${article.reviewer.credentials}`
+          : article.reviewer.name,
+        url: `${SITE_URL}/authors/${article.reviewer.slug}`,
+        image: article.reviewer.photo || undefined,
+        jobTitle: article.reviewer.title || "Medical Reviewer",
+        worksFor: {
+          "@type": "Organization",
+          name: "RehabLookup",
+          url: SITE_URL,
+        },
+      }
+    : undefined;
+
   // Base article schema with comprehensive rich snippet support
   const baseSchema = {
     "@context": "https://schema.org",
@@ -708,17 +770,9 @@ export function generateArticleSchema(article: {
       caption: article.title,
     } : undefined,
     thumbnailUrl: article.image, // For Google Discover
-    author: {
-      "@type": "Person",
-      name: article.author,
-      url: `${SITE_URL}/resources`,
-      jobTitle: "Health Content Specialist",
-      worksFor: {
-        "@type": "Organization",
-        name: "RehabLookup",
-        url: SITE_URL,
-      },
-    },
+    author: authorNode,
+    reviewedBy: reviewerNode,
+    lastReviewed: article.lastReviewedAt,
     publisher: {
       "@type": "Organization",
       name: "RehabLookup",

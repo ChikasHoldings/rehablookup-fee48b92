@@ -360,16 +360,26 @@ export default function SeekerReviews() {
         return;
       }
 
+      // Re-edits go back to pending so admin re-moderates the new content;
+      // without resetting status, an approved review could be edited in
+      // place with new text and stay approved (subagent flagged this).
       const { error } = await supabase
         .from('facility_reviews')
-        .update({ rating: editRating, review_text: sanitizedText || null })
+        .update({
+          rating: editRating,
+          review_text: sanitizedText || null,
+          status: 'pending',
+        })
         .eq('id', editingReview.id)
         .eq('user_id', userId);
 
       if (error) {
         toast({ title: "Error saving", description: "Could not update your review. Please try again.", variant: "destructive" });
       } else {
-        toast({ title: "Review updated", description: "Your review has been updated successfully." });
+        toast({
+          title: "Review updated",
+          description: "Your review has been updated and will reappear once moderated.",
+        });
         fetchReviews(userId);
       }
     } finally {

@@ -202,81 +202,109 @@ export default function SeekerSignup() {
       }
 
       const displayName = `${sanitizedFirst} ${sanitizedLast}`;
-      
-      const { data, error } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password,
-        options: {
-          data: {
-            display_name: displayName,
-            first_name: sanitizedFirst,
-            last_name: sanitizedLast,
-            account_type: 'seeker',
-            phone: phone,
-            zipcode: zipcode,
-            city: city,
-            state: state
-          }
-        }
-      });
-      
-      if (error) {
-        if (error.message.includes('already registered')) {
-          toast.error('An account with this email already exists. Please sign in instead.');
+      void displayName;
+
+      // Create the auth account via register-provider-account
+      // (accountType="seeker") so Supabase NEVER sends a magic-link
+      // confirmation email. autoConfirm=false because seekers also go through
+      // the 6-digit OTP step right after this, which flips email_confirmed_at
+      // server-side via verify-code.
+      const { data: regData, error: regErr } = await supabase.functions.invoke(
+        "register-provider-account",
+        {
+          body: {
+            email: trimmedEmail,
+            password,
+            firstName: sanitizedFirst,
+            lastName: sanitizedLast,
+            accountType: "seeker",
+          },
+        },
+      );
+
+      if (regErr || regData?.error) {
+        const code = regData?.code;
+        if (code === "USER_EXISTS") {
+          toast.error("An account with this email already exists. Please sign in instead.");
         } else {
-          toast.error(error.message);
+          toast.error(regData?.error ?? regErr?.message ?? "Failed to create account");
         }
         return;
       }
-      
-      if (data.user) {
-        // CRITICAL: Verify the returned user is actually a seeker, not a hijacked session
-        if (data.session) {
-          const accountType = data.user.user_metadata?.account_type;
-          if (accountType && accountType !== 'seeker') {
-            await supabase.auth.signOut();
-            toast.error('This email is already associated with another account type. Please use a different email.');
-            return;
-          }
-        }
-        // Update seeker profile with phone/location (trigger creates the base profile)
-        if (data.session) {
-          supabase
-            .from('seeker_profiles')
-            .update({
-              phone: phone,
-              zipcode: zipcode,
-              city: city,
-              state: state
-            })
-            .eq('user_id', data.user.id)
-            .then(() => {});
-        }
-        
-        // Send welcome email (fire and forget)
-        supabase.functions.invoke('send-seeker-emails', {
-          body: {
-            type: 'welcome',
-            seekerId: data.user.id,
-            email: trimmedEmail
-          }
-        }).catch(() => {});
-        
-        // Send 6-digit verification code
-        try {
-          await sendVerificationCode(trimmedEmail);
-          toast.success('Account created! Enter the 6-digit code sent to your email.');
-        } catch {
-          toast.success('Account created! We\'ll send you a verification code.');
-        }
-        
-        analytics.signupComplete('seeker', 'email');
-        setSignupEmail(trimmedEmail);
-        setShowVerification(true);
-        setResendCooldown(60);
+      if (!regData?.userId) {
+        toast.error("Unable to create account. Please try again.");
+        return;
       }
+
+      const newUserId: string = regData.userId;
+
+      // Best-effort: enrich the seeker_profiles row with phone/location.
+      // The handle_new_seeker trigger creates the base row from metadata,
+      // but admin.createUser doesn't always propagate metadata fully; upsert
+      // to be safe.
+      try {
+        await supabase
+          .from("seeker_profiles")
+          .upsert(
+            {
+              user_id: newUserId,
+              first_name: sanitizedFirst,
+              last_name: sanitizedLast,
+              email: trimmedEmail,
+              phone,
+              zipcode,
+              city,
+              state,
+            },
+            { onConflict: "user_id" },
+          );
+      } catch (err) {
+        console.warn("[SeekerSignup] seeker_profiles upsert failed", err);
+      }
+
+      // Fire-and-forget welcome email (never block signup).
+      void supabase.functions
+        .invoke("send-seeker-emails", {
+          body: { type: "welcome", seekerId: newUserId, email: trimmedEmail },
+        })
+        .catch(() => {});
+
+      // Fire-and-forget admin notification so the team has visibility into
+      // new seeker signups (parity with provider signups, which already
+      // notify admins).
+      void supabase.functions
+        .invoke("send-admin-notification", {
+          body: {
+            type: "new_seeker",
+            title: "New seeker signup",
+            message: `${sanitizedFirst} ${sanitizedLast} (${trimmedEmail}) just created a seeker account.`,
+            metadata: {
+              seeker_id: newUserId,
+              first_name: sanitizedFirst,
+              last_name: sanitizedLast,
+              email: trimmedEmail,
+              city: city || null,
+              state: state || null,
+            },
+          },
+        })
+        .catch(() => {});
+
+      // Kick off the 6-digit OTP. The OTP step renders next; verify-code
+      // marks email_confirmed_at server-side on success and we sign in then.
+      try {
+        await sendVerificationCode(trimmedEmail);
+        toast.success("Account created! Enter the 6-digit code sent to your email.");
+      } catch {
+        toast.success("Account created! We'll send you a verification code.");
+      }
+
+      analytics.signupComplete("seeker", "email");
+      setSignupEmail(trimmedEmail);
+      setShowVerification(true);
+      setResendCooldown(60);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create account');
+      toast.error(error.message || "Failed to create account");
     } finally {
       submittingRef.current = false;
       setIsSubmitting(false);
@@ -332,7 +360,19 @@ export default function SeekerSignup() {
         inputRefs.current[0]?.focus();
         return;
       }
-      
+
+      // Bulk-link any pre-signup concierge / international / VOB rows that
+      // were submitted as a guest with this email so they show up in
+      // /account/requests + /account/insurance-verifications immediately
+      // after first login. Fire-and-forget; we never block the redirect on
+      // the link call since the rows aren't lost — just unattached until
+      // the next sign-in if this attempt fails. (Phase 4I)
+      try {
+        await supabase.functions.invoke('link-inquiry-to-user', { body: {} });
+      } catch (linkErr) {
+        console.warn('[SeekerSignup] inquiry bulk-link failed', linkErr);
+      }
+
       toast.success('Email verified successfully!');
       navigate('/account', { replace: true });
     } catch {
@@ -599,14 +639,15 @@ export default function SeekerSignup() {
                   
                   {/* Location */}
                   <div className="space-y-1.5">
-                    <Label className="text-sm">Location</Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2">
+                    <Label className="text-sm" id="signup-location-label">Location</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2" role="group" aria-labelledby="signup-location-label">
                       <div className="relative">
                         <MapPin className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
                         <Input
                           value={zipcode}
                           onChange={(e) => setZipcode(e.target.value.replace(/\D/g, '').slice(0, 5))}
                           placeholder="Zip"
+                          aria-label="ZIP code"
                           className="h-10 sm:h-11 pl-8 sm:pl-10 text-sm"
                           maxLength={5}
                         />
@@ -615,6 +656,7 @@ export default function SeekerSignup() {
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         placeholder="City"
+                        aria-label="City"
                         className="h-10 sm:h-11 text-sm"
                         disabled={zipcodeLookup.isLoading}
                       />
@@ -622,6 +664,7 @@ export default function SeekerSignup() {
                         value={state}
                         onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))}
                         placeholder="ST"
+                        aria-label="State (2-letter abbreviation)"
                         className="h-10 sm:h-11 text-sm"
                         disabled={zipcodeLookup.isLoading}
                         maxLength={2}

@@ -45,7 +45,7 @@ function SeekerShellSkeleton() {
       </div>
 
       {/* Main content skeleton */}
-      <main className="min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-muted/30 p-4 sm:p-6 lg:p-8">
+      <main id="main" className="min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-muted/30 p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-4xl space-y-6">
           <Skeleton className="h-8 w-48" />
           <Card>
@@ -252,6 +252,7 @@ export function SeekerShell() {
 
       {/* Row 2 — Main scroll area (bounded by grid, no padding-hack needed) */}
       <main
+        id="main"
         ref={mainContentRef}
         className="min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-muted/30"
       >

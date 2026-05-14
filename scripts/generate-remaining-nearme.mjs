@@ -7,6 +7,7 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
@@ -96,8 +97,8 @@ function buildHtml(slug, title, desc) {
     .btn{display:inline-block;padding:.6rem 1.4rem;border-radius:.5rem;font-weight:600;background:#2563eb;color:#fff;margin:.25rem;text-decoration:none}
     footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
   </style>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2VB6C1X2MQ',{send_page_view:true});</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}',{send_page_view:true});</script>
 </head>
 <body>
   <header style="padding:12px 0 20px;border-bottom:1px solid #e5e7eb;margin-bottom:20px">
@@ -138,10 +139,9 @@ function buildHtml(slug, title, desc) {
 async function writePage(slug, title, desc) {
   const html = buildHtml(slug, title, desc);
   const flatPath = path.join(publicDir, `${slug}.html`);
-  const nestedDir = path.join(publicDir, slug);
-  await mkdir(nestedDir, { recursive: true });
+  await mkdir(path.dirname(flatPath), { recursive: true });
   await writeFile(flatPath, html, "utf8");
-  await writeFile(path.join(nestedDir, "index.html"), html, "utf8");
+  // Single flat .html — see generate-seo-html.mjs for rationale.
 }
 
 let count = 0;

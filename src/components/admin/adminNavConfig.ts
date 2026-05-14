@@ -14,6 +14,7 @@ import {
   Headphones,
   Megaphone,
   FileText,
+  FileCheck2,
   Inbox,
   AlertTriangle,
   Landmark,
@@ -65,6 +66,7 @@ const superAdminNav: NavSection[] = [
     sectionLabel: "Operations",
     entries: [
       { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
+      { to: "/admin/insurance-verifications", icon: FileCheck2, label: "Insurance VOB", permission: "leads", countKey: "insuranceVerifications" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
       { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
       {
@@ -138,6 +140,7 @@ const managerNav: NavSection[] = [
     entries: [
       { to: "/admin/users", icon: ShieldCheck, label: "Staff Management", permission: "users" },
       { to: "/admin/leads", icon: Users, label: "Inquiries", permission: "leads", countKey: "leads" },
+      { to: "/admin/insurance-verifications", icon: FileCheck2, label: "Insurance VOB", permission: "leads", countKey: "insuranceVerifications" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
       { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
       {

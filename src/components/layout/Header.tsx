@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type CSSProperties } from "react";
+import { useState, useEffect, useRef, lazy, Suspense, type CSSProperties } from "react";
 import headerLogo from "@/assets/logo-header.webp";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PrefetchLink } from "@/components/PrefetchLink";
@@ -17,10 +17,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ProviderMegaMenu, ProviderMegaMenuMobile } from "@/components/provider-guides/ProviderMegaMenu";
-import { FindTreatmentMegaMenu, FindTreatmentMegaMenuMobile } from "@/components/mega-menus/FindTreatmentMegaMenu";
-import { ResourcesMegaMenu, ResourcesMegaMenuMobile } from "@/components/mega-menus/ResourcesMegaMenu";
-import { InternationalMegaMenu, InternationalMegaMenuMobile } from "@/components/mega-menus/InternationalMegaMenu";
+
+// Mega-menus are only visible after the user opens a nav dropdown, so we
+// lazy-load them. This pulls ~40-60 kB off the every-page shell chunk.
+const FindTreatmentMegaMenu = lazy(() =>
+  import("@/components/mega-menus/FindTreatmentMegaMenu").then((m) => ({ default: m.FindTreatmentMegaMenu })));
+const FindTreatmentMegaMenuMobile = lazy(() =>
+  import("@/components/mega-menus/FindTreatmentMegaMenu").then((m) => ({ default: m.FindTreatmentMegaMenuMobile })));
+const ResourcesMegaMenu = lazy(() =>
+  import("@/components/mega-menus/ResourcesMegaMenu").then((m) => ({ default: m.ResourcesMegaMenu })));
+const ResourcesMegaMenuMobile = lazy(() =>
+  import("@/components/mega-menus/ResourcesMegaMenu").then((m) => ({ default: m.ResourcesMegaMenuMobile })));
+const InternationalMegaMenu = lazy(() =>
+  import("@/components/mega-menus/InternationalMegaMenu").then((m) => ({ default: m.InternationalMegaMenu })));
+const InternationalMegaMenuMobile = lazy(() =>
+  import("@/components/mega-menus/InternationalMegaMenu").then((m) => ({ default: m.InternationalMegaMenuMobile })));
+const ProviderMegaMenu = lazy(() =>
+  import("@/components/provider-guides/ProviderMegaMenu").then((m) => ({ default: m.ProviderMegaMenu })));
+const ProviderMegaMenuMobile = lazy(() =>
+  import("@/components/provider-guides/ProviderMegaMenu").then((m) => ({ default: m.ProviderMegaMenuMobile })));
 
 export interface NavLink {
   href: string;
@@ -313,7 +328,9 @@ export function Header({
                     className="fixed mt-0 z-50 bg-popover border border-border rounded-xl shadow-xl shadow-foreground/[0.06] animate-in fade-in-0 slide-in-from-top-1 duration-150"
                     style={getDesktopMegaMenuStyle(item.id)}
                   >
-                    <MegaMenuContent id={item.id} onNavigate={() => setOpenMegaMenu(null)} />
+                    <Suspense fallback={<div className="p-6 text-xs text-muted-foreground">Loading…</div>}>
+                      <MegaMenuContent id={item.id} onNavigate={() => setOpenMegaMenu(null)} />
+                    </Suspense>
                   </div>
                 )}
               </div>
@@ -355,11 +372,40 @@ export function Header({
             </DropdownMenu>
           </nav>
 
+          {/* Global desktop search — visible on lg+ so users deep in
+              resources/profile pages can re-enter the funnel without two
+              nav clicks. Submits to /search-results with the q param.
+              Mobile already has the search-icon button in the right rail. */}
+          <form
+            role="search"
+            className="hidden lg:flex items-center mx-3 max-w-xs flex-1"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              const q = String(fd.get("q") ?? "").trim();
+              if (!q) return;
+              navigate(`/search-results?q=${encodeURIComponent(q)}`);
+            }}
+          >
+            <label htmlFor="header-search-q" className="sr-only">Search treatment centers</label>
+            <div className="relative w-full">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                id="header-search-q"
+                name="q"
+                type="search"
+                placeholder="Search city, treatment, insurance…"
+                className="w-full h-8 rounded-md border border-border bg-background pl-8 pr-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                autoComplete="off"
+              />
+            </div>
+          </form>
+
           {/* CTA & Mobile Actions */}
           <div className="flex items-center gap-2 md:gap-3">
             <PrefetchLink
               to="/rehab-centers"
-              className="flex h-10 w-10 items-center justify-center rounded-lg md:hidden text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex h-11 w-11 items-center justify-center rounded-lg md:hidden text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               aria-label="Search facilities"
             >
               <Search className="h-5 w-5" />
@@ -367,7 +413,7 @@ export function Header({
 
             <button
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-lg md:hidden transition-all duration-200 bg-primary hover:bg-primary/90 active:scale-95",
+                "flex h-11 w-11 items-center justify-center rounded-lg md:hidden transition-all duration-200 bg-primary hover:bg-primary/90 active:scale-95",
                 mobileMenuOpen && "bg-primary/90"
               )}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -452,11 +498,11 @@ export function Header({
               <span className="font-display text-[15px] font-semibold tracking-tight text-foreground">Menu</span>
             </div>
             <button
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all active:scale-95"
+              className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-all active:scale-95"
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close menu"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
@@ -507,7 +553,9 @@ export function Header({
                         isExpanded ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
                       )}>
                         <div className="pl-2 pr-1 pt-1 pb-2">
-                          <MegaMenuMobileContent id={item.id} onNavigate={() => setMobileMenuOpen(false)} />
+                          <Suspense fallback={<div className="p-3 text-xs text-muted-foreground">Loading…</div>}>
+                            <MegaMenuMobileContent id={item.id} onNavigate={() => setMobileMenuOpen(false)} />
+                          </Suspense>
                         </div>
                       </div>
                     </div>

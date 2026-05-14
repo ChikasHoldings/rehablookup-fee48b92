@@ -17,6 +17,7 @@
 import { writeFile, mkdir, access } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
@@ -139,13 +140,8 @@ async function exists(p) {
 
 async function write(filePath, contents) {
   await mkdir(path.dirname(filePath), { recursive: true });
-  // Hybrid layout: write /path.html AND /path/index.html (see generate-seo-html.mjs)
+  // Single flat .html — see generate-seo-html.mjs for rationale.
   await writeFile(filePath, contents, "utf8");
-  if (filePath.endsWith(".html") && !filePath.endsWith("/index.html")) {
-    const nestedDir = filePath.slice(0, -".html".length);
-    await mkdir(nestedDir, { recursive: true });
-    await writeFile(path.join(nestedDir, "index.html"), contents, "utf8");
-  }
   count++;
 }
 
@@ -222,8 +218,8 @@ function renderHtml({ urlPath, metaTitle, metaDescription, h1, breadcrumbs, intr
     .intro{font-size:1.05rem;color:#1f2a44}
     footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
   </style>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2VB6C1X2MQ');</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
   <header><a href="/" aria-label="RehabLookup Home">RehabLookup</a></header>

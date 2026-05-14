@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Heart, Bookmark, RefreshCw, Search } from "lucide-react";
@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFavorites } from "@/hooks/useFavorites";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { supabase } from "@/integrations/supabase/client";
 import { FacilityCard, FacilityCardData, FacilityCardSkeleton } from "@/components/seeker/FacilityCard";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
@@ -27,30 +29,34 @@ export default function SeekerSaved() {
     }
 
     try {
+      // Use `public_facilities` view so SAMHSA-imported / unclaimed listings
+      // (which live with `status='approved'` but no claim) still resolve.
+      // Querying `facilities` directly with `.eq('status','approved')` works
+      // for most rows but the view also applies the same Pro-masking + claim
+      // flags everywhere else in the app uses.
       const { data, error: queryError } = await supabase
-        .from('facilities')
+        .from('public_facilities')
         .select('id, name, city, state, phone, facility_type, slug, description, logo_url, gallery_urls, verified, year_established')
         .in('id', favorites)
-        .eq('status', 'approved')
-        .limit(200);
+        .limit(500);
 
       if (queryError) {
         setError('Failed to load saved facilities');
         setFacilities([]);
       } else {
-        const mappedFacilities: FacilityCardData[] = (data || []).map(f => ({
-          id: f.id,
-          name: f.name,
-          city: f.city,
-          state: f.state,
-          phone: f.phone,
-          facility_type: f.facility_type,
-          slug: f.slug,
-          description: f.description,
-          logo_url: f.logo_url,
-          gallery_urls: f.gallery_urls,
-          verified: f.verified,
-          year_established: f.year_established
+        const mappedFacilities: FacilityCardData[] = (data || []).map((f) => ({
+          id: f.id as string,
+          name: (f.name as string) ?? "",
+          city: (f.city as string) ?? "",
+          state: (f.state as string) ?? "",
+          phone: (f.phone as string | null) ?? null,
+          facility_type: (f.facility_type as string) ?? "",
+          slug: (f.slug as string) ?? "",
+          description: (f.description as string | null) ?? null,
+          logo_url: (f.logo_url as string | null) ?? null,
+          gallery_urls: (f.gallery_urls as string[] | null) ?? null,
+          verified: (f.verified as boolean | null) ?? null,
+          year_established: (f.year_established as number | null) ?? null,
         }));
         setFacilities(mappedFacilities);
         setError(null);
@@ -83,6 +89,18 @@ export default function SeekerSaved() {
       description: "Facility has been removed from your saved list.",
     });
   };
+
+  // Paginate the saved list rather than silently truncating at the fetch
+  // limit. Page size persisted per-user via the usePagination hook.
+  const pagination = usePagination({
+    tableId: "seeker-saved",
+    defaultPageSize: 10,
+    totalItems: facilities.length,
+  });
+  const visibleFacilities = useMemo(
+    () => pagination.paginate(facilities),
+    [facilities, pagination],
+  );
 
   // Show auth prompt if not authenticated
   if (!isAuthenticated && !favoritesLoading) {
@@ -178,16 +196,29 @@ export default function SeekerSaved() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {facilities.map((facility) => (
-            <FacilityCard 
-              key={facility.id} 
-              facility={facility} 
-              onRemove={handleRemove}
-              showRemoveButton
+        <>
+          <div className="grid gap-4">
+            {visibleFacilities.map((facility) => (
+              <FacilityCard
+                key={facility.id}
+                facility={facility}
+                onRemove={handleRemove}
+                showRemoveButton
+              />
+            ))}
+          </div>
+          {facilities.length > pagination.pageSize && (
+            <PaginationFooter
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              pageSize={pagination.pageSize}
+              totalItems={facilities.length}
+              onPageChange={pagination.setPage}
+              onPageSizeChange={pagination.setPageSize}
+              className="mt-4"
             />
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
     </>

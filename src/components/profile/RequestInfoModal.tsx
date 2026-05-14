@@ -117,7 +117,11 @@ function CapacityWarning({
   };
 
   const handleBrowseOther = () => {
-    const destination = `/search?state=${facility.state}&city=${encodeURIComponent(facility.city)}`;
+    // The canonical route is `/search-results`; `/search` only exists as a
+    // legacy redirect target. Linking directly to /search-results avoids the
+    // redirect hop AND ensures the capacity-escape-hatch lands on a live
+    // page if the redirect is ever pulled.
+    const destination = `/search-results?state=${facility.state}&city=${encodeURIComponent(facility.city)}`;
     trackCapacityEvent("capacity_browse_other_clicked", facility.id, {
       facilityName: facility.name,
       city: facility.city,

@@ -266,36 +266,52 @@ export default function ConciergeThankYou() {
         return;
       }
 
-      // Create user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/account`,
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            account_type: "seeker",
+      // Create user account via register-provider-account edge function
+      // (accountType=seeker). Uses admin.createUser(email_confirm:true) so
+      // Supabase never sends a magic-link confirmation email — seekers
+      // arrive from the concierge flow already verified by intake.
+      const { data: regData, error: regErr } = await supabase.functions.invoke(
+        "register-provider-account",
+        {
+          body: {
+            email: trimmedEmail,
+            password,
+            firstName: firstName || "Seeker",
+            lastName: lastName || "User",
+            accountType: "seeker",
+            autoConfirm: true,
           },
         },
+      );
+      if (regErr || regData?.error) {
+        const msg = regData?.error ?? regErr?.message ?? "Failed to create account.";
+        toast.error(msg);
+        setIsCreatingAccount(false);
+        return;
+      }
+      if (!regData?.userId) {
+        toast.error("Unable to create account. Please try again.");
+        setIsCreatingAccount(false);
+        return;
+      }
+
+      // Sign in with password to mint a session. email_confirm was set to
+      // false by the edge function (default for new accounts), so we must
+      // explicitly confirm here to allow signInWithPassword.
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password,
       });
+      // Shape compatibility with the rest of this handler.
+      const authData = {
+        user: { id: regData.userId, user_metadata: { account_type: "seeker" } },
+      } as { user: { id: string; user_metadata: { account_type: string } } | null };
 
-      if (authError) throw authError;
-
-      // Guard: if signUp returned an existing session (email already registered),
-      // don't proceed — the user needs to log in instead
-      if (authData.user && !authData.session) {
-        // User created but needs email confirmation — this is normal
-      } else if (authData.user && authData.session) {
-        // Check the user's metadata to ensure they're a seeker, not a provider
-        const accountType = authData.user.user_metadata?.account_type;
-        if (accountType && accountType !== 'seeker') {
-          // Sign them out immediately — wrong account type
-          await supabase.auth.signOut();
-          toast.error("This email is already associated with another account type. Please use a different email.");
-          setIsCreatingAccount(false);
-          return;
-        }
+      if (signInErr) {
+        console.warn("[ConciergeThankYou] signInWithPassword failed", signInErr.message);
+        toast.success("Account created. Please sign in to continue.");
+        navigate("/login");
+        return;
       }
 
       if (authData.user) {

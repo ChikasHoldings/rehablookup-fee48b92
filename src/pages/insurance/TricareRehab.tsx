@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
+import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import { InternalLinkingSection, treatmentTypeLinks, nearMeLinks, resourceLinks } from "@/components/seo/InternalLinkingSection";
 import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import {
@@ -148,6 +149,8 @@ export default function TricareRehab() {
           </div>
         </div>
       </section>
+
+      <InsuranceVerifyCarrierCTA carrier="Tricare" description="Tell us your TRICARE plan (Prime, Select, Reserve Select, etc.) and sponsor / member info, and our care team will confirm what your benefits cover for rehab and detox — usually within one business day. Free and confidential." />
 
       <InsuranceFacilitiesSection insurerSlug="tricare" title="Treatment Centers Accepting TRICARE" limit={8} className="border-t border-border" />
 

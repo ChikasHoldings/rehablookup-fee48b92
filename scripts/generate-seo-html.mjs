@@ -14,6 +14,8 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { GA_MEASUREMENT_ID } from "./_ga.mjs";
+import { fetchAllFacilities, groupByState, renderFacilityList } from "./_facility-data.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -305,8 +307,8 @@ function generatePage({ urlPath, title, metaTitle, metaDescription, h1, content,
     .breadcrumbs ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px}
     footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
   </style>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2VB6C1X2MQ');</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
   <header><a href="/" aria-label="RehabLookup Home">RehabLookup</a></header>
@@ -329,18 +331,13 @@ function generatePage({ urlPath, title, metaTitle, metaDescription, h1, content,
 async function writePage(filePath, html) {
   const dir = path.dirname(filePath);
   await mkdir(dir, { recursive: true });
-  // Hybrid layout: write both /path.html (flat) AND /path/index.html (nested).
-  // Vercel's filesystem step serves /path/index.html for clean-URL requests
-  // (e.g. GET /foo) BEFORE any user-defined SPA rewrite fires, eliminating
-  // soft-404s where /foo would otherwise fall through to index.html and be
-  // routed client-side. The flat /path.html copy stays for crawlers that
-  // request the explicit .html and for tooling that walks public/.
+  // With vercel.json `cleanUrls: true` + `trailingSlash: false`, Vercel serves
+  // `public/foo.html` for the URL `/foo` automatically. We used to also emit
+  // a byte-identical `foo/index.html` ("hybrid layout") as a soft-404 guard
+  // but Google was discovering both URL forms and consolidating them as
+  // "Duplicate without user-selected canonical" — contributing to ~50% of
+  // pages being filtered from the index. Single flat .html only.
   await writeFile(filePath, html, "utf8");
-  if (filePath.endsWith(".html") && !filePath.endsWith("/index.html")) {
-    const nestedDir = filePath.slice(0, -".html".length);
-    await mkdir(nestedDir, { recursive: true });
-    await writeFile(path.join(nestedDir, "index.html"), html, "utf8");
-  }
   pagesGenerated++;
 }
 
@@ -560,6 +557,13 @@ async function generateCostAndComparisonPages() {
 
 // --- State Directory Pages (/rehab-centers/{state}) ---
 async function generateStatePages() {
+  // Pull all facilities once and group by state. After SAMHSA import this
+  // gives every state page a real list of accredited centers in the static
+  // HTML — no React-hydrate dependency for Googlebot first-pass crawl.
+  const allFacilities = await fetchAllFacilities();
+  const facilitiesByState = groupByState(allFacilities);
+  console.log(`[seo-html] state generator: ${allFacilities.length} facilities loaded across ${facilitiesByState.size} states`);
+
   for (const state of usStates) {
     const slug = stateToSlug(state);
     const title = `Rehab Centers in ${state}`;
@@ -567,6 +571,8 @@ async function generateStatePages() {
     const cityLinks = citiesInState.length
       ? `<h2>Cities in ${state}</h2><ul style="columns:2;list-style:disc;padding-left:20px">${citiesInState.map((c) => `<li><a href="/rehab-centers/${slug}/${c.slug}">${c.city}</a></li>`).join("")}</ul>`
       : "";
+    const stateFacilities = facilitiesByState.get(slug) ?? [];
+    const facilityList = renderFacilityList(stateFacilities, state);
     const html = generatePage({
       urlPath: `/rehab-centers/${slug}`,
       title,
@@ -574,6 +580,7 @@ async function generateStatePages() {
       metaDescription: `Find accredited rehab centers in ${state}. Compare inpatient, outpatient, and detox programs. Verify insurance coverage and start recovery today.`,
       h1: title,
       content: `<p>Browse verified addiction treatment facilities in ${state}. RehabLookup lists accredited rehab centers offering detox, inpatient, outpatient, and dual diagnosis programs across the state.</p>
+        ${facilityList}
         <h2>Treatment Options in ${state}</h2>
         <p>${state} offers a range of substance abuse treatment programs including medical detox, residential inpatient, intensive outpatient (IOP), partial hospitalization (PHP), and medication-assisted treatment (MAT).</p>
         <h2>Insurance Coverage</h2>

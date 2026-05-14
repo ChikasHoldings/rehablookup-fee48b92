@@ -69,16 +69,36 @@ export const FacilityTourRequestModal = forwardRef<HTMLDivElement, FacilityTourR
 
         if (inquiry) {
           // Use the concierge tour request flow
-          const { error } = await supabase.from("concierge_tour_requests").insert({
-            inquiry_id: inquiry.id,
-            facility_id: facilityId,
-            user_id: user.id,
-            tour_type: tourType,
-            preferred_dates: preferredDates.map(d => d.toISOString()),
-            notes: notes || null,
-            status: "requested",
-          });
+          const { data: insertedRow, error } = await supabase
+            .from("concierge_tour_requests")
+            .insert({
+              inquiry_id: inquiry.id,
+              facility_id: facilityId,
+              user_id: user.id,
+              tour_type: tourType,
+              preferred_dates: preferredDates.map((d) => d.toISOString()),
+              notes: notes || null,
+              status: "requested",
+            })
+            .select("id")
+            .maybeSingle();
           if (error) throw error;
+
+          // Notify the facility's provider that a tour was requested.
+          // Fire-and-forget — never block the user's confirmation on the email.
+          void supabase.functions
+            .invoke("send-tour-notifications", {
+              body: {
+                tourRequestId: insertedRow?.id,
+                facilityId,
+                inquiryId: inquiry.id,
+                event: "requested",
+                tourType,
+              },
+            })
+            .catch((err) =>
+              console.warn("[FacilityTourRequestModal] tour notification failed", err),
+            );
           return { type: "concierge" };
         }
       }

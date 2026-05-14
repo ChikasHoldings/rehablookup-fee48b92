@@ -474,14 +474,24 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   // Auto-save function (silent, no toast) - with input sanitization
   const performAutoSave = useCallback(async () => {
     if (!facility || isSaving) return;
-    
+
+    // Surface the FIRST validation issue as a subtle toast so the provider
+    // doesn't sit watching the auto-save spinner think changes are persisting
+    // when they're not. Toast is throttled by message-key dedup in our
+    // useToast layer so repeated 3s ticks of the same error don't spam.
     const requiredFields = ["name", "facility_type", "address", "city", "state", "zip_code", "phone"];
     for (const field of requiredFields) {
       const error = validateField(field, facility[field as keyof Facility] as string | null);
-      if (error) return;
+      if (error) {
+        toast({
+          title: "Auto-save paused",
+          description: `${error} Fix to resume saving.`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
-    // Validate and sanitize before saving
     try {
       validateFacilityType(facility.facility_type);
       validateState(facility.state);
@@ -492,10 +502,21 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       }
       if (facility.email) validateEmail(facility.email);
       if (facility.website && /^(javascript|data):/i.test(facility.website.trim())) {
-        return; // Block dangerous URLs silently
+        toast({
+          title: "Auto-save paused",
+          description: "Website URL is not allowed. Fix the website field to resume saving.",
+          variant: "destructive",
+        });
+        return;
       }
-    } catch {
-      return; // Skip auto-save if validation fails
+    } catch (validationErr) {
+      const msg = validationErr instanceof Error ? validationErr.message : "Invalid field value.";
+      toast({
+        title: "Auto-save paused",
+        description: `${msg} Fix to resume saving.`,
+        variant: "destructive",
+      });
+      return;
     }
     
     setIsAutoSaving(true);
@@ -681,6 +702,23 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
         queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
         setTimeout(() => setShowSaved(false), 2000);
+
+        // First-time 100%-complete celebration: fire-and-forget the
+        // congratulatory email (deployed function had no callers).
+        if (
+          profileCompletion.percentage === 100 &&
+          !(facility as { profile_completion_celebrated?: boolean })
+            .profile_completion_celebrated
+        ) {
+          void supabase.functions
+            .invoke("send-profile-complete-email", {
+              body: { facilityId: currentFacilityId },
+            })
+            .catch((err) =>
+              console.warn("[ListingEditor] profile-complete email failed", err),
+            );
+        }
+
         toast({
           title: "Profile updated",
           description: "Your public profile is now live with the latest changes.",

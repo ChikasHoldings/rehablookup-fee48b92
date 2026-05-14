@@ -3,12 +3,14 @@ import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
+import { loadFacilityBySlug } from "@/hooks/useFacilityBySlug";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/ui/RatingBadge";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { FacilityPhotoGallery } from "@/components/facility/FacilityPhotoGallery";
 import { FacilityTourRequestModal } from "@/components/facility/FacilityTourRequestModal";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFacilityReviews } from "@/hooks/useFacilityReviews";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
@@ -39,8 +41,10 @@ import {
   Award,
   Handshake,
   GlobeIcon,
+  Info,
+  ShieldCheck,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 interface SeekerProfile {
   first_name: string | null;
@@ -79,6 +83,13 @@ interface FacilityData {
   facility_age_groups: { age_group: string }[];
   facility_credentials: { accreditations: string | null; licensing_info: string | null }[];
   facility_accreditations: { accreditation_type: string; verified: boolean }[];
+  // Optional claim-state flags. Populated when the row comes from the
+  // public_facilities fallback path (facility not visible via the direct
+  // approved-status fetch, e.g. SAMHSA-imported listings). When set, the
+  // supplemental claim-flags useEffect short-circuits.
+  is_claimed?: boolean;
+  is_pro?: boolean;
+  is_premium_visible?: boolean;
 }
 
 function getInitials(name: string): string {
@@ -155,6 +166,7 @@ export default function SeekerFacilityProfile() {
   const [tourModalOpen, setTourModalOpen] = useState(false);
   const [showAllServices, setShowAllServices] = useState(false);
   const [showAllInsurance, setShowAllInsurance] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Get stored user synchronously to avoid getSession deadlocks
   const getStoredSession = useCallback(() => {
@@ -202,83 +214,82 @@ export default function SeekerFacilityProfile() {
   const { data: facility, isLoading, isError: facilityError, refetch: refetchFacility } = useQuery({
     queryKey: ["seeker-facility", slug],
     queryFn: async (): Promise<FacilityData | null> => {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      // Shared loader: snapshot → public_facilities fallback → claim flags.
+      // Replaces the previous direct REST fetch + inline fallback; the hook
+      // is the single source of truth across CenterProfile, this page, and
+      // the claim wizard.
+      const loaded = await loadFacilityBySlug(slug!);
+      if (!loaded.facility) return null;
 
-      // Try to get auth token if available (non-blocking)
-      let authToken = anonKey;
-      try {
-        const stored = localStorage.getItem(`sb-${import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed?.access_token) authToken = parsed.access_token;
-        }
-      } catch {
-        // Use anon key as fallback
+      const base = loaded.facility;
+      const fromFallback = !!loaded.flags; // fallback path always returns flags inline
+
+      // For fallback rows (typically SAMHSA-imported, unclaimed) skip the
+      // joined-table fetches and the Pro contact-details RPC. Those tables
+      // are empty for those rows and the view already returned phone/website
+      // with the right masking applied.
+      if (fromFallback) {
+        return {
+          ...base,
+          email: null,
+          facility_services: [],
+          facility_insurance: [],
+          facility_age_groups: [],
+          facility_credentials: [],
+          facility_accreditations: [],
+          is_claimed: loaded.flags?.is_claimed,
+          is_pro: loaded.flags?.is_pro,
+          is_premium_visible: loaded.flags?.is_premium_visible,
+        } as unknown as FacilityData;
       }
 
-      const headers = {
-        "apikey": anonKey,
-        "Authorization": `Bearer ${authToken}`,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      };
-
-      // Fetch facility by slug using direct REST call
-      const facilityRes = await fetch(
-        `${supabaseUrl}/rest/v1/facilities?slug=eq.${encodeURIComponent(slug!)}&status=eq.approved&select=id,name,slug,city,state,zip_code,address,description,facility_type,gender_served,bed_count,featured,verified,year_established,logo_url,gallery_urls,status,user_id,updated_at,concierge_network_opted_in,accepts_international_patients`,
-        { headers: { ...headers, "Accept": "application/vnd.pgrst.object+json" } }
-      );
-
-      if (!facilityRes.ok) {
-        if (facilityRes.status === 406) return null; // No match
-        throw new Error(`Failed to fetch facility: ${facilityRes.status}`);
-      }
-
-      const base = await facilityRes.json();
-      if (!base?.id) return null;
-
+      // Snapshot path — fetch joined detail tables + Pro-gated contact RPC.
       const facilityId = base.id;
-
-      // Fetch related data in parallel using direct REST
-      const [servicesRes, insuranceRes, ageGroupsRes, credentialsRes, accreditationsRes] = await Promise.all([
-        fetch(`${supabaseUrl}/rest/v1/facility_services?facility_id=eq.${facilityId}&select=service_name`, { headers }),
-        fetch(`${supabaseUrl}/rest/v1/facility_insurance?facility_id=eq.${facilityId}&select=insurance_name`, { headers }),
-        fetch(`${supabaseUrl}/rest/v1/facility_age_groups?facility_id=eq.${facilityId}&select=age_group`, { headers }),
-        fetch(`${supabaseUrl}/rest/v1/facility_credentials?facility_id=eq.${facilityId}&select=accreditations,licensing_info`, { headers }),
-        fetch(`${supabaseUrl}/rest/v1/facility_accreditations?facility_id=eq.${facilityId}&select=accreditation_type,verified`, { headers }),
-      ]);
-
       const [services, insurance, ageGroups, credentials, accreditations] = await Promise.all([
-        servicesRes.ok ? servicesRes.json() : [],
-        insuranceRes.ok ? insuranceRes.json() : [],
-        ageGroupsRes.ok ? ageGroupsRes.json() : [],
-        credentialsRes.ok ? credentialsRes.json() : [],
-        accreditationsRes.ok ? accreditationsRes.json() : [],
+        supabase.from("facility_services").select("service_name").eq("facility_id", facilityId),
+        supabase.from("facility_insurance").select("insurance_name").eq("facility_id", facilityId),
+        supabase.from("facility_age_groups").select("age_group").eq("facility_id", facilityId),
+        supabase.from("facility_credentials").select("accreditations, licensing_info").eq("facility_id", facilityId),
+        supabase.from("facility_accreditations").select("accreditation_type, verified").eq("facility_id", facilityId),
       ]);
 
-      // Fetch Pro-gated contact details (phone/website) via security definer function
       const { data: publicData } = await supabase
         .rpc("get_public_facility_data", { facility_id: facilityId })
         .maybeSingle();
 
       return {
         ...base,
-        // Override phone/website with Pro-gated values from the security definer function
+        // Pro-gated values override the snapshot's masked defaults.
         phone: publicData?.phone || null,
-        email: publicData?.email || base.email || null,
+        email: publicData?.email || null,
         website: publicData?.website || null,
-        facility_services: services,
-        facility_insurance: insurance,
-        facility_age_groups: ageGroups,
-        facility_credentials: credentials,
-        facility_accreditations: accreditations,
-      } as FacilityData;
+        facility_services: services.data ?? [],
+        facility_insurance: insurance.data ?? [],
+        facility_age_groups: ageGroups.data ?? [],
+        facility_credentials: credentials.data ?? [],
+        facility_accreditations: accreditations.data ?? [],
+        is_claimed: loaded.flags?.is_claimed,
+        is_pro: loaded.flags?.is_pro,
+        is_premium_visible: loaded.flags?.is_premium_visible,
+      } as unknown as FacilityData;
     },
     enabled: !!slug,
     retry: 2,
     staleTime: 1000 * 60 * 5,
   });
+
+  // Route "Claim This Listing" through the wizard. Signed-out visitors
+  // detour via /auth/signup with a returnTo back to the wizard.
+  const handleClaimClick = useCallback(() => {
+    if (!facility?.slug) return;
+    const target = `/provider/claim/${facility.slug}`;
+    if (!currentUserId) {
+      const search = new URLSearchParams({ returnTo: target, claim: "1" }).toString();
+      navigate(`/auth/signup?${search}`);
+      return;
+    }
+    navigate(target);
+  }, [facility?.slug, currentUserId, navigate]);
 
   const { data: facilityPlan = "free" } = useQuery({
     queryKey: ["facility-plan", facility?.id],
@@ -292,6 +303,31 @@ export default function SeekerFacilityProfile() {
     enabled: !!facility?.id,
     staleTime: 1000 * 60 * 5,
   });
+
+  // Claim-state flags sourced directly from the shared loader's result
+  // (baked into `facility` by the queryFn above via `loaded.flags`).
+  const claimFlags = useMemo<
+    | { is_claimed: boolean; is_pro: boolean; is_premium_visible: boolean }
+    | null
+  >(() => {
+    if (!facility || facility.is_claimed === undefined) return null;
+    return {
+      is_claimed: !!facility.is_claimed,
+      is_pro: !!facility.is_pro,
+      is_premium_visible: !!facility.is_premium_visible,
+    };
+  }, [facility]);
+
+  // Track current user id for the claim modal's auth-gated CTA.
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!cancelled) setCurrentUserId(session?.user?.id ?? null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const ratingData = useFacilityRating(facility?.id);
 
@@ -378,7 +414,11 @@ export default function SeekerFacilityProfile() {
   const hasValidLogo = facility.logo_url && !logoError;
   const yearsInBusiness = getYearsInBusiness(facility.year_established);
   // Pro members only: show phone and website on facility page
-  const showContactDetails = facilityPlan === "pro" || facilityPlan === "professional" || facilityPlan === "featured";
+  // Align with CenterProfile + get-facility-plan, which only emit "pro" or
+  // "free". The legacy "professional"/"featured" tier strings were never
+  // returned by the edge function; keeping them here caused the same listing
+  // to show phone in one view and not the other.
+  const showContactDetails = facilityPlan === "pro";
   const accreditations = facility.facility_accreditations.filter(a => a.verified);
 
   const genderLabel = facility.gender_served === "male" ? "Men Only" 
@@ -467,11 +507,27 @@ export default function SeekerFacilityProfile() {
 
                     {/* Badges - Stack on mobile */}
                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3">
-                      <RatingBadge 
-                        rating={ratingData.averageRating} 
-                        reviewCount={ratingData.reviewCount} 
-                        size="sm" 
+                      <RatingBadge
+                        rating={ratingData.averageRating}
+                        reviewCount={ratingData.reviewCount}
+                        size="sm"
                       />
+                      {claimFlags && !claimFlags.is_claimed && (
+                        <Tooltip delayDuration={150}>
+                          <TooltipTrigger asChild>
+                            <Badge
+                              variant="secondary"
+                              className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs cursor-help"
+                            >
+                              <Info className="h-2.5 sm:h-3 w-2.5 sm:w-3" aria-hidden />
+                              Unclaimed listing
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-xs text-xs leading-snug">
+                            This listing was created from public SAMHSA records and hasn't been claimed by the facility yet. Contact information may be outdated. Need help? Call our concierge at 214-639-6420.
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                       {facility.featured && (
                         <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs sm:text-xs bg-warning/10 text-warning border-warning/20">
                           <Sparkles className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
@@ -495,6 +551,17 @@ export default function SeekerFacilityProfile() {
                           <GlobeIcon className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
                           International
                         </Badge>
+                      )}
+                      {claimFlags && !claimFlags.is_claimed && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleClaimClick}
+                          className="ml-auto h-7 px-2.5 text-xs gap-1"
+                        >
+                          <ShieldCheck className="h-3 w-3" />
+                          Claim This Listing
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -808,29 +875,36 @@ export default function SeekerFacilityProfile() {
       </div>
 
       {/* Modals */}
-      <RequestInfoModal
-        open={requestModalOpen}
-        onOpenChange={setRequestModalOpen}
-        facility={{
-          id: facility.id,
-          name: facility.name,
-          city: facility.city,
-          state: facility.state,
-          slug: facility.slug,
-          logo_url: facility.logo_url,
-          featured: facility.featured,
-        }}
-        facilityPlan={facilityPlan === "pro" || facilityPlan === "professional" || facilityPlan === "featured" ? "pro" : "free"}
-        prefillData={prefillData}
-      />
+      {/* Inquiry + tour modals — gated on claimed-state. Unclaimed listings
+          surface the "Unclaimed listing" badge + "Claim This Listing"
+          button instead of an inquiry path. */}
+      {(!claimFlags || claimFlags.is_claimed) && (
+        <>
+          <RequestInfoModal
+            open={requestModalOpen}
+            onOpenChange={setRequestModalOpen}
+            facility={{
+              id: facility.id,
+              name: facility.name,
+              city: facility.city,
+              state: facility.state,
+              slug: facility.slug,
+              logo_url: facility.logo_url,
+              featured: facility.featured,
+            }}
+            facilityPlan={facilityPlan === "pro" ? "pro" : "free"}
+            prefillData={prefillData}
+          />
 
-      <FacilityTourRequestModal
-        open={tourModalOpen}
-        onClose={() => setTourModalOpen(false)}
-        facilityId={facility.id}
-        facilityName={facility.name}
-        prefillData={prefillData}
-      />
+          <FacilityTourRequestModal
+            open={tourModalOpen}
+            onClose={() => setTourModalOpen(false)}
+            facilityId={facility.id}
+            facilityName={facility.name}
+            prefillData={prefillData}
+          />
+        </>
+      )}
       </div>
     </>
   );

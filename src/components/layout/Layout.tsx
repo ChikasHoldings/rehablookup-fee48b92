@@ -5,6 +5,7 @@ import { BackToTop } from "@/components/ui/back-to-top";
 import { FloatingHelpButton } from "@/components/ui/floating-help-button";
 import { StickyConversionBar } from "@/components/seo/StickyConversionBar";
 import { InternationalBanner } from "@/components/InternationalBanner";
+import { CompareTray } from "@/components/comparison/CompareTray";
 import { preloadPublicPages } from "@/lib/routePrefetch";
 
 interface LayoutProps {
@@ -27,11 +28,12 @@ export function Layout({ children }: LayoutProps) {
     <div className="flex min-h-screen flex-col w-full max-w-[100vw] overflow-x-hidden">
       <InternationalBanner />
       <MemoizedHeader />
-      <main className="flex-1 w-full min-w-0">{children}</main>
+      <main id="main" className="flex-1 w-full min-w-0">{children}</main>
       <MemoizedFooter />
       <BackToTop />
       <FloatingHelpButton />
       <StickyConversionBar />
+      <CompareTray />
     </div>
   );
 }

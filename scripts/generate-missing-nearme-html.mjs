@@ -16,6 +16,7 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { GA_MEASUREMENT_ID } from './_ga.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, '..', 'public');
@@ -112,8 +113,8 @@ function buildHtml({ urlPath, title, metaDesc, h1, content, breadcrumbs }) {
     .btn{display:inline-block;padding:.6rem 1.4rem;border-radius:.5rem;font-weight:600;text-decoration:none;font-size:.9rem;background:#2563eb;color:#fff;margin:.25rem}
     footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
   </style>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2VB6C1X2MQ',{send_page_view:true});</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}',{send_page_view:true});</script>
 </head>
 <body>
   <header style="padding:12px 0 20px;border-bottom:1px solid #e5e7eb;margin-bottom:20px">
@@ -138,14 +139,11 @@ function buildHtml({ urlPath, title, metaDesc, h1, content, breadcrumbs }) {
 
 function writePage(urlPath, pageData) {
   const html = buildHtml({ urlPath, ...pageData });
-  // Flat .html file
+  // Single flat .html — see generate-seo-html.mjs for rationale on dropping
+  // the redundant nested /index.html.
   const flatPath = join(PUBLIC_DIR, urlPath.replace(/^\//, '') + '.html');
   mkdirSync(dirname(flatPath), { recursive: true });
   writeFileSync(flatPath, html, 'utf8');
-  // Nested /index.html for Vercel cleanUrls compat
-  const nestedPath = join(PUBLIC_DIR, urlPath.replace(/^\//, ''), 'index.html');
-  mkdirSync(dirname(nestedPath), { recursive: true });
-  writeFileSync(nestedPath, html, 'utf8');
 }
 
 let count = 0;

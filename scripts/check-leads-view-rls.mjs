@@ -23,7 +23,7 @@
 const SUPABASE_URL =
   process.env.SUPABASE_URL ||
   process.env.VITE_SUPABASE_URL ||
-  "https://plckxokpyiubuekvodtc.supabase.co";
+  "https://mldbxpntzcjalgjmwnqa.supabase.co";
 
 const SUPABASE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||

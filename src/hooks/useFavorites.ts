@@ -91,19 +91,47 @@ export function useFavorites() {
       }
 
       const dbFavoriteIds = dbFavorites?.map(f => f.facility_id) || [];
-      
-      // DB is the absolute source of truth for authenticated users.
-      // Clear any stale localStorage immediately — never inherit guest favorites.
+
+      // Migrate any guest-mode favorites collected before signin into the
+      // user's account. The previous behavior unconditionally cleared
+      // localStorage, dropping a favorite list a user had built while
+      // browsing anonymously and then signed up. We now upsert the
+      // difference and only clear local once the merge succeeded.
+      let guestFavorites: string[] = [];
       try {
-        localStorage.removeItem(FAVORITES_STORAGE_KEY);
+        const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) guestFavorites = parsed.filter((v) => typeof v === "string");
+        }
       } catch {
-        // Storage unavailable
+        // Storage unavailable / corrupt JSON — skip merge.
       }
 
-      setFavorites(dbFavoriteIds);
+      const toMigrate = guestFavorites.filter((id) => !dbFavoriteIds.includes(id));
+      let mergedIds = dbFavoriteIds;
+      if (toMigrate.length > 0) {
+        const rows = toMigrate.map((facility_id) => ({ user_id: user.id, facility_id }));
+        const { error: mergeErr } = await supabase
+          .from('user_favorites')
+          .upsert(rows, { onConflict: 'user_id,facility_id', ignoreDuplicates: true });
+        if (!mergeErr) {
+          mergedIds = [...dbFavoriteIds, ...toMigrate];
+        } else {
+          console.warn('[useFavorites] guest-favorite migrate failed; keeping local copy', mergeErr.message);
+        }
+      }
+
+      // Only clear local copy once we know the DB write succeeded (or there
+      // was nothing to migrate). On a failed merge we leave the local copy
+      // so the next sign-in attempt can retry.
+      if (toMigrate.length === 0 || mergedIds.length > dbFavoriteIds.length) {
+        try { localStorage.removeItem(FAVORITES_STORAGE_KEY); } catch { /* ignore */ }
+      }
+
+      setFavorites(mergedIds);
       setIsSynced(true);
-      
-      // Mark as synced for this user
+
       syncedUserIdRef.current = user.id;
       isSyncingRef.current = false;
       setIsLoading(false);

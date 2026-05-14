@@ -96,19 +96,19 @@
   "rewrites": [
     {
       "source": "/api/badge/:path*",
-      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/serve-badge/:path*"
+      "destination": "https://mldbxpntzcjalgjmwnqa.supabase.co/functions/v1/serve-badge/:path*"
     },
     {
       "source": "/sitemap.xml",
-      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=main"
+      "destination": "https://mldbxpntzcjalgjmwnqa.supabase.co/functions/v1/sitemap-facilities?type=main"
     },
     {
       "source": "/sitemap-index.xml",
-      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=index"
+      "destination": "https://mldbxpntzcjalgjmwnqa.supabase.co/functions/v1/sitemap-facilities?type=index"
     },
     {
       "source": "/sitemap-facilities.xml",
-      "destination": "https://plckxokpyiubuekvodtc.supabase.co/functions/v1/sitemap-facilities?type=facilities"
+      "destination": "https://mldbxpntzcjalgjmwnqa.supabase.co/functions/v1/sitemap-facilities?type=facilities"
     },
     {
       "source": "/((?!api|_next|static|.*\\..*).*)",

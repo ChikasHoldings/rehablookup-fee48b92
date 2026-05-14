@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import NotFound from "@/pages/NotFound";
+import { buildCityOverview } from "@/lib/locationDescriptions";
 import {
   generateCityContentSections,
   generateCityWhatToExpect,
@@ -38,12 +40,14 @@ import {
 
 // Treatment types for internal linking
 const treatmentTypesData = [
-  { icon: Pill, title: "Drug Addiction", link: "/treatment-types", param: "?type=drug" },
-  { icon: Activity, title: "Alcohol Rehab", link: "/treatment-types", param: "?type=alcohol" },
-  { icon: Brain, title: "Dual Diagnosis", link: "/treatment-types", param: "?type=dual-diagnosis" },
-  { icon: Home, title: "Residential Inpatient", link: "/treatment-types", param: "?type=inpatient" },
-  { icon: Stethoscope, title: "Outpatient Programs", link: "/treatment-types", param: "?type=outpatient" },
-  { icon: Sparkles, title: "Holistic Therapy", link: "/treatment-types", param: "?type=holistic" },
+  // Use canonical /treatment-types/<slug> paths so internal links concentrate
+  // PageRank on the indexable SEO targets (the query-string variant is not).
+  { icon: Pill, title: "Drug Addiction", link: "/treatment-types/drug-addiction-treatment", param: "" },
+  { icon: Activity, title: "Alcohol Rehab", link: "/treatment-types/alcohol-rehabilitation", param: "" },
+  { icon: Brain, title: "Dual Diagnosis", link: "/treatment-types/dual-diagnosis-treatment", param: "" },
+  { icon: Home, title: "Residential Inpatient", link: "/treatment-types/residential-inpatient", param: "" },
+  { icon: Stethoscope, title: "Outpatient Programs", link: "/treatment-types/outpatient-programs", param: "" },
+  { icon: Sparkles, title: "Holistic Therapy", link: "/treatment-types/holistic-therapy", param: "" },
 ];
 import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
@@ -230,7 +234,9 @@ const CityPage = () => {
   }, [stateSlug, citySlug]);
 
   if (!stateData || !cityData) {
-    return <Navigate to="/rehab-centers" replace />;
+    // Render NotFound in place instead of soft-redirecting to /rehab-centers
+    // (which Google interpreted as a soft-404 + wasted crawl budget).
+    return <NotFound />;
   }
 
   const fullLocation = `${cityData.name}, ${stateData.abbreviation}`;
@@ -299,10 +305,19 @@ const CityPage = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-10 md:py-14">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${cityImage})` }}
-        />
+        {cityImage && (
+          <img
+            src={cityImage}
+            alt=""
+            aria-hidden="true"
+            width={1600}
+            height={520}
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
         <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-transparent to-primary/40" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent" />
@@ -327,7 +342,14 @@ const CityPage = () => {
             </h1>
             
             <p className="mt-4 text-base md:text-lg text-white/85 leading-relaxed max-w-2xl">
-              {cityData.description}
+              {/* De-templated hero copy. The previous `cityData.description`
+                  was a one-line factory string repeated across every city
+                  with only the name swapped. buildCityOverview combines
+                  per-state CDC/SAMHSA stats + the city's population +
+                  verified-facility count into one of 4 prose variants
+                  picked deterministically from a slug hash, so two cities
+                  in the same state still ship distinct HTML. */}
+              {buildCityOverview(stateData.slug, stateData.name, cityData.name, cityCenters.length, cityData.population)}
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-4 md:gap-6">

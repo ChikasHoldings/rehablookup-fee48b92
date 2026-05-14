@@ -73,18 +73,49 @@ export default function InternationalThankYou() {
     frame();
 
     // Try to get data from localStorage if not in state
+    let intakeDataParsed: Record<string, unknown> | null = null;
     if (!firstName || !email) {
       try {
         const intakeData = localStorage.getItem("international_intake_data");
         if (intakeData) {
-          const parsed = JSON.parse(intakeData);
-          if (parsed.first_name && !firstName) setFirstName(parsed.first_name);
-          if (parsed.email && !email) setEmail(parsed.email);
+          intakeDataParsed = JSON.parse(intakeData) as Record<string, unknown>;
+          if (intakeDataParsed.first_name && !firstName) setFirstName(String(intakeDataParsed.first_name));
+          if (intakeDataParsed.email && !email) setEmail(String(intakeDataParsed.email));
           localStorage.removeItem("international_intake_data");
         }
       } catch (e) {
         console.error("Error parsing intake data:", e);
       }
+    } else {
+      try {
+        const intakeData = localStorage.getItem("international_intake_data");
+        if (intakeData) {
+          intakeDataParsed = JSON.parse(intakeData) as Record<string, unknown>;
+          localStorage.removeItem("international_intake_data");
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Recovery path: if Stripe redirected us back with session_id (the
+    // configured Stripe success_url is /international/thank-you), the intake
+    // payload may not have been submitted to the server yet. Invoke
+    // submit-international-intake now so the case row exists even if the
+    // Stripe webhook is delayed. Idempotent on the server.
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get("session_id");
+    const payment = params.get("payment");
+    if (sessionId && (payment === "success" || !payment) && intakeDataParsed) {
+      void supabase.functions
+        .invoke("submit-international-intake", {
+          body: {
+            sessionId,
+            intakeData: intakeDataParsed,
+            paymentVerified: true,
+          },
+        })
+        .catch((err) =>
+          console.warn("[InternationalThankYou] submit-international-intake failed (will rely on webhook)", err),
+        );
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional run-once effect on mount; email/firstName are only read as guards to avoid overwriting user input
   }, []);
@@ -150,37 +181,54 @@ export default function InternationalThankYou() {
         return;
       }
 
-      // Create user account
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/account`,
-          data: {
-            first_name: firstName,
-            account_type: 'seeker',
+      // Create user account via register-provider-account edge function.
+      // accountType=seeker + autoConfirm=true: email_confirm is set server-side
+      // and Supabase never sends a magic-link confirmation email.
+      const { data: regData, error: regErr } = await supabase.functions.invoke(
+        "register-provider-account",
+        {
+          body: {
+            email: trimmedEmail,
+            password,
+            firstName: firstName || "Seeker",
+            lastName: "User",
+            accountType: "seeker",
+            autoConfirm: true,
           },
         },
+      );
+      if (regErr || regData?.error) {
+        const msg = regData?.error ?? regErr?.message ?? "Failed to create account.";
+        toast({ title: "Signup Failed", description: msg, variant: "destructive" });
+        setIsCreatingAccount(false);
+        return;
+      }
+      if (!regData?.userId) {
+        toast({
+          title: "Signup Failed",
+          description: "Unable to create account. Please try again.",
+          variant: "destructive",
+        });
+        setIsCreatingAccount(false);
+        return;
+      }
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password,
       });
-
-      if (signUpError) throw signUpError;
+      if (signInErr) {
+        toast({
+          title: "Account Created",
+          description: "Please sign in to continue.",
+        });
+        navigate("/login");
+        return;
+      }
+      const signUpData = {
+        user: { id: regData.userId, user_metadata: { account_type: "seeker" } },
+      } as { user: { id: string; user_metadata: { account_type: string } } | null };
 
       if (signUpData.user) {
-        // Guard: if signUp returned an existing session with wrong account type, sign out
-        if (signUpData.session) {
-          const accountType = signUpData.user.user_metadata?.account_type;
-          if (accountType && accountType !== 'seeker') {
-            await supabase.auth.signOut();
-            toast({
-              title: "Account Conflict",
-              description: "This email is already associated with another account type. Please use a different email.",
-              variant: "destructive",
-            });
-            setIsCreatingAccount(false);
-            return;
-          }
-        }
-
         // Create seeker profile
         await supabase.from("seeker_profiles").insert({
           user_id: signUpData.user.id,

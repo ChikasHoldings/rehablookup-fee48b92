@@ -64,31 +64,113 @@ export default function ProviderAnalyticsPage() {
   const { data: leadData } = useCentralizedLeadAnalytics(dateRange, effectiveFacilityId);
 
   const handleExportCSV = useCallback(() => {
-    const rows: string[][] = [["Metric", "Period Value", "All-Time Value"]];
+    // Section helpers — each section ends with a blank row for human-
+    // readability when opening the CSV in Excel/Sheets/Numbers.
+    const rows: string[][] = [];
 
+    // Header block with export metadata so a downloaded CSV is unambiguous.
+    rows.push(["RehabLookup Analytics Export"]);
+    rows.push(["Exported", format(new Date(), "yyyy-MM-dd HH:mm")]);
+    rows.push([
+      "Date range",
+      dateRange.from ? format(dateRange.from, "yyyy-MM-dd") : "All time",
+      dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : "",
+    ]);
+    rows.push(["Facility filter", selectedFacilityId === "all" ? "All facilities" : (approvedFacilities.find(f => f.id === selectedFacilityId)?.name ?? selectedFacilityId)]);
+    rows.push([]);
+
+    // 1. KPI summary
+    rows.push(["KPI summary"]);
+    rows.push(["Metric", "Period", "All-time", "Growth %"]);
     if (engagementData) {
-      rows.push(["Search Appearances", String(engagementData.periodImpressions), String(engagementData.totalImpressions)]);
-      rows.push(["Profile Views", String(engagementData.periodProfileViews), String(engagementData.totalProfileViews)]);
-      rows.push(["Click to Call", String(engagementData.periodClickToCalls), String(engagementData.totalClickToCalls)]);
-      rows.push(["Website Clicks", String(engagementData.periodWebsiteClicks), String(engagementData.totalWebsiteClicks)]);
+      rows.push(["Search Appearances", String(engagementData.periodImpressions), String(engagementData.totalImpressions), `${engagementData.impressionGrowth}%`]);
+      rows.push(["Profile Views", String(engagementData.periodProfileViews), String(engagementData.totalProfileViews), `${engagementData.profileViewGrowth}%`]);
+      rows.push(["Click to Call", String(engagementData.periodClickToCalls), String(engagementData.totalClickToCalls), `${engagementData.clickToCallGrowth}%`]);
+      rows.push(["Website Clicks", String(engagementData.periodWebsiteClicks), String(engagementData.totalWebsiteClicks), `${engagementData.websiteClickGrowth}%`]);
     }
     if (leadData) {
-      rows.push(["Total Inquiries", String(leadData.thisMonthLeads), String(leadData.allTimeLeads)]);
-      rows.push(["Unlocked", String(leadData.conversionFunnel.contacted + leadData.conversionFunnel.qualified + leadData.conversionFunnel.converted), ""]);
-      rows.push(["Converted", String(leadData.conversionFunnel.converted), ""]);
-      rows.push(["Growth Rate", `${leadData.growthRate}%`, ""]);
+      rows.push(["Total Inquiries", String(leadData.thisMonthLeads), String(leadData.allTimeLeads), `${leadData.growthRate}%`]);
     }
+    rows.push([]);
 
-    if (engagementData?.facilityBreakdown && engagementData.facilityBreakdown.length > 0) {
+    // 2. Conversion funnel
+    if (engagementData || leadData) {
+      rows.push(["Conversion funnel (period)"]);
+      rows.push(["Step", "Rate", "Numerator", "Denominator", "Description"]);
+      if (engagementData) {
+        rows.push([
+          "Search → Profile",
+          `${engagementData.impressionToViewRate}%`,
+          String(engagementData.periodProfileViews),
+          String(engagementData.periodImpressions),
+          "Impressions → views",
+        ]);
+        rows.push([
+          "Profile → Call",
+          `${engagementData.viewToCallRate}%`,
+          String(engagementData.periodClickToCalls),
+          String(engagementData.periodProfileViews),
+          "Views → phone clicks",
+        ]);
+        rows.push([
+          "Profile → Website",
+          `${engagementData.viewToWebsiteRate}%`,
+          String(engagementData.periodWebsiteClicks),
+          String(engagementData.periodProfileViews),
+          "Views → site clicks",
+        ]);
+      }
+      if (leadData?.conversionFunnel) {
+        const { newLeads, contacted, qualified, converted } = leadData.conversionFunnel;
+        rows.push(["Inquiries → New", "", String(newLeads), "", ""]);
+        rows.push(["Inquiries → Contacted", "", String(contacted), "", ""]);
+        rows.push(["Inquiries → Qualified", "", String(qualified), "", ""]);
+        rows.push(["Inquiries → Converted", "", String(converted), "", ""]);
+      }
       rows.push([]);
-      rows.push(["Facility", "Impressions", "Views", "Calls", "Website", "Inquiries"]);
-      engagementData.facilityBreakdown.forEach(f => {
-        const facilityLeads = leadData?.facilityBreakdown.find(lf => lf.facilityId === f.facilityId)?.totalLeads || 0;
-        rows.push([f.facilityName, String(f.impressions), String(f.profileViews), String(f.clickToCalls), String(f.websiteClicks), String(facilityLeads)]);
-      });
     }
 
-    const csvContent = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+    // 3. Per-facility breakdown (period)
+    if (engagementData?.facilityBreakdown && engagementData.facilityBreakdown.length > 0) {
+      rows.push(["Per-facility breakdown (period)"]);
+      rows.push(["Facility", "Impressions", "Profile Views", "Calls", "Website", "Inquiries"]);
+      engagementData.facilityBreakdown.forEach((f) => {
+        const facilityLeads = leadData?.facilityBreakdown.find(lf => lf.facilityId === f.facilityId)?.totalLeads || 0;
+        rows.push([
+          f.facilityName,
+          String(f.impressions),
+          String(f.profileViews),
+          String(f.clickToCalls),
+          String(f.websiteClicks),
+          String(facilityLeads),
+        ]);
+      });
+      rows.push([]);
+    }
+
+    // 4. Daily / weekly trends (period). buildDailyTrends already buckets
+    // weekly when range > 60d, so this section reflects what the chart shows.
+    if (engagementData?.dailyTrends && engagementData.dailyTrends.length > 0) {
+      rows.push(["Trends (period)"]);
+      rows.push(["Bucket", "Impressions", "Profile Views", "Listing Views", "Calls", "Website"]);
+      engagementData.dailyTrends.forEach((t) => {
+        rows.push([
+          t.date,
+          String(t.impressions),
+          String(t.profileViews),
+          String(t.listingViews),
+          String(t.clickToCalls),
+          String(t.websiteClicks),
+        ]);
+      });
+      rows.push([]);
+    }
+
+    const csvContent = rows
+      .map((row) =>
+        row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(","),
+      )
+      .join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -97,7 +179,7 @@ export default function ProviderAnalyticsPage() {
     link.click();
     URL.revokeObjectURL(url);
     toast.success("Analytics exported successfully");
-  }, [engagementData, leadData]);
+  }, [engagementData, leadData, dateRange, selectedFacilityId, approvedFacilities]);
 
   const handlePresetSelect = (preset: typeof DATE_RANGE_PRESETS[number]) => {
     const range = preset.getRange();

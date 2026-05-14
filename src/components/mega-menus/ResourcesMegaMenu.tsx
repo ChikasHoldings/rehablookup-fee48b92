@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   BookOpen, ArrowRight, Shield, DollarSign, HelpCircle, FileText,
-  Sparkles, Calculator, Heart, Info, ChevronRight,
+  Sparkles, Calculator, Heart, Info, ChevronRight, Layers,
 } from "lucide-react";
+import { ALL_BLOG_CATEGORIES } from "@/data/blogCategories";
 
 interface MegaMenuProps {
   onNavigate?: () => void;
@@ -20,8 +21,9 @@ const guides = [
 ];
 
 const tools = [
+  { href: "/insurance-verification", label: "Verify Insurance (Free)", desc: "Free VOB by our care team", icon: Shield },
   { href: "/cost-estimator", label: "Cost Estimator", desc: "Get instant estimates", icon: Calculator },
-  { href: "/insurance", label: "Insurance Checker", desc: "Verify your coverage", icon: Shield },
+  { href: "/insurance", label: "Insurance Hub", desc: "Coverage by carrier", icon: Shield },
   { href: "/faq", label: "FAQ", desc: "Common questions", icon: HelpCircle },
   { href: "/how-it-works", label: "How It Works", desc: "Our matching process", icon: Info },
 ];
@@ -58,6 +60,26 @@ export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
             className="inline-flex items-center gap-1 px-2 pt-2 text-xs font-semibold text-primary hover:text-primary/80">
             All resources <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
+
+          {/* Topic hubs — canonical category landing pages */}
+          <div className="mt-3 pt-3 border-t border-border/30">
+            <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
+              <Layers className="h-3 w-3 text-accent" />
+              Topic hubs
+            </p>
+            <div className="flex flex-wrap gap-1.5 px-1">
+              {ALL_BLOG_CATEGORIES.map((cat) => (
+                <PrefetchLink
+                  key={cat.slug}
+                  to={`/resources/category/${cat.slug}`}
+                  onClick={onNavigate}
+                  className="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground/80 hover:border-primary/40 hover:text-primary transition-colors"
+                >
+                  {cat.label}
+                </PrefetchLink>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Right: Tools + CTA */}
@@ -125,6 +147,26 @@ export function ResourcesMegaMenuMobile({ onNavigate }: MegaMenuProps) {
           className="flex items-center gap-1.5 px-3 py-2 text-sm text-accent font-semibold">
           All resources <ArrowRight className="h-3.5 w-3.5" />
         </PrefetchLink>
+
+        {/* Topic hubs — mobile */}
+        <div className="border-t border-border/30 pt-2 mx-2 mt-1">
+          <p className="text-xs font-bold text-muted-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5 flex items-center gap-1.5">
+            <Layers className="h-3.5 w-3.5 text-accent" />
+            Topic hubs
+          </p>
+          <div className="flex flex-wrap gap-1.5 px-1 pb-2">
+            {ALL_BLOG_CATEGORIES.map((cat) => (
+              <PrefetchLink
+                key={cat.slug}
+                to={`/resources/category/${cat.slug}`}
+                onClick={onNavigate}
+                className="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground/80 hover:border-primary/40 active:bg-muted/40 transition-colors"
+              >
+                {cat.label}
+              </PrefetchLink>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Interactive Tools */}

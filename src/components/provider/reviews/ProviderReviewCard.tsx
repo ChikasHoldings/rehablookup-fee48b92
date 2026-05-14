@@ -102,15 +102,20 @@ export const ProviderReviewCard = memo(forwardRef<HTMLDivElement, ProviderReview
   }, [editText, review.response, onUpdateResponse]);
 
   const handleDelete = useCallback(async () => {
-    if (!review.response) return;
-    const { error } = await onDeleteResponse(review.response.id);
-    if (error) {
-      toast.error('Failed to delete response');
-    } else {
-      toast.success('Response deleted');
+    if (!review.response || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const { error } = await onDeleteResponse(review.response.id);
+      if (error) {
+        toast.error('Failed to delete response');
+      } else {
+        toast.success('Response deleted');
+      }
+      setDeleteConfirmOpen(false);
+    } finally {
+      setIsSubmitting(false);
     }
-    setDeleteConfirmOpen(false);
-  }, [review.response, onDeleteResponse]);
+  }, [review.response, onDeleteResponse, isSubmitting]);
 
   const startEditing = useCallback(() => {
     if (review.response) {

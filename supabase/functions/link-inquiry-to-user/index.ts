@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,7 +27,6 @@ Deno.serve(async (req) => {
       throw new Error("Missing required environment variables");
     }
 
-    // Authenticate the caller
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -39,18 +38,18 @@ Deno.serve(async (req) => {
     const anonClient = createClient(supabaseUrl, supabaseAnonKey);
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
-    
-    if (authError || !user) {
+
+    if (authError || !user || !user.email) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { inquiryId, userId } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { inquiryId, userId } = body as { inquiryId?: string; userId?: string };
 
-    // Validate that the requesting user matches the userId
-    if (userId !== user.id) {
+    if (userId && userId !== user.id) {
       logStep("User mismatch", { requestedUserId: userId, authUserId: user.id });
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
@@ -58,66 +57,110 @@ Deno.serve(async (req) => {
       });
     }
 
-    // UUID validation
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!inquiryId || !uuidRegex.test(inquiryId)) {
-      return new Response(JSON.stringify({ error: "Invalid inquiry ID" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const normalizedEmail = user.email.toLowerCase();
 
-    // Verify the inquiry belongs to this user's email
-    const { data: inquiry } = await supabaseAdmin
-      .from("concierge_inquiries")
-      .select("id, user_email, user_id")
-      .eq("id", inquiryId)
-      .maybeSingle();
+    // ──────────────────────────────────────────────
+    // Single-link mode (backward compatible): caller passes inquiryId
+    // ──────────────────────────────────────────────
+    if (inquiryId) {
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(inquiryId)) {
+        return new Response(JSON.stringify({ error: "Invalid inquiry ID" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-    if (!inquiry) {
-      return new Response(JSON.stringify({ error: "Inquiry not found" }), {
-        status: 404,
+      const { data: inquiry } = await supabaseAdmin
+        .from("concierge_inquiries")
+        .select("id, user_email, user_id")
+        .eq("id", inquiryId)
+        .maybeSingle();
+
+      if (!inquiry) {
+        return new Response(JSON.stringify({ error: "Inquiry not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (inquiry.user_email.toLowerCase() !== normalizedEmail) {
+        return new Response(JSON.stringify({ error: "Email does not match inquiry" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (inquiry.user_id && inquiry.user_id !== user.id) {
+        return new Response(JSON.stringify({ error: "Inquiry already linked" }), {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: updateError } = await supabaseAdmin
+        .from("concierge_inquiries")
+        .update({ user_id: user.id })
+        .eq("id", inquiryId);
+
+      if (updateError) {
+        logStep("Failed to link inquiry", { error: updateError.message });
+        throw new Error("Failed to link inquiry");
+      }
+
+      logStep("Inquiry linked successfully", { inquiryId, userId: user.id });
+      return new Response(JSON.stringify({ success: true, linked: { concierge_inquiries: 1 } }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
       });
     }
 
-    // Only link if the inquiry email matches the user email
-    if (inquiry.user_email.toLowerCase() !== user.email?.toLowerCase()) {
-      logStep("Email mismatch - cannot link", { 
-        inquiryEmail: inquiry.user_email, 
-        userEmail: user.email 
-      });
-      return new Response(JSON.stringify({ error: "Email does not match inquiry" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // ──────────────────────────────────────────────
+    // Bulk-link mode: link every matching unowned row across all seeker-side
+    // tables to this user by email match.
+    // ──────────────────────────────────────────────
+    const result = { concierge_inquiries: 0, international_placement_cases: 0, insurance_verification_requests: 0 };
 
-    // Only update if not already linked to a different user
-    if (inquiry.user_id && inquiry.user_id !== user.id) {
-      logStep("Inquiry already linked to different user");
-      return new Response(JSON.stringify({ error: "Inquiry already linked" }), {
-        status: 409,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Link the inquiry
-    const { error: updateError } = await supabaseAdmin
+    const { data: conciergeRows, error: conciergeErr } = await supabaseAdmin
       .from("concierge_inquiries")
       .update({ user_id: user.id })
-      .eq("id", inquiryId);
-
-    if (updateError) {
-      logStep("Failed to link inquiry", { error: updateError.message });
-      throw new Error("Failed to link inquiry");
+      .ilike("user_email", normalizedEmail)
+      .is("user_id", null)
+      .select("id");
+    if (conciergeErr) {
+      logStep("concierge_inquiries link error", { error: conciergeErr.message });
+    } else {
+      result.concierge_inquiries = conciergeRows?.length || 0;
     }
 
-    logStep("Inquiry linked successfully", { inquiryId, userId: user.id });
+    const { data: intlRows, error: intlErr } = await supabaseAdmin
+      .from("international_placement_cases")
+      .update({ user_id: user.id })
+      .ilike("client_email", normalizedEmail)
+      .is("user_id", null)
+      .select("id");
+    if (intlErr) {
+      logStep("international_placement_cases link error", { error: intlErr.message });
+    } else {
+      result.international_placement_cases = intlRows?.length || 0;
+    }
 
-    return new Response(JSON.stringify({ success: true }), {
+    const { data: vobRows, error: vobErr } = await supabaseAdmin
+      .from("insurance_verification_requests")
+      .update({ linked_user_id: user.id })
+      .ilike("email", normalizedEmail)
+      .is("linked_user_id", null)
+      .select("id");
+    if (vobErr) {
+      logStep("insurance_verification_requests link error", { error: vobErr.message });
+    } else {
+      result.insurance_verification_requests = vobRows?.length || 0;
+    }
+
+    logStep("Bulk link complete", { userId: user.id, ...result });
+
+    return new Response(JSON.stringify({ success: true, linked: result }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

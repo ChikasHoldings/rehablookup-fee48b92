@@ -70,18 +70,6 @@ const HERO_BENEFITS = [
     highlight: "Reputation mgmt",
   },
   {
-    icon: Search,
-    title: "Enhanced SEO",
-    description: "Priority indexing & enhanced metadata.",
-    highlight: "More organic traffic",
-  },
-  {
-    icon: Shield,
-    title: "Verified Badges",
-    description: "Display verified accreditations & trust signals.",
-    highlight: "Higher conversions",
-  },
-  {
     icon: Phone,
     title: "Phone Number Displayed",
     description: "Show your phone number on your facility page for direct calls.",
@@ -104,12 +92,8 @@ const COMPARISON_ITEMS: { feature: string; free: string | boolean; pro: string |
   { feature: "Website Link on Profile", free: false, pro: true },
   { feature: "Placement Fees", free: "Full Price", pro: "20% OFF" },
   { feature: "Search Ranking", free: "Standard", pro: "Priority (+50)" },
-  { feature: "Homepage Featured", free: false, pro: true },
   { feature: "Pro Badge", free: false, pro: true },
-  
-  
   { feature: "Per-Facility Analytics", free: false, pro: true },
-  { feature: "Support Priority", free: "Standard", pro: "Priority" },
 ];
 
 export default function ProUpgradePage() {
@@ -140,6 +124,11 @@ export default function ProUpgradePage() {
   }, [refetchProStatus]);
 
   useEffect(() => {
+    // Page-view event so we can measure the top of the Pro funnel
+    // separately from "begin checkout" and "purchase". Fires once per
+    // mount, intentionally not gated on selectedFacility — the page
+    // is sometimes visited before a facility is selected.
+    analytics.viewSubscriptionPlan('pro_monthly', 'Pro Plan', 399);
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };

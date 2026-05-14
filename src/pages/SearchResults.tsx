@@ -8,6 +8,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { scrollToTopSmooth } from "@/hooks/useScrollToTop";
 import { SearchResultsForm } from "@/components/search/SearchResultsForm";
+import { SaveSearchButton } from "@/components/search/SaveSearchButton";
 
 import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
@@ -456,6 +457,30 @@ const SearchResults = () => {
       results = results.filter((center) => center.featured === true);
     }
 
+    // Distance filter. Without lat/long on every facility we can't compute
+    // true mile-distance, so we map the user's mile radius onto the
+    // categorical proximity tier — a defensible UX approximation that
+    // matches how the rest of the page already sorts results.
+    //   ≤10 mi   → exact OR city
+    //   ≤25 mi   → exact / city / state
+    //   ≤50/100 → also nearby
+    //   "any"   → unfiltered
+    // The chip was previously cosmetic (selectedDistance read + counted as
+    // active but never applied), so any results being narrowed is a win
+    // versus the prior dead-feature behavior.
+    if (selectedDistance && selectedDistance !== "any" && locationMatch) {
+      const miles = parseInt(selectedDistance, 10);
+      const allow = (tier: string): boolean => {
+        if (miles <= 10) return tier === "exact" || tier === "city";
+        if (miles <= 25) return tier === "exact" || tier === "city" || tier === "state";
+        return tier === "exact" || tier === "city" || tier === "state" || tier === "nearby";
+      };
+      results = results.filter((center) => {
+        const { tier } = getProximityTier(center, locationMatch!);
+        return allow(tier);
+      });
+    }
+
     // Build proximity scoring using the enriched location match
     const getProximityScore = (center: { city: string; state: string; zipCode?: string }): number => {
       const sortLoc = locationForSort || locationForFilter;
@@ -519,6 +544,18 @@ const SearchResults = () => {
           return diff !== 0 ? diff : a.id.localeCompare(b.id);
         }
         case "reviews": {
+          // Real "Most Reviews" sort using googleReviewCount from the
+          // public snapshot (which already merges Google + platform review
+          // signals into a single count). Previous version was a no-op
+          // localeCompare stub. Falls back to ranking score for ties so
+          // the sort stays stable when many facilities share the same
+          // count (very common for zero-review small towns).
+          const ra = (a as { googleReviewCount?: number | null }).googleReviewCount ?? 0;
+          const rb = (b as { googleReviewCount?: number | null }).googleReviewCount ?? 0;
+          if (ra !== rb) return rb - ra;
+          const scoreA = ((a as { calculatedRankingScore?: number }).calculatedRankingScore) ?? 0;
+          const scoreB = ((b as { calculatedRankingScore?: number }).calculatedRankingScore) ?? 0;
+          if (scoreA !== scoreB) return scoreB - scoreA;
           return a.id.localeCompare(b.id);
         }
         case "name-asc": return a.name.localeCompare(b.name);
@@ -542,7 +579,7 @@ const SearchResults = () => {
     }
 
     return { filteredCenters: results, isExpandedSearch: expanded };
-  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
+  }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, selectedDistance, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
 
   const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
   const activeTypeFilter = type ? typeDisplayNames[type] : null;
@@ -573,6 +610,54 @@ const SearchResults = () => {
   const clearAllFilters = () => {
     setSearchParams(new URLSearchParams());
   };
+
+  // Snapshot of current filter state for /account/saved-searches.
+  // Only fields that materially affect the result set are included.
+  const savedSearchCriteria = useMemo<Record<string, unknown>>(() => {
+    const c: Record<string, unknown> = {};
+    if (location) c.location = location;
+    if (treatment) c.treatment = treatment;
+    if (insurance) c.insurance = insurance;
+    if (type) c.type = type;
+    if (stateParam) c.state = stateParam;
+    if (queryParam) c.q = queryParam;
+    if (selectedTreatmentTypes.length) c.treatmentTypes = selectedTreatmentTypes;
+    if (selectedAmenities.length) c.amenities = selectedAmenities;
+    if (selectedInsuranceTypes.length) c.insuranceTypes = selectedInsuranceTypes;
+    if (selectedDistance) c.distance = selectedDistance;
+    if (verifiedOnly) c.verified = true;
+    if (featuredOnly) c.featuredOnly = true;
+    return c;
+  }, [
+    location, treatment, insurance, type, stateParam, queryParam,
+    selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes,
+    selectedDistance, verifiedOnly, featuredOnly,
+  ]);
+
+  const savedSearchSuggestedName = useMemo<string>(() => {
+    const parts: string[] = [];
+    if (selectedTreatmentTypes.length) {
+      parts.push(selectedTreatmentTypes.slice(0, 2).join(" + "));
+    } else if (treatment) {
+      parts.push(treatment);
+    } else if (type) {
+      parts.push(type.replace(/-/g, " "));
+    }
+    if (location) parts.push(`in ${location}`);
+    else if (stateParam) parts.push(`in ${stateParam}`);
+    if (selectedInsuranceTypes.length) parts.push(`(${selectedInsuranceTypes[0]})`);
+    else if (insurance) parts.push(`(${insurance})`);
+    if (parts.length === 0) parts.push(queryParam || "Treatment centers");
+    const name = parts.join(" ").trim();
+    return name.length > 80 ? name.slice(0, 77) + "..." : name;
+  }, [
+    selectedTreatmentTypes, selectedInsuranceTypes, treatment, type,
+    location, stateParam, insurance, queryParam,
+  ]);
+
+  const savedSearchUrl = typeof window !== "undefined"
+    ? `${window.location.pathname}${window.location.search || ""}`
+    : "/search";
 
   // Build a shareable URL that preserves all current filters/location/sort/page
   const handleShare = useCallback(async () => {
@@ -1015,6 +1100,14 @@ const SearchResults = () => {
             )}
 
             <div className="flex items-center gap-2 shrink-0">
+              {/* Save this search — opens dialog with alert frequency */}
+              <SaveSearchButton
+                criteria={savedSearchCriteria}
+                suggestedName={savedSearchSuggestedName}
+                searchUrl={savedSearchUrl}
+                resultCount={filteredCenters.length}
+              />
+
               {/* Share search button — preserves all filters in URL */}
               <Button
                 variant="outline"
@@ -1061,18 +1154,35 @@ const SearchResults = () => {
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileFiltersOpen(false)} />
-          <div className="absolute right-0 top-0 h-full w-[320px] max-w-[85vw] bg-card border-l border-border shadow-2xl overflow-y-auto">
-            <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-border bg-card">
+          {/* Flex column with overflow-hidden so the sticky header + scrollable
+              middle + sticky footer all coexist correctly. Previously the whole
+              panel scrolled which meant the "Show results" footer couldn't sit
+              fixed at the bottom of the viewport. */}
+          <div className="absolute right-0 top-0 h-full w-[320px] max-w-[85vw] bg-card border-l border-border shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-border bg-card shrink-0">
               <h2 className="font-semibold text-foreground flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4 text-primary" />
                 Filters & Sort
               </h2>
-              <Button variant="ghost" size="sm" onClick={() => setMobileFiltersOpen(false)}>
+              <Button variant="ghost" size="sm" onClick={() => setMobileFiltersOpen(false)} aria-label="Close filters">
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="p-4">
+            <div className="p-4 flex-1 overflow-y-auto">
               <FilterSidebar />
+            </div>
+            {/* Sticky "Show results" footer — closes the sheet and confirms the
+                filter set is applied. Matches iOS / Android filter-sheet
+                pattern. (Phase 6C) */}
+            <div className="shrink-0 p-3 border-t border-border bg-card pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <Button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="w-full h-11 font-semibold"
+              >
+                {filteredCenters.length === 0
+                  ? "No matches — adjust filters"
+                  : `Show ${filteredCenters.length} ${filteredCenters.length === 1 ? "result" : "results"}`}
+              </Button>
             </div>
           </div>
         </div>
@@ -1116,6 +1226,94 @@ const SearchResults = () => {
                         <p className="text-xs text-muted-foreground mt-0.5">
                           Showing the closest facilities nationwide, sorted by proximity. Results nearest to your search appear first.
                         </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Active-filter chips — mobile-only. Lets seekers see and
+                      remove individual filters without re-opening the slide-
+                      out sheet. Desktop has the always-visible FilterSidebar
+                      so chips would be redundant there. (Phase 6C) */}
+                  {activeFiltersCount > 0 && (
+                    <div className="lg:hidden mb-3 -mx-3 px-3 overflow-x-auto no-scrollbar">
+                      <div className="flex items-center gap-1.5 min-w-min">
+                        {selectedTreatmentTypes.map((value) => (
+                          <button
+                            key={`tt-${value}`}
+                            type="button"
+                            onClick={() => toggleFilter("treatmentTypes", value, selectedTreatmentTypes)}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label={`Remove ${value} filter`}
+                          >
+                            <span className="truncate max-w-[140px]">{value}</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        ))}
+                        {selectedInsuranceTypes.map((value) => (
+                          <button
+                            key={`ins-${value}`}
+                            type="button"
+                            onClick={() => toggleFilter("insuranceTypes", value, selectedInsuranceTypes)}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label={`Remove ${value} filter`}
+                          >
+                            <span className="truncate max-w-[140px]">{value}</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        ))}
+                        {selectedAmenities.map((value) => (
+                          <button
+                            key={`am-${value}`}
+                            type="button"
+                            onClick={() => toggleFilter("amenities", value, selectedAmenities)}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label={`Remove ${value} filter`}
+                          >
+                            <span className="truncate max-w-[140px]">{value}</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        ))}
+                        {selectedDistance && (
+                          <button
+                            type="button"
+                            onClick={() => setSingleFilter("distance", "")}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label="Remove distance filter"
+                          >
+                            <span>Within {selectedDistance} mi</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                        {verifiedOnly && (
+                          <button
+                            type="button"
+                            onClick={() => toggleBooleanFilter("verified", true)}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label="Remove verified-only filter"
+                          >
+                            <span>Verified only</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                        {featuredOnly && (
+                          <button
+                            type="button"
+                            onClick={() => toggleBooleanFilter("featuredOnly", true)}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                            aria-label="Remove featured-only filter"
+                          >
+                            <span>Featured only</span>
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={clearAllFilters}
+                          className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40"
+                          aria-label="Clear all filters"
+                        >
+                          Clear all
+                        </button>
                       </div>
                     </div>
                   )}

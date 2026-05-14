@@ -339,18 +339,48 @@ export function ReviewForm({
       <ShellContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Your Rating</label>
-            <div className="flex items-center gap-1">
+            <label id="rating-label" className="block text-sm font-medium mb-2">Your Rating</label>
+            <div
+              className="flex items-center gap-1"
+              role="radiogroup"
+              aria-labelledby="rating-label"
+              onKeyDown={(e) => {
+                // Arrow-key support for screen-reader + keyboard-only users.
+                // Left/down decrement, right/up increment, Home/End set the
+                // extremes. Updates immediately so SR announces the new value.
+                if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setRating(Math.max(1, (rating || 0) - 1));
+                } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setRating(Math.min(5, (rating || 0) + 1));
+                } else if (e.key === "Home") {
+                  e.preventDefault();
+                  setRating(1);
+                } else if (e.key === "End") {
+                  e.preventDefault();
+                  setRating(5);
+                }
+              }}
+            >
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   type="button"
+                  role="radio"
+                  aria-checked={rating === star}
+                  aria-label={`${star} ${star === 1 ? "star" : "stars"}`}
+                  // Only the currently-selected star (or the first when none
+                  // selected) takes the tab stop so the radiogroup behaves
+                  // as a single composite control.
+                  tabIndex={(rating === star) || (rating === 0 && star === 1) ? 0 : -1}
                   className="p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
                   onClick={() => setRating(star)}
                 >
                   <Star
+                    aria-hidden
                     className={cn(
                       "h-8 w-8 transition-colors",
                       star <= (hoverRating || rating)

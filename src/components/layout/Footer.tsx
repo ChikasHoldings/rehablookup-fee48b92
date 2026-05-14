@@ -44,6 +44,7 @@ const treatmentLinks: FooterLink[] = [
 ];
 
 const insuranceLinks: FooterLink[] = [
+  { name: "Verify My Insurance", path: "/insurance-verification", badge: "Free" },
   { name: "Aetna Coverage", path: "/insurance/aetna-rehab" },
   { name: "Blue Cross Blue Shield", path: "/insurance/bcbs-treatment" },
   { name: "Cigna Rehab Coverage", path: "/insurance/cigna-rehab" },
@@ -86,6 +87,8 @@ const resourceLinks: FooterLink[] = [
   { name: "Paying for Rehab", path: "/resources/paying-for-rehab" },
   { name: "Detox Timeline", path: "/resources/detox-timeline" },
   { name: "Cost Estimator", path: "/cost-estimator" },
+  { name: "Compare Facilities", path: "/compare", badge: "New" },
+  { name: "Saved Searches", path: "/account/saved-searches", badge: "New" },
   { name: "General FAQ", path: "/faq" },
 ];
 
@@ -104,8 +107,9 @@ const companyLinks: FooterLink[] = [
   { name: "How It Works", path: "/how-it-works" },
   { name: "Contact Us", path: "/contact" },
   { name: "Treatment Placement", path: "/concierge" },
+  { name: "Editorial Team", path: "/authors", badge: "New" },
   { name: "Blog", path: "/blog" },
-  { name: "Rehab Score Methodology", path: "/rehab-score", badge: "New" },
+  { name: "Rehab Score Methodology", path: "/rehab-score" },
   { name: "Editorial Policy", path: "/editorial-policy" },
   { name: "Medical Disclaimer", path: "/medical-disclaimer" },
 ];
@@ -208,6 +212,7 @@ const MobileAccordion = memo(function MobileAccordion({ title, links }: FooterSe
         onClick={toggle}
         className="flex w-full items-center justify-between py-3.5 text-left"
         aria-expanded={open}
+        aria-label={`Toggle ${title} menu`}
       >
         <span className="text-[15px] font-semibold text-primary-foreground/90">{title}</span>
         <ChevronDown

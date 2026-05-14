@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
+import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import {
   Shield,
   CheckCircle,
@@ -309,6 +310,8 @@ export default function KaiserRehab() {
       </section>
 
       {/* Featured Centers */}
+      <InsuranceVerifyCarrierCTA carrier="Kaiser Permanente" />
+
       <InsuranceFacilitiesSection insurerSlug="kaiser" title="Treatment Centers Accepting Kaiser" limit={8} className="border-t border-border" />
 
       {/* FAQs */}

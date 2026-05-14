@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
+import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import {
   Shield,
   CheckCircle,
@@ -271,6 +272,8 @@ export default function HumanaRehab() {
       </section>
 
       {/* Featured Centers accepting Humana */}
+      <InsuranceVerifyCarrierCTA carrier="Humana" />
+
       <InsuranceFacilitiesSection insurerSlug="humana" title="Treatment Centers Accepting Humana" limit={8} className="border-t border-border" />
 
       {/* FAQs */}

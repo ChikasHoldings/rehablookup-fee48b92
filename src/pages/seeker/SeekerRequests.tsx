@@ -3,17 +3,19 @@ import { pluckNonNull } from "@/lib/nullableRows";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { 
-  Send, 
-  Clock, 
-  Building2, 
-  MapPin, 
+import {
+  Send,
+  Clock,
+  Building2,
+  MapPin,
   Plus,
   FileText,
   ChevronRight,
   RefreshCw,
   CheckCircle,
   Filter,
+  ShieldCheck,
+  Bookmark,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -228,6 +230,13 @@ export default function SeekerRequests() {
   const [savedData, setSavedData] = useState<SavedRequestData | null>(null);
   const [viewedLeadIds, setViewedLeadIds] = useState<Set<string>>(new Set());
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
+  // Counts of the OTHER inquiry types so this inbox can surface links to
+  // /account/concierge and /account/international when the seeker has work
+  // in those flows. The leads list above stays the primary feed.
+  const [conciergeCount, setConciergeCount] = useState<number>(0);
+  const [internationalCount, setInternationalCount] = useState<number>(0);
+  const [vobCount, setVobCount] = useState<number>(0);
+  const [savedSearchCount, setSavedSearchCount] = useState<number>(0);
   const { toast } = useToast();
 
   // Load viewed lead IDs from localStorage
@@ -344,6 +353,48 @@ export default function SeekerRequests() {
     void syncRequests();
     return () => { isCancelled = true; };
   }, [isAuthenticated, isReady, email, userId, fetchRequests]);
+
+  // Fetch the user's concierge + international counts so we can render
+  // cross-link cards at the top of the inbox. These read via RLS on the
+  // user_id column (set by link-inquiry-to-user on signup).
+  useEffect(() => {
+    if (!isAuthenticated || !userId) {
+      setConciergeCount(0);
+      setInternationalCount(0);
+      setVobCount(0);
+      setSavedSearchCount(0);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const [conc, intl, vob, saved] = await Promise.all([
+        supabase
+          .from("concierge_inquiries")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .not("status", "in", "(closed,completed)"),
+        supabase
+          .from("international_placement_cases")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .not("status", "in", "(closed,completed)"),
+        supabase
+          .from("insurance_verification_requests")
+          .select("id", { count: "exact", head: true })
+          .eq("linked_user_id", userId),
+        supabase
+          .from("saved_searches")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId),
+      ]);
+      if (cancelled) return;
+      setConciergeCount(conc.count ?? 0);
+      setInternationalCount(intl.count ?? 0);
+      setVobCount(vob.count ?? 0);
+      setSavedSearchCount(saved.count ?? 0);
+    })();
+    return () => { cancelled = true; };
+  }, [isAuthenticated, userId]);
 
   // Realtime subscription for lead status changes
   useEffect(() => {
@@ -483,6 +534,86 @@ export default function SeekerRequests() {
             </Button>
           </div>
         </div>
+
+        {/* Cross-link cards: surface the seeker's open concierge + international
+            + insurance-verification + saved-search work so this page acts as a
+            true inbox. */}
+        {(conciergeCount > 0 || internationalCount > 0 || vobCount > 0 || savedSearchCount > 0) && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+            {conciergeCount > 0 && (
+              <Link to="/account/concierge" className="block">
+                <Card className="hover:border-primary/40 transition-colors">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                      <Building2 className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">Concierge placement</p>
+                      <p className="text-xs text-muted-foreground">
+                        {conciergeCount} active case{conciergeCount === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
+            {internationalCount > 0 && (
+              <Link to="/account/international" className="block">
+                <Card className="hover:border-primary/40 transition-colors">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                      <Building2 className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">International placement</p>
+                      <p className="text-xs text-muted-foreground">
+                        {internationalCount} active case{internationalCount === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
+            {vobCount > 0 && (
+              <Link to="/account/insurance-verifications" className="block">
+                <Card className="hover:border-primary/40 transition-colors">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+                      <ShieldCheck className="h-5 w-5 text-violet-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">Insurance verifications</p>
+                      <p className="text-xs text-muted-foreground">
+                        {vobCount} request{vobCount === 1 ? "" : "s"} on file
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
+            {savedSearchCount > 0 && (
+              <Link to="/account/saved-searches" className="block">
+                <Card className="hover:border-primary/40 transition-colors">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                      <Bookmark className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">Saved searches</p>
+                      <p className="text-xs text-muted-foreground">
+                        {savedSearchCount} pinned filter{savedSearchCount === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </CardContent>
+                </Card>
+              </Link>
+            )}
+          </div>
+        )}
 
         {requests.length === 0 ? (
           <Card className="border-dashed">

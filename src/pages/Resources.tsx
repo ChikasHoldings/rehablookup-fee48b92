@@ -31,6 +31,7 @@ import {
   insuranceLinks 
 } from "@/components/seo/InternalLinkingSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { ALL_BLOG_CATEGORIES, getCanonicalCategoryFor } from "@/data/blogCategories";
 
 // Generate ItemList schema for article listing pages
 function generateArticleListSchema(articles: DBArticle[]) {
@@ -247,12 +248,21 @@ export default function Resources() {
     return generateArticleListSchema(articles);
   }, [articles]);
 
+  // When a category facet is selected, point the canonical at the dedicated
+  // hub URL so Google consolidates link equity on the canonical page rather
+  // than treating every facet as a duplicate of /resources.
+  const facetCanonical = useMemo(() => {
+    if (selectedCategory === "all") return "/resources";
+    const canonical = getCanonicalCategoryFor(selectedCategory);
+    return canonical ? `/resources/category/${canonical.slug}` : "/resources";
+  }, [selectedCategory]);
+
   return (
     <Layout>
       <SEO
         title="Recovery Resources & Guides | RehabLookup"
         description="Expert guides on addiction treatment, recovery support, and mental health. Find comprehensive resources to help you or your loved one on the path to recovery."
-        canonical="/resources"
+        canonical={facetCanonical}
         structuredData={articleListSchema || undefined}
         breadcrumbs={[
           { name: "Home", url: "/" },
@@ -324,6 +334,44 @@ export default function Resources() {
           </div>
         </div>
       </section>
+
+      {/* Browse-by-hub rail — links to the 8 canonical category hubs.
+          Only shown on the unfiltered view so it stays out of the way once
+          the user has narrowed down. */}
+      {selectedCategory === "all" && searchQuery === "" && (
+        <section className="py-10 bg-background border-b border-border">
+          <div className="container">
+            <div className="flex items-baseline justify-between gap-3 flex-wrap mb-5">
+              <h2 className="font-display text-xl font-bold text-foreground">Browse by hub</h2>
+              <p className="text-sm text-muted-foreground">
+                Topic-level guides curated for each part of the journey
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {ALL_BLOG_CATEGORIES.map((cat) => {
+                const HubIcon = cat.icon;
+                return (
+                  <Link
+                    key={cat.slug}
+                    to={`/resources/category/${cat.slug}`}
+                    className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 hover:border-primary/40 hover:shadow-sm transition-all"
+                  >
+                    <div className={`h-10 w-10 shrink-0 flex items-center justify-center rounded-lg text-white ${cat.color}`}>
+                      <HubIcon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground group-hover:text-primary transition-colors leading-tight">
+                        {cat.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{cat.tagline}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Featured Articles */}
       {featuredArticles.length > 0 && selectedCategory === "all" && searchQuery === "" && (

@@ -31,21 +31,55 @@ export default function EducationalPage() {
     return <Navigate to="/404" replace />;
   }
 
-  const structuredData: object[] = [
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      name: config.title,
-      headline: config.title,
-      description: config.metaDescription,
-      url: `https://rehablookup.com/${config.slug}`,
-      publisher: {
-        "@type": "Organization",
-        name: "RehabLookup",
-        url: "https://rehablookup.com",
-      },
-      dateModified: new Date().toISOString().split("T")[0],
+  // Withdrawal / symptom pages are medical-intent content; emit
+  // MedicalWebPage so Google treats them as health content rather than a
+  // generic Article. "What is X" pages stay as Article. Both gain a stable
+  // dateModified from the config (config.lastReviewed) so the timestamp
+  // doesn't churn every deploy.
+  const isMedicalContent = withdrawalSignsPages.some((p) => p.slug === config.slug);
+  const lastReviewed =
+    (config as { lastReviewed?: string }).lastReviewed
+    ?? "2025-01-01";
+
+  const baseSchema = {
+    "@context": "https://schema.org",
+    name: config.title,
+    headline: config.title,
+    description: config.metaDescription,
+    url: `https://rehablookup.com/${config.slug}`,
+    publisher: {
+      "@type": "Organization",
+      name: "RehabLookup",
+      url: "https://rehablookup.com",
     },
+    datePublished: lastReviewed,
+    dateModified: lastReviewed,
+  };
+
+  const structuredData: object[] = [
+    isMedicalContent
+      ? {
+          ...baseSchema,
+          "@type": "MedicalWebPage",
+          about: {
+            "@type": "MedicalCondition",
+            name: config.conditionName,
+          },
+          audience: {
+            "@type": "PeopleAudience",
+            audienceType: "Patients and Families",
+          },
+          lastReviewed,
+          reviewedBy: {
+            "@type": "Organization",
+            name: "RehabLookup Editorial Team",
+            url: "https://rehablookup.com/editorial-policy",
+          },
+        }
+      : {
+          ...baseSchema,
+          "@type": "Article",
+        },
   ];
   if (shouldEmitFAQSchema(config.faqs)) {
     structuredData.push({

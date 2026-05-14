@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfDay, endOfDay, subDays, format, parseISO } from "date-fns";
+import { startOfDay, endOfDay, subDays } from "date-fns";
 import { useProviderFacilities } from "./useProviderFacilities";
 import { type DateRange } from "./useLeadAnalytics";
 
@@ -46,35 +46,47 @@ export interface CentralizedEngagementAnalytics {
   impressionToViewRate: number;
 }
 
-interface ProviderEvent {
-  id: string;
-  facility_id: string;
-  event_type: string;
-  session_id: string;
-  page_context: string;
-  created_at: string;
+interface RpcSummary {
+  totals: { impressions: number; profileViews: number; clickToCalls: number; websiteClicks: number };
+  period: { impressions: number; profileViews: number; clickToCalls: number; websiteClicks: number };
+  previous: { impressions: number; profileViews: number; clickToCalls: number; websiteClicks: number };
+  facilityBreakdown: Array<{
+    facilityId: string;
+    facilityName: string;
+    impressions: number;
+    profileViews: number;
+    listingViews: number;
+    clickToCalls: number;
+    websiteClicks: number;
+  }>;
+  dailyTrends: Array<{
+    date: string;
+    impressions: number;
+    profileViews: number;
+    listingViews: number;
+    clickToCalls: number;
+    websiteClicks: number;
+  }>;
+  bucketSizeDays: number;
+  rangeFrom: string;
+  rangeTo: string;
 }
-
-const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
 export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterFacilityId?: string) {
   const queryClient = useQueryClient();
   const { facilities, isLoading: facilitiesLoading } = useProviderFacilities();
 
-  // Only include approved facilities — pending/rejected facilities never appear in
-  // provider_events (the edge function rejects non-approved facility IDs), so
-  // including them just bloats the .in() filter with IDs that will never match.
   const approvedFacilities = facilities.filter(f => f.status === "approved");
-  const facilityIds = filterFacilityId 
+  const facilityIds = filterFacilityId
     ? approvedFacilities.filter(f => f.id === filterFacilityId).map(f => f.id)
     : approvedFacilities.map((f) => f.id);
-
-  // Stable string key derived from the array — avoids a complex expression in the dep array
   const facilityIdsKey = facilityIds.join(",");
 
+  // Realtime invalidation on event inserts/updates for any of these facilities.
+  // Server-side aggregation still benefits from cache invalidation so we re-call
+  // the RPC when new events land.
   useEffect(() => {
     if (facilityIds.length === 0) return;
-
     const eventChannels = facilityIds.map((facilityId, index) =>
       supabase
         .channel(`centralized-engagement-events-${facilityId}-${index}`)
@@ -88,20 +100,19 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
           },
           () => {
             queryClient.invalidateQueries({ queryKey: ["centralized-engagement-analytics"] });
-          }
+          },
         )
-        .subscribe()
+        .subscribe(),
     );
-
     return () => {
       eventChannels.forEach((channel) => supabase.removeChannel(channel));
     };
-  }, [facilityIdsKey, queryClient]); // eslint-disable-line react-hooks/exhaustive-deps -- facilityIds is derived from facilityIdsKey; including it would cause duplicate subscriptions
+  }, [facilityIdsKey, queryClient]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return useQuery({
     queryKey: [
       "centralized-engagement-analytics",
-      facilityIds.join(","),
+      facilityIdsKey,
       dateRange?.from?.toISOString(),
       dateRange?.to?.toISOString(),
       filterFacilityId || "all",
@@ -111,118 +122,74 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
         return getEmptyAnalytics();
       }
 
-      // Fetch ALL provider events (views + clicks) from the single source of truth
-      // Paginate to avoid the default 1000-row limit
-      let allEventsData: ProviderEvent[] = [];
-      let page = 0;
-      const PAGE_SIZE = 1000;
-      while (true) {
-        const from = page * PAGE_SIZE;
-        const to = from + PAGE_SIZE - 1;
-        const { data: pageData, error: pageError } = await supabase
-          .from("provider_events")
-          .select("id, facility_id, event_type, session_id, page_context, created_at")
-          .in("facility_id", facilityIds)
-          .order("created_at", { ascending: true })
-          .range(from, to);
-
-        if (pageError) throw pageError;
-        if (!pageData || pageData.length === 0) break;
-        allEventsData = allEventsData.concat(pageData as ProviderEvent[]);
-        if (pageData.length < PAGE_SIZE) break;
-        page++;
-      }
-
-      const allEvents = allEventsData;
-      const facilityMap = new Map(approvedFacilities.map((f) => [f.id, f.name]));
-
-      // Split events by type
-      const viewEvents = allEvents.filter(e => e.event_type === "profile_view" || e.event_type === "listing_impression");
-      const clickEvents = allEvents.filter(e => e.event_type === "click_to_call" || e.event_type === "website_click");
-      const impressionEvents = allEvents.filter(e => e.event_type === "listing_impression");
-      const profileViewEvents = allEvents.filter(e => e.event_type === "profile_view");
-
       const now = new Date();
       const hasAllTimeSelection = Boolean(dateRange && !dateRange.from && !dateRange.to);
-      const allTimelineDates = allEvents
-        .map((event) => parseISO(event.created_at))
-        .filter((date) => !Number.isNaN(date.getTime()))
-        .sort((a, b) => a.getTime() - b.getTime());
-
       const fallbackStart = subDays(now, 30);
-      const rangeStart = dateRange?.from ?? (hasAllTimeSelection ? allTimelineDates[0] ?? fallbackStart : fallbackStart);
-      const rangeEnd = dateRange?.to ?? (hasAllTimeSelection ? allTimelineDates[allTimelineDates.length - 1] ?? now : now);
+      const rangeStart = dateRange?.from ?? (hasAllTimeSelection ? subDays(now, 365) : fallbackStart);
+      const rangeEnd = dateRange?.to ?? now;
+      const fromIso = startOfDay(rangeStart).toISOString();
+      const toIso = endOfDay(rangeEnd).toISOString();
 
-      const rangeStartISO = startOfDay(rangeStart).toISOString();
-      const rangeEndISO = endOfDay(rangeEnd).toISOString();
+      // Server-side aggregation. The RPC checks facility ownership before
+      // summing so a hostile client cannot pass other providers' facility
+      // IDs into p_facility_ids and learn their analytics.
+      const { data, error } = await supabase.rpc("get_provider_engagement_summary", {
+        p_facility_ids: facilityIds,
+        p_from: fromIso,
+        p_to: toIso,
+      });
+      if (error) throw error;
+      const summary = data as unknown as RpcSummary | null;
+      if (!summary) return getEmptyAnalytics();
 
-      const periodLength = Math.max(
-        1,
-        Math.ceil((endOfDay(rangeEnd).getTime() - startOfDay(rangeStart).getTime()) / DAY_IN_MS) + 1
-      );
-      const prevPeriodStart = subDays(startOfDay(rangeStart), periodLength);
-      const prevPeriodEnd = subDays(startOfDay(rangeStart), 1);
-      const prevStartISO = startOfDay(prevPeriodStart).toISOString();
-      const prevEndISO = endOfDay(prevPeriodEnd).toISOString();
+      const totalImpressions = summary.totals.impressions;
+      const totalProfileViews = summary.totals.profileViews;
+      const totalClickToCalls = summary.totals.clickToCalls;
+      const totalWebsiteClicks = summary.totals.websiteClicks;
+      const totalListingViews = totalImpressions + totalProfileViews;
 
-      const inRange = (e: ProviderEvent) => e.created_at >= rangeStartISO && e.created_at <= rangeEndISO;
-      const inPrevRange = (e: ProviderEvent) => e.created_at >= prevStartISO && e.created_at <= prevEndISO;
+      const periodImpressions = summary.period.impressions;
+      const periodProfileViews = summary.period.profileViews;
+      const periodClickToCalls = summary.period.clickToCalls;
+      const periodWebsiteClicks = summary.period.websiteClicks;
+      const periodListingViews = periodImpressions + periodProfileViews;
 
-      const currentViewEvents = viewEvents.filter(inRange);
-      const prevViewEvents = viewEvents.filter(inPrevRange);
-      const currentClickEvents = clickEvents.filter(inRange);
-      const prevClickEvents = clickEvents.filter(inPrevRange);
+      const prevImpressions = summary.previous.impressions;
+      const prevProfileViews = summary.previous.profileViews;
+      const prevClickToCalls = summary.previous.clickToCalls;
+      const prevWebsiteClicks = summary.previous.websiteClicks;
+      const prevListingViews = prevImpressions + prevProfileViews;
 
-      const totalListingViews = viewEvents.length;
-      const totalClickToCalls = countByType(clickEvents, "click_to_call");
-      const totalWebsiteClicks = countByType(clickEvents, "website_click");
-
-      const periodListingViews = currentViewEvents.length;
-      const periodClickToCalls = countByType(currentClickEvents, "click_to_call");
-      const periodWebsiteClicks = countByType(currentClickEvents, "website_click");
-
-      const prevListingViews = prevViewEvents.length;
-      const prevClickToCalls = countByType(prevClickEvents, "click_to_call");
-      const prevWebsiteClicks = countByType(prevClickEvents, "website_click");
-
+      const impressionGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodImpressions, prevImpressions);
+      const profileViewGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodProfileViews, prevProfileViews);
       const listingViewGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodListingViews, prevListingViews);
       const clickToCallGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodClickToCalls, prevClickToCalls);
       const websiteClickGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodWebsiteClicks, prevWebsiteClicks);
 
-      // Impressions & profile views
-      const currentImpressions = impressionEvents.filter(inRange);
-      const prevImpressions = impressionEvents.filter(inPrevRange);
-      const currentProfileViews = profileViewEvents.filter(inRange);
-      const prevProfileViewEvents = profileViewEvents.filter(inPrevRange);
-
-      const totalImpressions = impressionEvents.length;
-      const totalProfileViews = profileViewEvents.length;
-      const periodImpressions = currentImpressions.length;
-      const periodProfileViews = currentProfileViews.length;
-      const impressionGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodImpressions, prevImpressions.length);
-      const profileViewGrowth = hasAllTimeSelection ? 0 : calculateGrowth(periodProfileViews, prevProfileViewEvents.length);
       const impressionToViewRate = periodImpressions > 0 ? Math.round((periodProfileViews / periodImpressions) * 100) : 0;
-
-      const facilityBreakdown: FacilityEngagementBreakdown[] = facilityIds
-        .map((facilityId) => {
-          const fEvents = allEvents.filter(e => e.facility_id === facilityId && inRange(e));
-
-          return {
-            facilityId,
-            facilityName: facilityMap.get(facilityId) || "Unknown",
-            impressions: fEvents.filter(e => e.event_type === "listing_impression").length,
-            profileViews: fEvents.filter(e => e.event_type === "profile_view").length,
-            listingViews: fEvents.filter(e => e.event_type === "profile_view" || e.event_type === "listing_impression").length,
-            clickToCalls: fEvents.filter(e => e.event_type === "click_to_call").length,
-            websiteClicks: fEvents.filter(e => e.event_type === "website_click").length,
-          };
-        })
-        .filter((f) => f.listingViews > 0 || f.clickToCalls > 0 || f.websiteClicks > 0);
-
-      const dailyTrends = buildDailyTrends(currentViewEvents, currentClickEvents, rangeStart, rangeEnd);
-
       const viewToCallRate = periodListingViews > 0 ? Math.round((periodClickToCalls / periodListingViews) * 100) : 0;
       const viewToWebsiteRate = periodListingViews > 0 ? Math.round((periodWebsiteClicks / periodListingViews) * 100) : 0;
+
+      const facilityBreakdown: FacilityEngagementBreakdown[] = (summary.facilityBreakdown ?? [])
+        .filter((f) => f.listingViews > 0 || f.clickToCalls > 0 || f.websiteClicks > 0)
+        .map((f) => ({
+          facilityId: f.facilityId,
+          facilityName: f.facilityName,
+          impressions: f.impressions,
+          profileViews: f.profileViews,
+          listingViews: f.listingViews,
+          clickToCalls: f.clickToCalls,
+          websiteClicks: f.websiteClicks,
+        }));
+
+      const dailyTrends = (summary.dailyTrends ?? []).map((d) => ({
+        date: d.date,
+        impressions: d.impressions,
+        profileViews: d.profileViews,
+        listingViews: d.listingViews,
+        clickToCalls: d.clickToCalls,
+        websiteClicks: d.websiteClicks,
+      }));
 
       return {
         facilityBreakdown,
@@ -256,46 +223,9 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
   });
 }
 
-function countByType(events: ProviderEvent[], eventType: string): number {
-  return events.filter((event) => event.event_type === eventType).length;
-}
-
 function calculateGrowth(current: number, previous: number): number {
-  if (previous === 0) {
-    return current > 0 ? 100 : 0;
-  }
-
+  if (previous === 0) return current > 0 ? 100 : 0;
   return Math.round(((current - previous) / previous) * 100);
-}
-
-function buildDailyTrends(
-  viewEvents: ProviderEvent[],
-  clickEvents: ProviderEvent[],
-  rangeStart: Date,
-  rangeEnd: Date
-): CentralizedEngagementAnalytics["dailyTrends"] {
-  const trends: CentralizedEngagementAnalytics["dailyTrends"] = [];
-  const dayCount = Math.ceil((endOfDay(rangeEnd).getTime() - startOfDay(rangeStart).getTime()) / DAY_IN_MS) + 1;
-  const daysToShow = Math.min(dayCount, 30);
-
-  for (let i = 0; i < daysToShow; i++) {
-    const date = subDays(endOfDay(rangeEnd), daysToShow - 1 - i);
-    const dateStr = format(date, "yyyy-MM-dd");
-
-    const dayViews = viewEvents.filter((e) => format(parseISO(e.created_at), "yyyy-MM-dd") === dateStr);
-    const dayClicks = clickEvents.filter((e) => format(parseISO(e.created_at), "yyyy-MM-dd") === dateStr);
-
-    trends.push({
-      date: format(date, "MMM d"),
-      impressions: dayViews.filter(e => e.event_type === "listing_impression").length,
-      profileViews: dayViews.filter(e => e.event_type === "profile_view").length,
-      listingViews: dayViews.length,
-      clickToCalls: countByType(dayClicks, "click_to_call"),
-      websiteClicks: countByType(dayClicks, "website_click"),
-    });
-  }
-
-  return trends;
 }
 
 function getEmptyAnalytics(): CentralizedEngagementAnalytics {

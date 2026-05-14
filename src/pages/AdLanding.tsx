@@ -20,10 +20,13 @@ import logoImage from "@/assets/logo-header.webp";
 import { LeadIntakeForm } from "@/components/lead-intake";
 import { scrollToTopInstant } from "@/hooks/useScrollToTop";
 
-// Configure your video here - replace with your actual video ID
+// Configure your video here. Leave `videoId` empty to hide the video block
+// entirely; populating it renders the player. Previously held a Rick-Astley
+// placeholder which would have shipped "Never Gonna Give You Up" to anyone
+// who hit /ads/:slug — removed to avoid that reputational risk.
 const VIDEO_CONFIG = {
   platform: "youtube" as const, // or "vimeo"
-  videoId: "dQw4w9WgXcQ", // Replace with your actual YouTube/Vimeo video ID
+  videoId: "", // Set to a real YouTube/Vimeo video ID to enable.
 };
 
 interface UTMParams {
@@ -284,18 +287,20 @@ export default function AdLanding() {
             </p>
           </section>
           
-          {/* Video Section */}
-          <section className="space-y-3 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-100">
-            <LazyVideoEmbed
-              platform={VIDEO_CONFIG.platform}
-              videoId={VIDEO_CONFIG.videoId}
-              title="How RehabLookup helps connect people with treatment"
-              onPlay={handleVideoPlay}
-            />
-            <p className="text-sm text-muted-foreground text-center">
-              A brief overview of how we help connect people with treatment options in a respectful, confidential way.
-            </p>
-          </section>
+          {/* Video Section — only renders when VIDEO_CONFIG.videoId is set. */}
+          {VIDEO_CONFIG.videoId && (
+            <section className="space-y-3 animate-in fade-in slide-in-from-bottom-3 duration-500 delay-100">
+              <LazyVideoEmbed
+                platform={VIDEO_CONFIG.platform}
+                videoId={VIDEO_CONFIG.videoId}
+                title="How RehabLookup helps connect people with treatment"
+                onPlay={handleVideoPlay}
+              />
+              <p className="text-sm text-muted-foreground text-center">
+                A brief overview of how we help connect people with treatment options in a respectful, confidential way.
+              </p>
+            </section>
+          )}
           
           {/* Lead Intake Form with custom success */}
           <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">

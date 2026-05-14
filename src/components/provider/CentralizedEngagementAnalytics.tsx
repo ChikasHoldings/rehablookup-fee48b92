@@ -102,8 +102,11 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 [&>*]:min-w-0">
             <ConversionCell label="Search → Profile" value={`${impressionToViewRate}%`} desc="Impressions → views" />
-            <ConversionCell label="Profile → Call" value={`${viewToCallRate}%`} desc="Views → phone clicks" />
-            <ConversionCell label="Profile → Website" value={`${viewToWebsiteRate}%`} desc="Views → site clicks" />
+            {/* Call + website cells depend on Pro-gated KPIs; gate them too
+                so free providers don't see a derived percentage from numbers
+                they can't see in the KPI cards. */}
+            <ConversionCell label="Profile → Call" value={isPro ? `${viewToCallRate}%` : "—"} desc={isPro ? "Views → phone clicks" : "Pro only"} />
+            <ConversionCell label="Profile → Website" value={isPro ? `${viewToWebsiteRate}%` : "—"} desc={isPro ? "Views → site clicks" : "Pro only"} />
             <ConversionCell label="Profile → Inquiry" value={`${viewToInquiryRate}%`} desc="Views → inquiries" />
           </div>
         </div>

@@ -186,7 +186,7 @@ export function SearchForm({
           {/* Where */}
           <div className="group relative flex-[1.2] border-b border-border/40 transition-colors hover:bg-muted/15 md:border-b-0 md:border-r">
             <div className="p-4 md:px-5 md:py-4">
-              <label className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-primary">
+              <label htmlFor="search-location" className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-primary">
                 {isZipLookupLoading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : zipcodeData && !isZipcode ? (
@@ -197,6 +197,7 @@ export function SearchForm({
                 Location
               </label>
               <input
+                id="search-location"
                 ref={inputRef}
                 type="text"
                 placeholder="Enter city, state, or ZIP code"
@@ -290,6 +291,7 @@ export function SearchForm({
             <input
               ref={inputRef}
               type="text"
+              aria-label="City, state, or ZIP code"
               placeholder="City, State, or ZIP"
               value={location}
               onChange={(e) => handleLocationChange(e.target.value.slice(0, 200))}
@@ -321,6 +323,7 @@ export function SearchForm({
           <div className="relative flex-1 sm:max-w-[200px]">
             <Stethoscope className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <select
+              aria-label="Treatment type"
               value={selectedTreatmentTypes[0] || ""}
               onChange={(e) => setSelectedTreatmentTypes(e.target.value ? [e.target.value] : [])}
               className="h-12 w-full appearance-none rounded-xl border border-input bg-background pl-11 pr-8 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -336,6 +339,7 @@ export function SearchForm({
           <div className="relative hidden flex-1 sm:block sm:max-w-[200px]">
             <Shield className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <select
+              aria-label="Insurance provider"
               value={selectedInsurance[0] || ""}
               onChange={(e) => setSelectedInsurance(e.target.value ? [e.target.value] : [])}
               className="h-12 w-full appearance-none rounded-xl border border-input bg-background pl-11 pr-8 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -378,6 +382,7 @@ export function SearchForm({
             <input
               ref={inputRef}
               type="text"
+              aria-label="City, state, or ZIP code"
               placeholder="City, State, or ZIP"
               value={location}
               onChange={(e) => handleLocationChange(e.target.value.slice(0, 200))}

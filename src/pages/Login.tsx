@@ -437,7 +437,7 @@ export default function Login() {
         } else if (authError.message === "Invalid login credentials") {
           setError(`Invalid email or password. ${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} remaining.`);
         } else if (authError.message.includes("Email not confirmed")) {
-          setError("Please verify your email address before signing in. Check your inbox for a verification link.");
+          setError("Please verify your email address before signing in. Enter the 6-digit code we emailed you on the signup screen.");
         } else {
           setError(authError.message);
         }

@@ -241,6 +241,30 @@ async function handleReviewSubmitted(
     metadata: { review_id: review.id, facility_id: facility.id, facility_name: facility.name, rating: review.rating },
   });
 
+  // Notify the provider at SUBMISSION (pending moderation) so they can heads-up
+  // their staff. Previously providers only saw the review after admin approval.
+  // No PII — just a teaser.
+  if (facility.user_id) {
+    try {
+      await supabase.from("provider_notifications").insert({
+        user_id: facility.user_id,
+        facility_id: facility.id,
+        type: "review_pending",
+        title: "New review pending moderation",
+        message: `A ${review.rating}-star review for ${facility.name} was submitted and is awaiting admin approval.`,
+        metadata: {
+          review_id: review.id,
+          rating: review.rating,
+          status: "pending",
+        },
+      });
+    } catch (provNotifErr) {
+      logStep("Warning: provider pending-review notification insert failed", {
+        error: String(provNotifErr),
+      });
+    }
+  }
+
   // Send email to admins
   if (resend && adminEmails.length > 0) {
     const emailHtml = `

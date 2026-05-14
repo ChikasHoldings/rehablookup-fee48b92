@@ -1,4 +1,4 @@
-project_id = "plckxokpyiubuekvodtc"
+project_id = "mldbxpntzcjalgjmwnqa"
 
 [functions.serve-badge]
 verify_jwt = false

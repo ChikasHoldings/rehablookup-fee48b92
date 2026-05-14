@@ -29,6 +29,8 @@ import {
   Globe,
   Sparkles,
   ChevronRight,
+  Crown,
+  X as XIcon,
 } from "lucide-react";
 import {
   Accordion,
@@ -513,6 +515,135 @@ const ForProviders = () => {
                   Compare Your ROI — Free Calculator
                   <ArrowRight className="h-4 w-4" />
                 </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Free vs Pro Pricing Comparison — Phase 5C */}
+        <section className="py-12 sm:py-16 md:py-24 bg-muted/30 border-y border-border" id="pricing">
+          <div className="container px-4 md:px-6 lg:px-8">
+            <div className="text-center mb-10 sm:mb-14 max-w-2xl mx-auto">
+              <p className="text-xs sm:text-sm font-semibold text-primary uppercase tracking-wide mb-2 sm:mb-3">Pricing</p>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4">
+                Free to start. Upgrade only when you see results.
+              </h2>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Every facility gets a free listing. Pro adds featured placement, a 20% discount
+                on every lead unlock, and signals that compound over time.
+              </p>
+            </div>
+
+            <div className="mx-auto max-w-5xl grid gap-5 md:grid-cols-2">
+              {/* Free plan */}
+              <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 flex flex-col">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Free</p>
+                    <p className="mt-1 text-3xl font-bold text-foreground">$0<span className="text-base font-medium text-muted-foreground">/mo</span></p>
+                  </div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                    <Building2 className="h-6 w-6" />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                  Claim and maintain your facility profile. Pay only for the leads you choose to unlock.
+                </p>
+                <ul className="space-y-2.5 mb-6">
+                  {[
+                    { ok: true, label: "Free claimed facility profile" },
+                    { ok: true, label: "Per-lead unlock pricing (pay as you go)" },
+                    { ok: true, label: "Verified-listing badge" },
+                    { ok: true, label: "Basic profile analytics" },
+                    { ok: false, label: "20% lead-unlock discount" },
+                    { ok: false, label: "Featured placement on state & city pages" },
+                    { ok: false, label: "Search-ranking boost (+50)" },
+                    { ok: false, label: "Up to 5 facility listings on one account" },
+                  ].map((row) => (
+                    <li key={row.label} className="flex items-start gap-2 text-sm">
+                      {row.ok ? (
+                        <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      ) : (
+                        <XIcon className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />
+                      )}
+                      <span className={row.ok ? "text-foreground" : "text-muted-foreground/60 line-through decoration-muted-foreground/30"}>
+                        {row.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-auto">
+                  <Link to="/provider-signup">
+                    <Button variant="outline" className="w-full h-11 gap-2">
+                      Start free
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Pro plan */}
+              <div className="relative rounded-2xl border-2 border-primary/40 bg-card p-6 sm:p-8 flex flex-col shadow-lg shadow-primary/[0.06]">
+                <div className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">
+                  <Sparkles className="h-3 w-3" />
+                  Best ROI for &gt;20 leads/mo
+                </div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">Pro</p>
+                    <p className="mt-1 text-3xl font-bold text-foreground">$399<span className="text-base font-medium text-muted-foreground">/mo</span></p>
+                    <p className="text-xs text-muted-foreground mt-0.5">No setup fees · cancel any time</p>
+                  </div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                    <Crown className="h-6 w-6" />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                  Everything in Free, plus visibility boosts and a recurring 20% discount on every
+                  lead unlock that pays the membership back fast.
+                </p>
+                <ul className="space-y-2.5 mb-6">
+                  {[
+                    "Everything in Free",
+                    "20% discount on every lead unlock",
+                    "Featured placement on state, city & treatment pages",
+                    "+50 search-ranking boost across the directory",
+                    "Up to 5 facility listings on one account",
+                    "Pro badge on your public profile",
+                    "Phone & website visibility on public profile",
+                    "Per-facility analytics dashboard",
+                  ].map((row) => (
+                    <li key={row} className="flex items-start gap-2 text-sm text-foreground">
+                      <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span>{row}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-auto space-y-2">
+                  <Link to="/provider/pro-upgrade">
+                    <Button className="w-full h-11 gap-2 bg-primary hover:bg-primary/90">
+                      <Crown className="h-4 w-4" />
+                      See Pro pricing
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Already listed? <Link to="/login" className="text-primary hover:underline">Sign in</Link> to upgrade.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* ROI math strip */}
+            <div className="mt-8 sm:mt-10 mx-auto max-w-3xl rounded-xl bg-card border border-border p-5 text-center">
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">ROI math:</strong> at the average $40 lead-unlock fee,
+                Pro's 20% discount saves <strong className="text-foreground">$8 per lead</strong>.
+                Most facilities unlock 50+ leads/month — saving $400+ that more than covers the membership.
+              </p>
+              <Link to="/provider-roi-calculator" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                Run the calculator
+                <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
           </div>

@@ -15,6 +15,8 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { GA_MEASUREMENT_ID } from "./_ga.mjs";
+import { fetchAllFacilities, renderFacilityList, citySlug } from "./_facility-data.mjs";
 
 // Direct TS import — Node 22 strip-types makes this safe at build time.
 const { stateCountyData } = await import("../src/data/countySeoData.ts");
@@ -39,15 +41,12 @@ async function writePage(filePath, html) {
   const dir = path.dirname(filePath);
   await mkdir(dir, { recursive: true });
   await writeFile(filePath, html, "utf8");
-  if (filePath.endsWith(".html") && !filePath.endsWith("/index.html")) {
-    const nested = filePath.slice(0, -".html".length);
-    await mkdir(nested, { recursive: true });
-    await writeFile(path.join(nested, "index.html"), html, "utf8");
-  }
+  // Single flat .html — Vercel cleanUrls serves it at /path. Previously
+  // also emitted /path/index.html which Google was treating as a duplicate.
   pagesGenerated++;
 }
 
-function buildHtml({ state, county, urlPath }) {
+function buildHtml({ state, county, urlPath, facilities = [] }) {
   const title = `Rehab Centers in ${county.name} County, ${state.stateAbbr}`;
   const desc = county.metaDescription;
   const canonical = `${BASE_URL}${urlPath}`;
@@ -60,6 +59,12 @@ function buildHtml({ state, county, urlPath }) {
           .replace(/[^a-z0-9-]/g, "")}">${escHtml(c)}</a></li>`,
     )
     .join("");
+
+  // Inject up to N real facilities into the static HTML so Googlebot's
+  // first-pass crawl sees substantive content. Falls back to empty when
+  // the build couldn't fetch facility data (logged once in
+  // _facility-data.mjs).
+  const facilityList = renderFacilityList(facilities, `${county.name} County, ${state.stateName}`);
 
   const breadcrumbs = [
     { name: "Home", url: "/" },
@@ -158,8 +163,8 @@ function buildHtml({ state, county, urlPath }) {
     .breadcrumbs ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px}
     footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
   </style>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2VB6C1X2MQ');</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
   <header><a href="/" aria-label="RehabLookup Home">RehabLookup</a></header>
@@ -174,6 +179,7 @@ function buildHtml({ state, county, urlPath }) {
     <h2>Access &amp; Coverage</h2>
     <p>${escHtml(county.accessNotes)}</p>
     ${cityList ? `<h2>Cities in ${escHtml(county.name)} County</h2><ul style="columns:2;list-style:disc;padding-left:20px">${cityList}</ul>` : ""}
+    ${facilityList}
     <h2>Frequently Asked Questions</h2>
     ${faqHtml}
     <p style="margin-top:24px"><a href="/rehab-centers/${state.stateSlug}">All ${escHtml(state.stateName)} Rehab Centers</a> &middot; <a href="/concierge">Get Personalized Help</a> &middot; <a href="/">Home</a></p>
@@ -185,10 +191,30 @@ function buildHtml({ state, county, urlPath }) {
 
 async function main() {
   console.log("[county-html] starting...");
+  // One DB pull per build, grouped by state+city for fast county lookups
+  // (we map a county's `majorCities` list to the facilities in those cities).
+  const allFacilities = await fetchAllFacilities();
+  const byStateCity = new Map();
+  for (const f of allFacilities) {
+    const k = `${String(f.state).toLowerCase().replace(/\s+/g, "-")}|${citySlug(f.city)}`;
+    if (!byStateCity.has(k)) byStateCity.set(k, []);
+    byStateCity.get(k).push(f);
+  }
+  console.log(`[county-html] facility pool: ${allFacilities.length} approved facilities`);
+
   for (const state of stateCountyData) {
     for (const county of state.counties) {
       const urlPath = `/rehab-centers/${state.stateSlug}/county/${county.slug}`;
-      const html = buildHtml({ state, county, urlPath });
+      // Aggregate facilities across the county's major cities. Empty when
+      // the DB has no facilities for those cities yet — page falls back to
+      // the existing text-only template.
+      const facilities = [];
+      for (const cityName of county.majorCities) {
+        const k = `${state.stateSlug}|${citySlug(cityName)}`;
+        const inCity = byStateCity.get(k);
+        if (inCity) facilities.push(...inCity);
+      }
+      const html = buildHtml({ state, county, urlPath, facilities });
       const filePath = path.join(
         publicDir,
         "rehab-centers",
@@ -199,7 +225,7 @@ async function main() {
       await writePage(filePath, html);
     }
   }
-  console.log(`[county-html] generated ${pagesGenerated} county pages (flat + nested)`);
+  console.log(`[county-html] generated ${pagesGenerated} county pages`);
 }
 
 await main().catch((err) => {

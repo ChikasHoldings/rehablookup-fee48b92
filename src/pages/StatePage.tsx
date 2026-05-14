@@ -1,7 +1,9 @@
 import { lazy, Suspense, useMemo, useState } from "react";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
+import NotFound from "@/pages/NotFound";
+import { buildStateOverview } from "@/lib/locationDescriptions";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
@@ -48,12 +50,15 @@ import {
 
 // Treatment types for internal linking
 const treatmentTypesData = [
-  { icon: Pill, title: "Drug Addiction", link: "/treatment-types", param: "?type=drug" },
-  { icon: Activity, title: "Alcohol Rehab", link: "/treatment-types", param: "?type=alcohol" },
-  { icon: Brain, title: "Dual Diagnosis", link: "/treatment-types", param: "?type=dual-diagnosis" },
-  { icon: Home, title: "Residential Inpatient", link: "/treatment-types", param: "?type=inpatient" },
-  { icon: Stethoscope, title: "Outpatient Programs", link: "/treatment-types", param: "?type=outpatient" },
-  { icon: Sparkles, title: "Holistic Therapy", link: "/treatment-types", param: "?type=holistic" },
+  // Link directly to the canonical /treatment-types/<slug> SEO pages rather
+  // than /treatment-types?type=…. The query-string variant is non-canonical;
+  // every state/city/county page leaked PageRank into a non-target URL.
+  { icon: Pill, title: "Drug Addiction", link: "/treatment-types/drug-addiction-treatment", param: "" },
+  { icon: Activity, title: "Alcohol Rehab", link: "/treatment-types/alcohol-rehabilitation", param: "" },
+  { icon: Brain, title: "Dual Diagnosis", link: "/treatment-types/dual-diagnosis-treatment", param: "" },
+  { icon: Home, title: "Residential Inpatient", link: "/treatment-types/residential-inpatient", param: "" },
+  { icon: Stethoscope, title: "Outpatient Programs", link: "/treatment-types/outpatient-programs", param: "" },
+  { icon: Sparkles, title: "Holistic Therapy", link: "/treatment-types/holistic-therapy", param: "" },
 ];
 import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
@@ -203,7 +208,11 @@ const StatePage = () => {
   }
 
   if (!stateData) {
-    return <Navigate to="/rehab-centers" replace />;
+    // Render the NotFound page in place (200 in SPA, noindex/HTTP 404
+    // semantics in the prerendered HTML). Previously we Navigate-redirected
+    // to /rehab-centers — a 200 redirect — which made Google see invalid
+    // state slugs as soft-404s and waste crawl budget on the redirect chain.
+    return <NotFound />;
   }
 
   const faqSchema = {
@@ -247,12 +256,21 @@ const StatePage = () => {
     faqSchema
   ];
 
+  // Per-state social card rendered on-demand by the og-state-image edge
+  // function. Falls back to the default site OG image if VITE_SUPABASE_URL
+  // is not present at build/runtime (e.g., during certain SSG flows).
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const ogImageUrl = supabaseUrl
+    ? `${supabaseUrl}/functions/v1/og-state-image?slug=${encodeURIComponent(stateData.slug)}`
+    : undefined;
+
   return (
     <Layout>
       <SEO
         title={`Drug & Alcohol Rehab Centers in ${stateData.name} | Find Treatment`}
         description={stateData.metaDescription}
         canonical={`/rehab-centers/${stateData.slug}`}
+        image={ogImageUrl}
         structuredData={structuredData}
         breadcrumbs={[
           { name: "Home", url: "/" },
@@ -263,10 +281,20 @@ const StatePage = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
+        {/* Hero is rendered as an <img> rather than a background-image so the
+            browser can attribute it as the LCP element + fetch with high
+            priority. Width/height eliminate CLS while the image streams in. */}
         {capitalImage && (
-          <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${capitalImage})` }}
+          <img
+            src={capitalImage}
+            alt=""
+            aria-hidden="true"
+            width={1600}
+            height={520}
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
@@ -292,7 +320,15 @@ const StatePage = () => {
             </h1>
             
             <p className="mt-4 text-base md:text-lg text-white/85 leading-relaxed max-w-2xl">
-              {stateData.description}
+              {/* De-templated description: combines real per-state stats
+                  (CDC overdose mortality, SAMHSA facility count, Medicaid
+                  expansion status, regional context, signature note) with
+                  the verified-facility count we already have. Each state
+                  now ships substantively distinct hero copy to address the
+                  audit's "templated near-verbatim" finding. The original
+                  static description survives as the fallback meta line
+                  consumed by <SEO/>. */}
+              {buildStateOverview(stateData.slug, stateData.name, stateCenters.length)}
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-4 md:gap-6">

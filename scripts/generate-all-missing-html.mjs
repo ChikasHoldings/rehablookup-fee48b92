@@ -44,6 +44,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseStringPromise } from "xml2js";
 import { readFile } from "node:fs/promises";
+import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
@@ -145,8 +146,8 @@ function buildHtml({ urlPath, title, metaTitle, metaDesc, h1, content, breadcrum
     .btn{display:inline-block;padding:.6rem 1.4rem;border-radius:.5rem;font-weight:600;text-decoration:none;font-size:.9rem;background:#2563eb;color:#fff;margin:.25rem}
     footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
   </style>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2VB6C1X2MQ',{send_page_view:true});</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}',{send_page_view:true});</script>
 </head>
 <body>
   <header style="padding:12px 0 20px;border-bottom:1px solid #e5e7eb;margin-bottom:20px">
@@ -170,12 +171,13 @@ function buildHtml({ urlPath, title, metaTitle, metaDesc, h1, content, breadcrum
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Write page (flat .html + nested /index.html for Vercel cleanUrls compat)
+// Write page (single flat .html — Vercel cleanUrls serves it at /path).
+// Previously also emitted /path/index.html as a soft-404 guard but Google
+// was treating both URL forms as duplicates; see generate-seo-html.mjs.
 // ─────────────────────────────────────────────────────────────────────────────
 async function writePage(urlPath, pageData) {
   const htmlContent = buildHtml({ urlPath, ...pageData });
   const flatPath = path.join(publicDir, urlPath.replace(/^\//, "") + ".html");
-  const nestedPath = path.join(publicDir, urlPath.replace(/^\//, ""), "index.html");
 
   // Skip if already exists and not forcing
   if (!FORCE && existsSync(flatPath)) {
@@ -186,10 +188,6 @@ async function writePage(urlPath, pageData) {
   try {
     await mkdir(path.dirname(flatPath), { recursive: true });
     await writeFile(flatPath, htmlContent, "utf8");
-
-    await mkdir(path.dirname(nestedPath), { recursive: true });
-    await writeFile(nestedPath, htmlContent, "utf8");
-
     generated++;
   } catch (err) {
     errors++;

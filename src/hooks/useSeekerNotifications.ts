@@ -42,19 +42,24 @@ export function useSeekerNotifications() {
   const previousNotificationsRef = useRef<string[]>([]);
   const userIdRef = useRef<string | null>(getStoredUserId());
 
-  // Initialize audio element on mount
+  // Initialize audio element on mount. Browser-notification permission is
+  // NO LONGER auto-requested here — Chrome/Firefox both penalize sites that
+  // ask immediately. Surface a user-gesture-triggered "Enable notifications"
+  // button instead via `requestNotificationPermission()` returned from the
+  // hook so consumers can wire it to a settings toggle or the bell icon.
   useEffect(() => {
     audioRef.current = new Audio(NOTIFICATION_SOUND_URL);
     audioRef.current.volume = 0.5;
-
-    // Request notification permission
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-
     return () => {
       audioRef.current = null;
     };
+  }, []);
+
+  const requestNotificationPermission = useCallback(async () => {
+    if (!("Notification" in window)) return "unsupported" as const;
+    if (Notification.permission === "granted") return "granted" as const;
+    if (Notification.permission === "denied") return "denied" as const;
+    return await Notification.requestPermission();
   }, []);
 
   const playNotificationSound = useCallback(() => {
@@ -118,12 +123,37 @@ export function useSeekerNotifications() {
     }
   }, []);
 
+  // Auth-change listener: when the user signs in mid-session (e.g. lands on
+  // /account from the concierge thank-you page that called signInWithPassword),
+  // refresh the cached userId AND re-run the subscription effect. Without this,
+  // a session established AFTER mount left `userIdRef.current` null and
+  // realtime never subscribed, so the bell never lit.
+  const [authUserId, setAuthUserId] = useState<string | null>(() => userIdRef.current);
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        const next = session?.user?.id ?? null;
+        userIdRef.current = next;
+        setAuthUserId(next);
+      },
+    );
+    // Pick up any session that finished establishing between mount and this effect.
+    supabase.auth.getSession().then(({ data }) => {
+      const sessionUid = data.session?.user?.id ?? null;
+      if (sessionUid && sessionUid !== userIdRef.current) {
+        userIdRef.current = sessionUid;
+        setAuthUserId(sessionUid);
+      }
+    });
+    return () => { subscription.unsubscribe(); };
+  }, []);
+
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     const setupSubscription = async () => {
       // Update user ID from auth state change or stored value
-      const uid = userIdRef.current || getStoredUserId();
+      const uid = authUserId || userIdRef.current || getStoredUserId();
       if (!uid) {
         setIsLoading(false);
         return;
@@ -207,7 +237,8 @@ export function useSeekerNotifications() {
         supabase.removeChannel(channel);
       }
     };
-  }, [fetchNotifications, playNotificationSound, showBrowserNotification]);
+  // Re-run on authUserId change so the subscription rebinds to the new user id.
+  }, [authUserId, fetchNotifications, playNotificationSound, showBrowserNotification]);
 
   const markAsRead = useCallback(async (notificationId: string) => {
     // Optimistic update
@@ -295,5 +326,6 @@ export function useSeekerNotifications() {
     markAllAsRead,
     deleteNotification,
     refetch: fetchNotifications,
+    requestNotificationPermission,
   };
 }

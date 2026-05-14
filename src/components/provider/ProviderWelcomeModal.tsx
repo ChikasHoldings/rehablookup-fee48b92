@@ -75,6 +75,16 @@ export function ProviderWelcomeModal({
   const hasTrackedView = useRef(false);
   const navigate = useNavigate();
 
+  // Resync open/step when the user switches facilities while signed in. Without
+  // this, the modal can briefly show the previous facility's banner on the new
+  // facility's first-login state because `open` was initialized from the prior
+  // facility's `isFirstLogin` prop.
+  useEffect(() => {
+    setStep("welcome");
+    setOpen(isFirstLogin && isValidUUID);
+    hasTrackedView.current = false;
+  }, [facilityId, isFirstLogin, isValidUUID]);
+
   const safeFacilityName = facilityName
     ? facilityName.replace(/<[^>]*>/g, "").slice(0, 100)
     : undefined;

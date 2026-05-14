@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Heart, Phone, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const HIDDEN_ROUTES = ["/concierge", "/provider", "/admin", "/lp/", "/account"];
+// Routes with their own sticky bottom CTA (or where this bar would stack
+// awkwardly on mobile). Phase 6C added /center and /compare to avoid the
+// triple-stack with CenterProfile's mobile CTA bar + the global CompareTray.
+const HIDDEN_ROUTES = ["/concierge", "/provider", "/admin", "/lp/", "/account", "/center", "/compare"];
 const HELPLINE_TEL = "1-800-662-4357";
 
 export const StickyConversionBar = forwardRef<HTMLDivElement>(function StickyConversionBar(_props, ref) {

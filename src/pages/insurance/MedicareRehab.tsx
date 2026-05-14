@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
+import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import {
   Shield,
   CheckCircle,
@@ -326,6 +327,8 @@ export default function MedicareRehab() {
       </section>
 
       {/* Featured Centers accepting Medicare */}
+      <InsuranceVerifyCarrierCTA carrier="Medicare" description="Share your Medicare plan details (Original Medicare, Advantage, or Part D) and we'll confirm what your plan covers for rehab, detox, and out-of-pocket cost — usually within one business day. Free and confidential." />
+
       <InsuranceFacilitiesSection insurerSlug="medicare" title="Treatment Centers Accepting Medicare" limit={8} className="border-t border-border" />
 
       {/* FAQs */}

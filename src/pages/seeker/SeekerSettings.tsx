@@ -100,6 +100,7 @@ export default function SeekerSettings() {
   const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -381,7 +382,11 @@ export default function SeekerSettings() {
   };
 
   const sanitizePersonName = (str: string): string => {
-    return sanitizeText(str, 50).replace(/[^a-zA-Z\s\-'.]/g, '');
+    // Unicode-aware letter class so accented characters (José, Núñez,
+    // O'Connell, María, etc.) are preserved. The previous [a-zA-Z]
+    // class silently stripped them, mangling names. Hyphen, apostrophe,
+    // dot, and whitespace remain allowed; everything else gets dropped.
+    return sanitizeText(str, 50).replace(/[^\p{L}\s\-'.]/gu, '');
   };
 
   const handleSaveProfile = async () => {
@@ -499,7 +504,44 @@ export default function SeekerSettings() {
       return;
     }
 
+    if (!currentPassword) {
+      toast({
+        title: "Current password required",
+        description: "Enter your current password to confirm this change.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsChangingPassword(true);
+
+    // Re-auth check: confirm the user actually knows the current password
+    // before we allow updateUser({ password }). Without this, a stolen
+    // session token could change the password and lock out the real owner.
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
+      toast({
+        title: "Session expired",
+        description: "Please sign in again to change your password.",
+        variant: "destructive",
+      });
+      setIsChangingPassword(false);
+      return;
+    }
+
+    const { error: reauthErr } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (reauthErr) {
+      toast({
+        title: "Current password incorrect",
+        description: "Please re-enter your current password.",
+        variant: "destructive",
+      });
+      setIsChangingPassword(false);
+      return;
+    }
 
     const { error } = await supabase.auth.updateUser({
       password: newPassword
@@ -520,6 +562,7 @@ export default function SeekerSettings() {
         title: "Password updated",
         description: "Your password has been changed successfully."
       });
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setShowPasswordForm(false);
@@ -627,15 +670,23 @@ export default function SeekerSettings() {
         throw new Error("Not authenticated");
       }
 
-      const response = await supabase.functions.invoke("delete-seeker-account");
+      const response = await supabase.functions.invoke("delete-seeker-account", {
+        // Default soft-delete: account is signed out + scheduled for purge in
+        // 30 days. The user can recover by signing back in within that window.
+        body: {},
+      });
 
       if (response.error) {
         throw new Error(response.error.message || "Failed to delete account");
       }
 
+      const purgeAfter = (response.data as { purgeAfter?: string } | null)?.purgeAfter;
+      const recoveryDate = purgeAfter ? new Date(purgeAfter) : null;
       toast({
-        title: "Account deleted",
-        description: "Your account has been permanently deleted."
+        title: "Account scheduled for deletion",
+        description: recoveryDate
+          ? `Your account will be permanently deleted on ${recoveryDate.toLocaleDateString()}. Sign back in before then to recover it.`
+          : "Your account has been scheduled for deletion. Sign back in within 30 days to recover it.",
       });
 
       await supabase.auth.signOut();
@@ -1067,6 +1118,17 @@ export default function SeekerSettings() {
             ) : (
               <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
                 <div className="space-y-2">
+                  <Label htmlFor="current-password">Current password</Label>
+                  <Input
+                    id="current-password"
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter your current password"
+                    autoComplete="current-password"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="new-password">New Password</Label>
                   <div className="relative">
                     <Input
@@ -1076,6 +1138,7 @@ export default function SeekerSettings() {
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Enter new password"
                       className="pr-10"
+                      autoComplete="new-password"
                     />
                     <button
                       type="button"
@@ -1115,7 +1178,7 @@ export default function SeekerSettings() {
                 <div className="flex gap-2">
                   <Button
                     onClick={handleChangePassword}
-                    disabled={isChangingPassword || !newPassword || !confirmPassword}
+                    disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
                   >
                     {isChangingPassword ? (
                       <>
@@ -1130,6 +1193,7 @@ export default function SeekerSettings() {
                     variant="ghost"
                     onClick={() => {
                       setShowPasswordForm(false);
+                      setCurrentPassword("");
                       setNewPassword("");
                       setConfirmPassword("");
                     }}

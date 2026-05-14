@@ -4,21 +4,19 @@
  *
  * Asserts that the Vercel Edge Middleware (`middleware.ts`) is doing its job:
  *
- *   • Real browsers (UA = Mozilla/Chrome) get the React SPA shell — i.e.
- *     `<div id="root">` plus the GA4 `G-2VB6C1X2MQ` tag and Meta Pixel —
- *     so `gtag('event','page_view')` actually fires and Google Analytics
- *     traffic doesn't silently flatline.
- *
- * NOTE on GA4 config assertion (line ~99):
- *   index.html stores the measurement ID in a `GA_ID` variable and calls
- *   `gtag('config', GA_ID, {...})` — NOT `gtag('config', 'G-2VB6C1X2MQ', ...)`
- *   directly. The regex must accept both the variable form and the literal
- *   string form so the test doesn't produce false negatives after a future
- *   refactor that inlines the ID.
+ *   • Real browsers (UA = Mozilla/Chrome) get the React SPA shell with the
+ *     current GA4 measurement ID embedded — so `gtag('event','page_view')`
+ *     actually fires and Google Analytics traffic doesn't silently flatline.
  *
  *   • Crawlers (UA = Googlebot) get the prerendered SEO HTML — i.e. a
  *     descriptive <h1>, the canonical <link>, and JSON-LD — so SEO is
  *     preserved.
+ *
+ * The GA4 measurement ID is sourced from VITE_GA_MEASUREMENT_ID at runtime
+ * (with a current-prod fallback in _ga.mjs). The assertion below tolerates
+ * either the inlined-ID form (`gtag('config','G-XXX')`) used by index.html
+ * and the prerendered files, or the variable form (`gtag('config', GA_ID)`)
+ * in case a future refactor introduces a JS variable.
  *
  * If either contract regresses (e.g. middleware accidentally removed,
  * matcher misconfigured, GA snippet stripped from index.html), this script
@@ -28,6 +26,8 @@
  *   HOST=https://rehablookup.com node scripts/check-ua-routing.mjs
  *   HOST=https://<preview>.vercel.app node scripts/check-ua-routing.mjs
  */
+
+import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 
 const HOST = (process.env.HOST || "https://rehablookup.com").replace(/\/$/, "");
 
@@ -102,13 +102,16 @@ for (const path of ROUTES) {
     const { status, body } = await get(url, BROWSER_UA);
     assert(status === 200, `status ${status}`);
     assert(/<div\s+id=["']root["']/i.test(body), 'missing <div id="root">');
-    assert(body.includes("G-2VB6C1X2MQ"), "missing GA4 tag G-2VB6C1X2MQ");
-    // Accept both the variable form `gtag('config', GA_ID, ...)` used in
-    // index.html and the literal form `gtag('config', 'G-2VB6C1X2MQ', ...)`
-    // in case a future refactor inlines the ID directly.
+    assert(body.includes(GA_MEASUREMENT_ID), `missing GA4 tag ${GA_MEASUREMENT_ID}`);
+    // Accept either the literal form `gtag('config','G-XXX', ...)` (what
+    // index.html and the prerendered files emit today) or a variable form
+    // `gtag('config', GA_ID, ...)` in case a future refactor introduces one.
+    const configRe = new RegExp(
+      `gtag\\s*\\(\\s*['"](config)['"]\\s*,\\s*(?:GA_ID|['"]${GA_MEASUREMENT_ID.replace(/[-]/g, "[-]")}['"])`,
+    );
     assert(
-      /gtag\s*\(\s*['"](config)['"]\s*,\s*(?:GA_ID|['"]G-2VB6C1X2MQ['"])/.test(body),
-      "missing immediate GA4 config call (expected gtag('config', GA_ID, ...) or gtag('config', 'G-2VB6C1X2MQ', ...))",
+      configRe.test(body),
+      `missing immediate GA4 config call (expected gtag('config', '${GA_MEASUREMENT_ID}', ...))`,
     );
     assert(/fbq\s*\(\s*['"]init['"]/.test(body), "missing Meta Pixel init");
     // The crawler stub has no <script type="module" src="/assets/...">.

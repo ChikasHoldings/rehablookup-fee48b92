@@ -65,12 +65,18 @@ const ProviderForgotPassword = lazy(() => import("./pages/ProviderForgotPassword
 const ProviderResetPassword = lazy(() => import("./pages/ProviderResetPassword"));
 const ProviderSupport = lazy(() => import("./pages/ProviderSupport"));
 const ProviderFAQ = lazy(() => import("./pages/ProviderFAQ"));
-const ProviderSignup = lazy(() => import("./pages/ProviderSignup"));
+const AuthSignup = lazy(() => import("./pages/AuthSignup"));
+const ProviderOnboarding = lazy(() => import("./pages/provider/Onboarding"));
+const NewListingForm = lazy(() => import("./pages/provider/NewListingForm"));
+const ClaimWizard = lazy(() => import("./pages/provider/ClaimWizard"));
+const ClaimSubmitted = lazy(() => import("./pages/provider/ClaimSubmitted"));
+const ProviderClaims = lazy(() => import("./pages/provider/Claims"));
 const ProviderROICalculator = lazy(() => import("./pages/ProviderROICalculator"));
 
 // SEO Landing Pages - City+Treatment, Comparisons, Treatment Hubs, Cost/Insurance
 // CityTreatmentPage routes handled by SmartCatchAll
 const ComparisonPage = lazy(() => import("./pages/seo/ComparisonPage"));
+const FacilityCompare = lazy(() => import("./pages/Comparison"));
 const TreatmentHubPage = lazy(() => import("./pages/seo/TreatmentHubPage"));
 const CostInsurancePage = lazy(() => import("./pages/seo/CostInsurancePage"));
 const SubstanceTreatmentPage = lazy(() => import("./pages/seo/SubstanceTreatmentPage"));
@@ -207,7 +213,11 @@ const InternationalThankYou = lazy(() => import("./pages/international/Internati
 const AdLanding = lazy(() => import("./pages/AdLanding"));
 const SocialLanding = lazy(() => import("./pages/SocialLanding"));
 const Resources = lazy(() => import("./pages/Resources"));
+const CategoryHub = lazy(() => import("./pages/CategoryHub"));
+const Authors = lazy(() => import("./pages/Authors"));
+const AuthorProfile = lazy(() => import("./pages/AuthorProfile"));
 const Insurance = lazy(() => import("./pages/Insurance"));
+const InsuranceVerification = lazy(() => import("./pages/InsuranceVerification"));
 const AetnaRehab = lazy(() => import("./pages/insurance/AetnaRehab"));
 const BCBSTreatment = lazy(() => import("./pages/insurance/BCBSTreatment"));
 const CignaRehab = lazy(() => import("./pages/insurance/CignaRehab"));
@@ -253,6 +263,8 @@ const SeekerSearch = lazy(() => import("./pages/seeker/SeekerSearch"));
 const SeekerHelp = lazy(() => import("./pages/seeker/SeekerHelp"));
 const SeekerConcierge = lazy(() => import("./pages/seeker/SeekerConcierge"));
 const SeekerInternationalCase = lazy(() => import("./pages/seeker/SeekerInternationalCase"));
+const SeekerInsuranceVerifications = lazy(() => import("./pages/seeker/SeekerInsuranceVerifications"));
+const SeekerSavedSearches = lazy(() => import("./pages/seeker/SeekerSavedSearches"));
 
 // Near Me SEO Pages - lazy load
 const DrugRehabNearMe = lazy(() => import("./pages/near-me/DrugRehabNearMe"));
@@ -347,6 +359,7 @@ const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProviders = lazy(() => import("./pages/admin/AdminProviders"));
 const AdminLeads = lazy(() => import("./pages/admin/AdminLeads"));
+const AdminInsuranceVerifications = lazy(() => import("./pages/admin/AdminInsuranceVerifications"));
 const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
 const AdminNotFoundEvents = lazy(() => import("./pages/admin/AdminNotFoundEvents"));
@@ -355,6 +368,7 @@ const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminStaff"));
 const AdminSeekers = lazy(() => import("./pages/admin/AdminSeekers"));
+const AdminClaimsReviewPanel = lazy(() => import("./pages/admin/AdminClaimsReviewPanel"));
 const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminSecurityLogs = lazy(() => import("./pages/admin/AdminSecurityLogs"));
@@ -536,6 +550,7 @@ const AppInner = () => {
             <Route path="/" element={<PublicRouteGuard><Index /></PublicRouteGuard>} />
             <Route path="/locations" element={<PublicRouteGuard><Locations /></PublicRouteGuard>} />
             <Route path="/rehab-centers" element={<PublicRouteGuard><RehabCenters /></PublicRouteGuard>} />
+            <Route path="/compare" element={<PublicRouteGuard><FacilityCompare /></PublicRouteGuard>} />
             <Route path="/search-results" element={<PublicRouteGuard><SearchResults /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/articles/:articleSlug" element={<PublicRouteGuard><StateArticlePage /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/county/:countySlug/:treatmentSlug" element={<PublicRouteGuard><CountyTreatmentPage /></PublicRouteGuard>} />
@@ -1107,12 +1122,19 @@ const AppInner = () => {
             {/* Static Pages */}
             <Route path="/how-it-works" element={<PublicRouteGuard><HowItWorks /></PublicRouteGuard>} />
             <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
+            {/* Category hub MUST come before /resources/:id so it doesn't match the article slug catch-all */}
+            <Route path="/resources/category/:slug" element={<PublicRouteGuard><CategoryHub /></PublicRouteGuard>} />
             <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
+            <Route path="/authors" element={<PublicRouteGuard><Authors /></PublicRouteGuard>} />
+            <Route path="/authors/:slug" element={<PublicRouteGuard><AuthorProfile /></PublicRouteGuard>} />
             <Route path="/news" element={<PublicRouteGuard><News /></PublicRouteGuard>} />
             <Route path="/news/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
             <Route path="/blog" element={<Navigate to="/resources" replace />} />
             <Route path="/blog/:id" element={<BlogRedirect />} />
             <Route path="/insurance" element={<PublicRouteGuard><Insurance /></PublicRouteGuard>} />
+            <Route path="/insurance-verification" element={<PublicRouteGuard><InsuranceVerification /></PublicRouteGuard>} />
+            <Route path="/verify-insurance" element={<Navigate to="/insurance-verification" replace />} />
+            <Route path="/vob" element={<Navigate to="/insurance-verification" replace />} />
             {/* Insurance short URLs → redirect to canonical */}
             <Route path="/insurance/aetna" element={<Navigate to="/insurance/aetna-rehab" replace />} />
             <Route path="/insurance/bcbs" element={<Navigate to="/insurance/bcbs-treatment" replace />} />
@@ -1176,6 +1198,8 @@ const AppInner = () => {
               <Route path="concierge" element={<SeekerConcierge />} />
               <Route path="concierge/:inquiryId" element={<SeekerConcierge />} />
               <Route path="international" element={<SeekerInternationalCase />} />
+              <Route path="insurance-verifications" element={<SeekerInsuranceVerifications />} />
+              <Route path="saved-searches" element={<SeekerSavedSearches />} />
               <Route path="*" element={<Navigate to="/account" replace />} />
             </Route>
             
@@ -1187,7 +1211,17 @@ const AppInner = () => {
             <Route path="/provider-resources" element={<PublicRouteGuard><ProviderResources /></PublicRouteGuard>} />
             {/* /provider-guides hub — canonical redirect to /provider-resources (which lists all guides) */}
             <Route path="/provider-guides" element={<Navigate to="/provider-resources" replace />} />
-            <Route path="/provider-signup" element={<ProviderSignup />} />
+            {/* Phase 1: split signup from facility creation. Old signup
+                URL redirects to the new auth-only flow. The legacy multi-step
+                ProviderSignup component is reused at /provider/onboarding/new-listing
+                (mounted with initialStep={3} so it skips the auth steps). */}
+            <Route path="/provider-signup" element={<Navigate to="/auth/signup" replace />} />
+            <Route path="/auth/signup" element={<AuthSignup />} />
+            <Route path="/provider/onboarding" element={<ProviderOnboarding />} />
+            <Route path="/provider/onboarding/new-listing" element={<NewListingForm />} />
+            <Route path="/provider/claim/:slug" element={<ClaimWizard />} />
+            <Route path="/provider/claim/:slug/submitted" element={<ClaimSubmitted />} />
+            <Route path="/provider/claims" element={<ProviderClaims />} />
             <Route path="/provider-roi-calculator" element={<PublicRouteGuard><ProviderROICalculator /></PublicRouteGuard>} />
             <Route path="/provider-login" element={<Navigate to="/login" replace />} />
             <Route path="/provider-faq" element={<ProviderFAQ />} />
@@ -1582,7 +1616,9 @@ const AppInner = () => {
               <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="providers" element={<AdminProviders />} />
+              <Route path="claims" element={<AdminClaimsReviewPanel />} />
               <Route path="leads" element={<AdminLeads />} />
+              <Route path="insurance-verifications" element={<AdminInsuranceVerifications />} />
               <Route path="seekers" element={<AdminSeekers />} />
               <Route path="subscriptions" element={<AdminSubscriptions />} />
               <Route path="featured" element={<Navigate to="/admin/subscriptions?tab=featured" replace />} />

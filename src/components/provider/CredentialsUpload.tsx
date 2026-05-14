@@ -42,12 +42,15 @@ interface CredentialDocument {
   facility_id: string;
   document_name: string;
   document_url: string;
+  storage_path?: string | null;
   document_type: string;
   document_category?: string;
   status: 'pending' | 'verified' | 'rejected';
   uploaded_at: string;
   verified_at?: string | null;
   rejection_reason?: string | null;
+  /** Resolved display URL — signed URL for private docs, public URL for legacy. */
+  display_url?: string;
 }
 
 interface CredentialsUploadProps {
@@ -145,15 +148,30 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
     queryFn: async () => {
       const { data, error } = await supabase
         .from("facility_credential_documents")
-        .select("id, facility_id, document_name, document_type, document_url, status, rejection_reason, uploaded_at, verified_at, verified_by")
+        .select("id, facility_id, document_name, document_type, document_url, storage_path, status, rejection_reason, uploaded_at, verified_at, verified_by")
         .eq("facility_id", facilityId)
         .order("uploaded_at", { ascending: false });
-      
+
       if (error) {
         console.warn("Error fetching credential documents:", error);
         return [];
       }
-      return data as CredentialDocument[];
+
+      // Resolve display URL for each doc: signed URL (1h) for private storage,
+      // legacy public URL for rows uploaded before the private-bucket migration.
+      const rows = data as CredentialDocument[];
+      const resolved: CredentialDocument[] = await Promise.all(
+        rows.map(async (doc) => {
+          if (doc.storage_path) {
+            const { data: signed } = await supabase.storage
+              .from("facility-credentials")
+              .createSignedUrl(doc.storage_path, 60 * 60);
+            return { ...doc, display_url: signed?.signedUrl ?? "" };
+          }
+          return { ...doc, display_url: doc.document_url };
+        }),
+      );
+      return resolved;
     },
     enabled: !!facilityId,
   });
@@ -243,13 +261,18 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
     setIsUploading(true);
 
     try {
-      // Generate a unique filename
+      // Generate a unique filename. Path layout `<userId>/<facilityId>/...`
+      // matches the RLS predicate on the facility-credentials bucket which
+      // requires (storage.foldername(name))[1] = auth.uid()::text.
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${userId}/${facilityId}/credentials/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-      // Upload to storage
+      // Upload to the PRIVATE facility-credentials bucket. License/insurance
+      // PDFs were previously written to the public facility-images bucket and
+      // accessible via getPublicUrl — that's now a private bucket with signed
+      // URLs generated on render.
       const { error: uploadError } = await supabase.storage
-        .from("facility-images")
+        .from("facility-credentials")
         .upload(fileName, selectedFile, {
           cacheControl: "3600",
           upsert: false,
@@ -259,27 +282,24 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
         throw uploadError;
       }
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from("facility-images")
-        .getPublicUrl(fileName);
-
-      // Get category label for display
       const categoryLabel = DOCUMENT_CATEGORIES.find(c => c.value === selectedCategory)?.label || 'Other';
 
-      // Save document record to database
+      // Save document record to database. `storage_path` is the source of
+      // truth for new uploads; document_url is left empty so render-time
+      // code generates a signed URL from storage_path instead.
       const { error: dbError } = await supabase
         .from("facility_credential_documents")
         .insert({
           facility_id: facilityId,
           document_name: `${sanitizedName} (${categoryLabel})`,
-          document_url: urlData.publicUrl,
+          document_url: "",
+          storage_path: fileName,
           document_type: selectedFile.type,
           status: 'pending',
-        });
+        } as never);
 
       if (dbError) {
-        await supabase.storage.from("facility-images").remove([fileName]);
+        await supabase.storage.from("facility-credentials").remove([fileName]);
         throw dbError;
       }
 
@@ -313,12 +333,19 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
 
   const handleDeleteDocument = async (document: CredentialDocument) => {
     try {
-      // Extract file path from URL for deletion
-      const urlParts = document.document_url.split('/');
-      const filePath = urlParts.slice(-4).join('/'); // Get the path after bucket name
-
-      // Delete from storage
-      await supabase.storage.from("facility-images").remove([filePath]);
+      if (document.storage_path) {
+        // New uploads live in the private facility-credentials bucket and the
+        // exact path is stored on the row.
+        await supabase.storage
+          .from("facility-credentials")
+          .remove([document.storage_path]);
+      } else if (document.document_url) {
+        // Legacy rows from the public facility-images bucket; parse the
+        // path off the public URL.
+        const urlParts = document.document_url.split('/');
+        const filePath = urlParts.slice(-4).join('/');
+        await supabase.storage.from("facility-images").remove([filePath]);
+      }
 
       // Delete from database
       const { error } = await supabase
@@ -563,7 +590,7 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
                     className="h-8 w-8"
                     asChild
                   >
-                    <a href={doc.document_url} target="_blank" rel="noopener noreferrer" title="Open in new tab">
+                    <a href={doc.display_url ?? doc.document_url} target="_blank" rel="noopener noreferrer" title="Open in new tab">
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   </Button>
@@ -624,7 +651,7 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
                   size="sm"
                   asChild
                 >
-                  <a href={previewDocument?.document_url} download target="_blank" rel="noopener noreferrer">
+                  <a href={previewDocument?.display_url ?? previewDocument?.document_url} download target="_blank" rel="noopener noreferrer">
                     <Download className="h-4 w-4 mr-2" />
                     Download
                   </a>
@@ -636,16 +663,16 @@ export function CredentialsUpload({ facilityId, userId }: CredentialsUploadProps
           <div className="overflow-auto max-h-[calc(90vh-80px)] p-4 flex items-center justify-center bg-muted/20">
             {previewDocument && isImageFile(previewDocument.document_type) && (
               <img
-                src={previewDocument.document_url}
+                src={previewDocument.display_url ?? previewDocument.document_url}
                 alt={previewDocument.document_name}
                 className="max-w-full h-auto rounded-lg shadow-lg transition-transform duration-200"
                 style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center' }}
               />
             )}
-            
+
             {previewDocument && isPdfFile(previewDocument.document_type) && (
               <iframe
-                src={`${previewDocument.document_url}#toolbar=1&navpanes=0`}
+                src={`${previewDocument.display_url ?? previewDocument.document_url}#toolbar=1&navpanes=0`}
                 className="w-full h-[70vh] rounded-lg border"
                 title={previewDocument.document_name}
               />
