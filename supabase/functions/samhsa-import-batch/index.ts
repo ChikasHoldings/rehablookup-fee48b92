@@ -167,7 +167,9 @@ async function processOne(
     let action: "inserted" | "updated";
 
     if (existing?.id) {
-      // Update — keep existing slug to preserve URL stability.
+      // Update — keep existing slug to preserve URL stability. We omit slug
+      // from the payload entirely so the BEFORE-UPDATE trigger doesn't
+      // recompute it (it only regenerates when slug is NULL/empty).
       const { error: updErr } = await admin
         .from("facilities")
         .update(payload)
@@ -176,14 +178,13 @@ async function processOne(
       facilityId = existing.id as string;
       action = "updated";
     } else {
-      // Insert — generate a slug via the helper RPC (handles collisions).
-      const { data: slugData, error: slugErr } = await admin.rpc(
-        "generate_facility_slug",
-        { p_name: name, p_city: city, p_state: state },
-      );
-      if (slugErr) throw new Error(`slug generation failed: ${slugErr.message}`);
-      payload.slug = slugData;
-
+      // Insert — leave slug unset; the BEFORE-INSERT trigger
+      // `generate_facility_slug()` on the facilities table will derive a
+      // unique slug from name+city+state and handle collisions by
+      // appending an incrementing counter. Relying on the trigger removes
+      // the previous fragile dependency on a same-named RPC (whose DDL was
+      // not in the migrations folder) — if that RPC ever drifted out of
+      // the DB the import would break completely.
       const { data: inserted, error: insErr } = await admin
         .from("facilities")
         .insert(payload)
