@@ -189,6 +189,7 @@ export function AdminShell() {
         />
 
         <main
+          id="main"
           ref={mainContentRef}
           className="flex-1 min-w-0 min-h-0 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-6"
         >

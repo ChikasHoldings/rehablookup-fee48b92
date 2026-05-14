@@ -639,14 +639,15 @@ export default function SeekerSignup() {
                   
                   {/* Location */}
                   <div className="space-y-1.5">
-                    <Label className="text-sm">Location</Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2">
+                    <Label className="text-sm" id="signup-location-label">Location</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2" role="group" aria-labelledby="signup-location-label">
                       <div className="relative">
                         <MapPin className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground" />
                         <Input
                           value={zipcode}
                           onChange={(e) => setZipcode(e.target.value.replace(/\D/g, '').slice(0, 5))}
                           placeholder="Zip"
+                          aria-label="ZIP code"
                           className="h-10 sm:h-11 pl-8 sm:pl-10 text-sm"
                           maxLength={5}
                         />
@@ -655,6 +656,7 @@ export default function SeekerSignup() {
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         placeholder="City"
+                        aria-label="City"
                         className="h-10 sm:h-11 text-sm"
                         disabled={zipcodeLookup.isLoading}
                       />
@@ -662,6 +664,7 @@ export default function SeekerSignup() {
                         value={state}
                         onChange={(e) => setState(e.target.value.toUpperCase().slice(0, 2))}
                         placeholder="ST"
+                        aria-label="State (2-letter abbreviation)"
                         className="h-10 sm:h-11 text-sm"
                         disabled={zipcodeLookup.isLoading}
                         maxLength={2}
