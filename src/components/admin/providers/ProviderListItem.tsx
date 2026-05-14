@@ -197,8 +197,17 @@ export function ProviderListItem({
 
   return (
     <div
-      className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer group"
+      className="flex items-center justify-between p-4 hover:bg-muted/30 focus-within:bg-muted/20 transition-colors cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-1 rounded-md"
       onClick={() => onOpenDetail(provider)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open details for ${provider.name}, ${provider.city}, ${provider.state}`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpenDetail(provider);
+        }
+      }}
     >
       <div className="flex items-center gap-4 min-w-0">
         <div className="relative">

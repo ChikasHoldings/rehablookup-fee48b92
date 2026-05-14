@@ -33,6 +33,12 @@ import {
 } from "@/components/admin/providers";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
+import {
+  FACILITY_LIST_COLUMNS,
+  TAB_FILTERS,
+  applyProviderSearch,
+  type AdminProvidersTab,
+} from "./adminProvidersConfig";
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -254,68 +260,16 @@ export default function AdminProviders() {
     },
   });
 
-  // Fetch total count for current filter
+  // Fetch total count for current filter — drives pagination.
+  // Uses the shared TAB_FILTERS config so count + list never drift.
   const { data: totalCount } = useQuery({
     queryKey: ["admin-providers-count", activeTab, searchQuery],
     queryFn: async () => {
-      let query = supabase.from("facilities").select("id", { count: "exact", head: true });
-
-      if (activeTab === "approved") {
-        query = query.eq("status", "approved").neq("suspended", true);
-      } else if (activeTab === "pending") {
-        query = query.eq("status", "pending");
-      } else if (activeTab === "suspended") {
-        query = query.eq("suspended", true);
-      } else if (activeTab === "pro") {
-        const { data: proFacilities } = await supabase
-          .from("pro_subscriptions")
-          .select("facility_id")
-          .eq("status", "active");
-        const proIds = proFacilities?.map(p => p.facility_id) || [];
-        if (proIds.length === 0) return 0;
-        let proQuery = supabase.from("facilities").select("id", { count: "exact", head: true }).in("id", proIds);
-        if (searchQuery) {
-          const sanitized = searchQuery.replace(/[%_\\]/g, "");
-          if (sanitized) {
-            proQuery = proQuery.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
-          }
-        }
-        const { count: proCount } = await proQuery;
-        return proCount || 0;
-      } else if (activeTab === "placement") {
-        query = query.eq("concierge_network_opted_in", true);
-      } else if (activeTab === "samhsa") {
-        query = query.eq("data_source", "samhsa_import");
-      } else if (activeTab === "unclaimed") {
-        query = query.is("user_id", null);
-      } else if (activeTab === "claimed") {
-        query = query.not("user_id", "is", null);
-      } else if (activeTab === "pending_claims") {
-        const { data: pendingClaims } = await supabase
-          .from("facility_claim_requests")
-          .select("facility_id")
-          .eq("status", "pending");
-        const pendingIds = [...new Set((pendingClaims || []).map((r) => r.facility_id))];
-        if (pendingIds.length === 0) return 0;
-        let pcQuery = supabase.from("facilities").select("id", { count: "exact", head: true }).in("id", pendingIds);
-        if (searchQuery) {
-          const sanitized = searchQuery.replace(/[%_\\]/g, "");
-          if (sanitized) {
-            pcQuery = pcQuery.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
-          }
-        }
-        const { count: pcCount } = await pcQuery;
-        return pcCount || 0;
-      }
-
-      if (searchQuery) {
-        const sanitized = searchQuery.replace(/[%_\\]/g, "");
-        if (sanitized) {
-          query = query.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
-        }
-      }
-
-      const { count, error } = await query;
+      const base = supabase.from("facilities").select("id", { count: "exact", head: true });
+      const filter = TAB_FILTERS[activeTab as AdminProvidersTab] ?? TAB_FILTERS.all;
+      const resolved = await filter(base, { supabase, selectCols: "id" });
+      if (resolved === null) return 0; // short-circuit when sibling subquery returned []
+      const { count, error } = await applyProviderSearch(resolved, searchQuery);
       if (error) throw error;
       return count || 0;
     },
@@ -335,68 +289,21 @@ export default function AdminProviders() {
         const from = (currentPage - 1) * pageSize;
         const to = from + pageSize - 1;
 
-        let query = supabase
+        const base = supabase
           .from("facilities")
-          .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id, data_source, claimed_at, samhsa_facility_id")
+          .select(FACILITY_LIST_COLUMNS)
           .order("created_at", { ascending: false })
           .range(from, to);
 
-        if (activeTab === "approved") {
-          query = query.eq("status", "approved").neq("suspended", true);
-        } else if (activeTab === "pending") {
-          query = query.eq("status", "pending");
-        } else if (activeTab === "suspended") {
-          query = query.eq("suspended", true);
-        } else if (activeTab === "pro") {
-          const { data: proFacilities } = await supabase
-            .from("pro_subscriptions")
-            .select("facility_id")
-            .eq("status", "active");
-          const proIds = proFacilities?.map(p => p.facility_id) || [];
-          if (proIds.length === 0) return [];
-          query = supabase
-            .from("facilities")
-            .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id, data_source, claimed_at, samhsa_facility_id")
-            .in("id", proIds)
-            .order("created_at", { ascending: false })
-            .range(from, to);
-        } else if (activeTab === "placement") {
-          query = query.eq("concierge_network_opted_in", true);
-        } else if (activeTab === "samhsa") {
-          // Bulk-imported SAMHSA listings — unclaimed by default.
-          query = query.eq("data_source", "samhsa_import");
-        } else if (activeTab === "unclaimed") {
-          // Any facility with no owning provider, regardless of source.
-          query = query.is("user_id", null);
-        } else if (activeTab === "claimed") {
-          // Facilities transferred to a provider through the claim flow OR
-          // submitted by a provider with user_id from the start.
-          query = query.not("user_id", "is", null);
-        } else if (activeTab === "pending_claims") {
-          // Facilities with at least one pending claim request — the admin
-          // queue for the claim review panel.
-          const { data: pendingClaims } = await supabase
-            .from("facility_claim_requests")
-            .select("facility_id")
-            .eq("status", "pending");
-          const pendingIds = [...new Set((pendingClaims || []).map((r) => r.facility_id))];
-          if (pendingIds.length === 0) return [];
-          query = supabase
-            .from("facilities")
-            .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id, data_source, claimed_at, samhsa_facility_id")
-            .in("id", pendingIds)
-            .order("created_at", { ascending: false })
-            .range(from, to);
-        }
+        const filter = TAB_FILTERS[activeTab as AdminProvidersTab] ?? TAB_FILTERS.all;
+        const resolved = await filter(base, {
+          supabase,
+          selectCols: FACILITY_LIST_COLUMNS,
+          range: [from, to],
+        });
+        if (resolved === null) return []; // short-circuit when sibling subquery returned []
 
-        if (searchQuery) {
-          const sanitized = searchQuery.replace(/[%_\\]/g, "");
-          if (sanitized) {
-            query = query.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
-          }
-        }
-
-        const { data, error } = await query;
+        const { data, error } = await applyProviderSearch(resolved, searchQuery);
         if (error) throw error;
         return data as Facility[];
       } catch (error) {
@@ -408,24 +315,25 @@ export default function AdminProviders() {
     refetchOnWindowFocus: true,
   });
 
-  // Fetch lead counts for providers using count queries (no row fetching)
+  // Lead counts per visible facility. Previously fired N parallel
+  // `count(*) WHERE facility_id = ?` queries (one per row) — 25 round-trips
+  // per list page render. Replaced with a single `SELECT facility_id FROM
+  // leads WHERE facility_id IN (...)` and a client-side tally. One round-
+  // trip regardless of page size; PII-safe (only the foreign-key column is
+  // returned, no name/email/phone).
   const { data: leadCounts } = useQuery({
     queryKey: ["admin-provider-lead-counts", providers?.map((p) => p.id)],
     queryFn: async () => {
       if (!providers?.length) return {};
       const facilityIds = providers.map((p) => p.id);
+      const { data } = await supabase
+        .from("leads")
+        .select("facility_id")
+        .in("facility_id", facilityIds);
       const counts: Record<string, number> = {};
-      // Use individual count queries per facility to avoid fetching all lead rows
-      const promises = facilityIds.map(async (fid) => {
-        const { count } = await supabase
-          .from("leads")
-          .select("id", { count: "exact", head: true })
-          .eq("facility_id", fid);
-        counts[fid] = count || 0;
-      });
-      // Batch in groups of 10 to limit concurrency
-      for (let i = 0; i < promises.length; i += 10) {
-        await Promise.all(promises.slice(i, i + 10));
+      for (const fid of facilityIds) counts[fid] = 0;
+      for (const row of data || []) {
+        counts[row.facility_id] = (counts[row.facility_id] || 0) + 1;
       }
       return counts;
     },
@@ -700,6 +608,9 @@ export default function AdminProviders() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-8 sm:pl-9 h-9 text-sm"
+            aria-label="Search providers by name, city, or email"
+            type="search"
+            autoComplete="off"
           />
         </div>
         <div className="flex gap-2">
@@ -740,6 +651,7 @@ export default function AdminProviders() {
                     <Checkbox
                       checked={selectedIds.has(provider.id)}
                       onCheckedChange={() => toggleSelect(provider.id)}
+                      aria-label={`Select ${provider.name}`}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
