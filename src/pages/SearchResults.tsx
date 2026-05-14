@@ -1235,7 +1235,20 @@ const SearchResults = () => {
                       out sheet. Desktop has the always-visible FilterSidebar
                       so chips would be redundant there. (Phase 6C) */}
                   {activeFiltersCount > 0 && (
-                    <div className="lg:hidden mb-3 -mx-3 px-3 overflow-x-auto no-scrollbar">
+                    // -webkit-overflow-scrolling:touch gives iOS Safari its
+                    // momentum scroll; without it the chip strip felt locked
+                    // on touch even though it actually scrolled. The right
+                    // edge fade (mask-image) is the visual hint that more
+                    // chips exist past the viewport edge — replaces the
+                    // missing scrollbar.
+                    <div
+                      className="lg:hidden mb-3 -mx-3 px-3 overflow-x-auto no-scrollbar"
+                      style={{
+                        WebkitOverflowScrolling: "touch",
+                        maskImage: "linear-gradient(to right, black calc(100% - 24px), transparent)",
+                        WebkitMaskImage: "linear-gradient(to right, black calc(100% - 24px), transparent)",
+                      }}
+                    >
                       <div className="flex items-center gap-1.5 min-w-min">
                         {selectedTreatmentTypes.map((value) => (
                           <button

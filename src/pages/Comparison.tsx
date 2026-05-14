@@ -361,7 +361,12 @@ export default function Comparison() {
               {/* Header row */}
               <div
                 className="grid"
-                style={{ gridTemplateColumns: `minmax(120px, 200px) repeat(${count}, minmax(220px, 1fr))` }}
+                // minmax(160px,1fr) on facility columns prevents the 3rd
+                // column from getting crushed on iPad portrait (768px). The
+                // outer container has overflow-x-auto so 4+ facilities still
+                // scroll horizontally; this just keeps the visible 1-3 columns
+                // legible at common tablet widths.
+                style={{ gridTemplateColumns: `minmax(120px, 200px) repeat(${count}, minmax(160px, 1fr))` }}
               >
                 <div className="bg-muted/30 p-3 sm:p-4 border-r border-border border-b">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Facility</p>
