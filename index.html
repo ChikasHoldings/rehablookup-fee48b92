@@ -158,6 +158,22 @@
         100% { background-position: -200% 0; }
       }
       img { content-visibility: auto; }
+      /* Skip-to-content link — inlined here (not just in src/index.css) so
+         the link is positioned off-screen BEFORE the React CSS bundle
+         arrives. Without this, the link briefly renders as visible text at
+         the top of the body during the cold-load window. */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: hsl(216 55% 24%);
+        color: #fff;
+        padding: 0.5rem 1rem;
+        z-index: 100;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .skip-link:focus { top: 0; }
       /* No opacity transitions - render instantly */
       /* Noscript layout styles */
       .ns-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 20px; font-family: 'Inter', sans-serif; color: #1a1a2e; }
