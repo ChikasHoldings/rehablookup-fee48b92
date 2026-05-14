@@ -1,4 +1,5 @@
-import { Navigate, useLocation, Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
+import { InlineNotFound } from "@/components/InlineNotFound";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TrustBar } from "@/components/seo/TrustBar";
@@ -25,7 +26,7 @@ export default function ComparisonPage() {
   const slug = pathname.replace(/^\//, "").replace(/\/$/, "");
 
   const config = getComparisonPageBySlug(slug);
-  if (!config) return <Navigate to="/404" replace />;
+  if (!config) return <InlineNotFound />;
 
   const structuredData = [
     {

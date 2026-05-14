@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { InlineNotFound } from "@/components/InlineNotFound";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { seekerGuidePages } from "@/data/seoSeekerGuidesConfig";
 
@@ -9,7 +10,7 @@ export default function SeekerGuidePage() {
   const config = seekerGuidePages.find((p) => p.slug === slug);
 
   if (!config) {
-    return <Navigate to="/404" replace />;
+    return <InlineNotFound />;
   }
 
   const url = `https://rehablookup.com/${config.slug}`;
