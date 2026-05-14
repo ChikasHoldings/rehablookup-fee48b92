@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { cityInList } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { getStateBySlug } from "@/data/locationSeoData";
 import { getCountyBySlug } from "@/data/countySeoData";
@@ -27,12 +28,11 @@ export default function CountyInsurancePage() {
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
     const stateNameLower = stateData.name.toLowerCase();
     const stateAbbrLower = stateData.abbreviation.toLowerCase();
-    const countyCities = countyData.majorCities.map((c) => c.toLowerCase());
     const insurerLower = insurer.name.toLowerCase();
 
     let filtered = allFacilities.filter((f) => {
       const stateMatch = f.state.toLowerCase() === stateNameLower || f.state.toLowerCase() === stateAbbrLower;
-      const cityMatch = countyCities.some((city) => f.city.toLowerCase() === city);
+      const cityMatch = cityInList(f.city, countyData.majorCities);
       const insuranceMatch = f.insuranceAccepted?.some((ins) => ins.toLowerCase().includes(insurerLower)) || f.description?.toLowerCase().includes(insurerLower);
       return stateMatch && cityMatch && insuranceMatch;
     });
@@ -40,7 +40,7 @@ export default function CountyInsurancePage() {
     if (filtered.length < 3) {
       filtered = allFacilities.filter((f) => {
         const stateMatch = f.state.toLowerCase() === stateNameLower || f.state.toLowerCase() === stateAbbrLower;
-        const cityMatch = countyCities.some((city) => f.city.toLowerCase() === city);
+        const cityMatch = cityInList(f.city, countyData.majorCities);
         return stateMatch && cityMatch;
       });
     }

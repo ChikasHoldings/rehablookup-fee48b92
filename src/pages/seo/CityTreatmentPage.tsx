@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { InlineNotFound } from "@/components/InlineNotFound";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { citiesMatch } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import {
   generateTreatmentCitySections,
@@ -37,7 +38,6 @@ export default function CityTreatmentPage() {
       return { facilities: [], directMatchCount: 0, stateFallbackCount: 0 };
     }
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
-    const cityLower = city.city.toLowerCase();
     const stateLower = city.state.toLowerCase();
     const filterLower = treatment.filterKey.toLowerCase();
 
@@ -54,7 +54,7 @@ export default function CityTreatmentPage() {
       });
 
     const directMatch = allFacilities.filter((f) => {
-      const cityMatch = f.city.toLowerCase() === cityLower && f.state.toLowerCase() === stateLower;
+      const cityMatch = citiesMatch(f.city, city.city) && f.state.toLowerCase() === stateLower;
       const typeMatch =
         f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) ||
         f.description?.toLowerCase().includes(filterLower);

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { citiesMatch } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage, getFacilityDensity } from "@/utils/seoPageValidator";
@@ -35,13 +36,12 @@ export default function CityInsurancePage() {
   const facilities = useMemo(() => {
     if (!insurer || !stateConfig || !cityName) return [];
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
-    const cityLower = cityName.toLowerCase();
     const stateLower = stateConfig.state.toLowerCase();
     const insurerLower = insurer.name.toLowerCase();
 
     // City + insurer match
     const exact = allFacilities.filter((f) => {
-      const cityMatch = f.city.toLowerCase() === cityLower;
+      const cityMatch = citiesMatch(f.city, cityName);
       const stateMatch = f.state.toLowerCase() === stateLower;
       const insMatch = f.insuranceAccepted?.some((i) => i.toLowerCase().includes(insurerLower));
       return cityMatch && stateMatch && insMatch;
@@ -51,7 +51,7 @@ export default function CityInsurancePage() {
 
     // Fallback: city + state (no insurer filter)
     const cityFallback = allFacilities.filter((f) => {
-      const cityMatch = f.city.toLowerCase() === cityLower;
+      const cityMatch = citiesMatch(f.city, cityName);
       const stateMatch = f.state.toLowerCase() === stateLower;
       return cityMatch && stateMatch;
     });
