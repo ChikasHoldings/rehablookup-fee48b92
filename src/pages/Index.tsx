@@ -806,70 +806,50 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Resources / Blog Section */}
-      <LazySection fallbackHeight="400px">
-      <section className="py-10 md:py-12 lg:py-20">
+      {/* Resources directory — previously rendered as 3 magazine-style article
+          cards with large images, category tags, and "X min read" metadata
+          (classic blog convention). Reworked as a compact 2-column directory
+          listing so the homepage stays directory-first; the full /resources
+          page handles the magazine treatment. */}
+      <LazySection fallbackHeight="320px">
+      <section className="py-10 md:py-12 lg:py-16">
         <div className="container px-4 md:px-6 lg:px-8">
-          {/* Section Header */}
-          <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 md:gap-4">
+          <div className="mb-5 md:mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Resources</span>
-              <h2 className="mt-1.5 md:mt-2 font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
-                Helpful Guides
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recovery Resources</span>
+              <h2 className="mt-1.5 font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
+                Browse Recovery Guides
               </h2>
             </div>
             <Link to="/resources" className="group">
               <span className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                View all articles
+                View all resources
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
               </span>
             </Link>
           </div>
 
-          {/* Articles Grid - 1 col mobile, 2 col tablet, 3 col desktop */}
-          <div className="grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="divide-y divide-border rounded-xl border bg-card">
             {blogArticles.map((article) => (
-              <Link
-                key={article.id}
-                to={`/resources/${article.id}`}
-                className="group"
-              >
-                <article className="h-full rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/30 hover:shadow-md">
-                  {/* Image */}
-                  <div className="relative h-32 md:h-40 overflow-hidden">
-                    <img 
-                      src={article.image} 
-                      alt={article.title}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      width={400}
-                      height={200}
-                      loading="lazy"
-                    />
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="p-3 md:p-4">
-                    {/* Category & Read Time */}
-                    <div className="mb-1.5 md:mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="font-medium text-primary">{article.category}</span>
-                      <span>•</span>
-                      <span>{article.readTime}</span>
-                    </div>
-                    
-                    {/* Title */}
-                    <h3 className="font-semibold text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2 text-[15px] md:text-base">
+              <li key={article.id}>
+                <Link
+                  to={`/resources/${article.id}`}
+                  className="group flex items-center gap-4 px-4 py-3 md:px-5 md:py-4 hover:bg-muted/40 transition-colors"
+                >
+                  <span className="hidden sm:inline-flex shrink-0 items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary uppercase tracking-wide">
+                    {article.category}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm md:text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                       {article.title}
                     </h3>
-                    
-                    {/* Excerpt */}
-                    <p className="mt-1 md:mt-1.5 text-sm md:text-base text-muted-foreground line-clamp-2">
-                      {article.excerpt}
-                    </p>
+                    <p className="mt-0.5 text-xs md:text-sm text-muted-foreground line-clamp-1">{article.excerpt}</p>
                   </div>
-                </article>
-              </Link>
+                  <ArrowRight className="hidden sm:block h-4 w-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
       </LazySection>
