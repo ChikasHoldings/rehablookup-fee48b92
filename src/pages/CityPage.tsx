@@ -11,6 +11,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { citiesMatch } from "@/lib/cityNameMatch";
 
 import { getStateBySlug, getCityBySlug } from "@/data/locationSeoData";
 import { getStateArticles } from "@/data/stateArticlesData";
@@ -199,16 +200,18 @@ const CityPage = () => {
 
   const cityCenters = useMemo(() => {
     if (!stateData || !cityData) return [];
-    const cityNameLower = cityData.name.toLowerCase();
     const stateNameLower = stateData.name.toLowerCase();
     const stateAbbrevLower = stateData.abbreviation.toLowerCase();
-    
+
     return approvedFacilities.filter(center => {
-      const centerCity = center.city.toLowerCase();
       const centerState = center.state.toLowerCase();
-      const cityMatch = centerCity === cityNameLower || centerCity.includes(cityNameLower);
       const stateMatch = centerState === stateNameLower || centerState === stateAbbrevLower;
-      return cityMatch && stateMatch;
+      if (!stateMatch) return false;
+      // citiesMatch normalizes both sides for Saint/Fort/Mount/Point
+      // abbreviation differences + punctuation. Without this, SAMHSA
+      // facilities with city="St. Louis" never appeared on the
+      // "Saint Louis" city page (and vice versa).
+      return citiesMatch(center.city, cityData.name);
     }).sort((a, b) => {
       // Pro subscriptions first
       const aPro = (a as any).isPro ? 1 : 0;
