@@ -1,4 +1,5 @@
 import { Link, Navigate, useLocation } from "react-router-dom";
+import { InlineNotFound } from "@/components/InlineNotFound";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
 import { NearMeHero } from "@/components/seo/NearMeHero";
@@ -116,7 +117,7 @@ export default function NearMeCountyPage() {
   }, [facilities.length, stateInfo, nearbyCounties, allFacilities]);
 
   if (!nearMeType || !stateInfo || !countyData) {
-    return <Navigate to="/404" replace />;
+    return <InlineNotFound />;
   }
 
   // Legacy slug redirect

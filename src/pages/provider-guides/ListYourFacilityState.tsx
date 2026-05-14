@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { InlineNotFound } from "@/components/InlineNotFound";
 import { ProviderSEOPageLayout } from "@/components/provider-guides/ProviderSEOPageLayout";
 import pgGetMorePatients from "@/assets/provider-guides/pg-get-more-patients.jpg";
 import treatmentFacility from "@/assets/provider-guides/treatment-facility.jpg";
@@ -38,7 +39,7 @@ export default function ListYourFacilityState() {
   const state = stateSlug ? stateData[stateSlug] : null;
 
   if (!state) {
-    return <Navigate to="/404" replace />;
+    return <InlineNotFound />;
   }
 
   return (
