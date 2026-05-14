@@ -6,6 +6,7 @@
 
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { dirname } from 'path';
+import { GA_MEASUREMENT_ID } from './_ga.mjs';
 
 const BASE_URL = 'https://rehablookup.com';
 const PUBLIC = 'public';
@@ -92,7 +93,7 @@ function buildHtml({ path, title, description, h1, breadcrumbs }) {
   {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":${bcJson}}
   </script>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2VB6C1X2MQ"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
@@ -102,7 +103,7 @@ function buildHtml({ path, title, description, h1, breadcrumbs }) {
       ad_storage: 'denied',
       wait_for_update: 500
     });
-    gtag('config', 'G-2VB6C1X2MQ', { send_page_view: true });
+    gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: true });
   </script>
 </head>
 <body>

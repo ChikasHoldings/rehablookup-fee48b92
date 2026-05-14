@@ -1,7 +1,28 @@
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+
+// Single source of truth for the GA4 measurement ID exposed to the SPA via
+// index.html. Mirrors scripts/_ga.mjs which is used by the SEO generators.
+// Set VITE_GA_MEASUREMENT_ID on Vercel (Project Settings → Environment
+// Variables) to rotate; the fallback below keeps local dev / unconfigured
+// CI working with the current production tag.
+const GA_MEASUREMENT_ID = process.env.VITE_GA_MEASUREMENT_ID?.trim() || "G-MM5K8398LY";
+
+// Inject the GA ID into index.html at build time by replacing the
+// `%VITE_GA_MEASUREMENT_ID%` placeholder. We do this in a plugin rather
+// than relying on Vite's built-in `%VITE_FOO%` HTML substitution so that
+// the fallback above (rather than the literal string) is used when the
+// env var is missing — that way an unset env var degrades to "still
+// tracking" instead of "GA broken because the literal substitution
+// leaked into the URL".
+const injectGaId: PluginOption = {
+  name: "inject-ga-measurement-id",
+  transformIndexHtml(html: string) {
+    return html.replace(/%VITE_GA_MEASUREMENT_ID%/g, GA_MEASUREMENT_ID);
+  },
+};
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -9,7 +30,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [react(), injectGaId, mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
