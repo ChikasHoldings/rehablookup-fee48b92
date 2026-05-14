@@ -1511,7 +1511,23 @@ export function getStateBySlug(slug: string): StateData | undefined {
 
 export function getCityBySlug(stateSlug: string, citySlug: string): CityData | undefined {
   const state = getStateBySlug(stateSlug);
-  return state?.cities.find(c => c.slug === citySlug);
+  if (!state) return undefined;
+  // 1. Exact slug match — covers the canonical URLs that ship in sitemap.xml
+  //    and the SEO files in public/.
+  const exact = state.cities.find(c => c.slug === citySlug);
+  if (exact) return exact;
+  // 2. Natural-name fallback. ~180 cities in this dataset use a state-suffix
+  //    slug (e.g. "aurora-co") because they share names across states. The
+  //    natural URL a user / external link / press release would use is
+  //    /rehab-centers/colorado/aurora — without the suffix. Without this
+  //    fallback those URLs 404. Resolving them here renders the correct
+  //    city; CityPage emits the canonical link tag pointing back at the
+  //    data slug ("aurora-co") so Google consolidates signal.
+  const naturalSlug = citySlug.toLowerCase();
+  return state.cities.find(c => {
+    const nameSlug = c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return nameSlug === naturalSlug;
+  });
 }
 
 export function getTopCities(limit: number = 20): (CityData & { stateName: string; stateSlug: string; stateAbbr: string })[] {
