@@ -28,8 +28,13 @@ export default {
         xs: "400px",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Plus Jakarta Sans", "Inter", "sans-serif"],
+        // 'Inter Fallback' / 'Plus Jakarta Sans Fallback' are metric-matched
+        // Arial faces declared in index.html — they render with the same
+        // x-height and ascent as the real web fonts, eliminating the FOUT
+        // text reflow when Inter / Plus Jakarta Sans arrive. See the
+        // commented @font-face block in index.html for the rationale.
+        sans: ["Inter", "Inter Fallback", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans", "Plus Jakarta Sans Fallback", "Inter Fallback", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
