@@ -596,13 +596,13 @@ const CenterProfile = () => {
     return <CenterNotFound attemptedSlug={slug} reason="missing" />;
   }
 
-  // Listing exists but isn't publicly approved AND the visitor isn't the
-  // owner — show the Center Not Found page (inactive variant).
-  if (
-    facility &&
-    facility.status !== "approved" &&
-    facility.user_id !== currentUserId
-  ) {
+  // Listing exists but isn't publicly approved — show the inactive variant.
+  // The public route never loads `user_id` (it's masked by the view + forced
+  // to null in the queryFn), so we can't fall back to "owner can still view"
+  // here without re-introducing the bug that 404'd every claimed listing
+  // for any logged-in visitor. Owners who want to preview their own pending
+  // listing have a dedicated route (`/provider/facility/:id`).
+  if (facility && facility.status !== "approved") {
     return <CenterNotFound attemptedSlug={slug} reason="inactive" />;
   }
 
@@ -684,7 +684,12 @@ const CenterProfile = () => {
   const galleryImages = facility.gallery_urls?.filter(Boolean) || [];
   const initials = getInitials(facility.name);
   const hasValidLogo = facility.logo_url && !logoError;
-  const isOwner = currentUserId === facility.user_id;
+  // The public profile route never resolves `facility.user_id` (the view
+  // doesn't expose it and the queryFn forces it to null), so ownership can
+  // never be detected here. Owners who want an "edit my listing" experience
+  // are routed to the provider dashboard via the unclaimed-banner CTA below
+  // and the dedicated `/provider/facility/:id` route.
+  const isOwner = false;
   const isPending = facility.status === "pending";
   // Pro-only contact channels (phone, public email, website link).
   // Strictly gated on plan — even the facility owner sees the public-facing
