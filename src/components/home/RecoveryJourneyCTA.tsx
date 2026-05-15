@@ -1,10 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Phone, ArrowRight, Lock, CheckCircle, Clock, Building2 } from "lucide-react";
-import {
-  CONCIERGE_PHONE_DISPLAY,
-  CONCIERGE_PHONE_TEL,
-} from "@/lib/contactInfo";
+import { Search, ArrowRight, Sparkles, ShieldCheck, MapPin, Building2 } from "lucide-react";
 import { buildConciergeHref } from "@/lib/conciergeHref";
 
 interface RecoveryJourneyCTAProps {
@@ -14,24 +10,27 @@ interface RecoveryJourneyCTAProps {
 }
 
 /**
- * End-of-page hero CTA targeted at seekers — replaces the previous
- * lightweight "Start Your Recovery Journey" card with a richer
- * two-column band:
+ * End-of-page hero CTA that positions RehabLookup as an independent
+ * directory — not a treatment provider. Two paths to the same goal
+ * (finding the right facility):
  *
- *   • Left (60%) — eyebrow, tight headline, empathetic body, primary
- *     tel CTA + secondary find-treatment link, 4-up trust row.
- *   • Right (40%) — inline SVG illustration of a sunrise over rolling
- *     hills, brand navy + gold. ~3KB, no network round-trip, no CLS.
+ *   • Primary  — search the directory yourself      → /search-results
+ *   • Secondary — get a free personalized match     → /concierge
  *
- * Visual weight is intentionally heavier than surrounding sections so
- * this catches the eye at scroll-end.
+ * Wording intentionally avoids advisor / helpline framing ("call us",
+ * "talk to a counselor", "24/7 available") so visitors don't mistake
+ * us for the treatment center itself.
+ *
+ * Layout: two-column band (60/40) on desktop, single column on
+ * mobile. Right column is an inline SVG sunrise — brand navy + gold,
+ * ~1.5KB markup, no external fetch, no CLS.
  */
 export function RecoveryJourneyCTA({ conciergeLocation = "" }: RecoveryJourneyCTAProps) {
   const trustRow = [
-    { Icon: Lock, label: "100% Confidential" },
-    { Icon: CheckCircle, label: "Free service" },
-    { Icon: Clock, label: "Available 24/7" },
     { Icon: Building2, label: "3,800+ verified facilities" },
+    { Icon: MapPin, label: "All 50 states covered" },
+    { Icon: ShieldCheck, label: "Independent directory" },
+    { Icon: Sparkles, label: "Free to use" },
   ];
 
   return (
@@ -51,19 +50,20 @@ export function RecoveryJourneyCTA({ conciergeLocation = "" }: RecoveryJourneyCT
           {/* ── Left content (60% on desktop = lg:col-span-3) ───────── */}
           <div className="lg:col-span-3">
             <span className="inline-flex items-center rounded-full bg-[#1B365D]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1B365D]">
-              Ready when you are
+              Find your match
             </span>
 
             <h2
               id="recovery-journey-heading"
               className="mt-4 font-display text-3xl md:text-4xl lg:text-[2.5rem] font-bold tracking-tight text-[#1B365D] leading-[1.1]"
             >
-              Start your recovery journey today.
+              Find the right treatment center for you.
             </h2>
 
             <p className="mt-3 md:mt-4 text-base md:text-lg text-slate-600 leading-relaxed max-w-xl">
-              Talk to a confidential advisor any time, day or night. Every call is
-              free, judgment-free, and stays between you and us.
+              RehabLookup is an independent directory of verified addiction-treatment
+              facilities across the U.S. Search by location, insurance, and level of
+              care — or let our free concierge surface the best matches for you.
             </p>
 
             {/* CTAs */}
@@ -73,13 +73,10 @@ export function RecoveryJourneyCTA({ conciergeLocation = "" }: RecoveryJourneyCT
                 size="lg"
                 className="bg-[#1B365D] hover:bg-[#142a4a] text-white gap-2 font-semibold shadow-lg hover:shadow-xl transition-all"
               >
-                <a
-                  href={`tel:${CONCIERGE_PHONE_TEL}`}
-                  aria-label={`Call RehabLookup at ${CONCIERGE_PHONE_DISPLAY} — free and confidential`}
-                >
-                  <Phone className="h-4 w-4" />
-                  Call {CONCIERGE_PHONE_DISPLAY} — Free &amp; Confidential
-                </a>
+                <Link to="/search-results">
+                  <Search className="h-4 w-4" />
+                  Search treatment centers
+                </Link>
               </Button>
 
               <Link
@@ -89,12 +86,12 @@ export function RecoveryJourneyCTA({ conciergeLocation = "" }: RecoveryJourneyCT
                 })}
                 className="inline-flex items-center gap-1 text-sm font-semibold text-[#1B365D] hover:text-[#142a4a] underline underline-offset-4 decoration-[#1B365D]/40 hover:decoration-[#1B365D] transition-colors"
               >
-                Find treatment near me
+                Get a personalized match
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
-            {/* Trust row — 4 items, single line on md+, 2x2 on mobile. */}
+            {/* Trust row — 4 directory-appropriate signals. */}
             <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-3 text-sm text-slate-600 sm:grid-cols-4">
               {trustRow.map(({ Icon, label }) => (
                 <li key={label} className="flex items-center gap-2">
