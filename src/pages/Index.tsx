@@ -43,6 +43,25 @@ import {
   ClipboardList,
 } from "lucide-react";
 
+// Insurance carrier strip shown under the "Are You Covered?" heading.
+// Per-logo `scale` compensates for inconsistent SVG artwork-to-viewBox
+// ratios — Aetna's path data fills its viewBox densely and is the visual
+// baseline (scale 1.0); Cigna / Humana / Medicaid use a 200×50 viewBox
+// whose content occupies only the left ~50–70%, so they're scaled up to
+// match Aetna's rendered width. Optum has no SVG asset in the repo and
+// renders as styled brand-orange text instead.
+type InsuranceLogo =
+  | { kind: "svg"; src: string; alt: string; scale: number }
+  | { kind: "text"; alt: string; label: string; color: string };
+
+const INSURANCE_LOGOS: InsuranceLogo[] = [
+  { kind: "svg", src: "/insurance-logos/aetna.svg", alt: "Aetna", scale: 1.0 },
+  { kind: "text", alt: "Optum", label: "Optum", color: "#FF6200" },
+  { kind: "svg", src: "/insurance-logos/medicaid.svg", alt: "Medicaid", scale: 1.4 },
+  { kind: "svg", src: "/insurance-logos/cigna.svg", alt: "Cigna", scale: 1.7 },
+  { kind: "svg", src: "/insurance-logos/humana.svg", alt: "Humana", scale: 1.7 },
+];
+
 const blogArticles = [
   {
     id: "stages-of-recovery",
@@ -351,48 +370,57 @@ const Index = () => {
                 </Link>
               </div>
 
-              {/* Insurance Logos — 5 named carriers, grid-only (no marquee
-                  or horizontal scroller). The previous 10-logo horizontal
-                  scroll was unreadable at small sizes and was a known
-                  source of layout drift via `-mx-2` and `overflow-x-auto`.
-                  This grid stays inside the viewport at every breakpoint:
-                  2 columns on mobile (3 rows; the 5th cell spans both
-                  columns so the last row doesn't orphan), 5 columns on
-                  md+ in a single row of equal slots. */}
+              {/* Insurance Logos — 5 named carriers, container-less.
+                  The five logos don't share a normalized artwork bounding
+                  box: Aetna's SVG fills its viewBox densely, while
+                  Cigna / Humana / Medicaid use a 200×50 viewBox whose
+                  content occupies only the left ~50–70%. Plain
+                  `object-contain` would render those visually ~half the
+                  size of Aetna. Per-logo `transform: scale()` brings
+                  their rendered widths roughly to Aetna's. Optum has no
+                  SVG asset in the repo, so it renders as styled
+                  brand-color text. */}
               <div className="flex-1">
                 <div
                   className="grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4"
                   aria-label="Insurance carriers accepted"
                 >
-                  {[
-                    { src: "/insurance-logos/aetna.svg", alt: "Aetna" },
-                    { src: "/insurance-logos/bcbs.svg", alt: "Blue Cross Blue Shield" },
-                    { src: "/insurance-logos/cigna.svg", alt: "Cigna" },
-                    { src: "/insurance-logos/united.svg", alt: "UnitedHealthcare" },
-                    { src: "/insurance-logos/tricare.svg", alt: "TRICARE" },
-                  ].map((logo, i) => (
+                  {INSURANCE_LOGOS.map((logo, i) => (
                     <div
                       key={logo.alt}
                       className={cn(
                         // h-20 md:h-24 reserves vertical space BEFORE the
                         // SVGs paint so the row doesn't shift downward on
-                        // first load. Width comes from the grid track —
-                        // each cell is an equal-width slot.
-                        "flex h-20 md:h-24 items-center justify-center rounded-lg border border-border bg-white shadow-sm transition-all duration-200 hover:scale-[1.03] hover:shadow-md",
+                        // first load. No border / no background / no
+                        // shadow — the cell is a transparent layout
+                        // anchor. overflow-hidden contains the per-logo
+                        // scale-up so a zoomed logo can't bleed into
+                        // its neighbour.
+                        "group flex h-20 md:h-24 items-center justify-center overflow-hidden transition-transform duration-200 hover:scale-[1.04]",
                         // 5th cell spans both mobile columns so the final
                         // row isn't a lonely orphan tile.
                         i === 4 && "col-span-2 md:col-span-1",
                       )}
                     >
-                      <img
-                        src={logo.src}
-                        alt={logo.alt}
-                        width={200}
-                        height={50}
-                        className="h-14 md:h-16 w-auto max-w-[85%] object-contain"
-                        loading="lazy"
-                        decoding="async"
-                      />
+                      {logo.kind === "text" ? (
+                        <span
+                          className="text-3xl md:text-4xl font-bold tracking-tight"
+                          style={{ color: logo.color }}
+                        >
+                          {logo.label}
+                        </span>
+                      ) : (
+                        <img
+                          src={logo.src}
+                          alt={logo.alt}
+                          width={200}
+                          height={50}
+                          className="h-14 md:h-16 w-auto max-w-[90%] object-contain"
+                          style={{ transform: `scale(${logo.scale})`, transformOrigin: "center" }}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
