@@ -8,7 +8,7 @@ interface StatItem {
 }
 
 const STATS: StatItem[] = [
-  { icon: Building2, value: "15,000+", label: "Verified Facilities" },
+  { icon: Building2, value: "3,800+", label: "Verified Facilities" },
   { icon: MapPin, value: "All 50", label: "States Covered" },
   { icon: Users, value: "Free", label: "For Clients" },
   { icon: ShieldCheck, value: "HIPAA", label: "Compliant" },

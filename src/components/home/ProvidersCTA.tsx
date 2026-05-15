@@ -93,7 +93,7 @@ export function ProvidersCTA() {
                 <ShieldCheck className="h-5 w-5 text-[#1B365D]" aria-hidden />
               </div>
               <div className="leading-tight">
-                <p className="font-display text-base font-bold text-[#1B365D]">15,000+</p>
+                <p className="font-display text-base font-bold text-[#1B365D]">3,800+</p>
                 <p className="text-[11px] uppercase tracking-wide text-slate-500">Verified centers</p>
               </div>
             </div>

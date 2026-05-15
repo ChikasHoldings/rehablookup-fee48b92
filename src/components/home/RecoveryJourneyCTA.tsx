@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, ArrowRight, Sparkles, ShieldCheck, MapPin, Building2 } from "lucide-react";
+import { Search, ArrowRight, Sparkles, MapPin, Building2 } from "lucide-react";
 import { buildConciergeHref } from "@/lib/conciergeHref";
 
 interface RecoveryJourneyCTAProps {
@@ -29,7 +29,6 @@ export function RecoveryJourneyCTA({ conciergeLocation = "" }: RecoveryJourneyCT
   const trustRow = [
     { Icon: Building2, label: "3,800+ verified facilities" },
     { Icon: MapPin, label: "All 50 states covered" },
-    { Icon: ShieldCheck, label: "Independent directory" },
     { Icon: Sparkles, label: "Free to use" },
   ];
 
@@ -91,8 +90,10 @@ export function RecoveryJourneyCTA({ conciergeLocation = "" }: RecoveryJourneyCT
               </Link>
             </div>
 
-            {/* Trust row — 4 directory-appropriate signals. */}
-            <ul className="mt-8 grid grid-cols-2 gap-x-5 gap-y-3 text-sm text-slate-600 sm:grid-cols-4">
+            {/* Trust row — directory-appropriate signals. flex-wrap
+                lets the 3 items flow naturally (2+1 mobile, 3-up md+)
+                without orphaning a slot when one is removed. */}
+            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-600">
               {trustRow.map(({ Icon, label }) => (
                 <li key={label} className="flex items-center gap-2">
                   <Icon className="h-4 w-4 shrink-0 text-[#CDA223]" aria-hidden />

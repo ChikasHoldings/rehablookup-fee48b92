@@ -145,7 +145,9 @@ const Index = () => {
   // Trust-bar count-up animations. Animate once when the bar enters
   // the viewport. The hooks honor prefers-reduced-motion (set to the
   // final value immediately when the user prefers less motion).
-  const facilitiesCount = useCountUp({ to: 15000 });
+  // Target = live approved-facility count in `public_facilities`
+  // (~3,804 as of last SAMHSA ingest).
+  const facilitiesCount = useCountUp({ to: 3800 });
   const statesCount = useCountUp({ to: 50 });
   // Geo-derived location string (e.g. "Boise, ID") forwarded to /concierge
   // so the intake form can prefill the visitor's preferred location without
@@ -194,7 +196,7 @@ const Index = () => {
     <Layout>
       <SEO
         title="Find Drug & Alcohol Rehab Centers Near You"
-        description="Search 15,000+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help."
+        description="Search 3,800+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help."
         canonical="/"
         keywords={[
           "drug rehab near me",
@@ -216,7 +218,7 @@ const Index = () => {
             "@type": "WebPage",
             "@id": "https://rehablookup.com/#webpage",
             name: "Find Addiction Treatment Centers Near You",
-            description: "Search 15,000+ verified drug and alcohol rehab centers. Compare treatment options and find the right recovery program.",
+            description: "Search 3,800+ verified drug and alcohol rehab centers. Compare treatment options and find the right recovery program.",
             isPartOf: { "@id": "https://rehablookup.com/#website" },
             primaryImageOfPage: {
               "@type": "ImageObject",

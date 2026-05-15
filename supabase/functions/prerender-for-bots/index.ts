@@ -833,7 +833,7 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
       type: 'website',
     },
     `<h1>Find Trusted Addiction Treatment Centers</h1>
-    <p>Search 15,000+ verified drug and alcohol rehab centers across all 50 states.</p>
+    <p>Search 3,800+ verified drug and alcohol rehab centers across all 50 states.</p>
     <p><a href="/">Return to homepage</a> | <a href="/rehab-centers">Browse all treatment centers</a></p>`
   );
 }
