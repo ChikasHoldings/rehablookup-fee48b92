@@ -9,6 +9,7 @@ import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSecti
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { buildConciergeHref } from "@/lib/conciergeHref";
+import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
 import { SocialProofBar } from "@/components/conversion/SocialProofBar";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
@@ -350,57 +351,61 @@ const Index = () => {
                 </Link>
               </div>
 
-              {/* Insurance Logos */}
+              {/* Insurance Logos — 5 named carriers, grid-only (no marquee
+                  or horizontal scroller). The previous 10-logo horizontal
+                  scroll was unreadable at small sizes and was a known
+                  source of layout drift via `-mx-2` and `overflow-x-auto`.
+                  This grid stays inside the viewport at every breakpoint:
+                  2 columns on mobile (3 rows; the 5th cell spans both
+                  columns so the last row doesn't orphan), 5 columns on
+                  md+ in a single row of equal slots. */}
               <div className="flex-1">
-                {/* Mobile: Horizontal scroll carousel, Tablet+: Grid */}
-                <div className="relative -mx-2 px-2 md:mx-0 md:px-0">
-                  <div className="flex gap-4 md:gap-3 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory md:grid md:grid-cols-5 md:overflow-visible md:pb-0 lg:gap-6">
-                    {/* Aetna */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/aetna.svg" alt="Aetna" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                <div
+                  className="grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4"
+                  aria-label="Insurance carriers accepted"
+                >
+                  {[
+                    { src: "/insurance-logos/aetna.svg", alt: "Aetna" },
+                    { src: "/insurance-logos/bcbs.svg", alt: "Blue Cross Blue Shield" },
+                    { src: "/insurance-logos/cigna.svg", alt: "Cigna" },
+                    { src: "/insurance-logos/united.svg", alt: "UnitedHealthcare" },
+                    { src: "/insurance-logos/tricare.svg", alt: "TRICARE" },
+                  ].map((logo, i) => (
+                    <div
+                      key={logo.alt}
+                      className={cn(
+                        // h-20 md:h-24 reserves vertical space BEFORE the
+                        // SVGs paint so the row doesn't shift downward on
+                        // first load. Width comes from the grid track —
+                        // each cell is an equal-width slot.
+                        "flex h-20 md:h-24 items-center justify-center rounded-lg border border-border bg-white shadow-sm transition-all duration-200 hover:scale-[1.03] hover:shadow-md",
+                        // 5th cell spans both mobile columns so the final
+                        // row isn't a lonely orphan tile.
+                        i === 4 && "col-span-2 md:col-span-1",
+                      )}
+                    >
+                      <img
+                        src={logo.src}
+                        alt={logo.alt}
+                        width={200}
+                        height={50}
+                        className="h-14 md:h-16 w-auto max-w-[85%] object-contain"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
-                    {/* Anthem */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/anthem.svg" alt="Anthem" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* BCBS */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/bcbs.svg" alt="Blue Cross Blue Shield" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Cigna */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/cigna.svg" alt="Cigna" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Humana */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/humana.svg" alt="Humana" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Kaiser */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/kaiser.svg" alt="Kaiser Permanente" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Medicare */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/medicare.svg" alt="Medicare" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Medicaid */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/medicaid.svg" alt="Medicaid" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Optum */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <span className="text-sm md:text-base lg:text-lg font-bold text-[#FF6200] opacity-80 hover:opacity-100 transition-opacity">Optum</span>
-                    </div>
-                    {/* Tricare */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/tricare.svg" alt="TRICARE" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-                  {/* Scroll hint for mobile */}
-                  <div className="mt-2 flex items-center justify-center gap-1 text-xs text-muted-foreground md:hidden">
-                    <span>Swipe to see more</span>
-                    <ArrowRight className="h-3 w-3" />
-                  </div>
+                  ))}
+                </div>
+
+                {/* + more carriers link — routes to the full carrier list. */}
+                <div className="mt-4 text-center md:text-right">
+                  <Link
+                    to="/insurance"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    + more carriers accepted
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
               </div>
             </div>
