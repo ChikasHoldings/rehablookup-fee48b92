@@ -371,33 +371,17 @@ const CenterProfile = () => {
   }, [slug, queryClient, currentUserId]);
 
   const { data: facility, isLoading, isFetching, isFetched, error } = useQuery({
-    queryKey: ["facility", slug, currentUserId],
+    queryKey: ["facility", slug],
     queryFn: async (): Promise<FacilityData | null> => {
-      // Shared loader: snapshot → public_facilities fallback → claim flags.
-      // The hook handles all three paths in one go; see useFacilityBySlug.
+      // PUBLIC profile route — load from the public_facilities view via the
+      // shared loader. This must NEVER append a user_id filter, otherwise
+      // logged-in visitors who don't own this facility (admins, seekers,
+      // providers viewing other listings) see "Center Unavailable" for
+      // every unclaimed SAMHSA listing. PII fields the owner needs (email,
+      // claim_status, etc.) are fetched in a separate hook used only by
+      // the owner-edit dashboard.
       const loaded = await loadFacilityBySlug(slug!);
-
-      // Owner-scoped read of the base table (RLS allows owners) — picks up
-      // PII fields the public path masks (email, user_id, etc.). When the
-      // current user IS the owner, this is the authoritative source; for
-      // anon visitors it returns null and we fall back to `loaded.facility`.
-      let ownedRow: any = null;
-      if (currentUserId) {
-        const { data } = await supabase
-          .from("facilities")
-          .select(`
-            id, name, slug, city, state, zip_code, address, phone, email, website,
-            description, facility_type, gender_served, bed_count, featured, verified,
-            year_established, logo_url, gallery_urls, status, user_id, updated_at,
-            concierge_network_opted_in, accepts_international_patients
-          `)
-          .eq("slug", slug)
-          .eq("user_id", currentUserId)
-          .maybeSingle();
-        ownedRow = data;
-      }
-
-      const base = ownedRow ?? loaded.facility;
+      const base = loaded.facility;
       if (!base) return null;
 
       // Joined detail tables (anon-readable) in parallel.
@@ -412,22 +396,18 @@ const CenterProfile = () => {
 
       return {
         ...base,
-        // Ensure PII-only fields are at least defined for downstream typing.
-        email: ownedRow?.email ?? null,
-        user_id: ownedRow?.user_id ?? null,
-        concierge_network_opted_in: ownedRow?.concierge_network_opted_in ?? null,
-        accepts_international_patients:
-          ownedRow?.accepts_international_patients ??
-          base.accepts_international_patients ??
-          null,
+        // PII fields not exposed on the public view stay null on the public
+        // profile route; the owner-edit hook surfaces them separately when
+        // the viewer is the owner.
+        email: null,
+        user_id: null,
+        concierge_network_opted_in: null,
+        accepts_international_patients: base.accepts_international_patients ?? null,
         facility_services: services.data ?? [],
         facility_insurance: insurance.data ?? [],
         facility_age_groups: ageGroups.data ?? [],
         facility_credentials: credentials.data ?? [],
         facility_accreditations: accreditations.data ?? [],
-        // Claim flags are populated by the shared loader (either inline from
-        // the public_facilities fallback row, or via a supplemental fetch by
-        // id when the snapshot was the source).
         is_claimed: loaded.flags?.is_claimed,
         is_pro: loaded.flags?.is_pro,
         is_premium_visible: loaded.flags?.is_premium_visible,
