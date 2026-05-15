@@ -18,6 +18,7 @@ const heroImage = "/hero-recovery.webp";
 // Lazy-load below-fold sections to reduce initial JS bundle
 const InternalLinkBlock = lazy(() => import("@/components/seo/InternalLinkBlock").then(m => ({ default: m.InternalLinkBlock })));
 const ProvidersCTA = lazy(() => import("@/components/home/ProvidersCTA").then(m => ({ default: m.ProvidersCTA })));
+const RecoveryJourneyCTA = lazy(() => import("@/components/home/RecoveryJourneyCTA").then(m => ({ default: m.RecoveryJourneyCTA })));
 const TestimonialsSection = lazy(() => import("@/components/testimonials/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
 const PageFAQ = lazy(() => import("@/components/seo/PageFAQ").then(m => ({ default: m.PageFAQ })));
 const seekerTestimonialsPromise = import("@/data/testimonials").then(m => m.seekerTestimonials);
@@ -953,36 +954,13 @@ const Index = () => {
         </section>
       </LazySection>
 
-      {/* CTA Section */}
-      <section className="py-10 md:py-14 lg:py-20">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl">
-            {/* Main CTA Card */}
-            <div className="rounded-xl border border-border bg-card p-6 md:p-8 lg:p-10 text-center">
-              <h2 className="font-display text-xl md:text-2xl font-semibold text-foreground lg:text-3xl">
-                Start Your Recovery Journey
-              </h2>
-              <p className="mt-1.5 md:mt-2 text-muted-foreground text-[15px] md:text-base lg:text-lg max-w-md mx-auto">
-                Connect with verified treatment centers or list your facility in our directory.
-              </p>
-              <div className="mt-5 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 md:gap-3">
-                <Link to={buildConciergeHref({ location: homepageConciergeLocation, source: "homepage_footer_cta" })}>
-                  <Button size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
-                    <Heart className="h-4 w-4" />
-                    Find Treatment
-                  </Button>
-                </Link>
-                <Link to="/for-providers">
-                  <Button variant="outline" size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
-                    List Your Facility
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* End-of-page recovery-journey CTA — two-column band with a
+          sunrise illustration on the right and a tel-first dual CTA
+          on the left. Replaced the previous lightweight rounded-card
+          to give the scroll-end more visual weight. */}
+      <Suspense fallback={<div style={{ minHeight: "440px" }} aria-hidden="true" />}>
+        <RecoveryJourneyCTA conciergeLocation={homepageConciergeLocation} />
+      </Suspense>
 
       <LazySection fallbackHeight="300px">
         <Suspense fallback={<div style={{ minHeight: "300px" }} aria-hidden="true" />}>
