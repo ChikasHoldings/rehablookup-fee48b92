@@ -14,10 +14,11 @@
  * these flat files are SEO-only mirrors, matching the established pattern
  * used by the other generate-*-html.mjs scripts in this repo.
  *
- * Data source: the public sitemap-facilities edge function gives us the
- * canonical slug list, and we read public columns from `facilities` via the
- * Supabase REST API using the anon key (RLS already restricts what's
- * returned to the public-safe subset).
+ * Data source: `public_facilities` view (anon-readable, paywall-masked) for
+ * the main row, plus four side tables for per-facility services / insurance
+ * / age groups / accreditations. Each side table is pulled once per build
+ * (paginated), bucketed by facility_id, and threaded into the per-facility
+ * render so the static body carries the same structured data the SPA shows.
  *
  * Idempotent: safe to re-run; overwrites existing files.
  */
@@ -43,6 +44,58 @@ const ANON_KEY =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
   // Project anon key — safe to commit; matches src/integrations/supabase/client.ts
   "sb_publishable_tHLCRbeUrsu7EmMlCR0n6g_ygNXmMYP";
+
+// ---------------------------------------------------------------------------
+// Canonical taxonomies — kept in sync with the SPA's
+// src/components/facility-profile/* counterparts so visible HTML and the
+// SPA augmentation render the same buckets.
+// ---------------------------------------------------------------------------
+
+const LEVELS_OF_CARE = new Set([
+  "Outpatient",
+  "Intensive Outpatient (IOP)",
+  "Partial Hospitalization (PHP)",
+  "Detoxification",
+  "Sober Living",
+  "Telehealth/Virtual",
+  "Residential",
+]);
+
+const EVIDENCE_BASED = new Set([
+  "Cognitive Behavioral Therapy (CBT)",
+  "Trauma Therapy",
+  "Medication-Assisted Treatment (MAT)",
+  "Dual Diagnosis",
+  "Family Therapy",
+  "Group Therapy",
+]);
+
+// External verifiers — authoritative sources only. State-issued accreditations
+// have no canonical single verifier, so they omit the link.
+const ACCRED_VERIFY = {
+  "The Joint Commission (JCAHO)": "https://www.qualitycheck.org/",
+  "CARF International": "https://carf.org/providersearch/",
+  "SAMHSA-Listed": "https://findtreatment.samhsa.gov/",
+  "NAATP Member": "https://www.naatp.org/find-a-provider",
+};
+
+const ACCRED_BLURB = {
+  "The Joint Commission (JCAHO)":
+    "Independent accreditation of healthcare quality and safety",
+  "CARF International":
+    "Commission on Accreditation of Rehabilitation Facilities",
+  "State Department of Health": "State-issued operating license",
+  "State Substance Use Treatment Agency":
+    "State-issued substance use treatment authorization",
+  "State Mental Health Authority":
+    "State-issued mental health authorization",
+  "SAMHSA-Listed":
+    "Listed in the SAMHSA National Directory of Treatment Facilities",
+  "NAATP Member":
+    "Member, National Association of Addiction Treatment Providers",
+};
+
+const SLIDING_SCALE = "Sliding Scale/Financial Assistance";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -81,19 +134,104 @@ function locationSlug(s) {
   return String(s ?? "").toLowerCase().replace(/\s+/g, "-");
 }
 
+// Oxford-comma list joiner. Empty array → empty string.
+function joinList(arr) {
+  if (!arr || arr.length === 0) return "";
+  if (arr.length === 1) return arr[0];
+  if (arr.length === 2) return `${arr[0]} and ${arr[1]}`;
+  return `${arr.slice(0, -1).join(", ")}, and ${arr[arr.length - 1]}`;
+}
+
+function normalizeGender(value) {
+  if (!value) return null;
+  switch (String(value).toLowerCase()) {
+    case "male":
+    case "men":
+    case "men only":
+      return "Men Only";
+    case "female":
+    case "women":
+    case "women only":
+      return "Women Only";
+    case "all":
+    case "all genders":
+    case "coed":
+      return "All Genders";
+    default:
+      return value;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Data fetch
 // ---------------------------------------------------------------------------
 
 /**
- * Pull every approved facility with a slug. Filter MUST match the
- * sitemap-facilities edge function (which only filters by `status=approved`)
- * so every URL in sitemap-facilities.xml has a corresponding /center/<slug>.html
- * mirror — otherwise the check:facility-sitemap-sync validator fails the
- * build with "static HTML file has no sitemap entry" / vice-versa.
+ * Generic paginated fetch from a Supabase REST endpoint (view or table).
+ * Uses offset/limit since PostgREST caps each response at ~1,000 rows
+ * regardless of the requested limit. Matches the pagination pattern used
+ * by scripts/_facility-data.mjs.
+ */
+async function fetchAll(viewName, cols, extraQuery = "") {
+  const PAGE = 1000;
+  const all = [];
+  let from = 0;
+  while (true) {
+    const url =
+      `${PROJECT_URL}/rest/v1/${viewName}` +
+      `?select=${encodeURIComponent(cols)}` +
+      `${extraQuery ? "&" + extraQuery : ""}` +
+      `&offset=${from}&limit=${PAGE}`;
+
+    const res = await fetch(url, {
+      headers: {
+        apikey: ANON_KEY,
+        Authorization: `Bearer ${ANON_KEY}`,
+        Accept: "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(
+        `fetchAll(${viewName}) failed (${res.status}): ${body.slice(0, 200)}`,
+      );
+    }
+
+    const batch = await res.json();
+    all.push(...batch);
+    if (batch.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
+/**
+ * Bucket flat rows by a key column, collecting `valueField` into a string[].
+ * Returns Map<key, string[]>.
+ */
+function bucketBy(rows, keyField, valueField) {
+  const m = new Map();
+  for (const r of rows ?? []) {
+    const k = r?.[keyField];
+    if (!k) continue;
+    const v = r[valueField];
+    if (v == null || v === "") continue;
+    const arr = m.get(k);
+    if (arr) arr.push(String(v));
+    else m.set(k, [String(v)]);
+  }
+  return m;
+}
+
+/**
+ * Pull every approved facility with a slug.
  *
- * We select only the columns we need to render the static SEO mirror — keeps
- * payload small and matches the no-`select(*)` core memory rule.
+ * Reads from the `public_facilities` VIEW — not the `facilities` TABLE.
+ * The build runs with the anon key, which has no SELECT grant on the
+ * underlying table (intentional; phone/email/website are paywalled).
+ * The view applies `status='approved' AND NOT suspended` and exposes
+ * `gender_served` and `data_source` directly.
  */
 async function fetchFacilities() {
   const cols = [
@@ -113,119 +251,242 @@ async function fetchFacilities() {
     "year_established",
     "verified",
     "featured",
+    "gender_served",
     "updated_at",
   ].join(",");
 
-  const url =
-    // Query `facilities` directly with `status=approved` so the static HTML
-    // set matches the sitemap-facilities edge function 1:1. The edge fn
-    // uses the same filter (status=approved + slug NOT NULL), so the
-    // produced sitemap-facilities.xml lists the exact same rows we mirror
-    // to disk.
-    //
-    // We tried querying `public_facilities` view here previously to
-    // additionally exclude suspended + pending-claim rows. CI fails the
-    // facility ↔ sitemap sync check whenever the two snapshots diverge —
-    // e.g., a suspended facility gets a sitemap URL from the edge fn but
-    // no static HTML from this generator, so check:facility-sitemap-sync
-    // logs a mismatch and exits 1. Realigning the generator with the
-    // edge fn keeps the production gate green.
-    //
-    // Suspended/pending-claim facilities still get filtered out at SERVE
-    // time by the SPA's public_facilities query path and by middleware's
-    // prerender-manifest lookup; this just controls which files we
-    // commit. To exclude pending-claim listings from the SITEMAP too,
-    // update the sitemap-facilities edge function to query the
-    // public_facilities view — that's the canonical source-of-truth
-    // owner, not this generator.
-    `${PROJECT_URL}/rest/v1/facilities` +
-    `?select=${encodeURIComponent(cols)}` +
-    `&status=eq.approved` +
-    `&slug=not.is.null` +
-    `&order=updated_at.desc`;
-
-  const res = await fetch(url, {
-    headers: {
-      apikey: ANON_KEY,
-      Authorization: `Bearer ${ANON_KEY}`,
-      Accept: "application/json",
-    },
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(
-      `[facility-prerender] Failed to fetch facilities (${res.status}): ${body.slice(0, 200)}`,
-    );
-  }
-
-  return res.json();
+  return fetchAll(
+    "public_facilities",
+    cols,
+    "slug=not.is.null&order=updated_at.desc",
+  );
 }
 
 // ---------------------------------------------------------------------------
-// Facility-specific FAQ builder
+// Data-driven FAQ builder
 // ---------------------------------------------------------------------------
 
 /**
- * Build 4 fact-based Q/A pairs per facility. We only reference data we have on
- * the row — never insurance, ratings, programs, or accreditations the row
- * doesn't expose — and we route every "I want more detail" answer to either
- * the live profile (Request Info modal) or the concierge service. This keeps
- * the FAQs E-E-A-T compliant and avoids unverifiable claims.
- *
- * Returns at least 3 entries so FAQPage JSON-LD always passes the audit.
+ * Build Q/A pairs grounded in real data. Any question we can't answer from
+ * the facility row or its child tables is omitted — we never hedge with
+ * generic copy. The two anchor questions (location, contact) always render
+ * because their answers are computable from the row.
  */
-function buildFacilityFaqs(f) {
-  const name = f.name;
-  const city = f.city;
-  const state = f.state;
-  const type = f.facility_type;
-  const founded = f.year_established ? String(f.year_established) : "";
+function buildFaqItems(facility, facSvc, facIns, facAge, facAcc) {
+  const items = [];
+  const name = facility.name;
+  const city = facility.city;
+  const state = facility.state;
 
-  const locationLine = f.address
-    ? `${name} is located at ${f.address}, ${city}, ${state}${f.zip_code ? " " + f.zip_code : ""}.`
+  // Anchor — location is always known.
+  const locationLine = facility.address
+    ? `${name} is located at ${facility.address}, ${city}, ${state}${facility.zip_code ? " " + facility.zip_code : ""}.`
     : `${name} is based in ${city}, ${state}.`;
+  items.push({
+    q: `Where is ${name} located?`,
+    a: `${locationLine} View the full address, get directions, and see nearby treatment options on the facility profile.`,
+  });
 
-  const faqs = [
-    {
-      q: `Where is ${name} located?`,
-      a:
-        `${locationLine} You can view the full address, get directions, and see nearby treatment options on the facility profile at rehablookup.com/center/${f.slug}.`,
-    },
-    {
-      q: `What type of addiction treatment does ${name} provide?`,
-      a: type
-        ? `${name} operates as a ${type} in ${city}, ${state}, focused on addiction medicine and recovery support. Specific programs, levels of care, and admission criteria are listed on the verified profile.`
-        : `${name} provides addiction treatment services in ${city}, ${state}. Program details and levels of care are listed on the verified profile so you can confirm the right fit before reaching out.`,
-    },
-    {
-      q: `How do I contact ${name} or request more information?`,
-      a: f.phone
-        ? `You can call ${name} at ${f.phone} or use the "Request Information" form on the RehabLookup profile to send a confidential inquiry. A facility representative typically responds the same business day.`
-        : `Use the "Request Information" form on the ${name} profile at rehablookup.com/center/${f.slug} to send a confidential inquiry. A facility representative typically responds the same business day.`,
-    },
-    {
-      q: `Does ${name} accept insurance, and how is treatment paid for?`,
-      a:
-        `Coverage and self-pay options vary by program and individual plan. To verify benefits or discuss payment, request information directly through the ${name} profile — the facility's admissions team can confirm accepted insurance and out-of-pocket costs in writing before you commit.`,
-    },
-  ];
-
-  if (founded) {
-    faqs.push({
-      q: `When was ${name} established?`,
-      a: `${name} was established in ${founded} and currently operates in ${city}, ${state}. The verified profile shows the latest editorial review date and any updates submitted by the facility.`,
+  // Levels of care
+  const levels = facSvc.filter((s) => LEVELS_OF_CARE.has(s));
+  if (levels.length) {
+    items.push({
+      q: `What levels of care does ${name} offer?`,
+      a: `${name} offers ${joinList(levels)} services in ${city}, ${state}. Specific program length, intake criteria, and clinical schedule are confirmed during admissions.`,
     });
   }
 
-  return faqs;
+  // Therapy approaches
+  const approaches = facSvc.filter((s) => !LEVELS_OF_CARE.has(s));
+  if (approaches.length) {
+    items.push({
+      q: `What therapies and treatment approaches does ${name} use?`,
+      a: `${name} uses evidence-based and supportive approaches including ${joinList(approaches.slice(0, 6))}. The clinical team tailors the mix to each client's diagnosis, history, and goals.`,
+    });
+  }
+
+  // Insurance
+  if (facIns.length) {
+    const plans = facIns.filter((i) => i !== SLIDING_SCALE);
+    const sliding = facIns.includes(SLIDING_SCALE);
+    const planSentence = plans.length
+      ? `${name} accepts ${joinList(plans)}.`
+      : `${name} works with families on payment arrangements.`;
+    const slidingSentence = sliding
+      ? " Sliding-scale fees and financial assistance may also be available — verify with the center before admission."
+      : "";
+    items.push({
+      q: `Does ${name} accept insurance?`,
+      a: `${planSentence}${slidingSentence} Coverage details vary by plan and individual benefits — request a benefits verification through the profile.`,
+    });
+  }
+
+  // Ages
+  if (facAge.length) {
+    items.push({
+      q: `What ages does ${name} treat?`,
+      a: `${name} treats ${joinList(facAge)}. Some programs may have additional age-specific tracks — confirm with admissions.`,
+    });
+  }
+
+  // Gender
+  const gen = normalizeGender(facility.gender_served);
+  if (gen) {
+    const answer =
+      gen === "Women Only"
+        ? `${name} is a women-only facility, serving female-identifying clients.`
+        : gen === "Men Only"
+          ? `${name} is a men-only facility, serving male-identifying clients.`
+          : `${name} serves clients of all genders.`;
+    items.push({
+      q: `Is ${name} a men-only, women-only, or coed facility?`,
+      a: answer,
+    });
+  }
+
+  // Accreditation
+  if (facAcc.length) {
+    items.push({
+      q: `Is ${name} accredited?`,
+      a: `Yes. ${name} is recognized by ${joinList(facAcc)}. Each accreditation can be verified directly with the issuing authority.`,
+    });
+  }
+
+  // Year established
+  if (facility.year_established) {
+    items.push({
+      q: `When was ${name} established?`,
+      a: `${name} was established in ${facility.year_established} and currently operates in ${city}, ${state}.`,
+    });
+  }
+
+  // Anchor — contact closer.
+  items.push({
+    q: `How do I contact ${name} or request more information?`,
+    a: facility.phone
+      ? `You can call ${name} at ${facility.phone} or use the "Request Information" form on the RehabLookup profile to send a confidential inquiry. A facility representative typically responds the same business day.`
+      : `Use the "Request Information" form on the ${name} profile to send a confidential inquiry. A facility representative typically responds the same business day.`,
+  });
+
+  return items;
+}
+
+// ---------------------------------------------------------------------------
+// Rich body sections — visible HTML between <h2>About …</h2> and the CTA.
+// Each section self-hides when its data array is empty.
+// ---------------------------------------------------------------------------
+
+function renderRichSections(facility, facSvc, facIns, facAge, facAcc) {
+  const levels = facSvc.filter((s) => LEVELS_OF_CARE.has(s));
+  const approaches = facSvc.filter((s) => !LEVELS_OF_CARE.has(s));
+  const evidence = approaches.filter((s) => EVIDENCE_BASED.has(s));
+  const supports = approaches.filter((s) => !EVIDENCE_BASED.has(s));
+  const slidingScale = facIns.includes(SLIDING_SCALE);
+  const insurancePlans = facIns.filter((i) => i !== SLIDING_SCALE);
+  const gen = normalizeGender(facility.gender_served);
+
+  const parts = [];
+
+  if (levels.length) {
+    parts.push(`<section class="rich">
+<h2>Levels of Care</h2>
+<ul>
+${levels.map((l) => `<li>${escapeHtml(l)}</li>`).join("\n")}
+</ul>
+</section>`);
+  }
+
+  if (approaches.length) {
+    parts.push(`<section class="rich">
+<h2>Services &amp; Therapy Approaches</h2>${
+      evidence.length
+        ? `
+<h3>Evidence-Based Therapies</h3>
+<ul>
+${evidence.map((s) => `<li>${escapeHtml(s)}</li>`).join("\n")}
+</ul>`
+        : ""
+    }${
+      supports.length
+        ? `
+<h3>Recovery Supports</h3>
+<ul>
+${supports.map((s) => `<li>${escapeHtml(s)}</li>`).join("\n")}
+</ul>`
+        : ""
+    }
+</section>`);
+  }
+
+  if (facIns.length) {
+    parts.push(`<section class="rich">
+<h2>Insurance &amp; Payment</h2>${
+      insurancePlans.length
+        ? `
+<ul>
+${insurancePlans.map((i) => `<li>${escapeHtml(i)}</li>`).join("\n")}
+</ul>`
+        : ""
+    }${
+      slidingScale
+        ? `
+<p class="callout">Sliding-scale fees and financial assistance may be available. Verify cost and coverage with the center before admission.</p>`
+        : ""
+    }
+</section>`);
+  }
+
+  if (facAge.length || gen) {
+    parts.push(`<section class="rich">
+<h2>Who's Served</h2>
+<ul>${
+      facAge.length
+        ? `
+<li><strong>Ages:</strong> ${facAge.map(escapeHtml).join(", ")}</li>`
+        : ""
+    }${
+      gen
+        ? `
+<li><strong>Genders:</strong> ${escapeHtml(gen)}</li>`
+        : ""
+    }
+</ul>
+</section>`);
+  }
+
+  if (facAcc.length) {
+    const rows = facAcc
+      .map((a) => {
+        const blurb = ACCRED_BLURB[a] ?? "";
+        const verify = ACCRED_VERIFY[a];
+        const verifyLink = verify
+          ? ` <a href="${escapeAttr(verify)}" rel="nofollow noopener" target="_blank">Verify →</a>`
+          : "";
+        const blurbText = blurb ? ` — ${escapeHtml(blurb)}` : "";
+        return `<li><strong>${escapeHtml(a)}</strong>${blurbText}${verifyLink}</li>`;
+      })
+      .join("\n");
+    parts.push(`<section class="rich">
+<h2>Accreditations &amp; Licenses</h2>
+<ul>
+${rows}
+</ul>
+</section>`);
+  }
+
+  return parts.join("\n");
 }
 
 // ---------------------------------------------------------------------------
 // HTML template
 // ---------------------------------------------------------------------------
 
-function renderFacilityHtml(f) {
+function renderFacilityHtml(f, kids) {
+  const facSvc = kids.services.get(f.id) ?? [];
+  const facIns = kids.insurance.get(f.id) ?? [];
+  const facAge = kids.ageGroups.get(f.id) ?? [];
+  const facAcc = kids.accreditations.get(f.id) ?? [];
+
   const slug = f.slug;
   const canonical = `${BASE_URL}/center/${slug}`;
   const stateSlug = locationSlug(f.state);
@@ -331,6 +592,33 @@ function renderFacilityHtml(f) {
       "Dual Diagnosis Treatment",
       "Mental Health Treatment",
     ],
+    // Services this facility actually offers — drives Google's MedicalProcedure
+    // entity matching and surfaces in some rich-result variants.
+    ...(facSvc.length
+      ? {
+          availableService: facSvc.map((name) => ({
+            "@type": "MedicalProcedure",
+            name,
+          })),
+        }
+      : {}),
+    // Payment methods this facility accepts (insurance carriers + financial
+    // assistance flags). `paymentAccepted` is the canonical schema.org field
+    // for LocalBusiness and is recognized by Google's rich-results parser.
+    ...(facIns.length ? { paymentAccepted: facIns } : {}),
+    // Credentials / accreditations as EducationalOccupationalCredential
+    // entities, with a `url` pointing at the issuer's verifier where one
+    // exists (qualitycheck.org, carf.org, findtreatment.samhsa.gov, …).
+    ...(facAcc.length
+      ? {
+          hasCredential: facAcc.map((name) => ({
+            "@type": "EducationalOccupationalCredential",
+            credentialCategory: "Accreditation",
+            name,
+            ...(ACCRED_VERIFY[name] ? { url: ACCRED_VERIFY[name] } : {}),
+          })),
+        }
+      : {}),
     publisher: {
       "@type": "Organization",
       name: "RehabLookup",
@@ -355,14 +643,15 @@ function renderFacilityHtml(f) {
     ? `<h2>About ${escapeHtml(f.name)}</h2><p>${escapeHtml(f.description)}</p>`
     : `<h2>About ${escapeHtml(f.name)}</h2><p>${escapeHtml(f.name)} provides accredited addiction treatment services in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}. View the full profile for programs, insurance accepted, and admissions details.</p>`;
 
+  const richSections = renderRichSections(f, facSvc, facIns, facAge, facAcc);
+
   // ── Facility-specific FAQs ────────────────────────────────────────────────
-  // Build 4+ Q/A pairs grounded ONLY in fields we actually have on the row.
+  // Data-driven: every Q is dropped if we can't answer it from real columns.
   // Required by mem://seo/faq-jsonld-audit + mem://seo/quality-and-thin-content-protection:
   //   • Visible <section> with question/answer markup
   //   • Matching FAQPage JSON-LD with ≥3 Question entries (acceptedAnswer.text)
-  //   • No fabricated claims (insurance, ratings, accreditations) — keep answers
-  //     factual and route detail-seekers to the live profile / concierge.
-  const faqs = buildFacilityFaqs(f);
+  //   • No fabricated claims — every A names actual values
+  const faqs = buildFaqItems(f, facSvc, facIns, facAge, facAcc);
   const faqLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -413,13 +702,18 @@ ${faqs
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:32px 20px;color:#1a2b4a;line-height:1.7}
 h1{font-size:2rem;color:#1B365D;margin-bottom:8px}
 h2{font-size:1.4rem;color:#1B365D;margin-top:28px}
+h3{font-size:1.05rem;color:#1B365D;margin-top:14px;margin-bottom:6px}
 p{color:#333;margin-bottom:14px}
+ul{padding-left:22px;margin:8px 0 14px}
+li{margin:4px 0}
 a{color:#2563eb;text-decoration:none}
 a:hover{text-decoration:underline}
 .breadcrumbs{font-size:.85rem;color:#666;margin-bottom:20px}
 .breadcrumbs ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px}
 .meta{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin-top:18px}
 .meta p{margin:6px 0}
+.rich{margin-top:8px}
+.rich .callout{background:#fffbeb;border-left:3px solid #f59e0b;padding:10px 14px;margin-top:10px;color:#78350f}
 .cta{margin-top:28px;padding:20px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px}
 .cta h2{margin-top:0}
 .cta-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
@@ -461,6 +755,7 @@ ${phoneLine}
 ${websiteLine}
 </div>
 ${descBlock}
+${richSections}
 <div class="cta">
 <h2>Request Information from ${escapeHtml(f.name)}</h2>
 <p>Get verified program details, insurance verification, and admissions information directly from this facility. Confidential — no obligation.</p>
@@ -492,10 +787,20 @@ ${faqHtml}
 // ---------------------------------------------------------------------------
 
 async function main() {
-  console.log("[facility-prerender] Fetching approved facilities…");
+  console.log("[facility-prerender] Fetching approved facilities + child tables…");
   let facilities;
+  let svcRows;
+  let insRows;
+  let ageRows;
+  let accRows;
   try {
-    facilities = await fetchFacilities();
+    [facilities, svcRows, insRows, ageRows, accRows] = await Promise.all([
+      fetchFacilities(),
+      fetchAll("facility_services", "facility_id,service_name"),
+      fetchAll("facility_insurance", "facility_id,insurance_name"),
+      fetchAll("facility_age_groups", "facility_id,age_group"),
+      fetchAll("facility_accreditations", "facility_id,accreditation_type"),
+    ]);
   } catch (err) {
     console.error(`[facility-prerender] ${err.message}`);
     // Don't fail the build for transient REST issues — just skip with a warning.
@@ -511,6 +816,19 @@ async function main() {
     return;
   }
 
+  console.log(
+    `[facility-prerender] loaded ${facilities.length} facilities, ` +
+      `${svcRows.length} services, ${insRows.length} insurance, ` +
+      `${ageRows.length} ages, ${accRows.length} accreditations`,
+  );
+
+  const kids = {
+    services: bucketBy(svcRows, "facility_id", "service_name"),
+    insurance: bucketBy(insRows, "facility_id", "insurance_name"),
+    ageGroups: bucketBy(ageRows, "facility_id", "age_group"),
+    accreditations: bucketBy(accRows, "facility_id", "accreditation_type"),
+  };
+
   await mkdir(centerDir, { recursive: true });
 
   // Track which slugs we're about to write so we can prune any stale .html
@@ -525,7 +843,7 @@ async function main() {
       console.warn(`[facility-prerender] Skipping incomplete row id=${f.id}`);
       continue;
     }
-    const html = renderFacilityHtml(f);
+    const html = renderFacilityHtml(f, kids);
     const outFile = path.join(centerDir, `${f.slug}.html`);
     await writeFile(outFile, html, "utf8");
     liveSlugs.add(f.slug);
