@@ -31,6 +31,11 @@ const CountyTreatmentPage = lazy(() => import("./pages/seo/CountyTreatmentPage")
 const Locations = lazy(() => import("./pages/Locations"));
 const TreatmentCenterProfile = lazy(() => import("./pages/TreatmentCenterProfile"));
 const CenterProfile = lazy(() => import("./pages/CenterProfile"));
+// New directory-style detail page — replaces CenterProfile on the
+// public /center/:slug route. CenterProfile is retained as a fallback
+// component so we can hot-swap the route back without a code revert
+// if anything breaks live.
+const CenterPage = lazy(() => import("./pages/CenterPage"));
 const TreatmentTypes = lazy(() => import("./pages/TreatmentTypes"));
 const DrugAddictionTreatment = lazy(() => import("./pages/treatment-types/DrugAddictionTreatment"));
 const StateDrugAddiction = lazy(() => import("./pages/treatment-types/StateDrugAddiction"));
@@ -557,7 +562,7 @@ const AppInner = () => {
             <Route path="/rehab-centers/:stateSlug/county/:countySlug" element={<PublicRouteGuard><CountyPage /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/:citySlug" element={<PublicRouteGuard><CityPage /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug" element={<PublicRouteGuard><StatePage /></PublicRouteGuard>} />
-            <Route path="/center/:slug" element={<PublicRouteGuard><CenterProfile /></PublicRouteGuard>} />
+            <Route path="/center/:slug" element={<PublicRouteGuard><CenterPage /></PublicRouteGuard>} />
             <Route path="/treatment-types" element={<PublicRouteGuard><TreatmentTypes /></PublicRouteGuard>} />
             <Route path="/treatment-types/drug-addiction" element={<Navigate to="/treatment-types/drug-addiction-treatment" replace />} />
             <Route path="/treatment-types/drug-addiction-treatment" element={<PublicRouteGuard><DrugAddictionTreatment /></PublicRouteGuard>} />
