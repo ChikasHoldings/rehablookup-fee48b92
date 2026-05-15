@@ -237,14 +237,20 @@ export function Header({
         <div className="container flex h-[68px] items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
-            <img 
+            {/* width/height MUST match the natural aspect ratio of the
+                source file (400×73 in src/assets/logo-header.webp) or
+                the browser reserves the wrong-shape placeholder box and
+                shifts the entire navbar horizontally when the image
+                resolves. Scaled to h-9 (36px tall): 36 × (400/73) ≈ 197. */}
+            <img
               src={headerLogo}
-              alt="RehabLookup" 
+              alt="RehabLookup"
               className="h-9 w-auto"
-              width={150}
+              width={197}
               height={36}
               loading="eager"
               decoding="async"
+              fetchPriority="high"
             />
           </Link>
 
