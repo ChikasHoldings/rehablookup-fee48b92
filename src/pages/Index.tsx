@@ -8,6 +8,7 @@ import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSecti
 // TrustStrip moved to /concierge
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
+import { useCountUp } from "@/hooks/useCountUp";
 import { buildConciergeHref } from "@/lib/conciergeHref";
 import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
@@ -140,6 +141,12 @@ const Index = () => {
   // Lazy-loaded data for below-fold sections
   const [seekerTestimonials, setSeekerTestimonials] = useState<any[]>([]);
   const [homeFaqs, setHomeFaqs] = useState<any[]>([]);
+
+  // Trust-bar count-up animations. Animate once when the bar enters
+  // the viewport. The hooks honor prefers-reduced-motion (set to the
+  // final value immediately when the user prefers less motion).
+  const facilitiesCount = useCountUp({ to: 15000 });
+  const statesCount = useCountUp({ to: 50 });
   // Geo-derived location string (e.g. "Boise, ID") forwarded to /concierge
   // so the intake form can prefill the visitor's preferred location without
   // asking them to retype it. Falls back gracefully when geo isn't ready.
@@ -321,16 +328,24 @@ const Index = () => {
       <section className="relative bg-primary border-y border-primary-foreground/10">
         <div className="container py-3 md:py-4 px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-8 lg:gap-x-14">
-            <div className="flex items-center gap-2">
+            <div ref={facilitiesCount.ref as React.RefObject<HTMLDivElement>} className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-accent shrink-0" aria-hidden />
               <span className="text-sm md:text-base text-primary-foreground/90">
-                <strong className="font-semibold text-white">15,000+</strong> Verified Facilities
+                {/* inline-block + min-w keeps the row from jittering while
+                    the digit count grows from 1 → 5 during the count-up. */}
+                <strong className="inline-block min-w-[3.5em] text-right font-semibold text-white tabular-nums">
+                  {facilitiesCount.value.toLocaleString()}+
+                </strong>{" "}
+                Verified Facilities
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            <div ref={statesCount.ref as React.RefObject<HTMLDivElement>} className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-accent shrink-0" aria-hidden />
               <span className="text-sm md:text-base text-primary-foreground/90">
-                <strong className="font-semibold text-white">All 50</strong> States Covered
+                <strong className="inline-block min-w-[2.5em] text-right font-semibold text-white tabular-nums">
+                  {statesCount.value === 50 ? "All 50" : statesCount.value}
+                </strong>{" "}
+                States Covered
               </span>
             </div>
             <div className="flex items-center gap-2">

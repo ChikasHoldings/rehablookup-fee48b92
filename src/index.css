@@ -236,10 +236,17 @@ iframe, embed, object {
 
   h1 {
     @apply tracking-tight text-[1.625rem] md:text-3xl lg:text-4xl;
+    /* ss01 (stylistic alternates 1) + cv11 (character variant 11) on
+       Inter give the headings tighter, more confident geometry —
+       reads as "premium directory" instead of "default sans". Safe to
+       apply globally: variant fonts that don't support these features
+       silently ignore the declaration. */
+    font-feature-settings: "ss01", "cv11";
   }
 
   h2 {
     @apply tracking-tight text-xl md:text-2xl lg:text-3xl;
+    font-feature-settings: "ss01", "cv11";
   }
 
   h3 {
