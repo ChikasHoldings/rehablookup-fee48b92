@@ -11,7 +11,6 @@ import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { buildConciergeHref } from "@/lib/conciergeHref";
 import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
-import { SocialProofBar } from "@/components/conversion/SocialProofBar";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
@@ -41,6 +40,7 @@ import {
   MapPin,
   Navigation,
   ClipboardList,
+  ShieldCheck,
 } from "lucide-react";
 
 // Insurance carrier strip shown under the "Are You Covered?" heading.
@@ -312,33 +312,42 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Trust Bar */}
+      {/* Trust Bar — single source of truth for top-of-page trust signals.
+          The light-background SocialProofBar that used to sit below this
+          was stacking the same claims twice; merged its strongest two
+          signals (geographic reach, HIPAA compliance) into this dark bar
+          and dropped the duplicate. Same vertical padding as before —
+          height is unchanged, only the content is denser. */}
       <section className="relative bg-primary border-y border-primary-foreground/10">
         <div className="container py-3 md:py-4 px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-8 lg:gap-x-14">
-            <div className="flex items-center gap-2 group">
-              <CheckCircle className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Verified Facilities</span>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base text-primary-foreground/90">
+                <strong className="font-semibold text-white">15,000+</strong> Verified Facilities
+              </span>
             </div>
-            <div className="flex items-center gap-2 group">
-              <Users className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">15,000+ Centers</span>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base text-primary-foreground/90">
+                <strong className="font-semibold text-white">All 50</strong> States Covered
+              </span>
             </div>
-            <div className="flex items-center gap-2 group">
-              <Clock className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">24/7 Help</span>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base font-medium text-primary-foreground/90">HIPAA Compliant</span>
             </div>
-            <div className="flex items-center gap-2 group">
-              <Phone className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Free Insurance Check</span>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base text-primary-foreground/90">
+                <strong className="font-semibold text-white">Free</strong> 24/7 Help
+              </span>
             </div>
           </div>
         </div>
       </section>
 
       {/* TrustStrip moved to /concierge — see ConciergeLanding.tsx */}
-      {/* Social Proof Stats Bar */}
-      <SocialProofBar className="container px-4 md:px-6 lg:px-8 border-b" />
 
       {/* Featured Centers - Premium Horizontal Scroll */}
       <HomepageFeaturedSection />

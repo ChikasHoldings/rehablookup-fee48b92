@@ -32,7 +32,15 @@ export function Layout({ children }: LayoutProps) {
     // overflow-clipping effect WITHOUT creating a scroll container, so
     // sticky inside it works correctly. Modern-browser-only — supported
     // in Chrome 90+, Firefox 81+, Safari 16+ (2.5+ years).
-    <div className="flex min-h-screen flex-col w-full max-w-[100vw] [overflow-x:clip]">
+    //
+    // max-w-full (NOT max-w-[100vw]): on Win/Chrome the vertical scrollbar
+    // is part of the viewport width, so `100vw` returns ~17px more than
+    // the actual content area. That gap let descendants push past the
+    // visible width and turned the document into a horizontal drag
+    // surface before this clip could kick in. max-w-full pins to the
+    // parent's actual width — the html/body clip above is the global
+    // guarantee.
+    <div className="flex min-h-screen flex-col w-full max-w-full [overflow-x:clip]">
       <InternationalBanner />
       <MemoizedHeader />
       <main id="main" className="flex-1 w-full min-w-0">{children}</main>
