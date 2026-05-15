@@ -4,15 +4,29 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent navbar shift from scrollbar appearing/disappearing */
+/* Page-level overflow + overscroll guards.
+   - `overflow-x: clip` on BOTH html and body kills horizontal drag-scroll
+     of the document itself. `clip` (not `hidden`) is required so
+     `position: sticky` on the Header still works — `hidden` would
+     establish a new scroll container and break the header.
+   - `overflow-y: scroll` on html forces the vertical scrollbar to always
+     reserve its gutter, preventing layout shift on routes that grow past
+     a single viewport.
+   - `overscroll-behavior-y: none` on body stops the rubber-band bounce
+     at the top/bottom of the page on Safari, Chrome iOS, and Android. */
 html {
   overflow-y: scroll;
+  overflow-x: clip;
 }
 
 body, #root {
   width: 100%;
   max-width: 100%;
   overflow-x: clip;
+}
+
+body {
+  overscroll-behavior-y: none;
 }
 
 /* Prevent navbar from blinking/flickering on route changes */
