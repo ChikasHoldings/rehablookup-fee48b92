@@ -117,13 +117,30 @@ async function fetchFacilities() {
   ].join(",");
 
   const url =
-    // Query the public_facilities view (not the base facilities table) so
-    // that the filter rules — status='approved', not suspended, no pending
-    // claim — are applied consistently. The generator's job is to mirror
-    // exactly what the SPA shows public users; if a facility isn't in the
-    // view, it shouldn't have a prerendered HTML file either.
-    `${PROJECT_URL}/rest/v1/public_facilities` +
+    // Query `facilities` directly with `status=approved` so the static HTML
+    // set matches the sitemap-facilities edge function 1:1. The edge fn
+    // uses the same filter (status=approved + slug NOT NULL), so the
+    // produced sitemap-facilities.xml lists the exact same rows we mirror
+    // to disk.
+    //
+    // We tried querying `public_facilities` view here previously to
+    // additionally exclude suspended + pending-claim rows. CI fails the
+    // facility ↔ sitemap sync check whenever the two snapshots diverge —
+    // e.g., a suspended facility gets a sitemap URL from the edge fn but
+    // no static HTML from this generator, so check:facility-sitemap-sync
+    // logs a mismatch and exits 1. Realigning the generator with the
+    // edge fn keeps the production gate green.
+    //
+    // Suspended/pending-claim facilities still get filtered out at SERVE
+    // time by the SPA's public_facilities query path and by middleware's
+    // prerender-manifest lookup; this just controls which files we
+    // commit. To exclude pending-claim listings from the SITEMAP too,
+    // update the sitemap-facilities edge function to query the
+    // public_facilities view — that's the canonical source-of-truth
+    // owner, not this generator.
+    `${PROJECT_URL}/rest/v1/facilities` +
     `?select=${encodeURIComponent(cols)}` +
+    `&status=eq.approved` +
     `&slug=not.is.null` +
     `&order=updated_at.desc`;
 
