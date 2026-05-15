@@ -120,6 +120,10 @@ function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
   const before = (xml.match(/<url>/g) || []).length;
   let kept = 0;
   const droppedSamples = [];
+  // Per-sitemap dedupe — if the upstream edge fn emits the same URL twice
+  // in one sitemap, the validator counts each repeat as a hard error.
+  // First occurrence wins; subsequent ones are dropped silently.
+  const seenInThisFile = new Set();
 
   const filtered = xml.replace(/<url>([\s\S]*?)<\/url>\s*/g, (block, inner) => {
     const locMatch = inner.match(/<loc>\s*([^<\s]+)\s*<\/loc>/);
@@ -149,7 +153,6 @@ function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
     const inStatic = staticRoutes.has(norm) || norm === "/";
     const inDynamic = allDynamicPrefixes.some((pref) => norm.startsWith(pref) && norm.length > pref.length);
     if (hasPrerender || inStatic || inDynamic) {
-      kept++;
       // Rewrite <loc> to canonical form. Build absolute URL using the
       // original origin so we don't accidentally swap hosts.
       let canonicalLoc = loc;
@@ -159,6 +162,14 @@ function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
       } catch {
         canonicalLoc = canonical;
       }
+      // Per-sitemap dedupe AFTER canonicalization (so two upstream URLs
+      // that differ only by case / trailing slash collapse to one).
+      if (seenInThisFile.has(canonicalLoc)) {
+        if (droppedSamples.length < 5) droppedSamples.push(`${loc} (dup)`);
+        return "";
+      }
+      seenInThisFile.add(canonicalLoc);
+      kept++;
       const rewritten = block.replace(/<loc>\s*[^<\s]+\s*<\/loc>/, `<loc>${canonicalLoc}</loc>`);
       return rewritten;
     }
