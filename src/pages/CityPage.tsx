@@ -10,6 +10,8 @@ import {
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { FacilityCard, type FacilityCardData } from "@/components/cards/FacilityCard";
+import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
 
@@ -236,6 +238,11 @@ const CityPage = () => {
     return cityImages[stateSlug]?.[citySlug] || defaultCityImage;
   }, [stateSlug, citySlug]);
 
+  // Batched lookup of services/insurance/age_groups/accreditations for
+  // every facility on this page — 4 IN-list queries instead of 4×N.
+  const cardIds = useMemo(() => cityCenters.slice(0, 12).map((c) => c.id), [cityCenters]);
+  const { data: childData } = useFacilityChildData(cardIds);
+
   if (!stateData || !cityData) {
     // Render NotFound in place instead of soft-redirecting to /rehab-centers
     // (which Google interpreted as a soft-404 + wasted crawl budget).
@@ -402,9 +409,35 @@ const CityPage = () => {
           ) : cityCenters.length > 0 ? (
             <>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {cityCenters.slice(0, 12).map(center => (
-                  <TreatmentCenterCard key={center.id} center={center} />
-                ))}
+                {cityCenters.slice(0, 12).map((center) => {
+                  // Adapter — the legacy snapshot row shape uses camelCase
+                  // for some fields (logoUrl, facilityType); FacilityCard
+                  // reads snake_case from the view. Map both paths.
+                  const c = center as Record<string, unknown>;
+                  const cardData: FacilityCardData = {
+                    id: String(c.id),
+                    name: String(c.name ?? ""),
+                    slug: (c.slug as string | null) ?? null,
+                    city: String(c.city ?? ""),
+                    state: String(c.state ?? ""),
+                    facility_type: (c.facility_type as string | null) ?? (c.facilityType as string | null) ?? null,
+                    description: (c.description as string | null) ?? null,
+                    logo_url: (c.logo_url as string | null) ?? (c.logoUrl as string | null) ?? null,
+                    phone: (c.phone as string | null) ?? null,
+                    verified: (c.verified as boolean | null) ?? null,
+                    is_claimed: (c.is_claimed as boolean | undefined) ?? (c.isFromDatabase ? undefined : undefined),
+                  };
+                  return (
+                    <FacilityCard
+                      key={center.id}
+                      facility={cardData}
+                      services={childData?.services.get(String(c.id)) ?? []}
+                      insurance={childData?.insurance.get(String(c.id)) ?? []}
+                      ageGroups={childData?.ageGroups.get(String(c.id)) ?? []}
+                      accreditations={childData?.accreditations.get(String(c.id)) ?? []}
+                    />
+                  );
+                })}
               </div>
               <div className="mt-8 text-center">
                 <Link to={`/search-results?location=${encodeURIComponent(cityData.name + ', ' + stateData.name)}`}>
