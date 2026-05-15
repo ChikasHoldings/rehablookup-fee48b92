@@ -10,7 +10,7 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 
 export function InlineNotFound() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div className="min-h-screen" />}>
       <NotFound />
     </Suspense>
   );
