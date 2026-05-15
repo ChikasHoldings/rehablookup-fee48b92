@@ -57,7 +57,6 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
 import { TrustBadgesInline } from "@/components/trust/TrustBadgesSection";
-import { TrustBadge, AccreditationType } from "@/components/trust/TrustBadge";
 import { FacilityReviewsSection } from "@/components/reviews/FacilityReviewsSection";
 import { cn } from "@/lib/utils";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
@@ -68,10 +67,21 @@ import { PageFAQ } from "@/components/seo/PageFAQ";
 import { buildProfileFAQs } from "@/lib/buildProfileFAQs";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { loadFacilityBySlug } from "@/hooks/useFacilityBySlug";
+// Premium facility-profile augmentation components (Phase 3 v2). The
+// existing CenterProfile already derives services/insurance/ageGroups
+// inside its queryFn via a Promise.all batched fetch — these components
+// consume those derived arrays directly, so there's no second round-trip.
+// RelatedNearby manages its own batched lookup (via useFacilityChildData)
+// for the 3 sibling cards it renders.
+import { QuickFactsStrip } from "@/components/facility-profile/QuickFactsStrip";
+import { LevelsOfCareTiles } from "@/components/facility-profile/LevelsOfCareTiles";
+import { TherapyApproachesGrid } from "@/components/facility-profile/TherapyApproachesGrid";
+import { InsuranceShowcase } from "@/components/facility-profile/InsuranceShowcase";
+import { AccreditationsPanel } from "@/components/facility-profile/AccreditationsPanel";
+import { RelatedNearby } from "@/components/facility-profile/RelatedNearby";
 
 interface FacilityData {
   id: string;
@@ -483,44 +493,12 @@ const CenterProfile = () => {
   // Fetch facility rating for badge display
   const ratingData = useFacilityRating(facility?.id);
 
-  // Fetch nearby/related facilities from same state
-  const { data: nearbyFacilities = [] } = useQuery({
-    queryKey: ["nearby-facilities", facility?.state, facility?.id],
-    queryFn: async () => {
-      if (!facility) return [];
-      const facilities = getCachedPublicFacilitiesSnapshot() ?? await fetchPublicFacilitiesSnapshot();
-      return facilities
-        .filter((f) => f.state === facility.state && f.id !== facility.id)
-        .slice(0, 6)
-        .map((f) => ({
-        id: f.id,
-        name: f.name,
-        slug: f.slug,
-        city: f.city,
-        state: f.state,
-        zipCode: f.zipCode,
-        address: f.address,
-        phone: f.phone,
-        description: f.description || "",
-        treatmentTypes: [],
-        insuranceAccepted: [],
-        amenities: [],
-        rating: null,
-        reviewCount: 0,
-        image: f.galleryUrls?.[0] || f.logoUrl || null,
-        featured: f.featured,
-        verified: f.verified,
-        logo_url: f.logoUrl,
-        gallery_urls: f.galleryUrls,
-        year_established: f.yearEstablished,
-        isFromDatabase: true,
-        programOverview: "",
-      }));
-    },
-    enabled: !!facility?.id && !!facility?.state,
-    staleTime: 1000 * 60 * 10,
-    refetchOnWindowFocus: false,
-  });
+  // Nearby/related facilities are now fetched by <RelatedNearby /> via a
+  // single batched query against public_facilities + useFacilityChildData.
+  // The previous snapshot-based loader pulled the full directory JSON
+  // (~3MB on first visit) just to filter to 6 sibling cards — replaced
+  // with a 3-row PostgREST lookup that hits the same view the rest of
+  // the page already trusts.
 
   useEffect(() => {
     if (facility?.id) {
@@ -680,6 +658,9 @@ const CenterProfile = () => {
   const services = facility.facility_services.map((s) => s.service_name);
   const insuranceList = facility.facility_insurance.map((i) => i.insurance_name);
   const ageGroups = facility.facility_age_groups.map((a) => a.age_group);
+  const accreditationTypes = (facility.facility_accreditations ?? []).map(
+    (a) => a.accreditation_type,
+  );
   const credentials = facility.facility_credentials[0];
   const galleryImages = facility.gallery_urls?.filter(Boolean) || [];
   const initials = getInitials(facility.name);
@@ -1153,8 +1134,8 @@ const CenterProfile = () => {
               )}
 
               {/* About */}
-              <ProfileSection 
-                icon={Building2} 
+              <ProfileSection
+                icon={Building2}
                 title="About This Facility"
                 iconColor="bg-primary/10 text-primary"
               >
@@ -1166,6 +1147,18 @@ const CenterProfile = () => {
                   </p>
                 )}
               </ProfileSection>
+
+              {/* Quick Facts Strip — dense info bar surfacing the data the
+                  SAMHSA pass populated (levels of care, ages, insurance,
+                  gender, year established). Self-hides any tile whose data
+                  is empty, so the strip never shows "—" placeholders. */}
+              <QuickFactsStrip
+                services={services}
+                ageGroups={ageGroups}
+                insurance={insuranceList}
+                gender={facility.gender_served}
+                yearEstablished={facility.year_established}
+              />
 
               {/* Contact & Location Details */}
               <ProfileSection 
@@ -1254,88 +1247,25 @@ const CenterProfile = () => {
                 </div>
               </ProfileSection>
 
-              {/* Services & Programs */}
-              {services.length > 0 && (
-                <ProfileSection 
-                  icon={CheckCircle} 
-                  title="Services & Programs"
-                  iconColor="bg-emerald-500/10 text-emerald-600"
-                >
-                  <div className="flex flex-wrap gap-1.5">
-                    {(showAllServices ? services : services.slice(0, 8)).map((service) => (
-                      <Badge 
-                        key={service} 
-                        variant="secondary" 
-                        className="px-2.5 py-1 text-xs bg-muted hover:bg-muted/80 text-foreground font-medium transition-colors"
-                      >
-                        <CheckCircle className="h-3 w-3 mr-1 text-emerald-600" />
-                        {service}
-                      </Badge>
-                    ))}
-                    {services.length > 8 && (
-                      <button
-                        onClick={() => setShowAllServices(!showAllServices)}
-                        className="px-2.5 py-1 text-xs font-semibold text-primary hover:text-primary/80 bg-primary/5 hover:bg-primary/10 rounded-full transition-all cursor-pointer"
-                      >
-                        {showAllServices ? 'Show less' : `+${services.length - 8} more`}
-                      </button>
-                    )}
-                  </div>
-                  
-                  {/* Age Groups */}
-                  {ageGroups.length > 0 && (
-                    <div className="mt-6 pt-6 border-t border-border/60">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm font-semibold text-foreground">Age Groups Served</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {ageGroups.map((age) => (
-                          <Badge 
-                            key={age} 
-                            variant="outline" 
-                            className="px-3 py-1.5 text-sm hover:bg-muted/50 transition-colors font-medium"
-                          >
-                            {age}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </ProfileSection>
-              )}
+              {/* Levels of Care — visual tile grid filtered to the canonical
+                  level-of-care set. Replaces the previous inline chip cloud
+                  that mixed levels with therapy modalities. */}
+              <LevelsOfCareTiles services={services} />
 
-              {/* Insurance Accepted */}
-              {insuranceList.length > 0 && (
-                <ProfileSection 
-                  icon={Shield} 
-                  title="Insurance Accepted"
-                  iconColor="bg-amber-500/10 text-amber-600"
-                >
-                  <div className="flex flex-wrap gap-1.5">
-                    {(showAllInsurance ? insuranceList : insuranceList.slice(0, 8)).map((ins) => (
-                      <Badge 
-                        key={ins} 
-                        variant="outline" 
-                        className="px-2.5 py-1 text-xs font-medium hover:bg-muted/50 transition-colors"
-                      >
-                        {ins}
-                      </Badge>
-                    ))}
-                    {insuranceList.length > 8 && (
-                      <button
-                        onClick={() => setShowAllInsurance(!showAllInsurance)}
-                        className="px-2.5 py-1 text-xs font-semibold text-primary hover:text-primary/80 bg-primary/5 hover:bg-primary/10 rounded-full transition-all cursor-pointer"
-                      >
-                        {showAllInsurance ? 'Show less' : `+${insuranceList.length - 8} more`}
-                      </button>
-                    )}
-                  </div>
-                  <p className="mt-4 text-xs text-muted-foreground">
-                    Insurance coverage varies. Contact us to verify your specific plan.
-                  </p>
-                </ProfileSection>
-              )}
+              {/* Therapy approaches grouped into Evidence-Based + Recovery
+                  Supports columns, with an "Who's Served" demographics row
+                  showing age bands and gender_served when populated. */}
+              <TherapyApproachesGrid
+                services={services}
+                ageGroups={ageGroups}
+                gender={facility.gender_served}
+              />
+
+              {/* Insurance Accepted — visual plan grid with paywall-aware
+                  verify links and a sliding-scale callout. Renders a
+                  factual fallback when no plans are listed instead of
+                  hiding the section entirely. */}
+              <InsuranceShowcase insurance={insuranceList} />
 
               {/* Rehab Score — public transparency summary, links to /rehab-score methodology */}
               <ProfileSection
@@ -1360,32 +1290,11 @@ const CenterProfile = () => {
                 />
               </ProfileSection>
 
-              {/* Trust & Accreditations — inline, no card wrapper */}
-              {(() => {
-                const verifiedAccreditations = (facility.facility_accreditations || []).filter(a => a.verified);
-                const isLuxury = facility.facility_type?.toLowerCase().includes("luxury");
-                const hasContent = facility.verified || (yearsInBusiness && yearsInBusiness > 0) || verifiedAccreditations.length > 0 || isLuxury;
-                if (!hasContent) return null;
-                return (
-                  <ProfileSection
-                    icon={ShieldCheck}
-                    title="Trust & Accreditations"
-                    iconColor="bg-emerald-500/10 text-emerald-600"
-                  >
-                    <div className="flex flex-wrap gap-2">
-                      {isLuxury && <TrustBadge type="luxury" />}
-                      {facility.verified && <TrustBadge type="verified" />}
-                      {yearsInBusiness && yearsInBusiness > 0 && <TrustBadge type="years" years={yearsInBusiness} />}
-                      {verifiedAccreditations.map((acc) => (
-                        <TrustBadge key={acc.accreditation_type} type={acc.accreditation_type as AccreditationType} verified={acc.verified} />
-                      ))}
-                    </div>
-                    <p className="mt-4 text-xs text-muted-foreground">
-                      Accreditations are verified by our team. Learn more about what these badges mean.
-                    </p>
-                  </ProfileSection>
-                );
-              })()}
+              {/* Accreditations & Licensing — per-credential cards with
+                  authoritative external verification links (Joint Commission,
+                  CARF, SAMHSA, NAATP). Self-hides when no accreditations are
+                  recorded; never renders "—" placeholders. */}
+              <AccreditationsPanel accreditations={accreditationTypes} />
 
 
               {/* Our Team Section */}
@@ -1614,32 +1523,17 @@ const CenterProfile = () => {
             <ConciergeCTACard compact />
           </div>
 
-          {/* Nearby Facilities */}
-          {nearbyFacilities.length > 0 && (
-            <div className="mt-10 pt-8 border-t border-border">
-              <div className="flex items-center gap-2.5 mb-6">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/80">
-                  <MapPin className="h-4 w-4 text-primary" />
-                </div>
-                <h2 className="font-display text-lg font-bold tracking-tight text-foreground">
-                  More Facilities in {facility.state}
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {nearbyFacilities.slice(0, 6).map((center: any) => (
-                  <TreatmentCenterCard key={center.id} center={center} variant="compact" />
-                ))}
-              </div>
-              <div className="text-center mt-6">
-                <Link to={`/rehab-centers/${facility.state.toLowerCase().replace(/\s+/g, "-")}`}>
-                  <Button variant="outline" className="gap-2">
-                    View All in {facility.state}
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          )}
+          {/* Related nearby — 3 sibling facilities in the same state +
+              facility_type, ranked by completeness. Uses the new FacilityCard
+              and batches services/insurance/age-groups/accreditations for
+              all 3 cards in a single round-trip via useFacilityChildData. */}
+          <RelatedNearby
+            facility={{
+              id: facility.id,
+              state: facility.state,
+              facility_type: facility.facility_type,
+            }}
+          />
         </div>
       </div>
 
