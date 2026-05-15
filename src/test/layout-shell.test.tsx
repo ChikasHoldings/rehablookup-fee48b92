@@ -1,7 +1,7 @@
 /**
  * Layout-shell snapshot — verifies the public Layout shell renders with the
  * required global guards at every viewport. If anyone removes
- * `max-w-[100vw]`, `overflow-x-hidden`, or `min-w-0` from the shell, this
+ * `max-w-full`, `[overflow-x:clip]`, or `min-w-0` from the shell, this
  * fails before the regression hits production.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -28,6 +28,12 @@ vi.mock("@/components/ui/floating-help-button", () => ({
 }));
 vi.mock("@/components/ui/back-to-top", () => ({
   BackToTop: () => null,
+}));
+// CompareTray imports the Supabase client at module scope, which throws
+// when no SUPABASE_URL is set in the test env. Mock it out — it's not
+// what this test is verifying.
+vi.mock("@/components/comparison/CompareTray", () => ({
+  CompareTray: () => null,
 }));
 vi.mock("@/lib/routePrefetch", () => ({
   preloadPublicPages: () => {},
@@ -74,8 +80,15 @@ describe("Responsive: public Layout shell", () => {
         const root = container.firstChild as HTMLElement;
         const cls = root.getAttribute("class") || "";
 
-        expect(cls, "root must clip horizontal overflow").toMatch(/overflow-x-hidden/);
-        expect(cls, "root must cap width at viewport").toMatch(/max-w-\[100vw\]/);
+        // `[overflow-x:clip]` (not `overflow-x-hidden`) is required so the
+        // descendant sticky <Header> still works — `hidden` would establish
+        // a scroll container and break sticky.
+        expect(cls, "root must clip horizontal overflow").toMatch(/\[overflow-x:clip\]/);
+        // `max-w-full` (not `max-w-[100vw]`) because 100vw includes the
+        // vertical scrollbar width on Win/Chrome, which pushed the wrapper
+        // ~17px past the available content area and let the document scroll
+        // horizontally before the body clip kicked in.
+        expect(cls, "root must cap width at parent (not viewport)").toMatch(/max-w-full/);
         expect(cls, "root must be a vertical flex column").toMatch(/flex-col/);
         expect(cls, "root must claim full min-height").toMatch(/min-h-screen/);
       });
