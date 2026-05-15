@@ -30,6 +30,28 @@ const targets = [
 // `/center/` is always included — it's the facility profile namespace.
 const STATIC_DYNAMIC_PREFIXES = ["/center/"];
 
+// Paths to drop from every regenerated sitemap. These were cleaned out of
+// the committed sitemap files in an earlier hotfix (PR #4 / commit
+// 0e945a590) but the upstream Supabase sitemap edge functions still emit
+// them on every regen, so we re-strip them here. Two cases:
+//   • /authors and /authors/*    — disallowed by robots.txt for Googlebot
+//                                  AND for User-agent: *, so listing them
+//                                  in any sitemap is a hard validator
+//                                  failure ("sitemap URL blocked by
+//                                  robots.txt").
+//   • (cross-sitemap duplicates) — handled separately, see writePruned
+//                                  below; a path appearing in both
+//                                  sitemap.xml and sitemap-extras.xml is
+//                                  also a hard validator failure.
+const ROBOTS_BLOCKED_PATH_PATTERNS = [
+  /^\/authors$/i,
+  /^\/authors\//i,
+];
+
+function pathIsRobotsBlocked(p) {
+  return ROBOTS_BLOCKED_PATH_PATTERNS.some((re) => re.test(p));
+}
+
 async function fileExists(filePath) {
   try { await access(filePath); return true; } catch { return false; }
 }
@@ -116,6 +138,13 @@ function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
       return "";
     }
     const norm = canonical.toLowerCase().replace(/\/$/, "") || "/";
+    // Drop paths blocked by robots.txt before any other check. Listing a
+    // disallowed path in a sitemap is a hard validator failure even if
+    // the URL is otherwise routable in the SPA.
+    if (pathIsRobotsBlocked(norm)) {
+      if (droppedSamples.length < 5) droppedSamples.push(`${loc} (robots-blocked)`);
+      return "";
+    }
     const hasPrerender = prerenderedPaths.has(norm);
     const inStatic = staticRoutes.has(norm) || norm === "/";
     const inDynamic = allDynamicPrefixes.some((pref) => norm.startsWith(pref) && norm.length > pref.length);
@@ -192,6 +221,58 @@ async function updateRobotsHeader(stats) {
   }
 }
 
+/**
+ * Post-regen dedupe pass: remove sitemap-extras.xml URLs that now appear
+ * in the freshly-regenerated sitemap.xml. Also drops any /authors/*
+ * URLs from extras that might have been re-introduced. Without this,
+ * validate:sitemap-robots fails on every CI run with "duplicate URL in
+ * sitemap" because the upstream sitemap edge function emits URLs that
+ * extras was carrying historically. Mirrors the one-shot cleanup we did
+ * to the committed extras in commit 0e945a590 (PR #4 era), but applied
+ * every regen so the drift never reappears.
+ */
+async function dedupeExtrasAgainstMain() {
+  const extrasPath = path.join(publicDir, "sitemap-extras.xml");
+  const mainPath = path.join(publicDir, "sitemap.xml");
+  if (!(await fileExists(extrasPath)) || !(await fileExists(mainPath))) return;
+
+  const mainXml = await readFile(mainPath, "utf8");
+  const mainUrls = new Set();
+  const locRe = /<loc>\s*([^<\s]+)\s*<\/loc>/g;
+  let m;
+  while ((m = locRe.exec(mainXml)) !== null) mainUrls.add(m[1]);
+
+  let extrasXml = await readFile(extrasPath, "utf8");
+  const before = (extrasXml.match(/<url>/g) || []).length;
+  let dupes = 0;
+  let blocked = 0;
+
+  extrasXml = extrasXml.replace(/  <url>[\s\S]*?<\/url>\n?/g, (block) => {
+    const lm = block.match(/<loc>\s*([^<\s]+)\s*<\/loc>/);
+    if (!lm) return block;
+    const loc = lm[1];
+    let p;
+    try { p = new URL(loc).pathname; } catch { return block; }
+    if (pathIsRobotsBlocked(p)) {
+      blocked++;
+      return "";
+    }
+    if (mainUrls.has(loc)) {
+      dupes++;
+      return "";
+    }
+    return block;
+  });
+
+  if (dupes > 0 || blocked > 0) {
+    await writeFile(extrasPath, extrasXml, "utf8");
+    const after = (extrasXml.match(/<url>/g) || []).length;
+    console.log(
+      `[sitemap] sitemap-extras.xml dedupe: ${before} → ${after} URLs (dropped ${dupes} duplicates, ${blocked} robots-blocked)`,
+    );
+  }
+}
+
 async function ensureExtrasInIndex() {
   // sitemap-extras.xml is built/maintained by scripts/cleanup-orphan-sitemaps.mjs
   // and lists prerendered HTML pages that aren't in the upstream main sitemap
@@ -227,6 +308,12 @@ async function main() {
   for (const target of targets) {
     await generateSitemapFile(target, prerenderedPaths, stats, spaRoutes);
   }
+
+  // Drop sitemap-extras URLs that the regen has just re-introduced into
+  // sitemap.xml; also strip any robots-blocked paths. Runs AFTER the
+  // regen loop so the freshly-written sitemap.xml is the source of
+  // truth for "which URLs are duplicates".
+  await dedupeExtrasAgainstMain();
 
   await ensureExtrasInIndex();
 
