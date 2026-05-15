@@ -3,6 +3,8 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { FacilityCard, type FacilityCardData } from "@/components/cards/FacilityCard";
+import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TrustBar } from "@/components/seo/TrustBar";
@@ -138,6 +140,12 @@ export function SEOLandingTemplate({
   children,
 }: SEOLandingTemplateProps) {
   const displayFacilities = facilities.slice(0, 12);
+  // Batch fetch side-table data (services, insurance, age groups,
+  // accreditations) for every visible card — 4 IN-list queries instead
+  // of 4×N per card, so the new FacilityCard renders with rich data
+  // without a per-row round-trip.
+  const cardIds = displayFacilities.map((f) => f.id);
+  const { data: cardChildData } = useFacilityChildData(cardIds);
 
   return (
     <Layout>
@@ -275,14 +283,38 @@ export function SEOLandingTemplate({
             <SearchResultsLoading />
           ) : displayFacilities.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-              {displayFacilities.map((facility) => (
-                <TreatmentCenterCard
-                  key={facility.id}
-                  center={facility}
-                  featured={facility.featured}
-                  variant="compact"
-                />
-              ))}
+              {displayFacilities.map((facility) => {
+                const f = facility as Record<string, unknown>;
+                const cardData: FacilityCardData = {
+                  id: String(f.id),
+                  name: String(f.name ?? ""),
+                  slug: (f.slug as string | null) ?? null,
+                  city: String(f.city ?? ""),
+                  state: String(f.state ?? ""),
+                  facility_type:
+                    (f.facility_type as string | null) ??
+                    (f.facilityType as string | null) ??
+                    null,
+                  description: (f.description as string | null) ?? null,
+                  logo_url:
+                    (f.logo_url as string | null) ??
+                    (f.logoUrl as string | null) ??
+                    null,
+                  phone: (f.phone as string | null) ?? null,
+                  verified: (f.verified as boolean | null) ?? null,
+                  is_claimed: f.is_claimed as boolean | undefined,
+                };
+                return (
+                  <FacilityCard
+                    key={facility.id}
+                    facility={cardData}
+                    services={cardChildData?.services.get(facility.id) ?? []}
+                    insurance={cardChildData?.insurance.get(facility.id) ?? []}
+                    ageGroups={cardChildData?.ageGroups.get(facility.id) ?? []}
+                    accreditations={cardChildData?.accreditations.get(facility.id) ?? []}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="space-y-6 max-w-2xl mx-auto">
