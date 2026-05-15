@@ -132,6 +132,41 @@
         src: url(https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2) format('woff2');
         unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
       }
+      /* ────────────────────────────────────────────────────────────────────
+         Metric-matched fallback faces (FOUT mitigation).
+
+         Without these, body text rendered in Arial before the web font
+         loads, then snapped to Inter — different widths and line metrics
+         cause the entire page below the first paint to reflow. That's
+         a real Cumulative Layout Shift score hit.
+
+         These two @font-face rules don't actually load a new font; they
+         just re-expose the LOCAL Arial under a new name with overrides
+         that reshape Arial's metrics to match Inter / Plus Jakarta Sans:
+           - size-adjust   scales glyph dimensions so x-height matches
+           - ascent/descent/line-gap override pin vertical metrics
+         The font-family stacks below then list 'Inter Fallback' BEFORE
+         the rest of the stack, so the cold-load render uses metric-
+         matched Arial, and when Inter arrives the swap is invisible.
+
+         Values are from the fontaine / capsize tooling for these exact
+         fonts — published as the reference for size-adjust mapping. */
+      @font-face {
+        font-family: 'Inter Fallback';
+        src: local('Arial');
+        size-adjust: 107.40%;
+        ascent-override: 90%;
+        descent-override: 22.43%;
+        line-gap-override: 0%;
+      }
+      @font-face {
+        font-family: 'Plus Jakarta Sans Fallback';
+        src: local('Arial');
+        size-adjust: 101%;
+        ascent-override: 95%;
+        descent-override: 25%;
+        line-gap-override: 0%;
+      }
       :root {
         --background: 220 30% 97%;
         --foreground: 222 47% 11%;
@@ -141,7 +176,7 @@
       html { scroll-behavior: smooth; }
       body {
         margin: 0;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family: 'Inter', 'Inter Fallback', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         background-color: hsl(220 30% 97%);
         color: hsl(222 47% 11%);
         -webkit-font-smoothing: antialiased;
@@ -158,6 +193,22 @@
         100% { background-position: -200% 0; }
       }
       img { content-visibility: auto; }
+      /* Skip-to-content link — inlined here (not just in src/index.css) so
+         the link is positioned off-screen BEFORE the React CSS bundle
+         arrives. Without this, the link briefly renders as visible text at
+         the top of the body during the cold-load window. */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: hsl(216 55% 24%);
+        color: #fff;
+        padding: 0.5rem 1rem;
+        z-index: 100;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .skip-link:focus { top: 0; }
       /* No opacity transitions - render instantly */
       /* Noscript layout styles */
       .ns-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 20px; font-family: 'Inter', sans-serif; color: #1a1a2e; }
@@ -345,7 +396,15 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', '%VITE_GA_MEASUREMENT_ID%');
+      // send_page_view:false — middleware rewrites every human visitor to "/"
+      // so the SPA shell loads on every deep URL. gtag's default auto-page_view
+      // would fire here (URL: the user's deep path, title: still the index.html
+      // homepage title before React/helmet swap it), then RouteChangeTracker
+      // would fire a second page_view on mount once helmet has set the right
+      // title — double-counting every initial load. Disabling auto and letting
+      // RouteChangeTracker own page_view firing fixes the double-count and
+      // ensures every page_view ships with the correct page_title.
+      gtag('config', '%VITE_GA_MEASUREMENT_ID%', { send_page_view: false });
     </script>
     <!-- End Google Analytics 4 -->
   </head>

@@ -495,12 +495,75 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         .single();
 
       if (facilityError) {
+        // Hardening: a failed facility insert leaves an orphan auth user +
+        // profile with no facility. We now call the signup-rollback-cleanup
+        // edge function which deletes the auth user + profile so the email
+        // is freed and the user can retry signup. The admin_notifications
+        // entry stays as a backup audit trail in case the cleanup itself
+        // fails (in which case the dashboard banner becomes the safety net).
         console.error("[ProviderSignup] Facility creation error:", facilityError);
+        try {
+          await supabase.from("admin_notifications").insert({
+            type: "signup_facility_insert_failed",
+            title: "Provider signup needs support — facility insert failed",
+            message: `Auth user ${userId.slice(0, 8)}… created profile but the facility row could not be inserted: ${facilityError.message}`,
+            metadata: {
+              user_id: userId,
+              email: sanitizedEmail,
+              attempted_name: sanitizedName,
+              attempted_city: sanitizedCity,
+              attempted_state: formData.state,
+              postgres_error: facilityError.message,
+              postgres_code: (facilityError as any).code ?? null,
+            },
+          });
+        } catch (notifyErr) {
+          console.warn("[ProviderSignup] admin_notifications insert failed", notifyErr);
+        }
+
+        // Try the rollback. If it succeeds, the email is free and we can
+        // tell the user to retry signup. If it fails, we fall back to the
+        // dashboard recovery flow. Either way the user is never stuck.
+        let cleanupSucceeded = false;
+        try {
+          const { error: cleanupErr } = await supabase.functions.invoke(
+            "signup-rollback-cleanup",
+            { body: {} },
+          );
+          if (cleanupErr) {
+            console.warn("[ProviderSignup] cleanup edge fn returned error", cleanupErr);
+          } else {
+            cleanupSucceeded = true;
+          }
+        } catch (cleanupExc) {
+          console.warn("[ProviderSignup] cleanup edge fn exception", cleanupExc);
+        }
+
+        if (cleanupSucceeded) {
+          // Clean state — sign out so the dead session doesn't linger and
+          // tell the user they can try again right here.
+          await supabase.auth.signOut().catch(() => {});
+          toast({
+            title: "Couldn't save your facility — try again",
+            description:
+              "We couldn't save your facility details. Your account has been reset so you can re-submit the form below. If this keeps happening, contact support@rehablookup.com.",
+            variant: "destructive",
+          });
+          submittingRef.current = false;
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Cleanup failed → fall back to dashboard recovery banner.
         toast({
-          title: "Partial Success",
-          description: "Account created but there was an issue saving facility data. Please update in your dashboard.",
+          title: "Account created — facility save failed",
+          description:
+            "Your account is set up but we couldn't save your facility right now. Our team has been notified. You can also retry from your dashboard.",
+          variant: "destructive",
         });
-        navigate("/provider/dashboard");
+        navigate("/provider/dashboard?signup_facility_failed=1");
+        submittingRef.current = false;
+        setIsSubmitting(false);
         return;
       }
 
@@ -568,46 +631,72 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       let logoUrl: string | null = null;
       const galleryUrls: string[] = [];
 
+      // Image uploads are best-effort: the facility is already saved, so an
+      // upload failure shouldn't unwind signup. We do tally failures and
+      // surface a single combined warning so providers know to retry from
+      // the dashboard (rather than think their images uploaded silently).
+      const imageUploadFailures: string[] = [];
+
       if (formData.logoFile) {
         try {
           const compressedLogo = await compressImage(formData.logoFile, "logo");
           const logoFileName = `${userId}/${facilityId}/logo/${Date.now()}.webp`;
-          
+
           const { error: logoUploadError } = await supabase.storage
             .from("facility-images")
             .upload(logoFileName, compressedLogo, { upsert: true });
 
-          if (!logoUploadError) {
+          if (logoUploadError) {
+            imageUploadFailures.push("logo");
+            console.warn("[ProviderSignup] Logo upload failed:", logoUploadError);
+          } else {
             const { data: logoUrlData } = supabase.storage
               .from("facility-images")
               .getPublicUrl(logoFileName);
             logoUrl = logoUrlData.publicUrl;
           }
         } catch (e) {
-          console.error("Logo upload error:", e);
+          imageUploadFailures.push("logo");
+          console.warn("[ProviderSignup] Logo upload exception:", e);
         }
       }
 
       if (formData.galleryFiles.length > 0) {
+        let galleryFailCount = 0;
         for (const file of formData.galleryFiles) {
           try {
             const compressedImage = await compressImage(file, "gallery");
             const galleryFileName = `${userId}/${facilityId}/gallery/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-            
+
             const { error: galleryUploadError } = await supabase.storage
               .from("facility-images")
               .upload(galleryFileName, compressedImage, { upsert: true });
 
-            if (!galleryUploadError) {
+            if (galleryUploadError) {
+              galleryFailCount++;
+              console.warn("[ProviderSignup] Gallery upload failed:", galleryUploadError);
+            } else {
               const { data: galleryUrlData } = supabase.storage
                 .from("facility-images")
                 .getPublicUrl(galleryFileName);
               galleryUrls.push(galleryUrlData.publicUrl);
             }
           } catch (e) {
-            console.error("Gallery upload error:", e);
+            galleryFailCount++;
+            console.warn("[ProviderSignup] Gallery upload exception:", e);
           }
         }
+        if (galleryFailCount > 0) {
+          imageUploadFailures.push(`${galleryFailCount} of ${formData.galleryFiles.length} gallery image${galleryFailCount === 1 ? "" : "s"}`);
+        }
+      }
+
+      if (imageUploadFailures.length > 0) {
+        toast({
+          title: "Images need a re-upload",
+          description: `Your account and facility are saved, but these uploads failed: ${imageUploadFailures.join(", ")}. Retry from your dashboard.`,
+          variant: "default",
+        });
       }
 
       // Update facility with image URLs if any were uploaded

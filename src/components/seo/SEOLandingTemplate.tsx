@@ -3,6 +3,8 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { FacilityCard, type FacilityCardData } from "@/components/cards/FacilityCard";
+import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TrustBar } from "@/components/seo/TrustBar";
@@ -138,6 +140,12 @@ export function SEOLandingTemplate({
   children,
 }: SEOLandingTemplateProps) {
   const displayFacilities = facilities.slice(0, 12);
+  // Batch fetch side-table data (services, insurance, age groups,
+  // accreditations) for every visible card — 4 IN-list queries instead
+  // of 4×N per card, so the new FacilityCard renders with rich data
+  // without a per-row round-trip.
+  const cardIds = displayFacilities.map((f) => f.id);
+  const { data: cardChildData } = useFacilityChildData(cardIds);
 
   return (
     <Layout>
@@ -239,139 +247,74 @@ export function SEOLandingTemplate({
       {/* Trust Bar */}
       <TrustBar />
 
-      {/* Intro Content */}
-      {introContent && (
-        <section className="py-10 md:py-12 bg-background">
-          <div className="container max-w-4xl">
-            <div className="prose prose-lg max-w-none text-muted-foreground">
-              <p className="text-base md:text-lg leading-relaxed">{introContent}</p>
-            </div>
-            {/* Quick action cards for engagement */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-              <Link to="/concierge" className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm transition-all group">
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Phone className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Free Consultation</p>
-                  <p className="text-xs text-muted-foreground">Speak with an advisor</p>
-                </div>
-              </Link>
-              <Link to="/insurance" className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm transition-all group">
-                <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                  <Shield className="h-5 w-5 text-accent" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Verify Insurance</p>
-                  <p className="text-xs text-muted-foreground">Check your coverage</p>
-                </div>
-              </Link>
-              <Link to="/rehab-centers" className="flex items-center gap-3 rounded-xl border bg-card p-4 hover:border-primary/40 hover:shadow-sm transition-all group">
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Search className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Search Directory</p>
-                  <p className="text-xs text-muted-foreground">Browse all centers</p>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Content Sections */}
-      {sections && sections.length > 0 && (
-        <section className="py-12 bg-muted/30">
-          <div className="container max-w-4xl">
-            <div className="space-y-10">
-              {sections.map((section, idx) => (
-                <div key={idx}>
-                  <h2 className="text-2xl font-bold text-foreground mb-4">{section.heading}</h2>
-                  <p className="text-base text-muted-foreground leading-relaxed">{section.content}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* What to Expect + Benefits */}
-      {(whatToExpect || benefits) && (
-        <section className="py-12 bg-background">
-          <div className="container">
-            <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              {whatToExpect && (
-                <div className="rounded-2xl border bg-card p-6 md:p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Clock className="h-5 w-5 text-primary" />
-                    </div>
-                    <h2 className="text-xl font-bold text-foreground">What to Expect</h2>
-                  </div>
-                  <ul className="space-y-3">
-                    {whatToExpect.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        <CheckCircle className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                        <span className="text-sm text-muted-foreground">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {benefits && (
-                <div className="rounded-2xl border bg-card p-6 md:p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                      <Heart className="h-5 w-5 text-accent" />
-                    </div>
-                    <h2 className="text-xl font-bold text-foreground">Key Benefits</h2>
-                  </div>
-                  <ul className="space-y-3">
-                    {benefits.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        <Star className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                        <span className="text-sm text-muted-foreground">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Facility Listings */}
-      <section className="py-12 bg-muted/30">
+      {/* Facility Listings — directory-style, immediately below the hero/trust bar.
+          Previously these sat at position 6 (below ~3 blog-style prose sections),
+          which made the page read like an article with listings buried. Moving
+          them up here makes the page read like a directory — Yelp/HealthGrades
+          pattern, not Medium. */}
+      <section className="py-10 md:py-12 bg-muted/30">
         <div className="container">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 mb-3">
-              <Building2 className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">
-                {facilityCount ?? facilities.length} Treatment Centers
-              </span>
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-6 max-w-6xl mx-auto">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 mb-2">
+                <Building2 className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-primary">
+                  {facilityCount ?? facilities.length} Treatment Centers
+                </span>
+              </div>
+              <h2 className="text-xl md:text-2xl font-bold text-foreground">
+                Verified {title}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Each facility verified for licensing, accreditation, and quality of care.
+              </p>
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-              Verified {title}
-            </h2>
-            <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
-              Each facility is verified for licensing, accreditation, and quality of care.
-            </p>
+            {showMoreLink && displayFacilities.length > 0 && (
+              <Button asChild variant="outline" size="sm">
+                <Link to={showMoreLink}>
+                  View All
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Link>
+              </Button>
+            )}
           </div>
 
           {isLoading ? (
             <SearchResultsLoading />
           ) : displayFacilities.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-              {displayFacilities.map((facility) => (
-                <TreatmentCenterCard
-                  key={facility.id}
-                  center={facility}
-                  featured={facility.featured}
-                  variant="compact"
-                />
-              ))}
+              {displayFacilities.map((facility) => {
+                const f = facility as Record<string, unknown>;
+                const cardData: FacilityCardData = {
+                  id: String(f.id),
+                  name: String(f.name ?? ""),
+                  slug: (f.slug as string | null) ?? null,
+                  city: String(f.city ?? ""),
+                  state: String(f.state ?? ""),
+                  facility_type:
+                    (f.facility_type as string | null) ??
+                    (f.facilityType as string | null) ??
+                    null,
+                  description: (f.description as string | null) ?? null,
+                  logo_url:
+                    (f.logo_url as string | null) ??
+                    (f.logoUrl as string | null) ??
+                    null,
+                  phone: (f.phone as string | null) ?? null,
+                  verified: (f.verified as boolean | null) ?? null,
+                  is_claimed: f.is_claimed as boolean | undefined,
+                };
+                return (
+                  <FacilityCard
+                    key={facility.id}
+                    facility={cardData}
+                    services={cardChildData?.services.get(facility.id) ?? []}
+                    insurance={cardChildData?.insurance.get(facility.id) ?? []}
+                    ageGroups={cardChildData?.ageGroups.get(facility.id) ?? []}
+                    accreditations={cardChildData?.accreditations.get(facility.id) ?? []}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="space-y-6 max-w-2xl mx-auto">
@@ -407,22 +350,127 @@ export function SEOLandingTemplate({
               )}
             </div>
           )}
-
-          {showMoreLink && displayFacilities.length > 0 && (
-            <div className="text-center mt-8">
-              <Button asChild variant="outline" size="lg">
-                <Link to={showMoreLink}>
-                  View All Centers
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </Link>
-              </Button>
-            </div>
-          )}
         </div>
       </section>
 
-      {/* Comparison */}
+      {/* Comparison — sits with the facility listings as part of the directory view. */}
       <ComparisonSection facilities={facilities} location={heroLocation} />
+
+      {/* About / Quick Facts panel — replaces the previous blog-prose Intro Content
+          section. Same data (introContent + the three quick-action cards), but laid
+          out as a compact fact-panel beside action cards so it reads like a
+          directory's "About this location" pane, not an editorial lede. */}
+      {introContent && (
+        <section className="py-10 bg-background">
+          <div className="container max-w-6xl">
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 rounded-2xl border bg-card p-6 md:p-7">
+                <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  About This Directory
+                </h2>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{introContent}</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <Link to="/concierge" className="flex items-center gap-3 rounded-xl border bg-card p-3 hover:border-primary/40 hover:shadow-sm transition-all group">
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Phone className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Free Consultation</p>
+                    <p className="text-xs text-muted-foreground truncate">Speak with an advisor</p>
+                  </div>
+                </Link>
+                <Link to="/insurance" className="flex items-center gap-3 rounded-xl border bg-card p-3 hover:border-primary/40 hover:shadow-sm transition-all group">
+                  <div className="h-9 w-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                    <Shield className="h-4 w-4 text-accent" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Verify Insurance</p>
+                    <p className="text-xs text-muted-foreground truncate">Check your coverage</p>
+                  </div>
+                </Link>
+                <Link to="/rehab-centers" className="flex items-center gap-3 rounded-xl border bg-card p-3 hover:border-primary/40 hover:shadow-sm transition-all group">
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Search className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Search Directory</p>
+                    <p className="text-xs text-muted-foreground truncate">Browse all centers</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Topic info cards — previous "Content Sections" rendered as long-form
+          essay (h2 + paragraph repeated). Re-rendered as a directory-style
+          grid of compact info cards so each section reads as a sidebar fact,
+          not a chapter. */}
+      {sections && sections.length > 0 && (
+        <section className="py-10 bg-muted/30">
+          <div className="container max-w-6xl">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sections.map((section, idx) => (
+                <div key={idx} className="rounded-xl border bg-card p-5">
+                  <h3 className="text-sm font-bold text-foreground mb-2">{section.heading}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{section.content}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* What to Expect + Benefits — kept as cards but now below the facility
+          listings, framed as supporting fact panels rather than competing for
+          above-the-fold attention. */}
+      {(whatToExpect || benefits) && (
+        <section className="py-10 bg-background">
+          <div className="container">
+            <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+              {whatToExpect && (
+                <div className="rounded-2xl border bg-card p-6 md:p-7">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Clock className="h-4 w-4 text-primary" />
+                    </div>
+                    <h2 className="text-lg font-bold text-foreground">What to Expect</h2>
+                  </div>
+                  <ul className="space-y-2.5">
+                    {whatToExpect.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5">
+                        <CheckCircle className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                        <span className="text-sm text-muted-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {benefits && (
+                <div className="rounded-2xl border bg-card p-6 md:p-7">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-9 w-9 rounded-xl bg-accent/10 flex items-center justify-center">
+                      <Heart className="h-4 w-4 text-accent" />
+                    </div>
+                    <h2 className="text-lg font-bold text-foreground">Key Benefits</h2>
+                  </div>
+                  <ul className="space-y-2.5">
+                    {benefits.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5">
+                        <Star className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                        <span className="text-sm text-muted-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Mid-page inline intake — catches visitors who scrolled past the hero */}
       <section className="py-10 bg-muted/30">

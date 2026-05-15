@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import NotFound from "@/pages/NotFound";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { cityInList } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { getStateBySlug } from "@/data/locationSeoData";
 import { getCountyBySlug } from "@/data/countySeoData";
@@ -66,13 +67,12 @@ export default function CountyTreatmentPage() {
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
     const stateNameLower = stateData.name.toLowerCase();
     const stateAbbrLower = stateData.abbreviation.toLowerCase();
-    const countyCities = countyData.majorCities.map((c) => c.toLowerCase());
     const filterLower = treatment.filterKey.toLowerCase();
 
     // County + treatment match
     let filtered = allFacilities.filter((f) => {
       const stateMatch = f.state.toLowerCase() === stateNameLower || f.state.toLowerCase() === stateAbbrLower;
-      const cityMatch = countyCities.some((city) => f.city.toLowerCase() === city);
+      const cityMatch = cityInList(f.city, countyData.majorCities);
       const typeMatch = f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)) || f.description?.toLowerCase().includes(filterLower);
       return stateMatch && cityMatch && typeMatch;
     });

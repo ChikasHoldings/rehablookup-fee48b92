@@ -58,8 +58,16 @@ export function InternationalBanner() {
 
   if (!visible) return null;
 
+  // min-h-[44px] matches the actual rendered height (py-2.5 padding + ~24px
+  // content row). The useGeoLocation hook now hydrates from sessionStorage
+  // synchronously, so repeat-session non-US visitors get this banner on the
+  // very first paint with no shift. First-visit non-US users still see a
+  // one-time ~44px downward shift after the geo fetch resolves; reserving
+  // the slot upfront would impose an empty-stripe regression on the much
+  // larger US visitor majority, so we accept the one-time shift for the
+  // smaller non-US first-visit cohort.
   return (
-    <div className="bg-primary text-primary-foreground">
+    <div className="bg-primary text-primary-foreground min-h-[44px]">
       <div className="container mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Globe className="h-4 w-4 shrink-0 hidden sm:block" />
@@ -67,7 +75,7 @@ export function InternationalBanner() {
             Outside the U.S.? Get private placement into top American rehabs.
           </p>
         </div>
-        
+
         <div className="flex items-center gap-2 shrink-0">
           <Button
             asChild
@@ -77,7 +85,7 @@ export function InternationalBanner() {
           >
             <Link to="/international">Find US Treatment</Link>
           </Button>
-          
+
           <button
             onClick={handleDismiss}
             className="p-1 rounded hover:bg-primary-foreground/10 transition-colors"

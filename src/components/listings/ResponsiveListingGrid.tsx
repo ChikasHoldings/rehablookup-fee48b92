@@ -1,10 +1,36 @@
-import { useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Search, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { FacilityCard, type FacilityCardData } from "@/components/cards/FacilityCard";
+import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { buildConciergeHref } from "@/lib/conciergeHref";
+
+// Adapts the legacy snapshot row shape (camelCase facilityType/logoUrl)
+// AND the new public_facilities row shape (snake_case facility_type/logo_url)
+// into the single FacilityCardData shape FacilityCard reads.
+function toCardData(facility: Record<string, unknown>): FacilityCardData {
+  return {
+    id: String(facility.id),
+    name: String(facility.name ?? ""),
+    slug: (facility.slug as string | null) ?? null,
+    city: String(facility.city ?? ""),
+    state: String(facility.state ?? ""),
+    facility_type:
+      (facility.facility_type as string | null) ??
+      (facility.facilityType as string | null) ??
+      null,
+    description: (facility.description as string | null) ?? null,
+    logo_url:
+      (facility.logo_url as string | null) ??
+      (facility.logoUrl as string | null) ??
+      null,
+    phone: (facility.phone as string | null) ?? null,
+    verified: (facility.verified as boolean | null) ?? null,
+    is_claimed: facility.is_claimed as boolean | undefined,
+  };
+}
 
 interface ResponsiveListingGridProps {
   facilities: any[];
@@ -36,6 +62,34 @@ export function ResponsiveListingGrid({
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const items = facilities.slice(0, maxItems);
+  const nearbyItems = nearbyFacilities ?? [];
+
+  // Batched child-data lookup — services / insurance / age groups /
+  // accreditations for every visible card in 4 IN-list queries total.
+  // Includes nearby items when the primary list is empty so the
+  // fallback cards aren't blank either.
+  const visibleIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const f of items) if (f?.id) set.add(String(f.id));
+    for (const f of nearbyItems) if (f?.id) set.add(String(f.id));
+    return [...set];
+  }, [items, nearbyItems]);
+  const { data: childData } = useFacilityChildData(visibleIds);
+
+  const renderCard = (facility: Record<string, unknown>) => {
+    const card = toCardData(facility);
+    const id = String(facility.id ?? card.id);
+    return (
+      <FacilityCard
+        key={id || card.name}
+        facility={card}
+        services={childData?.services.get(id) ?? []}
+        insurance={childData?.insurance.get(id) ?? []}
+        ageGroups={childData?.ageGroups.get(id) ?? []}
+        accreditations={childData?.accreditations.get(id) ?? []}
+      />
+    );
+  };
 
   const checkScroll = () => {
     const el = scrollRef.current;
@@ -76,9 +130,7 @@ export function ResponsiveListingGrid({
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {nearby.map((facility) => (
-              <TreatmentCenterCard key={facility.id || facility.name} center={facility} />
-            ))}
+            {nearby.map((facility) => renderCard(facility))}
           </div>
           <div className="flex justify-center pt-2">
             <Link
@@ -136,9 +188,7 @@ export function ResponsiveListingGrid({
   if (!isMobile) {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {items.map((facility) => (
-          <TreatmentCenterCard key={facility.id || facility.name} center={facility} />
-        ))}
+        {items.map((facility) => renderCard(facility))}
       </div>
     );
   }
@@ -155,7 +205,7 @@ export function ResponsiveListingGrid({
             key={facility.id || facility.name}
             className="flex-shrink-0 w-[85vw] max-w-[340px] snap-start"
           >
-            <TreatmentCenterCard center={facility} />
+            {renderCard(facility)}
           </div>
         ))}
       </div>

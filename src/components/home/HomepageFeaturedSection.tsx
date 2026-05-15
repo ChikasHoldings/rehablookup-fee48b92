@@ -153,8 +153,11 @@ export function HomepageFeaturedSection() {
 
   if (isLoading) {
     return (
-      <section className="py-14 md:py-20">
-        <div className="container px-4 md:px-6 lg:px-8"><FeaturedSkeleton /></div>
+      // Match the loaded-state padding (py-10 md:py-16) so the section
+      // doesn't shrink ~16-32px and shift everything below it up when the
+      // facility fetch resolves. Was py-14 md:py-20 — a CLS regression.
+      <section className="py-10 md:py-16">
+        <div className="container px-3 sm:px-4 md:px-6 lg:px-8"><FeaturedSkeleton /></div>
       </section>
     );
   }

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, Cell } from "recharts";
-import { Building2, Crown, Shield, AlertTriangle, Handshake, CheckCircle } from "lucide-react";
+import { Building2, Crown, Shield, AlertTriangle, Handshake, CheckCircle, Database, Lock, Unlock, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 
@@ -14,6 +14,14 @@ interface ProviderStatsChartsProps {
     suspended: number;
     pro: number;
     placement: number;
+    /** Bulk-imported SAMHSA facilities (data_source = "samhsa_import"). */
+    samhsa?: number;
+    /** Facilities with no owning provider account (user_id IS NULL). */
+    unclaimed?: number;
+    /** Facilities owned by a provider account (user_id IS NOT NULL). */
+    claimed?: number;
+    /** Open facility_claim_requests awaiting admin review. */
+    pendingClaims?: number;
   } | undefined;
   onTabChange: (tab: string) => void;
   activeTab: string;
@@ -87,69 +95,143 @@ export function ProviderStatsCharts({ statusCounts, onTabChange, activeTab }: Pr
   return (
     <Card>
       <CardContent className="p-0">
-        <div className="flex items-stretch">
-          {/* Primary Stats */}
-          <div className="flex items-center gap-0.5 p-3">
-            <StatItem
-              label="Total"
-              value={statusCounts?.all || 0}
-              icon={Building2}
-              tab="all"
-              activeTab={activeTab}
-              onTabChange={onTabChange}
-              variant="default"
-            />
-            <StatItem
-              label="Approved"
-              value={statusCounts?.approved || 0}
-              icon={CheckCircle}
-              tab="approved"
-              activeTab={activeTab}
-              onTabChange={onTabChange}
-              variant="success"
-            />
-            <StatItem
-              label="Pending"
-              value={statusCounts?.pending || 0}
-              icon={Shield}
-              tab="pending"
-              activeTab={activeTab}
-              onTabChange={onTabChange}
-              variant="warning"
-            />
-            <StatItem
-              label="Suspended"
-              value={statusCounts?.suspended || 0}
-              icon={AlertTriangle}
-              tab="suspended"
-              activeTab={activeTab}
-              onTabChange={onTabChange}
-              variant="destructive"
-            />
+        <div className="flex items-stretch flex-wrap">
+          {/* ── Action Required ──────────────────────────────────────────────
+              Provider-submission and claim-review queues. These two counters
+              should ALWAYS lead the stats panel so admins see what needs
+              their attention before anything else. When both are zero the
+              admin queues are empty. */}
+          <div className="flex flex-col p-3">
+            <span className="text-[9px] uppercase tracking-wider text-rose-700/80 font-semibold mb-1 px-1">
+              Action Required
+            </span>
+            <div className="flex items-center gap-0.5">
+              <StatItem
+                label="Approval Queue"
+                value={statusCounts?.pending || 0}
+                icon={Shield}
+                tab="pending"
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                variant="warning"
+              />
+              <StatItem
+                label="Claim Queue"
+                value={statusCounts?.pendingClaims || 0}
+                icon={Bell}
+                tab="pending_claims"
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                variant="destructive"
+              />
+            </div>
           </div>
 
           <Separator orientation="vertical" className="h-auto" />
 
-          {/* Subscription Stats */}
-          <div className="flex items-center gap-0.5 p-3">
-            <StatItem
-              label="Pro"
-              value={statusCounts?.pro || 0}
-              icon={Crown}
-              tab="pro"
-              activeTab={activeTab}
-              onTabChange={onTabChange}
-              variant="accent"
-            />
-            <StatItem
-              label="Placement"
-              value={statusCounts?.placement || 0}
-              icon={Handshake}
-              tab="placement"
-              activeTab={activeTab}
-              onTabChange={onTabChange}
-              variant="primary"
-            />
+          {/* ── Directory State ─────────────────────────────────────────── */}
+          <div className="flex flex-col p-3">
+            <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold mb-1 px-1">
+              Directory
+            </span>
+            <div className="flex items-center gap-0.5">
+              <StatItem
+                label="Total"
+                value={statusCounts?.all || 0}
+                icon={Building2}
+                tab="all"
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                variant="default"
+              />
+              <StatItem
+                label="Approved"
+                value={statusCounts?.approved || 0}
+                icon={CheckCircle}
+                tab="approved"
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                variant="success"
+              />
+              <StatItem
+                label="Suspended"
+                value={statusCounts?.suspended || 0}
+                icon={AlertTriangle}
+                tab="suspended"
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                variant="destructive"
+              />
+            </div>
+          </div>
+
+          <Separator orientation="vertical" className="h-auto" />
+
+          {/* ── Source ───────────────────────────────────────────────────
+              Provenance + ownership state. Distinguishes the bulk SAMHSA
+              import from provider-owned listings. */}
+          <div className="flex flex-col p-3">
+            <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold mb-1 px-1">
+              Source
+            </span>
+            <div className="flex items-center gap-0.5">
+              <StatItem
+                label="SAMHSA"
+                value={statusCounts?.samhsa || 0}
+                icon={Database}
+                tab="samhsa"
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                variant="default"
+              />
+              <StatItem
+                label="Unclaimed"
+                value={statusCounts?.unclaimed || 0}
+                icon={Unlock}
+                tab="unclaimed"
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                variant="warning"
+              />
+              <StatItem
+                label="Claimed"
+                value={statusCounts?.claimed || 0}
+                icon={Lock}
+                tab="claimed"
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                variant="success"
+              />
+            </div>
+          </div>
+
+          <Separator orientation="vertical" className="h-auto" />
+
+          {/* ── Membership ─────────────────────────────────────────────── */}
+          <div className="flex flex-col p-3">
+            <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold mb-1 px-1">
+              Membership
+            </span>
+            <div className="flex items-center gap-0.5">
+              <StatItem
+                label="Pro"
+                value={statusCounts?.pro || 0}
+                icon={Crown}
+                tab="pro"
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                variant="accent"
+              />
+              <StatItem
+                label="Placement"
+                value={statusCounts?.placement || 0}
+                icon={Handshake}
+                tab="placement"
+                activeTab={activeTab}
+                onTabChange={onTabChange}
+                variant="primary"
+              />
+            </div>
           </div>
 
           {/* Subscription Percentages - Hidden on small screens */}

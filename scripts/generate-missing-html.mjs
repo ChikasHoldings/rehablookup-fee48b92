@@ -6,6 +6,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
+import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
@@ -47,30 +48,22 @@ function html({ urlPath, title, metaTitle, metaDescription, h1, content, breadcr
   <link rel="icon" type="image/png" href="/favicon.png">
   ${bcSchema}
   ${faqSchema}
-  <style>
-    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:32px 20px;color:#1a2b4a;line-height:1.7}
-    h1{font-size:2rem;color:#1B365D;margin-bottom:12px}
-    h2{font-size:1.4rem;color:#1B365D;margin-top:28px}
-    p{color:#333;margin-bottom:16px}
-    a{color:#2563eb;text-decoration:none}
-    a:hover{text-decoration:underline}
-    .breadcrumbs{font-size:.85rem;color:#666;margin-bottom:20px}
-    .breadcrumbs ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px}
-    footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.8rem;color:#888}
-  </style>
+  ${seoStyles()}
   <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
-  <header><a href="/" aria-label="RehabLookup Home">RehabLookup</a></header>
-  ${bcHtml ? `<nav class="breadcrumbs" aria-label="Breadcrumb"><ul>${bcHtml}</ul></nav>` : ""}
-  <main>
-    <h1>${escHtml(h1||title)}</h1>
-    ${content}
-    ${faqHtml}
-    <p style="margin-top:24px"><a href="/rehab-centers">Browse All Treatment Centers</a> &middot; <a href="/concierge">Get Personalized Help</a> &middot; <a href="/">Home</a></p>
+  ${seoHeader()}
+  <main class="rl-main">
+    <div class="rl-container">
+      ${bcHtml ? `<nav class="breadcrumbs" aria-label="Breadcrumb"><ul>${bcHtml}</ul></nav>` : ""}
+      <h1>${escHtml(h1||title)}</h1>
+      ${content}
+      ${faqHtml}
+      ${seoCtaStrip()}
+    </div>
   </main>
-  <footer><p>&copy; 2026 RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy</a> &middot; <a href="/terms-of-service">Terms</a></p></footer>
+  ${seoFooter()}
 </body>
 </html>`;
 }

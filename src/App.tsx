@@ -542,7 +542,11 @@ const AppInner = () => {
         <RouteChangeTracker />
 
         <ExitIntentPopup />
-        <Suspense fallback={null}>
+        {/* min-h-screen reserves the viewport during lazy route chunk loads
+            so the layout doesn't shift downward when the route bundle lands.
+            Was fallback={null} — caused visible CLS on slow networks when
+            any route's lazy chunk took a frame to mount. */}
+        <Suspense fallback={<div className="min-h-screen" />}>
           <TrailingSlashRedirect>
           <SEORouteBoundary>
           <Routes>

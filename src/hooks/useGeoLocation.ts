@@ -12,17 +12,42 @@ interface GeoData {
   error: string | null;
 }
 
+/**
+ * Synchronously hydrate from sessionStorage on the very first render so the
+ * `useGeoLocation` consumer (e.g. InternationalBanner) doesn't flicker
+ * isLoading=true → isUS=true → eventually-correct on repeat visits within
+ * the same session. The async useEffect path below still runs as a fallback
+ * for first visits / corrupt cache.
+ */
+function readCachedGeo(): Omit<GeoData, "isLoading" | "error"> | null {
+  try {
+    if (typeof window === "undefined") return null;
+    const cached = sessionStorage.getItem("geo_data_v2");
+    if (!cached) return null;
+    const parsed = JSON.parse(cached);
+    if (parsed && typeof parsed.isUS === "boolean") return parsed;
+  } catch { /* ignore */ }
+  return null;
+}
+
 export function useGeoLocation(): GeoData {
-  const [geoData, setGeoData] = useState<GeoData>({
-    country: "",
-    countryCode: "",
-    city: "",
-    region: "",
-    regionCode: "",
-    postal: "",
-    isUS: true, // Default to US to avoid showing banner unnecessarily
-    isLoading: true,
-    error: null,
+  const [geoData, setGeoData] = useState<GeoData>(() => {
+    const cached = readCachedGeo();
+    if (cached) {
+      // Repeat-session visit: settle synchronously, no async window, no CLS.
+      return { ...cached, isLoading: false, error: null };
+    }
+    return {
+      country: "",
+      countryCode: "",
+      city: "",
+      region: "",
+      regionCode: "",
+      postal: "",
+      isUS: true, // Default to US to avoid showing banner unnecessarily
+      isLoading: true,
+      error: null,
+    };
   });
 
   useEffect(() => {

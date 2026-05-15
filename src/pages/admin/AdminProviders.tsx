@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Download, Trash2, Loader2 } from "lucide-react";
+import { Search, Download, Trash2, Loader2, Info, ExternalLink, ShieldCheck, FileCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,12 @@ import {
 } from "@/components/admin/providers";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
+import {
+  FACILITY_LIST_COLUMNS,
+  TAB_FILTERS,
+  applyProviderSearch,
+  type AdminProvidersTab,
+} from "./adminProvidersConfig";
 
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -83,22 +90,59 @@ export default function AdminProviders() {
     });
   };
 
+  // Bulk delete walks the selected facility IDs sequentially through the
+  // edge function. We track failures explicitly (not just silently dropping
+  // them from the success count) so the admin sees exactly which rows
+  // didn't delete — critical when a partial batch fails and the admin
+  // assumes everything succeeded.
   const handleBulkDelete = async () => {
     setBulkDeleting(true);
+    const results: { id: string; ok: boolean; message?: string }[] = [];
+    const ids = [...selectedIds];
+    const idToName: Record<string, string> = {};
+    for (const p of providers || []) idToName[p.id] = p.name;
     try {
-      let successCount = 0;
-      for (const facilityId of selectedIds) {
-        const { error } = await supabase.functions.invoke("admin-delete-provider", {
-          body: { facilityId, deleteUser: false },
-        });
-        if (!error) successCount++;
+      for (const facilityId of ids) {
+        try {
+          const { error } = await supabase.functions.invoke("admin-delete-provider", {
+            body: { facilityId, deleteUser: false },
+          });
+          results.push({
+            id: facilityId,
+            ok: !error,
+            message: error?.message,
+          });
+        } catch (err: any) {
+          results.push({ id: facilityId, ok: false, message: err?.message ?? "Unknown error" });
+        }
       }
-      toast.success(`Deleted ${successCount} provider(s)`);
-      setSelectedIds(new Set());
+
+      const successes = results.filter((r) => r.ok);
+      const failures = results.filter((r) => !r.ok);
+
+      if (failures.length === 0) {
+        toast.success(`Deleted ${successes.length} provider(s)`);
+        setSelectedIds(new Set());
+      } else if (successes.length === 0) {
+        toast.error(
+          `Bulk delete failed — 0 of ${ids.length} succeeded. First error: ${failures[0].message ?? "unknown"}`,
+          { duration: 10000 },
+        );
+        // Keep the selection so the admin can retry without re-selecting.
+      } else {
+        const failedNames = failures
+          .slice(0, 3)
+          .map((f) => idToName[f.id] || f.id.slice(0, 8))
+          .join(", ");
+        toast.warning(
+          `Partial delete: ${successes.length} succeeded, ${failures.length} failed (${failedNames}${failures.length > 3 ? `, +${failures.length - 3} more` : ""}). Retry the failed rows manually.`,
+          { duration: 10000 },
+        );
+        // Narrow the selection to the failed rows so the admin can retry.
+        setSelectedIds(new Set(failures.map((f) => f.id)));
+      }
       setBulkDeleteOpen(false);
       invalidateProviderQueries();
-    } catch (err: any) {
-      toast.error("Bulk delete failed: " + (err.message || "Unknown error"));
     } finally {
       setBulkDeleting(false);
     }
@@ -111,6 +155,17 @@ export default function AdminProviders() {
       State: p.state,
       "Facility Type": p.facility_type,
       Status: p.suspended ? "Suspended" : p.status,
+      Source: p.data_source === "samhsa_import"
+        ? "SAMHSA"
+        : p.data_source === "provider"
+          ? "Provider"
+          : p.data_source === "manual"
+            ? "Manual"
+            : (p.data_source || ""),
+      "SAMHSA ID": p.samhsa_facility_id || "",
+      "Claim Status": p.user_id ? "Claimed" : "Unclaimed",
+      "Claimed At": p.claimed_at ? new Date(p.claimed_at).toLocaleDateString() : "",
+      "Pending Claims": String(pendingClaimCounts?.[p.id] || 0),
       Email: p.email || "",
       Phone: p.phone,
       Verified: p.verified ? "Yes" : "No",
@@ -144,6 +199,7 @@ export default function AdminProviders() {
     queryClient.invalidateQueries({ queryKey: ["admin-providers-status-counts"] });
     queryClient.invalidateQueries({ queryKey: ["admin-providers-count"] });
     queryClient.invalidateQueries({ queryKey: ["admin-provider-lead-counts"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-provider-pending-claim-counts"] });
     queryClient.invalidateQueries({ queryKey: ["admin-pro-subscriptions"] });
     queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
   }, [queryClient]);
@@ -180,13 +236,28 @@ export default function AdminProviders() {
     queryKey: ["admin-providers-status-counts"],
     queryFn: async () => {
       try {
-        const [allResult, approvedResult, pendingResult, suspendedResult, proResult, placementResult] = await Promise.all([
+        const [
+          allResult,
+          approvedResult,
+          pendingResult,
+          suspendedResult,
+          proResult,
+          placementResult,
+          samhsaResult,
+          unclaimedResult,
+          claimedResult,
+          pendingClaimResult,
+        ] = await Promise.all([
           supabase.from("facilities").select("id", { count: "exact", head: true }),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved").neq("suspended", true),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
           supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("concierge_network_opted_in", true),
+          supabase.from("facilities").select("id", { count: "exact", head: true }).eq("data_source", "samhsa_import"),
+          supabase.from("facilities").select("id", { count: "exact", head: true }).is("user_id", null),
+          supabase.from("facilities").select("id", { count: "exact", head: true }).not("user_id", "is", null),
+          supabase.from("facility_claim_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
         ]);
 
         return {
@@ -196,6 +267,10 @@ export default function AdminProviders() {
           suspended: suspendedResult.count || 0,
           pro: proResult.count || 0,
           placement: placementResult.count || 0,
+          samhsa: samhsaResult.count || 0,
+          unclaimed: unclaimedResult.count || 0,
+          claimed: claimedResult.count || 0,
+          pendingClaims: pendingClaimResult.count || 0,
         };
       } catch (error) {
         logError("fetch_status_counts", error);
@@ -223,46 +298,16 @@ export default function AdminProviders() {
     },
   });
 
-  // Fetch total count for current filter
+  // Fetch total count for current filter — drives pagination.
+  // Uses the shared TAB_FILTERS config so count + list never drift.
   const { data: totalCount } = useQuery({
     queryKey: ["admin-providers-count", activeTab, searchQuery],
     queryFn: async () => {
-      let query = supabase.from("facilities").select("id", { count: "exact", head: true });
-
-      if (activeTab === "approved") {
-        query = query.eq("status", "approved").neq("suspended", true);
-      } else if (activeTab === "pending") {
-        query = query.eq("status", "pending");
-      } else if (activeTab === "suspended") {
-        query = query.eq("suspended", true);
-      } else if (activeTab === "pro") {
-        const { data: proFacilities } = await supabase
-          .from("pro_subscriptions")
-          .select("facility_id")
-          .eq("status", "active");
-        const proIds = proFacilities?.map(p => p.facility_id) || [];
-        if (proIds.length === 0) return 0;
-        let proQuery = supabase.from("facilities").select("id", { count: "exact", head: true }).in("id", proIds);
-        if (searchQuery) {
-          const sanitized = searchQuery.replace(/[%_\\]/g, "");
-          if (sanitized) {
-            proQuery = proQuery.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
-          }
-        }
-        const { count: proCount } = await proQuery;
-        return proCount || 0;
-      } else if (activeTab === "placement") {
-        query = query.eq("concierge_network_opted_in", true);
-      }
-
-      if (searchQuery) {
-        const sanitized = searchQuery.replace(/[%_\\]/g, "");
-        if (sanitized) {
-          query = query.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
-        }
-      }
-
-      const { count, error } = await query;
+      const base = supabase.from("facilities").select("id", { count: "exact", head: true });
+      const filter = TAB_FILTERS[activeTab as AdminProvidersTab] ?? TAB_FILTERS.all;
+      const resolved = await filter(base, { supabase, selectCols: "id" });
+      if (resolved === null) return 0; // short-circuit when sibling subquery returned []
+      const { count, error } = await applyProviderSearch(resolved, searchQuery);
       if (error) throw error;
       return count || 0;
     },
@@ -282,43 +327,21 @@ export default function AdminProviders() {
         const from = (currentPage - 1) * pageSize;
         const to = from + pageSize - 1;
 
-        let query = supabase
+        const base = supabase
           .from("facilities")
-          .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id")
+          .select(FACILITY_LIST_COLUMNS)
           .order("created_at", { ascending: false })
           .range(from, to);
 
-        if (activeTab === "approved") {
-          query = query.eq("status", "approved").neq("suspended", true);
-        } else if (activeTab === "pending") {
-          query = query.eq("status", "pending");
-        } else if (activeTab === "suspended") {
-          query = query.eq("suspended", true);
-        } else if (activeTab === "pro") {
-          const { data: proFacilities } = await supabase
-            .from("pro_subscriptions")
-            .select("facility_id")
-            .eq("status", "active");
-          const proIds = proFacilities?.map(p => p.facility_id) || [];
-          if (proIds.length === 0) return [];
-          query = supabase
-            .from("facilities")
-            .select("id, name, slug, city, state, zip_code, phone, email, website, facility_type, status, featured, verified, suspended, concierge_network_opted_in, logo_url, created_at, updated_at, user_id")
-            .in("id", proIds)
-            .order("created_at", { ascending: false })
-            .range(from, to);
-        } else if (activeTab === "placement") {
-          query = query.eq("concierge_network_opted_in", true);
-        }
+        const filter = TAB_FILTERS[activeTab as AdminProvidersTab] ?? TAB_FILTERS.all;
+        const resolved = await filter(base, {
+          supabase,
+          selectCols: FACILITY_LIST_COLUMNS,
+          range: [from, to],
+        });
+        if (resolved === null) return []; // short-circuit when sibling subquery returned []
 
-        if (searchQuery) {
-          const sanitized = searchQuery.replace(/[%_\\]/g, "");
-          if (sanitized) {
-            query = query.or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
-          }
-        }
-
-        const { data, error } = await query;
+        const { data, error } = await applyProviderSearch(resolved, searchQuery);
         if (error) throw error;
         return data as Facility[];
       } catch (error) {
@@ -330,24 +353,47 @@ export default function AdminProviders() {
     refetchOnWindowFocus: true,
   });
 
-  // Fetch lead counts for providers using count queries (no row fetching)
+  // Lead counts per visible facility. Previously fired N parallel
+  // `count(*) WHERE facility_id = ?` queries (one per row) — 25 round-trips
+  // per list page render. Replaced with a single `SELECT facility_id FROM
+  // leads WHERE facility_id IN (...)` and a client-side tally. One round-
+  // trip regardless of page size; PII-safe (only the foreign-key column is
+  // returned, no name/email/phone).
   const { data: leadCounts } = useQuery({
     queryKey: ["admin-provider-lead-counts", providers?.map((p) => p.id)],
     queryFn: async () => {
       if (!providers?.length) return {};
       const facilityIds = providers.map((p) => p.id);
+      const { data } = await supabase
+        .from("leads")
+        .select("facility_id")
+        .in("facility_id", facilityIds);
       const counts: Record<string, number> = {};
-      // Use individual count queries per facility to avoid fetching all lead rows
-      const promises = facilityIds.map(async (fid) => {
-        const { count } = await supabase
-          .from("leads")
-          .select("id", { count: "exact", head: true })
-          .eq("facility_id", fid);
-        counts[fid] = count || 0;
-      });
-      // Batch in groups of 10 to limit concurrency
-      for (let i = 0; i < promises.length; i += 10) {
-        await Promise.all(promises.slice(i, i + 10));
+      for (const fid of facilityIds) counts[fid] = 0;
+      for (const row of data || []) {
+        counts[row.facility_id] = (counts[row.facility_id] || 0) + 1;
+      }
+      return counts;
+    },
+    enabled: !!providers?.length,
+  });
+
+  // Pending claim-request counts per visible facility — drives the "N pending
+  // claims" bell badge on each row in the list. Single query for all visible
+  // rows; we tally client-side to avoid one round-trip per facility.
+  const { data: pendingClaimCounts } = useQuery({
+    queryKey: ["admin-provider-pending-claim-counts", providers?.map((p) => p.id)],
+    queryFn: async () => {
+      if (!providers?.length) return {};
+      const facilityIds = providers.map((p) => p.id);
+      const { data } = await supabase
+        .from("facility_claim_requests")
+        .select("facility_id")
+        .eq("status", "pending")
+        .in("facility_id", facilityIds);
+      const counts: Record<string, number> = {};
+      for (const row of data || []) {
+        counts[row.facility_id] = (counts[row.facility_id] || 0) + 1;
       }
       return counts;
     },
@@ -355,6 +401,13 @@ export default function AdminProviders() {
   });
 
   // Update provider mutation
+  // Provider mutation. Hardened to:
+  //   • Verify the acting admin is still signed in BEFORE the DB write so
+  //     we never produce an audit-log entry with no admin_user_id and
+  //     never silently lose attribution.
+  //   • Surface email-send failures so admins see when an approved provider
+  //     wasn't notified (was silently swallowed before).
+  //   • Return a status flag so onSuccess can craft the right toast.
   const updateProvider = useMutation({
     mutationFn: async ({
       id,
@@ -364,52 +417,73 @@ export default function AdminProviders() {
       id: string;
       updates: Partial<Facility>;
       actionType: string;
-    }) => {
-      const { data: facility } = await supabase
+    }): Promise<{ approvalEmailSent?: boolean }> => {
+      // 1. Capture acting admin upfront. If the session expired or RLS
+      //    will reject us, fail loudly here rather than after the write.
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw new Error(`Could not verify admin session: ${userErr.message}`);
+      const adminUserId = userData.user?.id;
+      if (!adminUserId) throw new Error("Sign-in expired — please log back in.");
+
+      const { data: facility, error: fetchErr } = await supabase
         .from("facilities")
         .select("name, user_id, status")
         .eq("id", id)
         .single();
+      if (fetchErr) throw fetchErr;
 
       const { error } = await supabase.from("facilities").update(updates).eq("id", id);
       if (error) throw error;
 
+      // 2. Send approval email when status transitions to approved. Return
+      //    the send status so onSuccess can warn admins on failure.
+      let approvalEmailSent: boolean | undefined;
       if (updates.status === "approved" && facility && facility.status !== "approved") {
         try {
-          await supabase.functions.invoke("send-approval-email", {
+          const { error: mailErr } = await supabase.functions.invoke("send-approval-email", {
             body: {
               facilityId: id,
               facilityName: facility.name,
               userId: facility.user_id,
             },
           });
+          approvalEmailSent = !mailErr;
+          if (mailErr) console.warn("[AdminProviders] approval email failed", mailErr);
         } catch (emailError) {
-          console.error("Failed to send approval email:", emailError);
+          approvalEmailSent = false;
+          console.warn("[AdminProviders] approval email exception", emailError);
         }
       }
 
+      // 3. Audit log — non-fatal on failure but we now know the admin id.
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) {
-          await supabase.from("admin_audit_log").insert({
-            admin_user_id: user.id,
-            action_type: actionType,
-            target_type: "facility",
-            target_id: id,
-            details: updates,
-          });
-        }
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: adminUserId,
+          action_type: actionType,
+          target_type: "facility",
+          target_id: id,
+          details: { ...updates, prev_status: facility?.status ?? null },
+        });
       } catch (auditError) {
-        console.error("Failed to log admin action:", auditError);
+        console.warn("[AdminProviders] audit log write failed", auditError);
       }
+
+      return { approvalEmailSent };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       invalidateProviderQueries();
-      toast.success("Provider updated successfully");
+      if (result.approvalEmailSent === false) {
+        toast.warning(
+          "Provider approved, but the notification email failed to send. The provider will not know they're approved until you message them directly.",
+          { duration: 10000 },
+        );
+      } else {
+        toast.success("Provider updated successfully");
+      }
     },
     onError: (error) => {
       console.error("Provider update failed:", error);
-      toast.error("Failed to update provider");
+      toast.error(error instanceof Error ? error.message : "Failed to update provider");
     },
   });
 
@@ -585,11 +659,74 @@ export default function AdminProviders() {
       </div>
 
       {/* Interactive Stats Charts */}
-      <ProviderStatsCharts 
+      <ProviderStatsCharts
         statusCounts={statusCounts}
         onTabChange={handleTabChange}
         activeTab={activeTab}
       />
+
+      {/* Tab-specific workflow banner. Surfaces the moderation rules so
+          admins don't have to memorize them, and links the two action-queue
+          tabs to the canonical review surfaces. */}
+      {activeTab === "pending" && (
+        <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20">
+          <CardContent className="p-4 flex items-start gap-3">
+            <FileCheck className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                New facility submissions awaiting approval
+              </p>
+              <p className="text-xs text-amber-800/80 dark:text-amber-200/70 mt-0.5">
+                Each row below is a provider-submitted listing currently hidden from the public directory.
+                Approve to publish it, or reject to keep it hidden. Use the inline Approve / Reject buttons
+                for quick decisions, or open the row for the full review surface.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {activeTab === "pending_claims" && (
+        <Card className="border-rose-200 bg-rose-50/50 dark:bg-rose-950/20">
+          <CardContent className="p-4 flex items-start gap-3">
+            <ShieldCheck className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-rose-900 dark:text-rose-200">
+                SAMHSA listings under active claim review
+              </p>
+              <p className="text-xs text-rose-800/80 dark:text-rose-200/70 mt-0.5">
+                Each row below is currently <strong>hidden from the public directory</strong> because a
+                provider has filed a claim awaiting your review. Use the Claim Review Panel to inspect
+                evidence, verify the claimant, and approve or reject the claim — once approved, the
+                facility reappears in the public directory under the claimant's ownership.
+              </p>
+              <Button asChild size="sm" variant="default" className="gap-1.5 mt-2 bg-rose-600 hover:bg-rose-700">
+                <Link to="/admin/claims">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Open Claim Review Panel
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {activeTab === "samhsa" && (
+        <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+          <CardContent className="p-4 flex items-start gap-3">
+            <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                SAMHSA bulk-imported listings
+              </p>
+              <p className="text-xs text-blue-800/80 dark:text-blue-200/70 mt-0.5">
+                These facilities were imported from the SAMHSA national directory and are
+                <strong> visible to the public</strong> so providers can find and claim them. When a
+                provider files a claim, the listing is hidden from the public directory until you
+                approve or reject the claim in the Claim Review Panel.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search + Actions */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
@@ -600,6 +737,9 @@ export default function AdminProviders() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-8 sm:pl-9 h-9 text-sm"
+            aria-label="Search providers by name, city, or email"
+            type="search"
+            autoComplete="off"
           />
         </div>
         <div className="flex gap-2">
@@ -640,6 +780,7 @@ export default function AdminProviders() {
                     <Checkbox
                       checked={selectedIds.has(provider.id)}
                       onCheckedChange={() => toggleSelect(provider.id)}
+                      aria-label={`Select ${provider.name}`}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -647,6 +788,7 @@ export default function AdminProviders() {
                       provider={provider}
                       isPro={!!proSubscriptions?.[provider.id]}
                       leadCount={leadCounts?.[provider.id] || 0}
+                      pendingClaimCount={pendingClaimCounts?.[provider.id] || 0}
                       canModerate={canModerate}
                       onOpenDetail={openProviderDetail}
                       onStatusChange={handleStatusChange}

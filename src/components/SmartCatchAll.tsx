@@ -176,7 +176,7 @@ export function SmartCatchAll() {
   if (pathname.startsWith("/best-rehab-centers-in-")) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="min-h-screen" />}>
           <BestInStatePage />
         </Suspense>
       </PublicRouteGuard>
@@ -193,7 +193,7 @@ export function SmartCatchAll() {
     if (STATE_SLUGS.has(slug)) {
       return (
         <PublicRouteGuard>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div className="min-h-screen" />}>
             <ListYourFacilityState />
           </Suspense>
         </PublicRouteGuard>
@@ -203,7 +203,7 @@ export function SmartCatchAll() {
     if (slug.includes("-")) {
       return (
         <PublicRouteGuard>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div className="min-h-screen" />}>
             <ListYourFacilityCity />
           </Suspense>
         </PublicRouteGuard>
@@ -212,7 +212,7 @@ export function SmartCatchAll() {
     // Unknown single-token slug — fall back to the State page (renders its own 404 if missing).
     return (
       <PublicRouteGuard>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="min-h-screen" />}>
           <ListYourFacilityState />
         </Suspense>
       </PublicRouteGuard>
@@ -223,7 +223,7 @@ export function SmartCatchAll() {
   if (pathname.startsWith("/for-providers-in-")) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="min-h-screen" />}>
           <ForProvidersState />
         </Suspense>
       </PublicRouteGuard>
@@ -234,7 +234,7 @@ export function SmartCatchAll() {
   if (CITY_TREATMENT_PROVIDER_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="min-h-screen" />}>
           <CityTreatmentProviderPage />
         </Suspense>
       </PublicRouteGuard>
@@ -245,7 +245,7 @@ export function SmartCatchAll() {
   if (CITY_INSURANCE_PROVIDER_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="min-h-screen" />}>
           <CityInsuranceProviderPage />
         </Suspense>
       </PublicRouteGuard>
@@ -256,7 +256,7 @@ export function SmartCatchAll() {
   if (CITY_TREATMENT_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="min-h-screen" />}>
           <CityTreatmentPage />
         </Suspense>
       </PublicRouteGuard>
@@ -267,7 +267,7 @@ export function SmartCatchAll() {
   if (pathname.startsWith("/get-more-patients-in-")) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="min-h-screen" />}>
           <CityProviderPage />
         </Suspense>
       </PublicRouteGuard>
@@ -280,7 +280,7 @@ export function SmartCatchAll() {
     if (nearMeParsed.type === "county") {
       return (
         <PublicRouteGuard>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div className="min-h-screen" />}>
             <NearMeCountyPage />
           </Suspense>
         </PublicRouteGuard>
@@ -288,7 +288,7 @@ export function SmartCatchAll() {
     }
     return (
       <PublicRouteGuard>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="min-h-screen" />}>
           <NearMeCityPage />
         </Suspense>
       </PublicRouteGuard>
@@ -296,7 +296,7 @@ export function SmartCatchAll() {
   }
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div className="min-h-screen" />}>
       <NotFound />
     </Suspense>
   );

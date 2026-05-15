@@ -25,6 +25,7 @@
 import { writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { gtagSnippet } from "./_ga.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -369,6 +370,7 @@ function renderArticleHtml(article) {
     .article-body blockquote { border-left: 4px solid #2563eb; padding: 0.75rem 1rem; background: #f9fafb; margin: 1.25rem 0; color: #4b5563; font-style: italic; }
     .article-body a { color: #2563eb; }
   </style>
+${gtagSnippet()}
 </head>
 <body>
   <header>

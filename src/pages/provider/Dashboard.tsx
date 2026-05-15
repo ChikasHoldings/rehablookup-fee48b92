@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { 
   CheckCircle, 
@@ -112,6 +112,17 @@ export default function ProviderDashboardPage() {
   const queryClient = useQueryClient();
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
+  // Recovery banner: ProviderSignup redirects here with this query param
+  // when the auth user + profile were created but the facility row insert
+  // failed AND the rollback edge function was unable to clean up. Shown
+  // until the user dismisses or actually creates a facility.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const showSignupRecovery = searchParams.get("signup_facility_failed") === "1";
+  const dismissSignupRecovery = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("signup_facility_failed");
+    setSearchParams(next, { replace: true });
+  };
   
   const { data: providerData, isLoading, isPlaceholderData } = useProviderData(facilityId);
   const { facilities } = useProviderFacilities();
@@ -446,7 +457,39 @@ export default function ProviderDashboardPage() {
       )}
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-        
+
+        {/* Signup recovery banner — shown only when ProviderSignup
+            redirected here with ?signup_facility_failed=1 AND the
+            rollback edge function couldn't clean up automatically.
+            Last-resort safety net so the user is never stuck on a
+            half-completed account with no on-screen guidance. */}
+        {showSignupRecovery && (
+          <Card className="mb-4 border-rose-300 bg-rose-50 dark:bg-rose-950/30">
+            <CardContent className="p-4 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-rose-900 dark:text-rose-200">
+                  Your facility didn't save during signup
+                </p>
+                <p className="text-xs text-rose-800/80 dark:text-rose-200/80 mt-1">
+                  Your account is set up but the facility details from the signup form weren't
+                  saved. Add your facility now to start receiving leads. Our support team has
+                  also been notified — they'll reach out within one business day if you'd
+                  prefer help.
+                </p>
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <Button asChild size="sm" variant="default" className="bg-rose-600 hover:bg-rose-700">
+                    <Link to="/provider/locations/new">Add facility now</Link>
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={dismissSignupRecovery}>
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Main Grid Layout - No full-width sections */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 md:gap-5">
           
@@ -573,7 +616,7 @@ export default function ProviderDashboardPage() {
                         </p>
                         <p className="text-xs text-muted-foreground">Unlock to view details</p>
                       </div>
-                      <Button size="sm" className="h-7 text-xs bg-success hover:bg-success/90" asChild>
+                      <Button size="sm" className="h-9 sm:h-8 text-xs bg-success hover:bg-success/90" asChild>
                         <Link to="/provider/inquiries">
                           View
                         </Link>
@@ -599,7 +642,7 @@ export default function ProviderDashboardPage() {
                         </p>
                         <p className="text-xs text-muted-foreground">Waiting 24h+</p>
                       </div>
-                      <Button size="sm" className="h-7 text-xs bg-warning hover:bg-warning/90 text-warning-foreground" asChild>
+                      <Button size="sm" className="h-9 sm:h-8 text-xs bg-warning hover:bg-warning/90 text-warning-foreground" asChild>
                         <Link to="/provider/inquiries?status=new">
                           <Phone className="h-3.5 w-3.5 mr-1" />
                           Call
@@ -626,7 +669,7 @@ export default function ProviderDashboardPage() {
                           <p className="text-sm font-medium text-foreground">Complete Profile</p>
                           <p className="text-xs text-muted-foreground">{missingFields.length} items missing</p>
                         </div>
-                        <Button size="sm" className="h-7 text-xs" asChild>
+                        <Button size="sm" className="h-9 sm:h-8 text-xs" asChild>
                           <Link to="/provider/listings">Add</Link>
                         </Button>
                         <button

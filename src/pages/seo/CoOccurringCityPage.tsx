@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { citiesMatch } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { coOccurringPages } from "@/pages/seo/CoOccurringPage";
 import { statesData } from "@/data/locationSeoData";
@@ -31,11 +32,10 @@ export default function CoOccurringCityPage() {
     }
     const all = [...treatmentCenters, ...approvedFacilities];
     const keywords = config.filterKeys.map((k) => k.toLowerCase());
-    const cityLower = cityData.name.toLowerCase();
     const stateLower = stateData.name.toLowerCase();
 
     const cityMatched = all.filter((f) => {
-      const cityMatch = f.city.toLowerCase() === cityLower && f.state.toLowerCase() === stateLower;
+      const cityMatch = citiesMatch(f.city, cityData.name) && f.state.toLowerCase() === stateLower;
       const keyMatch = f.treatmentTypes?.some((t) => keywords.some((k) => t.toLowerCase().includes(k))) ||
         keywords.some((k) => f.description?.toLowerCase().includes(k));
       return cityMatch && keyMatch;
@@ -44,7 +44,7 @@ export default function CoOccurringCityPage() {
     const stateAll = all.filter((f) => f.state.toLowerCase() === stateLower);
     let displayed = cityMatched;
     if (displayed.length < 3) {
-      const cityAll = all.filter((f) => f.city.toLowerCase() === cityLower && f.state.toLowerCase() === stateLower);
+      const cityAll = all.filter((f) => citiesMatch(f.city, cityData.name) && f.state.toLowerCase() === stateLower);
       displayed = cityAll.length >= 3 ? cityAll : stateAll;
     }
     return {

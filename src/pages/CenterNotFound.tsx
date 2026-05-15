@@ -65,19 +65,18 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
     navigate(`/search-results?location=${encodeURIComponent(trimmed)}`);
   };
 
+  // Softened copy: prior version claimed "no longer active" for any miss,
+  // which was inaccurate — the most common miss is a misspelled or moved
+  // URL, not a deactivated facility. Keep the headline factual + neutral.
   const headline =
-    reason === "inactive"
-      ? "This center is no longer active"
-      : reason === "invalid"
-        ? "That link doesn't look right"
-        : "We couldn't find that center";
+    reason === "invalid"
+      ? "That link doesn't look right"
+      : "We couldn't find this center";
 
   const subline =
-    reason === "inactive"
-      ? "The treatment center you're looking for has been removed or is pending re-verification. We can help you find a similar option nearby."
-      : reason === "invalid"
-        ? "The URL for this center appears to be malformed. Try searching by city, state, or facility name and we'll point you in the right direction."
-        : "The treatment center you're looking for doesn't exist or is no longer available. Let's help you find the right one.";
+    reason === "invalid"
+      ? "The URL appears to be malformed. Try searching by city, state, or facility name."
+      : "The page you're looking for may have moved, or the slug is incorrect. Browse similar centers nearby:";
 
   const popularCategories = [
     { label: "Drug Rehab Near Me", href: "/drug-rehab-near-me" },
@@ -99,10 +98,10 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
         <div className="max-w-4xl mx-auto">
           {/* Hero */}
           <div className="text-center mb-10">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-destructive/10 px-4 py-2 animate-fade-in">
-              <Building2 className="h-4 w-4 text-destructive" />
-              <span className="text-sm font-medium text-destructive">
-                Center Unavailable
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 animate-fade-in">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">
+                Page not found
               </span>
             </div>
 
@@ -220,21 +219,17 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
                 <div className="flex items-center gap-2 mb-4">
                   <ShieldCheck className="h-5 w-5 text-primary" />
                   <h2 className="font-display font-semibold text-lg">
-                    Why centers go offline
+                    Why you might be here
                   </h2>
                 </div>
                 <ul className="space-y-3 text-sm text-muted-foreground">
                   <li className="flex gap-2">
                     <span className="text-primary mt-0.5">•</span>
-                    <span>The facility updated its profile URL.</span>
+                    <span>The URL has a typo or the slug is incorrect.</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-primary mt-0.5">•</span>
-                    <span>The listing is being re-verified by our team.</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-primary mt-0.5">•</span>
-                    <span>The center has temporarily paused admissions.</span>
+                    <span>The facility recently updated its profile URL.</span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-primary mt-0.5">•</span>
@@ -242,8 +237,8 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
                   </li>
                 </ul>
                 <p className="mt-4 text-xs text-muted-foreground">
-                  Our concierge team can match you with a verified, currently
-                  accepting alternative — usually within 24 hours.
+                  Our concierge team can match you with a verified treatment
+                  center — usually within 24 hours.
                 </p>
               </CardContent>
             </Card>

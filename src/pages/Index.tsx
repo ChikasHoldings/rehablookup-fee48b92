@@ -40,11 +40,6 @@ import {
   MapPin,
   Navigation,
   ClipboardList,
-  Building2,
-  Globe,
-  UserCheck,
-  ShieldCheck,
-  Award,
 } from "lucide-react";
 
 const blogArticles = [
@@ -187,8 +182,6 @@ const Index = () => {
           "addiction help",
           "find rehab",
           "alcohol rehab",
-          "find rehab",
-          "alcohol rehab",
         ]}
         structuredData={[
           {
@@ -299,48 +292,25 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Trust Bar - Consolidated and Updated with Gold Icons */}
+      {/* Trust Bar */}
       <section className="relative bg-primary border-y border-primary-foreground/10">
         <div className="container py-3 md:py-4 px-4 md:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-x-8 lg:gap-x-12">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-8 lg:gap-x-14">
             <div className="flex items-center gap-2 group">
-              <Building2 className="h-4 w-4 text-accent" aria-hidden="true" />
-              <div className="flex items-center gap-1.5">
-                <strong className="text-sm md:text-base font-bold text-white">15,000+</strong>
-                <span className="text-sm md:text-base font-medium text-primary-foreground/90">Verified Facilities</span>
-              </div>
+              <CheckCircle className="h-4 w-4 text-accent shrink-0" />
+              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Verified Facilities</span>
             </div>
-            <span className="hidden sm:inline text-primary-foreground/30" aria-hidden>·</span>
             <div className="flex items-center gap-2 group">
-              <Globe className="h-4 w-4 text-accent" aria-hidden="true" />
-              <div className="flex items-center gap-1.5">
-                <strong className="text-sm md:text-base font-bold text-white">All 50</strong>
-                <span className="text-sm md:text-base font-medium text-primary-foreground/90">States Covered</span>
-              </div>
+              <Users className="h-4 w-4 text-accent shrink-0" />
+              <span className="text-sm md:text-base font-medium text-primary-foreground/90">15,000+ Centers</span>
             </div>
-            <span className="hidden sm:inline text-primary-foreground/30" aria-hidden>·</span>
             <div className="flex items-center gap-2 group">
-              <UserCheck className="h-4 w-4 text-accent" aria-hidden="true" />
-              <div className="flex items-center gap-1.5">
-                <strong className="text-sm md:text-base font-bold text-white">Free</strong>
-                <span className="text-sm md:text-base font-medium text-primary-foreground/90">For Clients</span>
-              </div>
+              <Clock className="h-4 w-4 text-accent shrink-0" />
+              <span className="text-sm md:text-base font-medium text-primary-foreground/90">24/7 Help</span>
             </div>
-            <span className="hidden sm:inline text-primary-foreground/30" aria-hidden>·</span>
             <div className="flex items-center gap-2 group">
-              <ShieldCheck className="h-4 w-4 text-accent" aria-hidden="true" />
-              <div className="flex items-center gap-1.5">
-                <strong className="text-sm md:text-base font-bold text-white">HIPAA</strong>
-                <span className="text-sm md:text-base font-medium text-primary-foreground/90">Compliant</span>
-              </div>
-            </div>
-            <span className="hidden sm:inline text-primary-foreground/30" aria-hidden>·</span>
-            <div className="flex items-center gap-2 group">
-              <Award className="h-4 w-4 text-accent" aria-hidden="true" />
-              <div className="flex items-center gap-1.5">
-                <strong className="text-sm md:text-base font-bold text-white">4.8★</strong>
-                <span className="text-sm md:text-base font-medium text-primary-foreground/90">Advisor Rating</span>
-              </div>
+              <Phone className="h-4 w-4 text-accent shrink-0" />
+              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Free Insurance Check</span>
             </div>
           </div>
         </div>
@@ -531,15 +501,30 @@ const Index = () => {
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="relative flex items-start gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1 overflow-hidden">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                    <option.icon className="h-5 w-5" />
+                  {/* Subtle background gradient on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  
+                  {/* Icon with scale and rotate */}
+                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-md">
+                    <option.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">{option.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                  
+                  <div className="relative flex-1 min-w-0">
+                    <h3 className="font-semibold text-[15px] md:text-base text-foreground transition-colors duration-200 group-hover:text-primary">
+                      {option.title}
+                    </h3>
+                    <p className="mt-0.5 text-sm md:text-base text-muted-foreground line-clamp-2 transition-colors duration-200 group-hover:text-muted-foreground/80">
                       {option.description}
                     </p>
                   </div>
+                  
+                  {/* Arrow with enhanced animation */}
+                  <div className="relative mt-1 flex items-center">
+                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-all duration-300 group-hover:text-primary group-hover:translate-x-1" />
+                  </div>
+                  
+                  {/* Bottom accent line */}
+                  <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-primary to-accent transition-all duration-300 group-hover:w-full" />
                 </div>
               </Link>
             ))}
@@ -548,93 +533,406 @@ const Index = () => {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-10 md:py-12 lg:py-24 overflow-hidden">
+      <section className="py-10 md:py-12 lg:py-20 bg-primary">
         <div className="container px-4 md:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
-            {/* Image Side */}
-            <div className="w-full lg:w-1/2 relative" ref={parallaxRef}>
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
+          <div className="grid items-center gap-6 md:gap-8 md:grid-cols-2 lg:gap-12">
+            {/* Content */}
+            <div className="order-2 md:order-1">
+              <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">Why RehabLookup</span>
+              <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-primary-foreground lg:text-3xl">
+                Trusted by Families Across America
+              </h2>
+              <p className="mt-2 md:mt-3 text-[15px] md:text-base text-primary-foreground/70 leading-relaxed max-w-md">
+                We're committed to helping you find the right treatment with transparency and compassion.
+              </p>
+
+              <ul className="mt-4 md:mt-6 space-y-2 md:space-y-2.5">
+                {[
+                  "Every facility verified for licensing",
+                  "Transparent program information",
+                  "No hidden fees or referrals",
+                  "Confidential communication",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2 md:gap-2.5">
+                    <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 text-accent" />
+                    <span className="text-primary-foreground text-sm md:text-base">{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-5 md:mt-6">
+                <Link to="/about">
+                  <Button variant="hero-light" size="sm" className="gap-2">
+                    About Our Mission
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Image with Stats Overlay */}
+            <div ref={parallaxRef} className="order-1 md:order-2">
+              <div className="relative overflow-hidden rounded-xl">
                 <img 
                   src={whyChooseUsImage} 
-                  alt="Trusted by Families Across America" 
-                  className="w-full h-full object-cover transition-transform duration-500 ease-out"
-                  style={{ transform: `scale(1.1) translateY(${parallaxOffset}px)` }}
+                  alt="Healthcare professional consulting with a family"
+                  className="w-full aspect-[4/3] object-cover"
+                  width={800}
+                  height={600}
+                  loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                {/* Overlay gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent" />
                 
-                {/* Floating badge */}
-                <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-white/20">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <ShieldCheck className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-foreground">Verified & Secure</p>
-                      <p className="text-xs text-muted-foreground">Every facility is manually vetted by our team</p>
-                    </div>
+                {/* Stats Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 md:gap-2">
+                    {[
+                      { value: "15K+", label: "Centers" },
+                      { value: "50", label: "States" },
+                      { value: "10K+", label: "Families" },
+                      { value: "24/7", label: "Support" },
+                    ].map((stat) => (
+                      <div key={stat.label} className="text-center">
+                        <div className="font-display text-lg md:text-xl font-bold text-accent lg:text-2xl">
+                          {stat.value}
+                        </div>
+                        <p className="text-xs md:text-sm text-primary-foreground/80 lg:text-sm">{stat.label}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-              
-              {/* Decorative elements */}
-              <div className="absolute -top-6 -right-6 h-24 w-24 bg-primary/5 rounded-full blur-2xl" />
-              <div className="absolute -bottom-10 -left-10 h-40 w-40 bg-accent/10 rounded-full blur-3xl" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Placement Service */}
+      <section className="py-12 md:py-16 lg:py-20 bg-accent/5 border-y border-accent/10 relative overflow-hidden">
+        {/* Decorative background pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+        
+        <div className="container relative px-4 md:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center max-w-5xl mx-auto">
+            {/* Left side - Content */}
+            <div className="text-center md:text-left">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/15 px-4 py-1.5 border border-accent/20">
+                <Heart className="h-4 w-4 text-accent fill-accent/30" />
+                <span className="text-sm font-semibold text-accent">Placement Service</span>
+              </div>
+              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
+                Overwhelmed by Options?
+                <span className="block text-accent mt-1">Let Us Help.</span>
+              </h2>
+              <p className="text-muted-foreground mb-6 max-w-md">
+                Our specialists personally connect you with verified treatment centers based on your insurance, location, and unique needs.
+              </p>
+              <Link to={buildConciergeHref({ location: homepageConciergeLocation, source: "homepage_placement_section" })}>
+                <Button size="lg" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20">
+                  Find Treatment
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
 
-            {/* Content Side */}
-            <div className="w-full lg:w-1/2">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                  Why RehabLookup
-                </span>
-              </div>
-              <h2 className="mb-6 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight">
-                Trusted by Families<br /> Across America
-              </h2>
-              <p className="mb-8 text-base md:text-lg text-muted-foreground leading-relaxed">
-                We're committed to helping you find the right treatment with transparency and compassion.
-              </p>
-              
-              <div className="grid sm:grid-cols-2 gap-6">
-                {[
-                  {
-                    title: "Verified Listings",
-                    desc: "Every facility is manually verified for licensing and accreditation.",
-                    icon: CheckCircle
-                  },
-                  {
-                    title: "Transparent Info",
-                    desc: "Get clear details on programs, amenities, and insurance options.",
-                    icon: ClipboardList
-                  },
-                  {
-                    title: "Confidential Help",
-                    desc: "Your privacy is our priority. All inquiries are 100% confidential.",
-                    icon: ShieldCheck
-                  },
-                  {
-                    title: "Free for Seekers",
-                    desc: "Our directory and placement services are always free for families.",
-                    icon: Heart
-                  }
-                ].map((item) => (
-                  <div key={item.title} className="flex gap-4">
-                    <div className="h-10 w-10 shrink-0 rounded-lg bg-muted flex items-center justify-center">
-                      <item.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-foreground">{item.title}</h4>
-                      <p className="text-sm text-muted-foreground">{item.desc}</p>
-                    </div>
+            {/* Right side - Visual steps */}
+            <div className="space-y-3">
+              {[
+                { icon: ClipboardList, title: "Tell Us Your Needs", desc: "Share your situation, preferences, and insurance" },
+                { icon: Users, title: "We Find Matches", desc: "Our team reviews programs that fit your criteria" },
+                { icon: Phone, title: "Get Connected", desc: "We introduce you directly to the best options" },
+              ].map((step, idx) => (
+                <div 
+                  key={step.title}
+                  className="flex items-start gap-4 bg-card/80 backdrop-blur-sm rounded-xl p-4 border border-border/50 shadow-sm hover:shadow-md hover:border-accent/30 transition-all"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                    <step.icon className="h-5 w-5" />
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-accent/60">0{idx + 1}</span>
+                      <h3 className="font-semibold text-foreground text-sm">{step.title}</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-0.5">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <LazySection fallbackHeight="400px">
+        <Suspense fallback={<div style={{ minHeight: "400px" }} aria-hidden="true" />}>
+          <TestimonialsSection
+            testimonials={seekerTestimonials}
+            title="Real Stories from Families We've Helped"
+            subtitle="Hear from people who found the right treatment through RehabLookup"
+          />
+        </Suspense>
+      </LazySection>
+
+      {/* International Patients CTA */}
+      <LazySection fallbackHeight="200px">
+        <Suspense fallback={<div style={{ minHeight: "200px" }} aria-hidden="true" />}>
+          <InternationalCTA />
+        </Suspense>
+      </LazySection>
+
+      {/* Find Treatment Near You - SEO Section */}
+      <section className="py-10 md:py-12 lg:py-20 border-t border-border/50">
+        <div className="container px-4 md:px-6 lg:px-8">
+          <div className="mb-6 md:mb-8 lg:mb-10 text-center">
+            <div className="mb-1.5 md:mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+              <Navigation className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary">
+                Near You
+              </span>
+            </div>
+            <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
+              Find Treatment Near You
+            </h2>
+            <p className="mt-1.5 md:mt-2 text-[15px] md:text-base text-muted-foreground max-w-lg mx-auto">
+              Get location-based treatment options with real-time availability
+            </p>
+          </div>
+
+          {/* Near me grid - 2 columns on mobile, 3 on tablet, 3 on desktop */}
+          <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-3 max-w-4xl mx-auto">
+            <Link
+              to="/drug-rehab-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Pill className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
+                  Drug Rehab Near Me
+                </h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Addiction treatment centers
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/alcohol-rehab-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Activity className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
+                  Alcohol Rehab Near Me
+                </h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Alcohol treatment programs
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/detox-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Sparkles className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
+                  Detox Centers Near Me
+                </h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Medical detox facilities
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/dual-diagnosis-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Brain className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
+                  Dual Diagnosis Near Me
+                </h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Mental health + addiction
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/inpatient-rehab-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Home className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
+                  Inpatient Rehab Near Me
+                </h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Residential treatment
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/outpatient-near-me"
+              className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
+                <Stethoscope className="h-4 w-4 md:h-5 md:w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm md:text-base">
+                  Outpatient Near Me
+                </h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  IOP & PHP programs
+                </p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Resources directory — previously rendered as 3 magazine-style article
+          cards with large images, category tags, and "X min read" metadata
+          (classic blog convention). Reworked as a compact 2-column directory
+          listing so the homepage stays directory-first; the full /resources
+          page handles the magazine treatment. */}
+      <LazySection fallbackHeight="320px">
+      <section className="py-10 md:py-12 lg:py-16">
+        <div className="container px-4 md:px-6 lg:px-8">
+          <div className="mb-5 md:mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recovery Resources</span>
+              <h2 className="mt-1.5 font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
+                Browse Recovery Guides
+              </h2>
+            </div>
+            <Link to="/resources" className="group">
+              <span className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
+                View all resources
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          </div>
+
+          <ul className="divide-y divide-border rounded-xl border bg-card">
+            {blogArticles.map((article) => (
+              <li key={article.id}>
+                <Link
+                  to={`/resources/${article.id}`}
+                  className="group flex items-center gap-4 px-4 py-3 md:px-5 md:py-4 hover:bg-muted/40 transition-colors"
+                >
+                  <span className="hidden sm:inline-flex shrink-0 items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary uppercase tracking-wide">
+                    {article.category}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm md:text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                      {article.title}
+                    </h3>
+                    <p className="mt-0.5 text-xs md:text-sm text-muted-foreground line-clamp-1">{article.excerpt}</p>
+                  </div>
+                  <ArrowRight className="hidden sm:block h-4 w-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+      </LazySection>
+
+      {/* SEO Internal Links Section */}
+      <LazySection fallbackHeight="600px">
+        <section className="py-10 md:py-12 lg:py-16 bg-muted/30 border-t">
+          <div className="container px-4 md:px-6 lg:px-8 space-y-8 md:space-y-10">
+            {/* Quick Links to Key Pages */}
+            <div>
+              <h3 className="text-lg md:text-xl font-semibold text-foreground mb-4">
+                Explore RehabLookup
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {[
+                  { name: "How It Works", href: "/how-it-works" },
+                  { name: "About Us", href: "/about" },
+                  { name: "Insurance Guide", href: "/insurance" },
+                  { name: "FAQs", href: "/faq" },
+                  { name: "Contact Us", href: "/contact" },
+                  { name: "For Providers", href: "/for-providers" },
+                  { name: "Treatment Types", href: "/treatment-types" },
+                  { name: "All Locations", href: "/locations" },
+                  { name: "Cost Estimator", href: "/cost-estimator" },
+                  { name: "Provider Resources", href: "/provider-resources" },
+                  { name: "Concierge Service", href: "/concierge" },
+                  { name: "Search Centers", href: "/search-results" },
+                ].map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors py-1"
+                  >
+                    {link.name}
+                  </Link>
                 ))}
               </div>
-              
-              <div className="mt-10">
-                <Link to="/about">
-                  <Button variant="outline" className="gap-2">
-                    About Our Mission
+            </div>
+
+            <Suspense fallback={<div style={{ minHeight: "600px" }} aria-hidden="true" />}>
+              <InternalLinkBlock
+                title="Find Treatment by State"
+                variant="states"
+              />
+              <InternalLinkBlock
+                title="Treatment Programs"
+                variant="treatments"
+              />
+              <InternalLinkBlock
+                title="Insurance Coverage Guides"
+                variant="insurance"
+              />
+              <InternalLinkBlock
+                title="Find Treatment Near You"
+                variant="nearme"
+              />
+            </Suspense>
+          </div>
+        </section>
+      </LazySection>
+
+      {/* CTA Section */}
+      <section className="py-10 md:py-14 lg:py-20">
+        <div className="container px-4 md:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl">
+            {/* Main CTA Card */}
+            <div className="rounded-xl border border-border bg-card p-6 md:p-8 lg:p-10 text-center">
+              <h2 className="font-display text-xl md:text-2xl font-semibold text-foreground lg:text-3xl">
+                Start Your Recovery Journey
+              </h2>
+              <p className="mt-1.5 md:mt-2 text-muted-foreground text-[15px] md:text-base lg:text-lg max-w-md mx-auto">
+                Connect with verified treatment centers or list your facility in our directory.
+              </p>
+              <div className="mt-5 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 md:gap-3">
+                <Link to={buildConciergeHref({ location: homepageConciergeLocation, source: "homepage_footer_cta" })}>
+                  <Button size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
+                    <Heart className="h-4 w-4" />
+                    Find Treatment
+                  </Button>
+                </Link>
+                <Link to="/for-providers">
+                  <Button variant="outline" size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
+                    List Your Facility
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -644,79 +942,11 @@ const Index = () => {
         </div>
       </section>
 
-      {/* International CTA */}
-      <Suspense fallback={<div className="h-64 bg-muted animate-pulse" />}>
-        <InternationalCTA />
-      </Suspense>
-
-      {/* Blog/Resources Section */}
-      <section className="py-10 md:py-12 lg:py-24 bg-muted/30">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-12 gap-4">
-            <div>
-              <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">Latest Resources</h2>
-              <p className="mt-2 text-muted-foreground">Expert advice and guides for your recovery journey</p>
-            </div>
-            <Link to="/resources">
-              <Button variant="ghost" className="gap-2 group">
-                View all articles
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {blogArticles.map((article) => (
-              <Link key={article.id} to={`/resources/${article.id}`} className="group flex flex-col bg-card rounded-2xl border border-border overflow-hidden transition-all hover:shadow-xl hover:border-primary/20">
-                <div className="aspect-[16/9] overflow-hidden">
-                  <img 
-                    src={article.image} 
-                    alt={article.title} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-6 flex-1 flex flex-col">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-xs font-bold text-primary uppercase tracking-wider">{article.category}</span>
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {article.readTime}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                    {article.title}
-                  </h3>
-                  <p className="text-muted-foreground text-sm line-clamp-3 mb-6">
-                    {article.excerpt}
-                  </p>
-                  <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
-                    <span className="text-xs font-medium text-foreground">By {article.author}</span>
-                    <span className="text-primary text-sm font-bold inline-flex items-center gap-1">
-                      Read More
-                      <ArrowRight className="h-3 w-3" />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <Suspense fallback={<div className="h-96 bg-muted animate-pulse" />}>
-        <TestimonialsSection testimonials={seekerTestimonials} />
-      </Suspense>
-
-      {/* FAQ Section */}
-      <Suspense fallback={<div className="h-96 bg-muted animate-pulse" />}>
-        <PageFAQ faqs={homeFaqs} />
-      </Suspense>
-
-      {/* SEO Internal Links */}
-      <Suspense fallback={<div className="h-64 bg-muted animate-pulse" />}>
-        <InternalLinkBlock />
-      </Suspense>
+      <LazySection fallbackHeight="300px">
+        <Suspense fallback={<div style={{ minHeight: "300px" }} aria-hidden="true" />}>
+          {homeFaqs.length > 0 && <PageFAQ faqs={homeFaqs} className="border-t border-border bg-muted/30" />}
+        </Suspense>
+      </LazySection>
     </Layout>
   );
 };

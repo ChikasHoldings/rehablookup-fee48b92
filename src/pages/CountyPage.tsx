@@ -7,6 +7,7 @@ import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
+import { cityInList } from "@/lib/cityNameMatch";
 import { getStateBySlug } from "@/data/locationSeoData";
 import { getCountyBySlug, getCountiesForState, getStateCountyData } from "@/data/countySeoData";
 import { getStateArticles } from "@/data/stateArticlesData";
@@ -43,17 +44,19 @@ export default function CountyPage() {
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
-  // Filter facilities for this county — match by city names within the county
+  // Filter facilities for this county — match by city names within the county.
+  // cityInList normalizes both sides for Saint/Fort/Mount/Point + punctuation
+  // so SAMHSA-imported facilities (e.g. city="St. Louis") match seed data
+  // (e.g. majorCities=["Saint Louis"]).
   const countyFacilities = useMemo(() => {
     if (!countyData || !stateData) return [];
     const stateNameLower = stateData.name.toLowerCase();
     const stateAbbrLower = stateData.abbreviation.toLowerCase();
-    const countyCities = countyData.majorCities.map(c => c.toLowerCase());
 
     let filtered = approvedFacilities.filter(f => {
       const stateMatch = f.state.toLowerCase() === stateNameLower || f.state.toLowerCase() === stateAbbrLower;
-      const cityMatch = countyCities.some(city => f.city.toLowerCase() === city);
-      return stateMatch && cityMatch;
+      if (!stateMatch) return false;
+      return cityInList(f.city, countyData.majorCities);
     });
 
     // Fallback: if fewer than 3, show all state facilities
