@@ -17,7 +17,7 @@ const heroImage = "/hero-recovery.webp";
 
 // Lazy-load below-fold sections to reduce initial JS bundle
 const InternalLinkBlock = lazy(() => import("@/components/seo/InternalLinkBlock").then(m => ({ default: m.InternalLinkBlock })));
-const InternationalCTA = lazy(() => import("@/components/home/InternationalCTA").then(m => ({ default: m.InternationalCTA })));
+const ProvidersCTA = lazy(() => import("@/components/home/ProvidersCTA").then(m => ({ default: m.ProvidersCTA })));
 const TestimonialsSection = lazy(() => import("@/components/testimonials/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
 const PageFAQ = lazy(() => import("@/components/seo/PageFAQ").then(m => ({ default: m.PageFAQ })));
 const seekerTestimonialsPromise = import("@/data/testimonials").then(m => m.seekerTestimonials);
@@ -713,10 +713,13 @@ const Index = () => {
         </Suspense>
       </LazySection>
 
-      {/* International Patients CTA */}
-      <LazySection fallbackHeight="200px">
-        <Suspense fallback={<div style={{ minHeight: "200px" }} aria-hidden="true" />}>
-          <InternationalCTA />
+      {/* For Treatment Providers CTA — repurposed from the previous
+          International Patients block on the homepage. The dedicated
+          /us-rehab/international-patients page remains untouched and
+          is still reached via the international banner + footer. */}
+      <LazySection fallbackHeight="380px">
+        <Suspense fallback={<div style={{ minHeight: "380px" }} aria-hidden="true" />}>
+          <ProvidersCTA />
         </Suspense>
       </LazySection>
 
