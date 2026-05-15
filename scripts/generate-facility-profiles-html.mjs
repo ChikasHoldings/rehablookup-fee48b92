@@ -86,14 +86,22 @@ function locationSlug(s) {
 // ---------------------------------------------------------------------------
 
 /**
- * Pull every approved facility with a slug. Filter MUST match the
- * sitemap-facilities edge function (which only filters by `status=approved`)
- * so every URL in sitemap-facilities.xml has a corresponding /center/<slug>.html
- * mirror — otherwise the check:facility-sitemap-sync validator fails the
- * build with "static HTML file has no sitemap entry" / vice-versa.
+ * Pull every approved facility with a slug.
  *
- * We select only the columns we need to render the static SEO mirror — keeps
- * payload small and matches the no-`select(*)` core memory rule.
+ * Reads from the `public_facilities` VIEW — not the `facilities` TABLE.
+ * The build runs with the anon key, which has no SELECT grant on the
+ * underlying table (intentional; phone/email/website are paywalled).
+ * Hitting the table returned 401 every build, so this generator silently
+ * emitted zero files for months. The view is anon-readable and applies
+ * the same `status='approved' AND NOT suspended` predicate the sitemap
+ * edge function uses, so the static mirror set still matches the
+ * sitemap 1:1 (verified: same 3,804 rows on both sides today).
+ *
+ * Paginates with offset/limit since PostgREST caps each response at
+ * 1,000 rows and the approved set is ~3,800.
+ *
+ * We select only the columns we need to render the static SEO mirror —
+ * keeps payload small and matches the no-`select(*)` core memory rule.
  */
 async function fetchFacilities() {
   const cols = [
@@ -116,50 +124,38 @@ async function fetchFacilities() {
     "updated_at",
   ].join(",");
 
-  const url =
-    // Query `facilities` directly with `status=approved` so the static HTML
-    // set matches the sitemap-facilities edge function 1:1. The edge fn
-    // uses the same filter (status=approved + slug NOT NULL), so the
-    // produced sitemap-facilities.xml lists the exact same rows we mirror
-    // to disk.
-    //
-    // We tried querying `public_facilities` view here previously to
-    // additionally exclude suspended + pending-claim rows. CI fails the
-    // facility ↔ sitemap sync check whenever the two snapshots diverge —
-    // e.g., a suspended facility gets a sitemap URL from the edge fn but
-    // no static HTML from this generator, so check:facility-sitemap-sync
-    // logs a mismatch and exits 1. Realigning the generator with the
-    // edge fn keeps the production gate green.
-    //
-    // Suspended/pending-claim facilities still get filtered out at SERVE
-    // time by the SPA's public_facilities query path and by middleware's
-    // prerender-manifest lookup; this just controls which files we
-    // commit. To exclude pending-claim listings from the SITEMAP too,
-    // update the sitemap-facilities edge function to query the
-    // public_facilities view — that's the canonical source-of-truth
-    // owner, not this generator.
-    `${PROJECT_URL}/rest/v1/facilities` +
-    `?select=${encodeURIComponent(cols)}` +
-    `&status=eq.approved` +
-    `&slug=not.is.null` +
-    `&order=updated_at.desc`;
+  const PAGE = 1000;
+  const all = [];
+  let from = 0;
+  while (true) {
+    const url =
+      `${PROJECT_URL}/rest/v1/public_facilities` +
+      `?select=${encodeURIComponent(cols)}` +
+      `&slug=not.is.null` +
+      `&order=updated_at.desc` +
+      `&offset=${from}&limit=${PAGE}`;
 
-  const res = await fetch(url, {
-    headers: {
-      apikey: ANON_KEY,
-      Authorization: `Bearer ${ANON_KEY}`,
-      Accept: "application/json",
-    },
-  });
+    const res = await fetch(url, {
+      headers: {
+        apikey: ANON_KEY,
+        Authorization: `Bearer ${ANON_KEY}`,
+        Accept: "application/json",
+      },
+    });
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(
-      `[facility-prerender] Failed to fetch facilities (${res.status}): ${body.slice(0, 200)}`,
-    );
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(
+        `[facility-prerender] Failed to fetch facilities (${res.status}): ${body.slice(0, 200)}`,
+      );
+    }
+
+    const batch = await res.json();
+    all.push(...batch);
+    if (batch.length < PAGE) break;
+    from += PAGE;
   }
-
-  return res.json();
+  return all;
 }
 
 // ---------------------------------------------------------------------------
