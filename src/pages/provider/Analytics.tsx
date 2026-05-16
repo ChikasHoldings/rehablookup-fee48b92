@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import { BarChart3, CalendarIcon, X, ChevronDown, Building2, Download } from "lucide-react";
+import { SubscriptionAnalyticsTab } from "@/components/provider/analytics/SubscriptionAnalyticsTab";
 import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
 import { CentralizedEngagementAnalytics } from "@/components/provider/CentralizedEngagementAnalytics";
 import { ProviderPerformanceAnalytics } from "@/components/provider/ProviderPerformanceAnalytics";
@@ -36,7 +37,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-type TabKey = "overview" | "engagement" | "leads" | "performance" | "roi";
+type TabKey = "overview" | "engagement" | "leads" | "performance" | "roi" | "subscription";
 
 export default function ProviderAnalyticsPage() {
   const shouldOpenCalendarFromMenuRef = useRef(false);
@@ -206,6 +207,7 @@ export default function ProviderAnalyticsPage() {
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: "overview", label: "Overview" },
+    { key: "subscription", label: "Subscription" },
     { key: "engagement", label: "Engagement" },
     { key: "leads", label: "Leads" },
     { key: "performance", label: "Performance" },
@@ -486,6 +488,11 @@ export default function ProviderAnalyticsPage() {
         </div>
 
         {/* ── Tab Content ── */}
+        {activeTab === "subscription" && (
+          <SubscriptionAnalyticsTab
+            facilityId={selectedFacilityId !== "all" ? selectedFacilityId : (approvedFacilities[0]?.id ?? null)}
+          />
+        )}
         {activeTab === "overview" && (
           <div className="space-y-4 sm:space-y-6">
             <Card>
