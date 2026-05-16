@@ -163,10 +163,29 @@ function parseInlineMarkdown(text) {
 // ---------------------------------------------------------------------------
 // Content block renderer — converts JSONB content array to HTML
 // ---------------------------------------------------------------------------
+//
+// Some CMS articles include a "Frequently Asked Questions" heading without
+// any Q/A pairs after it. That emits an empty FAQ section to the static
+// page and trips the check-faq-jsonld validator (it sees the FAQ heading
+// but no FAQPage JSON-LD, fails the build). Filter those empty FAQ
+// headings out at render time — if the article gains real FAQ content
+// later, the CMS can add the heading back along with Q/A pairs and a
+// FAQPage block.
+function stripEmptyFaqHeadings(html) {
+  // Remove any "Frequently Asked Questions" h2 (with optional surrounding
+  // whitespace) that has no FAQ-Q content after it before the next h2 or
+  // end of input. Empty-paragraph blocks (`<p></p>` or `<p>\s*</p>`)
+  // following the heading are dropped along with it.
+  return html.replace(
+    /<h2>\s*Frequently Asked Questions\s*<\/h2>(?:\s*<p>\s*<\/p>)*(?=\s*<h2|\s*$)/gi,
+    "",
+  );
+}
+
 function renderContentBlocks(content) {
   if (!content || !Array.isArray(content)) return "";
 
-  return content
+  const rendered = content
     .map((block) => {
       // Legacy string-based content (Markdown-like strings)
       if (typeof block === "string") {
@@ -217,6 +236,38 @@ function renderContentBlocks(content) {
       return `<p>${parseInlineMarkdown(block.content || "")}</p>`;
     })
     .join("\n    ");
+
+  return stripEmptyFaqHeadings(rendered);
+}
+
+// Extract FAQPage JSON-LD from a rendered article body. Looks for an h2
+// "Frequently Asked Questions" followed by h3+p pairs, returns a
+// schema.org FAQPage object or null when there's no FAQ content.
+function buildFaqSchemaFromBody(html) {
+  if (!html) return null;
+  const sectionMatch = html.match(
+    /<h2>\s*Frequently[\s\S]*?Questions?\s*<\/h2>([\s\S]*?)(?=<h2|$)/i,
+  );
+  if (!sectionMatch) return null;
+  const section = sectionMatch[1];
+  const pairs = [];
+  const pairRe = /<h3>([\s\S]*?)<\/h3>\s*<p>([\s\S]*?)<\/p>/gi;
+  let m;
+  while ((m = pairRe.exec(section)) !== null) {
+    const q = m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+    const a = m[2].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+    if (q && a) pairs.push({ q, a });
+  }
+  if (pairs.length === 0) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: pairs.map(({ q, a }) => ({
+      "@type": "Question",
+      name: q,
+      acceptedAnswer: { "@type": "Answer", text: a },
+    })),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -281,6 +332,14 @@ function renderArticleHtml(article) {
     },
   };
 
+  // FAQPage schema — emitted when the article body has h3+p Q/A pairs
+  // under a "Frequently Asked Questions" heading. Pairs are extracted
+  // from the rendered HTML so the JSON-LD always matches the rendered
+  // text exactly. Empty FAQ sections were already stripped upstream by
+  // stripEmptyFaqHeadings.
+  const renderedBody = article.content ? renderContentBlocks(article.content) : "";
+  const faqSchema = buildFaqSchemaFromBody(renderedBody);
+
   // BreadcrumbList schema
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -337,7 +396,8 @@ function renderArticleHtml(article) {
   <meta name="twitter:image" content="${escapeHtml(ogImage)}">
   <meta name="twitter:image:alt" content="${metaTitle}">
   <script type="application/ld+json">${jsonLd(articleSchema)}</script>
-  <script type="application/ld+json">${jsonLd(breadcrumbSchema)}</script>
+  <script type="application/ld+json">${jsonLd(breadcrumbSchema)}</script>${faqSchema ? `
+  <script type="application/ld+json">${jsonLd(faqSchema)}</script>` : ""}
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 1rem 1.5rem; color: #1a1a2e; line-height: 1.6; }
     header { border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem; margin-bottom: 1.5rem; }
