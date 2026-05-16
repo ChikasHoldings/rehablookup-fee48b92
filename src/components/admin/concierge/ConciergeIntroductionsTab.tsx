@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -6,7 +6,7 @@ import { getCaseEventActorType } from "@/lib/caseEventActor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -15,9 +15,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Send, Clock, CheckCircle, XCircle, MessageSquare, Loader2, Eye, EyeOff, Shield } from "lucide-react";
+import { Clock, CheckCircle, XCircle, MessageSquare, Loader2, Eye, Shield } from "lucide-react";
 import { format } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { SendIntroductionsBatchAction } from "./SendIntroductionsBatchAction";
+import { PlacementPartnerBadge } from "./PlacementPartnerBadge";
+import { useFacilityPartnerStatus } from "@/hooks/useFacilityPartnerStatus";
 
 type ConciergeInquiry = Database["public"]["Tables"]["concierge_inquiries"]["Row"];
 type ConciergeIntroduction = Database["public"]["Tables"]["concierge_introductions"]["Row"];
@@ -37,8 +40,28 @@ const RESPONSE_STATUS = {
 
 export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntroductionsTabProps) {
   const { adminRole } = useAdminAuth();
-  const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [disclosingTo, setDisclosingTo] = useState<string | null>(null);
+  const [selectedFacilityIds, setSelectedFacilityIds] = useState<Set<string>>(new Set());
+
+  // Clinical criteria snapshot for the EKRA audit + partner-status geo match.
+  const clinicalCriteria = useMemo(
+    () => ({
+      geo_state: caseData.preferred_state ?? caseData.desired_location_state ?? null,
+      geo_city: caseData.preferred_city ?? caseData.desired_location_city ?? null,
+      level_of_care: caseData.level_of_care ?? null,
+      insurance: caseData.insurance_carrier ?? null,
+      primary_concern: caseData.primary_concern ?? null,
+    }),
+    [
+      caseData.preferred_state,
+      caseData.desired_location_state,
+      caseData.preferred_city,
+      caseData.desired_location_city,
+      caseData.level_of_care,
+      caseData.insurance_carrier,
+      caseData.primary_concern,
+    ],
+  );
 
   // Fetch introductions for this inquiry
   const { data: introductions, isLoading, refetch: refetchIntros } = useQuery({
@@ -95,114 +118,72 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
     enabled: allMatchedFacilityIds.length > 0,
   });
 
-  // Send introduction mutation
-  const sendIntroMutation = useMutation({
-    mutationFn: async (facilityId: string) => {
-      setSendingTo(facilityId);
-
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Duplicate guard: check if intro already exists for this facility
-      const { data: existingIntro } = await supabase
-        .from("concierge_introductions")
-        .select("id")
-        .eq("inquiry_id", caseData.id)
-        .eq("facility_id", facilityId)
-        .maybeSingle();
-
-      if (existingIntro) {
-        throw new Error("An introduction has already been sent to this facility.");
-      }
-
-      // Create introduction record
-      const { data: introData, error } = await supabase
-        .from("concierge_introductions")
-        .insert({
-          inquiry_id: caseData.id,
-          facility_id: facilityId,
-          sent_by: user?.id,
-          sent_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Trigger auto-status transition for introduction sent — pass granular
-      // admin role so the resulting auto-logged case event is properly attributed.
-      await supabase.functions.invoke("auto-status-transition", {
-        body: {
-          inquiryId: caseData.id,
-          trigger: "introduction_sent",
-          actorId: user?.id,
-          actorType: getCaseEventActorType(adminRole),
-        },
-      });
-
-      // Atomic-ish increment with optimistic lock on the prior count to prevent
-      // the read-modify-write race when two intros are sent concurrently.
-      const priorCount = caseData.introductions_sent_count || 0;
-      const { data: incUpdated } = await supabase
-        .from("concierge_inquiries")
-        .update({ introductions_sent_count: priorCount + 1 })
-        .eq("id", caseData.id)
-        .eq("introductions_sent_count", priorCount)
-        .select("id")
-        .maybeSingle();
-      if (!incUpdated) {
-        const { data: fresh } = await supabase
-          .from("concierge_inquiries")
-          .select("introductions_sent_count")
-          .eq("id", caseData.id)
-          .maybeSingle();
-        const latest = fresh?.introductions_sent_count ?? priorCount;
-        await supabase
-          .from("concierge_inquiries")
-          .update({ introductions_sent_count: latest + 1 })
-          .eq("id", caseData.id)
-          .eq("introductions_sent_count", latest);
-      }
-
-      // Send email notification to facility
-      try {
-        const response = await supabase.functions.invoke("send-concierge-introduction", {
-          body: {
-            inquiryId: caseData.id,
-            facilityId: facilityId,
-            introductionId: introData.id,
-          },
-        });
-
-        if (response.error) {
-          console.error("Email notification failed:", response.error);
-        }
-      } catch (emailError) {
-        console.error("Failed to send email:", emailError);
-      }
-
-      // Notify the seeker that introductions are being sent
-      try {
-        await supabase.functions.invoke("send-concierge-notifications", {
-          body: {
-            type: "introductions_sent",
-            inquiryId: caseData.id,
-          },
-        });
-      } catch (notifError) {
-        console.error("Failed to send seeker notification:", notifError);
-      }
-    },
-    onSuccess: () => {
-      toast.success("Introduction sent and facility notified");
-      refetchIntros();
-      onRefresh();
-      setSendingTo(null);
-    },
-    onError: (error) => {
-      toast.error("Failed to send introduction: " + error.message);
-      setSendingTo(null);
-    },
+  // Partner status for every available facility — drives the badge in the
+  // selection list and feeds the EKRA audit on the batch send.
+  const { data: partnerSet } = useFacilityPartnerStatus({
+    facilityIds: (availableFacilities ?? []).map((f) => f.id),
+    seekerState: clinicalCriteria.geo_state,
+    seekerCity: clinicalCriteria.geo_city,
   });
+  const partners = partnerSet ?? new Set<string>();
+
+  const surfacedCandidates = useMemo(
+    () =>
+      (availableFacilities ?? []).map((f) => ({
+        facility_id: f.id,
+        facility_name: f.name,
+        facility_summary: [f.city, f.state].filter(Boolean).join(", "),
+      })),
+    [availableFacilities],
+  );
+  const selectedCandidates = useMemo(
+    () => surfacedCandidates.filter((c) => selectedFacilityIds.has(c.facility_id)),
+    [surfacedCandidates, selectedFacilityIds],
+  );
+
+  const toggleFacilitySelection = (facilityId: string) => {
+    setSelectedFacilityIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(facilityId)) next.delete(facilityId);
+      else if (next.size < 10) next.add(facilityId);
+      else toast.warning("You can select at most 10 facilities per batch.");
+      return next;
+    });
+  };
+
+  const handleBatchCompleted = async () => {
+    // Mirror the per-facility flow's side-effects so other tabs / case state
+    // stay in sync. The audit row and email sends were already issued by the
+    // batch action itself.
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.functions.invoke("auto-status-transition", {
+      body: {
+        inquiryId: caseData.id,
+        trigger: "introduction_sent",
+        actorId: user?.id,
+        actorType: getCaseEventActorType(adminRole),
+      },
+    });
+
+    const sentCount = selectedFacilityIds.size;
+    const priorCount = caseData.introductions_sent_count || 0;
+    await supabase
+      .from("concierge_inquiries")
+      .update({ introductions_sent_count: priorCount + sentCount })
+      .eq("id", caseData.id);
+
+    try {
+      await supabase.functions.invoke("send-concierge-notifications", {
+        body: { type: "introductions_sent", inquiryId: caseData.id },
+      });
+    } catch (notifErr) {
+      console.error("Failed to send seeker notification:", notifErr);
+    }
+
+    setSelectedFacilityIds(new Set());
+    refetchIntros();
+    onRefresh();
+  };
 
   // Update response mutation
   const updateResponseMutation = useMutation({
@@ -308,44 +289,66 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
 
   return (
     <div className="space-y-4">
-      {/* Send New Introduction */}
+      {/* Select facilities to introduce */}
       {availableFacilities && availableFacilities.length > 0 && (
         <Card>
           <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Send Introduction</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Select facilities to introduce
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Choose up to 10. You'll confirm the EKRA non-partner consideration
+              before sending.
+            </p>
           </CardHeader>
           <CardContent className="py-2">
             <div className="space-y-2">
-              {availableFacilities.map((facility) => (
-                <div
-                  key={facility.id}
-                  className="flex items-center justify-between p-2 border rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">{facility.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {facility.city}, {facility.state}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => sendIntroMutation.mutate(facility.id)}
-                    disabled={sendingTo === facility.id}
+              {availableFacilities.map((facility) => {
+                const isPartner = partners.has(facility.id);
+                const isChecked = selectedFacilityIds.has(facility.id);
+                return (
+                  <label
+                    key={facility.id}
+                    htmlFor={`intro-facility-${facility.id}`}
+                    className="flex items-center justify-between gap-3 p-2 border rounded-lg cursor-pointer hover:bg-slate-50"
                   >
-                    {sendingTo === facility.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Checkbox
+                        id={`intro-facility-${facility.id}`}
+                        checked={isChecked}
+                        onCheckedChange={() => toggleFacilitySelection(facility.id)}
+                      />
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{facility.name}</p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {facility.city}, {facility.state}
+                        </p>
+                      </div>
+                    </div>
+                    {isPartner ? (
+                      <PlacementPartnerBadge />
                     ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-1" />
-                        Send
-                      </>
+                      <Badge variant="outline" className="text-[10px]">
+                        Non-partner
+                      </Badge>
                     )}
-                  </Button>
-                </div>
-              ))}
+                  </label>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Batch send + EKRA audit confirmation */}
+      {selectedCandidates.length > 0 && (
+        <SendIntroductionsBatchAction
+          inquiryId={caseData.id}
+          selected={selectedCandidates}
+          surfaced={surfacedCandidates}
+          clinicalCriteria={clinicalCriteria}
+          onCompleted={handleBatchCompleted}
+        />
       )}
 
       {/* Sent Introductions */}
