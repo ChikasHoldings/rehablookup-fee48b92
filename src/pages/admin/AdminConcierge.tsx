@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { pluckNonNull } from "@/lib/nullableRows";
 import { useQuery } from "@tanstack/react-query";
+import { AdvisorReminder } from "@/components/admin/concierge/AdvisorReminder";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -167,6 +168,7 @@ export default function AdminConcierge() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <AdvisorReminder />
       <AdminPageHeader
         icon={HeartHandshake}
         iconGradient="bg-gradient-to-br from-primary to-primary/70"
