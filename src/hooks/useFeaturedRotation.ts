@@ -37,6 +37,11 @@ interface FeaturedRotationResult {
   facilities: FeaturedRotationFacility[];
   pool_size: number;
   seed: number;
+  /** True when no paid Featured subscribers covered the bucket and
+   *  the edge function fell back to top-rated approved facilities.
+   *  Clients use this to relabel the section ("Top-Rated" not
+   *  "Featured") so the paid/organic line stays honest. */
+  is_fallback?: boolean;
 }
 
 /**
@@ -45,10 +50,14 @@ interface FeaturedRotationResult {
  * doesn't shuffle the cards; sees a deterministic slice of the pool.
  *
  * Returns an empty `facilities` list when:
- *   • the bucket has no eligible subscribers (silent absence is the
- *     designed empty state — don't render a placeholder)
+ *   • the bucket has no eligible subscribers AND fallback is disabled
  *   • the placement_value is falsy (the caller hasn't resolved it yet,
  *     e.g. on a /[loc]-near-me page before geo-IP completes)
+ *
+ * `fallback_to_top_rated` (default false) tells the edge function to
+ * return top-rated approved facilities matching the bucket when the
+ * paid pool is empty, so the section always has something to render.
+ * The returned `is_fallback` flag flips when this path is hit.
  *
  * `log_impressions` defaults to true (legacy rail behavior — server
  * logs one impression per facility returned). The FeaturedStrip
@@ -60,10 +69,12 @@ export function useFeaturedRotation(args: {
   placement_value: string | null | undefined;
   slot_count: number;
   log_impressions?: boolean;
+  fallback_to_top_rated?: boolean;
 }) {
   const seed = useMemo(() => getOrCreateRotationSeed(), []);
   const pagePath = typeof window !== "undefined" ? window.location.pathname : null;
   const logImpressions = args.log_impressions ?? true;
+  const fallback = args.fallback_to_top_rated ?? false;
 
   return useQuery({
     queryKey: [
@@ -73,10 +84,11 @@ export function useFeaturedRotation(args: {
       args.slot_count,
       seed,
       logImpressions,
+      fallback,
     ],
     queryFn: async (): Promise<FeaturedRotationResult> => {
       if (!args.placement_value) {
-        return { facilities: [], pool_size: 0, seed };
+        return { facilities: [], pool_size: 0, seed, is_fallback: false };
       }
       const { data, error } = await supabase.functions.invoke("get-featured-rotation", {
         body: {
@@ -86,6 +98,7 @@ export function useFeaturedRotation(args: {
           seed,
           page_path: pagePath,
           log_impressions: logImpressions,
+          fallback_to_top_rated: fallback,
         },
       });
       if (error) throw error;

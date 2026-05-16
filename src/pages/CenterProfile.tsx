@@ -109,6 +109,10 @@ interface FacilityData {
   updated_at: string;
   concierge_network_opted_in: boolean | null;
   accepts_international_patients: boolean | null;
+  // Verified-contact gate: when has_facility_verified_contact is true
+  // the page prefers verified_phone over phone for the Call CTA.
+  has_facility_verified_contact?: boolean | null;
+  verified_phone?: string | null;
   facility_services: { service_name: string }[];
   facility_insurance: { insurance_name: string }[];
   facility_age_groups: { age_group: string }[];
@@ -992,31 +996,38 @@ const CenterProfile = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col xs:flex-row items-stretch gap-2 px-3 py-3 sm:px-4 md:px-6 border-t border-border/30 bg-card">
-              {/* Call — native dialer via tel:. Only renders when the
-                  facility's contact details are exposable (Pro plan,
-                  see showContactDetails) AND the row has a phone. The
-                  global useTelClickTracking handler logs the click via
-                  the standard phone_click event; trackInteraction
-                  preserves the page-local "call" interaction signal. */}
-              {showContactDetails && facility.phone && (
-                <Button
-                  asChild
-                  size="lg"
-                  className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold shadow-sm"
-                >
-                  <a
-                    href={`tel:+1${getPhoneDigits(facility.phone)}`}
-                    onClick={() => trackInteraction("call")}
-                    aria-label={`Call ${facility.name} at ${formatPhoneNumber(facility.phone)}`}
-                    data-cta-location="hero_call"
+              {/* Call — native dialer via tel:. Phone selection per
+                  spec: verified_phone when has_facility_verified_contact
+                  is true, else the public phone. Renders any time we
+                  have a callable number; the global useTelClickTracking
+                  handler logs the click via the standard phone_click
+                  event, and trackInteraction preserves the page-local
+                  "call" interaction signal. */}
+              {(() => {
+                const callPhone = facility.has_facility_verified_contact && facility.verified_phone
+                  ? facility.verified_phone
+                  : facility.phone;
+                if (!callPhone) return null;
+                return (
+                  <Button
+                    asChild
+                    size="lg"
+                    className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold shadow-sm"
                   >
-                    <Phone className="h-4 w-4 shrink-0" />
-                    <span className="truncate whitespace-nowrap">
-                      Call {formatPhoneNumber(facility.phone)}
-                    </span>
-                  </a>
-                </Button>
-              )}
+                    <a
+                      href={`tel:+1${getPhoneDigits(callPhone)}`}
+                      onClick={() => trackInteraction("call")}
+                      aria-label={`Call ${facility.name} at ${formatPhoneNumber(callPhone)}`}
+                      data-cta-location="hero_call"
+                    >
+                      <Phone className="h-4 w-4 shrink-0" />
+                      <span className="truncate whitespace-nowrap">
+                        Call {formatPhoneNumber(callPhone)}
+                      </span>
+                    </a>
+                  </Button>
+                );
+              })()}
               <Button
                 variant="outline"
                 size="lg"

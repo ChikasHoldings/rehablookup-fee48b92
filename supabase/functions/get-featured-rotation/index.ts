@@ -43,6 +43,14 @@ const RequestSchema = z.object({
   seed: z.number().int().min(0).max(99).default(0),
   page_path: z.string().max(2048).optional(),
   log_impressions: z.boolean().default(true),
+  /**
+   * When true AND the paid Featured pool for the bucket is empty,
+   * fall back to top-rated approved+verified facilities matching the
+   * bucket. Returned facilities carry is_fallback=true so the client
+   * can adjust the section's title ("Top-Rated" vs "Featured") and
+   * avoid implying paid placement when none exists.
+   */
+  fallback_to_top_rated: z.boolean().default(false),
 });
 
 interface EligibleFacility {
@@ -80,6 +88,275 @@ function sortLocs(services: string[]): string[] {
     const bi = LOC_ORDER[b.toLowerCase()] ?? 99;
     return ai - bi || a.localeCompare(b);
   });
+}
+
+// Shared facility-shape used by both the paid-rotation and
+// fallback paths. The fallback omits `activated_at` because it
+// isn't loaded from featured_placements.
+type FacilityShape = Omit<EligibleFacility, "activated_at"> & { activated_at?: string };
+
+// US state abbreviation → friendly name. Used by the near_me
+// fallback (placement_value is the abbreviation; facilities.state
+// stores the friendly name).
+const US_STATE_ABBR_TO_NAME: Record<string, string> = {
+  AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
+  CO: "Colorado", CT: "Connecticut", DE: "Delaware", FL: "Florida", GA: "Georgia",
+  HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa",
+  KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland",
+  MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri",
+  MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey",
+  NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio",
+  OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina",
+  SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont",
+  VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming",
+  DC: "District of Columbia",
+};
+
+/**
+ * Enrich a list of facilities with their top services + top insurance.
+ * One small batch fetch per facility list rather than a per-row N+1.
+ * Adds the computed display_phone + position_in_rail per the response
+ * contract. Returns the response-shaped array.
+ */
+async function enrichFacilities(
+  supabase: ReturnType<typeof createClient>,
+  facilities: FacilityShape[],
+  facilityIds: string[],
+): Promise<Array<Record<string, unknown>>> {
+  const [servicesRes, insuranceRes] = await Promise.all([
+    supabase
+      .from("facility_services")
+      .select("facility_id, service_name")
+      .in("facility_id", facilityIds),
+    supabase
+      .from("facility_insurance")
+      .select("facility_id, insurance_name")
+      .in("facility_id", facilityIds),
+  ]);
+
+  if (servicesRes.error) {
+    console.error("[get-featured-rotation] services fetch failed", servicesRes.error);
+  }
+  if (insuranceRes.error) {
+    console.error("[get-featured-rotation] insurance fetch failed", insuranceRes.error);
+  }
+
+  const servicesByFacility = new Map<string, string[]>();
+  for (const row of servicesRes.data ?? []) {
+    const fid = (row as { facility_id: string }).facility_id;
+    const name = (row as { service_name: string }).service_name;
+    if (!servicesByFacility.has(fid)) servicesByFacility.set(fid, []);
+    servicesByFacility.get(fid)!.push(name);
+  }
+  const insuranceByFacility = new Map<string, string[]>();
+  for (const row of insuranceRes.data ?? []) {
+    const fid = (row as { facility_id: string }).facility_id;
+    const name = (row as { insurance_name: string }).insurance_name;
+    if (!insuranceByFacility.has(fid)) insuranceByFacility.set(fid, []);
+    insuranceByFacility.get(fid)!.push(name);
+  }
+
+  return facilities.map((f, position) => {
+    const allServices = servicesByFacility.get(f.facility_id) ?? [];
+    const allInsurance = insuranceByFacility.get(f.facility_id) ?? [];
+    return {
+      facility_id: f.facility_id,
+      slug: f.slug,
+      name: f.name,
+      city: f.city,
+      state: f.state,
+      facility_type: f.facility_type,
+      description: f.description,
+      logo_url: f.logo_url,
+      verified: f.verified,
+      sponsored_tagline: f.sponsored_tagline,
+      top_levels_of_care: sortLocs(allServices).slice(0, 3),
+      top_insurance: [...allInsurance].sort((a, b) => a.localeCompare(b)).slice(0, 3),
+      display_phone: f.has_facility_verified_contact && f.verified_phone
+        ? f.verified_phone
+        : f.phone,
+      position_in_rail: position,
+    };
+  });
+}
+
+/**
+ * Fallback: when no paid Featured subscribers cover a bucket, surface
+ * top-rated approved+verified facilities that match the bucket's
+ * filter so the section still renders something useful.
+ *
+ *   homepage | search        → top approved verified, nationally
+ *   state | near_me          → WHERE state matches (via abbreviation
+ *                              for near_me; via slug→name for state).
+ *                              We resolve the state name once.
+ *   city                     → WHERE city slug matches (relaxed to
+ *                              case-insensitive city name match since
+ *                              facilities don't have a city slug col)
+ *   treatment                → JOIN facility_services on slug→service_name
+ *   insurance                → JOIN facility_insurance on slug→insurance_name
+ *   article                  → no fallback, return [] (article-specific
+ *                              buckets don't have a natural facility filter)
+ *
+ * Selection is deterministic on (bucket, seed): we fetch the top
+ * 30 candidates ordered by verified DESC, name ASC, then rotate
+ * `seed % candidates.length` to pick the slot_count window. This
+ * preserves the same EKRA-clean, per-visitor rotation contract as
+ * the paid path.
+ */
+async function fetchFallbackFacilities(
+  supabase: ReturnType<typeof createClient>,
+  placement_type: typeof PLACEMENT_TYPES[number],
+  placement_value: string,
+  slot_count: number,
+  seed: number,
+): Promise<FacilityShape[]> {
+  if (placement_type === "article") return [];
+
+  // Common select + ordering for every fallback flavor.
+  const SELECT =
+    "id, name, slug, city, state, facility_type, description, logo_url, " +
+    "phone, verified_phone, has_facility_verified_contact, verified, sponsored_tagline";
+  const FETCH_LIMIT = 30;
+
+  let rows: Array<Record<string, unknown>> = [];
+
+  if (placement_type === "homepage" || placement_type === "search") {
+    const { data, error } = await supabase
+      .from("facilities")
+      .select(SELECT)
+      .eq("status", "approved")
+      .order("verified", { ascending: false })
+      .order("name", { ascending: true })
+      .limit(FETCH_LIMIT);
+    if (error) {
+      console.error("[fallback] homepage/search fetch failed", error);
+      return [];
+    }
+    rows = data ?? [];
+  } else if (placement_type === "state" || placement_type === "near_me") {
+    // facilities.state stores the full friendly name ("California"),
+    // not the abbreviation. State pages pass a slug ("california");
+    // near-me pages pass a 2-letter abbreviation ("CA"). Resolve both
+    // to a friendly name before querying.
+    const friendly =
+      placement_value.length === 2
+        ? US_STATE_ABBR_TO_NAME[placement_value.toUpperCase()] ?? placement_value
+        : placement_value
+            .replace(/-/g, " ")
+            .replace(/\b\w/g, (m) => m.toUpperCase());
+    const { data, error } = await supabase
+      .from("facilities")
+      .select(SELECT)
+      .eq("status", "approved")
+      .ilike("state", friendly)
+      .order("verified", { ascending: false })
+      .order("name", { ascending: true })
+      .limit(FETCH_LIMIT);
+    if (error) {
+      console.error("[fallback] state/near_me fetch failed", error);
+      return [];
+    }
+    rows = data ?? [];
+  } else if (placement_type === "city") {
+    const cityNameGuess = placement_value
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (m) => m.toUpperCase());
+    const { data, error } = await supabase
+      .from("facilities")
+      .select(SELECT)
+      .eq("status", "approved")
+      .ilike("city", cityNameGuess)
+      .order("verified", { ascending: false })
+      .order("name", { ascending: true })
+      .limit(FETCH_LIMIT);
+    if (error) {
+      console.error("[fallback] city fetch failed", error);
+      return [];
+    }
+    rows = data ?? [];
+  } else if (placement_type === "treatment") {
+    // Slugs like "detox-programs" / "alcohol-rehabilitation" — match
+    // service_name with a fuzzy ILIKE on a few normalized forms.
+    const slugAsName = placement_value.replace(/-/g, " ");
+    const { data: serviceMatches, error: smErr } = await supabase
+      .from("facility_services")
+      .select("facility_id")
+      .ilike("service_name", `%${slugAsName}%`)
+      .limit(500);
+    if (smErr) {
+      console.error("[fallback] treatment service lookup failed", smErr);
+      return [];
+    }
+    const ids = Array.from(new Set((serviceMatches ?? []).map((r) => (r as { facility_id: string }).facility_id))).slice(0, 200);
+    if (ids.length === 0) return [];
+    const { data, error } = await supabase
+      .from("facilities")
+      .select(SELECT)
+      .in("id", ids)
+      .eq("status", "approved")
+      .order("verified", { ascending: false })
+      .order("name", { ascending: true })
+      .limit(FETCH_LIMIT);
+    if (error) {
+      console.error("[fallback] treatment facility fetch failed", error);
+      return [];
+    }
+    rows = data ?? [];
+  } else if (placement_type === "insurance") {
+    const slugAsName = placement_value
+      .replace(/-rehab$|-treatment$/, "")
+      .replace(/-/g, " ");
+    const { data: insuranceMatches, error: imErr } = await supabase
+      .from("facility_insurance")
+      .select("facility_id")
+      .ilike("insurance_name", `%${slugAsName}%`)
+      .limit(500);
+    if (imErr) {
+      console.error("[fallback] insurance lookup failed", imErr);
+      return [];
+    }
+    const ids = Array.from(new Set((insuranceMatches ?? []).map((r) => (r as { facility_id: string }).facility_id))).slice(0, 200);
+    if (ids.length === 0) return [];
+    const { data, error } = await supabase
+      .from("facilities")
+      .select(SELECT)
+      .in("id", ids)
+      .eq("status", "approved")
+      .order("verified", { ascending: false })
+      .order("name", { ascending: true })
+      .limit(FETCH_LIMIT);
+    if (error) {
+      console.error("[fallback] insurance facility fetch failed", error);
+      return [];
+    }
+    rows = data ?? [];
+  }
+
+  if (rows.length === 0) return [];
+
+  // Rotate per seed so different visitors see different slices.
+  const startIndex = seed % rows.length;
+  const sliceLen = Math.min(slot_count, rows.length);
+  const out: FacilityShape[] = [];
+  for (let i = 0; i < sliceLen; i++) {
+    const r = rows[(startIndex + i) % rows.length];
+    out.push({
+      facility_id: (r.id as string),
+      name: (r.name as string),
+      slug: (r.slug as string | null),
+      city: (r.city as string),
+      state: (r.state as string),
+      facility_type: (r.facility_type as string | null),
+      description: (r.description as string | null),
+      logo_url: (r.logo_url as string | null),
+      phone: (r.phone as string | null),
+      verified_phone: (r.verified_phone as string | null),
+      has_facility_verified_contact: (r.has_facility_verified_contact as boolean | null),
+      verified: (r.verified as boolean | null),
+      sponsored_tagline: (r.sponsored_tagline as string | null) ?? null,
+    });
+  }
+  return out;
 }
 
 async function hashIp(ip: string | null): Promise<string | null> {
@@ -185,9 +462,50 @@ Deno.serve(async (req) => {
   });
 
   if (pool.length === 0) {
+    if (!parsed.data.fallback_to_top_rated) {
+      return new Response(
+        JSON.stringify({ facilities: [], pool_size: 0, seed: parsed.data.seed, is_fallback: false }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Fallback path: no paid Featured subscribers for this bucket, so
+    // surface top-rated approved+verified facilities that match the
+    // bucket's filter so the section still renders. The client gets
+    // is_fallback=true and re-labels the section ("Top-Rated" not
+    // "Featured") to keep the paid/organic line honest.
+    const fb = await fetchFallbackFacilities(
+      supabase,
+      parsed.data.placement_type,
+      parsed.data.placement_value,
+      parsed.data.slot_count,
+      parsed.data.seed,
+    );
+    if (fb.length === 0) {
+      return new Response(
+        JSON.stringify({ facilities: [], pool_size: 0, seed: parsed.data.seed, is_fallback: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const fbFacilityIds = fb.map((f) => f.facility_id);
+    const fbEnriched = await enrichFacilities(supabase, fb, fbFacilityIds);
     return new Response(
-      JSON.stringify({ facilities: [], pool_size: 0, seed: parsed.data.seed }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({
+        facilities: fbEnriched,
+        pool_size: fb.length,
+        seed: parsed.data.seed,
+        is_fallback: true,
+        placement_type: parsed.data.placement_type,
+        placement_value: parsed.data.placement_value,
+      }),
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "Cache-Control": "public, max-age=300, s-maxage=300",
+        },
+      },
     );
   }
 
@@ -200,67 +518,8 @@ Deno.serve(async (req) => {
     rotated.push(pool[(startIndex + i) % pool.length]);
   }
 
-  // Enrich each rotated facility with its top services + top insurance
-  // — used by the strip's full card layout. One small batch fetch per
-  // facility list rather than a per-row N+1.
   const facilityIds = rotated.map((f) => f.facility_id);
-  const [servicesRes, insuranceRes] = await Promise.all([
-    supabase
-      .from("facility_services")
-      .select("facility_id, service_name")
-      .in("facility_id", facilityIds),
-    supabase
-      .from("facility_insurance")
-      .select("facility_id, insurance_name")
-      .in("facility_id", facilityIds),
-  ]);
-
-  if (servicesRes.error) {
-    console.error("[get-featured-rotation] services fetch failed", servicesRes.error);
-  }
-  if (insuranceRes.error) {
-    console.error("[get-featured-rotation] insurance fetch failed", insuranceRes.error);
-  }
-
-  const servicesByFacility = new Map<string, string[]>();
-  for (const row of servicesRes.data ?? []) {
-    const fid = (row as { facility_id: string }).facility_id;
-    const name = (row as { service_name: string }).service_name;
-    if (!servicesByFacility.has(fid)) servicesByFacility.set(fid, []);
-    servicesByFacility.get(fid)!.push(name);
-  }
-  const insuranceByFacility = new Map<string, string[]>();
-  for (const row of insuranceRes.data ?? []) {
-    const fid = (row as { facility_id: string }).facility_id;
-    const name = (row as { insurance_name: string }).insurance_name;
-    if (!insuranceByFacility.has(fid)) insuranceByFacility.set(fid, []);
-    insuranceByFacility.get(fid)!.push(name);
-  }
-
-  // Map to the response shape — the resolved display phone is computed
-  // here so the client doesn't have to know the verified-contact rule.
-  const facilities = rotated.map((f, position) => {
-    const allServices = servicesByFacility.get(f.facility_id) ?? [];
-    const allInsurance = insuranceByFacility.get(f.facility_id) ?? [];
-    return {
-      facility_id: f.facility_id,
-      slug: f.slug,
-      name: f.name,
-      city: f.city,
-      state: f.state,
-      facility_type: f.facility_type,
-      description: f.description,
-      logo_url: f.logo_url,
-      verified: f.verified,
-      sponsored_tagline: f.sponsored_tagline,
-      top_levels_of_care: sortLocs(allServices).slice(0, 3),
-      top_insurance: [...allInsurance].sort((a, b) => a.localeCompare(b)).slice(0, 3),
-      display_phone: f.has_facility_verified_contact && f.verified_phone
-        ? f.verified_phone
-        : f.phone,
-      position_in_rail: position,
-    };
-  });
+  const facilities = await enrichFacilities(supabase, rotated, facilityIds);
 
   // Log impressions (fire-and-forget — don't block the response).
   // Skipped entirely when log_impressions=false (strip surface — the
@@ -300,6 +559,7 @@ Deno.serve(async (req) => {
       facilities,
       pool_size: pool.length,
       seed: parsed.data.seed,
+      is_fallback: false,
       placement_type: parsed.data.placement_type,
       placement_value: parsed.data.placement_value,
     }),

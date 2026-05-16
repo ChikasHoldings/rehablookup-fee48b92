@@ -67,27 +67,40 @@ export function LandingFeaturedSection({
     placement_type,
     placement_value,
     slot_count: resolvedSlotCount,
-    // Per-card viewport-debounced impression logging keeps this
-    // honest — server-side bulk logging would inflate impressions for
-    // any section that sits below the fold.
     log_impressions: false,
+    // Always fall back to top-rated approved facilities when no paid
+    // Featured subscriber covers the bucket — keeps the section
+    // visible across the site instead of silent-absencing on 90%+
+    // of pages (current paid pool: 0).
+    fallback_to_top_rated: true,
   });
 
   const facilities = data?.facilities ?? [];
+  const isFallback = data?.is_fallback ?? false;
 
   if (!placement_value) return null;
   if (isLoading) return <LandingFeaturedSkeleton title={title} className={className} />;
   if (facilities.length === 0) return null;
+
+  // When falling back to organic top-rated, relabel so we don't imply
+  // paid placement. Caller-supplied title still wins.
+  const defaultTitle = isFallback
+    ? "Top-Rated Treatment Facilities"
+    : "Featured Treatment Facilities";
+  const defaultSubtitle = isFallback
+    ? "Verified, accredited facilities ready to help"
+    : "Verified, accredited facilities ready to help";
 
   return (
     <FeaturedScroller
       facilities={facilities}
       placement_type={placement_type}
       placement_value={placement_value}
-      title={title ?? "Featured Treatment Facilities"}
-      subtitle={subtitle ?? "Verified, accredited facilities ready to help"}
+      title={title ?? defaultTitle}
+      subtitle={subtitle ?? defaultSubtitle}
       view_all_href={view_all_href ?? "/rehab-centers"}
       className={className}
+      is_fallback={isFallback}
     />
   );
 }
@@ -100,6 +113,11 @@ interface ScrollerProps {
   subtitle: string;
   view_all_href: string;
   className?: string;
+  /** True when the rendered facilities come from the fallback top-rated
+   *  pool (no paid Featured subscribers covered the bucket). Suppresses
+   *  the strip-impression log + the "Featured" chip on the cards so the
+   *  paid-placement signal stays accurate. */
+  is_fallback?: boolean;
 }
 
 function FeaturedScroller({
@@ -110,6 +128,7 @@ function FeaturedScroller({
   subtitle,
   view_all_href,
   className,
+  is_fallback,
 }: ScrollerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -140,7 +159,12 @@ function FeaturedScroller({
   // the scroller. A single IntersectionObserver attached to the
   // scroll container catches each card as it crosses 50% visible,
   // dwells 500ms, then fires once per (facility_id, page view).
+  //
+  // Skipped entirely when is_fallback is true — those rows aren't
+  // paid Featured slots, so logging them would inflate the
+  // featured_impressions analytics and conflate organic with paid.
   useEffect(() => {
+    if (is_fallback) return;
     const el = scrollRef.current;
     if (!el) return;
     const cards = el.querySelectorAll<HTMLElement>("[data-featured-card]");
@@ -179,7 +203,7 @@ function FeaturedScroller({
       for (const t of dwellTimers.values()) window.clearTimeout(t);
       dwellTimers.clear();
     };
-  }, [facilities, logImpression]);
+  }, [facilities, logImpression, is_fallback]);
 
   const scroll = useCallback((dir: "left" | "right") => {
     const el = scrollRef.current;
@@ -262,8 +286,8 @@ function FeaturedScroller({
                 className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px] snap-start"
               >
                 <TreatmentCenterCard
-                  center={facilityFromRotation(f)}
-                  featured
+                  center={facilityFromRotation(f, !is_fallback)}
+                  featured={!is_fallback}
                 />
               </div>
             ))}
@@ -280,7 +304,10 @@ function FeaturedScroller({
  * already there; the rest are filled with sensible defaults so the
  * card renders cleanly without optional-chaining throughout.
  */
-function facilityFromRotation(f: FeaturedRotationFacility): TreatmentCenter & {
+function facilityFromRotation(
+  f: FeaturedRotationFacility,
+  isPaidFeatured: boolean,
+): TreatmentCenter & {
   slug: string | null;
   isFromDatabase: boolean;
   logo_url: string | null;
@@ -300,7 +327,7 @@ function facilityFromRotation(f: FeaturedRotationFacility): TreatmentCenter & {
     insuranceAccepted: f.top_insurance ?? [],
     description: f.sponsored_tagline ?? f.description ?? "",
     programOverview: "",
-    featured: true,
+    featured: isPaidFeatured,
     rating: null,
     reviewCount: 0,
     amenities: [],
@@ -308,8 +335,8 @@ function facilityFromRotation(f: FeaturedRotationFacility): TreatmentCenter & {
     slug: f.slug,
     isFromDatabase: true,
     logo_url: f.logo_url,
-    hasFeaturedSubscription: true,
-    isPro: true,
+    hasFeaturedSubscription: isPaidFeatured,
+    isPro: isPaidFeatured,
     verified: f.verified,
   };
 }
