@@ -12,6 +12,7 @@ import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { FacilityCard, type FacilityCardData } from "@/components/cards/FacilityCard";
 import { FeaturedRail } from "@/components/featured/FeaturedRail";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
@@ -393,17 +394,20 @@ const CityPage = () => {
         </div>
       </section>
 
+      {/* Featured rotation — paid Featured pool for this city, mounted
+          directly under the hero. Visual matches the homepage Featured
+          section for cross-site consistency. Silent absence when no
+          Featured subscribers serve this city. */}
+      <LandingFeaturedSection
+        placement_type="city"
+        placement_value={cityData.slug}
+        title={`Featured Treatment Facilities in ${cityData.name}`}
+        view_all_href={`/search-results?location=${encodeURIComponent(fullLocation)}`}
+      />
+
       {/* Results - Always at the top under hero */}
       <section className="bg-background py-10 md:py-14">
         <div className="container">
-          {/* Featured rail — bucket (city, <city slug>). Silent absence
-              when no Featured subscribers serve this city. */}
-          <FeaturedRail
-            placement_type="city"
-            placement_value={cityData.slug}
-            className="mb-10"
-          />
-
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
               Treatment Centers in {cityData.name}

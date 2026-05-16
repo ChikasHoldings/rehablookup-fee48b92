@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import {
   MapPin, Building2, ChevronRight, Search, Phone, ArrowRight,
   CheckCircle, Shield, Clock, Star, Heart, ChevronDown, HelpCircle,
@@ -208,6 +209,19 @@ export default function CountyPage() {
           </div>
         </div>
       </section>
+
+      {/* Featured rotation — county pages share the parent state's
+          Featured pool (placement_type='state', placement_value=
+          state slug) since the rotation system has no dedicated
+          county bucket. Silent absence when no Featured subscribers
+          serve the state. Visual matches the homepage Featured
+          section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="state"
+        placement_value={stateData.slug}
+        title={`Featured Treatment Facilities serving ${countyData.name} County`}
+        view_all_href={`/search-results?location=${encodeURIComponent(`${countyData.name} County, ${stateData.name}`)}`}
+      />
 
       {/* County Stats Bar */}
       <section className="bg-muted/30 border-b">

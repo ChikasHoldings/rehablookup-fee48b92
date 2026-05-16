@@ -24,6 +24,7 @@ import { getStateArticles } from "@/data/stateArticlesData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
 import { FeaturedRail } from "@/components/featured/FeaturedRail";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { NearbyStatesLinks } from "@/components/seo/CityLinkGrid";
 import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
@@ -371,18 +372,22 @@ const StatePage = () => {
         </div>
       </section>
 
+      {/* Featured rotation — paid Featured pool for this state.
+          Mounted directly under the hero so seekers see paid
+          placements before the organic list. Silent absence when no
+          Featured subscribers match this bucket. Visual matches the
+          homepage Featured section (bordered container + scroll
+          arrows + TreatmentCenterCard) for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="state"
+        placement_value={stateData.slug}
+        title={`Featured Treatment Facilities in ${stateData.name}`}
+        view_all_href={`/search-results?location=${encodeURIComponent(stateData.name)}`}
+      />
+
       {/* Results - Always at the top under hero */}
       <section className="bg-background py-10 md:py-14">
         <div className="container">
-          {/* Featured rail — paid placements above organic results.
-              Bucket: (state, <state slug>). Silent absence when no
-              Featured subscribers in this state. */}
-          <FeaturedRail
-            placement_type="state"
-            placement_value={stateData.slug}
-            className="mb-10"
-          />
-
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-foreground">

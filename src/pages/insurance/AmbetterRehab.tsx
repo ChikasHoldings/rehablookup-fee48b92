@@ -7,6 +7,7 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import { InternalLinkingSection, treatmentTypeLinks, nearMeLinks, resourceLinks } from "@/components/seo/InternalLinkingSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import { Shield, CheckCircle, ArrowRight, Phone, MapPin, FileText, Clock, DollarSign, Building2, Users, Stethoscope, Heart, AlertCircle } from "lucide-react";
 
@@ -52,6 +53,17 @@ export default function AmbetterRehab() {
           </div>
         </div>
       </section>
+
+      {/* Featured rotation — paid Featured pool for this
+          page's bucket, mounted directly under the hero. Visual
+          matches the homepage Featured section for cross-site
+          consistency. Silent absence when the bucket has no
+          active Featured subscribers. */}
+      <LandingFeaturedSection
+        placement_type="insurance"
+        placement_value="ambetter-rehab"
+        title="Featured Centers Accepting Ambetter"
+      />
 
       <section className="border-b border-border bg-muted/50 py-4"><div className="container"><div className="flex items-center justify-center gap-3 text-sm text-muted-foreground"><AlertCircle className="h-4 w-4 text-primary shrink-0" /><p><span className="font-medium text-foreground">Coverage varies by plan level and state.</span> Contact Ambetter to verify your specific behavioral health benefits.</p></div></div></section>
 

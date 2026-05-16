@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import {
   Shield,
@@ -170,6 +171,17 @@ export default function KaiserRehab() {
           </div>
         </div>
       </section>
+
+      {/* Featured rotation — paid Featured pool for this
+          page's bucket, mounted directly under the hero. Visual
+          matches the homepage Featured section for cross-site
+          consistency. Silent absence when the bucket has no
+          active Featured subscribers. */}
+      <LandingFeaturedSection
+        placement_type="insurance"
+        placement_value="kaiser-rehab"
+        title="Featured Centers Accepting Kaiser"
+      />
 
       {/* Important Notice */}
       <section className="border-b border-border bg-muted/50 py-4">

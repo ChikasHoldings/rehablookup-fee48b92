@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { FeaturedRail } from "@/components/featured/FeaturedRail";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { SEO, generateFAQSchema, generateLocalBusinessAggregateSchema } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -178,6 +178,15 @@ export default function AetnaRehab() {
         </div>
       </section>
 
+      {/* Featured rotation — paid Featured pool for this carrier,
+          mounted directly under the hero. Visual matches the homepage
+          Featured section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="insurance"
+        placement_value="aetna-rehab"
+        title="Featured Centers Accepting Aetna"
+      />
+
       {/* Important Notice */}
       <section className="border-b border-border bg-muted/50 py-4">
         <div className="container">
@@ -191,17 +200,6 @@ export default function AetnaRehab() {
         </div>
       </section>
 
-      {/* Featured rail — bucket (insurance, 'aetna-rehab'). 5 slots.
-          Silent absence when no Featured subscribers in this carrier. */}
-      <section className="py-8 md:py-10">
-        <div className="container">
-          <FeaturedRail
-            placement_type="insurance"
-            placement_value="aetna-rehab"
-            slot_count={5}
-          />
-        </div>
-      </section>
 
       {/* What Aetna Covers */}
       <section className="py-10 md:py-14">

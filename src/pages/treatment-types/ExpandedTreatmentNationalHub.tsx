@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { statesData } from "@/data/locationSeoData";
@@ -220,6 +221,17 @@ const ExpandedTreatmentNationalHub = ({ treatmentKey }: ExpandedTreatmentNationa
             </div>
           </div>
         </section>
+
+        {/* Featured rotation — paid Featured pool for this treatment
+            type's bucket, mounted directly under the hero. The
+            treatment slug comes from the URL (treatmentKey prop).
+            Visual matches the homepage Featured section for cross-
+            site consistency. */}
+        <LandingFeaturedSection
+          placement_type="treatment"
+          placement_value={treatmentKey}
+          title={`Featured ${config.title}`}
+        />
 
         {/* Overview */}
         <section className="py-12">

@@ -10,6 +10,7 @@ import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { statesData } from "@/data/locationSeoData";
 import { TrustBar } from "@/components/seo/TrustBar";
 import { ConversionSection } from "@/components/seo/ConversionSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin } from "lucide-react";
 import {
@@ -415,6 +416,17 @@ export default function GenericNearMePage({ configSlug }: GenericNearMePageProps
       />
 
       <TrustBar />
+
+      {/* Featured rotation — paid Featured pool for the visitor's
+          geo-resolved state, mounted directly under the hero/trust
+          bar. Visual matches the homepage Featured section. Renders
+          nothing until geo-IP resolves (per spec: don't fall back to
+          national on near-me — too random for this surface). */}
+      <LandingFeaturedSection
+        placement_type="near_me"
+        placement_value={stateData?.stateAbbr ?? null}
+        title={stateData ? `Featured ${config.treatmentType} Centers in ${stateData.state}` : `Featured ${config.treatmentType} Centers Near You`}
+      />
 
       <section className="py-12 bg-background">
         <div className="container">

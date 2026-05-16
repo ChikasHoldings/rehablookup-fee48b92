@@ -28,6 +28,7 @@ import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 const programTypes = [
   {
     title: "Medical Detox",
@@ -211,6 +212,17 @@ const AlcoholRehabilitation = () => {
           </div>
         </div>
       </section>
+
+      {/* Featured rotation — paid Featured pool for this
+          page's bucket, mounted directly under the hero. Visual
+          matches the homepage Featured section for cross-site
+          consistency. Silent absence when the bucket has no
+          active Featured subscribers. */}
+      <LandingFeaturedSection
+        placement_type="treatment"
+        placement_value="alcohol-rehabilitation"
+        title="Featured Alcohol Rehabilitation Programs"
+      />
 
       {/* Trust Bar */}
       <section className="border-b border-border bg-card py-4">

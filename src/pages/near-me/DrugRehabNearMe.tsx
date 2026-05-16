@@ -17,7 +17,7 @@ import {
   resourceLinks 
 } from "@/components/seo/InternalLinkingSection";
 import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
-import { FeaturedRail } from "@/components/featured/FeaturedRail";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 
 export default function DrugRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
@@ -94,19 +94,20 @@ export default function DrugRehabNearMe() {
         treatmentType="Drug Rehab"
       />
 
+      {/* Featured rotation — paid Featured pool for the visitor's
+          geo-resolved state, mounted directly under the hero. Visual
+          matches the homepage Featured section. Renders nothing
+          until geo-IP resolves (per spec: don't fall back to
+          national on near-me — too random for this surface). */}
+      <LandingFeaturedSection
+        placement_type="near_me"
+        placement_value={stateData?.stateAbbr ?? null}
+        title={stateData ? `Featured Drug Rehab Centers in ${stateData.state}` : "Featured Drug Rehab Centers Near You"}
+      />
+
       {/* Facility Listings */}
       <section className="py-12 bg-background">
         <div className="container">
-          {/* Featured rail — bucket (near_me, <state abbr>). Renders
-              nothing when stateData isn't resolved (geo-IP miss or
-              loading), per the spec: don't fall back to national on
-              near-me pages — would be too random for this surface. */}
-          <FeaturedRail
-            placement_type="near_me"
-            placement_value={stateData?.stateAbbr ?? null}
-            className="mb-8"
-          />
-
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground treatment-intro">
               Drug Rehabilitation Centers {stateData ? `in ${stateData.state}` : "Near You"}

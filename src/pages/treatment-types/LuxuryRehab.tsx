@@ -27,6 +27,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 const faqs = [
   {
     question: "What makes luxury rehab different from standard treatment?",
@@ -119,6 +120,15 @@ export default function LuxuryRehab() {
           </div>
         </div>
       </section>
+
+      {/* Featured rotation — paid Featured pool for this treatment
+          bucket, mounted directly under the hero. Visual matches the
+          homepage Featured section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="treatment"
+        placement_value="luxury-rehab"
+        title="Featured Luxury Rehab Programs"
+      />
 
       {/* Features Grid */}
       <section className="py-12 bg-background">

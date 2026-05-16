@@ -21,7 +21,7 @@ import {
 import { ReactNode, useMemo } from "react";
 import { MidArticleCTA } from "@/components/articles/MidArticleCTA";
 import { ArticleShareBar } from "@/components/articles/ArticleShareBar";
-import { FeaturedStrip } from "@/components/featured/FeaturedStrip";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { 
   InternalLinkingSection, 
   treatmentTypeLinks, 
@@ -614,6 +614,19 @@ const ArticleDetail = () => {
         </div>
       </div>
 
+      {/* Featured rotation — paid Featured pool for this article's
+          bucket, mounted directly under the hero. Same visual as the
+          homepage Featured section for cross-site consistency.
+          Renders nothing when blog_articles.featured_placement_bucket
+          is NULL OR when the bucket has no active Featured
+          subscribers. */}
+      <LandingFeaturedSection
+        placement_type="article"
+        placement_value={article.featured_placement_bucket}
+        slot_count={6}
+        title="Featured Treatment Facilities"
+      />
+
       {/* Content */}
       <section className="py-12 md:py-16">
         <div className="container">
@@ -647,23 +660,11 @@ const ArticleDetail = () => {
                 />
               </div>
 
-              {/* End-of-article Featured Strip — paid placement
-                  rotated per-visitor via the rl_rot_seed cookie. Only
-                  renders when an admin has tagged the article with a
-                  featured_placement_bucket AND the bucket has at
-                  least one active Featured subscriber. Silent
-                  absence otherwise — no placeholder. */}
-              {article.featured_placement_bucket && (
-                <div className="mt-10 -mx-4 sm:-mx-6 lg:-mx-8">
-                  <FeaturedStrip
-                    placement_type="article"
-                    placement_value={article.featured_placement_bucket}
-                    visible_slot_count={6}
-                    title="Featured Treatment Centers"
-                    subtitle="Verified and ready to help"
-                  />
-                </div>
-              )}
+              {/* (Featured rotation moved to top of page — see
+                  LandingFeaturedSection mount above, directly under
+                  the hero. Single Featured surface per page keeps
+                  visual treatment consistent with the homepage and
+                  every other landing page in the site.) */}
 
               {/* Enhanced Related Articles with Smart Linking */}
               {smartRelatedArticles && smartRelatedArticles.length > 0 && (

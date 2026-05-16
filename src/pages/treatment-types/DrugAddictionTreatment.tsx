@@ -6,7 +6,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
-import { FeaturedRail } from "@/components/featured/FeaturedRail";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import {
   Pill,
   ArrowRight,
@@ -188,15 +188,14 @@ const DrugAddictionTreatment = () => {
         </div>
       </section>
 
-      {/* Featured rail — bucket (treatment, 'drug-addiction-treatment'). */}
-      <section className="py-8 md:py-10">
-        <div className="container">
-          <FeaturedRail
-            placement_type="treatment"
-            placement_value="drug-addiction-treatment"
-          />
-        </div>
-      </section>
+      {/* Featured rotation — paid Featured pool, mounted directly
+          under the hero. Visual matches the homepage Featured
+          section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="treatment"
+        placement_value="drug-addiction-treatment"
+        title="Featured Drug Addiction Treatment Programs"
+      />
 
       {/* Trust Bar */}
       <section className="border-b border-border bg-card py-4">
