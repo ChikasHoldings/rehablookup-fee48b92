@@ -28,6 +28,58 @@ const PRO_PRODUCT_IDS = [
   "prod_TbyzJVNOQL71NN", // featured
 ];
 
+// New flat-fee monetization lookup keys (created by
+// scripts/stripe-setup-monetization.ts). Webhook derives the tier +
+// addon flags from which of these appear in the subscription items.
+const LOOKUP_KEYS = {
+  PRO: "rl_pro_annual_v1",
+  FEATURED: "rl_featured_annual_v1",
+  CONCIERGE: "rl_concierge_annual_v1",
+} as const;
+
+/**
+ * Inspect a Stripe subscription's items and return:
+ *   - tier:                "pro" if any item matches the Pro lookup key
+ *   - has_featured:        true if any item matches the Featured key
+ *   - has_concierge_partner: true if any item matches the Concierge key
+ *   - paid_amount_cents:   sum of unit_amount × quantity across all items
+ * Falls through to {tier:null, ...} if no new lookup keys are present
+ * (legacy subscriptions still fall through to the older code path).
+ */
+function deriveTierFlagsFromSubscription(sub: Stripe.Subscription) {
+  let isPro = false;
+  let hasFeatured = false;
+  let hasConcierge = false;
+  let paidAmountCents = 0;
+  for (const item of sub.items.data) {
+    const lookupKey = item.price.lookup_key;
+    if (lookupKey === LOOKUP_KEYS.PRO) isPro = true;
+    if (lookupKey === LOOKUP_KEYS.FEATURED) hasFeatured = true;
+    if (lookupKey === LOOKUP_KEYS.CONCIERGE) hasConcierge = true;
+    paidAmountCents += (item.price.unit_amount ?? 0) * (item.quantity ?? 1);
+  }
+  return {
+    tier: isPro ? "pro" : null,
+    has_featured: hasFeatured,
+    has_concierge_partner: hasConcierge,
+    paid_amount_cents: paidAmountCents,
+    matched_new_lookup_keys: isPro || hasFeatured || hasConcierge,
+  };
+}
+
+/**
+ * STUB — refund computation lands in monetization PR 2. Keeps the
+ * webhook code path live so subscription.deleted events don't 500;
+ * actual refund Stripe calls happen in the follow-up PR.
+ */
+function stubComputeCancellationRefund(_subscriptionId: string) {
+  console.log(
+    "[stripe-webhook] subscription cancellation received — refund stub returning null. " +
+      "Real refund logic ships in monetization PR 2.",
+  );
+  return null; // null = "not yet implemented; route to manual flow"
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -857,8 +909,18 @@ Deno.serve(async (req) => {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
 
+          // Derive new monetization flags from the subscription items.
+          // Falls back to legacy price_cents if no new lookup keys
+          // matched (older subscriptions still flow through here).
+          const flagsCheckout = deriveTierFlagsFromSubscription(subscription);
+          const monthlyEquivalentCents = flagsCheckout.matched_new_lookup_keys
+            ? (9900 +
+                (flagsCheckout.has_featured ? 59900 : 0) +
+                (flagsCheckout.has_concierge_partner ? 100000 : 0))
+            : 39900;
+
           const { error: proError } = await supabaseAdmin
-            .from("pro_subscriptions")
+            .from("facility_subscriptions")
             .upsert({
               provider_id: userId,
               facility_id: facilityId,
@@ -866,7 +928,15 @@ Deno.serve(async (req) => {
               stripe_customer_id: customerId,
               status: "active",
               unlock_discount_percent: 20,
-              price_cents: 39900,
+              price_cents: monthlyEquivalentCents,
+              tier: "pro",
+              has_featured: flagsCheckout.has_featured,
+              has_concierge_partner: flagsCheckout.has_concierge_partner,
+              billing_period: "annual",
+              paid_amount_cents: flagsCheckout.matched_new_lookup_keys
+                ? flagsCheckout.paid_amount_cents
+                : null,
+              period_start: new Date(subscription.current_period_start * 1000).toISOString(),
               started_at: new Date().toISOString(),
               current_period_end: currentPeriodEnd,
               updated_at: new Date().toISOString(),
@@ -960,7 +1030,7 @@ Deno.serve(async (req) => {
         : subscription.status;
 
       const { error: updateError } = await supabaseAdmin
-        .from("pro_subscriptions")
+        .from("facility_subscriptions")
         .update({
           status: mappedStatus,
           current_period_end: currentPeriodEnd,
@@ -976,7 +1046,7 @@ Deno.serve(async (req) => {
 
         // Fetch the pro_subscription record for all status-change handling below
         const { data: proSub } = await supabaseAdmin
-          .from("pro_subscriptions")
+          .from("facility_subscriptions")
           .select("provider_id, facility_id")
           .eq("stripe_subscription_id", subscription.id)
           .maybeSingle();
@@ -1348,7 +1418,23 @@ Deno.serve(async (req) => {
         const amount = priceItem?.price?.unit_amount || 0;
         const currency = (priceItem?.price?.currency || "usd").toUpperCase();
 
-        if (priceItem?.price?.product) {
+        // Try the new flat-fee monetization lookup keys first.
+        // If the subscription has any of `rl_pro_annual_v1`,
+        // `rl_featured_annual_v1`, `rl_concierge_annual_v1`, derive
+        // tier + addon flags from those. Falls through to the legacy
+        // PRO_PRODUCT_IDS check otherwise.
+        const flags = deriveTierFlagsFromSubscription(subscription);
+        if (flags.matched_new_lookup_keys) {
+          planTier = flags.tier;
+          planName =
+            flags.has_featured && flags.has_concierge_partner
+              ? "Pro + Featured + Concierge (annual)"
+              : flags.has_featured
+                ? "Pro + Featured (annual)"
+                : flags.has_concierge_partner
+                  ? "Pro + Concierge (annual)"
+                  : "Pro (annual)";
+        } else if (priceItem?.price?.product) {
           const product = await stripe.products.retrieve(priceItem.price.product as string);
           planName = product.name;
           productId = product.id;
@@ -1528,15 +1614,21 @@ Deno.serve(async (req) => {
             .limit(1);
 
           if (facilities?.[0]) {
-            // Update pro_subscriptions to cancelled
+            // Update facility_subscriptions to cancelled
             await supabaseAdmin
-              .from("pro_subscriptions")
-              .update({ 
-                status: "canceled", 
+              .from("facility_subscriptions")
+              .update({
+                status: "canceled",
                 canceled_at: new Date().toISOString(),
-                updated_at: new Date().toISOString() 
+                updated_at: new Date().toISOString()
               })
               .eq("stripe_subscription_id", subscription.id);
+
+            // Trigger refund computation. STUB returns null in this PR
+            // (foundation); the real flat-monthly × months_used math
+            // ships in monetization PR 2 and will write a row into
+            // subscription_cancellations + issue the Stripe refund.
+            stubComputeCancellationRefund(subscription.id);
 
             // DEACTIVATE PRO BENEFITS: remove featured flag and ranking boost from ALL provider facilities
             const providerId = profiles[0].user_id;

@@ -1,8 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { getCachedSession } from "@/lib/sessionCache";
-import { toast } from "sonner";
-import { analytics } from "@/lib/analytics";
+// TODO(monetization rebuild): the pay-per-lead-unlock model was dropped
+// in the foundation PR. The `lead_unlocks` table no longer exists. This
+// hook is stubbed to keep callers compiling and rendering empty states
+// until the dependent UI is removed in a follow-up PR.
+//
+// Hook stays exported with the same signature so LeadDetailPanel /
+// LeadDetailDrawer / UnlockLeadButton don't crash at runtime; every
+// returned value is the "no unlock activity" baseline.
+
+import { useMutation } from "@tanstack/react-query";
 
 export interface LeadUnlock {
   id: string;
@@ -14,102 +19,29 @@ export interface LeadUnlock {
   provider_id?: string;
 }
 
-export function useLeadUnlocks(facilityId?: string) {
-  const queryClient = useQueryClient();
+const NOOP_LEAD_UNLOCKS: LeadUnlock[] = [];
 
-  const query = useQuery({
-    queryKey: ["lead-unlocks", facilityId],
-    queryFn: async (): Promise<LeadUnlock[]> => {
-      const session = await getCachedSession();
-      if (!session) return [];
-
-      let queryBuilder = supabase
-        .from("lead_unlocks")
-        .select("id, lead_id, facility_id, unlock_price_cents, unlocked_at, payment_method, provider_id")
-        .order("unlocked_at", { ascending: false });
-
-      if (facilityId) {
-        queryBuilder = queryBuilder.eq("facility_id", facilityId);
-      }
-
-      const { data, error } = await queryBuilder;
-
-      if (error) {
-        console.error("[useLeadUnlocks] Error fetching unlocks:", error);
-        return [];
-      }
-
-      return data as LeadUnlock[];
-    },
-    enabled: true,
-    staleTime: 1000 * 60 * 2,
-    refetchOnWindowFocus: true,
-  });
-
-  // Check if a specific lead is unlocked
-  const isLeadUnlocked = (leadId: string): boolean => {
-    return query.data?.some(unlock => unlock.lead_id === leadId) ?? false;
-  };
-
-  // Get unlock details for a lead
-  const getUnlockDetails = (leadId: string): LeadUnlock | undefined => {
-    return query.data?.find(unlock => unlock.lead_id === leadId);
-  };
-
-  // Mutation to unlock a lead
+export function useLeadUnlocks(_facilityId?: string) {
   const unlockLead = useMutation({
-    mutationFn: async ({
-      leadId,
-      facilityId: fId,
-      paymentMethod = 'credits',
-    }: {
-      leadId: string;
-      facilityId: string;
-      paymentMethod?: 'credits' | 'stripe';
-    }) => {
-      const { data, error } = await supabase.functions.invoke("unlock-lead", {
-        body: { leadId, facilityId: fId, paymentMethod },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: (data, variables) => {
-      // Track lead unlock (analytics.leadUnlocked — provider removed)
-      const priceCents = typeof data?.priceCents === 'number' ? data.priceCents : 0;
-      analytics.leadUnlocked(
-        variables.leadId,
-        variables.facilityId,
-        priceCents,
-        variables.paymentMethod || 'credits',
-        data?.discountApplied
+    mutationFn: async () => {
+      throw new Error(
+        "Lead unlocking has been retired — facility subscriptions deliver leads directly. " +
+          "If you reached this code path, file an issue.",
       );
-
-      queryClient.invalidateQueries({ queryKey: ["lead-unlocks"] });
-      queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
-      queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-      queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
-      queryClient.invalidateQueries({ queryKey: ["lead-analytics"] });
-
-      // M1: trust server-computed discountAmount only — never client-passed value.
-      const serverDiscount = typeof data?.discountAmount === "number" ? data.discountAmount : 0;
-      if (data?.discountApplied && serverDiscount > 0) {
-        toast.success(`Lead unlocked! Pro discount saved you $${(serverDiscount / 100).toFixed(2)}`);
-      } else {
-        toast.success("Lead unlocked! You can now view contact details.");
-      }
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to unlock lead");
     },
   });
 
   return {
-    ...query,
-    unlocks: query.data ?? [],
-    isLeadUnlocked,
-    getUnlockDetails,
+    data: NOOP_LEAD_UNLOCKS,
+    unlocks: NOOP_LEAD_UNLOCKS,
+    isLoading: false,
+    isFetching: false,
+    isError: false as const,
+    error: null,
+    refetch: async () => ({ data: NOOP_LEAD_UNLOCKS }),
+    isLeadUnlocked: (_leadId: string) => true, // Pro tier: every lead is "unlocked" by default
+    getUnlockDetails: (_leadId: string): LeadUnlock | undefined => undefined,
     unlockLead,
-    isUnlocking: unlockLead.isPending,
+    isUnlocking: false,
   };
 }

@@ -49,7 +49,9 @@ CREATE INDEX IF NOT EXISTS provider_interest_email_idx ON public.provider_intere
 
 -- updated_at auto-bump
 CREATE OR REPLACE FUNCTION public.bump_provider_interest_updated_at()
-RETURNS trigger LANGUAGE plpgsql AS $$
+RETURNS trigger LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
