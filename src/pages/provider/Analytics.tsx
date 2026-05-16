@@ -122,7 +122,10 @@ export default function ProviderAnalyticsPage() {
         ]);
       }
       if (leadData?.conversionFunnel) {
-        const { newLeads, contacted, qualified, converted } = leadData.conversionFunnel;
+        // `new` is a reserved word — rename via destructure pattern so the
+        // local binding doesn't collide. The source type from
+        // useCentralizedLeadAnalytics returns `{ new, contacted, qualified, converted }`.
+        const { new: newLeads, contacted, qualified, converted } = leadData.conversionFunnel;
         rows.push(["Inquiries → New", "", String(newLeads), "", ""]);
         rows.push(["Inquiries → Contacted", "", String(contacted), "", ""]);
         rows.push(["Inquiries → Qualified", "", String(qualified), "", ""]);
