@@ -20,6 +20,7 @@ import {
   insuranceLinks,
   resourceLinks,
 } from "@/components/seo/InternalLinkingSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { useMemo } from "react";
 
 /**
@@ -187,6 +188,17 @@ export default function NearMeCityPage() {
         treatmentType={nearMeType.treatmentType}
         location={{ state: stateData.name, stateAbbr: stateData.abbreviation }}
         facilityCount={facilities.length}
+      />
+
+      {/* Featured rotation — paid Featured pool for the
+          visitor's geo-resolved state. Visual matches the
+          homepage Featured section for cross-site consistency.
+          Silent absence until geo resolves AND the state has an
+          active Featured subscriber. */}
+      <LandingFeaturedSection
+        placement_type="city"
+        placement_value={cityData?.slug ?? null}
+        title={cityData ? `Featured Rehab Centers in ${cityData.name}` : `Featured Rehab Centers Near You`}
       />
 
       <TrustBar />

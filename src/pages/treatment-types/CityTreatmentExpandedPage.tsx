@@ -7,6 +7,7 @@ import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { shouldEmitFAQSchema, getFacilityDensity, getUrbanClassification } from "@/utils/seoPageValidator";
 import {
   Search, ArrowRight, Shield, Clock, CheckCircle, MapPin, Heart, Phone,
@@ -268,6 +269,15 @@ const CityTreatmentExpandedPage = ({ treatmentKey }: CityTreatmentExpandedPagePr
             </div>
           </div>
         </section>
+
+      {/* Featured rotation — paid Featured pool for this
+          city, mounted directly under the hero. Visual matches
+          the homepage Featured section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="city"
+        placement_value={citySlug}
+        title={`Featured Treatment in ${cityName}`}
+      />
 
         {/* Content Sections */}
         <section className="py-12">

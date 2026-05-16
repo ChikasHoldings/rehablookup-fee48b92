@@ -6,6 +6,7 @@ import { statesData } from "@/data/locationSeoData";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 import {
   Phone,
@@ -144,6 +145,15 @@ const CityAlcoholRehab = () => {
           </div>
         </div>
       </section>
+
+      {/* Featured rotation — paid Featured pool for this
+          city, mounted directly under the hero. Visual matches
+          the homepage Featured section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="city"
+        placement_value={citySlug}
+        title={`Featured Alcohol Rehab in ${cityData.name}`}
+      />
 
       {/* Trust Bar */}
       <section className="border-b bg-muted/30 py-4">

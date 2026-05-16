@@ -8,6 +8,7 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import {
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
@@ -206,6 +207,15 @@ const StateTreatmentExpandedPage = ({ treatmentKey }: StateTreatmentExpandedPage
           </div>
         </div>
       </section>
+
+      {/* Featured rotation — paid Featured pool for this
+          state, mounted directly under the hero. Visual matches
+          the homepage Featured section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="state"
+        placement_value={stateSlug}
+        title={`Featured Treatment in ${stateName}`}
+      />
 
       {/* Trust Bar */}
       <section className="border-b bg-muted/30 py-4">

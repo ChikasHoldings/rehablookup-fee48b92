@@ -7,6 +7,7 @@ import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import {
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
@@ -111,6 +112,15 @@ const StateDualDiagnosis = () => {
           </div>
         </div>
       </section>
+
+      {/* Featured rotation — paid Featured pool for this
+          state, mounted directly under the hero. Visual matches
+          the homepage Featured section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="state"
+        placement_value={stateSlug}
+        title={`Featured Dual Diagnosis Treatment in ${stateName}`}
+      />
 
       <section className="border-b border-border bg-card py-4">
         <div className="container">

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 
 const substancesTreated = [
@@ -143,6 +144,15 @@ const CityDrugAddiction = () => {
           </div>
         </div>
       </section>
+
+      {/* Featured rotation — paid Featured pool for this
+          city, mounted directly under the hero. Visual matches
+          the homepage Featured section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="city"
+        placement_value={citySlug}
+        title={`Featured Drug Addiction Treatment in ${cityData.name}`}
+      />
 
       {/* Trust Bar */}
       <section className="border-b bg-muted/30 py-4">

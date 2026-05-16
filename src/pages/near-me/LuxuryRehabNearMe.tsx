@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO, generateNearMeSchema } from "@/components/SEO";
 import { NearMeHero } from "@/components/seo/NearMeHero";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
@@ -104,6 +105,17 @@ export default function LuxuryRehabNearMe() {
         treatmentType="Luxury Addiction Treatment"
         location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
+      />
+
+      {/* Featured rotation — paid Featured pool for the
+          visitor's geo-resolved state. Visual matches the
+          homepage Featured section for cross-site consistency.
+          Silent absence until geo resolves AND the state has an
+          active Featured subscriber. */}
+      <LandingFeaturedSection
+        placement_type="near_me"
+        placement_value={stateData?.stateAbbr ?? null}
+        title={stateData ? `Featured Luxury Rehab Centers in ${stateData.state}` : `Featured Luxury Rehab Centers Near You`}
       />
 
       {/* Luxury Features */}
