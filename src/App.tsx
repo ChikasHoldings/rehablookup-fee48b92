@@ -19,6 +19,7 @@ import { queryClient } from "@/lib/queryClient";
 
 // Eagerly load homepage for instant LCP
 import Index from "./pages/Index";
+const InquiryConfirmationPage = lazy(() => import("./pages/InquiryConfirmation"));
 import { SmartCatchAll } from "./components/SmartCatchAll";
 
 // Lazy load all other public pages for reduced initial bundle
@@ -552,6 +553,7 @@ const AppInner = () => {
           <Routes>
             {/* Public Routes - Providers are redirected away */}
             <Route path="/" element={<PublicRouteGuard><Index /></PublicRouteGuard>} />
+            <Route path="/inquiry/confirmation/:inquiryId" element={<PublicRouteGuard><InquiryConfirmationPage /></PublicRouteGuard>} />
             <Route path="/locations" element={<PublicRouteGuard><Locations /></PublicRouteGuard>} />
             <Route path="/rehab-centers" element={<PublicRouteGuard><RehabCenters /></PublicRouteGuard>} />
             <Route path="/compare" element={<PublicRouteGuard><FacilityCompare /></PublicRouteGuard>} />

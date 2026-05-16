@@ -141,6 +141,7 @@ export function LeadIntakeForm({
           checkAndAutoVerifyEmail={checkAndAutoVerifyEmail}
           isSubmitting={isSubmitting}
           facilityName={facilityName}
+          facilityId={facilityId}
         />
       </div>
     </LeadFormErrorBoundary>
