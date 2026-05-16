@@ -203,8 +203,8 @@ export function ToursTab({ caseData }: ToursTabProps) {
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       
-      const { error } = await supabase
-        .from("concierge_tour_requests")
+      const { error } = await (supabase
+        .from("concierge_tour_requests") as any)
         .update(updates)
         .eq("id", tourId);
 

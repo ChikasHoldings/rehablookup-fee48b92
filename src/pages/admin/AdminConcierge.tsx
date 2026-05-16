@@ -23,7 +23,6 @@ import { formatDistanceToNow } from "date-fns";
 import { PlacementOpsDashboard } from "@/components/admin/concierge/PlacementOpsDashboard";
 import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvidersTab";
 import { InternationalCasesTab } from "@/components/admin/concierge/InternationalCasesTab";
-import { RevenueProtectionDashboard } from "@/components/admin/concierge/RevenueProtectionDashboard";
 import { getCaseNextAction } from "@/components/admin/concierge/placementActionUtils";
 import { CaseAlertIcons } from "@/components/admin/concierge/CaseSlaAlerts";
 import { VISUAL_STAGES, getVisualStage, STATUS_CONFIG } from "@/components/admin/concierge/placementPipelineConfig";
@@ -239,11 +238,8 @@ export default function AdminConcierge() {
                   <span className="text-xs sm:text-sm">Network</span>
                   {!!networkCount && <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{networkCount}</Badge>}
                 </TabsTrigger>
-                {/* Invoices tab retired — pay-per-admission placement_invoices dropped. */}
-                <TabsTrigger value="revenue" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
-                  <DollarSign className="h-3.5 w-3.5" />
-                  <span className="text-xs sm:text-sm">Revenue</span>
-                </TabsTrigger>
+                {/* Invoices + Revenue Protection tabs retired — pay-per-admission
+                    placement_invoices + admission_verifications tables dropped. */}
               </>
             )}
           </TabsList>
@@ -425,12 +421,6 @@ export default function AdminConcierge() {
           <NetworkProvidersTab />
         </TabsContent>
 
-        {/* Invoices tab retired — pay-per-admission placement_invoices
-            table dropped in monetization rebuild. */}
-
-        <TabsContent value="revenue">
-          <RevenueProtectionDashboard />
-        </TabsContent>
       </Tabs>
 
       {/* PlacementDetailModal retired — placement_cases dropped in

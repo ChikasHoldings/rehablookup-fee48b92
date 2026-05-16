@@ -345,9 +345,9 @@ export function PlanSettingsTab() {
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Up to {PLAN_DETAILS.pro.location_limit} facility listings</li>
-                <li>• {PLAN_DETAILS.pro.unlock_discount}% off lead unlocks</li>
-                <li>• Featured homepage placement</li>
-                <li>• Priority search ranking</li>
+                <li>• Every qualified lead delivered with full contact details</li>
+                <li>• Analytics dashboard</li>
+                <li>• Priority support</li>
               </ul>
             </div>
           </div>

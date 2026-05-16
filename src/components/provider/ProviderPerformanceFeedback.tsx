@@ -24,14 +24,14 @@ export function ProviderPerformanceFeedback({ facilityId }: ProviderPerformanceF
         .gte("created_at", weekAgo.toISOString());
 
       // Leads unlocked this week
-      const { count: unlockedThisWeek } = await supabase
+      const { count: unlockedThisWeek } = await (supabase as any)
         .from("lead_unlocks")
         .select("id", { count: "exact", head: true })
         .eq("facility_id", facilityId)
         .gte("unlocked_at", weekAgo.toISOString());
 
       // Average response time (time between lead creation and unlock)
-      const { data: recentUnlocks } = await supabase
+      const { data: recentUnlocks } = await (supabase as any)
         .from("lead_unlocks")
         .select("lead_id, unlocked_at")
         .eq("facility_id", facilityId)

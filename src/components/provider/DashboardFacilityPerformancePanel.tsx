@@ -48,7 +48,7 @@ function useFacilityPerformanceMetrics(facilityId: string | undefined) {
         .limit(2000);
 
       // Fetch unlocks — bounded
-      const { data: unlocks } = await supabase
+      const { data: unlocks } = await (supabase as any)
         .from("lead_unlocks")
         .select("lead_id, created_at")
         .eq("facility_id", facilityId)
@@ -118,7 +118,7 @@ function useAllFacilitiesComparison(facilityIds: string[]) {
           const [{ data: facility }, { data: leads }, { data: unlocks }] = await Promise.all([
             supabase.from("facilities").select("name").eq("id", fid).single(),
             supabase.from("leads_provider_view").select("id").eq("facility_id", fid).limit(2000),
-            supabase.from("lead_unlocks").select("lead_id").eq("facility_id", fid).limit(2000),
+            (supabase as any).from("lead_unlocks").select("lead_id").eq("facility_id", fid).limit(2000),
           ]);
           const name = facility?.name || "Unknown";
           const shortName = name.length > 16 ? name.slice(0, 14) + "…" : name;

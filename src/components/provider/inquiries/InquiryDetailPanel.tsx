@@ -58,10 +58,9 @@ interface InquiryDetailPanelProps {
     special_needs: string[] | null;
   };
   isUnlocked: boolean;
-  onUnlockSuccess: () => void;
 }
 
-export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: InquiryDetailPanelProps) {
+export function InquiryDetailPanel({ inquiry, isUnlocked }: InquiryDetailPanelProps) {
   const queryClient = useQueryClient();
   const [responseNotes, setResponseNotes] = useState("");
   

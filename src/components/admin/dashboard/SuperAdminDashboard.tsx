@@ -188,17 +188,15 @@ export function SuperAdminDashboard() {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const [totalMonth, totalAll, verified, newLeads, unlocksMonth, unlocksAll, unlockRevenueMonth] = await Promise.all([
+      // Legacy lead_unlocks table dropped in the monetization rebuild — unlock-
+      // related metrics retired. Pro subscribers receive every qualified lead
+      // with full PII by default; there is no per-unlock event to count.
+      const [totalMonth, totalAll, verified, newLeads] = await Promise.all([
         supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
         supabase.from("leads").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("email_verified", true).gte("created_at", startOfMonth.toISOString()),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new"),
-        supabase.from("lead_unlocks").select("id", { count: "exact", head: true }).gte("unlocked_at", startOfMonth.toISOString()),
-        supabase.from("lead_unlocks").select("id", { count: "exact", head: true }),
-        supabase.from("lead_unlocks").select("unlock_price_cents").gte("unlocked_at", startOfMonth.toISOString()),
       ]);
-
-      const monthlyUnlockRevenue = unlockRevenueMonth.data?.reduce((sum, u) => sum + (u.unlock_price_cents || 0), 0) || 0;
 
       return {
         totalMonth: totalMonth.count || 0,
@@ -206,11 +204,11 @@ export function SuperAdminDashboard() {
         verified: verified.count || 0,
         verificationRate: totalMonth.count ? Math.round(((verified.count || 0) / totalMonth.count) * 100) : 0,
         newLeads: newLeads.count || 0,
-        unlockedMonth: unlocksMonth.count || 0,
-        unlockedAll: unlocksAll.count || 0,
-        unlockRevenueMonth: monthlyUnlockRevenue,
-        unlockRate: totalMonth.count ? Math.round(((unlocksMonth.count || 0) / totalMonth.count) * 100) : 0,
-        assigned: unlocksAll.count || 0,
+        unlockedMonth: 0,
+        unlockedAll: 0,
+        unlockRevenueMonth: 0,
+        unlockRate: 0,
+        assigned: 0,
       };
     },
     staleTime: 2 * 60 * 1000,

@@ -40,20 +40,11 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
   const [savingNote, setSavingNote] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch unlock details
-  const { data: unlockData } = useQuery({
-    queryKey: ["inquiry-unlock-detail", lead?.id],
-    queryFn: async () => {
-      if (!lead?.id) return [];
-      const { data } = await supabase
-        .from("lead_unlocks")
-        .select("id, facility_id, provider_id, unlocked_at, unlock_price_cents, payment_method")
-        .eq("lead_id", lead.id)
-        .order("unlocked_at", { ascending: false });
-      return data || [];
-    },
-    enabled: !!lead?.id && open,
-  });
+  // Legacy lead_unlocks table dropped — surface an empty array so the
+  // existing "unlock history" UI section degrades to its empty state.
+  // Type `any[]` so downstream conditional accesses don't break the
+  // type-checker; the array is empty at runtime so they never fire.
+  const unlockData: any[] = [];
 
   // Fetch distribution details
   const { data: distributions } = useQuery({
@@ -148,7 +139,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
         updates.original_facility_id = previousFacilityId;
       }
 
-      const { error } = await supabase.from("leads").update(updates).eq("id", lead.id);
+      const { error } = await (supabase.from("leads") as any).update(updates).eq("id", lead.id);
       if (error) throw error;
 
       // Audit log so admins can trace cross-facility moves.

@@ -347,49 +347,11 @@ export const analytics = {
     enqueue("promo_applied", { promo: promoCode, discount, plan_id: planId }, "subscription"),
   checkoutAbandoned: (planId: string, planName: string, price: number) =>
     enqueue("subscription_abandon", { plan_id: planId, plan_name: planName, price }, "subscription"),
-  beginCreditPurchase: (amountCents: number, facilityId: string) =>
-    enqueue("credit_purchase_begin", { amount_cents: amountCents, facility_id: facilityId }, "credits"),
-  creditPurchaseComplete: (amountCents: number) =>
-    enqueue("credit_purchase_complete", { amount_cents: amountCents }, "credits"),
-  leadUnlocked: (
-    leadId: string,
-    facilityId: string,
-    priceCents: number,
-    paymentMethod: string,
-    discountApplied?: boolean,
-  ) =>
-    enqueue(
-      "lead_unlocked",
-      {
-        lead_id: leadId,
-        facility_id: facilityId,
-        price_cents: priceCents,
-        method: paymentMethod,
-        discount: !!discountApplied,
-      },
-      "lead",
-    ),
   conciergeIntakeSubmitted: () => enqueue("concierge_intake_submitted", undefined, "concierge"),
   beginInternationalCheckout: (country: string) =>
     enqueue("international_checkout_begin", { country }, "international"),
   internationalPaymentComplete: (sessionId: string) =>
     enqueue("international_payment_complete", { session: sessionId }, "international"),
-  placementFeeCharged: (
-    facilityId: string,
-    amountCents: number,
-    caseId: string,
-    isInternational?: boolean,
-  ) =>
-    enqueue(
-      "placement_fee_charged",
-      {
-        facility_id: facilityId,
-        amount_cents: amountCents,
-        case_id: caseId,
-        international: !!isInternational,
-      },
-      "placement",
-    ),
   signupComplete: (role: "seeker" | "provider", method: string) =>
     enqueue("signup_complete", { role, method }, "auth"),
   loginComplete: (role: string, method: string) =>

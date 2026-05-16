@@ -90,7 +90,7 @@ export function ProviderDetailModal({
     queryKey: ["admin-provider-credits", provider?.user_id],
     queryFn: async () => {
       if (!provider?.user_id) return 0;
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("credit_transactions")
         .select("amount_cents, transaction_type")
         .eq("provider_id", provider.user_id);
@@ -140,7 +140,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return { introductions: 0, placements: 0 };
       const [introResult, placementResult] = await Promise.all([
         supabase.from("concierge_introductions").select("id", { count: "exact", head: true }).eq("facility_id", provider.id),
-        supabase.from("concierge_engagements").select("id", { count: "exact", head: true }).eq("facility_id", provider.id).in("status", ["admitted", "completed"]),
+        (supabase as any).from("concierge_engagements").select("id", { count: "exact", head: true }).eq("facility_id", provider.id).in("status", ["admitted", "completed"]),
       ]);
       return { introductions: introResult.count || 0, placements: placementResult.count || 0 };
     },

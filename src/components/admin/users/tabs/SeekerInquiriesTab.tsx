@@ -84,7 +84,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
 
       // Fetch unlock status
       const leadIds = data.map((l: any) => l.id);
-      const { data: unlocks } = await supabase
+      const { data: unlocks } = await (supabase as any)
         .from("lead_unlocks")
         .select("lead_id, unlocked_at, facility_id")
         .in("lead_id", leadIds);

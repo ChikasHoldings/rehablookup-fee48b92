@@ -55,7 +55,7 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
   const { data: unlockData } = useQuery({
     queryKey: ["admin-provider-analytics-unlocks", provider.user_id, dateRange],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("lead_unlocks")
         .select("id, unlocked_at")
         .in("facility_id", facilityIds)

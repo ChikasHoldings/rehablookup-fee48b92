@@ -286,7 +286,7 @@ export default function AdminSubscriptions() {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("lead_unlocks")
         .select("facility_id")
         .gte("created_at", startOfMonth.toISOString())

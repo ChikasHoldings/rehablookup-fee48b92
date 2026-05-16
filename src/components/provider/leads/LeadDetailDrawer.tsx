@@ -50,7 +50,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
 import { EmailLeadDialog } from "./EmailLeadDialog";
-import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
+import { useProStatus } from "@/hooks/useProStatus";
 import { Lead } from "./LeadDetailPanel";
 import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
 
@@ -86,10 +86,10 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
   const queryClient = useQueryClient();
   const { trackContact } = useLeadContactTracking();
 
-  // Lead unlock status - used for UI control, not masking
-  // Data from leads_provider_view is already masked/unmasked at the DB level
-  const { isLeadUnlocked } = useLeadUnlocks(lead?.facility_id);
-  const isUnlocked = lead ? isLeadUnlocked(lead.id) : false;
+  // PII reveal is driven entirely by the Pro tier; leads_provider_view
+  // returns full PII for Pro subscribers and masked previews for Free.
+  const { data: proStatus } = useProStatus();
+  const isUnlocked = !!proStatus?.isPro;
   
   // Display info directly from view data (already masked/unmasked by DB)
   const displayInfo = lead ? {

@@ -13,7 +13,6 @@ export interface PlacementCaseData {
   tour_coordination_status: string;
   admission_status: string;
   placement_confirmed: boolean | null;
-  provider_fee_status: string | null;
   closed_at: string | null;
 }
 

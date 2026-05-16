@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ListingPreviewModal } from "./listing/ListingPreviewModal";
 import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link, useNavigate } from "react-router-dom";
-import { useProviderCredits } from "@/hooks/useProviderCredits";
 import { formatDistanceToNow } from "date-fns";
 import { 
   ChevronDown, 
@@ -76,15 +75,12 @@ const notificationIcons: Record<string, React.ReactNode> = {
   lead_expired: <AlertTriangle className="h-4 w-4 text-destructive" />,
   lead_status_changed: <MessageSquare className="h-4 w-4 text-primary" />,
   lead_redistributed: <UserPlus className="h-4 w-4 text-primary" />,
-  lead_unlocked: <Check className="h-4 w-4 text-green-500" />,
   // Billing types
-  credits_added: <CreditCard className="h-4 w-4 text-green-500" />,
   subscription_updated: <CreditCard className="h-4 w-4 text-accent-foreground" />,
   subscription_active: <Crown className="h-4 w-4 text-amber-500" />,
   subscription_renewal: <CreditCard className="h-4 w-4 text-purple-500" />,
   subscription_cancelled: <AlertTriangle className="h-4 w-4 text-destructive" />,
   payment_failed: <AlertCircle className="h-4 w-4 text-destructive" />,
-  low_credits_warning: <AlertTriangle className="h-4 w-4 text-amber-500" />,
   lead_limit_warning: <AlertTriangle className="h-4 w-4 text-amber-500" />,
   concierge_invoice_issued: <CreditCard className="h-4 w-4 text-purple-500" />,
   concierge_invoice_paid: <CreditCard className="h-4 w-4 text-green-500" />,
@@ -126,8 +122,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     cancelFacilitySwitch 
   } = useSelectedFacility();
   const { canAddMore, planTier, limit: locationLimit } = useFacilityLimits();
-  const { data: creditsData, isLoading: creditsLoading } = useProviderCredits(facilityId);
-  
+
   const recentNotifications = notifications.slice(0, 5);
   const isPro = planTier === "pro";
   const approvedFacilities = facilities.filter(f => f.status === "approved" && !f.suspended);
@@ -178,12 +173,12 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     
     // Lead-related notification types — route to inquiries
     const leadTypes = [
-      "new_lead", "high_intent_lead", "lead_received", "lead_status_changed", 
-      "lead_redistributed", "lead_unlocked", "lead_reminder", "lead_expired",
+      "new_lead", "high_intent_lead", "lead_received", "lead_status_changed",
+      "lead_redistributed", "lead_reminder", "lead_expired",
     ];
     const billingTypes = [
-      "credits_added", "subscription_updated", "subscription_active", "subscription_renewal",
-      "subscription_cancelled", "payment_failed", "low_credits_warning", "lead_limit_warning",
+      "subscription_updated", "subscription_active", "subscription_renewal",
+      "subscription_cancelled", "payment_failed", "lead_limit_warning",
       "concierge_invoice_issued", "concierge_invoice_paid",
     ];
     const listingTypes = ["listing_approved", "listing_rejected", "listing_needs_edits", "featured_activated", "featured_expired", "image_flagged", "credential_verified", "credential_rejected"];
@@ -192,7 +187,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     if (leadTypes.includes(notification.type)) {
       navigate("/provider/inquiries");
     } else if (billingTypes.includes(notification.type)) {
-      navigate("/provider/billing");
+      navigate("/provider/settings");
     } else if (listingTypes.includes(notification.type)) {
       navigate("/provider/listings");
     } else if (placementTypes.includes(notification.type)) {
@@ -242,19 +237,6 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
           >
             {mobileSearchOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Search className="h-4 w-4 sm:h-5 sm:w-5" />}
           </Button>
-
-          {/* Credit Balance */}
-          <Link
-            to="/provider/billing"
-            className="hidden lg:inline-flex items-center gap-2 h-10 px-3.5 text-sm font-medium text-white hover:bg-white/15 rounded-lg transition-all duration-200 border border-white/20 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <CreditCard className="h-4 w-4" />
-            {creditsLoading ? (
-              <span className="animate-pulse">···</span>
-            ) : (
-              <span className="font-bold tabular-nums">${((creditsData?.balance_cents || 0) / 100).toFixed(2)}</span>
-            )}
-          </Link>
 
           {/* Notifications */}
           <DropdownMenu>
@@ -383,8 +365,8 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
               </div>
 
               {/* Plan Badge - Compact */}
-              <Link 
-                to="/provider/pro-upgrade"
+              <Link
+                to="/provider/settings"
                 className={cn(
                   "flex items-center justify-between mx-3 my-2.5 px-3 py-2 rounded-lg transition-all",
                   planConfig.bgColor,
@@ -560,8 +542,8 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                     <span className="text-sm font-medium">Add Location</span>
                   </Link>
                 ) : (
-                  <Link 
-                    to="/provider/pro-upgrade" 
+                  <Link
+                    to="/provider/settings"
                     className="flex items-center gap-2.5 mx-1.5 mt-1 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors"
                   >
                     <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
@@ -586,12 +568,6 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                   <Link to="/provider/settings" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
                     <Settings className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">Settings</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/provider/billing" className="flex items-center gap-3 cursor-pointer py-2 px-3 mx-1.5 rounded-md">
-                    <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Billing</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

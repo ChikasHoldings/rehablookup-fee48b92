@@ -99,7 +99,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
     queryKey: ["international-case-notes", caseData?.id],
     queryFn: async () => {
       if (!caseData?.id) return [];
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("international_case_notes")
         .select("id, case_id, admin_id, content, created_at")
         .eq("case_id", caseData.id)
@@ -115,7 +115,7 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
     queryKey: ["international-case-events", caseData?.id],
     queryFn: async () => {
       if (!caseData?.id) return [];
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("international_case_events")
         .select("id, case_id, event_type, event_data, actor_id, actor_type, created_at")
         .eq("case_id", caseData.id)

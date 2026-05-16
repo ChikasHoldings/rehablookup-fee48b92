@@ -174,7 +174,7 @@ export function InternationalCasesTab() {
     queryFn: async () => {
       const { data: casesData } = await supabase
         .from("international_placement_cases")
-        .select("status, payment_amount_cents, facility_fee_status");
+        .select("status, payment_amount_cents");
 
       const counts = {
         new: 0,

@@ -174,7 +174,6 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
               tour_coordination_status: caseData.tour_coordination_status,
               admission_status: caseData.admission_status,
               placement_confirmed: caseData.placement_confirmed,
-              provider_fee_status: caseData.provider_fee_status,
               closed_at: caseData.closed_at,
             }}
             compact

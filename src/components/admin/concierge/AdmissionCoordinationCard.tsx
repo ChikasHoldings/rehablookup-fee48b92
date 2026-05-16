@@ -78,7 +78,7 @@ export function AdmissionCoordinationCard({ caseData, onRefresh }: AdmissionCoor
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const updates: Record<string, unknown> = {
+      const updates = {
         tour_coordination_status: tourStatus,
         admission_status: admissionStatus,
         admission_notes: admissionNotes || null,

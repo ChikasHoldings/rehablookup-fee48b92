@@ -22,7 +22,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
-import { useProviderCredits } from "@/hooks/useProviderCredits";
 import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +34,6 @@ import { cn } from "@/lib/utils";
 import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";
 import { ProBenefitsWidget } from "@/components/provider/ProBenefitsWidget";
 import { ProMultiFacilityOverview } from "@/components/provider/ProMultiFacilityOverview";
-import { ProROIWidget } from "@/components/provider/ProROIWidget";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
 import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
@@ -126,7 +124,6 @@ export default function ProviderDashboardPage() {
   
   const { data: providerData, isLoading, isPlaceholderData } = useProviderData(facilityId);
   const { facilities } = useProviderFacilities();
-  const { data: creditsData, isLoading: creditsLoading } = useProviderCredits(facilityId);
   const { limit: locationLimit, used: usedLocations, planTier, isLoading: proLoading } = useFacilityLimits();
   const proStatus = { isPro: planTier === "pro" };
   
@@ -175,22 +172,6 @@ export default function ProviderDashboardPage() {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     retry: 2,
-  });
-
-  // Fetch unlocked lead IDs for the current facility
-  const { data: unlockedLeadIds = new Set<string>() } = useQuery({
-    queryKey: ["unlocked-lead-ids", facilityId],
-    queryFn: async (): Promise<Set<string>> => {
-      if (!facilityId) return new Set();
-      const { data, error } = await supabase
-        .from("lead_unlocks")
-        .select("lead_id")
-        .eq("facility_id", facilityId);
-      if (error) throw error;
-      return new Set((data || []).map(u => u.lead_id));
-    },
-    enabled: !!facilityId,
-    staleTime: 1000 * 60 * 2,
   });
 
   // Fetch total leads count via secure DB function (bypasses RLS unlock restriction for accurate counts)
@@ -373,31 +354,6 @@ export default function ProviderDashboardPage() {
     return () => clearInterval(interval);
   }, [facilityId, queryClient]);
 
-  // Real-time subscription for lead unlocks — refreshes unlock counts & credit balance instantly
-  useEffect(() => {
-    if (!facilityId) return;
-    const channel = supabase
-      .channel(`unlocks-live-${facilityId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "lead_unlocks",
-          filter: `facility_id=eq.${facilityId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["unlocked-lead-ids", facilityId] });
-          queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
-          queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
-          queryClient.invalidateQueries({ queryKey: ["dashboard-kpi-strip", facilityId] });
-          queryClient.invalidateQueries({ queryKey: ["credit-spending-monthly", facilityId] });
-        }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [facilityId, queryClient]);
-
   const handleLeadClick = (lead: Lead) => {
     setSelectedLead(lead);
     setDrawerOpen(true);
@@ -565,7 +521,6 @@ export default function ProviderDashboardPage() {
             {/* Lead Feed — Core Money Section */}
             <DashboardLeadFeed
               leads={recentLeads}
-              unlockedLeadIds={unlockedLeadIds}
               facilityId={facilityId || ""}
               facilityName={facility?.name}
               isPro={proStatus.isPro}
@@ -742,16 +697,6 @@ export default function ProviderDashboardPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* ROI Widget (Pro only) */}
-            {proStatus?.isPro && !creditsLoading && (
-              <ProROIWidget
-                transactions={creditsData?.transactions ?? []}
-                balanceCents={creditsData?.balance_cents ?? 0}
-                isPro={true}
-              />
-            )}
-
 
             {/* Featured Analytics Widget - if Pro */}
             {proStatus?.isPro && facility?.id && (

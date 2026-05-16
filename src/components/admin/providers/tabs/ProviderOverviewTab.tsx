@@ -96,7 +96,7 @@ export function ProviderOverviewTab({
   const { data: unlockCount } = useQuery({
     queryKey: ["admin-provider-unlock-count", provider.user_id, facilityIds],
     queryFn: async () => {
-      const { count } = await supabase
+      const { count } = await (supabase as any)
         .from("lead_unlocks")
         .select("id", { count: "exact", head: true })
         .in("facility_id", facilityIds);
@@ -108,7 +108,7 @@ export function ProviderOverviewTab({
   const { data: totalSpent } = useQuery({
     queryKey: ["admin-provider-total-spent", provider.user_id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("credit_transactions")
         .select("amount_cents, transaction_type")
         .eq("provider_id", provider.user_id);
@@ -126,7 +126,7 @@ export function ProviderOverviewTab({
   const { data: totalPurchased } = useQuery({
     queryKey: ["admin-provider-total-purchased", provider.user_id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("credit_transactions")
         .select("amount_cents, transaction_type")
         .eq("provider_id", provider.user_id);

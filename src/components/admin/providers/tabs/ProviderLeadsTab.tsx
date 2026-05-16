@@ -45,7 +45,7 @@ export function ProviderLeadsTab({ provider, providerFacilities }: ProviderLeads
     queryFn: async () => {
       if (!leads?.length) return {};
       const leadIds = leads.map((l) => l.id);
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("lead_unlocks")
         .select("lead_id, unlock_price_cents, unlocked_at, payment_method")
         .in("lead_id", leadIds);

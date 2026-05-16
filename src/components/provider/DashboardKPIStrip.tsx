@@ -1,14 +1,12 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getCachedSession } from "@/lib/sessionCache";
 import {
   Inbox,
   Eye,
   Star,
   AlertTriangle,
   Sparkles,
-  Zap,
   ArrowRight,
   TrendingUp,
 } from "lucide-react";
@@ -16,13 +14,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek, startOfMonth } from "date-fns";
+import { startOfWeek } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface DashboardKPIStripProps {
   facilityId: string;
   isPro: boolean;
-  proSavingsCents?: number;
   impressionCount?: number;
   reviewCount?: number;
   totalLeadsCount?: number;
@@ -38,7 +35,7 @@ interface WeeklyKPIs {
 // Average revenue per admission (industry avg $2,000–$10,000; using $5,000 midpoint)
 const AVG_REVENUE_PER_LEAD_CENTS = 500000; // $5,000 average admission value
 
-export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impressionCount = 0, reviewCount = 0, totalLeadsCount = 0 }: DashboardKPIStripProps) {
+export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, reviewCount = 0, totalLeadsCount = 0 }: DashboardKPIStripProps) {
   const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(), []);
 
   const { data: kpis, isLoading } = useQuery({
@@ -69,31 +66,6 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
     retry: 2,
   });
 
-  // Fetch Pro savings this month from credit transactions
-  const monthStart = useMemo(() => startOfMonth(new Date()).toISOString(), []);
-  const { data: monthlySavings = 0 } = useQuery({
-    queryKey: ["pro-monthly-savings", facilityId, monthStart],
-    queryFn: async (): Promise<number> => {
-      const session = await getCachedSession();
-      if (!session) return 0;
-
-      const { data, error } = await supabase
-        .from("credit_transactions")
-        .select("discount_amount_cents")
-        .eq("provider_id", session.user.id)
-        .eq("transaction_type", "unlock")
-        .eq("discount_applied", true)
-        .gte("created_at", monthStart);
-
-      if (error) return 0;
-      return (data || []).reduce((sum, tx) => sum + (tx.discount_amount_cents || 0), 0);
-    },
-    enabled: isPro && !!facilityId,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const effectiveSavings = proSavingsCents || monthlySavings;
-
   const unlockedThisWeek = kpis?.unlocked ?? 0;
   const lockedThisWeek = Math.max(0, (kpis?.received ?? 0) - unlockedThisWeek);
 
@@ -101,7 +73,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
     {
       label: "Total Leads",
       value: totalLeadsCount,
-      subtitle: `${unlockedThisWeek} unlocked this week`,
+      subtitle: `${unlockedThisWeek} delivered this week`,
       icon: Inbox,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
@@ -109,7 +81,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
     {
       label: "Locked",
       value: lockedThisWeek,
-      subtitle: "awaiting unlock",
+      subtitle: "masked preview",
       icon: AlertTriangle,
       iconBg: "bg-warning/10",
       iconColor: "text-warning",
@@ -192,7 +164,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         That's ~${((kpis!.missed * AVG_REVENUE_PER_LEAD_CENTS) / 100).toLocaleString()} in potential revenue.
-                        Upgrade to Pro for priority access + save 20% on every unlock.
+                        Upgrade to Pro to receive every qualified lead with full contact details.
                       </p>
                     </div>
                   </div>
@@ -201,7 +173,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
                     className="h-8 text-xs gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0 shadow-sm shrink-0"
                     asChild
                   >
-                    <Link to="/provider/pro-upgrade">
+                    <Link to="/provider/settings">
                       <Sparkles className="h-3.5 w-3.5" />
                       Upgrade to Pro
                       <ArrowRight className="h-3 w-3" />
@@ -217,23 +189,11 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10 text-xs text-muted-foreground">
               <TrendingUp className="h-3.5 w-3.5 text-primary shrink-0" />
               <span>
-                Great response rate! <span className="font-medium text-foreground">Upgrade to Pro</span> to save 20% on unlocks and get priority lead access.
+                Great response rate! <span className="font-medium text-foreground">Upgrade to Pro</span> to receive every qualified lead with full contact details.
               </span>
-              <Link to="/provider/pro-upgrade" className="ml-auto text-primary font-medium hover:underline shrink-0">
+              <Link to="/provider/settings" className="ml-auto text-primary font-medium hover:underline shrink-0">
                 Learn more
               </Link>
-            </div>
-          )}
-
-          {/* PRO USER: Savings reinforcement */}
-          {isPro && effectiveSavings > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-emerald-500/5 border border-amber-500/20 text-xs">
-              <Zap className="h-4 w-4 text-amber-500 shrink-0" />
-              <span className="text-foreground">
-                🔥 You saved <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  ${(effectiveSavings / 100).toFixed(2)}
-                </span> with Pro this month
-              </span>
             </div>
           )}
 

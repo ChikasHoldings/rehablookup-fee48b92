@@ -201,7 +201,7 @@ export default function AdminLeads() {
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "contacted"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "converted"),
-        supabase.from("lead_unlocks").select("id", { count: "exact", head: true }),
+        (supabase as any).from("lead_unlocks").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }).in("redistribution_status", ["extended", "redistributed"]),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("inquiry_type", "request_info"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("inquiry_type", "request_callback"),
@@ -289,7 +289,7 @@ export default function AdminLeads() {
     queryKey: ["admin-leads-unlock-map", leadIds],
     queryFn: async () => {
       if (!leadIds.length) return {};
-      const { data } = await supabase.from("lead_unlocks").select("lead_id, unlocked_at, facility_id").in("lead_id", leadIds);
+      const { data } = await (supabase as any).from("lead_unlocks").select("lead_id, unlocked_at, facility_id").in("lead_id", leadIds);
       const map: Record<string, { unlocked_at: string; facility_id: string }> = {};
       data?.forEach((u: any) => { map[u.lead_id] = u; });
       return map;

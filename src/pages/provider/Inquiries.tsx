@@ -175,12 +175,11 @@ export default function ProviderInquiriesPage() {
     }
   }, [inquiriesError]);
 
-  // Poll for new leads every 30 seconds (leads/lead_unlocks removed from Realtime for PII security)
+  // Poll for new leads every 30 seconds (Realtime disabled for PII safety).
   useEffect(() => {
     if (facilityIds.length === 0) return;
     const interval = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-      queryClient.invalidateQueries({ queryKey: ["provider-lead-unlocks"] });
     }, 30000);
     return () => clearInterval(interval);
   }, [facilityIds, queryClient]);
@@ -273,12 +272,6 @@ export default function ProviderInquiriesPage() {
   const handleBackToList = () => {
     setMobileView('list');
     setSelectedInquiry(null);
-  };
-
-  const handleUnlockSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-    queryClient.invalidateQueries({ queryKey: ["provider-lead-unlocks"] });
-    queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
   };
 
   // Auto-select first inquiry on desktop
