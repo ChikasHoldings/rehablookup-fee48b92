@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, MapPin } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { US_STATES } from "@/lib/facilityConstants";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 
@@ -88,7 +88,7 @@ export function FindByStateSection() {
   return (
     <section
       aria-labelledby="find-by-state-heading"
-      className="relative overflow-hidden py-12 md:py-16 lg:py-20 text-white"
+      className="relative overflow-hidden py-8 md:py-10 lg:py-12 text-white"
       // Same navy → darker-navy gradient strip used by the homepage
       // ProvidersCTA section — keeps brand rhythm consistent across
       // the page's "premium band" surfaces.
@@ -108,23 +108,28 @@ export function FindByStateSection() {
       />
 
       <div className="container relative px-3 sm:px-4 md:px-6 lg:px-8">
-        {/* Header */}
-        <header className="mx-auto max-w-3xl text-center mb-8 md:mb-10">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 mb-3 ring-1 ring-white/20 backdrop-blur-sm">
-            <MapPin className="h-3.5 w-3.5 text-[#CDA223]" aria-hidden />
-            <span className="text-xs font-semibold uppercase tracking-wider text-white/90">
-              By Location
-            </span>
+        {/* Header — left-aligned, with the "Browse all 50 states" CTA
+            pinned to the right on the same horizontal line. Stacks
+            vertically on mobile so the CTA stays tappable. */}
+        <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6 md:mb-8">
+          <div className="min-w-0">
+            <h2
+              id="find-by-state-heading"
+              className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight"
+            >
+              Find Treatment Center by State
+            </h2>
+            <p className="mt-1.5 text-sm md:text-base text-white/75">
+              Browse verified addiction treatment centers in all 50 states.
+            </p>
           </div>
-          <h2
-            id="find-by-state-heading"
-            className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight"
+          <Link
+            to="/locations"
+            className="self-start sm:self-auto shrink-0 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 md:px-5 md:py-2.5 text-sm md:text-base font-semibold text-[#1B365D] shadow-sm hover:bg-white/95 hover:shadow-md transition-all"
           >
-            Find Treatment Center by State
-          </h2>
-          <p className="mt-2 text-sm md:text-base text-white/75">
-            Browse verified addiction treatment centers in all 50 states.
-          </p>
+            Browse all 50 states
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </header>
 
         {/* Top-5 state image cards. The cards already own their own
@@ -188,18 +193,6 @@ export function FindByStateSection() {
             );
           })}
         </ul>
-
-        {/* Brand CTA — white button on navy strip for max contrast,
-            mirrors the ProvidersCTA button treatment. */}
-        <div className="mt-8 md:mt-10 text-center">
-          <Link
-            to="/locations"
-            className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 md:px-6 md:py-3 text-sm md:text-base font-semibold text-[#1B365D] shadow-sm hover:bg-white/95 hover:shadow-md transition-all"
-          >
-            Browse all 50 states
-            <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
-          </Link>
-        </div>
       </div>
     </section>
   );
