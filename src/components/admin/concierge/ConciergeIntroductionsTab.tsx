@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { OriginatingFacilityBanner } from "./OriginatingFacilityBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { getCaseEventActorType } from "@/lib/caseEventActor";
@@ -306,8 +307,28 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
     },
   });
 
+  // Free-tier-redirect inquiries pin the originating facility as
+  // Option 1 of the 3 introductions. The banner shows the advisor
+  // exactly which facility and flags any clinical mismatch with the
+  // seeker's intake.
+  const isFreeTierRedirect = (caseData as { routing_mode?: string | null }).routing_mode === "free_tier_redirect";
+  const originatingFacilityId = (caseData as { originating_facility_id?: string | null }).originating_facility_id ?? null;
+  const intakeForBanner = ((caseData as { intake_data?: Record<string, unknown> | null }).intake_data ?? {}) as {
+    level_of_care?: string | null;
+    insurance_provider?: string | null;
+    insurance_type?: string | null;
+    location_state?: string | null;
+  };
+
   return (
     <div className="space-y-4">
+      {isFreeTierRedirect && originatingFacilityId && (
+        <OriginatingFacilityBanner
+          originatingFacilityId={originatingFacilityId}
+          intake={intakeForBanner}
+        />
+      )}
+
       {/* Send New Introduction */}
       {availableFacilities && availableFacilities.length > 0 && (
         <Card>

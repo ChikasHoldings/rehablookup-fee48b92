@@ -47,6 +47,11 @@ export default function AdminConcierge() {
   const [searchInput, setSearchInput] = useState("");
   const searchQuery = useDebounce(searchInput, 350);
   const [stageFilter, setStageFilter] = useState<string>("all");
+  // Routing-mode filter — defaults to "all". The Free-tier-redirect
+  // option lets advisors zero in on inquiries that submitted on a Free
+  // listing (those carry routing_mode='free_tier_redirect' from the
+  // submit-qualified-lead branch).
+  const [routingFilter, setRoutingFilter] = useState<"all" | "free_tier_redirect" | "standard">("all");
   const [advisorFilter, setAdvisorFilter] = useState<string>("all");
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "dashboard">("table");
@@ -60,7 +65,7 @@ export default function AdminConcierge() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("concierge_inquiries")
-        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, preferred_city, match_count, assigned_advisor_id, created_at, updated_at, admission_status, admission_substatus, tour_coordination_status, placement_confirmed, placement_confirmed_at, placed_facility_id, introductions_sent_at, introductions_sent_count, provider_fee_status, provider_fee_cents, timeline_urgency, primary_concern, closed_at, seeker_confirmed, matched_at")
+        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, preferred_city, match_count, assigned_advisor_id, created_at, updated_at, admission_status, admission_substatus, tour_coordination_status, placement_confirmed, placement_confirmed_at, placed_facility_id, introductions_sent_at, introductions_sent_count, provider_fee_status, provider_fee_cents, timeline_urgency, primary_concern, closed_at, seeker_confirmed, matched_at, routing_mode, originating_facility_id")
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -143,6 +148,13 @@ export default function AdminConcierge() {
     if (stageFilter === "closed" && c.status !== "closed") return false;
     if (advisorFilter === "unassigned" && c.assigned_advisor_id !== null) return false;
     if (advisorFilter !== "all" && advisorFilter !== "unassigned" && c.assigned_advisor_id !== advisorFilter) return false;
+    // Routing-mode filter. The 'standard' bucket includes legacy rows
+    // where routing_mode is NULL (those pre-date the column).
+    if (routingFilter === "free_tier_redirect" && (c as { routing_mode?: string | null }).routing_mode !== "free_tier_redirect") return false;
+    if (routingFilter === "standard") {
+      const rm = (c as { routing_mode?: string | null }).routing_mode;
+      if (rm === "free_tier_redirect") return false;
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
@@ -252,6 +264,19 @@ export default function AdminConcierge() {
                   <SelectItem key={vs.key} value={vs.key}>{vs.label}</SelectItem>
                 ))}
                 <SelectItem value="closed">Closed</SelectItem>
+              </SelectContent>
+            </Select>
+            {/* Routing-mode filter — surfaces free_tier_redirect inquiries
+                so advisors can prioritize them (originating facility must
+                be pinned as Option 1 of the 3 introductions). */}
+            <Select value={routingFilter} onValueChange={(v) => setRoutingFilter(v as typeof routingFilter)}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Routing" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All routing modes</SelectItem>
+                <SelectItem value="free_tier_redirect">Free-tier redirects</SelectItem>
+                <SelectItem value="standard">Standard intake</SelectItem>
               </SelectContent>
             </Select>
             <Select value={advisorFilter} onValueChange={setAdvisorFilter}>
