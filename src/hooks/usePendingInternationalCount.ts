@@ -15,7 +15,7 @@ export function usePendingInternationalCount(facilityId?: string) {
       if (!session) return 0;
 
       // Count international matches that are pending (invited but not responded)
-      const { count, error } = await supabase
+      const { count, error } = await (supabase as any)
         .from("international_case_facility_matches")
         .select("*", { count: "exact", head: true })
         .eq("facility_id", facilityId)

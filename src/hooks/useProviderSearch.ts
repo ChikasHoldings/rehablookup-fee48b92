@@ -42,7 +42,7 @@ export function useProviderSearch(query: string, facilityId?: string) {
     queryKey: ["provider-search-leads", facilityId],
     queryFn: async () => {
       if (!facilityId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("leads_provider_view")
         .select("id, name, email, phone, status, created_at, message, location_city_state")
         .eq("facility_id", facilityId)

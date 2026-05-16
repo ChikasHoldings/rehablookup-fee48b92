@@ -83,7 +83,7 @@ export function InternationalCandidatesTab({ hasPro = false }: { hasPro?: boolea
     queryKey: ["international-matches", selectedFacility?.id],
     queryFn: async () => {
       if (!selectedFacility?.id) return [];
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("international_case_facility_matches")
         .select(`*, international_placement_cases (id, client_country, intake_data, priority, created_at)`)
         .eq("facility_id", selectedFacility.id)

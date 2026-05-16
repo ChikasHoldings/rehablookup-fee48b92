@@ -41,7 +41,7 @@ function useFacilityPerformanceMetrics(facilityId: string | undefined) {
         .single();
 
       // Fetch leads — bounded to prevent unbounded scans on large providers
-      const { data: leads } = await supabase
+      const { data: leads } = await (supabase as any)
         .from("leads_provider_view")
         .select("id, status, created_at, is_unlocked, provider_response_status")
         .eq("facility_id", facilityId)
@@ -117,7 +117,7 @@ function useAllFacilitiesComparison(facilityIds: string[]) {
         facilityIds.map(async fid => {
           const [{ data: facility }, { data: leads }, { data: unlocks }] = await Promise.all([
             supabase.from("facilities").select("name").eq("id", fid).single(),
-            supabase.from("leads_provider_view").select("id").eq("facility_id", fid).limit(2000),
+            (supabase as any).from("leads_provider_view").select("id").eq("facility_id", fid).limit(2000),
             (supabase as any).from("lead_unlocks").select("lead_id").eq("facility_id", fid).limit(2000),
           ]);
           const name = facility?.name || "Unknown";

@@ -43,7 +43,7 @@ export function ProMultiFacilityOverview({ facilities }: ProMultiFacilityOvervie
           const totalLeads = Number(leadsResult.data?.[0]?.total_count) || 0;
 
           // Get new leads count
-          const { count: newCount } = await supabase
+          const { count: newCount } = await (supabase as any)
             .from("leads_provider_view")
             .select("id", { count: "exact", head: true })
             .eq("facility_id", facility.id)

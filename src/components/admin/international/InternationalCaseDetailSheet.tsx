@@ -707,20 +707,13 @@ export function InternationalCaseDetailSheet({ caseData, open, onOpenChange }: P
 
 // Sub-component to display facility matches with statuses
 function FacilityMatchesSection({ caseId, matchedIds }: { caseId: string; matchedIds: string[] }) {
-  const { data: matches } = useQuery({
-    queryKey: ["international-case-matches", caseId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("international_case_facility_matches")
-        .select(`
-          *,
-          facilities (id, name, city, state)
-        `)
-        .eq("case_id", caseId);
-      if (error) throw error;
-      return data;
-    },
-  });
+  // international_case_facility_matches table dropped — surface an empty
+  // list so the consumer UI degrades to "no matches".
+  const matches: Array<{
+    facility_id: string;
+    facilities?: { id: string; name: string; city: string; state: string };
+    status?: string;
+  }> | undefined = undefined;
 
   const { data: facilitiesData } = useQuery({
     queryKey: ["facilities-by-ids", matchedIds],

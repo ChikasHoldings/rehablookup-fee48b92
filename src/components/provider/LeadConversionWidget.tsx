@@ -41,7 +41,7 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
       // narrows to facilities the caller owns, but explicit `.in(facility_id)`
       // prevents accidentally aggregating across unrelated facilities when
       // a future view change broadens the row set.
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("leads_provider_view")
         .select("id, status, created_at, provider_responded_at, qualified, facility_id")
         .in("facility_id", facilityIds)

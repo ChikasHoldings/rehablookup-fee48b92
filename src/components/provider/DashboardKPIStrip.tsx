@@ -9,6 +9,7 @@ import {
   Sparkles,
   ArrowRight,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,7 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
     queryKey: ["dashboard-kpi-strip", facilityId, weekStart],
     queryFn: async (): Promise<WeeklyKPIs> => {
       // Fetch this week's leads for the facility
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("leads_provider_view")
         .select("id, status, is_unlocked, created_at")
         .eq("facility_id", facilityId)

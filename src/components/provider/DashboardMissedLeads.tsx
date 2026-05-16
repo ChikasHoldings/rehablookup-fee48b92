@@ -31,7 +31,7 @@ export function DashboardMissedLeads({ facilityId, isPro }: DashboardMissedLeads
       if (!facilityId) return [];
 
       // Get leads that expired or were redistributed without being unlocked
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("leads_provider_view")
         .select("id, created_at, urgency, level_of_care, location_city_state, insurance_type, is_unlocked, status")
         .eq("facility_id", facilityId)

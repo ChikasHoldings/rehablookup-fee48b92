@@ -71,7 +71,7 @@ export function useLeadAnalytics(facilityId: string | undefined, dateRange?: Dat
       // Fetch all leads for the facility
       // Use leads_provider_view instead of leads table directly
       // (RLS on leads requires unlock, which would hide new leads from analytics)
-      const { data: leads, error } = await supabase
+      const { data: leads, error } = await (supabase as any)
         .from("leads_provider_view")
         .select("id, facility_id, name, status, created_at, urgency, level_of_care, source, location_city_state, insurance_type, inquiry_type, primary_substance, who_seeking_help")
         .eq("facility_id", facilityId)
