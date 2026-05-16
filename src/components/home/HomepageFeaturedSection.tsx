@@ -102,10 +102,7 @@ export function HomepageFeaturedSection() {
       pool = seededShuffle(pool, seed);
     }
 
-    // 14 facilities flow into a 2-row grid (7 per row) so the section
-    // reads as a denser directory surface than the prior single-row strip
-    // while keeping the same horizontal-scroll + chevron affordances.
-    return pool.slice(0, 14);
+    return pool.slice(0, 8);
   }, [approvedFacilities, userState, userCity, nearbyStates, geo.isLoading]);
 
   const trackFeaturedImpressions = useCallback(async () => {
@@ -229,17 +226,14 @@ export function HomepageFeaturedSection() {
             </div>
           </div>
 
-          {/* Scroll track — 2-row grid with column-flow so cards stack
-              vertically per column, then advance to the next column. The
-              chevron controls scroll horizontally by one column at a
-              time (same UX as before, just denser). */}
+          {/* Scroll track */}
           <div
             ref={scrollRef}
-            className="grid grid-rows-2 grid-flow-col auto-cols-[280px] sm:auto-cols-[320px] md:auto-cols-[360px] gap-3 sm:gap-4 md:gap-5 overflow-x-auto scroll-smooth px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6 snap-x snap-mandatory"
+            className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto scroll-smooth px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6 snap-x snap-mandatory"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {featuredCenters.map((center: any) => (
-              <div key={center.id} className="snap-start" data-featured-card>
+              <div key={center.id} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px] snap-start" data-featured-card>
                 <TreatmentCenterCard
                   center={center}
                   featured={true}
@@ -272,9 +266,9 @@ function FeaturedSkeleton() {
         <Skeleton className="h-8 w-72" />
         <Skeleton className="h-4 w-48" />
       </div>
-      <div className="grid grid-rows-2 grid-flow-col auto-cols-[360px] gap-5 overflow-hidden">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="rounded-xl border border-border overflow-hidden bg-card">
+      <div className="flex gap-5 overflow-hidden">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="flex-shrink-0 w-[360px] rounded-xl border border-border overflow-hidden bg-card">
             <Skeleton className="aspect-[16/9]" />
             <div className="p-4 space-y-3">
               <div className="flex items-start gap-3">
