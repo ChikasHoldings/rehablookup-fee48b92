@@ -9,8 +9,9 @@ import {
   BarChart3,
   Sparkles,
   Star,
-  Network,
   HelpCircle,
+  Megaphone,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -26,14 +27,19 @@ interface ProviderSidebarProps {
   onNavigate?: () => void;
 }
 
+// Subscription and Marketing are surfaced as distinct nav entries so
+// providers don't conflate the foundational plan (Free/Pro) with the
+// growth tools (Featured/Concierge). Wallet/Network/legacy entries
+// removed; the canonical surfaces are /provider/subscription and
+// /provider/marketing.
 const navItems = [
   { href: "/provider/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/provider/inquiries", label: "Leads", icon: Users },
-  { href: "/provider/placement-network", label: "Placement Network", icon: Network },
   { href: "/provider/listings", label: "My Listing", icon: Building2 },
   { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/provider/reviews", label: "Reviews", icon: Star },
-  { href: "/provider/billing", label: "Billing", icon: Wallet },
+  { href: "/provider/billing", label: "Subscription", icon: CreditCard },
+  { href: "/provider/marketing", label: "Marketing", icon: Megaphone },
   { href: "/provider/settings", label: "Settings", icon: Settings },
   { href: "/provider/help", label: "Help & Support", icon: HelpCircle },
 ];

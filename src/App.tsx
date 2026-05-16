@@ -354,6 +354,9 @@ const ProviderBillingPage = lazy(() => import("./pages/provider/Billing"));
 const ProviderBillingCancelPage = lazy(() => import("./pages/provider/BillingCancel"));
 const ProviderBillingPlacementsPage = lazy(() => import("./pages/provider/BillingPlacements"));
 const ProviderBillingConciergePage = lazy(() => import("./pages/provider/BillingConcierge"));
+const ProviderMarketingHub = lazy(() => import("./pages/provider/MarketingHub"));
+const ProviderMarketingFeatured = lazy(() => import("./pages/provider/MarketingFeatured"));
+const ProviderMarketingConcierge = lazy(() => import("./pages/provider/MarketingConcierge"));
 // Pro upgrade page + Placement network removed in monetization rebuild.
 // /provider/pro-upgrade and /provider/placement-network now Navigate
 // to /for-providers so any stale bookmark / external link still lands
@@ -1608,9 +1611,13 @@ const AppInner = () => {
               <Route path="credits" element={<Navigate to="/provider/billing?purchase_credits=true" replace />} />
               <Route path="pro-upgrade" element={<Navigate to="/for-providers" replace />} />
               <Route path="billing" element={<ProviderBillingPage />} />
+              <Route path="subscription" element={<ProviderBillingPage />} />
               <Route path="billing/cancel" element={<ProviderBillingCancelPage />} />
               <Route path="billing/placements" element={<ProviderBillingPlacementsPage />} />
               <Route path="billing/concierge" element={<ProviderBillingConciergePage />} />
+              <Route path="marketing" element={<ProviderMarketingHub />} />
+              <Route path="marketing/featured" element={<ProviderMarketingFeatured />} />
+              <Route path="marketing/concierge" element={<ProviderMarketingConcierge />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="embed-badge" element={<ProviderEmbedBadgePage />} />
               <Route path="notifications" element={<ProviderNotificationsPage />} />
@@ -1620,8 +1627,9 @@ const AppInner = () => {
               {/* placement-network + placements removed — the pay-per-admission
                   network model retired. Both navigate to the new for-providers
                   sales surface so stale bookmarks land somewhere useful. */}
-              <Route path="placement-network" element={<Navigate to="/for-providers" replace />} />
-              <Route path="placements" element={<Navigate to="/for-providers" replace />} />
+              <Route path="placement-network" element={<Navigate to="/provider/marketing" replace />} />
+              <Route path="placements" element={<Navigate to="/provider/marketing/featured" replace />} />
+              <Route path="placement" element={<Navigate to="/provider/marketing/concierge" replace />} />
             </Route>
 
             {/* Admin Routes */}
