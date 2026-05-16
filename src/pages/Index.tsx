@@ -10,7 +10,6 @@ import { FeaturedRail } from "@/components/featured/FeaturedRail";
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { useCountUp } from "@/hooks/useCountUp";
-import { buildConciergeHref } from "@/lib/conciergeHref";
 import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
@@ -35,14 +34,9 @@ import {
   Stethoscope,
   Sparkles,
   CheckCircle,
-  Search,
-  Users,
-  Phone,
-  Heart,
   Clock,
   MapPin,
   Navigation,
-  ClipboardList,
   ShieldCheck,
 } from "lucide-react";
 
@@ -62,36 +56,6 @@ const INSURANCE_LOGOS: InsuranceLogo[] = [
   { kind: "svg", src: "/insurance-logos/medicaid.svg", alt: "Medicaid" },
   { kind: "svg", src: "/insurance-logos/cigna.svg", alt: "Cigna" },
   { kind: "svg", src: "/insurance-logos/humana.svg", alt: "Humana" },
-];
-
-const blogArticles = [
-  {
-    id: "stages-of-recovery",
-    title: "Understanding the Stages of Addiction Recovery",
-    excerpt: "Recovery is a journey with distinct stages. Learn what to expect and how to navigate each phase successfully.",
-    category: "Recovery",
-    readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&h=400&fit=crop",
-    author: "Dr. Sarah Mitchell",
-  },
-  {
-    id: "support-loved-one",
-    title: "How to Support a Loved One in Treatment",
-    excerpt: "Family support is crucial for recovery. Discover effective ways to be there for someone during their treatment journey.",
-    category: "Family Support",
-    readTime: "4 min read",
-    image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop",
-    author: "Jennifer Walsh, LCSW",
-  },
-  {
-    id: "inpatient-vs-outpatient",
-    title: "Choosing Between Inpatient and Outpatient Care",
-    excerpt: "Not sure which treatment option is right? We break down the key differences to help you make an informed decision.",
-    category: "Treatment Options",
-    readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=400&fit=crop",
-    author: "Dr. Michael Chen",
-  },
 ];
 
 
@@ -387,178 +351,13 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Centers - Premium Horizontal Scroll */}
+      {/* Featured Centers — primary directory focal point (2-col desktop,
+          1-col mobile, 10–12 verified facilities, single CTA). */}
       <HomepageFeaturedSection />
 
-      {/* Insurance Coverage Section */}
-      <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-muted/20 to-muted/30">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="rounded-2xl border border-border bg-card p-5 md:p-6 lg:p-10 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-6 lg:gap-12">
-              {/* Left Content */}
-              <div className="md:max-w-xs lg:max-w-sm text-center md:text-left shrink-0">
-                <div className="mb-2 md:mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
-                  <CheckCircle className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary">
-                    Insurance Verification
-                  </span>
-                </div>
-                <h2 className="mb-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-[1.75rem]">
-                  Are You Covered?
-                </h2>
-                <p className="mb-4 md:mb-5 text-[15px] md:text-base text-muted-foreground leading-relaxed">
-                  Most insurance plans cover addiction treatment. Check your benefits in minutes.
-                </p>
-                <Link to="/insurance">
-                  <Button size="default" className="gap-2 font-semibold shadow-md hover:shadow-lg transition-shadow md:size-lg">
-                    Check Your Coverage
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-
-              {/* Insurance Logos — 5 named carriers, container-less.
-                  The five logos don't share a normalized artwork bounding
-                  box: Aetna's SVG fills its viewBox densely, while
-                  Cigna / Humana / Medicaid use a 200×50 viewBox whose
-                  content occupies only the left ~50–70%. Plain
-                  `object-contain` would render those visually ~half the
-                  size of Aetna. Per-logo `transform: scale()` brings
-                  their rendered widths roughly to Aetna's. Optum has no
-                  SVG asset in the repo, so it renders as styled
-                  brand-color text. */}
-              <div className="flex-1">
-                <div
-                  className="grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4"
-                  aria-label="Insurance carriers accepted"
-                >
-                  {INSURANCE_LOGOS.map((logo, i) => (
-                    <div
-                      key={logo.alt}
-                      className={cn(
-                        // h-20 md:h-24 reserves vertical space BEFORE the
-                        // SVGs paint so the row doesn't shift downward on
-                        // first load. No border / no background / no
-                        // shadow — the cell is a transparent layout
-                        // anchor. NO overflow-hidden — each SVG carries
-                        // its own tight viewBox and renders at its full
-                        // visible size; clipping here was cropping the
-                        // larger logos.
-                        "group flex h-20 md:h-24 items-center justify-center transition-transform duration-200 hover:scale-[1.04]",
-                        // 5th cell spans both mobile columns so the final
-                        // row isn't a lonely orphan tile.
-                        i === 4 && "col-span-2 md:col-span-1",
-                      )}
-                    >
-                      {logo.kind === "text" ? (
-                        <span
-                          className="text-3xl md:text-4xl font-bold tracking-tight"
-                          style={{ color: logo.color }}
-                        >
-                          {logo.label}
-                        </span>
-                      ) : (
-                        <img
-                          src={logo.src}
-                          alt={logo.alt}
-                          className="h-14 md:h-16 w-auto max-w-full object-contain"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* + more carriers link — routes to the full carrier list. */}
-                <div className="mt-4 text-center md:text-right">
-                  <Link
-                    to="/insurance"
-                    className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                  >
-                    + more carriers accepted
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-10 md:py-12 lg:py-20">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl">
-            {/* Section Header */}
-            <div className="mb-6 md:mb-8 text-center">
-              <h2 className="font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
-                How It Works
-              </h2>
-              <p className="mt-1.5 md:mt-2 text-[15px] md:text-base text-muted-foreground">
-                Finding help is simple and confidential
-              </p>
-            </div>
-
-            {/* Steps - Clean numbered list */}
-            <div className="space-y-3 md:space-y-4">
-              {[
-                {
-                  step: 1,
-                  title: "Search",
-                  description: "Enter your location to find verified treatment centers near you.",
-                  icon: Search,
-                },
-                {
-                  step: 2,
-                  title: "Compare",
-                  description: "Review programs, insurance options, and facility details.",
-                  icon: Users,
-                },
-                {
-                  step: 3,
-                  title: "Connect",
-                  description: "Contact centers directly or request a callback from our team.",
-                  icon: Phone,
-                },
-              ].map((item) => (
-                <div
-                  key={item.step}
-                  className="group flex items-start gap-3 md:gap-4 rounded-xl border border-border bg-card p-3 md:p-4 transition-all hover:border-primary/30 hover:shadow-sm"
-                >
-                  {/* Step number */}
-                  <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm md:text-base font-bold text-primary-foreground">
-                    {item.step}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground text-[15px] md:text-base">
-                      {item.title}
-                    </h3>
-                    <p className="mt-0.5 text-sm md:text-base text-muted-foreground">
-                      {item.description}
-                    </p>
-                  </div>
-                  
-                  <item.icon className="h-4 w-4 md:h-5 md:w-5 shrink-0 text-muted-foreground/50 mt-0.5" />
-                </div>
-              ))}
-            </div>
-
-            {/* CTA */}
-            <div className="mt-6 md:mt-8 text-center">
-              <Link to="/rehab-centers">
-                <Button size="default" className="gap-2 md:size-lg">
-                  Start Your Search
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Treatment Options */}
+      {/* Browse by Category — directly under Featured per the directory
+          re-focus. The taxonomy entry point lives here so the homepage
+          flows Featured → categories → why-us → near-you. */}
       <section className="py-10 md:py-12 lg:py-20 bg-muted/40 border-y border-border/50">
         <div className="container px-4 md:px-6 lg:px-8">
           {/* Section Header */}
@@ -686,57 +485,89 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Placement Service */}
-      <section className="py-12 md:py-16 lg:py-20 bg-accent/5 border-y border-accent/10 relative overflow-hidden">
-        {/* Decorative background pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-        
-        <div className="container relative px-4 md:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center max-w-5xl mx-auto">
-            {/* Left side - Content */}
-            <div className="text-center md:text-left">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/15 px-4 py-1.5 border border-accent/20">
-                <Heart className="h-4 w-4 text-accent fill-accent/30" />
-                <span className="text-sm font-semibold text-accent">Placement Service</span>
-              </div>
-              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
-                Overwhelmed by Options?
-                <span className="block text-accent mt-1">Let Us Help.</span>
-              </h2>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                Our specialists personally connect you with verified treatment centers based on your insurance, location, and unique needs.
-              </p>
-              <Link to={buildConciergeHref({ location: homepageConciergeLocation, source: "homepage_placement_section" })}>
-                <Button size="lg" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20">
-                  Find Treatment
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Right side - Visual steps */}
-            <div className="space-y-3">
-              {[
-                { icon: ClipboardList, title: "Tell Us Your Needs", desc: "Share your situation, preferences, and insurance" },
-                { icon: Users, title: "We Find Matches", desc: "Our team reviews programs that fit your criteria" },
-                { icon: Phone, title: "Get Connected", desc: "We introduce you directly to the best options" },
-              ].map((step, idx) => (
-                <div 
-                  key={step.title}
-                  className="flex items-start gap-4 bg-card/80 backdrop-blur-sm rounded-xl p-4 border border-border/50 shadow-sm hover:shadow-md hover:border-accent/30 transition-all"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-                    <step.icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-accent/60">0{idx + 1}</span>
-                      <h3 className="font-semibold text-foreground text-sm">{step.title}</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-0.5">{step.desc}</p>
-                  </div>
+      {/* Insurance Coverage Section — moved here from above per the
+          directory-refocus pass so seekers see the verification ramp
+          right before reading testimonials. */}
+      <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-muted/20 to-muted/30">
+        <div className="container px-4 md:px-6 lg:px-8">
+          <div className="rounded-2xl border border-border bg-card p-5 md:p-6 lg:p-10 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-6 lg:gap-12">
+              {/* Left Content */}
+              <div className="md:max-w-xs lg:max-w-sm text-center md:text-left shrink-0">
+                <div className="mb-2 md:mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+                  <CheckCircle className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary">
+                    Insurance Verification
+                  </span>
                 </div>
-              ))}
+                <h2 className="mb-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-[1.75rem]">
+                  Are You Covered?
+                </h2>
+                <p className="mb-4 md:mb-5 text-[15px] md:text-base text-muted-foreground leading-relaxed">
+                  Most insurance plans cover addiction treatment. Check your benefits in minutes.
+                </p>
+                <Link to="/insurance">
+                  <Button size="default" className="gap-2 font-semibold shadow-md hover:shadow-lg transition-shadow md:size-lg">
+                    Check Your Coverage
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Insurance Logos — 5 named carriers, container-less.
+                  The five logos don't share a normalized artwork bounding
+                  box: Aetna's SVG fills its viewBox densely, while
+                  Cigna / Humana / Medicaid use a 200×50 viewBox whose
+                  content occupies only the left ~50–70%. Plain
+                  `object-contain` would render those visually ~half the
+                  size of Aetna. Per-logo `transform: scale()` brings
+                  their rendered widths roughly to Aetna's. Optum has no
+                  SVG asset in the repo, so it renders as styled
+                  brand-color text. */}
+              <div className="flex-1">
+                <div
+                  className="grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4"
+                  aria-label="Insurance carriers accepted"
+                >
+                  {INSURANCE_LOGOS.map((logo, i) => (
+                    <div
+                      key={logo.alt}
+                      className={cn(
+                        "group flex h-20 md:h-24 items-center justify-center transition-transform duration-200 hover:scale-[1.04]",
+                        i === 4 && "col-span-2 md:col-span-1",
+                      )}
+                    >
+                      {logo.kind === "text" ? (
+                        <span
+                          className="text-3xl md:text-4xl font-bold tracking-tight"
+                          style={{ color: logo.color }}
+                        >
+                          {logo.label}
+                        </span>
+                      ) : (
+                        <img
+                          src={logo.src}
+                          alt={logo.alt}
+                          className="h-14 md:h-16 w-auto max-w-full object-contain"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* + more carriers link — routes to the full carrier list. */}
+                <div className="mt-4 text-center md:text-right">
+                  <Link
+                    to="/insurance"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    + more carriers accepted
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -886,54 +717,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Resources directory — previously rendered as 3 magazine-style article
-          cards with large images, category tags, and "X min read" metadata
-          (classic blog convention). Reworked as a compact 2-column directory
-          listing so the homepage stays directory-first; the full /resources
-          page handles the magazine treatment. */}
-      <LazySection fallbackHeight="320px">
-      <section className="py-10 md:py-12 lg:py-16">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="mb-5 md:mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recovery Resources</span>
-              <h2 className="mt-1.5 font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
-                Browse Recovery Guides
-              </h2>
-            </div>
-            <Link to="/resources" className="group">
-              <span className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                View all resources
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </span>
-            </Link>
-          </div>
-
-          <ul className="divide-y divide-border rounded-xl border bg-card">
-            {blogArticles.map((article) => (
-              <li key={article.id}>
-                <Link
-                  to={`/resources/${article.id}`}
-                  className="group flex items-center gap-4 px-4 py-3 md:px-5 md:py-4 hover:bg-muted/40 transition-colors"
-                >
-                  <span className="hidden sm:inline-flex shrink-0 items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary uppercase tracking-wide">
-                    {article.category}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm md:text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                      {article.title}
-                    </h3>
-                    <p className="mt-0.5 text-xs md:text-sm text-muted-foreground line-clamp-1">{article.excerpt}</p>
-                  </div>
-                  <ArrowRight className="hidden sm:block h-4 w-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-      </LazySection>
 
       {/* SEO Internal Links Section */}
       <LazySection fallbackHeight="600px">

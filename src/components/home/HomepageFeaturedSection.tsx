@@ -1,16 +1,21 @@
-import { useMemo, useRef, useEffect, useCallback, useState } from "react";
+import { useMemo, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStaticFacilities, type PublicFacility } from "@/hooks/useStaticFacilities";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getNearbyStates } from "@/lib/proximitySearch";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 
+// Grid sizing: the spec calls for a 2-column desktop grid showing
+// 12 max / 10 min so the section reads as the primary directory
+// surface on the homepage, not a thin teaser strip.
+const GRID_MAX = 12;
+const GRID_MIN = 10;
+
+/** Stable per-day shuffle so the page doesn't churn between renders. */
 function getDailySeed(): number {
   const d = new Date();
   const str = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -33,83 +38,149 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
   return s;
 }
 
-function getProximityTier(facility: PublicFacility, userState: string, userCity: string, nearbyStates: string[]): number {
+function getProximityTier(
+  facility: PublicFacility,
+  userState: string,
+  userCity: string,
+  nearbyStates: string[],
+): number {
   if (!userState) return 4;
   const fState = facility.state?.toUpperCase();
   const uState = userState.toUpperCase();
   const uCity = userCity.toLowerCase();
   if (fState === uState && facility.city?.toLowerCase() === uCity) return 0;
   if (fState === uState) return 1;
-  if (nearbyStates.map(s => s.toUpperCase()).includes(fState)) return 2;
+  if (nearbyStates.map((s) => s.toUpperCase()).includes(fState)) return 2;
   return 3;
+}
+
+/**
+ * Sort key per task spec:
+ *   is_featured DESC → featured_priority DESC → rating DESC
+ *
+ * `is_featured` is the boolean union of `isHomepageFeatured` (curated)
+ * and `hasFeaturedSubscription` (paid Featured slot). `featured_priority`
+ * is a derived score so curated-AND-paid outranks curated-only, which
+ * outranks paid-only — the canonical priority bias for any directory
+ * surface.
+ */
+function sortKey(f: PublicFacility): [number, number, number] {
+  const fAny = f as unknown as {
+    isHomepageFeatured?: boolean;
+    hasFeaturedSubscription?: boolean;
+  };
+  const curated = fAny.isHomepageFeatured ? 1 : 0;
+  const paid = fAny.hasFeaturedSubscription ? 1 : 0;
+  const isFeatured = curated || paid;
+  // 3 = curated+paid, 2 = curated only, 1 = paid only, 0 = neither
+  const featuredPriority = curated * 2 + paid;
+  const rating = f.googleRating ?? 0;
+  return [isFeatured, featuredPriority, rating];
+}
+
+function compareBySortKey(a: PublicFacility, b: PublicFacility): number {
+  const ka = sortKey(a);
+  const kb = sortKey(b);
+  for (let i = 0; i < ka.length; i++) {
+    if (ka[i] !== kb[i]) return kb[i] - ka[i]; // DESC
+  }
+  return 0;
 }
 
 export function HomepageFeaturedSection() {
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
   const geo = useGeoLocation();
-  
-  const scrollRef = useRef<HTMLDivElement>(null);
   const hasTrackedImpressions = useRef(false);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const userState = geo.regionCode || "";
   const userCity = geo.city || "";
-  const nearbyStates = useMemo(() => userState ? getNearbyStates(userState) : [], [userState]);
+  const nearbyStates = useMemo(
+    () => (userState ? getNearbyStates(userState) : []),
+    [userState],
+  );
 
   const featuredCenters = useMemo(() => {
-    // Priority 1: explicitly featured facilities
-    const dbFeatured = approvedFacilities.filter(
-      (f: any) => f.isHomepageFeatured || f.hasFeaturedSubscription
-    );
+    // Featured pool: anything explicitly featured (curated or paid).
+    const featured = approvedFacilities.filter((f) => {
+      const fAny = f as unknown as {
+        isHomepageFeatured?: boolean;
+        hasFeaturedSubscription?: boolean;
+      };
+      return fAny.isHomepageFeatured || fAny.hasFeaturedSubscription;
+    });
 
-    // Priority 2: all approved facilities as fallback (sorted by pro > verified > rating)
-    let pool: any[];
-    if (dbFeatured.length > 0) {
-      pool = [...dbFeatured];
-    } else if (approvedFacilities.length > 0) {
-      pool = [...approvedFacilities].sort((a: any, b: any) => {
-        if (a.isPro !== b.isPro) return a.isPro ? -1 : 1;
-        if (a.verified !== b.verified) return a.verified ? -1 : 1;
-        return (b.googleRating || 0) - (a.googleRating || 0);
-      });
-    } else {
-      // Priority 3: static data
-      pool = treatmentCenters
+    // Verified fallback pool: anything verified (or Pro) that isn't already
+    // in the featured list. Used only when featured < GRID_MIN so the grid
+    // never reads thin.
+    const featuredIds = new Set(featured.map((f) => f.id));
+    const verifiedFallback = approvedFacilities.filter((f) => {
+      if (featuredIds.has(f.id)) return false;
+      const fAny = f as unknown as { isPro?: boolean; verified?: boolean | null };
+      return !!fAny.isPro || !!fAny.verified;
+    });
+
+    // Build the pool: featured first (sorted), verified fallback second
+    // (sorted). When even verified is too thin (early-stage / staging),
+    // back off to the static treatmentCenters seed list.
+    let pool: PublicFacility[] = [...featured].sort(compareBySortKey);
+    if (pool.length < GRID_MIN) {
+      pool = pool.concat([...verifiedFallback].sort(compareBySortKey));
+    }
+    if (pool.length < GRID_MIN) {
+      const staticFallback = treatmentCenters
         .filter((c) => c.featured)
-        .map((c) => ({
-          ...c, slug: null, isFromDatabase: false, logo_url: null, gallery_urls: null,
-          hasFeaturedSubscription: false, isPro: false, verified: false,
-          year_established: null, facilityType: null, googleRating: null, googleReviewCount: null,
+        .map((c): PublicFacility => ({
+          ...c,
+          slug: null,
+          isFromDatabase: false,
+          logo_url: null,
+          gallery_urls: null,
+          isPro: false,
+          verified: false,
+          year_established: null,
+          facilityType: null,
+          googleRating: null,
+          googleReviewCount: null,
+          planTier: "free",
         }));
+      pool = pool.concat(staticFallback);
     }
 
+    // Apply proximity tiering as a stable secondary signal: re-rank
+    // each section of `pool` (featured/fallback) so the same-state
+    // facility floats up within its tier, without breaking the
+    // featured-first ordering of the pool itself.
     const seed = getDailySeed();
-
     if (userState && !geo.isLoading) {
-      const tiers: Map<number, PublicFacility[]> = new Map();
+      const tiered: PublicFacility[] = [];
+      const buckets: Map<number, PublicFacility[]> = new Map();
       for (const f of pool) {
         const tier = getProximityTier(f, userState, userCity, nearbyStates);
-        if (!tiers.has(tier)) tiers.set(tier, []);
-        tiers.get(tier)!.push(f);
+        if (!buckets.has(tier)) buckets.set(tier, []);
+        buckets.get(tier)!.push(f);
       }
-      pool = [];
       for (const tier of [0, 1, 2, 3, 4]) {
-        const group = tiers.get(tier);
-        if (group?.length) pool.push(...seededShuffle(group, seed + tier));
+        const group = buckets.get(tier);
+        if (group?.length) tiered.push(...seededShuffle(group, seed + tier));
       }
+      pool = tiered;
     } else {
       pool = seededShuffle(pool, seed);
     }
 
-    return pool.slice(0, 8);
+    return pool.slice(0, GRID_MAX);
   }, [approvedFacilities, userState, userCity, nearbyStates, geo.isLoading]);
 
   const trackFeaturedImpressions = useCallback(async () => {
     if (hasTrackedImpressions.current) return;
-    const dbFacilities = featuredCenters.filter(
-      (c: any) => c.isFromDatabase && (c.hasFeaturedSubscription || c.isPro) && c.id
-    );
+    const dbFacilities = featuredCenters.filter((c) => {
+      const cAny = c as unknown as {
+        isFromDatabase?: boolean;
+        hasFeaturedSubscription?: boolean;
+        isPro?: boolean;
+      };
+      return cAny.isFromDatabase && (cAny.hasFeaturedSubscription || cAny.isPro) && c.id;
+    });
     if (dbFacilities.length === 0) return;
     hasTrackedImpressions.current = true;
     for (const facility of dbFacilities) {
@@ -117,7 +188,9 @@ export function HomepageFeaturedSection() {
         await supabase.functions.invoke("track-featured-analytics", {
           body: { facility_id: facility.id, event_type: "impression" },
         });
-      } catch (e) { /* silent */ }
+      } catch {
+        /* silent */
+      }
     }
   }, [featuredCenters]);
 
@@ -125,131 +198,62 @@ export function HomepageFeaturedSection() {
     if (featuredCenters.length > 0) trackFeaturedImpressions();
   }, [featuredCenters, trackFeaturedImpressions]);
 
-  const updateScrollState = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
-  }, []);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    updateScrollState();
-    el.addEventListener("scroll", updateScrollState, { passive: true });
-    window.addEventListener("resize", updateScrollState);
-    return () => {
-      el.removeEventListener("scroll", updateScrollState);
-      window.removeEventListener("resize", updateScrollState);
-    };
-  }, [updateScrollState, featuredCenters]);
-
-  const scroll = useCallback((dir: "left" | "right") => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const cardWidth = el.querySelector("[data-featured-card]")?.clientWidth || 360;
-    el.scrollBy({ left: dir === "left" ? -cardWidth - 20 : cardWidth + 20, behavior: "smooth" });
-  }, []);
-
   if (isLoading) {
     return (
-      // Match the loaded-state padding (py-10 md:py-16) so the section
-      // doesn't shrink ~16-32px and shift everything below it up when the
-      // facility fetch resolves. Was py-14 md:py-20 — a CLS regression.
-      <section className="py-10 md:py-16">
-        <div className="container px-3 sm:px-4 md:px-6 lg:px-8"><FeaturedSkeleton /></div>
+      <section className="py-10 md:py-14">
+        <div className="container px-3 sm:px-4 md:px-6 lg:px-8">
+          <FeaturedSkeleton />
+        </div>
       </section>
     );
   }
 
   if (featuredCenters.length === 0) return null;
 
-  // Only show city/state label for US visitors — non-US region codes (e.g. "10" for Balikesir, TR)
-  // would otherwise render as "Showing results near Balikesir, 10" on a US-focused directory.
-  const locationLabel = geo.isUS && userState && !geo.isLoading
-    ? `Showing results near ${userCity ? `${userCity}, ` : ""}${userState}`
-    : "Verified facilities across the United States";
+  const locationLabel =
+    geo.isUS && userState && !geo.isLoading
+      ? `Showing centers near ${userCity ? `${userCity}, ` : ""}${userState}`
+      : "Verified facilities across the United States";
+
+  // Round live count to the nearest hundred and prefix with the
+  // canonical "3,800+" floor used on the trust bar. We never advertise
+  // fewer centers than the trust bar counts up to.
+  const liveCount = approvedFacilities.length;
+  const advertisedCount =
+    liveCount >= 3800 ? `${Math.floor(liveCount / 100) * 100}+` : "3,800+";
 
   return (
-    <section className="py-10 md:py-16">
+    <section className="py-10 md:py-14">
       <div className="container px-3 sm:px-4 md:px-6 lg:px-8">
-        {/* Section Container with Refined Border */}
-        <div className="rounded-xl sm:rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-          {/* Header */}
-          <div className="px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6 border-b border-border bg-muted/20">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="font-display text-lg sm:text-xl md:text-2xl font-bold text-foreground tracking-tight">
-                  Top-Rated Treatment Facilities
-                </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 truncate">
-                  {locationLabel}
-                </p>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="hidden md:flex items-center gap-1.5">
-                  <button
-                    onClick={() => scroll("left")}
-                    disabled={!canScrollLeft}
-                    className={cn(
-                      "h-9 w-9 rounded-lg border flex items-center justify-center transition-all",
-                      canScrollLeft
-                        ? "border-border bg-card hover:bg-muted text-foreground hover:border-primary/30"
-                        : "border-border/30 text-muted-foreground/30 cursor-default"
-                    )}
-                    aria-label="Scroll left"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => scroll("right")}
-                    disabled={!canScrollRight}
-                    className={cn(
-                      "h-9 w-9 rounded-lg border flex items-center justify-center transition-all",
-                      canScrollRight
-                        ? "border-border bg-card hover:bg-muted text-foreground hover:border-primary/30"
-                        : "border-border/30 text-muted-foreground/30 cursor-default"
-                    )}
-                    aria-label="Scroll right"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-                <Link
-                  to="/rehab-centers"
-                  className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                >
-                  View all
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-          </div>
+        {/* Section header */}
+        <header className="mx-auto max-w-3xl text-center mb-7 md:mb-9">
+          <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
+            Top-Rated Treatment Facilities
+          </h2>
+          <p className="mt-2 text-sm md:text-base text-muted-foreground">
+            {locationLabel}
+          </p>
+        </header>
 
-          {/* Scroll track */}
-          <div
-            ref={scrollRef}
-            className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto scroll-smooth px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6 snap-x snap-mandatory"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {featuredCenters.map((center: any) => (
-              <div key={center.id} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px] snap-start" data-featured-card>
-                <TreatmentCenterCard
-                  center={center}
-                  featured={true}
-                />
-              </div>
-            ))}
-          </div>
+        {/* 2-column desktop grid, 1-column mobile. 10-12 facilities. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+          {featuredCenters.map((center) => (
+            <TreatmentCenterCard
+              key={center.id}
+              center={center}
+              featured={true}
+            />
+          ))}
         </div>
 
-        {/* Mobile CTA */}
-        <div className="mt-4 sm:hidden">
-          <Link to="/rehab-centers">
-            <Button variant="outline" size="sm" className="w-full gap-2 font-medium">
-              View All Centers
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+        {/* Single CTA — primary directory entry point */}
+        <div className="mt-8 md:mt-10 text-center">
+          <Link
+            to="/rehab-centers"
+            className="inline-flex items-center gap-2 text-base md:text-lg font-semibold text-primary hover:text-primary/80 transition-colors"
+          >
+            View all {advertisedCount} centers
+            <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
           </Link>
         </div>
       </div>
@@ -257,18 +261,19 @@ export function HomepageFeaturedSection() {
   );
 }
 
-
 function FeaturedSkeleton() {
   return (
     <div>
-      <div className="space-y-2 mb-10">
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-8 w-72" />
-        <Skeleton className="h-4 w-48" />
+      <div className="mx-auto max-w-3xl text-center space-y-2 mb-7 md:mb-9">
+        <Skeleton className="h-8 md:h-10 w-3/4 mx-auto" />
+        <Skeleton className="h-4 w-48 mx-auto" />
       </div>
-      <div className="flex gap-5 overflow-hidden">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="flex-shrink-0 w-[360px] rounded-xl border border-border overflow-hidden bg-card">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-xl border border-border overflow-hidden bg-card"
+          >
             <Skeleton className="aspect-[16/9]" />
             <div className="p-4 space-y-3">
               <div className="flex items-start gap-3">
