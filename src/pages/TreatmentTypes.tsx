@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { InlineIntakeForm } from "@/components/conversion/InlineIntakeForm";
 
 interface TreatmentType {
   icon: LucideIcon;
@@ -598,6 +599,15 @@ const TreatmentTypes = () => {
               className=""
             />
           </div>
+        </div>
+      </section>
+
+      {/* Inline 3-field intake widget — quiet conversion path after
+          seekers have browsed treatment types. Self-gates via
+          NEW_CTA_SYSTEM; renders nothing when the flag is off. */}
+      <section className="py-8 md:py-10">
+        <div className="container max-w-xl">
+          <InlineIntakeForm heading="Not sure which level of care fits?" />
         </div>
       </section>
 

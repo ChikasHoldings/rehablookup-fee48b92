@@ -27,6 +27,7 @@ import { FeaturedRail } from "@/components/featured/FeaturedRail";
 import { NearbyStatesLinks } from "@/components/seo/CityLinkGrid";
 import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
+import { InlineIntakeForm } from "@/components/conversion/InlineIntakeForm";
 import { 
   MapPin, 
   Building2, 
@@ -423,6 +424,14 @@ const StatePage = () => {
               </Link>
             </div>
           )}
+
+          {/* Inline 3-field intake widget — quiet, state-contextual
+              entry to the concierge flow. Self-gates via NEW_CTA_SYSTEM
+              so the page is byte-identical when the flag is off. */}
+          <InlineIntakeForm
+            heading={`Find ${stateData.name} treatment programs`}
+            className="mt-10 max-w-xl mx-auto"
+          />
         </div>
       </section>
 

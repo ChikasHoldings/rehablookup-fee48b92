@@ -743,6 +743,13 @@ export default function ConciergeIntake() {
       applied_payment_type: ctx?.applied_payment_type ?? false,
       applied_level_of_care: ctx?.applied_level_of_care ?? false,
     });
+    // Generic form-lifecycle event used by the conversion-system
+    // dashboards (one namespace across full intake + inline widget).
+    trackEvent("intake_form_started", {
+      form: "concierge_intake",
+      source: ctx?.source || "(direct)",
+      had_prefill: !!ctx,
+    });
   }, []);
 
   // Fires concierge_intake_submitted exactly once per mount, regardless of
@@ -770,9 +777,47 @@ export default function ConciergeIntake() {
         applied_level_of_care: ctx?.applied_level_of_care ?? false,
         ...extras,
       });
+      // Generic form-lifecycle event — paired with intake_form_started
+      // so a single funnel query can compute start→submit rates across
+      // both the full intake and the inline widget.
+      trackEvent("intake_form_submitted", {
+        form: "concierge_intake",
+        channel,
+        source: ctx?.source || "(direct)",
+      });
     },
     [],
   );
+
+  // Generic form-lifecycle abandonment event. Fires at most once when
+  // the user navigates away (pagehide) or backgrounds the tab AFTER
+  // they started the form but BEFORE they submit. visibilitychange is
+  // the most reliable mobile signal (beforeunload is unreliable on
+  // iOS Safari). We also guard with a ref so the same session can't
+  // double-fire if both events happen.
+  const abandonedFiredRef = useRef(false);
+  useEffect(() => {
+    const fireAbandonedIfApplicable = () => {
+      if (abandonedFiredRef.current) return;
+      if (!startedFiredRef.current) return;
+      if (submittedFiredRef.current) return;
+      abandonedFiredRef.current = true;
+      trackEvent("intake_form_abandoned", {
+        form: "concierge_intake",
+        last_step: currentStep,
+        total_steps: TOTAL_STEPS,
+      });
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") fireAbandonedIfApplicable();
+    };
+    window.addEventListener("pagehide", fireAbandonedIfApplicable);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", fireAbandonedIfApplicable);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [currentStep]);
 
   const handleNext = async () => {
     if (validateStep(currentStep)) {
@@ -782,6 +827,15 @@ export default function ConciergeIntake() {
       trackEvent("concierge_intake_step_complete", {
         event_category: "ConciergeFunnel",
         event_label: `step_${currentStep}`,
+        step_number: currentStep,
+        total_steps: TOTAL_STEPS,
+      });
+      // Generic form-lifecycle event — uses STEP_CONFIG[i].title as
+      // the field-group name so analytics joins cleanly across the
+      // full intake and any future inline-form variants.
+      trackEvent("intake_form_field_completed", {
+        form: "concierge_intake",
+        field_group: STEP_CONFIG[currentStep - 1]?.title ?? `step_${currentStep}`,
         step_number: currentStep,
         total_steps: TOTAL_STEPS,
       });

@@ -82,6 +82,7 @@ import { TherapyApproachesGrid } from "@/components/facility-profile/TherapyAppr
 import { InsuranceShowcase } from "@/components/facility-profile/InsuranceShowcase";
 import { AccreditationsPanel } from "@/components/facility-profile/AccreditationsPanel";
 import { RelatedNearby } from "@/components/facility-profile/RelatedNearby";
+import { InlineIntakeForm } from "@/components/conversion/InlineIntakeForm";
 
 interface FacilityData {
   id: string;
@@ -1327,6 +1328,15 @@ const CenterProfile = () => {
                   />
                 );
               })()}
+
+              {/* Inline 3-field intake widget — quiet conversion path
+                  for seekers who read the FAQ and want to talk to
+                  someone. Self-gates via NEW_CTA_SYSTEM; renders nothing
+                  when the flag is off so the profile is unchanged. */}
+              <InlineIntakeForm
+                heading={`Get help finding care like ${facility.name}`}
+                className="max-w-xl mx-auto"
+              />
 
               {/* Contextual internal links — strengthens crawl paths from
                   the profile to related treatment-type, city, state, and
