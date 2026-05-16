@@ -370,7 +370,7 @@ const Index = () => {
       {/* Featured rail — bucket (homepage, 'national'). 6 slots. Silent
           absence when no Featured subscribers nationwide. Distinct from
           HomepageFeaturedSection (legacy editorial Featured strip). */}
-      <section className="py-10 md:py-12 bg-background">
+      <section className="pt-4 pb-10 md:pt-5 md:pb-12 bg-background">
         <div className="container px-4 md:px-6 lg:px-8">
           <FeaturedRail
             placement_type="homepage"

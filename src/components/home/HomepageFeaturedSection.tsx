@@ -179,9 +179,6 @@ export function HomepageFeaturedSection() {
           <div className="px-4 py-4 sm:px-6 sm:py-5 md:px-8 md:py-6 border-b border-border bg-muted/20">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-1">
-                  Featured Centers
-                </p>
                 <h2 className="font-display text-lg sm:text-xl md:text-2xl font-bold text-foreground tracking-tight">
                   Top-Rated Treatment Facilities
                 </h2>
