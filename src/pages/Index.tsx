@@ -1,10 +1,11 @@
-import { useRef, useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Button } from "@/components/ui/button";
 import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
+import { FindByStateSection } from "@/components/home/FindByStateSection";
 import { FeaturedRail } from "@/components/featured/FeaturedRail";
 // TrustStrip moved to /concierge
 import { LazySection } from "@/components/ui/lazy-section";
@@ -24,7 +25,6 @@ const TestimonialsSection = lazy(() => import("@/components/testimonials/Testimo
 const PageFAQ = lazy(() => import("@/components/seo/PageFAQ").then(m => ({ default: m.PageFAQ })));
 const seekerTestimonialsPromise = import("@/data/testimonials").then(m => m.seekerTestimonials);
 const homeFaqsPromise = import("@/data/pageFaqs").then(m => m.homeFaqs);
-import whyChooseUsImage from "@/assets/why-choose-us.webp";
 import {
   ArrowRight,
   Pill,
@@ -126,35 +126,6 @@ const Index = () => {
   useEffect(() => {
     seekerTestimonialsPromise.then(setSeekerTestimonials);
     homeFaqsPromise.then(setHomeFaqs);
-  }, []);
-  // Parallax effect for Why Choose Us image
-  const parallaxRef = useRef<HTMLDivElement>(null);
-  const [parallaxOffset, setParallaxOffset] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!parallaxRef.current) return;
-      
-      const rect = parallaxRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      
-      // Calculate how far the element is from the center of the viewport
-      const elementCenter = rect.top + rect.height / 2;
-      const viewportCenter = windowHeight / 2;
-      const distance = elementCenter - viewportCenter;
-      
-      // Only apply parallax when element is in view
-      if (rect.top < windowHeight && rect.bottom > 0) {
-        // Subtle parallax: move image slightly opposite to scroll direction
-        const offset = distance * 0.08;
-        setParallaxOffset(offset);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial call
-    
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
@@ -401,81 +372,10 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section className="py-10 md:py-12 lg:py-20 bg-primary">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="grid items-center gap-6 md:gap-8 md:grid-cols-2 lg:gap-12">
-            {/* Content */}
-            <div className="order-2 md:order-1">
-              <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">Why RehabLookup</span>
-              <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-primary-foreground lg:text-3xl">
-                Trusted by Families Across America
-              </h2>
-              <p className="mt-2 md:mt-3 text-[15px] md:text-base text-primary-foreground/70 leading-relaxed max-w-md">
-                We're committed to helping you find the right treatment with transparency and compassion.
-              </p>
-
-              <ul className="mt-4 md:mt-6 space-y-2 md:space-y-2.5">
-                {[
-                  "Every facility verified for licensing",
-                  "Transparent program information",
-                  "No hidden fees or referrals",
-                  "Confidential communication",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-2 md:gap-2.5">
-                    <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 text-accent" />
-                    <span className="text-primary-foreground text-sm md:text-base">{item}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-5 md:mt-6">
-                <Link to="/about">
-                  <Button variant="hero-light" size="sm" className="gap-2">
-                    About Our Mission
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Image with Stats Overlay */}
-            <div ref={parallaxRef} className="order-1 md:order-2">
-              <div className="relative overflow-hidden rounded-xl">
-                <img 
-                  src={whyChooseUsImage} 
-                  alt="Healthcare professional consulting with a family"
-                  className="w-full aspect-[4/3] object-cover"
-                  width={800}
-                  height={600}
-                  loading="lazy"
-                />
-                {/* Overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent" />
-                
-                {/* Stats Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 md:gap-2">
-                    {[
-                      { value: "15K+", label: "Centers" },
-                      { value: "50", label: "States" },
-                      { value: "10K+", label: "Families" },
-                      { value: "24/7", label: "Support" },
-                    ].map((stat) => (
-                      <div key={stat.label} className="text-center">
-                        <div className="font-display text-lg md:text-xl font-bold text-accent lg:text-2xl">
-                          {stat.value}
-                        </div>
-                        <p className="text-xs md:text-sm text-primary-foreground/80 lg:text-sm">{stat.label}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Find Treatment Center by State — replaces the prior "Trusted
+          by Families" block. The 4-tile stats strip lives on inside
+          FindByStateSection (Centers / States / Families / Support). */}
+      <FindByStateSection />
 
       {/* Insurance Coverage Section — moved here from above per the
           directory-refocus pass so seekers see the verification ramp
