@@ -2,10 +2,11 @@ import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { cancelSubscriptionAndRefund } from "../_shared/cancel-subscription.ts";
 
 // Version tracking for deployment verification
-const VERSION = "1.1.0";
-const DEPLOYED_AT = "2026-04-06T00:00:00Z";
+const VERSION = "1.2.0";
+const DEPLOYED_AT = "2026-05-16T00:00:00Z";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -124,19 +125,6 @@ function deriveTierFlagsFromSubscription(sub: Stripe.Subscription) {
     discount_applied_cents: discountAppliedCents,
     matched_new_lookup_keys: isPro || hasFeatured || hasConcierge,
   };
-}
-
-/**
- * STUB — refund computation lands in monetization PR 2. Keeps the
- * webhook code path live so subscription.deleted events don't 500;
- * actual refund Stripe calls happen in the follow-up PR.
- */
-function stubComputeCancellationRefund(_subscriptionId: string) {
-  console.log(
-    "[stripe-webhook] subscription cancellation received — refund stub returning null. " +
-      "Real refund logic ships in monetization PR 2.",
-  );
-  return null; // null = "not yet implemented; route to manual flow"
 }
 
 Deno.serve(async (req) => {
@@ -589,10 +577,46 @@ Deno.serve(async (req) => {
       });
 
       const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      const mappedStatus = subscription.status === "active" ? "active" 
+      const mappedStatus = subscription.status === "active" ? "active"
         : subscription.status === "past_due" ? "past_due"
         : subscription.status === "canceled" ? "canceled"
         : subscription.status;
+
+      // Detect mid-period add-on removal by comparing DB-stored add-on flags
+      // with the current subscription items. If Featured/Concierge were active
+      // and the lookup key is no longer present in the items, the provider
+      // dropped that add-on — refund + deactivate dependent rows via the
+      // shared cancel module. cancelSubscriptionAndRefund handles flag
+      // persistence + audit row + Stripe refund, so we skip the manual
+      // flag-update below for the affected add-on.
+      const { data: priorSubRow } = await supabaseAdmin
+        .from("facility_subscriptions")
+        .select("id, has_featured, has_concierge_partner")
+        .eq("stripe_subscription_id", subscription.id)
+        .maybeSingle();
+      const currentFlags = deriveTierFlagsFromSubscription(subscription);
+      const droppedFeatured = priorSubRow?.has_featured === true && !currentFlags.has_featured;
+      const droppedConcierge = priorSubRow?.has_concierge_partner === true && !currentFlags.has_concierge_partner;
+      if (priorSubRow && (droppedFeatured || droppedConcierge)) {
+        try {
+          if (droppedFeatured) {
+            const r = await cancelSubscriptionAndRefund(priorSubRow.id, {
+              scope: "addon-featured",
+              reason: "stripe webhook: featured item removed from subscription",
+            });
+            logStep("Featured add-on refunded on item removal", { refundCents: r.featuredRefundCents, refundIds: r.stripeRefundIds });
+          }
+          if (droppedConcierge) {
+            const r = await cancelSubscriptionAndRefund(priorSubRow.id, {
+              scope: "addon-concierge",
+              reason: "stripe webhook: concierge item removed from subscription",
+            });
+            logStep("Concierge add-on refunded on item removal", { refundCents: r.conciergeRefundCents, refundIds: r.stripeRefundIds });
+          }
+        } catch (addonErr) {
+          logStep("ERROR refunding removed add-on", { error: String(addonErr) });
+        }
+      }
 
       const { error: updateError } = await supabaseAdmin
         .from("facility_subscriptions")
@@ -875,6 +899,29 @@ Deno.serve(async (req) => {
             },
           });
           logStep("Payment event recorded");
+
+          // On renewal (subscription_cycle), clear the renewal_reminder_*_sent_at
+          // milestones so the daily cron can fire the 60/30/14/7-day reminders
+          // for the new period. First payment of a subscription is
+          // `subscription_create`; we skip resets in that case since the
+          // columns are already NULL on a fresh row.
+          if (invoice.billing_reason === "subscription_cycle" && invoice.subscription) {
+            const { error: resetErr } = await supabaseAdmin
+              .from("facility_subscriptions")
+              .update({
+                renewal_reminder_60d_sent_at: null,
+                renewal_reminder_30d_sent_at: null,
+                renewal_reminder_14d_sent_at: null,
+                renewal_reminder_7d_sent_at: null,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("stripe_subscription_id", invoice.subscription as string);
+            if (resetErr) {
+              logStep("Failed to reset renewal reminder milestones", { error: resetErr.message });
+            } else {
+              logStep("Renewal reminder milestones reset for new period");
+            }
+          }
 
           // Send payment confirmation notification + email to provider (renewals & first payments)
           if (userId && facilityId) {
@@ -1180,21 +1227,45 @@ Deno.serve(async (req) => {
             .limit(1);
 
           if (facilities?.[0]) {
-            // Update facility_subscriptions to cancelled
-            await supabaseAdmin
+            // Resolve the facility_subscriptions row id so cancelSubscriptionAndRefund
+            // can refund per-tier (Pro + every active add-on), record audit
+            // rows, and flip the row to canceled with has_featured=false +
+            // has_concierge_partner=false in a single transactional call.
+            const { data: subRow } = await supabaseAdmin
               .from("facility_subscriptions")
-              .update({
-                status: "canceled",
-                canceled_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              })
-              .eq("stripe_subscription_id", subscription.id);
+              .select("id")
+              .eq("stripe_subscription_id", subscription.id)
+              .maybeSingle();
 
-            // Trigger refund computation. STUB returns null in this PR
-            // (foundation); the real flat-monthly × months_used math
-            // ships in monetization PR 2 and will write a row into
-            // subscription_cancellations + issue the Stripe refund.
-            stubComputeCancellationRefund(subscription.id);
+            if (subRow?.id) {
+              try {
+                const cancelResult = await cancelSubscriptionAndRefund(subRow.id, {
+                  scope: "all",
+                  reason: subscription.cancellation_details?.reason
+                    ? `stripe webhook: ${subscription.cancellation_details.reason}`
+                    : "stripe webhook: subscription.deleted",
+                });
+                logStep("Cancellation refunds issued", {
+                  totalRefundCents: cancelResult.totalRefundCents,
+                  refundIds: cancelResult.stripeRefundIds,
+                  rowIds: cancelResult.cancellationRowIds,
+                });
+              } catch (cancelErr) {
+                logStep("ERROR running cancelSubscriptionAndRefund", { error: String(cancelErr) });
+                // Fallback: at minimum mark the row canceled so downstream
+                // benefit removal still runs.
+                await supabaseAdmin
+                  .from("facility_subscriptions")
+                  .update({
+                    status: "canceled",
+                    canceled_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", subRow.id);
+              }
+            } else {
+              logStep("No facility_subscriptions row found for cancelled Stripe sub — skipping refund executor", { stripeSubId: subscription.id });
+            }
 
             // DEACTIVATE PRO BENEFITS: remove featured flag and ranking boost from ALL provider facilities
             const providerId = profiles[0].user_id;
