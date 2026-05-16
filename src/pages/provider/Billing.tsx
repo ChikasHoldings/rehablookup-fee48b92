@@ -16,6 +16,7 @@ import {
   PlanComparisonGrid,
 } from "@/components/provider/billing/PlanComparisonGrid";
 import { SwitchToAnnualBanner } from "@/components/provider/billing/SwitchToAnnualBanner";
+import { SwitchToMonthlyAtRenewalBanner } from "@/components/provider/billing/SwitchToMonthlyAtRenewalBanner";
 import type { BillingInterval } from "@/components/provider/billing/BillingIntervalToggle";
 
 /**
@@ -128,6 +129,20 @@ export default function ProviderBilling() {
     subscription?.status === "active" &&
     subscription?.billing_period === "monthly";
 
+  // Annual subscriber, currently inside the 60-day renewal-reminder
+  // window. The window matches the renewal-reminder cron's earliest
+  // milestone so the "switch at renewal" affordance shows up alongside
+  // those notifications, not year-round.
+  const isAnnualPro =
+    subscription?.tier === "pro" &&
+    subscription?.status === "active" &&
+    subscription?.billing_period === "annual";
+  const daysUntilRenewal = isAnnualPro && subscription?.current_period_end
+    ? Math.floor((new Date(subscription.current_period_end).getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+    : null;
+  const showRenewalSwitchBanner =
+    isAnnualPro && daysUntilRenewal !== null && daysUntilRenewal >= 0 && daysUntilRenewal <= 60;
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -177,6 +192,13 @@ export default function ProviderBilling() {
 
         {isMonthlyPro && subscription && (
           <SwitchToAnnualBanner
+            subscription={subscription}
+            onSwitched={() => invalidateSub(facilityId)}
+          />
+        )}
+
+        {showRenewalSwitchBanner && subscription && (
+          <SwitchToMonthlyAtRenewalBanner
             subscription={subscription}
             onSwitched={() => invalidateSub(facilityId)}
           />

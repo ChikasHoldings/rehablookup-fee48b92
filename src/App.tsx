@@ -352,6 +352,8 @@ const ProviderImageGuidelines = lazy(() => import("./pages/provider/ImageGuideli
 const ProviderAddLocation = lazy(() => import("./pages/provider/AddLocation"));
 const ProviderBillingPage = lazy(() => import("./pages/provider/Billing"));
 const ProviderBillingCancelPage = lazy(() => import("./pages/provider/BillingCancel"));
+const ProviderBillingPlacementsPage = lazy(() => import("./pages/provider/BillingPlacements"));
+const ProviderBillingConciergePage = lazy(() => import("./pages/provider/BillingConcierge"));
 // Pro upgrade page + Placement network removed in monetization rebuild.
 // /provider/pro-upgrade and /provider/placement-network now Navigate
 // to /for-providers so any stale bookmark / external link still lands
@@ -1607,6 +1609,8 @@ const AppInner = () => {
               <Route path="pro-upgrade" element={<Navigate to="/for-providers" replace />} />
               <Route path="billing" element={<ProviderBillingPage />} />
               <Route path="billing/cancel" element={<ProviderBillingCancelPage />} />
+              <Route path="billing/placements" element={<ProviderBillingPlacementsPage />} />
+              <Route path="billing/concierge" element={<ProviderBillingConciergePage />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="embed-badge" element={<ProviderEmbedBadgePage />} />
               <Route path="notifications" element={<ProviderNotificationsPage />} />
