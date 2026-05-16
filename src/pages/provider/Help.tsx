@@ -117,7 +117,7 @@ const faqSections = [
     items: [
       {
         question: "What does Pro membership include?",
-        answer: "Pro ($399/mo) includes: featured listing placement, 20% off all lead unlocks, $200 off placement fees, up to 5 facility listings, priority support, analytics dashboard, and an embeddable trust badge."
+        answer: "Pro ($99/mo billed annually — $1,009.80/yr, save 15%) includes: verified badge, direct contact info visible to seekers, inquiries delivered directly to your inbox, review responses, 10 photos plus 1 video, up to 5 facility listings, priority support, analytics dashboard, and an embeddable trust badge. Featured rotation placements and Concierge Partner surfacing are optional annual add-ons priced separately — see /for-providers for the full lineup."
       },
       {
         question: "How does billing work?",

@@ -265,13 +265,13 @@ Deno.serve(async (req) => {
       const productId = subscription.items.data[0]?.price?.product as string;
       const plan: "free" | "pro" = PRO_PRODUCT_IDS.includes(productId) ? "pro" : "free";
 
-      // Get unlocked leads count this month
+      // lead_unlocks dropped — retention signal will be reworked off
+      // subscription activity in a follow-up PR. Treat current-month
+      // unlock count as zero so the retention outreach still fires
+      // for low-engagement subscribers.
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const { count: leadsUnlocked } = await supabaseClient
-        .from("lead_unlocks")
-        .select("id", { count: "exact", head: true })
-        .eq("facility_id", facility.id)
-        .gte("unlocked_at", startOfMonth.toISOString());
+      void startOfMonth;
+      const leadsUnlocked = 0;
 
       // Get last login activity
       const { data: lastActivity } = await supabaseClient

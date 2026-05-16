@@ -55,7 +55,7 @@ const providerPageMap: Record<string, () => Promise<unknown>> = {
   "/provider/notifications": () => import("@/pages/provider/Notifications"),
   "/provider/help": () => import("@/pages/provider/Help"),
   "/provider/billing": () => import("@/pages/provider/Billing"),
-  "/provider/placement-network": () => import("@/pages/provider/PlacementNetwork"),
+  // /provider/placement-network removed in monetization rebuild.
 };
 
 const adminPageMap: Record<string, () => Promise<unknown>> = {
@@ -74,7 +74,7 @@ const adminPageMap: Record<string, () => Promise<unknown>> = {
   "/admin/profile": () => import("@/pages/admin/AdminProfile"),
   "/admin/reviews": () => import("@/pages/admin/AdminReviews"),
   "/admin/concierge": () => import("@/pages/admin/AdminConcierge"),
-  "/admin/placement-revenue": () => import("@/pages/admin/PlacementRevenueDashboard"),
+  // /admin/placement-revenue dashboard removed in monetization rebuild.
   "/admin/support": () => import("@/pages/admin/AdminSupport"),
   "/admin/marketing": () => import("@/pages/admin/AdminMarketing"),
 };
@@ -178,7 +178,6 @@ export function preloadProviderPages(): void {
     () => import("@/pages/provider/Notifications"),
     () => import("@/pages/provider/Help"),
     () => import("@/pages/provider/Billing"),
-    () => import("@/pages/provider/PlacementNetwork"),
     () => import("@/pages/provider/EmbedBadge"),
   ];
   

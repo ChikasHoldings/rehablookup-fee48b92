@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Building2, Lock, Sparkles, CreditCard, Loader2, CheckCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export function AddListingCard({
 }: AddListingCardProps) {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Handle slot purchase confirmation from URL params
   useEffect(() => {
@@ -53,33 +54,12 @@ export function AddListingCard({
     }
   }, [searchParams, setSearchParams, onSlotPurchased]);
 
+  // $49 per-slot purchase flow retired in monetization rebuild —
+  // listing slots are now bundled into the Pro tier (up to 5
+  // facilities). Multi-facility operators above the 5-listing cap
+  // contact sales via /for-providers.
   const handlePurchaseSlot = async () => {
-    setIsPurchasing(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke("purchase-listing-slot", {
-        method: "POST",
-      });
-      
-      if (error) {
-        console.error("[AddListingCard] Invoke error:", error);
-        throw error;
-      }
-      
-      if (data?.url && (data.url.startsWith("https://checkout.stripe.com") || data.url.startsWith("https://billing.stripe.com"))) {
-        window.location.href = data.url;
-      } else if (data?.url) {
-        throw new Error("Invalid checkout URL");
-      } else {
-        throw new Error("No checkout URL returned");
-      }
-    } catch (error) {
-      console.error("[AddListingCard] Error purchasing listing slot:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to start checkout";
-      toast.error(errorMessage + ". Please try again.");
-    } finally {
-      setIsPurchasing(false);
-    }
+    navigate("/for-providers");
   };
 
   if (!canAdd) {
@@ -97,7 +77,8 @@ export function AddListingCard({
                   Add Another Listing
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  You've used all {limit} listings. Purchase additional slots for $49 each.
+                  You've used all {limit} listings on your current plan. Contact sales to add
+                  more facilities.
                 </p>
               </div>
               <Button 
@@ -110,7 +91,7 @@ export function AddListingCard({
                 ) : (
                   <CreditCard className="h-4 w-4" />
                 )}
-                Buy Slot - $49
+                Contact sales
               </Button>
             </div>
           </CardContent>

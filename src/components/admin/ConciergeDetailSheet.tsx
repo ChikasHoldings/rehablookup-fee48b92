@@ -19,11 +19,9 @@ import { ConciergePlacementTab } from "./concierge/ConciergePlacementTab";
 import { ConciergeIntroductionsTab } from "./concierge/ConciergeIntroductionsTab";
 import { ConciergeDecisionTab } from "./concierge/ConciergeDecisionTab";
 import { ConciergeActionsTab } from "./concierge/ConciergeActionsTab";
-import { InvoiceManagementTab } from "./concierge/InvoiceManagementTab";
 import { ToursTab } from "./concierge/ToursTab";
 import { ConciergeTimelineTab } from "./concierge/ConciergeTimelineTab";
 import { AdmissionCoordinationCard } from "./concierge/AdmissionCoordinationCard";
-import { AdminConfirmPlacement } from "./concierge/AdminConfirmPlacement";
 import { StageActionBar } from "./concierge/StageActionBar";
 import { STATUS_CONFIG as PIPELINE_STATUS_CONFIG } from "./concierge/placementPipelineConfig";
 import type { Database } from "@/integrations/supabase/types";
@@ -230,14 +228,10 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
               <ToursTab caseData={caseData} />
             </TabsContent>
             <TabsContent value="admission" className="m-0 space-y-4">
-              <AdminConfirmPlacement caseData={caseData} onRefresh={onRefresh} />
+              {/* AdminConfirmPlacement retired — placement_cases dropped. */}
               <AdmissionCoordinationCard caseData={caseData} onRefresh={onRefresh} />
             </TabsContent>
-            {canManageBilling && (
-              <TabsContent value="billing" className="m-0">
-                <InvoiceManagementTab caseData={caseData} />
-              </TabsContent>
-            )}
+            {/* Billing tab retired — pay-per-admission placement_invoices dropped. */}
             <TabsContent value="timeline" className="m-0">
               <ConciergeTimelineTab caseData={caseData} onRefresh={onRefresh} />
             </TabsContent>

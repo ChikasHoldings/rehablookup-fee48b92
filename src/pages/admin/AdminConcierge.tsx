@@ -21,10 +21,8 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { PlacementOpsDashboard } from "@/components/admin/concierge/PlacementOpsDashboard";
 import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvidersTab";
-import { AllInvoicesTab } from "@/components/admin/concierge/AllInvoicesTab";
 import { InternationalCasesTab } from "@/components/admin/concierge/InternationalCasesTab";
 import { RevenueProtectionDashboard } from "@/components/admin/concierge/RevenueProtectionDashboard";
-import { PlacementDetailModal } from "@/components/admin/concierge/PlacementDetailModal";
 import { getCaseNextAction } from "@/components/admin/concierge/placementActionUtils";
 import { CaseAlertIcons } from "@/components/admin/concierge/CaseSlaAlerts";
 import { VISUAL_STAGES, getVisualStage, STATUS_CONFIG } from "@/components/admin/concierge/placementPipelineConfig";
@@ -60,7 +58,7 @@ export default function AdminConcierge() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("concierge_inquiries")
-        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, preferred_city, match_count, assigned_advisor_id, created_at, updated_at, admission_status, admission_substatus, tour_coordination_status, placement_confirmed, placement_confirmed_at, placed_facility_id, introductions_sent_at, introductions_sent_count, provider_fee_status, provider_fee_cents, timeline_urgency, primary_concern, closed_at, seeker_confirmed, matched_at")
+        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, preferred_city, match_count, assigned_advisor_id, created_at, updated_at, admission_status, admission_substatus, tour_coordination_status, placement_confirmed, placement_confirmed_at, placed_facility_id, introductions_sent_at, introductions_sent_count, timeline_urgency, primary_concern, closed_at, seeker_confirmed, matched_at")
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -114,7 +112,7 @@ export default function AdminConcierge() {
       if (!selectedCaseId) return undefined;
       const { data, error } = await supabase
         .from("concierge_inquiries")
-        .select("id, user_name, user_email, user_phone, status, payment_status, payment_amount_cents, intake_data, created_at, updated_at, admin_notes, assigned_advisor_id, matched_facility_ids, admin_matched_facility_ids, placed_facility_id, placement_confirmed, placement_confirmed_at, level_of_care, primary_concern, insurance_carrier, budget_range, timeline_urgency, preferred_state, preferred_city, gender, age_range, referral_source, tour_coordination_status, admission_status, admission_substatus, admission_notes, introductions_sent_at, introductions_sent_count, matched_at, closed_at, seeker_rating, seeker_feedback, provider_fee_cents, provider_fee_status, provider_fee_type, provider_invoice_id, draft_id, checkout_session_id, stripe_payment_intent_id, payment_type, idempotency_key, user_id, match_scores, notes, abandoned_cart_email_sent_at, alternative_contact_name, alternative_contact_phone, amenity_preferences, assessment_preference, benefits_verified, best_time_to_call, co_occurring_concerns, current_living_situation, current_medications, decision_maker_name, decision_maker_phone, desired_location_city, desired_location_state, desired_radius_miles, detox_needed, email_verified_at, emergency_contact_name, emergency_contact_phone, employer_name, faith_based_preference, form_completed_at, hipaa_consent, holistic_interest, insurance_group_number, insurance_member_id, intake_submitted_at, match_count, mobility_needs, move_in_date, needs_transport_help, payment_reminder_count, preferred_environment, preferred_language, prior_treatment_history, prior_treatment_notes, relationship_to_decision_maker, relationship_to_seeker, scholarship_interest, seeker_confirmed, seeker_confirmed_at, stripe_customer_id, substance_use_duration, substance_use_frequency, suicide_history, willing_to_travel, sms_consent, sms_callback_requested_at, contact_channel")
+        .select("id, user_name, user_email, user_phone, status, payment_status, payment_amount_cents, intake_data, created_at, updated_at, admin_notes, assigned_advisor_id, matched_facility_ids, admin_matched_facility_ids, placed_facility_id, placement_confirmed, placement_confirmed_at, level_of_care, primary_concern, insurance_carrier, budget_range, timeline_urgency, preferred_state, preferred_city, gender, age_range, referral_source, tour_coordination_status, admission_status, admission_substatus, admission_notes, introductions_sent_at, introductions_sent_count, matched_at, closed_at, seeker_rating, seeker_feedback, draft_id, checkout_session_id, stripe_payment_intent_id, payment_type, idempotency_key, user_id, match_scores, notes, abandoned_cart_email_sent_at, alternative_contact_name, alternative_contact_phone, amenity_preferences, assessment_preference, benefits_verified, best_time_to_call, co_occurring_concerns, current_living_situation, current_medications, decision_maker_name, decision_maker_phone, desired_location_city, desired_location_state, desired_radius_miles, detox_needed, email_verified_at, emergency_contact_name, emergency_contact_phone, employer_name, faith_based_preference, form_completed_at, hipaa_consent, holistic_interest, insurance_group_number, insurance_member_id, intake_submitted_at, match_count, mobility_needs, move_in_date, needs_transport_help, payment_reminder_count, preferred_environment, preferred_language, prior_treatment_history, prior_treatment_notes, relationship_to_decision_maker, relationship_to_seeker, scholarship_interest, seeker_confirmed, seeker_confirmed_at, stripe_customer_id, substance_use_duration, substance_use_frequency, suicide_history, willing_to_travel, sms_consent, sms_callback_requested_at, contact_channel")
         .eq("id", selectedCaseId)
         .single();
       if (error) throw error;
@@ -213,10 +211,7 @@ export default function AdminConcierge() {
                   <span className="text-xs sm:text-sm">Network</span>
                   {!!networkCount && <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{networkCount}</Badge>}
                 </TabsTrigger>
-                <TabsTrigger value="invoices" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
-                  <Receipt className="h-3.5 w-3.5" />
-                  <span className="text-xs sm:text-sm">Invoices</span>
-                </TabsTrigger>
+                {/* Invoices tab retired — pay-per-admission placement_invoices dropped. */}
                 <TabsTrigger value="revenue" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
                   <DollarSign className="h-3.5 w-3.5" />
                   <span className="text-xs sm:text-sm">Revenue</span>
@@ -389,23 +384,17 @@ export default function AdminConcierge() {
           <NetworkProvidersTab />
         </TabsContent>
 
-        <TabsContent value="invoices">
-          <AllInvoicesTab />
-        </TabsContent>
+        {/* Invoices tab retired — pay-per-admission placement_invoices
+            table dropped in monetization rebuild. */}
 
         <TabsContent value="revenue">
           <RevenueProtectionDashboard />
         </TabsContent>
       </Tabs>
 
-      <PlacementDetailModal
-        caseData={selectedCase}
-        open={!!selectedCaseId}
-        onClose={() => setSelectedCaseId(null)}
-        onRefresh={() => refetch()}
-        advisorNames={advisorNames}
-        facilityMap={facilityMap || {}}
-      />
+      {/* PlacementDetailModal retired — placement_cases dropped in
+          monetization rebuild. Detail view will be replaced in a
+          follow-up PR with a Concierge-Inquiry-detail surface. */}
     </div>
   );
 }

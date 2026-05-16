@@ -532,7 +532,7 @@ When a family submits an inquiry about your facility:
 - To view full contact details, **unlock the lead using credits**
 - You choose which leads to unlock — no wasted spend on leads you don't want
 
-## Pro Membership ($399/month)
+## Pro Membership
 
 For facilities wanting maximum exposure and savings:
 - **20% discount** on all lead unlocks

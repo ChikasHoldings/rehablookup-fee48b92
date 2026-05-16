@@ -41,15 +41,13 @@ export function getHiddenContactText(): string {
   return "Unlock to view";
 }
 
+// Lead-unlock gate retired in monetization rebuild. Access is now
+// scoped by facility ownership + subscription tier (checked by callers).
+// Kept as a true-returning stub so legacy callers don't crash; remove
+// in a follow-up PR once all consumers are migrated.
 // deno-lint-ignore no-explicit-any
-export async function isLeadUnlocked(supabase: any, leadId: string, facilityId: string): Promise<boolean> {
-  const { data } = await supabase
-    .from("lead_unlocks")
-    .select("id")
-    .eq("lead_id", leadId)
-    .eq("facility_id", facilityId)
-    .maybeSingle();
-  return !!data;
+export async function isLeadUnlocked(_supabase: any, _leadId: string, _facilityId: string): Promise<boolean> {
+  return true;
 }
 
 // ============================================================================

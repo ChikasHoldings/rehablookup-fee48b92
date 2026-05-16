@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
-import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 import { formatSourceLabel } from "@/lib/sourceLabels";
 
 type ResponseStatus = 'pending' | 'contacted' | 'responded' | 'closed';
@@ -129,16 +128,8 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
             </div>
           </div>
 
-          {!isUnlocked && (
-            <UnlockLeadButton
-              leadId={inquiry.id}
-              facilityId={inquiry.facility_id}
-              inquiryType={inquiry.inquiry_type}
-              cityState={inquiry.location_city_state}
-              hidePrice
-              onUnlockSuccess={onUnlockSuccess}
-            />
-          )}
+          {/* Lead unlocking retired — full inquiry contact info delivered
+              directly to Pro subscribers. */}
         </div>
       </div>
 

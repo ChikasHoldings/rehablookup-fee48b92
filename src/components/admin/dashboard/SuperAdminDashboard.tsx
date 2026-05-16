@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { SuperAdminActivityFeed } from "@/components/admin/dashboard/SuperAdminActivityFeed";
 import SubscriptionActivityWidget from "@/components/admin/SubscriptionActivityWidget";
-import LowCreditMonitorWidget from "@/components/admin/LowCreditMonitorWidget";
 import {
   DashboardKPICards,
   DashboardChartsSection,
@@ -436,9 +435,8 @@ export function SuperAdminDashboard() {
         <AdminWidgetBoundary name="Subscriptions">
           <SubscriptionActivityWidget />
         </AdminWidgetBoundary>
-        <AdminWidgetBoundary name="Credit Monitor">
-          <LowCreditMonitorWidget />
-        </AdminWidgetBoundary>
+        {/* Credit monitor widget retired — pay-per-lead-unlock credits model
+            removed in monetization rebuild. */}
       </div>
     </div>
   );

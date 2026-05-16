@@ -413,32 +413,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // CRITICAL: For non-admins, verify the lead is unlocked before allowing email
-    if (!isAdmin) {
-      const { data: unlockRecord, error: unlockError } = await supabase
-        .from("lead_unlocks")
-        .select("id")
-        .eq("lead_id", leadId)
-        .eq("facility_id", facility.id)
-        .maybeSingle();
-
-      if (unlockError) {
-        console.error("Error checking unlock status:", unlockError);
-        return new Response(
-          JSON.stringify({ error: "Failed to verify lead unlock status" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      if (!unlockRecord) {
-        console.error("Access denied: Lead is not unlocked for this facility", { leadId, facilityId: facility.id });
-        return new Response(
-          JSON.stringify({ error: "You must unlock this lead before sending emails. Unlock the lead to access contact information." }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      console.log("Lead unlock verified:", { leadId, facilityId: facility.id, unlockId: unlockRecord.id });
-    }
+    // Lead-unlock gate retired — pay-per-lead-unlock model was dropped
+    // in the monetization rebuild. Access is now scoped by facility
+    // ownership (checked above) and by the facility's active
+    // subscription tier. Pro-tier subscription check ships in the
+    // upgrade-flow PR; for now any facility owner whose ownership
+    // check passed can send the email.
 
     const replyToEmail = facility.reply_email || facility.email || profile.email;
     if (!replyToEmail) {

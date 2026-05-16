@@ -102,9 +102,12 @@ export function useSubscription() {
   });
 }
 
-// NEW MONETIZATION MODEL: Plan definitions
-// - Free: List 1 facility, receive locked leads, pay per unlock
-// - Pro ($399/mo): Up to 5 facilities, 20% off unlocks, 20% off placement fees, featured placement
+// MONETIZATION (rebuild): two tiers + 2 add-ons.
+// - Free: claim listing, edit, 5 photos, contact via concierge
+// - Pro:  $99/mo (billed annually $1,009.80 — save 15%) — verified
+//         badge, direct contact, leads inbox, review responses,
+//         10 photos + video. Featured / Concierge are independent
+//         annual add-ons priced separately.
 export const PLAN_DETAILS = {
   free: {
     name: "Free Listing",
@@ -128,21 +131,25 @@ export const PLAN_DETAILS = {
   },
   pro: {
     name: "Pro",
-    price: "$399",
-    period: "/month",
-    description: "Enhanced visibility + discounts",
+    price: "$99",
+    period: "/mo · annual",
+    description: "Verified listing, direct contact, leads inbox",
     location_limit: 5,
-    unlock_discount: 20,
+    unlock_discount: 0,
     features: [
+      "Verified badge on listing",
+      "Direct contact info visible to seekers",
+      "Inquiries delivered directly (no concierge routing)",
+      "Respond to reviews",
+      "10 photos + 1 video",
       "Up to 5 facility listings",
-      "20% off lead unlocks",
-      "Placement fee: $1,000 (Pro: $800, save $200)",
-      "Featured homepage placement",
-      "Priority search ranking",
-      "Pro badge on profile",
+      "Annual billing — save 15%",
     ],
-    price_id: "price_1Sel1C9fxdThyiakWLfgbl9K",
-    product_id: "prod_Tbyz1bf6iYyzYd",
+    // Stripe price/product ids are read from STRIPE_PRICE_PRO_ANNUAL
+    // at runtime (see scripts/stripe-setup-monetization.ts). Static
+    // ids are no longer hardcoded here.
+    price_id: null,
+    product_id: null,
   },
 };
 

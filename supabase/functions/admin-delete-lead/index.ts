@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
     await Promise.all([
       adminClient.from("lead_notes").delete().in("lead_id", leadIds),
       adminClient.from("lead_emails").delete().in("lead_id", leadIds),
-      adminClient.from("lead_unlocks").delete().in("lead_id", leadIds),
+      // lead_unlocks table dropped in monetization rebuild — nothing to cascade.
       adminClient.from("lead_distributions").delete().in("lead_id", leadIds),
       adminClient.from("lead_routing_logs").delete().in("lead_id", leadIds),
     ]);

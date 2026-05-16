@@ -165,10 +165,11 @@ Deno.serve(async (req) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    const { data: leadUnlocks } = await supabaseClient
-      .from("lead_unlocks")
-      .select("facility_id, created_at")
-      .gte("created_at", thirtyDaysAgo.toISOString());
+    // lead_unlocks dropped in monetization rebuild — engagement signal
+    // for ranking now comes from facility_subscriptions tier + Pro
+    // response rate. Until the new signal lands in a follow-up PR,
+    // engagement contribution from unlocks is treated as zero.
+    const leadUnlocks: Array<{ facility_id: string; created_at: string }> = [];
 
     const { data: respondedLeads } = await supabaseClient
       .from("leads")

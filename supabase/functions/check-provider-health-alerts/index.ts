@@ -206,11 +206,11 @@ Deno.serve(async (req) => {
         .eq("facility_id", facility.id)
         .gte("created_at", startOfMonth.toISOString());
       
-      const { count: unlockedLeads } = await supabaseClient
-        .from("lead_unlocks")
-        .select("id", { count: "exact", head: true })
-        .eq("facility_id", facility.id)
-        .gte("created_at", startOfMonth.toISOString());
+      // lead_unlocks dropped — provider-health alerts will move to
+      // subscription engagement signals in a follow-up PR. Treat
+      // monthly unlock count as zero so unlock-rate computations
+      // resolve cleanly.
+      const unlockedLeads = 0;
       
       const unlockRate = (totalLeadsReceived || 0) > 0 
         ? ((unlockedLeads || 0) / (totalLeadsReceived || 1)) * 100 

@@ -63,7 +63,6 @@ import { EmailLeadDialog } from "./EmailLeadDialog";
 import { cn } from "@/lib/utils";
 import { formatSourceLabel } from "@/lib/sourceLabels";
 import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
-import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 
 export interface Lead {
   id: string;
@@ -611,12 +610,8 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                       </span>
                     </div>
                   </div>
-                  <UnlockLeadButton 
-                    leadId={lead.id} 
-                    facilityId={lead.facility_id}
-                    inquiryType={(lead as any).inquiry_type || 'request_info'}
-                    className="w-full max-w-xs mx-auto"
-                  />
+                  {/* Lead unlocking retired — Pro subscribers see full contact
+                      info by default; non-subscribers see a CTA elsewhere. */}
                 </div>
               ) : (
                 /* Unlocked State - Show full contact info with prominent CTAs */

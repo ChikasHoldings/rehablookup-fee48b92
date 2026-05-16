@@ -33,7 +33,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/provider/inquiries": () => import("@/pages/provider/Inquiries"),
   "/provider/analytics": () => import("@/pages/provider/Analytics"),
   "/provider/billing": () => import("@/pages/provider/Billing"),
-  "/provider/placement-network": () => import("@/pages/provider/PlacementNetwork"),
+  // /provider/placement-network removed in monetization rebuild.
   "/provider/settings": () => import("@/pages/provider/Settings"),
   "/provider/notifications": () => import("@/pages/provider/Notifications"),
   "/provider/help": () => import("@/pages/provider/Help"),

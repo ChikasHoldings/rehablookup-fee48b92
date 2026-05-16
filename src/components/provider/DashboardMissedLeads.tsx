@@ -147,7 +147,7 @@ export function DashboardMissedLeads({ facilityId, isPro }: DashboardMissedLeads
             >
               <Link to="/provider/pro-upgrade">
                 <Crown className="h-3 w-3 mr-1" />
-                Upgrade to Pro — $399/mo
+                Upgrade to Pro
               </Link>
             </Button>
           </div>
