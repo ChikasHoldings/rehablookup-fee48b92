@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import {
   Search, RefreshCw, HeartHandshake, Building2, Receipt,
-  Globe, Flag, DollarSign, LayoutGrid, List,
+  Globe, Flag, DollarSign, LayoutGrid, List, TrendingUp,
   Clock, Users, CheckCircle,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -179,14 +179,28 @@ export default function AdminConcierge() {
           { label: "Completed", value: completedCases, className: "bg-success/10 text-success" },
         ]}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {!isAdvisor && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/admin/placement-revenue">
-                  <DollarSign className="h-3.5 w-3.5 mr-1.5" />
-                  <span className="text-xs sm:text-sm">Revenue</span>
-                </Link>
-              </Button>
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/admin/concierge/metrics">
+                    <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="text-xs sm:text-sm">Partner metrics</span>
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/admin/concierge/audit-review">
+                    <Flag className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="text-xs sm:text-sm">Audit review</span>
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/admin/placement-revenue">
+                    <DollarSign className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="text-xs sm:text-sm">Revenue</span>
+                  </Link>
+                </Button>
+              </>
             )}
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="h-3.5 w-3.5 mr-1.5" />

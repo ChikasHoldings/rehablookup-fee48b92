@@ -375,6 +375,7 @@ const AdminSecurityLogs = lazy(() => import("./pages/admin/AdminSecurityLogs"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const AdminConcierge = lazy(() => import("./pages/admin/AdminConcierge"));
 const AdminConciergeAuditReview = lazy(() => import("./pages/admin/AdminConciergeAuditReview"));
+const AdminConciergeMetrics = lazy(() => import("./pages/admin/AdminConciergeMetrics"));
 const InternationalAgreementTemplate = lazy(() => import("./pages/admin/InternationalAgreementTemplate"));
 const PlacementRevenueDashboard = lazy(() => import("./pages/admin/PlacementRevenueDashboard"));
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
@@ -1638,6 +1639,7 @@ const AppInner = () => {
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="concierge" element={<AdminConcierge />} />
               <Route path="concierge/audit-review" element={<AdminConciergeAuditReview />} />
+              <Route path="concierge/metrics" element={<AdminConciergeMetrics />} />
               <Route path="international" element={<Navigate to="/admin/concierge" replace />} />
               <Route path="international/agreement" element={<InternationalAgreementTemplate />} />
               <Route path="placement-revenue" element={<PlacementRevenueDashboard />} />
