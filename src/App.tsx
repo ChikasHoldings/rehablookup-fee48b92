@@ -11,6 +11,9 @@ import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
 import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
 // CookieConsentBanner removed — US site, no opt-in required. GA4 tracks unconditionally.
 import { ExitIntentPopup } from "@/components/conversion/ExitIntentPopup";
+import { StickyMobileActionBar } from "@/components/conversion/StickyMobileActionBar";
+import { useTelClickTracking } from "@/hooks/useTelClickTracking";
+import { useNewCtaSystem } from "@/hooks/useNewCtaSystem";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
@@ -398,6 +401,29 @@ const AdminBackOffice = lazy(() => import("./pages/admin/AdminBackOffice"));
 const AdvisorProviderDirectory = lazy(() => import("./pages/admin/AdvisorProviderDirectory"));
 const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
 
+/**
+ * Global side-effects + chrome that runs once per app mount. Lives
+ * inside the React tree so it can use hooks. Two responsibilities:
+ *   1. useTelClickTracking — delegated click listener that records a
+ *      single `phone_click` event for every `<a href="tel:...">` on
+ *      the page, so we can finally measure the real conversion in
+ *      this YMYL category.
+ *   2. Render `<ExitIntentPopup/>` (legacy, kept by default) OR the
+ *      new `<StickyMobileActionBar/>` — gated by the NEW_CTA_SYSTEM
+ *      flag so we can ship the new system alongside the old and
+ *      flip per-environment.
+ */
+function AppGlobals() {
+  useTelClickTracking();
+  const newCta = useNewCtaSystem();
+  return (
+    <>
+      {!newCta && <ExitIntentPopup />}
+      {newCta && <StickyMobileActionBar />}
+    </>
+  );
+}
+
 function LegacyCenterRedirect() {
   const { slug } = useParams();
   return <Navigate to={`/center/${slug}`} replace />;
@@ -554,7 +580,7 @@ const AppInner = () => {
                 <ScrollToTop />
         <RouteChangeTracker />
 
-        <ExitIntentPopup />
+        <AppGlobals />
         {/* min-h-screen reserves the viewport during lazy route chunk loads
             so the layout doesn't shift downward when the route bundle lands.
             Was fallback={null} — caused visible CLS on slow networks when

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
 import { FindByStateSection } from "@/components/home/FindByStateSection";
 import { FeaturedRail } from "@/components/featured/FeaturedRail";
+import { TrustRibbon } from "@/components/conversion/TrustRibbon";
+import { useNewCtaSystem } from "@/hooks/useNewCtaSystem";
 // TrustStrip moved to /concierge
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
@@ -103,6 +105,10 @@ const treatmentOptions = [
 
 
 const Index = () => {
+  // NEW_CTA_SYSTEM gate — gates the TrustRibbon (and any future
+  // homepage-only conversion components). Other components self-gate.
+  const newCtaEnabled = useNewCtaSystem();
+
   // Lazy-loaded data for below-fold sections
   const [seekerTestimonials, setSeekerTestimonials] = useState<any[]>([]);
   const [homeFaqs, setHomeFaqs] = useState<any[]>([]);
@@ -301,6 +307,12 @@ const Index = () => {
       </section>
 
       {/* TrustStrip moved to /concierge — see ConciergeLanding.tsx */}
+
+      {/* Calm reassurance ribbon — only renders when the
+          NEW_CTA_SYSTEM flag is on. Sits directly below the navy
+          trust bar so the seeker sees one quiet block of facts
+          before the directory content. */}
+      {newCtaEnabled && <TrustRibbon />}
 
       {/* Featured rail — bucket (homepage, 'national'). 6 slots. Silent
           absence when no Featured subscribers nationwide. Distinct from

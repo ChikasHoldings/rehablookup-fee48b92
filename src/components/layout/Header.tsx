@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useFavorites } from "@/hooks/useFavorites";
+import { PersistentHeaderCTA } from "@/components/conversion/PersistentHeaderCTA";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -416,6 +417,7 @@ export function Header({
             </button>
 
             <div className="hidden md:flex items-center gap-2 flex-shrink-0 min-w-[140px] lg:min-w-[200px] justify-end">
+              <PersistentHeaderCTA />
               {isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
                   <Button size="sm" variant="ghost" className="h-9 text-sm gap-0 relative px-1">
