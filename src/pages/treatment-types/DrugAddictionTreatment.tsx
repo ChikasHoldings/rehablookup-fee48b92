@@ -6,6 +6,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
+import { FeaturedRail } from "@/components/featured/FeaturedRail";
 import {
   Pill,
   ArrowRight,
@@ -184,6 +185,16 @@ const DrugAddictionTreatment = () => {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Featured rail — bucket (treatment, 'drug-addiction-treatment'). */}
+      <section className="py-8 md:py-10">
+        <div className="container">
+          <FeaturedRail
+            placement_type="treatment"
+            placement_value="drug-addiction-treatment"
+          />
         </div>
       </section>
 

@@ -11,6 +11,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { FacilityCard, type FacilityCardData } from "@/components/cards/FacilityCard";
+import { FeaturedRail } from "@/components/featured/FeaturedRail";
 import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
@@ -395,6 +396,14 @@ const CityPage = () => {
       {/* Results - Always at the top under hero */}
       <section className="bg-background py-10 md:py-14">
         <div className="container">
+          {/* Featured rail — bucket (city, <city slug>). Silent absence
+              when no Featured subscribers serve this city. */}
+          <FeaturedRail
+            placement_type="city"
+            placement_value={cityData.slug}
+            className="mb-10"
+          />
+
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-foreground">
               Treatment Centers in {cityData.name}

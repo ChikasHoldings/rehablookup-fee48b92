@@ -23,6 +23,7 @@ import { getCountiesForState } from "@/data/countySeoData";
 import { getStateArticles } from "@/data/stateArticlesData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
+import { FeaturedRail } from "@/components/featured/FeaturedRail";
 import { NearbyStatesLinks } from "@/components/seo/CityLinkGrid";
 import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
@@ -372,6 +373,15 @@ const StatePage = () => {
       {/* Results - Always at the top under hero */}
       <section className="bg-background py-10 md:py-14">
         <div className="container">
+          {/* Featured rail — paid placements above organic results.
+              Bucket: (state, <state slug>). Silent absence when no
+              Featured subscribers in this state. */}
+          <FeaturedRail
+            placement_type="state"
+            placement_value={stateData.slug}
+            className="mb-10"
+          />
+
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-foreground">

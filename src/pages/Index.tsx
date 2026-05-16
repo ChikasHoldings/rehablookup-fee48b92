@@ -5,6 +5,7 @@ import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Button } from "@/components/ui/button";
 import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
+import { FeaturedRail } from "@/components/featured/FeaturedRail";
 // TrustStrip moved to /concierge
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
@@ -365,6 +366,18 @@ const Index = () => {
       </section>
 
       {/* TrustStrip moved to /concierge — see ConciergeLanding.tsx */}
+
+      {/* Featured rail — bucket (homepage, 'national'). 6 slots. Silent
+          absence when no Featured subscribers nationwide. Distinct from
+          HomepageFeaturedSection (legacy editorial Featured strip). */}
+      <section className="py-10 md:py-12 bg-background">
+        <div className="container px-4 md:px-6 lg:px-8">
+          <FeaturedRail
+            placement_type="homepage"
+            placement_value="national"
+          />
+        </div>
+      </section>
 
       {/* Featured Centers - Premium Horizontal Scroll */}
       <HomepageFeaturedSection />
