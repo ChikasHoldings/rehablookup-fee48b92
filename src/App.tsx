@@ -246,6 +246,7 @@ const EditorialPolicy = lazy(() => import("./pages/EditorialPolicy"));
 const RehabScore = lazy(() => import("./pages/RehabScore"));
 const MedicalDisclaimer = lazy(() => import("./pages/MedicalDisclaimer"));
 const SeekerSignup = lazy(() => import("./pages/SeekerSignup"));
+const SignupCompletePage = lazy(() => import("./pages/signup/SignupComplete"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Login = lazy(() => import("./pages/Login"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -1194,6 +1195,8 @@ const AppInner = () => {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/seeker/signup" element={<SeekerSignup />} />
             <Route path="/signup" element={<Navigate to="/seeker/signup" replace />} />
+            <Route path="/signup/complete" element={<SignupCompletePage />} />
+            <Route path="/signup/subscription" element={<Navigate to="/provider/billing?signup=retry" replace />} />
             <Route path="/seeker/reset-password" element={<ResetPassword />} />
             <Route path="/reset-password" element={<Navigate to="/seeker/reset-password" replace />} />
             <Route path="/provider-reset-password" element={<Navigate to="/provider/reset-password" replace />} />
