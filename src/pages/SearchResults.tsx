@@ -3,6 +3,8 @@ import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateSearchResultsSchema } from "@/components/SEO";
 import { SearchResultCard } from "@/components/cards/SearchResultCard";
+import { FeaturedRail } from "@/components/featured/FeaturedRail";
+import { resolveSearchBucket } from "@/lib/featuredBucket";
 import { DataPagination } from "@/components/common/DataPagination";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
@@ -159,6 +161,19 @@ const SearchResults = () => {
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const sortParam = (searchParams.get("sort") as SortOption) || "proximity";
   
+  // Resolve the Featured rail's placement bucket from the active
+  // filters. The memo only depends on the params the resolver reads;
+  // a different treatment OR state filter re-renders the rail with
+  // the right pool.
+  const featuredBucket = useMemo(
+    () => resolveSearchBucket({
+      state: stateParam || null,
+      citySlug: location && stateParam ? location : null,
+      treatmentSlug: treatment || null,
+    }),
+    [stateParam, location, treatment],
+  );
+
   // Filter params (comma-separated values)
   const treatmentTypesParam = searchParams.get("treatmentTypes") || "";
   const amenitiesParam = searchParams.get("amenities") || "";
@@ -1211,6 +1226,18 @@ const SearchResults = () => {
 
             {/* Right Content — Results */}
             <main className="flex-1 min-w-0">
+              {/* Featured rail — bucket resolved from current filters.
+                  city+state → (city, slug); state only → (state, abbr);
+                  treatment only → (treatment, slug); otherwise national.
+                  Silent absence when bucket pool is empty. */}
+              {featuredBucket && (
+                <FeaturedRail
+                  placement_type={featuredBucket.placement_type}
+                  placement_value={featuredBucket.placement_value}
+                  className="mb-6"
+                />
+              )}
+
               {isLoading ? (
                 <SearchResultsLoading count={6} />
               ) : paginatedCenters.length > 0 ? (
