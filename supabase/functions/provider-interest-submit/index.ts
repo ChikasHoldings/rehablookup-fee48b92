@@ -25,6 +25,7 @@ const FROM_ADDRESS = "RehabLookup Sales <sales@rehablookup.com>";
 
 const VOLUME_VALUES = ["<10/mo", "10-25/mo", "25-50/mo", "50-100/mo", "100+/mo"] as const;
 const TIER_VALUES = ["pro", "pro_featured", "pro_concierge", "all"] as const;
+const BILLING_INTERVAL_VALUES = ["monthly", "annual", "either", "not_sure"] as const;
 
 const ProviderInterestSchema = z.object({
   facilityName: z.string().trim().min(1).max(255),
@@ -36,6 +37,9 @@ const ProviderInterestSchema = z.object({
   state: z.string().trim().min(1).max(120),
   admissionVolume: z.enum(VOLUME_VALUES),
   tierInterest: z.enum(TIER_VALUES),
+  // Optional for backwards-compat with older form submissions that pre-date
+  // the monthly/annual toggle.
+  billingInterval: z.enum(BILLING_INTERVAL_VALUES).optional(),
   pricingFrustration: z.string().trim().max(2000).optional().or(z.literal("")),
   utm: z
     .object({
@@ -63,6 +67,16 @@ function tierLabel(t: string): string {
     case "pro_concierge": return "Pro + Concierge ($1,099/mo)";
     case "all": return "All (Pro + Featured + Concierge — $1,698/mo)";
     default: return t;
+  }
+}
+
+function intervalLabel(i: string | undefined): string {
+  switch (i) {
+    case "monthly": return "Monthly";
+    case "annual": return "Annual (save 15%)";
+    case "either": return "Either";
+    case "not_sure": return "Not sure yet";
+    default: return "(not provided)";
   }
 }
 
@@ -118,6 +132,7 @@ Deno.serve(async (req) => {
       state: body.state,
       admission_volume: body.admissionVolume,
       tier_interest: body.tierInterest,
+      billing_interval: body.billingInterval ?? null,
       pricing_frustration: body.pricingFrustration || null,
       utm_source: body.utm?.source ?? null,
       utm_medium: body.utm?.medium ?? null,
@@ -149,6 +164,7 @@ Deno.serve(async (req) => {
         ${body.phone ? `<p><strong>Phone:</strong> ${escapeHtml(body.phone)}</p>` : ""}
         <p><strong>Volume:</strong> ${escapeHtml(body.admissionVolume)}</p>
         <p><strong>Tier interest:</strong> ${escapeHtml(tierLabel(body.tierInterest))}</p>
+        <p><strong>Billing interest:</strong> ${escapeHtml(intervalLabel(body.billingInterval))}</p>
         ${body.pricingFrustration
           ? `<p><strong>Pricing frustration:</strong><br>${escapeHtml(body.pricingFrustration).replace(/\n/g, "<br>")}</p>`
           : ""}

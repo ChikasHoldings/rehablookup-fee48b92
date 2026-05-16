@@ -36,27 +36,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 // ──────────────────────────────────────────────────────────────────────
-// Pricing data — single source of truth for the page. Annual figures
-// are computed: monthly × 12 × 0.85 (15% annual discount).
+// Pricing — monthly is the default headline. Annual is offered as a
+// 15%-discount upsell. Both intervals share the same feature set; only
+// the billed cadence differs.
 // ──────────────────────────────────────────────────────────────────────
+
+type BillingInterval = "monthly" | "annual";
 
 interface Tier {
   id: "free" | "pro" | "pro_featured" | "pro_concierge";
   name: string;
-  monthly: number;          // monthly equivalent in USD
-  annual: number;           // annual billed amount (monthly × 12 × 0.85)
+  monthly: number;          // monthly billed amount in USD
+  annual: number;           // annual billed amount in USD (monthly × 12 × 0.85)
+  monthlyEquivOfAnnual: number; // annual ÷ 12 — used as "($X/mo equivalent)" subline
   blurb: string;
 }
 
+// Annual figures match the canonical sales-page pricing.
+// Pro = 99 × 12 × 0.85 = 1,009.80.  Pro+Featured = 1,009.80 + 6,108.60.
+// Pro+Concierge = 1,009.80 + 10,200.  Bundle = 17,318.40.
 const TIERS: Tier[] = [
-  { id: "free",           name: "Free",                   monthly: 0,    annual: 0,         blurb: "Basic claim" },
-  { id: "pro",            name: "Pro",                    monthly: 99,   annual: 1009.80,   blurb: "Verified, direct contact" },
-  { id: "pro_featured",   name: "Pro + Featured",         monthly: 698,  annual: 7118.40,   blurb: "Pro + rotation placements" },
-  { id: "pro_concierge",  name: "Pro + Concierge",        monthly: 1099, annual: 11209.80,  blurb: "Pro + advisor surfacing" },
+  { id: "free",          name: "Free",            monthly: 0,    annual: 0,         monthlyEquivOfAnnual: 0,       blurb: "Basic claim" },
+  { id: "pro",           name: "Pro",             monthly: 99,   annual: 1009.80,   monthlyEquivOfAnnual: 84.15,   blurb: "Verified, direct contact" },
+  { id: "pro_featured",  name: "Pro + Featured",  monthly: 698,  annual: 7118.40,   monthlyEquivOfAnnual: 593.20,  blurb: "Pro + rotation placements" },
+  { id: "pro_concierge", name: "Pro + Concierge", monthly: 1099, annual: 11209.80,  monthlyEquivOfAnnual: 934.15,  blurb: "Pro + advisor surfacing" },
 ];
 
-const ALL_BUNDLE_MONTHLY = 99 + 599 + 1000;          // $1,698
-const ALL_BUNDLE_ANNUAL = ALL_BUNDLE_MONTHLY * 12 * 0.85; // $17,319.60
+const ALL_BUNDLE_MONTHLY = 99 + 599 + 1000;          // $1,698/mo
+const ALL_BUNDLE_ANNUAL = 1009.80 + 6108.60 + 10200; // $17,318.40/yr
 
 const fmtMoney = (n: number) =>
   n === 0 ? "$0" : `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -85,8 +92,10 @@ function HeroSection({ scrollToForm }: { scrollToForm: () => void }) {
           </h1>
 
           <p className="mx-auto mt-4 md:mt-5 max-w-2xl text-base md:text-lg text-white/85 leading-relaxed">
-            No referral fees. No per-call charges. No lead routing through our number.
-            Just transparent ad inventory facilities have wanted for 20 years.
+            Pro from <strong className="font-semibold text-white">$99/month</strong>.
+            Cancel anytime. No referral fees, no per-call charges, no lead
+            routing through our number — just transparent ad inventory facilities
+            have wanted for 20 years.
           </p>
 
           <div className="mt-7">
@@ -137,7 +146,7 @@ function WhyDifferentSection() {
       Icon: BadgeDollarSign,
       title: "Flat fees, no surprises",
       body:
-        "Annual subscriptions. Transparent prices on this page. No pay-per-click, no pay-per-lead, no pay-per-admission. EKRA-compliant by design — built for the post-2018 industry.",
+        "Transparent prices on this page. Monthly or annual at checkout. No pay-per-click, no pay-per-lead, no pay-per-admission. EKRA-compliant by design — built for the post-2018 industry.",
     },
   ];
 
@@ -165,6 +174,66 @@ function WhyDifferentSection() {
         </div>
       </div>
     </section>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Billing toggle — monthly is the default. Annual is the upsell.
+// Purely visual: no checkout happens from this table.
+// ──────────────────────────────────────────────────────────────────────
+
+function BillingToggle({
+  value,
+  onChange,
+}: {
+  value: BillingInterval;
+  onChange: (v: BillingInterval) => void;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Billing interval"
+      className="inline-flex items-center rounded-full border border-slate-200 bg-white p-1 shadow-sm"
+    >
+      <button
+        type="button"
+        role="radio"
+        aria-checked={value === "monthly"}
+        onClick={() => onChange("monthly")}
+        className={cn(
+          "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+          value === "monthly"
+            ? "bg-[#1B365D] text-white"
+            : "text-slate-700 hover:text-[#1B365D]",
+        )}
+      >
+        Monthly
+      </button>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={value === "annual"}
+        onClick={() => onChange("annual")}
+        className={cn(
+          "rounded-full px-4 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5",
+          value === "annual"
+            ? "bg-[#1B365D] text-white"
+            : "text-slate-700 hover:text-[#1B365D]",
+        )}
+      >
+        Annual
+        <span
+          className={cn(
+            "rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+            value === "annual"
+              ? "bg-[#CDA223] text-[#1B365D]"
+              : "bg-emerald-100 text-emerald-700",
+          )}
+        >
+          Save 15%
+        </span>
+      </button>
+    </div>
   );
 }
 
@@ -203,18 +272,54 @@ function CellMark({ value }: { value: CellValue }) {
   return <span className="text-sm text-slate-700">{value}</span>;
 }
 
+function PriceCell({ tier, interval }: { tier: Tier; interval: BillingInterval }) {
+  if (tier.monthly === 0) {
+    return (
+      <div className="flex flex-col items-center">
+        <span className="text-base font-bold text-[#1B365D]">$0</span>
+        <span className="text-[11px] text-slate-500 mt-0.5">forever</span>
+      </div>
+    );
+  }
+  if (interval === "monthly") {
+    return (
+      <div className="flex flex-col items-center">
+        <span className="text-base font-bold text-[#1B365D]">
+          {fmtMoneyWhole(tier.monthly)}<span className="text-xs font-normal text-slate-500">/mo</span>
+        </span>
+        <span className="text-[11px] text-slate-500 mt-0.5">billed monthly</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col items-center">
+      <span className="text-base font-bold text-[#1B365D]">
+        {fmtMoney(tier.annual)}<span className="text-xs font-normal text-slate-500">/yr</span>
+      </span>
+      <span className="text-[11px] text-emerald-700 mt-0.5">
+        {fmtMoney(tier.monthlyEquivOfAnnual)}/mo equivalent
+      </span>
+    </div>
+  );
+}
+
 function PlanComparisonSection() {
+  const [interval, setInterval] = useState<BillingInterval>("monthly");
+
   return (
     <section className="py-14 md:py-20 bg-slate-50/60 border-y border-slate-200/70">
       <div className="container px-4 md:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-[#1B365D]">
-            Pricing — annual only, save 15%
+            Simple pricing. Monthly or annual.
           </h2>
           <p className="mt-3 text-base md:text-lg text-slate-600">
-            Every price visible. No "contact sales." Add Featured and Concierge to Pro
-            independently or together.
+            Every price visible. No "contact sales." Pick monthly for flexibility
+            or annual to save 15%.
           </p>
+          <div className="mt-6 flex justify-center">
+            <BillingToggle value={interval} onChange={setInterval} />
+          </div>
         </div>
 
         {/* Desktop / tablet table */}
@@ -241,6 +346,24 @@ function PlanComparisonSection() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
+                {/* Price row sits at the top so the toggle's effect is immediately visible. */}
+                <tr className="bg-slate-50/60">
+                  <th scope="row" className="px-5 py-5 text-sm font-semibold text-slate-800 align-top">
+                    Price
+                  </th>
+                  {TIERS.map((t) => (
+                    <td
+                      key={t.id}
+                      className={cn(
+                        "px-4 py-5 text-center align-top",
+                        t.id === "pro_featured" && "bg-[#1B365D]/[0.06]",
+                      )}
+                    >
+                      <PriceCell tier={t} interval={interval} />
+                    </td>
+                  ))}
+                </tr>
+
                 {COMPARISON_ROWS.map((row) => (
                   <tr key={row.label} className="text-sm">
                     <th scope="row" className="px-5 py-3 font-medium text-slate-800 align-top">
@@ -259,43 +382,13 @@ function PlanComparisonSection() {
                     ))}
                   </tr>
                 ))}
-
-                {/* Pricing rows */}
-                <tr className="bg-slate-50/60">
-                  <th scope="row" className="px-5 py-4 text-sm font-semibold text-slate-800">
-                    Monthly equivalent
-                  </th>
-                  {TIERS.map((t) => (
-                    <td key={t.id} className={cn("px-4 py-4 text-center text-sm font-semibold text-slate-900", t.id === "pro_featured" && "bg-[#1B365D]/[0.06]")}>
-                      {fmtMoneyWhole(t.monthly)}
-                      {t.monthly > 0 && <span className="text-xs font-normal text-slate-500">/mo</span>}
-                    </td>
-                  ))}
-                </tr>
-                <tr className="bg-slate-50/60">
-                  <th scope="row" className="px-5 py-4 text-sm font-semibold text-slate-800">
-                    Billed annually <span className="text-xs font-normal text-slate-500">(save 15%)</span>
-                  </th>
-                  {TIERS.map((t) => (
-                    <td key={t.id} className={cn("px-4 py-4 text-center align-top", t.id === "pro_featured" && "bg-[#1B365D]/[0.06]")}>
-                      {t.annual === 0 ? (
-                        <span className="text-sm text-slate-500">—</span>
-                      ) : (
-                        <div className="flex flex-col items-center">
-                          <span className="text-sm font-bold text-[#1B365D]">{fmtMoney(t.annual)}</span>
-                          <span className="text-[11px] text-emerald-700 mt-0.5">save 15%</span>
-                        </div>
-                      )}
-                    </td>
-                  ))}
-                </tr>
               </tbody>
             </table>
           </div>
 
           <p className="mt-4 text-sm text-slate-600 italic">
-            Both Featured and Concierge can be added to Pro together — $99 + $599 + $1,000 ={" "}
-            {fmtMoneyWhole(ALL_BUNDLE_MONTHLY)}/mo equivalent, {fmtMoney(ALL_BUNDLE_ANNUAL)}/yr annual.
+            Both Featured and Concierge can be added together —{" "}
+            {fmtMoneyWhole(ALL_BUNDLE_MONTHLY)}/mo or {fmtMoney(ALL_BUNDLE_ANNUAL)}/yr.
           </p>
         </div>
 
@@ -318,14 +411,24 @@ function PlanComparisonSection() {
                       <p className="text-xs text-slate-500 mt-0.5">{t.blurb}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-bold text-[#1B365D]">
-                        {fmtMoneyWhole(t.monthly)}
-                        {t.monthly > 0 && <span className="text-xs font-normal text-slate-500">/mo</span>}
-                      </p>
-                      {t.annual > 0 && (
-                        <p className="text-[11px] text-slate-500">
-                          {fmtMoney(t.annual)}/yr
-                        </p>
+                      {t.monthly === 0 ? (
+                        <p className="font-bold text-[#1B365D]">$0</p>
+                      ) : interval === "monthly" ? (
+                        <>
+                          <p className="font-bold text-[#1B365D]">
+                            {fmtMoneyWhole(t.monthly)}
+                            <span className="text-xs font-normal text-slate-500">/mo</span>
+                          </p>
+                          <p className="text-[11px] text-slate-500">billed monthly</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-bold text-[#1B365D]">
+                            {fmtMoney(t.annual)}
+                            <span className="text-xs font-normal text-slate-500">/yr</span>
+                          </p>
+                          <p className="text-[11px] text-emerald-700">save 15%</p>
+                        </>
                       )}
                     </div>
                   </div>
@@ -352,8 +455,8 @@ function PlanComparisonSection() {
             ))}
           </Accordion>
           <p className="mt-4 text-xs text-slate-600 italic">
-            Add Featured and Concierge to Pro together for {fmtMoneyWhole(ALL_BUNDLE_MONTHLY)}/mo equivalent
-            ({fmtMoney(ALL_BUNDLE_ANNUAL)}/yr).
+            Add Featured and Concierge to Pro together — {fmtMoneyWhole(ALL_BUNDLE_MONTHLY)}/mo
+            or {fmtMoney(ALL_BUNDLE_ANNUAL)}/yr.
           </p>
         </div>
       </div>
@@ -489,7 +592,7 @@ function ConciergePartnerSection() {
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Cancellation policy
+// Cancellation policy — covers both monthly and annual cadence
 // ──────────────────────────────────────────────────────────────────────
 
 function CancellationSection() {
@@ -498,25 +601,41 @@ function CancellationSection() {
       <div className="container px-4 md:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
           <h2 className="font-display text-xl md:text-2xl font-bold tracking-tight text-[#1B365D]">
-            Cancel anytime. Here's the math.
+            Cancel anytime. Flexible by design.
           </h2>
           <div className="mt-4 space-y-4 text-[15px] leading-relaxed text-slate-700">
             <p>
-              All subscriptions are annual. If you cancel mid-year, we refund the months you
-              didn't use — calculated at the <strong>full monthly rate</strong>{" "}
-              ($99 / $599 / $1,000 respectively), not the discounted annual rate.
+              Pick monthly or annual at checkout. Switch later if you change your mind.
             </p>
-            <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 text-sm">
-              <p className="font-semibold text-slate-900 mb-1">Example</p>
-              <p>
-                Pro at $1,009.80/yr. Cancel after 4 months. We charge you $99 × 4 = $396 for
-                the time used. Refund = $1,009.80 − $396 = <strong>$613.80</strong>.
+
+            <div className="rounded-lg bg-slate-50 border border-slate-200 p-4">
+              <p className="font-semibold text-slate-900 mb-1">Monthly</p>
+              <p className="text-sm">
+                Cancel any time. You keep access through the end of the month you've
+                paid for. No refund needed; you got the month you paid for.
               </p>
             </div>
+
+            <div className="rounded-lg bg-slate-50 border border-slate-200 p-4">
+              <p className="font-semibold text-slate-900 mb-1">Annual</p>
+              <p className="text-sm">
+                Cancel any time. We refund the months you didn't use, calculated at the{" "}
+                <strong>full monthly rate</strong> (not the discounted annual rate). This
+                means the 15% discount applies to facilities that complete the full year.
+              </p>
+              <div className="mt-3 rounded border border-slate-200 bg-white p-3 text-sm">
+                <p className="font-semibold text-slate-900 mb-1">Example</p>
+                <p>
+                  Pro annual at $1,009.80. Cancel after 4 months. We charge $99 × 4 =
+                  $396 for time used. Refund = <strong>$613.80</strong>.
+                </p>
+              </div>
+            </div>
+
             <p>
-              The 15% annual discount only applies to facilities that complete the full year.
-              We think that's fair: locking in for a year is what lets us guarantee you'll
-              never see surprise pricing changes.
+              The 15% discount is a "commit to the year, save money" deal. If you're not
+              ready to commit, monthly is the better fit — same features, just slightly
+              higher per-month cost.
             </p>
           </div>
         </div>
@@ -531,8 +650,24 @@ function CancellationSection() {
 
 const FAQ: Array<{ q: string; a: string }> = [
   {
-    q: "Why annual only? Why not monthly?",
-    a: "Annual locks in revenue + reduces churn, lets us guarantee no surprise pricing changes for the year, and the 15% discount is real savings for facilities that plan their year. The cancellation math (above) means you're not penalized if your situation changes — you only pay full monthly for the months you actually use.",
+    q: "Monthly or annual?",
+    a: "Monthly if you want flexibility — same features, cancel anytime, pay for what you use. Annual if you're committing to RehabLookup for the year and want 15% off. You can always upgrade from monthly to annual later (we'll apply the discount on your next renewal).",
+  },
+  {
+    q: "Can I switch from monthly to annual mid-cycle?",
+    a: "Yes. Go to /provider/billing and click 'Switch to annual.' We prorate the remaining days of your current monthly period against the annual amount. You start the year fresh from the switch date.",
+  },
+  {
+    q: "Can I switch from annual to monthly?",
+    a: "Not mid-year. You stay on annual through the period you paid for. At renewal, you can choose monthly — the renewal reminder gives you the option to switch.",
+  },
+  {
+    q: "What if I just want to try Pro for a month?",
+    a: "Pick monthly. Same features. Cancel anytime. The annual discount is for facilities that already know they want Pro for the year.",
+  },
+  {
+    q: "Why annual at all then?",
+    a: "Two reasons. (1) 15% cheaper if you stay the full year. (2) Locks in your current rate even if we raise prices later.",
   },
   {
     q: "Is RehabLookup EKRA-compliant?",
@@ -557,10 +692,6 @@ const FAQ: Array<{ q: string; a: string }> = [
   {
     q: "What happens to inquiries on a Free listing?",
     a: "They route to our concierge, who presents your facility plus 2 matching alternatives to the seeker. You get a notification: \"A seeker submitted on your listing — upgrade to Pro to receive these directly.\" If you're already busy without paid placements, Free is genuinely viable.",
-  },
-  {
-    q: "Can I upgrade or downgrade mid-year?",
-    a: "Upgrade anytime — prorated charge for the remaining days of your annual term. Downgrade takes effect at the next renewal; no refund for the downgrade itself, since you've already paid for the full year.",
   },
   {
     q: "How do I see ROI?",
@@ -608,6 +739,8 @@ function FaqSection() {
 // Stripe flow yet — that's a future PR.
 // ──────────────────────────────────────────────────────────────────────
 
+type BillingIntervalInterest = "" | "monthly" | "annual" | "either" | "not_sure";
+
 interface FormState {
   facilityName: string;
   contactName: string;
@@ -618,6 +751,7 @@ interface FormState {
   state: string;
   admissionVolume: "" | "<10/mo" | "10-25/mo" | "25-50/mo" | "50-100/mo" | "100+/mo";
   tierInterest: "" | "pro" | "pro_featured" | "pro_concierge" | "all";
+  billingInterval: BillingIntervalInterest;
   pricingFrustration: string;
 }
 
@@ -631,6 +765,7 @@ const INITIAL_FORM: FormState = {
   state: "",
   admissionVolume: "",
   tierInterest: "",
+  billingInterval: "",
   pricingFrustration: "",
 };
 
@@ -643,10 +778,17 @@ const VOLUME_CHIPS: Array<{ value: FormState["admissionVolume"]; label: string }
 ];
 
 const TIER_OPTIONS: Array<{ value: FormState["tierInterest"]; label: string }> = [
-  { value: "pro",            label: "Pro ($99/mo, $1,009.80/yr)" },
-  { value: "pro_featured",   label: "Pro + Featured ($698/mo, $7,118.40/yr)" },
-  { value: "pro_concierge",  label: "Pro + Concierge ($1,099/mo, $11,209.80/yr)" },
+  { value: "pro",            label: "Pro ($99/mo or $1,009.80/yr)" },
+  { value: "pro_featured",   label: "Pro + Featured ($698/mo or $7,118.40/yr)" },
+  { value: "pro_concierge",  label: "Pro + Concierge ($1,099/mo or $11,209.80/yr)" },
   { value: "all",            label: "All three (Pro + Featured + Concierge)" },
+];
+
+const BILLING_INTERVAL_CHIPS: Array<{ value: Exclude<BillingIntervalInterest, "">; label: string }> = [
+  { value: "monthly",  label: "Monthly" },
+  { value: "annual",   label: "Annual (save 15%)" },
+  { value: "either",   label: "Either" },
+  { value: "not_sure", label: "Not sure yet" },
 ];
 
 interface InterestFormProps {
@@ -676,6 +818,7 @@ function InterestForm({ formRef }: InterestFormProps) {
     if (!form.state.trim()) next.state = "State is required";
     if (!form.admissionVolume) next.admissionVolume = "Pick a volume range";
     if (!form.tierInterest) next.tierInterest = "Pick a tier";
+    if (!form.billingInterval) next.billingInterval = "Pick a billing preference";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -696,6 +839,7 @@ function InterestForm({ formRef }: InterestFormProps) {
           state: form.state.trim(),
           admissionVolume: form.admissionVolume,
           tierInterest: form.tierInterest,
+          billingInterval: form.billingInterval || undefined,
           pricingFrustration: form.pricingFrustration.trim() || undefined,
           landingPage: typeof window !== "undefined" ? window.location.pathname : undefined,
         },
@@ -946,6 +1090,38 @@ function InterestForm({ formRef }: InterestFormProps) {
                   </div>
 
                   <div>
+                    <span className="text-sm font-medium">
+                      Which billing interval interests you most?{" "}
+                      <span className="text-destructive">*</span>
+                    </span>
+                    <div role="radiogroup" aria-label="Billing interval" className="mt-2 flex flex-wrap gap-2">
+                      {BILLING_INTERVAL_CHIPS.map((chip) => {
+                        const active = form.billingInterval === chip.value;
+                        return (
+                          <button
+                            key={chip.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={active}
+                            onClick={() => update("billingInterval", chip.value)}
+                            className={cn(
+                              "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
+                              active
+                                ? "border-[#1B365D] bg-[#1B365D] text-white"
+                                : "border-slate-200 bg-white text-slate-700 hover:border-[#1B365D]/40",
+                            )}
+                          >
+                            {chip.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {errors.billingInterval && (
+                      <p className="mt-1 text-xs text-destructive">{errors.billingInterval}</p>
+                    )}
+                  </div>
+
+                  <div>
                     <Label htmlFor="pricingFrustration" className="text-sm font-medium">
                       What's your biggest frustration with current rehab directory pricing?{" "}
                       <span className="text-xs text-muted-foreground">(optional, but the answer helps)</span>
@@ -1018,7 +1194,7 @@ export default function ForProviders() {
     <Layout>
       <SEO
         title="For Treatment Providers | RehabLookup"
-        description="List your facility on the independent rehab directory. Annual subscriptions, transparent prices, EKRA-compliant by design. Pro $99/mo, Featured $599/mo, Concierge Partner $1,000/mo — all billed annually with 15% off."
+        description="List your facility on the independent rehab directory. Pro from $99/mo. Cancel anytime. Annual saves 15%. EKRA-compliant by design."
         canonical="/for-providers"
       />
       <HeroSection scrollToForm={scrollToForm} />
