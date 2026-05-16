@@ -21,6 +21,16 @@ export interface FeaturedRotationFacility {
    *  is true on the facility, otherwise the standard public phone. */
   display_phone: string | null;
   position_in_rail: number;
+  /** Optional 120-char tagline the facility set in their dashboard.
+   *  NULL means the renderer should auto-generate one from
+   *  top_levels_of_care + top_insurance. */
+  sponsored_tagline?: string | null;
+  /** Top 3 levels of care, sorted by the canonical continuum
+   *  (Detox → Inpatient → PHP → IOP → Outpatient). Strip card uses
+   *  these; the legacy rail ignores them. */
+  top_levels_of_care?: string[];
+  /** Top 3 insurance carriers, alphabetical. Strip card uses these. */
+  top_insurance?: string[];
 }
 
 interface FeaturedRotationResult {
@@ -39,14 +49,21 @@ interface FeaturedRotationResult {
  *     designed empty state — don't render a placeholder)
  *   • the placement_value is falsy (the caller hasn't resolved it yet,
  *     e.g. on a /[loc]-near-me page before geo-IP completes)
+ *
+ * `log_impressions` defaults to true (legacy rail behavior — server
+ * logs one impression per facility returned). The FeaturedStrip
+ * passes false because it logs per-card via IntersectionObserver in
+ * useLogFeaturedStripImpression instead.
  */
 export function useFeaturedRotation(args: {
   placement_type: PlacementType;
   placement_value: string | null | undefined;
   slot_count: number;
+  log_impressions?: boolean;
 }) {
   const seed = useMemo(() => getOrCreateRotationSeed(), []);
   const pagePath = typeof window !== "undefined" ? window.location.pathname : null;
+  const logImpressions = args.log_impressions ?? true;
 
   return useQuery({
     queryKey: [
@@ -55,6 +72,7 @@ export function useFeaturedRotation(args: {
       args.placement_value,
       args.slot_count,
       seed,
+      logImpressions,
     ],
     queryFn: async (): Promise<FeaturedRotationResult> => {
       if (!args.placement_value) {
@@ -67,6 +85,7 @@ export function useFeaturedRotation(args: {
           slot_count: args.slot_count,
           seed,
           page_path: pagePath,
+          log_impressions: logImpressions,
         },
       });
       if (error) throw error;
@@ -105,6 +124,40 @@ export function useLogFeaturedPhoneClick(args: {
       })
       .catch((err) => {
         if (import.meta.env.DEV) console.warn("[log-phone-click] failed", err);
+      });
+  };
+}
+
+/**
+ * Fire-and-forget FeaturedStrip impression logger. Called by each
+ * FeaturedStripCard when IntersectionObserver confirms the card has
+ * been ≥50% visible for ≥500ms. Once per card per page view —
+ * debouncing is the card's responsibility.
+ *
+ * Uses fetch + keepalive (not supabase.functions.invoke) so the log
+ * survives page navigation triggered by the user tapping a card link.
+ */
+export function useLogFeaturedStripImpression(args: {
+  placement_type: PlacementType;
+  placement_value: string;
+}) {
+  return (facility_id: string, position_in_strip: number) => {
+    if (typeof window === "undefined") return;
+    const pagePath = window.location.pathname;
+    const seed = getOrCreateRotationSeed();
+    supabase.functions
+      .invoke("log-strip-impression", {
+        body: {
+          facility_id,
+          placement_type: args.placement_type,
+          placement_value: args.placement_value,
+          page_path: pagePath,
+          visitor_seed: seed,
+          position_in_strip,
+        },
+      })
+      .catch((err) => {
+        if (import.meta.env.DEV) console.warn("[log-strip-impression] failed", err);
       });
   };
 }

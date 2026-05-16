@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,6 +62,73 @@ export default function BillingPlacements() {
 
   const [confirmRemove, setConfirmRemove] = useState<FeaturedPlacementRow | null>(null);
   const [removing, setRemoving] = useState(false);
+
+  // Sponsored tagline (Featured Strip cards). Server-side capped at
+  // 120 chars by the CHECK constraint; we also enforce in the UI so
+  // the save round-trip can't fail silently.
+  const [tagline, setTagline] = useState("");
+  const [taglineLoaded, setTaglineLoaded] = useState(false);
+  const [savedTagline, setSavedTagline] = useState("");
+  const [savingTagline, setSavingTagline] = useState(false);
+
+  useEffect(() => {
+    if (!facilityId) {
+      setTaglineLoaded(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("facilities")
+        .select("sponsored_tagline")
+        .eq("id", facilityId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error) {
+        console.error("[BillingPlacements] tagline load failed", error);
+        setTaglineLoaded(true);
+        return;
+      }
+      const initial = ((data as { sponsored_tagline: string | null } | null)?.sponsored_tagline ?? "").trim();
+      setTagline(initial);
+      setSavedTagline(initial);
+      setTaglineLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [facilityId]);
+
+  const handleSaveTagline = async () => {
+    if (!facilityId) return;
+    const next = tagline.trim();
+    if (next.length > 120) {
+      toast.error("Tagline must be 120 characters or fewer.");
+      return;
+    }
+    setSavingTagline(true);
+    try {
+      const { error } = await supabase
+        .from("facilities")
+        .update({ sponsored_tagline: next.length === 0 ? null : next })
+        .eq("id", facilityId);
+      if (error) throw error;
+      setSavedTagline(next);
+      toast.success(
+        next.length === 0
+          ? "Tagline cleared — strip cards will use the auto-generated version."
+          : "Tagline updated. Featured Strip cards will refresh within 5 minutes.",
+      );
+    } catch (err) {
+      console.error("[BillingPlacements] tagline save failed", err);
+      toast.error(err instanceof Error ? err.message : "Failed to save tagline");
+    } finally {
+      setSavingTagline(false);
+    }
+  };
+
+  const taglineDirty = tagline.trim() !== savedTagline.trim();
+  const taglineOverLimit = tagline.length > 120;
 
   const { data: placements, isLoading: placementsLoading } = useQuery({
     queryKey: ["featured-placements", subscription?.id],
@@ -150,6 +219,58 @@ export default function BillingPlacements() {
           {subscription.billing_period === "monthly" ? " (monthly)" : " (annual)"}.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Sponsored Tagline</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-slate-600">
+            Shown on your Featured Strip cards. 120 character max. Leave
+            blank to use an auto-generated tagline from your services and
+            insurance.
+          </p>
+          <div className="space-y-1.5">
+            <Label htmlFor="sponsored-tagline" className="sr-only">
+              Sponsored tagline
+            </Label>
+            {!taglineLoaded ? (
+              <Skeleton className="h-20 w-full" />
+            ) : (
+              <Textarea
+                id="sponsored-tagline"
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                maxLength={140}
+                rows={3}
+                placeholder="e.g., 24-hour admissions. Detox + IOP. Insurance verified in 30 minutes."
+                className="resize-none"
+              />
+            )}
+            <div className="flex items-center justify-between text-xs">
+              <span
+                className={taglineOverLimit ? "text-destructive" : "text-slate-500"}
+              >
+                {tagline.length} / 120
+              </span>
+              <Button
+                size="sm"
+                onClick={handleSaveTagline}
+                disabled={
+                  savingTagline ||
+                  !taglineLoaded ||
+                  !taglineDirty ||
+                  taglineOverLimit
+                }
+                className="bg-[#1B365D] hover:bg-[#142a4a] gap-1.5"
+              >
+                {savingTagline ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                {savingTagline ? "Saving…" : "Save tagline"}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

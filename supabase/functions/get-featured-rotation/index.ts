@@ -2,7 +2,7 @@
 // ─────────────────────
 // Returns the deterministically-rotated subset of eligible Featured
 // facilities for one placement bucket. Logs an impression row per
-// facility returned.
+// facility returned (UNLESS the caller opts out — see log_impressions).
 //
 // Rotation algorithm:
 //   1. Query featured_placements + facility_subscriptions for the
@@ -17,6 +17,13 @@
 // call-volume influence on order. Pure seed + activated_at order.
 //
 // verify_jwt: false — serves public pages.
+//
+// log_impressions:
+//   default true → matches the legacy rail's behavior (server-side
+//                  bulk-log every facility the rotation returned).
+//   false → caller will log impressions themselves via the
+//           log-strip-impression endpoint after IntersectionObserver
+//           confirms viewport entry. Used by the FeaturedStrip.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { z } from "https://esm.sh/zod@3.23.8?target=denonext";
@@ -35,6 +42,7 @@ const RequestSchema = z.object({
   slot_count: z.number().int().min(1).max(20).default(3),
   seed: z.number().int().min(0).max(99).default(0),
   page_path: z.string().max(2048).optional(),
+  log_impressions: z.boolean().default(true),
 });
 
 interface EligibleFacility {
@@ -51,6 +59,27 @@ interface EligibleFacility {
   verified_phone: string | null;
   has_facility_verified_contact: boolean | null;
   verified: boolean | null;
+  sponsored_tagline: string | null;
+}
+
+// Canonical level-of-care continuum. Used to sort facility_services
+// rows so the strip card always shows the highest-acuity LoC first
+// (Detox → Inpatient → PHP → IOP → Outpatient → Sober Living).
+const LOC_ORDER: Record<string, number> = {
+  "detox": 0, "detoxification": 0, "medical detox": 0,
+  "inpatient": 1, "residential": 1, "residential treatment": 1,
+  "php": 2, "partial hospitalization": 2, "partial hospitalization program": 2,
+  "iop": 3, "intensive outpatient": 3, "intensive outpatient program": 3,
+  "outpatient": 4, "outpatient treatment": 4, "op": 4,
+  "sober living": 5, "aftercare": 6,
+};
+
+function sortLocs(services: string[]): string[] {
+  return [...services].sort((a, b) => {
+    const ai = LOC_ORDER[a.toLowerCase()] ?? 99;
+    const bi = LOC_ORDER[b.toLowerCase()] ?? 99;
+    return ai - bi || a.localeCompare(b);
+  });
 }
 
 async function hashIp(ip: string | null): Promise<string | null> {
@@ -110,7 +139,8 @@ Deno.serve(async (req) => {
       activated_at,
       facilities!inner (
         id, name, slug, city, state, facility_type, description, logo_url,
-        phone, verified_phone, has_facility_verified_contact, verified
+        phone, verified_phone, has_facility_verified_contact, verified,
+        sponsored_tagline
       ),
       facility_subscriptions!inner (
         has_featured, status
@@ -150,6 +180,7 @@ Deno.serve(async (req) => {
       verified_phone: f.verified_phone,
       has_facility_verified_contact: f.has_facility_verified_contact,
       verified: f.verified,
+      sponsored_tagline: f.sponsored_tagline ?? null,
     }];
   });
 
@@ -169,51 +200,98 @@ Deno.serve(async (req) => {
     rotated.push(pool[(startIndex + i) % pool.length]);
   }
 
+  // Enrich each rotated facility with its top services + top insurance
+  // — used by the strip's full card layout. One small batch fetch per
+  // facility list rather than a per-row N+1.
+  const facilityIds = rotated.map((f) => f.facility_id);
+  const [servicesRes, insuranceRes] = await Promise.all([
+    supabase
+      .from("facility_services")
+      .select("facility_id, service_name")
+      .in("facility_id", facilityIds),
+    supabase
+      .from("facility_insurance")
+      .select("facility_id, insurance_name")
+      .in("facility_id", facilityIds),
+  ]);
+
+  if (servicesRes.error) {
+    console.error("[get-featured-rotation] services fetch failed", servicesRes.error);
+  }
+  if (insuranceRes.error) {
+    console.error("[get-featured-rotation] insurance fetch failed", insuranceRes.error);
+  }
+
+  const servicesByFacility = new Map<string, string[]>();
+  for (const row of servicesRes.data ?? []) {
+    const fid = (row as { facility_id: string }).facility_id;
+    const name = (row as { service_name: string }).service_name;
+    if (!servicesByFacility.has(fid)) servicesByFacility.set(fid, []);
+    servicesByFacility.get(fid)!.push(name);
+  }
+  const insuranceByFacility = new Map<string, string[]>();
+  for (const row of insuranceRes.data ?? []) {
+    const fid = (row as { facility_id: string }).facility_id;
+    const name = (row as { insurance_name: string }).insurance_name;
+    if (!insuranceByFacility.has(fid)) insuranceByFacility.set(fid, []);
+    insuranceByFacility.get(fid)!.push(name);
+  }
+
   // Map to the response shape — the resolved display phone is computed
   // here so the client doesn't have to know the verified-contact rule.
-  const facilities = rotated.map((f, position) => ({
-    facility_id: f.facility_id,
-    slug: f.slug,
-    name: f.name,
-    city: f.city,
-    state: f.state,
-    facility_type: f.facility_type,
-    description: f.description,
-    logo_url: f.logo_url,
-    verified: f.verified,
-    display_phone: f.has_facility_verified_contact && f.verified_phone
-      ? f.verified_phone
-      : f.phone,
-    position_in_rail: position,
-  }));
+  const facilities = rotated.map((f, position) => {
+    const allServices = servicesByFacility.get(f.facility_id) ?? [];
+    const allInsurance = insuranceByFacility.get(f.facility_id) ?? [];
+    return {
+      facility_id: f.facility_id,
+      slug: f.slug,
+      name: f.name,
+      city: f.city,
+      state: f.state,
+      facility_type: f.facility_type,
+      description: f.description,
+      logo_url: f.logo_url,
+      verified: f.verified,
+      sponsored_tagline: f.sponsored_tagline,
+      top_levels_of_care: sortLocs(allServices).slice(0, 3),
+      top_insurance: [...allInsurance].sort((a, b) => a.localeCompare(b)).slice(0, 3),
+      display_phone: f.has_facility_verified_contact && f.verified_phone
+        ? f.verified_phone
+        : f.phone,
+      position_in_rail: position,
+    };
+  });
 
   // Log impressions (fire-and-forget — don't block the response).
-  const xf = req.headers.get("x-forwarded-for");
-  const ip = xf ? xf.split(",")[0]?.trim() : null;
-  const ipHash = await hashIp(ip);
-  const userAgent = req.headers.get("user-agent")?.slice(0, 500) ?? null;
-  const pagePath = parsed.data.page_path ?? null;
+  // Skipped entirely when log_impressions=false (strip surface — the
+  // client logs per-card via IntersectionObserver instead).
+  if (parsed.data.log_impressions) {
+    const xf = req.headers.get("x-forwarded-for");
+    const ip = xf ? xf.split(",")[0]?.trim() : null;
+    const ipHash = await hashIp(ip);
+    const userAgent = req.headers.get("user-agent")?.slice(0, 500) ?? null;
+    const pagePath = parsed.data.page_path ?? null;
 
-  if (facilities.length > 0 && pagePath) {
-    const impressionRows = facilities.map((f) => ({
-      facility_id: f.facility_id,
-      placement_type: parsed.data.placement_type,
-      placement_value: parsed.data.placement_value,
-      visitor_seed: parsed.data.seed,
-      position_in_rail: f.position_in_rail,
-      page_path: pagePath,
-      user_agent: userAgent,
-      ip_hash: ipHash,
-    }));
-    // Awaited so RLS-bypassed service-role insert lands before response.
-    // Latency budget: insert is small and indexed; if it slips above
-    // ~30ms p95, switch to background tasks (Deno's "EdgeRuntime.waitUntil").
-    const { error: insertErr } = await supabase
-      .from("featured_impressions")
-      .insert(impressionRows);
-    if (insertErr) {
-      console.error("[get-featured-rotation] impression log failed", insertErr);
-      // Non-fatal — return the rotation regardless.
+    if (facilities.length > 0 && pagePath) {
+      const impressionRows = facilities.map((f) => ({
+        facility_id: f.facility_id,
+        placement_type: parsed.data.placement_type,
+        placement_value: parsed.data.placement_value,
+        visitor_seed: parsed.data.seed,
+        position_in_rail: f.position_in_rail,
+        page_path: pagePath,
+        user_agent: userAgent,
+        ip_hash: ipHash,
+        // NULL surface == legacy rail. Strip rows are written by
+        // log-strip-impression with surface='strip'.
+        surface: null,
+      }));
+      const { error: insertErr } = await supabase
+        .from("featured_impressions")
+        .insert(impressionRows);
+      if (insertErr) {
+        console.error("[get-featured-rotation] impression log failed", insertErr);
+      }
     }
   }
 

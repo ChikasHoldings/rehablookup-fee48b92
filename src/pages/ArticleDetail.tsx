@@ -21,6 +21,7 @@ import {
 import { ReactNode, useMemo } from "react";
 import { MidArticleCTA } from "@/components/articles/MidArticleCTA";
 import { ArticleShareBar } from "@/components/articles/ArticleShareBar";
+import { FeaturedStrip } from "@/components/featured/FeaturedStrip";
 import { 
   InternalLinkingSection, 
   treatmentTypeLinks, 
@@ -67,6 +68,10 @@ interface DBArticle {
   meta_title: string | null;
   meta_description: string | null;
   seo_keywords: string[] | null;
+  /** Bucket key (e.g., "aetna-rehab", "detox-programs") used to pull
+   *  the end-of-article FeaturedStrip. NULL means no Featured strip
+   *  renders on this article. */
+  featured_placement_bucket: string | null;
 }
 
 // Helper function to parse content with internal links and Markdown formatting.
@@ -226,7 +231,7 @@ const ArticleDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_articles")
-        .select("id, title, slug, excerpt, content, author, author_date, category, category_label, image_url, read_time, published_at, created_at, updated_at, meta_title, meta_description, seo_keywords, featured, status, author_id, medical_reviewer_id, last_medically_reviewed_at")
+        .select("id, title, slug, excerpt, content, author, author_date, category, category_label, image_url, read_time, published_at, created_at, updated_at, meta_title, meta_description, seo_keywords, featured, status, author_id, medical_reviewer_id, last_medically_reviewed_at, featured_placement_bucket")
         .eq("slug", normalizedSlug)
         .eq("status", "published")
         .single();
@@ -641,6 +646,24 @@ const ArticleDetail = () => {
                   url={`https://rehablookup.com/resources/${article.slug}`}
                 />
               </div>
+
+              {/* End-of-article Featured Strip — paid placement
+                  rotated per-visitor via the rl_rot_seed cookie. Only
+                  renders when an admin has tagged the article with a
+                  featured_placement_bucket AND the bucket has at
+                  least one active Featured subscriber. Silent
+                  absence otherwise — no placeholder. */}
+              {article.featured_placement_bucket && (
+                <div className="mt-10 -mx-4 sm:-mx-6 lg:-mx-8">
+                  <FeaturedStrip
+                    placement_type="article"
+                    placement_value={article.featured_placement_bucket}
+                    visible_slot_count={6}
+                    title="Featured Treatment Centers"
+                    subtitle="Verified and ready to help"
+                  />
+                </div>
+              )}
 
               {/* Enhanced Related Articles with Smart Linking */}
               {smartRelatedArticles && smartRelatedArticles.length > 0 && (

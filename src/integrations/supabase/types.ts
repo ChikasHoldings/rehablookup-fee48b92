@@ -632,6 +632,7 @@ export type Database = {
           created_by: string | null
           excerpt: string
           featured: boolean | null
+          featured_placement_bucket: string | null
           id: string
           image_url: string | null
           last_medically_reviewed_at: string | null
@@ -657,6 +658,7 @@ export type Database = {
           created_by?: string | null
           excerpt: string
           featured?: boolean | null
+          featured_placement_bucket?: string | null
           id?: string
           image_url?: string | null
           last_medically_reviewed_at?: string | null
@@ -682,6 +684,7 @@ export type Database = {
           created_by?: string | null
           excerpt?: string
           featured?: boolean | null
+          featured_placement_bucket?: string | null
           id?: string
           image_url?: string | null
           last_medically_reviewed_at?: string | null
@@ -871,6 +874,7 @@ export type Database = {
           move_in_date: string | null
           needs_transport_help: boolean | null
           notes: string | null
+          originating_facility_id: string | null
           payment_amount_cents: number
           payment_reminder_count: number | null
           payment_status: string
@@ -889,6 +893,7 @@ export type Database = {
           referral_source: string | null
           relationship_to_decision_maker: string | null
           relationship_to_seeker: string | null
+          routing_mode: string | null
           scholarship_interest: boolean | null
           seeker_confirmed: boolean | null
           seeker_confirmed_at: string | null
@@ -967,6 +972,7 @@ export type Database = {
           move_in_date?: string | null
           needs_transport_help?: boolean | null
           notes?: string | null
+          originating_facility_id?: string | null
           payment_amount_cents?: number
           payment_reminder_count?: number | null
           payment_status?: string
@@ -985,6 +991,7 @@ export type Database = {
           referral_source?: string | null
           relationship_to_decision_maker?: string | null
           relationship_to_seeker?: string | null
+          routing_mode?: string | null
           scholarship_interest?: boolean | null
           seeker_confirmed?: boolean | null
           seeker_confirmed_at?: string | null
@@ -1063,6 +1070,7 @@ export type Database = {
           move_in_date?: string | null
           needs_transport_help?: boolean | null
           notes?: string | null
+          originating_facility_id?: string | null
           payment_amount_cents?: number
           payment_reminder_count?: number | null
           payment_status?: string
@@ -1081,6 +1089,7 @@ export type Database = {
           referral_source?: string | null
           relationship_to_decision_maker?: string | null
           relationship_to_seeker?: string | null
+          routing_mode?: string | null
           scholarship_interest?: boolean | null
           seeker_confirmed?: boolean | null
           seeker_confirmed_at?: string | null
@@ -1112,6 +1121,20 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "concierge_inquiries_originating_facility_id_fkey"
+            columns: ["originating_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_inquiries_originating_facility_id_fkey"
+            columns: ["originating_facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "concierge_inquiries_placed_facility_id_fkey"
             columns: ["placed_facility_id"]
             isOneToOne: false
@@ -1121,6 +1144,94 @@ export type Database = {
           {
             foreignKeyName: "concierge_inquiries_placed_facility_id_fkey"
             columns: ["placed_facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concierge_introduction_audit: {
+        Row: {
+          advisor_confirmed_no_non_partner_candidates: boolean
+          advisor_confirmed_non_partner_consideration: boolean
+          advisor_id: string
+          clinical_criteria_snapshot: Json
+          flagged_for_admin_review: boolean
+          flagged_reason: string | null
+          id: string
+          inquiry_id: string
+          introduced_facility_ids: string[]
+          originating_facility_auto_pinned: boolean
+          originating_facility_id: string | null
+          partner_facility_ids: string[]
+          rejected_non_partner_candidates: Json | null
+          review_note: string | null
+          review_outcome: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sent_at: string
+          surfaced_candidate_ids: string[]
+        }
+        Insert: {
+          advisor_confirmed_no_non_partner_candidates?: boolean
+          advisor_confirmed_non_partner_consideration: boolean
+          advisor_id: string
+          clinical_criteria_snapshot?: Json
+          flagged_for_admin_review?: boolean
+          flagged_reason?: string | null
+          id?: string
+          inquiry_id: string
+          introduced_facility_ids: string[]
+          originating_facility_auto_pinned?: boolean
+          originating_facility_id?: string | null
+          partner_facility_ids?: string[]
+          rejected_non_partner_candidates?: Json | null
+          review_note?: string | null
+          review_outcome?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sent_at?: string
+          surfaced_candidate_ids?: string[]
+        }
+        Update: {
+          advisor_confirmed_no_non_partner_candidates?: boolean
+          advisor_confirmed_non_partner_consideration?: boolean
+          advisor_id?: string
+          clinical_criteria_snapshot?: Json
+          flagged_for_admin_review?: boolean
+          flagged_reason?: string | null
+          id?: string
+          inquiry_id?: string
+          introduced_facility_ids?: string[]
+          originating_facility_auto_pinned?: boolean
+          originating_facility_id?: string | null
+          partner_facility_ids?: string[]
+          rejected_non_partner_candidates?: Json | null
+          review_note?: string | null
+          review_outcome?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sent_at?: string
+          surfaced_candidate_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concierge_introduction_audit_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "concierge_inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_introduction_audit_originating_facility_id_fkey"
+            columns: ["originating_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_introduction_audit_originating_facility_id_fkey"
+            columns: ["originating_facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
             referencedColumns: ["id"]
@@ -1651,6 +1762,7 @@ export type Database = {
           response_rate_score: number | null
           samhsa_facility_id: string | null
           slug: string | null
+          sponsored_tagline: string | null
           state: string
           status: string
           suspended: boolean | null
@@ -1712,6 +1824,7 @@ export type Database = {
           response_rate_score?: number | null
           samhsa_facility_id?: string | null
           slug?: string | null
+          sponsored_tagline?: string | null
           state: string
           status?: string
           suspended?: boolean | null
@@ -1773,6 +1886,7 @@ export type Database = {
           response_rate_score?: number | null
           samhsa_facility_id?: string | null
           slug?: string | null
+          sponsored_tagline?: string | null
           state?: string
           status?: string
           suspended?: boolean | null
@@ -2525,6 +2639,7 @@ export type Database = {
           cancel_at_period_end: boolean
           canceled_at: string | null
           created_at: string
+          current_monthly_period_start: string | null
           current_period_end: string | null
           discount_applied_cents: number | null
           facility_id: string
@@ -2533,6 +2648,7 @@ export type Database = {
           id: string
           original_annual_cents: number | null
           paid_amount_cents: number | null
+          payment_method_warning_sent_at: string | null
           period_start: string | null
           price_cents: number
           provider_id: string
@@ -2544,6 +2660,7 @@ export type Database = {
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          switch_to_monthly_at_renewal: boolean
           tier: string
           unlock_discount_percent: number
           updated_at: string
@@ -2553,6 +2670,7 @@ export type Database = {
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
+          current_monthly_period_start?: string | null
           current_period_end?: string | null
           discount_applied_cents?: number | null
           facility_id: string
@@ -2561,6 +2679,7 @@ export type Database = {
           id?: string
           original_annual_cents?: number | null
           paid_amount_cents?: number | null
+          payment_method_warning_sent_at?: string | null
           period_start?: string | null
           price_cents?: number
           provider_id: string
@@ -2572,6 +2691,7 @@ export type Database = {
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          switch_to_monthly_at_renewal?: boolean
           tier?: string
           unlock_discount_percent?: number
           updated_at?: string
@@ -2581,6 +2701,7 @@ export type Database = {
           cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
+          current_monthly_period_start?: string | null
           current_period_end?: string | null
           discount_applied_cents?: number | null
           facility_id?: string
@@ -2589,6 +2710,7 @@ export type Database = {
           id?: string
           original_annual_cents?: number | null
           paid_amount_cents?: number | null
+          payment_method_warning_sent_at?: string | null
           period_start?: string | null
           price_cents?: number
           provider_id?: string
@@ -2600,6 +2722,7 @@ export type Database = {
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          switch_to_monthly_at_renewal?: boolean
           tier?: string
           unlock_discount_percent?: number
           updated_at?: string
@@ -2656,6 +2779,114 @@ export type Database = {
           },
           {
             foreignKeyName: "facility_views_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      featured_impressions: {
+        Row: {
+          facility_id: string
+          id: string
+          ip_hash: string | null
+          occurred_at: string
+          page_path: string
+          placement_type: string
+          placement_value: string
+          position_in_rail: number
+          surface: string | null
+          user_agent: string | null
+          visitor_seed: number
+        }
+        Insert: {
+          facility_id: string
+          id?: string
+          ip_hash?: string | null
+          occurred_at?: string
+          page_path: string
+          placement_type: string
+          placement_value: string
+          position_in_rail: number
+          surface?: string | null
+          user_agent?: string | null
+          visitor_seed: number
+        }
+        Update: {
+          facility_id?: string
+          id?: string
+          ip_hash?: string | null
+          occurred_at?: string
+          page_path?: string
+          placement_type?: string
+          placement_value?: string
+          position_in_rail?: number
+          surface?: string | null
+          user_agent?: string | null
+          visitor_seed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "featured_impressions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "featured_impressions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      featured_phone_clicks: {
+        Row: {
+          clicked_at: string
+          facility_id: string
+          id: string
+          ip_hash: string | null
+          page_path: string
+          placement_type: string
+          placement_value: string
+          user_agent: string | null
+          visitor_seed: number | null
+        }
+        Insert: {
+          clicked_at?: string
+          facility_id: string
+          id?: string
+          ip_hash?: string | null
+          page_path: string
+          placement_type: string
+          placement_value: string
+          user_agent?: string | null
+          visitor_seed?: number | null
+        }
+        Update: {
+          clicked_at?: string
+          facility_id?: string
+          id?: string
+          ip_hash?: string | null
+          page_path?: string
+          placement_type?: string
+          placement_value?: string
+          user_agent?: string | null
+          visitor_seed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "featured_phone_clicks_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "featured_phone_clicks_facility_id_fkey"
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
@@ -4356,6 +4587,7 @@ export type Database = {
           admin_notified: boolean
           admin_notified_at: string | null
           admission_volume: string
+          billing_interval: string | null
           city: string
           contact_name: string
           contact_title: string
@@ -4382,6 +4614,7 @@ export type Database = {
           admin_notified?: boolean
           admin_notified_at?: string | null
           admission_volume: string
+          billing_interval?: string | null
           city: string
           contact_name: string
           contact_title: string
@@ -4408,6 +4641,7 @@ export type Database = {
           admin_notified?: boolean
           admin_notified_at?: string | null
           admission_volume?: string
+          billing_interval?: string | null
           city?: string
           contact_name?: string
           contact_title?: string
@@ -6226,6 +6460,7 @@ export type Database = {
         }
         Returns: Json
       }
+      check_renewal_reminder_setup: { Args: never; Returns: Json }
       claim_stripe_webhook_event: {
         Args: { p_event_id: string; p_event_type: string }
         Returns: boolean
@@ -6250,6 +6485,10 @@ export type Database = {
       }
       current_auth_uid: { Args: never; Returns: string }
       current_user_email: { Args: never; Returns: string }
+      enqueue_renewal_reminder: {
+        Args: { p_milestone: string; p_subscription_id: string }
+        Returns: undefined
+      }
       extract_email_domain: { Args: { input: string }; Returns: string }
       extract_website_domain: { Args: { input: string }; Returns: string }
       generate_facility_slug: {
@@ -6692,6 +6931,7 @@ export type Database = {
         Args: { p_facility_id: string; p_inquiry_id: string }
         Returns: undefined
       }
+      send_subscription_renewal_reminders: { Args: never; Returns: Json }
       staged_directory_merge_upsert: {
         Args: { records: Json }
         Returns: {
