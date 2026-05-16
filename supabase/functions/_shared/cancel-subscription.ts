@@ -57,6 +57,10 @@ interface FacilitySubscription {
   has_concierge_partner: boolean;
   paid_amount_cents: number | null;
   price_cents: number;
+  /** 'monthly' | 'annual' — drives the refund branch in subscription-math.
+   *  Default 'annual' guards rows from before the monthly+annual schema
+   *  correction; the webhook keeps this column in sync going forward. */
+  billing_period: "monthly" | "annual";
   period_start: string | null;
   current_period_end: string | null;
   canceled_at: string | null;
@@ -156,6 +160,7 @@ async function refundOnePiece(args: {
     : undefined;
 
   const refund = computeCancellationRefund({
+    billingPeriod: subscription.billing_period,
     paidAmountCents,
     fullMonthlyRateCents,
     periodStart,
@@ -269,7 +274,7 @@ export async function cancelSubscriptionAndRefund(
   const { data: subRow, error: subError } = await supabase
     .from("facility_subscriptions")
     .select(
-      "id, facility_id, provider_id, stripe_subscription_id, stripe_customer_id, status, tier, has_featured, has_concierge_partner, paid_amount_cents, price_cents, period_start, current_period_end, canceled_at",
+      "id, facility_id, provider_id, stripe_subscription_id, stripe_customer_id, status, tier, has_featured, has_concierge_partner, paid_amount_cents, price_cents, billing_period, period_start, current_period_end, canceled_at",
     )
     .eq("id", subscriptionId)
     .single();
@@ -287,14 +292,21 @@ export async function cancelSubscriptionAndRefund(
     cancellationRowIds: rowIds,
   };
 
-  // The Stripe-paid annual is bundled, so all 3 tiers share the same
-  // paid_amount_cents until we split per-line at upgrade time. The
-  // accurate per-piece paid amount is the DISCOUNTED ANNUAL for each
-  // tier the subscription actually carries. We use TIER_PRICING for
-  // those constants — same source of truth as the math.
-  const paidForPro = TIER_PRICING.pro.discountedAnnualCents;
-  const paidForFeatured = TIER_PRICING.featured.discountedAnnualCents;
-  const paidForConcierge = TIER_PRICING.concierge.discountedAnnualCents;
+  // Per-tier paid amount. For annual subscribers, this is the
+  // discounted annual ($1,009.80 / $6,108.60 / $10,200). For monthly,
+  // it's the monthly amount actually charged this period (full rate,
+  // no discount). The math module returns refund=0 on the monthly
+  // branch regardless, so this value just feeds the audit row.
+  const isMonthly = subscription.billing_period === "monthly";
+  const paidForPro = isMonthly
+    ? TIER_PRICING.pro.fullMonthlyRateCents
+    : TIER_PRICING.pro.discountedAnnualCents;
+  const paidForFeatured = isMonthly
+    ? TIER_PRICING.featured.fullMonthlyRateCents
+    : TIER_PRICING.featured.discountedAnnualCents;
+  const paidForConcierge = isMonthly
+    ? TIER_PRICING.concierge.fullMonthlyRateCents
+    : TIER_PRICING.concierge.discountedAnnualCents;
 
   if (options.scope === "all") {
     // 1) Pro

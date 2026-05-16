@@ -1,7 +1,17 @@
 // subscription-math.ts
 // ─────────────────────
-// Pure, deterministic refund + proration math for the new
-// Pro / Featured / Concierge annual-billing model.
+// Pure, deterministic refund + proration math for the
+// Pro / Featured / Concierge subscription model — monthly default,
+// annual = 15%-discount upsell.
+//
+// Two-branch rule:
+//   • Monthly subscribers: Stripe handles cancellation natively. We
+//     don't issue refunds — you used the month you paid for. The
+//     math functions still return a deterministic shape so callers
+//     can record a 0-refund audit row.
+//   • Annual subscribers: custom math. months_used × full_monthly_rate
+//     is what we keep; the rest is refunded. The 15% discount is
+//     forfeited on partial years.
 //
 // HARD RULE: this module is pure. No DB calls, no Stripe calls,
 // no environment reads, no I/O. Every input arrives as a parameter.
@@ -30,10 +40,17 @@ export function computeMonthsUsed(periodStart: Date, now: Date): number {
   return Math.ceil(elapsedDays / DAYS_PER_MONTH);
 }
 
+export type BillingPeriod = "monthly" | "annual";
+
 export interface CancellationRefundInput {
-  /** Annual paid amount in cents (post-discount, what they actually paid). */
+  /** Which billing cadence the subscriber is on. Drives the refund branch. */
+  billingPeriod: BillingPeriod;
+  /** Amount actually paid in cents.
+   *   • monthly: the monthly amount charged ($99 / $599 / $1,000)
+   *   • annual:  the discounted annual ($1,009.80 / $6,108.60 / $10,200) */
   paidAmountCents: number;
-  /** Full UN-discounted monthly rate in cents (Pro=9900, Featured=59900, Concierge=100000). */
+  /** Full UN-discounted monthly rate in cents (Pro=9900, Featured=59900, Concierge=100000).
+   *  Only meaningful on the annual branch — monthly cancellation never refunds. */
   fullMonthlyRateCents: number;
   /** When the current billing period started. */
   periodStart: Date;
@@ -50,10 +67,22 @@ export interface CancellationRefundResult {
 }
 
 /**
- * Spec formula:
- *   months_used    = ceil((now - period_start) / 30 days)   (special-cased above)
- *   charge_for_use = months_used × full_monthly_rate_cents
- *   refund         = max(0, paid_amount_cents − charge_for_use)
+ * Two-branch cancellation math:
+ *
+ *   billingPeriod === 'monthly'
+ *     The subscriber paid for the current month and used it. Refund
+ *     is always 0; we treat the whole month as charged. Stripe's
+ *     cancel-at-period-end handles the "no further renewals" piece
+ *     natively, so this function exists only to produce a deterministic
+ *     audit-row shape (and to centralise the "no monthly refund" policy
+ *     so it can't drift across handlers).
+ *     Returns: { monthsUsed: 1, chargeForUseCents: paidAmountCents, refundCents: 0 }
+ *
+ *   billingPeriod === 'annual'
+ *     Spec formula:
+ *       months_used    = ceil((now - period_start) / 30 days) (special cases above)
+ *       charge_for_use = months_used × full_monthly_rate_cents
+ *       refund         = max(0, paid_amount_cents − charge_for_use)
  *
  * Idempotency note: this is purely deterministic — same inputs yield
  * same outputs forever. Callers store the result in
@@ -63,8 +92,20 @@ export interface CancellationRefundResult {
 export function computeCancellationRefund(
   input: CancellationRefundInput,
 ): CancellationRefundResult {
-  const now = input.now ?? new Date();
   const paid = Math.max(0, Math.floor(input.paidAmountCents));
+
+  // Monthly branch: no refund, ever. Stripe handles the cancel-at-
+  // period-end + final invoice. We log a 0-refund row for audit.
+  if (input.billingPeriod === "monthly") {
+    return {
+      monthsUsed: 1,
+      chargeForUseCents: paid,
+      refundCents: 0,
+    };
+  }
+
+  // Annual branch: existing math.
+  const now = input.now ?? new Date();
   const monthlyRate = Math.max(0, Math.floor(input.fullMonthlyRateCents));
 
   // Cancellation requested after the period already ended — no refund.
@@ -88,44 +129,81 @@ export function computeCancellationRefund(
 }
 
 export interface UpgradeProrationInput {
-  /** The ADD-ON's full annual price in cents BEFORE the 15% discount.
+  /** Which interval the EXISTING parent subscription is on. Drives the branch. */
+  currentBillingPeriod: BillingPeriod;
+  /** The add-on's full annual price in cents BEFORE the 15% discount.
    *  Featured = 599 × 12 × 100 = 718800. Concierge = 1000 × 12 × 100 = 1200000.
-   *  The 15% discount only applies at next renewal, not on the partial period. */
+   *  The 15% discount only applies at next renewal, not on the partial period.
+   *  Only used on the annual branch. */
   addonFullAnnualCents: number;
-  /** End of the parent Pro subscription's annual period. */
+  /** The add-on's monthly rate in cents (Featured=59900, Concierge=100000).
+   *  Returned as the caller's reference rate when the monthly branch fires;
+   *  Stripe-native proration uses this when computing the partial month. */
+  addonMonthlyCents: number;
+  /** End of the parent subscription's current period. */
   periodEnd: Date;
   /** Override the "now" timestamp — defaults to actual now. */
   now?: Date;
 }
 
 export interface UpgradeProrationResult {
+  /** Where the charge originates.
+   *   • 'stripe-native': the caller should let Stripe prorate on the
+   *     subscriptions.update call (proration_behavior: 'create_prorations').
+   *     proratedChargeCents is null in that case — Stripe computes it.
+   *   • 'computed': we calculated proratedChargeCents in this module. */
+  handledBy: "stripe-native" | "computed";
   daysRemaining: number;
   dailyRateCents: number;
-  proratedChargeCents: number;
+  proratedChargeCents: number | null;
 }
 
 /**
- * Spec formula:
- *   daily_rate       = addon_full_annual_cents / 365
- *   days_remaining   = floor((period_end - now) / 1 day)   (whole days only)
- *   prorated_charge  = round(daily_rate × days_remaining)
+ * Two-branch upgrade proration:
  *
- * `daysRemaining` is floored (no partial days charged), `proratedCharge`
- * is rounded to the nearest cent — both choices documented here so the
- * rounding behavior is transparent and auditable.
+ *   currentBillingPeriod === 'monthly'
+ *     Stripe handles partial-month proration natively when you add a
+ *     subscription item with proration_behavior: 'create_prorations'.
+ *     We return handledBy: 'stripe-native' and a null proratedChargeCents
+ *     — the caller should NOT compute its own number, just pass through
+ *     to Stripe.
  *
- * If days_remaining <= 0 (upgrade after period_end) → prorated_charge = 0.
- * The caller should NOT issue a Stripe charge in that case.
+ *   currentBillingPeriod === 'annual'
+ *     Custom math, since we want the add-on to align with the parent
+ *     annual period:
+ *       daily_rate       = addon_full_annual_cents / 365
+ *       days_remaining   = floor((period_end - now) / 1 day)   (whole days only)
+ *       prorated_charge  = round(daily_rate × days_remaining)
+ *     If days_remaining <= 0 (upgrade after period_end) → prorated_charge = 0.
+ *     The caller should NOT issue a Stripe charge in that case.
+ *
+ * `daysRemaining` is floored (no partial days charged) and
+ * `proratedChargeCents` is rounded to the nearest cent — both choices
+ * documented here so the rounding behavior is transparent and auditable.
  */
 export function computeUpgradeProration(
   input: UpgradeProrationInput,
 ): UpgradeProrationResult {
   const now = input.now ?? new Date();
-  const addonAnnualCents = Math.max(0, Math.floor(input.addonFullAnnualCents));
-
   const elapsedMs = input.periodEnd.getTime() - now.getTime();
   const daysRemaining = elapsedMs > 0 ? Math.floor(elapsedMs / MS_PER_DAY) : 0;
 
+  if (input.currentBillingPeriod === "monthly") {
+    // Stripe handles the partial-month charge natively. We surface the
+    // monthly daily-rate equivalent for any UI that wants to show the
+    // customer a preview, but the authoritative number comes from Stripe.
+    const monthlyCents = Math.max(0, Math.floor(input.addonMonthlyCents));
+    const monthlyDailyRate = Math.round(monthlyCents / DAYS_PER_MONTH);
+    return {
+      handledBy: "stripe-native",
+      daysRemaining,
+      dailyRateCents: monthlyDailyRate,
+      proratedChargeCents: null,
+    };
+  }
+
+  // Annual branch: existing math.
+  const addonAnnualCents = Math.max(0, Math.floor(input.addonFullAnnualCents));
   // Daily rate stored as a fractional value temporarily; we only
   // round the FINAL charge so the daily-rate display can show
   // accurate cents-with-fractional precision if needed.
@@ -133,6 +211,7 @@ export function computeUpgradeProration(
   const proratedChargeCents = Math.round(dailyRateFloat * daysRemaining);
 
   return {
+    handledBy: "computed",
     daysRemaining,
     dailyRateCents: Math.round(dailyRateFloat),
     proratedChargeCents,

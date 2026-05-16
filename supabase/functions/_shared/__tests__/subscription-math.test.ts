@@ -45,9 +45,10 @@ Deno.test("computeMonthsUsed: negative time clamps to 0", () => {
   assertEquals(computeMonthsUsed(periodStart, daysFrom(-5)), 0);
 });
 
-// ── computeCancellationRefund — worked examples from spec ─────────
-Deno.test("Pro, $1009.80, cancel @ 4 months -> $613.80 refund", () => {
+// ── Annual branch — worked examples ───────────────────────────────
+Deno.test("Annual Pro, $1009.80, cancel @ 4 months -> $613.80 refund", () => {
   const r = computeCancellationRefund({
+    billingPeriod: "annual",
     paidAmountCents: 100980,
     fullMonthlyRateCents: TIER_PRICING.pro.fullMonthlyRateCents,
     periodStart,
@@ -57,8 +58,9 @@ Deno.test("Pro, $1009.80, cancel @ 4 months -> $613.80 refund", () => {
   assertEquals(r.refundCents, 61380);
 });
 
-Deno.test("Pro, $1009.80, cancel @ 4 months + 5 days -> $514.80 refund (5 months billed)", () => {
+Deno.test("Annual Pro, $1009.80, cancel @ 4 months + 5 days -> $514.80 refund (5 months billed)", () => {
   const r = computeCancellationRefund({
+    billingPeriod: "annual",
     paidAmountCents: 100980,
     fullMonthlyRateCents: TIER_PRICING.pro.fullMonthlyRateCents,
     periodStart,
@@ -68,8 +70,9 @@ Deno.test("Pro, $1009.80, cancel @ 4 months + 5 days -> $514.80 refund (5 months
   assertEquals(r.refundCents, 51480);
 });
 
-Deno.test("Pro, $1009.80, cancel @ 11 months -> $0 (clamped)", () => {
+Deno.test("Annual Pro, $1009.80, cancel @ 11 months -> $0 (clamped)", () => {
   const r = computeCancellationRefund({
+    billingPeriod: "annual",
     paidAmountCents: 100980,
     fullMonthlyRateCents: TIER_PRICING.pro.fullMonthlyRateCents,
     periodStart,
@@ -78,9 +81,10 @@ Deno.test("Pro, $1009.80, cancel @ 11 months -> $0 (clamped)", () => {
   assertEquals(r.refundCents, 0);
 });
 
-Deno.test("Featured, $6108.60, cancel @ 6 months -> $2514.60 refund", () => {
+Deno.test("Annual Featured, $6108.60, cancel @ 6 months -> $2514.60 refund", () => {
   // Spec rate: 610860¢ (matches the Stripe Featured Annual price).
   const r = computeCancellationRefund({
+    billingPeriod: "annual",
     paidAmountCents: 610860,
     fullMonthlyRateCents: TIER_PRICING.featured.fullMonthlyRateCents,
     periodStart,
@@ -90,8 +94,9 @@ Deno.test("Featured, $6108.60, cancel @ 6 months -> $2514.60 refund", () => {
   assertEquals(r.refundCents, 610860 - 6 * 59900);
 });
 
-Deno.test("Concierge, $10,200, cancel < 1hr in -> full refund", () => {
+Deno.test("Annual Concierge, $10,200, cancel < 1hr in -> full refund", () => {
   const r = computeCancellationRefund({
+    billingPeriod: "annual",
     paidAmountCents: 1020000,
     fullMonthlyRateCents: TIER_PRICING.concierge.fullMonthlyRateCents,
     periodStart,
@@ -101,9 +106,10 @@ Deno.test("Concierge, $10,200, cancel < 1hr in -> full refund", () => {
   assertEquals(r.refundCents, 1020000);
 });
 
-// ── Edge cases ────────────────────────────────────────────────────
-Deno.test("paidAmount = 0 -> refund 0, no error", () => {
+// ── Annual branch — edge cases ────────────────────────────────────
+Deno.test("Annual: paidAmount = 0 -> refund 0, no error", () => {
   const r = computeCancellationRefund({
+    billingPeriod: "annual",
     paidAmountCents: 0,
     fullMonthlyRateCents: 9900,
     periodStart,
@@ -112,8 +118,9 @@ Deno.test("paidAmount = 0 -> refund 0, no error", () => {
   assertEquals(r.refundCents, 0);
 });
 
-Deno.test("cancellation after periodEnd -> refund 0", () => {
+Deno.test("Annual: cancellation after periodEnd -> refund 0", () => {
   const r = computeCancellationRefund({
+    billingPeriod: "annual",
     paidAmountCents: 100980,
     fullMonthlyRateCents: 9900,
     periodStart,
@@ -123,8 +130,9 @@ Deno.test("cancellation after periodEnd -> refund 0", () => {
   assertEquals(r.refundCents, 0);
 });
 
-Deno.test("refund + charge are always integers", () => {
+Deno.test("Annual: refund + charge are always integers", () => {
   const r = computeCancellationRefund({
+    billingPeriod: "annual",
     paidAmountCents: 100980.7,
     fullMonthlyRateCents: 9900,
     periodStart,
@@ -134,35 +142,93 @@ Deno.test("refund + charge are always integers", () => {
   assert(Number.isInteger(r.chargeForUseCents));
 });
 
-// ── Upgrade proration ─────────────────────────────────────────────
+// ── Monthly branch — refund is always 0 ───────────────────────────
+Deno.test("Monthly Pro, $99, cancel @ 10 days -> refund 0", () => {
+  const r = computeCancellationRefund({
+    billingPeriod: "monthly",
+    paidAmountCents: 9900,
+    fullMonthlyRateCents: TIER_PRICING.pro.fullMonthlyRateCents,
+    periodStart,
+    now: daysFrom(10),
+  });
+  assertEquals(r.refundCents, 0);
+  assertEquals(r.monthsUsed, 1);
+  assertEquals(r.chargeForUseCents, 9900);
+});
+
+Deno.test("Monthly Featured, $599, cancel @ 15 days -> refund 0", () => {
+  const r = computeCancellationRefund({
+    billingPeriod: "monthly",
+    paidAmountCents: 59900,
+    fullMonthlyRateCents: TIER_PRICING.featured.fullMonthlyRateCents,
+    periodStart,
+    now: daysFrom(15),
+  });
+  assertEquals(r.refundCents, 0);
+  assertEquals(r.chargeForUseCents, 59900);
+});
+
+Deno.test("Monthly Concierge, $1000, cancel @ 1 day -> refund 0", () => {
+  const r = computeCancellationRefund({
+    billingPeriod: "monthly",
+    paidAmountCents: 100000,
+    fullMonthlyRateCents: TIER_PRICING.concierge.fullMonthlyRateCents,
+    periodStart,
+    now: daysFrom(1),
+  });
+  assertEquals(r.refundCents, 0);
+});
+
+// ── Upgrade proration — annual (computed) ─────────────────────────
 const upgradeNow = new Date("2026-06-01T00:00:00Z");
 
-Deno.test("Featured upgrade with 200 days left -> $3,938.63 prorated", () => {
+Deno.test("Annual: Featured upgrade with 200 days left -> $3,938.63 prorated", () => {
   const r = computeUpgradeProration({
+    currentBillingPeriod: "annual",
     addonFullAnnualCents: TIER_PRICING.featured.fullAnnualCents,
+    addonMonthlyCents: TIER_PRICING.featured.fullMonthlyRateCents,
     periodEnd: new Date(upgradeNow.getTime() + 200 * DAY),
     now: upgradeNow,
   });
+  assertEquals(r.handledBy, "computed");
   assertEquals(r.daysRemaining, 200);
   assertEquals(r.proratedChargeCents, 393863);
 });
 
-Deno.test("days_remaining = 0 -> prorated 0", () => {
+Deno.test("Annual: days_remaining = 0 -> prorated 0", () => {
   const r = computeUpgradeProration({
+    currentBillingPeriod: "annual",
     addonFullAnnualCents: TIER_PRICING.featured.fullAnnualCents,
+    addonMonthlyCents: TIER_PRICING.featured.fullMonthlyRateCents,
     periodEnd: upgradeNow,
     now: upgradeNow,
   });
   assertEquals(r.proratedChargeCents, 0);
 });
 
-Deno.test("days_remaining = 365 -> prorated ≈ full annual", () => {
+Deno.test("Annual: days_remaining = 365 -> prorated ≈ full annual", () => {
   const r = computeUpgradeProration({
+    currentBillingPeriod: "annual",
     addonFullAnnualCents: TIER_PRICING.featured.fullAnnualCents,
+    addonMonthlyCents: TIER_PRICING.featured.fullMonthlyRateCents,
     periodEnd: new Date(upgradeNow.getTime() + 365 * DAY),
     now: upgradeNow,
   });
   assertEquals(r.proratedChargeCents, TIER_PRICING.featured.fullAnnualCents);
+});
+
+// ── Upgrade proration — monthly (stripe-native) ───────────────────
+Deno.test("Monthly: Featured upgrade mid-month -> stripe-native, prorated charge null", () => {
+  const r = computeUpgradeProration({
+    currentBillingPeriod: "monthly",
+    addonFullAnnualCents: TIER_PRICING.featured.fullAnnualCents,
+    addonMonthlyCents: TIER_PRICING.featured.fullMonthlyRateCents,
+    periodEnd: new Date(upgradeNow.getTime() + 15 * DAY),
+    now: upgradeNow,
+  });
+  assertEquals(r.handledBy, "stripe-native");
+  assertEquals(r.proratedChargeCents, null);
+  assertEquals(r.daysRemaining, 15);
 });
 
 // ── Tier pricing sanity ───────────────────────────────────────────
