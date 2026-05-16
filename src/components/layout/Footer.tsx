@@ -105,6 +105,7 @@ const providerLinks: FooterLink[] = [
 const companyLinks: FooterLink[] = [
   { name: "About Us", path: "/about" },
   { name: "How It Works", path: "/how-it-works" },
+  { name: "How We Make Money", path: "/how-we-make-money" },
   { name: "Contact Us", path: "/contact" },
   { name: "Treatment Placement", path: "/concierge" },
   { name: "Editorial Team", path: "/authors", badge: "New" },

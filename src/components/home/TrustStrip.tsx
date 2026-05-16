@@ -55,9 +55,9 @@ export function TrustStrip() {
     {
       icon: Scale,
       value: "Transparent",
-      label: "How we rank →",
-      href: "/rehab-score",
-      ariaLabel: "Learn how RehabLookup ranks treatment centers — Rehab Score methodology",
+      label: "How we make money →",
+      href: "/how-we-make-money",
+      ariaLabel: "How RehabLookup makes money — EKRA transparency",
     },
   ];
 

@@ -675,12 +675,21 @@ export default function ConciergeThankYou() {
             <div className="mt-6 text-center text-sm text-muted-foreground">
               <p>
                 Questions? Contact us at{" "}
-                <a 
-                  href="mailto:placement@rehablookup.com" 
+                <a
+                  href="mailto:placement@rehablookup.com"
                   className="text-primary hover:underline font-medium"
                 >
                   placement@rehablookup.com
                 </a>
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground/80">
+                Curious how RehabLookup makes money?{" "}
+                <Link
+                  to="/how-we-make-money"
+                  className="text-primary hover:underline font-medium"
+                >
+                  See our transparency page →
+                </Link>
               </p>
             </div>
           </div>

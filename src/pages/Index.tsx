@@ -362,6 +362,14 @@ const Index = () => {
               </span>
             </div>
           </div>
+          <div className="mt-2 text-center">
+            <Link
+              to="/how-we-make-money"
+              className="text-[11px] md:text-xs text-primary-foreground/70 hover:text-white underline-offset-2 hover:underline transition-colors"
+            >
+              How we make money →
+            </Link>
+          </div>
         </div>
       </section>
 

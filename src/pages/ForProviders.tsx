@@ -638,6 +638,16 @@ function CancellationSection() {
               higher per-month cost.
             </p>
           </div>
+          <div className="mt-6 border-t border-slate-200 pt-4 text-sm text-slate-600">
+            EKRA-compliant by design. No per-call, per-lead, or per-admission fees on any
+            product on this page.{" "}
+            <Link
+              to="/how-we-make-money"
+              className="font-medium text-[#1B365D] underline underline-offset-2"
+            >
+              How we make money →
+            </Link>
+          </div>
         </div>
       </div>
     </section>

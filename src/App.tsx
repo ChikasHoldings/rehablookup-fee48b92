@@ -245,6 +245,7 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const EditorialPolicy = lazy(() => import("./pages/EditorialPolicy"));
 const RehabScore = lazy(() => import("./pages/RehabScore"));
+const HowWeMakeMoney = lazy(() => import("./pages/HowWeMakeMoney"));
 const MedicalDisclaimer = lazy(() => import("./pages/MedicalDisclaimer"));
 const SeekerSignup = lazy(() => import("./pages/SeekerSignup"));
 const SignupCompletePage = lazy(() => import("./pages/signup/SignupComplete"));
@@ -1190,6 +1191,11 @@ const AppInner = () => {
             <Route path="/editorial-policy" element={<PublicRouteGuard><EditorialPolicy /></PublicRouteGuard>} />
             <Route path="/rehab-score" element={<PublicRouteGuard><RehabScore /></PublicRouteGuard>} />
             <Route path="/medical-disclaimer" element={<PublicRouteGuard><MedicalDisclaimer /></PublicRouteGuard>} />
+            <Route path="/how-we-make-money" element={<PublicRouteGuard><HowWeMakeMoney /></PublicRouteGuard>} />
+            <Route path="/ekra" element={<Navigate to="/how-we-make-money" replace />} />
+            <Route path="/how-we-work" element={<Navigate to="/how-we-make-money" replace />} />
+            <Route path="/transparency" element={<Navigate to="/how-we-make-money" replace />} />
+            <Route path="/our-business-model" element={<Navigate to="/how-we-make-money" replace />} />
             
             {/* Seeker Authentication */}
             <Route path="/login" element={<Login />} />
