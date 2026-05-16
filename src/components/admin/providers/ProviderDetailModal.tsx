@@ -16,10 +16,8 @@ import { type Facility, type ProSubscription, getStatusBadge } from "./ProviderL
 import { ProviderOverviewTab } from "./tabs/ProviderOverviewTab";
 import { ProviderFacilitiesTab } from "./tabs/ProviderFacilitiesTab";
 import { ProviderLeadsTab } from "./tabs/ProviderLeadsTab";
-import { ProviderPlacementsTab } from "./tabs/ProviderPlacementsTab";
 import { ProviderReviewsTab } from "./tabs/ProviderReviewsTab";
 import { ProviderAnalyticsTab } from "./tabs/ProviderAnalyticsTab";
-import { ProviderBillingTab } from "./tabs/ProviderBillingTab";
 import { ProviderActivityTab } from "./tabs/ProviderActivityTab";
 import { ProviderCredentialsTab } from "./tabs/ProviderCredentialsTab";
 import { ProviderContactTab } from "./tabs/ProviderContactTab";
@@ -111,7 +109,7 @@ export function ProviderDetailModal({
     queryFn: async () => {
       if (!provider?.id) return null;
       const { data } = await supabase
-        .from("pro_subscriptions")
+        .from("facility_subscriptions")
         .select("id, facility_id, status, price_cents, current_period_end, stripe_subscription_id, unlock_discount_percent, created_at")
         .eq("facility_id", provider.id)
         .eq("status", "active")
@@ -169,11 +167,9 @@ export function ProviderDetailModal({
     { value: "overview", label: "Overview", icon: Eye },
     { value: "facilities", label: "Facilities", icon: LayoutList, badge: providerFacilities?.length },
     { value: "leads", label: "Leads", icon: Inbox, badge: providerLeads?.length },
-    { value: "placements", label: "Placements", icon: Handshake },
     { value: "reviews", label: "Reviews", icon: Star },
     { value: "analytics", label: "Analytics", icon: TrendingUp },
     { value: "credentials", label: "Credentials", icon: FileCheck2 },
-    { value: "billing", label: "Billing", icon: Wallet },
     { value: "activity", label: "Activity", icon: History },
     { value: "contact", label: "Contact", icon: Send },
   ];
@@ -275,12 +271,8 @@ export function ProviderDetailModal({
               />
             </TabsContent>
 
-            <TabsContent value="placements" className="m-0 data-[state=inactive]:hidden">
-              <ProviderPlacementsTab
-                provider={provider}
-                providerFacilities={providerFacilities || []}
-              />
-            </TabsContent>
+            {/* Placements tab retired — pay-per-admission concierge_engagements
+                / placement_invoices flow dropped in monetization rebuild. */}
 
             <TabsContent value="reviews" className="m-0 data-[state=inactive]:hidden">
               <ProviderReviewsTab
@@ -303,14 +295,10 @@ export function ProviderDetailModal({
               />
             </TabsContent>
 
-            <TabsContent value="billing" className="m-0 data-[state=inactive]:hidden">
-              <ProviderBillingTab
-                provider={provider}
-                proSubscription={selectedProviderPro}
-                creditBalance={creditBalance || 0}
-                placementStats={placementStats || { introductions: 0, placements: 0 }}
-              />
-            </TabsContent>
+            {/* Billing tab retired — credit_transactions table dropped in
+                monetization rebuild. Subscription billing now surfaces in
+                a dedicated facility_subscriptions admin view shipping in a
+                follow-up PR. */}
 
             <TabsContent value="activity" className="m-0 h-full data-[state=inactive]:hidden">
               <ProviderActivityTab facilityId={provider.id} userId={provider.user_id} />

@@ -41,7 +41,7 @@ export function useFacilityBadges(facilityId: string | undefined) {
           .eq("facility_id", facilityId)
           .eq("status", "approved"),
         supabase
-          .from("pro_subscriptions")
+          .from("facility_subscriptions")
           .select("status, current_period_end")
           .eq("facility_id", facilityId)
           .eq("status", "active")

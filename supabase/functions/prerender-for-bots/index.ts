@@ -738,7 +738,7 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
 
       // Pro plan check — controls whether phone is exposed in prerendered HTML / JSON-LD.
       const { data: proSub } = await supabase
-        .from('pro_subscriptions')
+        .from('facility_subscriptions')
         .select('id')
         .eq('facility_id', facilityRow.id)
         .eq('status', 'active')

@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
 
     // Fetch Pro subscriptions
     const { data: proSubs } = await supabaseClient
-      .from("pro_subscriptions")
+      .from("facility_subscriptions")
       .select("facility_id")
       .eq("status", "active")
       .gt("current_period_end", new Date().toISOString());

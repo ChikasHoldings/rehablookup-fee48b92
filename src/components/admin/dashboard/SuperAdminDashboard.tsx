@@ -163,7 +163,7 @@ export function SuperAdminDashboard() {
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
-        supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("concierge_inquiries").select("placed_facility_id", { count: "exact", head: true }).not("placed_facility_id", "is", null).eq("placement_confirmed", true),
       ]);
       return {
