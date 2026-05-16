@@ -769,7 +769,116 @@ Deno.serve(async (req) => {
       (data as Record<string, unknown>).ipHash = ipHashHex;
     }
 
-    // ===== LEAD INSERTION =====
+    // ===== FREE-TIER ROUTING CHECK =====
+    // Look up the facility's subscription tier server-side (never trust
+    // the client). Free-tier listings route through the concierge:
+    //   • Create a concierge_inquiries row with routing_mode =
+    //     'free_tier_redirect' and originating_facility_id pinned.
+    //   • Notify the Free facility with the upsell email.
+    //   • Return early with the redirect response shape so the client
+    //     can route to the seeker-confirmation page.
+    // Pro flow continues below unchanged.
+    const { data: facilityForTier } = await supabase
+      .from("facility_subscriptions")
+      .select("status, tier, has_featured, has_concierge_partner")
+      .eq("facility_id", data.facilityId)
+      .eq("status", "active")
+      .maybeSingle();
+    const isProTier =
+      facilityForTier?.status === "active" && facilityForTier?.tier === "pro";
+
+    if (!isProTier) {
+      log(requestId, "INFO", "Free-tier inquiry — routing through concierge", {
+        facilityId: data.facilityId,
+      });
+
+      // Pull the facility name + admissions email for the upsell
+      // notification. claim_email is the canonical inbox; fall back to
+      // public email if claim_email isn't set yet.
+      const { data: facilityForNotify } = await supabase
+        .from("facilities")
+        .select("id, name, claim_email, email, slug, user_id")
+        .eq("id", data.facilityId)
+        .single();
+
+      // Build the intake_data payload — same shape as the standard
+      // concierge intake plus the routing metadata.
+      const conciergeIntake = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        preferred_contact: validatedPreferredContact,
+        message: data.message,
+        urgency: validatedUrgency,
+        level_of_care: data.levelOfCare ?? null,
+        insurance_type: data.insuranceType ?? null,
+        insurance_provider: data.insuranceProvider ?? null,
+        location_zip: data.locationZip ?? null,
+        location_city_state: data.locationCityState ?? null,
+        primary_substance: Array.isArray(data.primarySubstance) ? data.primarySubstance : [],
+        dual_diagnosis: data.dualDiagnosis ?? null,
+        readiness_level: data.readinessLevel ?? null,
+        originating_facility_id: data.facilityId,
+        originating_facility_name: facilityForNotify?.name ?? null,
+        routing_mode: "free_tier_redirect",
+        submitted_at: now.toISOString(),
+      };
+
+      const { data: inquiryRow, error: inquiryErr } = await supabase
+        .from("concierge_inquiries")
+        .insert({
+          user_id: null,
+          user_name: data.name,
+          user_email: data.email,
+          user_phone: data.phone,
+          status: "pending_intake",
+          payment_status: "n/a",
+          payment_amount_cents: 0,
+          intake_data: conciergeIntake,
+          routing_mode: "free_tier_redirect",
+          originating_facility_id: data.facilityId,
+        })
+        .select("id, created_at")
+        .single();
+
+      if (inquiryErr || !inquiryRow) {
+        log(requestId, "ERROR", "Concierge inquiry insert failed", { error: inquiryErr });
+        return errorResponse(500, "concierge_insert_failed", "Failed to route inquiry.");
+      }
+
+      // Fire-and-forget upsell notification to the Free facility. We
+      // intentionally don't block the seeker on this — the
+      // concierge_inquiries row is the source of truth; the
+      // notification is just a courtesy.
+      supabase.functions
+        .invoke("notify-free-tier-inquiry-redirect", {
+          body: {
+            facility_id: data.facilityId,
+            inquiry_id: inquiryRow.id,
+            level_of_care: data.levelOfCare ?? null,
+            insurance: data.insuranceProvider ?? data.insuranceType ?? null,
+            urgency: validatedUrgency,
+            location: data.locationCityState ?? data.locationZip ?? null,
+          },
+        })
+        .catch((err) => log(requestId, "WARN", "Notify edge function failed (non-blocking)", { err: String(err) }));
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          routing_mode: "free_tier_redirect",
+          inquiry_id: inquiryRow.id,
+          confirmation_path: `/inquiry/confirmation/${inquiryRow.id}`,
+          originating_facility_name: facilityForNotify?.name ?? null,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    // ===== LEAD INSERTION (Pro-tier flow — unchanged below) =====
     const now = new Date();
     const exclusiveUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const extendedUntil = new Date(now.getTime() + 72 * 60 * 60 * 1000);

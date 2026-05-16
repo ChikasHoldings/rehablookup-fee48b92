@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { FreeTierRoutingDisclosure } from "@/components/lead-intake/FreeTierRoutingDisclosure";
 import { EmailInput } from "@/components/ui/email-input";
 import { isValidPhoneNumber, validatePhoneNumber } from "@/lib/phoneUtils";
 import { isValidEmail, getEmailValidationError } from "@/lib/emailUtils";
@@ -235,6 +236,7 @@ interface SingleQuestionFlowProps {
   checkAndAutoVerifyEmail: (email: string) => Promise<boolean>;
   isSubmitting: boolean;
   facilityName?: string | null;
+  facilityId?: string | null;
 }
 
 export function SingleQuestionFlow({
@@ -256,6 +258,7 @@ export function SingleQuestionFlow({
   checkAndAutoVerifyEmail,
   isSubmitting,
   facilityName,
+  facilityId,
 }: SingleQuestionFlowProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -789,8 +792,14 @@ export function SingleQuestionFlow({
                 </p>
               )}
             </div>
-            
-            <Button 
+
+            {/* Free-tier routing disclosure — renders nothing for Pro listings.
+                Server re-checks tier on submit; this is purely cosmetic
+                so the seeker isn't surprised when they land on the
+                concierge-confirmation page after submitting. */}
+            <FreeTierRoutingDisclosure facilityName={facilityName} facilityId={facilityId} />
+
+            <Button
               onClick={handleVerifyCode}
               disabled={isProcessing || isVerifying || verificationCode.length !== 6 || isSubmitting}
               className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-primary/20 active:scale-[0.98] transition-all"

@@ -477,15 +477,27 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       
       if (error) throw new Error(extractErrorMessage(error, "Submission failed. Please try again."));
       if (data?.error) throw new Error(extractErrorMessage(data, "Submission failed. Please try again."));
-      
+
       // Clear saved form data and idempotency key
       localStorage.removeItem(STORAGE_KEY);
       idempotencyKeyRef.current = null;
-      
+
       analytics.leadFormComplete(source);
       analytics.formSubmit("lead_intake", true);
+
+      // Free-tier facilities route through the concierge — the response
+      // carries routing_mode and a confirmation_path the user should
+      // land on instead of the standard "submitted" success view.
+      if (
+        data?.routing_mode === "free_tier_redirect" &&
+        typeof data?.confirmation_path === "string"
+      ) {
+        window.location.assign(data.confirmation_path);
+        return;
+      }
+
       setIsSubmitted(true);
-      
+
       // NOTE: Seeker confirmation email is sent server-side by submit-qualified-lead.
       // Do NOT send a duplicate frontend email here.
       
