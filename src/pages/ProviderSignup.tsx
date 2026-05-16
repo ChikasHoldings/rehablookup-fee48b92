@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
 import { EmailVerificationStep } from "@/components/provider/EmailVerificationStep";
+import { SubscriptionChoiceStep } from "@/components/signup/SubscriptionChoiceStep";
 import {
   Select,
   SelectContent,
@@ -111,6 +112,7 @@ const steps = [
   { id: 5, name: "Services", icon: Stethoscope },
   { id: 6, name: "Insurance", icon: CreditCard },
   { id: 7, name: "Review", icon: CheckCircle },
+  { id: 8, name: "Plan", icon: CreditCard },
 ];
 
 // Use shared constants - single source of truth
@@ -127,6 +129,22 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
   const [emailVerified, setEmailVerified] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Subscription choice — picked on step 8 (Subscription). Defaults to
+  // Pro Monthly on the commercial new-listing path (initialStep>=3 = the
+  // "List your facility" CTA); the ClaimWizard wires its own
+  // SubscriptionChoiceStep with default='free' for claim-entry users.
+  const [subscriptionChoice, setSubscriptionChoice] = useState<
+    "free" | "pro_monthly" | "pro_annual"
+  >("pro_monthly");
+  // Ref mirror so handleSubmit can read the latest choice synchronously
+  // — the SubscriptionChoiceStep's onSelect calls setState + handleSubmit
+  // in the same tick, and React state wouldn't reflect the update yet.
+  const subscriptionChoiceRef = useRef<"free" | "pro_monthly" | "pro_annual">("pro_monthly");
+  // facility_id captured after handleSubmit creates the facility, so
+  // step 8's "Continue to payment" can hand it to create-signup-checkout
+  // without a second DB round-trip.
+  const createdFacilityIdRef = useRef<string | null>(null);
 
   // Check if user is already logged in
   useEffect(() => {
@@ -254,7 +272,7 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
   };
 
   const nextStep = () => {
-    if (currentStep < 7) {
+    if (currentStep < 8) {
       setCurrentStep(currentStep + 1);
       window.scrollTo(0, 0);
     }
@@ -568,6 +586,7 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       }
 
       const facilityId = facilityData.id;
+      createdFacilityIdRef.current = facilityId;
       if (import.meta.env.DEV) console.log("[ProviderSignup] Facility created, facilityId:", facilityId.substring(0, 8) + "...");
 
       // 4-7: Insert related data in parallel (services, age groups, insurance, accreditations)
@@ -839,15 +858,55 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         // Non-blocking
       }
 
-      // 13. Redirect to dashboard
+      // 13. Branch by subscription choice (step 8 captured this).
+      //   Free → /provider/billing with an upgrade-soft-banner flag.
+      //   Pro Monthly / Pro Annual → Stripe Checkout (create-signup-checkout).
       analytics.signupComplete('provider', 'email');
-      toast({
-        title: "Welcome to RehabLookup!",
-        description: "Your account has been created. Your listing is pending review and will be live shortly.",
-      });
       // Wizard finished — clear the autosave draft so the next signup starts fresh.
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
-      navigate("/provider/dashboard");
+
+      const finalChoice = subscriptionChoiceRef.current;
+      if (finalChoice === "free") {
+        toast({
+          title: "Welcome to RehabLookup!",
+          description: "Your free listing is being prepared. Upgrade to Pro anytime to unlock direct contact display.",
+        });
+        navigate("/provider/billing?signup=free");
+        return;
+      }
+
+      // Pro path — kick off Stripe Checkout. handleSubmit already runs
+      // inside the submittingRef guard, so we keep the loading state on
+      // through the redirect; if Stripe fails we surface a toast and
+      // fall back to /provider/billing so the user isn't stranded.
+      try {
+        const { data, error } = await supabase.functions.invoke("create-signup-checkout", {
+          body: {
+            facility_id: facilityId,
+            billing_period: finalChoice === "pro_annual" ? "annual" : "monthly",
+            flow: "new-listing",
+          },
+        });
+        if (error) throw error;
+        if (data?.error || !data?.url) {
+          throw new Error(data?.error ?? "Stripe Checkout URL missing");
+        }
+        const url = new URL(data.url);
+        if (!url.hostname.endsWith("stripe.com")) {
+          throw new Error("Invalid Stripe Checkout URL");
+        }
+        window.location.assign(data.url);
+        // Fall-through is fine — the page is unloading.
+        return;
+      } catch (checkoutErr) {
+        console.error("[ProviderSignup] create-signup-checkout failed", checkoutErr);
+        toast({
+          title: "Couldn't start payment",
+          description: "Your listing is created but payment didn't start. Open billing to retry.",
+          variant: "destructive",
+        });
+        navigate("/provider/billing?signup=payment_failed");
+      }
     } catch (error: any) {
       console.error("Signup error:", error);
       toast({
@@ -910,6 +969,11 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         return true; // Insurance is optional — some facilities are self-pay only
       case 7:
         return formData.agreeToTerms;
+      case 8:
+        // SubscriptionChoiceStep manages its own internal state and CTA,
+        // so we don't gate the navigation Continue button — the step's
+        // own button drives submission.
+        return true;
       default:
         return false;
     }
@@ -1763,6 +1827,26 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
               </div>
             )}
 
+            {/* Step 8: Subscription choice */}
+            {currentStep === 8 && (
+              <div key="step-8-subscription" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
+                <SubscriptionChoiceStep
+                  defaultChoice={subscriptionChoice}
+                  submitting={isSubmitting}
+                  onSelect={(choice) => {
+                    setSubscriptionChoice(choice);
+                    subscriptionChoiceRef.current = choice;
+                    // Defer to handleSubmit so the existing create-account
+                    // + create-facility logic runs first. handleSubmit
+                    // reads subscriptionChoiceRef and branches — Free
+                    // goes straight to /provider/billing, Pro kicks off
+                    // Stripe Checkout via create-signup-checkout.
+                    void handleSubmit();
+                  }}
+                />
+              </div>
+            )}
+
             {/* Navigation Buttons */}
             <div className="mt-8 flex justify-between gap-4">
               {currentStep > 1 && currentStep !== 2 && (
@@ -1794,18 +1878,13 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
 
               {currentStep === 7 && (
                 <Button
-                  onClick={handleSubmit}
-                  disabled={!canProceed() || isSubmitting}
+                  onClick={nextStep}
+                  disabled={!canProceed()}
                   className="ml-auto"
                   size="default"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <svg className="mr-2 h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                      Creating Account...
-                    </>
-                  ) : "Create Account"}
-                  <CheckCircle className="ml-2 h-4 w-4" />
+                  Continue
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </div>
