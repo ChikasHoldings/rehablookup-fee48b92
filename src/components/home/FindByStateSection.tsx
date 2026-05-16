@@ -4,22 +4,13 @@ import { ArrowRight, MapPin } from "lucide-react";
 import { US_STATES } from "@/lib/facilityConstants";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 
-// State-themed imagery sourced from the existing blog assets — same
-// pictures we already use on the state guide articles. Each one is a
-// recognisable location signal (skyline / coastline / landmark) so the
-// tile reads at a glance.
+// State-themed imagery — same blog assets we already use on the
+// state guide articles.
 import californiaImg from "@/assets/blog/california-rehab-resources-guide.webp";
 import floridaImg from "@/assets/blog/florida-rehab-resources-guide.webp";
 import texasImg from "@/assets/blog/texas-rehab-guide.webp";
 import newYorkImg from "@/assets/blog/new-york-city-rehab-guide.webp";
 import pennsylvaniaImg from "@/assets/blog/pennsylvania-rehab-guide.webp";
-
-const HEADLINE_STATS = [
-  { value: "15K+", label: "Centers" },
-  { value: "50", label: "States" },
-  { value: "10K+", label: "Families" },
-  { value: "24/7", label: "Support" },
-] as const;
 
 const TOP_N = 5;
 
@@ -31,13 +22,11 @@ const STATE_IMAGES: Record<string, string> = {
   Pennsylvania: pennsylvaniaImg,
 };
 
-/** The 5 states we hard-fall-back to when the facility snapshot
- *  hasn't loaded yet — these all have an asset in STATE_IMAGES so the
- *  initial paint shows real imagery, not a blank tile. */
+/** Fallback when the facilities snapshot hasn't loaded yet — these 5
+ *  all have a matching image in STATE_IMAGES so the first paint shows
+ *  real photography, not a blank tile. */
 const FALLBACK_TOP = ["California", "Florida", "Texas", "New York", "Pennsylvania"] as const;
 
-// State-name aliases for the facilities snapshot (mixes USPS codes and
-// full names). Normalise both sides before counting.
 const STATE_ABBR: Record<string, string> = {
   Alabama: "AL", Alaska: "AK", Arizona: "AZ", Arkansas: "AR", California: "CA",
   Colorado: "CO", Connecticut: "CT", Delaware: "DE", Florida: "FL", Georgia: "GA",
@@ -58,12 +47,10 @@ function stateSlug(name: string) {
 export function FindByStateSection() {
   const { data: facilities = [] } = useStaticFacilities();
 
-  // Live per-state counts derived from the CDN-cached public facilities
-  // snapshot. Never hard-coded.
+  // Live per-state counts from the CDN-cached snapshot.
   // TODO: replace with a dedicated edge function
   // (`select state, count(*) from facilities where status='approved' group by state`)
-  // once the snapshot payload grows past the point where shipping it
-  // for a count-only purpose is acceptable.
+  // when traffic justifies it.
   const countByState = useMemo(() => {
     const counts = new Map<string, number>();
     for (const f of facilities) {
@@ -84,9 +71,6 @@ export function FindByStateSection() {
     );
   }
 
-  // Top 5 states by live count. When the snapshot hasn't arrived
-  // (every count is 0), fall back to the canonical population-ordered
-  // list so the section never reads empty.
   const topStates = useMemo(() => {
     const withCounts = US_STATES.map((name) => ({
       name,
@@ -104,54 +88,48 @@ export function FindByStateSection() {
   return (
     <section
       aria-labelledby="find-by-state-heading"
-      className="py-12 md:py-16 lg:py-20"
+      className="relative overflow-hidden py-12 md:py-16 lg:py-20 text-white"
+      // Same navy → darker-navy gradient strip used by the homepage
+      // ProvidersCTA section — keeps brand rhythm consistent across
+      // the page's "premium band" surfaces.
+      style={{
+        background: "linear-gradient(135deg, #1B365D 0%, #0E1F3A 100%)",
+      }}
     >
-      <div className="container px-3 sm:px-4 md:px-6 lg:px-8">
+      {/* Decorative gold glow — same accent ProvidersCTA uses, low
+          opacity so it reads as texture, not a feature. */}
+      <div
+        className="pointer-events-none absolute -top-32 -left-32 h-80 w-80 rounded-full bg-[#CDA223]/10 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-[#CDA223]/[0.06] blur-3xl"
+        aria-hidden
+      />
+
+      <div className="container relative px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Header */}
-        <header className="mx-auto max-w-3xl text-center mb-6 md:mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 mb-2">
-            <MapPin className="h-3.5 w-3.5 text-primary" aria-hidden />
-            <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+        <header className="mx-auto max-w-3xl text-center mb-8 md:mb-10">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 mb-3 ring-1 ring-white/20 backdrop-blur-sm">
+            <MapPin className="h-3.5 w-3.5 text-[#CDA223]" aria-hidden />
+            <span className="text-xs font-semibold uppercase tracking-wider text-white/90">
               By Location
             </span>
           </div>
           <h2
             id="find-by-state-heading"
-            className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-foreground tracking-tight"
+            className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight"
           >
             Find Treatment Center by State
           </h2>
-          <p className="mt-2 text-sm md:text-base text-muted-foreground">
+          <p className="mt-2 text-sm md:text-base text-white/75">
             Browse verified addiction treatment centers in all 50 states.
           </p>
         </header>
 
-        {/* Preserved stats strip — same 4 facts as the previous
-            "Why Choose Us" overlay, now living above the state row. */}
-        <div
-          className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 max-w-3xl mx-auto mb-8 md:mb-10"
-          aria-label="Directory facts"
-        >
-          {HEADLINE_STATS.map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-lg border border-border bg-card px-3 py-3 md:px-4 md:py-4 text-center"
-            >
-              <div className="font-display text-lg md:text-xl lg:text-2xl font-bold text-primary">
-                {stat.value}
-              </div>
-              <p className="text-xs md:text-sm text-muted-foreground">
-                {stat.label}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Premium state-image row — 5 image cards, single line on
-            desktop. Each card is a self-contained <Link> with a
-            recognisable state photograph, a dark gradient over the
-            bottom half, and the state name + facility count rendered
-            in white on top of the gradient. */}
+        {/* Top-5 state image cards. The cards already own their own
+            dark gradient + glassy chips so they sit cleanly on the
+            navy strip without further adjustment. */}
         <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           {topStates.map((s) => {
             const img = STATE_IMAGES[s.name];
@@ -163,7 +141,7 @@ export function FindByStateSection() {
                 <Link
                   to={`/rehab-centers/${stateSlug(s.name)}`}
                   aria-label={ariaLabel}
-                  className="group block relative aspect-[4/5] overflow-hidden rounded-2xl ring-1 ring-border bg-slate-900 shadow-sm transition-all duration-300 hover:shadow-xl hover:ring-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="group block relative aspect-[4/5] overflow-hidden rounded-2xl ring-1 ring-white/15 bg-slate-900 shadow-lg transition-all duration-300 hover:shadow-2xl hover:ring-[#CDA223]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDA223]"
                 >
                   {img ? (
                     <img
@@ -176,29 +154,26 @@ export function FindByStateSection() {
                       height={500}
                     />
                   ) : (
-                    /* Fallback: tasteful brand-tinted gradient when we
-                        don't have a state photograph on disk. */
                     <div
                       className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary to-primary/90"
                       aria-hidden
                     />
                   )}
 
-                  {/* Dark gradient that anchors the type at the bottom
-                      so it stays readable on any photo. */}
+                  {/* Dark gradient anchoring the type at the bottom. */}
                   <div
                     className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-slate-950/10 group-hover:from-slate-950/95 group-hover:via-slate-950/50 transition-colors duration-300"
                     aria-hidden
                   />
 
-                  {/* Glassy facility-count chip in the top-right corner. */}
+                  {/* Glassy facility-count chip, top-right. */}
                   <div className="absolute top-3 right-3">
                     <span className="inline-flex items-center rounded-full bg-white/15 backdrop-blur-md px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/25 tabular-nums">
                       {s.count > 0 ? `${s.count.toLocaleString()} facilities` : "Verified"}
                     </span>
                   </div>
 
-                  {/* Title block. Pinned to the bottom of the card. */}
+                  {/* Title block, bottom-left. */}
                   <div className="absolute inset-x-0 bottom-0 p-4 md:p-5">
                     <h3 className="font-display text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]">
                       {s.name}
@@ -214,11 +189,12 @@ export function FindByStateSection() {
           })}
         </ul>
 
-        {/* CTA — bigger brand-primary button to /locations. */}
+        {/* Brand CTA — white button on navy strip for max contrast,
+            mirrors the ProvidersCTA button treatment. */}
         <div className="mt-8 md:mt-10 text-center">
           <Link
             to="/locations"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 md:px-6 md:py-3 text-sm md:text-base font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md transition-all"
+            className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 md:px-6 md:py-3 text-sm md:text-base font-semibold text-[#1B365D] shadow-sm hover:bg-white/95 hover:shadow-md transition-all"
           >
             Browse all 50 states
             <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
