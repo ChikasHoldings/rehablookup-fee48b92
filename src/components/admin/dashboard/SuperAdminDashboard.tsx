@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { SuperAdminActivityFeed } from "@/components/admin/dashboard/SuperAdminActivityFeed";
 import SubscriptionActivityWidget from "@/components/admin/SubscriptionActivityWidget";
-import LowCreditMonitorWidget from "@/components/admin/LowCreditMonitorWidget";
 import {
   DashboardKPICards,
   DashboardChartsSection,
@@ -164,7 +163,7 @@ export function SuperAdminDashboard() {
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
-        supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("concierge_inquiries").select("placed_facility_id", { count: "exact", head: true }).not("placed_facility_id", "is", null).eq("placement_confirmed", true),
       ]);
       return {
@@ -436,9 +435,8 @@ export function SuperAdminDashboard() {
         <AdminWidgetBoundary name="Subscriptions">
           <SubscriptionActivityWidget />
         </AdminWidgetBoundary>
-        <AdminWidgetBoundary name="Credit Monitor">
-          <LowCreditMonitorWidget />
-        </AdminWidgetBoundary>
+        {/* Credit monitor widget retired — pay-per-lead-unlock credits model
+            removed in monetization rebuild. */}
       </div>
     </div>
   );

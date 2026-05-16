@@ -56,7 +56,7 @@ export const TAB_FILTERS: Record<AdminProvidersTab, TabFilter> = {
   // when the sibling query is empty so the caller can short-circuit.
   pro: async (_q, { supabase, selectCols, range }) => {
     const { data } = await supabase
-      .from("pro_subscriptions")
+      .from("facility_subscriptions")
       .select("facility_id")
       .eq("status", "active");
     const ids = (data || []).map((r: { facility_id: string }) => r.facility_id);

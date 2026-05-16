@@ -94,7 +94,7 @@ export function ProviderValueProp({ className }: ProviderValuePropProps) {
       {/* Social proof strip */}
       <div className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 border-t pt-5">
         {[
-          "15,000+ Verified Facilities",
+          "3,800+ Verified Facilities",
           "All 50 States",
           "Free for Clients",
           "HIPAA Compliant",

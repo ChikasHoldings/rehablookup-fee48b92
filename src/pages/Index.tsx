@@ -8,16 +8,18 @@ import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSecti
 // TrustStrip moved to /concierge
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
+import { useCountUp } from "@/hooks/useCountUp";
 import { buildConciergeHref } from "@/lib/conciergeHref";
+import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
-import { SocialProofBar } from "@/components/conversion/SocialProofBar";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
 
 // Lazy-load below-fold sections to reduce initial JS bundle
 const InternalLinkBlock = lazy(() => import("@/components/seo/InternalLinkBlock").then(m => ({ default: m.InternalLinkBlock })));
-const InternationalCTA = lazy(() => import("@/components/home/InternationalCTA").then(m => ({ default: m.InternationalCTA })));
+const ProvidersCTA = lazy(() => import("@/components/home/ProvidersCTA").then(m => ({ default: m.ProvidersCTA })));
+const RecoveryJourneyCTA = lazy(() => import("@/components/home/RecoveryJourneyCTA").then(m => ({ default: m.RecoveryJourneyCTA })));
 const TestimonialsSection = lazy(() => import("@/components/testimonials/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
 const PageFAQ = lazy(() => import("@/components/seo/PageFAQ").then(m => ({ default: m.PageFAQ })));
 const seekerTestimonialsPromise = import("@/data/testimonials").then(m => m.seekerTestimonials);
@@ -40,7 +42,26 @@ import {
   MapPin,
   Navigation,
   ClipboardList,
+  ShieldCheck,
 } from "lucide-react";
+
+// Insurance carrier strip shown under the "Are You Covered?" heading.
+// The four SVG assets all carry their own tightened viewBox (in
+// public/insurance-logos/*.svg) so `object-contain` renders each one
+// at its true bounds — no per-logo `transform: scale` workaround
+// needed. Optum has no SVG asset in the repo and renders as styled
+// brand-orange text instead.
+type InsuranceLogo =
+  | { kind: "svg"; src: string; alt: string }
+  | { kind: "text"; alt: string; label: string; color: string };
+
+const INSURANCE_LOGOS: InsuranceLogo[] = [
+  { kind: "svg", src: "/insurance-logos/aetna.svg", alt: "Aetna" },
+  { kind: "text", alt: "Optum", label: "Optum", color: "#FF6200" },
+  { kind: "svg", src: "/insurance-logos/medicaid.svg", alt: "Medicaid" },
+  { kind: "svg", src: "/insurance-logos/cigna.svg", alt: "Cigna" },
+  { kind: "svg", src: "/insurance-logos/humana.svg", alt: "Humana" },
+];
 
 const blogArticles = [
   {
@@ -120,6 +141,14 @@ const Index = () => {
   // Lazy-loaded data for below-fold sections
   const [seekerTestimonials, setSeekerTestimonials] = useState<any[]>([]);
   const [homeFaqs, setHomeFaqs] = useState<any[]>([]);
+
+  // Trust-bar count-up animations. Animate once when the bar enters
+  // the viewport. The hooks honor prefers-reduced-motion (set to the
+  // final value immediately when the user prefers less motion).
+  // Target = live approved-facility count in `public_facilities`
+  // (~3,804 as of last SAMHSA ingest).
+  const facilitiesCount = useCountUp({ to: 3800 });
+  const statesCount = useCountUp({ to: 50 });
   // Geo-derived location string (e.g. "Boise, ID") forwarded to /concierge
   // so the intake form can prefill the visitor's preferred location without
   // asking them to retype it. Falls back gracefully when geo isn't ready.
@@ -167,7 +196,7 @@ const Index = () => {
     <Layout>
       <SEO
         title="Find Drug & Alcohol Rehab Centers Near You"
-        description="Search 15,000+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help."
+        description="Search 3,800+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help."
         canonical="/"
         keywords={[
           "drug rehab near me",
@@ -189,7 +218,7 @@ const Index = () => {
             "@type": "WebPage",
             "@id": "https://rehablookup.com/#webpage",
             name: "Find Addiction Treatment Centers Near You",
-            description: "Search 15,000+ verified drug and alcohol rehab centers. Compare treatment options and find the right recovery program.",
+            description: "Search 3,800+ verified drug and alcohol rehab centers. Compare treatment options and find the right recovery program.",
             isPartOf: { "@id": "https://rehablookup.com/#website" },
             primaryImageOfPage: {
               "@type": "ImageObject",
@@ -292,33 +321,50 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Trust Bar */}
+      {/* Trust Bar — single source of truth for top-of-page trust signals.
+          The light-background SocialProofBar that used to sit below this
+          was stacking the same claims twice; merged its strongest two
+          signals (geographic reach, HIPAA compliance) into this dark bar
+          and dropped the duplicate. Same vertical padding as before —
+          height is unchanged, only the content is denser. */}
       <section className="relative bg-primary border-y border-primary-foreground/10">
         <div className="container py-3 md:py-4 px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-8 lg:gap-x-14">
-            <div className="flex items-center gap-2 group">
-              <CheckCircle className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Verified Facilities</span>
+            <div ref={facilitiesCount.ref as React.RefObject<HTMLDivElement>} className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base text-primary-foreground/90">
+                {/* inline-block + min-w keeps the row from jittering while
+                    the digit count grows from 1 → 5 during the count-up. */}
+                <strong className="inline-block min-w-[3.5em] text-right font-semibold text-white tabular-nums">
+                  {facilitiesCount.value.toLocaleString()}+
+                </strong>{" "}
+                Verified Facilities
+              </span>
             </div>
-            <div className="flex items-center gap-2 group">
-              <Users className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">15,000+ Centers</span>
+            <div ref={statesCount.ref as React.RefObject<HTMLDivElement>} className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base text-primary-foreground/90">
+                <strong className="inline-block min-w-[2.5em] text-right font-semibold text-white tabular-nums">
+                  {statesCount.value === 50 ? "All 50" : statesCount.value}
+                </strong>{" "}
+                States Covered
+              </span>
             </div>
-            <div className="flex items-center gap-2 group">
-              <Clock className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">24/7 Help</span>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base font-medium text-primary-foreground/90">HIPAA Compliant</span>
             </div>
-            <div className="flex items-center gap-2 group">
-              <Phone className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Free Insurance Check</span>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base text-primary-foreground/90">
+                <strong className="font-semibold text-white">Free</strong> 24/7 Help
+              </span>
             </div>
           </div>
         </div>
       </section>
 
       {/* TrustStrip moved to /concierge — see ConciergeLanding.tsx */}
-      {/* Social Proof Stats Bar */}
-      <SocialProofBar className="container px-4 md:px-6 lg:px-8 border-b" />
 
       {/* Featured Centers - Premium Horizontal Scroll */}
       <HomepageFeaturedSection />
@@ -350,57 +396,68 @@ const Index = () => {
                 </Link>
               </div>
 
-              {/* Insurance Logos */}
+              {/* Insurance Logos — 5 named carriers, container-less.
+                  The five logos don't share a normalized artwork bounding
+                  box: Aetna's SVG fills its viewBox densely, while
+                  Cigna / Humana / Medicaid use a 200×50 viewBox whose
+                  content occupies only the left ~50–70%. Plain
+                  `object-contain` would render those visually ~half the
+                  size of Aetna. Per-logo `transform: scale()` brings
+                  their rendered widths roughly to Aetna's. Optum has no
+                  SVG asset in the repo, so it renders as styled
+                  brand-color text. */}
               <div className="flex-1">
-                {/* Mobile: Horizontal scroll carousel, Tablet+: Grid */}
-                <div className="relative -mx-2 px-2 md:mx-0 md:px-0">
-                  <div className="flex gap-4 md:gap-3 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory md:grid md:grid-cols-5 md:overflow-visible md:pb-0 lg:gap-6">
-                    {/* Aetna */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/aetna.svg" alt="Aetna" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
+                <div
+                  className="grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4"
+                  aria-label="Insurance carriers accepted"
+                >
+                  {INSURANCE_LOGOS.map((logo, i) => (
+                    <div
+                      key={logo.alt}
+                      className={cn(
+                        // h-20 md:h-24 reserves vertical space BEFORE the
+                        // SVGs paint so the row doesn't shift downward on
+                        // first load. No border / no background / no
+                        // shadow — the cell is a transparent layout
+                        // anchor. NO overflow-hidden — each SVG carries
+                        // its own tight viewBox and renders at its full
+                        // visible size; clipping here was cropping the
+                        // larger logos.
+                        "group flex h-20 md:h-24 items-center justify-center transition-transform duration-200 hover:scale-[1.04]",
+                        // 5th cell spans both mobile columns so the final
+                        // row isn't a lonely orphan tile.
+                        i === 4 && "col-span-2 md:col-span-1",
+                      )}
+                    >
+                      {logo.kind === "text" ? (
+                        <span
+                          className="text-3xl md:text-4xl font-bold tracking-tight"
+                          style={{ color: logo.color }}
+                        >
+                          {logo.label}
+                        </span>
+                      ) : (
+                        <img
+                          src={logo.src}
+                          alt={logo.alt}
+                          className="h-14 md:h-16 w-auto max-w-full object-contain"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      )}
                     </div>
-                    {/* Anthem */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/anthem.svg" alt="Anthem" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* BCBS */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/bcbs.svg" alt="Blue Cross Blue Shield" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Cigna */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/cigna.svg" alt="Cigna" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Humana */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/humana.svg" alt="Humana" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Kaiser */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/kaiser.svg" alt="Kaiser Permanente" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Medicare */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/medicare.svg" alt="Medicare" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Medicaid */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/medicaid.svg" alt="Medicaid" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Optum */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <span className="text-sm md:text-base lg:text-lg font-bold text-[#FF6200] opacity-80 hover:opacity-100 transition-opacity">Optum</span>
-                    </div>
-                    {/* Tricare */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/tricare.svg" alt="TRICARE" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-                  {/* Scroll hint for mobile */}
-                  <div className="mt-2 flex items-center justify-center gap-1 text-xs text-muted-foreground md:hidden">
-                    <span>Swipe to see more</span>
-                    <ArrowRight className="h-3 w-3" />
-                  </div>
+                  ))}
+                </div>
+
+                {/* + more carriers link — routes to the full carrier list. */}
+                <div className="mt-4 text-center md:text-right">
+                  <Link
+                    to="/insurance"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    + more carriers accepted
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -674,10 +731,13 @@ const Index = () => {
         </Suspense>
       </LazySection>
 
-      {/* International Patients CTA */}
-      <LazySection fallbackHeight="200px">
-        <Suspense fallback={<div style={{ minHeight: "200px" }} aria-hidden="true" />}>
-          <InternationalCTA />
+      {/* For Treatment Providers CTA — repurposed from the previous
+          International Patients block on the homepage. The dedicated
+          /us-rehab/international-patients page remains untouched and
+          is still reached via the international banner + footer. */}
+      <LazySection fallbackHeight="380px">
+        <Suspense fallback={<div style={{ minHeight: "380px" }} aria-hidden="true" />}>
+          <ProvidersCTA />
         </Suspense>
       </LazySection>
 
@@ -911,36 +971,13 @@ const Index = () => {
         </section>
       </LazySection>
 
-      {/* CTA Section */}
-      <section className="py-10 md:py-14 lg:py-20">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl">
-            {/* Main CTA Card */}
-            <div className="rounded-xl border border-border bg-card p-6 md:p-8 lg:p-10 text-center">
-              <h2 className="font-display text-xl md:text-2xl font-semibold text-foreground lg:text-3xl">
-                Start Your Recovery Journey
-              </h2>
-              <p className="mt-1.5 md:mt-2 text-muted-foreground text-[15px] md:text-base lg:text-lg max-w-md mx-auto">
-                Connect with verified treatment centers or list your facility in our directory.
-              </p>
-              <div className="mt-5 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 md:gap-3">
-                <Link to={buildConciergeHref({ location: homepageConciergeLocation, source: "homepage_footer_cta" })}>
-                  <Button size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
-                    <Heart className="h-4 w-4" />
-                    Find Treatment
-                  </Button>
-                </Link>
-                <Link to="/for-providers">
-                  <Button variant="outline" size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
-                    List Your Facility
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* End-of-page recovery-journey CTA — two-column band with a
+          sunrise illustration on the right and a tel-first dual CTA
+          on the left. Replaced the previous lightweight rounded-card
+          to give the scroll-end more visual weight. */}
+      <Suspense fallback={<div style={{ minHeight: "440px" }} aria-hidden="true" />}>
+        <RecoveryJourneyCTA conciergeLocation={homepageConciergeLocation} />
+      </Suspense>
 
       <LazySection fallbackHeight="300px">
         <Suspense fallback={<div style={{ minHeight: "300px" }} aria-hidden="true" />}>

@@ -27,7 +27,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
-import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 import { useLeadCountdown } from "@/hooks/useLeadCountdown";
 import type { Lead } from "@/components/provider/leads/LeadDetailPanel";
 
@@ -340,14 +339,7 @@ function LockedLeadRow({
             <LeadCountdownBadge createdAt={lead.created_at} />
             
             <div className="ml-auto flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <UnlockLeadButton
-                leadId={lead.id}
-                facilityId={facilityId}
-                leadName={blurredName}
-                inquiryType={lead.inquiry_type}
-                cityState={lead.location_city_state}
-                variant="compact"
-              />
+              {/* Lead unlocking retired. */}
             </div>
           </div>
 

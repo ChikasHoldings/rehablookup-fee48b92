@@ -252,7 +252,7 @@ export default function AdminProviders() {
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved").neq("suspended", true),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("suspended", true),
-          supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
+          supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("concierge_network_opted_in", true),
           supabase.from("facilities").select("id", { count: "exact", head: true }).eq("data_source", "samhsa_import"),
           supabase.from("facilities").select("id", { count: "exact", head: true }).is("user_id", null),
@@ -286,7 +286,7 @@ export default function AdminProviders() {
     queryKey: ["admin-pro-subscriptions"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("pro_subscriptions")
+        .from("facility_subscriptions")
         .select("id, facility_id, status, unlock_discount_percent, current_period_end, price_cents, created_at")
         .eq("status", "active");
       

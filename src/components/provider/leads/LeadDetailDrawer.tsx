@@ -51,7 +51,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { LeadStatusBadge, getStatusOptions, type LeadStatus } from "./LeadStatusBadge";
 import { EmailLeadDialog } from "./EmailLeadDialog";
 import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
-import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 import { Lead } from "./LeadDetailPanel";
 import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
 
@@ -387,12 +386,7 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                         {displayInfo.email}
                       </span>
                     </div>
-                    <UnlockLeadButton 
-                      leadId={lead.id} 
-                      facilityId={lead.facility_id}
-                      inquiryType={(lead as any).inquiry_type || 'request_info'}
-                      className="w-full max-w-xs mx-auto"
-                    />
+                    {/* Lead unlocking retired in monetization rebuild. */}
                   </div>
                 ) : (
                   /* Unlocked State - Show full contact info with instant CTAs */

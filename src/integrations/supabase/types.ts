@@ -814,76 +814,6 @@ export type Database = {
           },
         ]
       }
-      concierge_engagements: {
-        Row: {
-          concierge_inquiry_id: string
-          contacted_at: string | null
-          created_at: string
-          engaged_at: string
-          facility_id: string
-          id: string
-          outcome_at: string | null
-          outcome_notes: string | null
-          payment_method: string
-          provider_id: string
-          status: string
-          stripe_payment_intent_id: string | null
-          unlock_price_cents: number
-        }
-        Insert: {
-          concierge_inquiry_id: string
-          contacted_at?: string | null
-          created_at?: string
-          engaged_at?: string
-          facility_id: string
-          id?: string
-          outcome_at?: string | null
-          outcome_notes?: string | null
-          payment_method?: string
-          provider_id: string
-          status?: string
-          stripe_payment_intent_id?: string | null
-          unlock_price_cents?: number
-        }
-        Update: {
-          concierge_inquiry_id?: string
-          contacted_at?: string | null
-          created_at?: string
-          engaged_at?: string
-          facility_id?: string
-          id?: string
-          outcome_at?: string | null
-          outcome_notes?: string | null
-          payment_method?: string
-          provider_id?: string
-          status?: string
-          stripe_payment_intent_id?: string | null
-          unlock_price_cents?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "concierge_engagements_concierge_inquiry_id_fkey"
-            columns: ["concierge_inquiry_id"]
-            isOneToOne: false
-            referencedRelation: "concierge_inquiries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "concierge_engagements_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "concierge_engagements_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       concierge_inquiries: {
         Row: {
           admin_matched_facility_ids: string[] | null
@@ -956,10 +886,6 @@ export type Database = {
           primary_concern: string | null
           prior_treatment_history: boolean | null
           prior_treatment_notes: string | null
-          provider_fee_cents: number | null
-          provider_fee_status: string | null
-          provider_fee_type: string | null
-          provider_invoice_id: string | null
           referral_source: string | null
           relationship_to_decision_maker: string | null
           relationship_to_seeker: string | null
@@ -1056,10 +982,6 @@ export type Database = {
           primary_concern?: string | null
           prior_treatment_history?: boolean | null
           prior_treatment_notes?: string | null
-          provider_fee_cents?: number | null
-          provider_fee_status?: string | null
-          provider_fee_type?: string | null
-          provider_invoice_id?: string | null
           referral_source?: string | null
           relationship_to_decision_maker?: string | null
           relationship_to_seeker?: string | null
@@ -1156,10 +1078,6 @@ export type Database = {
           primary_concern?: string | null
           prior_treatment_history?: boolean | null
           prior_treatment_notes?: string | null
-          provider_fee_cents?: number | null
-          provider_fee_status?: string | null
-          provider_fee_type?: string | null
-          provider_invoice_id?: string | null
           referral_source?: string | null
           relationship_to_decision_maker?: string | null
           relationship_to_seeker?: string | null
@@ -1205,13 +1123,6 @@ export type Database = {
             columns: ["placed_facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "concierge_inquiries_provider_invoice_id_fkey"
-            columns: ["provider_invoice_id"]
-            isOneToOne: false
-            referencedRelation: "placement_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -1326,6 +1237,64 @@ export type Database = {
             columns: ["thread_id"]
             isOneToOne: false
             referencedRelation: "concierge_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      concierge_partner_facilities: {
+        Row: {
+          activated_at: string
+          active: boolean
+          deactivated_at: string | null
+          facility_id: string
+          geo_city: string | null
+          geo_state: string
+          id: string
+          level_of_care: string[]
+          subscription_id: string
+        }
+        Insert: {
+          activated_at?: string
+          active?: boolean
+          deactivated_at?: string | null
+          facility_id: string
+          geo_city?: string | null
+          geo_state: string
+          id?: string
+          level_of_care: string[]
+          subscription_id: string
+        }
+        Update: {
+          activated_at?: string
+          active?: boolean
+          deactivated_at?: string | null
+          facility_id?: string
+          geo_city?: string | null
+          geo_state?: string
+          id?: string
+          level_of_care?: string[]
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concierge_partner_facilities_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_partner_facilities_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "concierge_partner_facilities_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "facility_subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -1513,69 +1482,6 @@ export type Database = {
           },
         ]
       }
-      credit_transactions: {
-        Row: {
-          amount_cents: number
-          base_price_cents: number | null
-          created_at: string
-          description: string | null
-          discount_amount_cents: number | null
-          discount_applied: boolean | null
-          facility_id: string | null
-          id: string
-          inquiry_type: string | null
-          provider_id: string
-          reference_id: string | null
-          stripe_payment_intent_id: string | null
-          transaction_type: string
-        }
-        Insert: {
-          amount_cents: number
-          base_price_cents?: number | null
-          created_at?: string
-          description?: string | null
-          discount_amount_cents?: number | null
-          discount_applied?: boolean | null
-          facility_id?: string | null
-          id?: string
-          inquiry_type?: string | null
-          provider_id: string
-          reference_id?: string | null
-          stripe_payment_intent_id?: string | null
-          transaction_type: string
-        }
-        Update: {
-          amount_cents?: number
-          base_price_cents?: number | null
-          created_at?: string
-          description?: string | null
-          discount_amount_cents?: number | null
-          discount_applied?: boolean | null
-          facility_id?: string | null
-          id?: string
-          inquiry_type?: string | null
-          provider_id?: string
-          reference_id?: string | null
-          stripe_payment_intent_id?: string | null
-          transaction_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "credit_transactions_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "credit_transactions_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       email_send_failures: {
         Row: {
           attempts: number
@@ -1701,7 +1607,6 @@ export type Database = {
           address: string
           admin_notes: string | null
           bed_count: string | null
-          bonus_leads: number | null
           calculated_ranking_score: number | null
           city: string
           claimed_at: string | null
@@ -1728,10 +1633,10 @@ export type Database = {
           featured_pinned: boolean | null
           gallery_urls: string[] | null
           gender_served: string | null
+          has_facility_verified_contact: boolean
           id: string
           last_activity_at: string | null
           last_featured_shown_at: string | null
-          lead_limit_override: number | null
           leads_reset_at: string | null
           listing_completeness_score: number | null
           logo_url: string | null
@@ -1752,6 +1657,8 @@ export type Database = {
           updated_at: string
           user_id: string | null
           verified: boolean | null
+          verified_phone: string | null
+          verified_phone_set_at: string | null
           website: string | null
           year_established: number | null
           zip_code: string
@@ -1761,7 +1668,6 @@ export type Database = {
           address: string
           admin_notes?: string | null
           bed_count?: string | null
-          bonus_leads?: number | null
           calculated_ranking_score?: number | null
           city: string
           claimed_at?: string | null
@@ -1788,10 +1694,10 @@ export type Database = {
           featured_pinned?: boolean | null
           gallery_urls?: string[] | null
           gender_served?: string | null
+          has_facility_verified_contact?: boolean
           id?: string
           last_activity_at?: string | null
           last_featured_shown_at?: string | null
-          lead_limit_override?: number | null
           leads_reset_at?: string | null
           listing_completeness_score?: number | null
           logo_url?: string | null
@@ -1812,6 +1718,8 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           verified?: boolean | null
+          verified_phone?: string | null
+          verified_phone_set_at?: string | null
           website?: string | null
           year_established?: number | null
           zip_code: string
@@ -1821,7 +1729,6 @@ export type Database = {
           address?: string
           admin_notes?: string | null
           bed_count?: string | null
-          bonus_leads?: number | null
           calculated_ranking_score?: number | null
           city?: string
           claimed_at?: string | null
@@ -1848,10 +1755,10 @@ export type Database = {
           featured_pinned?: boolean | null
           gallery_urls?: string[] | null
           gender_served?: string | null
+          has_facility_verified_contact?: boolean
           id?: string
           last_activity_at?: string | null
           last_featured_shown_at?: string | null
-          lead_limit_override?: number | null
           leads_reset_at?: string | null
           listing_completeness_score?: number | null
           logo_url?: string | null
@@ -1872,6 +1779,8 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           verified?: boolean | null
+          verified_phone?: string | null
+          verified_phone_set_at?: string | null
           website?: string | null
           year_established?: number | null
           zip_code?: string
@@ -2250,6 +2159,108 @@ export type Database = {
           },
         ]
       }
+      facility_match_clusters: {
+        Row: {
+          cluster_key: string
+          conflicts: Json
+          created_at: string
+          directory_count: number
+          id: string
+          leads_count: number
+          match_confidence: number | null
+          match_signals: Json
+          promoted_at: string | null
+          promoted_to_facility_id: string | null
+          promotion_decision: string | null
+          rejected_reason: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          samhsa_count: number
+          total_sources: number | null
+          updated_at: string
+          winning_city: string | null
+          winning_email: string | null
+          winning_name: string | null
+          winning_phone: string | null
+          winning_state: string | null
+          winning_street: string | null
+          winning_website: string | null
+          winning_zip: string | null
+        }
+        Insert: {
+          cluster_key: string
+          conflicts?: Json
+          created_at?: string
+          directory_count?: number
+          id?: string
+          leads_count?: number
+          match_confidence?: number | null
+          match_signals?: Json
+          promoted_at?: string | null
+          promoted_to_facility_id?: string | null
+          promotion_decision?: string | null
+          rejected_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          samhsa_count?: number
+          total_sources?: number | null
+          updated_at?: string
+          winning_city?: string | null
+          winning_email?: string | null
+          winning_name?: string | null
+          winning_phone?: string | null
+          winning_state?: string | null
+          winning_street?: string | null
+          winning_website?: string | null
+          winning_zip?: string | null
+        }
+        Update: {
+          cluster_key?: string
+          conflicts?: Json
+          created_at?: string
+          directory_count?: number
+          id?: string
+          leads_count?: number
+          match_confidence?: number | null
+          match_signals?: Json
+          promoted_at?: string | null
+          promoted_to_facility_id?: string | null
+          promotion_decision?: string | null
+          rejected_reason?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          samhsa_count?: number
+          total_sources?: number | null
+          updated_at?: string
+          winning_city?: string | null
+          winning_email?: string | null
+          winning_name?: string | null
+          winning_phone?: string | null
+          winning_state?: string | null
+          winning_street?: string | null
+          winning_website?: string | null
+          winning_zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_match_clusters_promoted_to_facility_id_fkey"
+            columns: ["promoted_to_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_match_clusters_promoted_to_facility_id_fkey"
+            columns: ["promoted_to_facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facility_pending_changes: {
         Row: {
           changed_fields: string[]
@@ -2508,6 +2519,108 @@ export type Database = {
           },
         ]
       }
+      facility_subscriptions: {
+        Row: {
+          billing_period: string
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          discount_applied_cents: number | null
+          facility_id: string
+          has_concierge_partner: boolean
+          has_featured: boolean
+          id: string
+          original_annual_cents: number | null
+          paid_amount_cents: number | null
+          period_start: string | null
+          price_cents: number
+          provider_id: string
+          renewal_reminder_14d_sent_at: string | null
+          renewal_reminder_30d_sent_at: string | null
+          renewal_reminder_60d_sent_at: string | null
+          renewal_reminder_7d_sent_at: string | null
+          started_at: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier: string
+          unlock_discount_percent: number
+          updated_at: string
+        }
+        Insert: {
+          billing_period?: string
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          discount_applied_cents?: number | null
+          facility_id: string
+          has_concierge_partner?: boolean
+          has_featured?: boolean
+          id?: string
+          original_annual_cents?: number | null
+          paid_amount_cents?: number | null
+          period_start?: string | null
+          price_cents?: number
+          provider_id: string
+          renewal_reminder_14d_sent_at?: string | null
+          renewal_reminder_30d_sent_at?: string | null
+          renewal_reminder_60d_sent_at?: string | null
+          renewal_reminder_7d_sent_at?: string | null
+          started_at?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string
+          unlock_discount_percent?: number
+          updated_at?: string
+        }
+        Update: {
+          billing_period?: string
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          discount_applied_cents?: number | null
+          facility_id?: string
+          has_concierge_partner?: boolean
+          has_featured?: boolean
+          id?: string
+          original_annual_cents?: number | null
+          paid_amount_cents?: number | null
+          period_start?: string | null
+          price_cents?: number
+          provider_id?: string
+          renewal_reminder_14d_sent_at?: string | null
+          renewal_reminder_30d_sent_at?: string | null
+          renewal_reminder_60d_sent_at?: string | null
+          renewal_reminder_7d_sent_at?: string | null
+          started_at?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string
+          unlock_discount_percent?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pro_subscriptions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: true
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pro_subscriptions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: true
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facility_views: {
         Row: {
           created_at: string
@@ -2594,6 +2707,61 @@ export type Database = {
             columns: ["facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      featured_placements: {
+        Row: {
+          activated_at: string
+          active: boolean
+          deactivated_at: string | null
+          facility_id: string
+          id: string
+          placement_type: string
+          placement_value: string
+          subscription_id: string
+        }
+        Insert: {
+          activated_at?: string
+          active?: boolean
+          deactivated_at?: string | null
+          facility_id: string
+          id?: string
+          placement_type: string
+          placement_value: string
+          subscription_id: string
+        }
+        Update: {
+          activated_at?: string
+          active?: boolean
+          deactivated_at?: string | null
+          facility_id?: string
+          id?: string
+          placement_type?: string
+          placement_value?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "featured_placements_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "featured_placements_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "featured_placements_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "facility_subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -3033,13 +3201,6 @@ export type Database = {
             referencedRelation: "leads"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "lead_contact_events_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads_provider_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       lead_distributions: {
@@ -3098,13 +3259,6 @@ export type Database = {
             referencedRelation: "leads"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "lead_distributions_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads_provider_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       lead_email_resend_attempts: {
@@ -3141,13 +3295,6 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lead_email_resend_attempts_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads_provider_view"
             referencedColumns: ["id"]
           },
         ]
@@ -3217,13 +3364,6 @@ export type Database = {
             referencedRelation: "leads"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "lead_emails_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads_provider_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       lead_notes: {
@@ -3254,13 +3394,6 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lead_notes_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads_provider_view"
             referencedColumns: ["id"]
           },
         ]
@@ -3340,13 +3473,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "lead_routing_logs_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads_provider_view"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "lead_routing_logs_requested_facility_id_fkey"
             columns: ["requested_facility_id"]
             isOneToOne: false
@@ -3358,71 +3484,6 @@ export type Database = {
             columns: ["requested_facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      lead_unlocks: {
-        Row: {
-          created_at: string
-          facility_id: string
-          id: string
-          lead_id: string
-          payment_method: string
-          provider_id: string
-          stripe_payment_intent_id: string | null
-          unlock_price_cents: number
-          unlocked_at: string
-        }
-        Insert: {
-          created_at?: string
-          facility_id: string
-          id?: string
-          lead_id: string
-          payment_method?: string
-          provider_id: string
-          stripe_payment_intent_id?: string | null
-          unlock_price_cents?: number
-          unlocked_at?: string
-        }
-        Update: {
-          created_at?: string
-          facility_id?: string
-          id?: string
-          lead_id?: string
-          payment_method?: string
-          provider_id?: string
-          stripe_payment_intent_id?: string | null
-          unlock_price_cents?: number
-          unlocked_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lead_unlocks_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lead_unlocks_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lead_unlocks_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lead_unlocks_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads_provider_view"
             referencedColumns: ["id"]
           },
         ]
@@ -4124,580 +4185,26 @@ export type Database = {
         }
         Relationships: []
       }
-      placement_agreements: {
+      placement_caps: {
         Row: {
-          agreement_type: string
-          case_id: string | null
-          commission_percent: number | null
-          created_at: string
-          document_url: string | null
-          facility_id: string
-          flat_fee_cents: number | null
-          id: string
-          provider_id: string
-          sent_at: string | null
-          signature_ip: string | null
-          signature_name: string | null
-          signed_at: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          agreement_type: string
-          case_id?: string | null
-          commission_percent?: number | null
-          created_at?: string
-          document_url?: string | null
-          facility_id: string
-          flat_fee_cents?: number | null
-          id?: string
-          provider_id: string
-          sent_at?: string | null
-          signature_ip?: string | null
-          signature_name?: string | null
-          signed_at?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          agreement_type?: string
-          case_id?: string | null
-          commission_percent?: number | null
-          created_at?: string
-          document_url?: string | null
-          facility_id?: string
-          flat_fee_cents?: number | null
-          id?: string
-          provider_id?: string
-          sent_at?: string | null
-          signature_ip?: string | null
-          signature_name?: string | null
-          signed_at?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "placement_agreements_case_id_fkey"
-            columns: ["case_id"]
-            isOneToOne: false
-            referencedRelation: "placement_cases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_agreements_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_agreements_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      placement_case_documents: {
-        Row: {
-          case_id: string
-          created_at: string
-          document_name: string | null
-          document_type: string
-          file_url: string | null
-          id: string
-          status: string
-          uploaded_at: string | null
-          verified_at: string | null
-          verified_by: string | null
-        }
-        Insert: {
-          case_id: string
-          created_at?: string
-          document_name?: string | null
-          document_type: string
-          file_url?: string | null
-          id?: string
-          status?: string
-          uploaded_at?: string | null
-          verified_at?: string | null
-          verified_by?: string | null
-        }
-        Update: {
-          case_id?: string
-          created_at?: string
-          document_name?: string | null
-          document_type?: string
-          file_url?: string | null
-          id?: string
-          status?: string
-          uploaded_at?: string | null
-          verified_at?: string | null
-          verified_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "placement_case_documents_case_id_fkey"
-            columns: ["case_id"]
-            isOneToOne: false
-            referencedRelation: "placement_cases"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      placement_case_messages: {
-        Row: {
-          case_id: string
-          content: string
-          created_at: string
-          created_by: string | null
-          id: string
-          is_internal: boolean | null
-          message_type: string
-        }
-        Insert: {
-          case_id: string
-          content: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_internal?: boolean | null
-          message_type?: string
-        }
-        Update: {
-          case_id?: string
-          content?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_internal?: boolean | null
-          message_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "placement_case_messages_case_id_fkey"
-            columns: ["case_id"]
-            isOneToOne: false
-            referencedRelation: "placement_cases"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      placement_case_providers: {
-        Row: {
-          availability_notes: string | null
-          case_id: string
-          created_at: string
-          facility_id: string
-          id: string
-          introduced_at: string | null
-          provider_id: string
-          provider_response: string | null
-          responded_at: string | null
-          selected_for_placement: boolean | null
-        }
-        Insert: {
-          availability_notes?: string | null
-          case_id: string
-          created_at?: string
-          facility_id: string
-          id?: string
-          introduced_at?: string | null
-          provider_id: string
-          provider_response?: string | null
-          responded_at?: string | null
-          selected_for_placement?: boolean | null
-        }
-        Update: {
-          availability_notes?: string | null
-          case_id?: string
-          created_at?: string
-          facility_id?: string
-          id?: string
-          introduced_at?: string | null
-          provider_id?: string
-          provider_response?: string | null
-          responded_at?: string | null
-          selected_for_placement?: boolean | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "placement_case_providers_case_id_fkey"
-            columns: ["case_id"]
-            isOneToOne: false
-            referencedRelation: "placement_cases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_case_providers_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_case_providers_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      placement_cases: {
-        Row: {
-          additional_notes: string | null
-          admitted_at: string | null
-          admitted_facility_id: string | null
-          age_range: string | null
-          assigned_to: string | null
-          best_time_to_contact: string | null
-          closed_reason: string | null
-          commission_percent: number | null
-          created_at: string
-          flat_fee_cents: number | null
-          gender: string | null
-          id: string
-          insurance_carrier: string | null
-          insurance_plan: string | null
-          level_of_care: string | null
-          monetization_type: string | null
-          payment_type: string | null
-          preferred_cities: string[] | null
-          preferred_contact_method: string | null
-          preferred_states: string[] | null
-          primary_issue: string[] | null
-          revenue_cents: number | null
-          revenue_collected_at: string | null
-          seeker_email: string
-          seeker_name: string
-          seeker_phone: string
-          seeker_user_id: string | null
-          self_pay_budget: string | null
-          special_considerations: Json | null
-          status: string
-          status_updated_at: string | null
-          terms_status: string | null
-          updated_at: string
-          urgency: string | null
-          who_seeking_help: string | null
-        }
-        Insert: {
-          additional_notes?: string | null
-          admitted_at?: string | null
-          admitted_facility_id?: string | null
-          age_range?: string | null
-          assigned_to?: string | null
-          best_time_to_contact?: string | null
-          closed_reason?: string | null
-          commission_percent?: number | null
-          created_at?: string
-          flat_fee_cents?: number | null
-          gender?: string | null
-          id?: string
-          insurance_carrier?: string | null
-          insurance_plan?: string | null
-          level_of_care?: string | null
-          monetization_type?: string | null
-          payment_type?: string | null
-          preferred_cities?: string[] | null
-          preferred_contact_method?: string | null
-          preferred_states?: string[] | null
-          primary_issue?: string[] | null
-          revenue_cents?: number | null
-          revenue_collected_at?: string | null
-          seeker_email: string
-          seeker_name: string
-          seeker_phone: string
-          seeker_user_id?: string | null
-          self_pay_budget?: string | null
-          special_considerations?: Json | null
-          status?: string
-          status_updated_at?: string | null
-          terms_status?: string | null
-          updated_at?: string
-          urgency?: string | null
-          who_seeking_help?: string | null
-        }
-        Update: {
-          additional_notes?: string | null
-          admitted_at?: string | null
-          admitted_facility_id?: string | null
-          age_range?: string | null
-          assigned_to?: string | null
-          best_time_to_contact?: string | null
-          closed_reason?: string | null
-          commission_percent?: number | null
-          created_at?: string
-          flat_fee_cents?: number | null
-          gender?: string | null
-          id?: string
-          insurance_carrier?: string | null
-          insurance_plan?: string | null
-          level_of_care?: string | null
-          monetization_type?: string | null
-          payment_type?: string | null
-          preferred_cities?: string[] | null
-          preferred_contact_method?: string | null
-          preferred_states?: string[] | null
-          primary_issue?: string[] | null
-          revenue_cents?: number | null
-          revenue_collected_at?: string | null
-          seeker_email?: string
-          seeker_name?: string
-          seeker_phone?: string
-          seeker_user_id?: string | null
-          self_pay_budget?: string | null
-          special_considerations?: Json | null
-          status?: string
-          status_updated_at?: string | null
-          terms_status?: string | null
-          updated_at?: string
-          urgency?: string | null
-          who_seeking_help?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "placement_cases_admitted_facility_id_fkey"
-            columns: ["admitted_facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_cases_admitted_facility_id_fkey"
-            columns: ["admitted_facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      placement_fee_events: {
-        Row: {
-          actor_id: string | null
-          actor_type: string | null
-          amount_cents: number | null
-          created_at: string | null
-          details: Json | null
-          event_type: string
-          facility_id: string | null
-          id: string
-          inquiry_id: string | null
-          invoice_id: string | null
-        }
-        Insert: {
-          actor_id?: string | null
-          actor_type?: string | null
-          amount_cents?: number | null
-          created_at?: string | null
-          details?: Json | null
-          event_type: string
-          facility_id?: string | null
-          id?: string
-          inquiry_id?: string | null
-          invoice_id?: string | null
-        }
-        Update: {
-          actor_id?: string | null
-          actor_type?: string | null
-          amount_cents?: number | null
-          created_at?: string | null
-          details?: Json | null
-          event_type?: string
-          facility_id?: string | null
-          id?: string
-          inquiry_id?: string | null
-          invoice_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "placement_fee_events_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_fee_events_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_fee_events_inquiry_id_fkey"
-            columns: ["inquiry_id"]
-            isOneToOne: false
-            referencedRelation: "concierge_inquiries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_fee_events_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "placement_invoices"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      placement_invoices: {
-        Row: {
-          agreement_id: string | null
-          amount_cents: number
-          case_id: string
-          created_at: string
-          delinquent: boolean | null
-          delinquent_at: string | null
-          discount_percent: number | null
-          discount_reason: string | null
-          due_at: string | null
-          facility_id: string
-          failure_reason: string | null
-          fee_type: string | null
-          id: string
-          inquiry_id: string | null
-          last_retry_at: string | null
-          manual_payment: boolean | null
-          next_retry_at: string | null
+          max_slots: number
           notes: string | null
-          overridden_at: string | null
-          overridden_by: string | null
-          override_amount_cents: number | null
-          override_reason: string | null
-          paid_at: string | null
-          receipt_url: string | null
-          reminder_count: number | null
-          reminder_sent_at: string | null
-          retry_count: number | null
-          sent_at: string | null
-          status: string
-          stripe_invoice_id: string | null
-          stripe_payment_intent_id: string | null
-          stripe_payment_link: string | null
-          updated_at: string
-          waive_reason: string | null
-          waived: boolean | null
-          waived_at: string | null
-          waived_by: string | null
+          placement_type: string
+          placement_value: string
         }
         Insert: {
-          agreement_id?: string | null
-          amount_cents: number
-          case_id: string
-          created_at?: string
-          delinquent?: boolean | null
-          delinquent_at?: string | null
-          discount_percent?: number | null
-          discount_reason?: string | null
-          due_at?: string | null
-          facility_id: string
-          failure_reason?: string | null
-          fee_type?: string | null
-          id?: string
-          inquiry_id?: string | null
-          last_retry_at?: string | null
-          manual_payment?: boolean | null
-          next_retry_at?: string | null
+          max_slots: number
           notes?: string | null
-          overridden_at?: string | null
-          overridden_by?: string | null
-          override_amount_cents?: number | null
-          override_reason?: string | null
-          paid_at?: string | null
-          receipt_url?: string | null
-          reminder_count?: number | null
-          reminder_sent_at?: string | null
-          retry_count?: number | null
-          sent_at?: string | null
-          status?: string
-          stripe_invoice_id?: string | null
-          stripe_payment_intent_id?: string | null
-          stripe_payment_link?: string | null
-          updated_at?: string
-          waive_reason?: string | null
-          waived?: boolean | null
-          waived_at?: string | null
-          waived_by?: string | null
+          placement_type: string
+          placement_value: string
         }
         Update: {
-          agreement_id?: string | null
-          amount_cents?: number
-          case_id?: string
-          created_at?: string
-          delinquent?: boolean | null
-          delinquent_at?: string | null
-          discount_percent?: number | null
-          discount_reason?: string | null
-          due_at?: string | null
-          facility_id?: string
-          failure_reason?: string | null
-          fee_type?: string | null
-          id?: string
-          inquiry_id?: string | null
-          last_retry_at?: string | null
-          manual_payment?: boolean | null
-          next_retry_at?: string | null
+          max_slots?: number
           notes?: string | null
-          overridden_at?: string | null
-          overridden_by?: string | null
-          override_amount_cents?: number | null
-          override_reason?: string | null
-          paid_at?: string | null
-          receipt_url?: string | null
-          reminder_count?: number | null
-          reminder_sent_at?: string | null
-          retry_count?: number | null
-          sent_at?: string | null
-          status?: string
-          stripe_invoice_id?: string | null
-          stripe_payment_intent_id?: string | null
-          stripe_payment_link?: string | null
-          updated_at?: string
-          waive_reason?: string | null
-          waived?: boolean | null
-          waived_at?: string | null
-          waived_by?: string | null
+          placement_type?: string
+          placement_value?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "placement_invoices_agreement_id_fkey"
-            columns: ["agreement_id"]
-            isOneToOne: false
-            referencedRelation: "placement_agreements"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_invoices_case_id_fkey"
-            columns: ["case_id"]
-            isOneToOne: false
-            referencedRelation: "placement_cases"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_invoices_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_invoices_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "placement_invoices_inquiry_id_fkey"
-            columns: ["inquiry_id"]
-            isOneToOne: false
-            referencedRelation: "concierge_inquiries"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       platform_settings: {
         Row: {
@@ -4753,72 +4260,6 @@ export type Database = {
         }
         Relationships: []
       }
-      pro_subscriptions: {
-        Row: {
-          cancel_at_period_end: boolean
-          canceled_at: string | null
-          created_at: string
-          current_period_end: string | null
-          facility_id: string
-          id: string
-          price_cents: number
-          provider_id: string
-          started_at: string | null
-          status: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          unlock_discount_percent: number
-          updated_at: string
-        }
-        Insert: {
-          cancel_at_period_end?: boolean
-          canceled_at?: string | null
-          created_at?: string
-          current_period_end?: string | null
-          facility_id: string
-          id?: string
-          price_cents?: number
-          provider_id: string
-          started_at?: string | null
-          status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          unlock_discount_percent?: number
-          updated_at?: string
-        }
-        Update: {
-          cancel_at_period_end?: boolean
-          canceled_at?: string | null
-          created_at?: string
-          current_period_end?: string | null
-          facility_id?: string
-          id?: string
-          price_cents?: number
-          provider_id?: string
-          started_at?: string | null
-          status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          unlock_discount_percent?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pro_subscriptions_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: true
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pro_subscriptions_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: true
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           created_at: string
@@ -4867,96 +4308,6 @@ export type Database = {
         }
         Relationships: []
       }
-      provider_auto_reload_settings: {
-        Row: {
-          created_at: string
-          enabled: boolean
-          facility_id: string | null
-          id: string
-          provider_id: string
-          reload_amount_cents: number
-          threshold_cents: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          enabled?: boolean
-          facility_id?: string | null
-          id?: string
-          provider_id: string
-          reload_amount_cents?: number
-          threshold_cents?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          enabled?: boolean
-          facility_id?: string | null
-          id?: string
-          provider_id?: string
-          reload_amount_cents?: number
-          threshold_cents?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "provider_auto_reload_settings_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "provider_auto_reload_settings_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      provider_credits: {
-        Row: {
-          balance_cents: number
-          created_at: string
-          facility_id: string
-          id: string
-          provider_id: string
-          updated_at: string
-        }
-        Insert: {
-          balance_cents?: number
-          created_at?: string
-          facility_id: string
-          id?: string
-          provider_id: string
-          updated_at?: string
-        }
-        Update: {
-          balance_cents?: number
-          created_at?: string
-          facility_id?: string
-          id?: string
-          provider_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "provider_credits_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "provider_credits_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       provider_events: {
         Row: {
           created_at: string
@@ -4998,6 +4349,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      provider_interest: {
+        Row: {
+          admin_notes: string | null
+          admin_notified: boolean
+          admin_notified_at: string | null
+          admission_volume: string
+          city: string
+          contact_name: string
+          contact_title: string
+          created_at: string
+          email: string
+          facility_name: string
+          followed_up: boolean
+          followed_up_at: string | null
+          id: string
+          landing_page: string | null
+          phone: string | null
+          pricing_frustration: string | null
+          source: string
+          state: string
+          status: string
+          tier_interest: string
+          updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          admin_notified?: boolean
+          admin_notified_at?: string | null
+          admission_volume: string
+          city: string
+          contact_name: string
+          contact_title: string
+          created_at?: string
+          email: string
+          facility_name: string
+          followed_up?: boolean
+          followed_up_at?: string | null
+          id?: string
+          landing_page?: string | null
+          phone?: string | null
+          pricing_frustration?: string | null
+          source?: string
+          state: string
+          status?: string
+          tier_interest: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          admin_notified?: boolean
+          admin_notified_at?: string | null
+          admission_volume?: string
+          city?: string
+          contact_name?: string
+          contact_title?: string
+          created_at?: string
+          email?: string
+          facility_name?: string
+          followed_up?: boolean
+          followed_up_at?: string | null
+          id?: string
+          landing_page?: string | null
+          phone?: string | null
+          pricing_frustration?: string | null
+          source?: string
+          state?: string
+          status?: string
+          tier_interest?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
       }
       provider_notifications: {
         Row: {
@@ -5765,6 +5197,342 @@ export type Database = {
         }
         Relationships: []
       }
+      staged_directory: {
+        Row: {
+          accreditation_number: string | null
+          accreditation_status: string | null
+          accreditation_type: string | null
+          city: string | null
+          cluster_id: string | null
+          created_at: string
+          expiry_date: string | null
+          facility_name: string | null
+          id: string
+          issued_date: string | null
+          match_key: string | null
+          normalized_name: string | null
+          normalized_phone: string | null
+          normalized_street: string | null
+          normalized_zip: string | null
+          phone: string | null
+          raw_payload: Json
+          rejection_reason: string | null
+          scraped_at: string
+          source: string
+          source_id: string
+          state: string | null
+          status: string
+          street: string | null
+          updated_at: string
+          verification_url: string | null
+          website: string | null
+          website_domain: string | null
+          zip: string | null
+        }
+        Insert: {
+          accreditation_number?: string | null
+          accreditation_status?: string | null
+          accreditation_type?: string | null
+          city?: string | null
+          cluster_id?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          facility_name?: string | null
+          id?: string
+          issued_date?: string | null
+          match_key?: string | null
+          normalized_name?: string | null
+          normalized_phone?: string | null
+          normalized_street?: string | null
+          normalized_zip?: string | null
+          phone?: string | null
+          raw_payload: Json
+          rejection_reason?: string | null
+          scraped_at?: string
+          source: string
+          source_id: string
+          state?: string | null
+          status?: string
+          street?: string | null
+          updated_at?: string
+          verification_url?: string | null
+          website?: string | null
+          website_domain?: string | null
+          zip?: string | null
+        }
+        Update: {
+          accreditation_number?: string | null
+          accreditation_status?: string | null
+          accreditation_type?: string | null
+          city?: string | null
+          cluster_id?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          facility_name?: string | null
+          id?: string
+          issued_date?: string | null
+          match_key?: string | null
+          normalized_name?: string | null
+          normalized_phone?: string | null
+          normalized_street?: string | null
+          normalized_zip?: string | null
+          phone?: string | null
+          raw_payload?: Json
+          rejection_reason?: string | null
+          scraped_at?: string
+          source?: string
+          source_id?: string
+          state?: string | null
+          status?: string
+          street?: string | null
+          updated_at?: string
+          verification_url?: string | null
+          website?: string | null
+          website_domain?: string | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staged_directory_cluster_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "facility_match_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staged_leads: {
+        Row: {
+          bounced_at: string | null
+          city: string | null
+          cluster_id: string | null
+          contact_first_name: string | null
+          contact_last_name: string | null
+          contact_title: string | null
+          created_at: string
+          do_not_email: boolean
+          email: string | null
+          email_domain: string | null
+          email_validated_at: string | null
+          email_validation_result: string | null
+          facility_name: string | null
+          id: string
+          import_batch: string
+          linkedin_url: string | null
+          match_key: string | null
+          normalized_name: string | null
+          normalized_phone: string | null
+          normalized_street: string | null
+          normalized_zip: string | null
+          notes: string | null
+          phone: string | null
+          raw_payload: Json
+          rejection_reason: string | null
+          source_id: string
+          state: string | null
+          status: string
+          street: string | null
+          unsubscribed_at: string | null
+          updated_at: string
+          uploaded_at: string
+          website: string | null
+          website_domain: string | null
+          zip: string | null
+        }
+        Insert: {
+          bounced_at?: string | null
+          city?: string | null
+          cluster_id?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
+          contact_title?: string | null
+          created_at?: string
+          do_not_email?: boolean
+          email?: string | null
+          email_domain?: string | null
+          email_validated_at?: string | null
+          email_validation_result?: string | null
+          facility_name?: string | null
+          id?: string
+          import_batch: string
+          linkedin_url?: string | null
+          match_key?: string | null
+          normalized_name?: string | null
+          normalized_phone?: string | null
+          normalized_street?: string | null
+          normalized_zip?: string | null
+          notes?: string | null
+          phone?: string | null
+          raw_payload: Json
+          rejection_reason?: string | null
+          source_id: string
+          state?: string | null
+          status?: string
+          street?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+          uploaded_at?: string
+          website?: string | null
+          website_domain?: string | null
+          zip?: string | null
+        }
+        Update: {
+          bounced_at?: string | null
+          city?: string | null
+          cluster_id?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
+          contact_title?: string | null
+          created_at?: string
+          do_not_email?: boolean
+          email?: string | null
+          email_domain?: string | null
+          email_validated_at?: string | null
+          email_validation_result?: string | null
+          facility_name?: string | null
+          id?: string
+          import_batch?: string
+          linkedin_url?: string | null
+          match_key?: string | null
+          normalized_name?: string | null
+          normalized_phone?: string | null
+          normalized_street?: string | null
+          normalized_zip?: string | null
+          notes?: string | null
+          phone?: string | null
+          raw_payload?: Json
+          rejection_reason?: string | null
+          source_id?: string
+          state?: string | null
+          status?: string
+          street?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+          uploaded_at?: string
+          website?: string | null
+          website_domain?: string | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staged_leads_cluster_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "facility_match_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staged_samhsa: {
+        Row: {
+          city: string | null
+          cluster_id: string | null
+          created_at: string
+          hotline_phone: string | null
+          id: string
+          insurance: Json | null
+          intake_phone: string | null
+          latitude: number | null
+          longitude: number | null
+          match_key: string | null
+          name: string
+          name_alt: string | null
+          normalized_intake_phone: string | null
+          normalized_name: string | null
+          normalized_phone: string | null
+          normalized_street: string | null
+          normalized_zip: string | null
+          phone: string | null
+          raw_payload: Json
+          rejection_reason: string | null
+          scraped_at: string
+          services: Json | null
+          source_id: string
+          state: string | null
+          status: string
+          street: string | null
+          type_facility: string | null
+          updated_at: string
+          website: string | null
+          website_domain: string | null
+          zip: string | null
+        }
+        Insert: {
+          city?: string | null
+          cluster_id?: string | null
+          created_at?: string
+          hotline_phone?: string | null
+          id?: string
+          insurance?: Json | null
+          intake_phone?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          match_key?: string | null
+          name: string
+          name_alt?: string | null
+          normalized_intake_phone?: string | null
+          normalized_name?: string | null
+          normalized_phone?: string | null
+          normalized_street?: string | null
+          normalized_zip?: string | null
+          phone?: string | null
+          raw_payload: Json
+          rejection_reason?: string | null
+          scraped_at?: string
+          services?: Json | null
+          source_id: string
+          state?: string | null
+          status?: string
+          street?: string | null
+          type_facility?: string | null
+          updated_at?: string
+          website?: string | null
+          website_domain?: string | null
+          zip?: string | null
+        }
+        Update: {
+          city?: string | null
+          cluster_id?: string | null
+          created_at?: string
+          hotline_phone?: string | null
+          id?: string
+          insurance?: Json | null
+          intake_phone?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          match_key?: string | null
+          name?: string
+          name_alt?: string | null
+          normalized_intake_phone?: string | null
+          normalized_name?: string | null
+          normalized_phone?: string | null
+          normalized_street?: string | null
+          normalized_zip?: string | null
+          phone?: string | null
+          raw_payload?: Json
+          rejection_reason?: string | null
+          scraped_at?: string
+          services?: Json | null
+          source_id?: string
+          state?: string | null
+          status?: string
+          street?: string | null
+          type_facility?: string | null
+          updated_at?: string
+          website?: string | null
+          website_domain?: string | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staged_samhsa_cluster_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "facility_match_clusters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stripe_webhook_events: {
         Row: {
           error_message: string | null
@@ -5821,6 +5589,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      subscription_cancellations: {
+        Row: {
+          canceled_at: string
+          canceled_by: string | null
+          charged_for_use_cents: number
+          full_monthly_rate_cents: number
+          id: string
+          months_used: number
+          paid_amount_cents: number
+          reason: string | null
+          refund_amount_cents: number
+          stripe_refund_id: string | null
+          subscription_id: string
+        }
+        Insert: {
+          canceled_at?: string
+          canceled_by?: string | null
+          charged_for_use_cents: number
+          full_monthly_rate_cents: number
+          id?: string
+          months_used: number
+          paid_amount_cents: number
+          reason?: string | null
+          refund_amount_cents: number
+          stripe_refund_id?: string | null
+          subscription_id: string
+        }
+        Update: {
+          canceled_at?: string
+          canceled_by?: string | null
+          charged_for_use_cents?: number
+          full_monthly_rate_cents?: number
+          id?: string
+          months_used?: number
+          paid_amount_cents?: number
+          reason?: string | null
+          refund_amount_cents?: number
+          stripe_refund_id?: string | null
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_cancellations_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "facility_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_events: {
         Row: {
@@ -6189,173 +6007,6 @@ export type Database = {
       }
     }
     Views: {
-      leads_provider_view: {
-        Row: {
-          age_range: string | null
-          assignment_status: string | null
-          best_time_to_call: string | null
-          budget_preference: string | null
-          co_occurring_conditions: string[] | null
-          created_at: string | null
-          dual_diagnosis: string | null
-          email: string | null
-          email_verified: boolean | null
-          exclusive_until: string | null
-          extended_until: string | null
-          facility_id: string | null
-          follow_up_reminder_sent_at: string | null
-          gender: string | null
-          id: string | null
-          inquiry_type: string | null
-          insurance_provider: string | null
-          insurance_type: string | null
-          is_unlocked: boolean | null
-          level_of_care: string | null
-          location_city_state: string | null
-          location_zip: string | null
-          message: string | null
-          name: string | null
-          original_facility_id: string | null
-          phone: string | null
-          preferred_contact: string | null
-          previous_treatment: string | null
-          previous_treatment_details: string | null
-          primary_substance: string[] | null
-          provider_responded_at: string | null
-          provider_response_status: string | null
-          qualification_reason: string | null
-          qualified: boolean | null
-          readiness_level: string | null
-          redistribution_status: string | null
-          relationship_to_patient: string | null
-          snooze_until: string | null
-          source: string | null
-          special_needs: string[] | null
-          status: string | null
-          urgency: string | null
-          who_seeking_help: string | null
-        }
-        Insert: {
-          age_range?: string | null
-          assignment_status?: string | null
-          best_time_to_call?: string | null
-          budget_preference?: string | null
-          co_occurring_conditions?: string[] | null
-          created_at?: string | null
-          dual_diagnosis?: string | null
-          email?: never
-          email_verified?: boolean | null
-          exclusive_until?: string | null
-          extended_until?: string | null
-          facility_id?: string | null
-          follow_up_reminder_sent_at?: string | null
-          gender?: string | null
-          id?: string | null
-          inquiry_type?: string | null
-          insurance_provider?: string | null
-          insurance_type?: string | null
-          is_unlocked?: never
-          level_of_care?: string | null
-          location_city_state?: string | null
-          location_zip?: string | null
-          message?: never
-          name?: never
-          original_facility_id?: string | null
-          phone?: never
-          preferred_contact?: string | null
-          previous_treatment?: string | null
-          previous_treatment_details?: never
-          primary_substance?: string[] | null
-          provider_responded_at?: string | null
-          provider_response_status?: string | null
-          qualification_reason?: string | null
-          qualified?: boolean | null
-          readiness_level?: string | null
-          redistribution_status?: string | null
-          relationship_to_patient?: string | null
-          snooze_until?: string | null
-          source?: string | null
-          special_needs?: string[] | null
-          status?: string | null
-          urgency?: string | null
-          who_seeking_help?: string | null
-        }
-        Update: {
-          age_range?: string | null
-          assignment_status?: string | null
-          best_time_to_call?: string | null
-          budget_preference?: string | null
-          co_occurring_conditions?: string[] | null
-          created_at?: string | null
-          dual_diagnosis?: string | null
-          email?: never
-          email_verified?: boolean | null
-          exclusive_until?: string | null
-          extended_until?: string | null
-          facility_id?: string | null
-          follow_up_reminder_sent_at?: string | null
-          gender?: string | null
-          id?: string | null
-          inquiry_type?: string | null
-          insurance_provider?: string | null
-          insurance_type?: string | null
-          is_unlocked?: never
-          level_of_care?: string | null
-          location_city_state?: string | null
-          location_zip?: string | null
-          message?: never
-          name?: never
-          original_facility_id?: string | null
-          phone?: never
-          preferred_contact?: string | null
-          previous_treatment?: string | null
-          previous_treatment_details?: never
-          primary_substance?: string[] | null
-          provider_responded_at?: string | null
-          provider_response_status?: string | null
-          qualification_reason?: string | null
-          qualified?: boolean | null
-          readiness_level?: string | null
-          redistribution_status?: string | null
-          relationship_to_patient?: string | null
-          snooze_until?: string | null
-          source?: string | null
-          special_needs?: string[] | null
-          status?: string | null
-          urgency?: string | null
-          who_seeking_help?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "leads_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "leads_facility_id_fkey"
-            columns: ["facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "leads_original_facility_id_fkey"
-            columns: ["original_facility_id"]
-            isOneToOne: false
-            referencedRelation: "facilities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "leads_original_facility_id_fkey"
-            columns: ["original_facility_id"]
-            isOneToOne: false
-            referencedRelation: "public_facilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       public_facilities: {
         Row: {
           accepts_international_patients: boolean | null
@@ -6527,6 +6178,30 @@ export type Database = {
         }
         Returns: Json
       }
+      backfill_samhsa_descriptions: { Args: never; Returns: number }
+      backfill_samhsa_enrichment: {
+        Args: never
+        Returns: {
+          age_groups_inserted: number
+          descriptions_generated: number
+          facilities_processed: number
+          gender_updated: number
+          insurance_inserted: number
+          services_inserted: number
+        }[]
+      }
+      build_match_clusters: {
+        Args: never
+        Returns: {
+          admin_review: number
+          auto_eligible: number
+          by_tier_address: number
+          by_tier_phone_state: number
+          by_tier_phone_state_zip: number
+          clusters_created: number
+          records_linked: number
+        }[]
+      }
       can_access_lead: {
         Args: { p_lead_id: string; p_user_id: string }
         Returns: boolean
@@ -6563,8 +6238,24 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      compute_cancellation_refund: {
+        Args: { p_cancel_at?: string; p_subscription_id: string }
+        Returns: {
+          charged_for_use_cents: number
+          full_monthly_rate_cents: number
+          months_used: number
+          paid_amount_cents: number
+          refund_amount_cents: number
+        }[]
+      }
       current_auth_uid: { Args: never; Returns: string }
       current_user_email: { Args: never; Returns: string }
+      extract_email_domain: { Args: { input: string }; Returns: string }
+      extract_website_domain: { Args: { input: string }; Returns: string }
+      generate_facility_slug: {
+        Args: { p_city: string; p_name: string; p_state: string }
+        Returns: string
+      }
       get_admin_dashboard_stats: { Args: never; Returns: Json }
       get_admin_profile: {
         Args: { p_user_id: string }
@@ -6920,11 +6611,54 @@ export type Database = {
         Args: { p_error?: string; p_event_id: string; p_status?: string }
         Returns: undefined
       }
+      match_key_strict: {
+        Args: {
+          p_address: string
+          p_city: string
+          p_phone: string
+          p_state: string
+          p_zip: string
+        }
+        Returns: string
+      }
+      normalize_facility_name: { Args: { input: string }; Returns: string }
+      normalize_phone: { Args: { input: string }; Returns: string }
+      normalize_street_address: { Args: { input: string }; Returns: string }
+      normalize_text_basic: { Args: { input: string }; Returns: string }
+      normalize_zip: { Args: { input: string }; Returns: string }
       phi_audit_resolve_actor: {
         Args: never
         Returns: {
           actor_type: string
           actor_user_id: string
+        }[]
+      }
+      promote_eligible_clusters: {
+        Args: { p_dry_run?: boolean }
+        Returns: {
+          action: string
+          out_city: string
+          out_cluster_id: string
+          out_existing_facility_id: string
+          out_facility_name: string
+          out_generated_slug: string
+          out_phone: string
+          out_source_count: number
+          out_state: string
+        }[]
+      }
+      promote_quality_two_source_clusters: {
+        Args: { p_dry_run?: boolean }
+        Returns: {
+          action: string
+          out_city: string
+          out_cluster_id: string
+          out_facility_id: string
+          out_facility_name: string
+          out_phone: string
+          out_sources: string
+          out_state: string
+          out_website: string
         }[]
       }
       provider_has_introduction: {
@@ -6938,6 +6672,10 @@ export type Database = {
       purge_seeker_data: {
         Args: { p_user_email: string; p_user_id: string }
         Returns: undefined
+      }
+      regenerate_facility_descriptions_canonical: {
+        Args: never
+        Returns: number
       }
       register_trusted_device: {
         Args: {
@@ -6954,7 +6692,23 @@ export type Database = {
         Args: { p_facility_id: string; p_inquiry_id: string }
         Returns: undefined
       }
+      staged_directory_merge_upsert: {
+        Args: { records: Json }
+        Returns: {
+          out_source_id: string
+          was_insert: boolean
+        }[]
+      }
+      staged_samhsa_merge_upsert: {
+        Args: { records: Json }
+        Returns: {
+          out_source_id: string
+          was_insert: boolean
+        }[]
+      }
+      state_code_to_name: { Args: { code: string }; Returns: string }
       test_leads_provider_view_masks_non_owner: { Args: never; Returns: Json }
+      title_case_with_acronyms: { Args: { input: string }; Returns: string }
       touch_admin_activity: { Args: { p_user_id: string }; Returns: undefined }
       try_acquire_auto_reload_lock: {
         Args: { p_provider_id: string }
@@ -7129,4 +6883,3 @@ export const Constants = {
     },
   },
 } as const
-

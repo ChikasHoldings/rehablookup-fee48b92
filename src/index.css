@@ -4,15 +4,40 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent navbar shift from scrollbar appearing/disappearing */
+/* Page-level overflow + overscroll guards.
+   - `overflow-x: clip` on BOTH html and body kills horizontal drag-scroll
+     of the document itself. `clip` (not `hidden`) is required so
+     `position: sticky` on the Header still works — `hidden` would
+     establish a new scroll container and break the header.
+   - `overflow-y: scroll` on html forces the vertical scrollbar to always
+     reserve its gutter, preventing layout shift on routes that grow past
+     a single viewport.
+   - `overscroll-behavior-y: none` on BOTH html and body stops the
+     rubber-band bounce at the top/bottom and the pull-to-refresh gesture.
+     iOS Safari requires this on `html` (not just `body`) because the
+     viewport scroll context belongs to `html` there; Chrome+Firefox
+     respect it on either. Set on both for cross-browser safety.
+   - `overscroll-behavior-x: auto` is intentional — we don't block
+     horizontal browser-back swipes (Mac trackpad, iOS edge swipe). */
 html {
   overflow-y: scroll;
+  overflow-x: clip;
+  overscroll-behavior-y: none;
 }
 
 body, #root {
   width: 100%;
   max-width: 100%;
   overflow-x: clip;
+  /* position: relative anchors any absolute-positioned descendant to
+     the body's box. Without it, an abs-positioned child with negative
+     `left` could escape the body and push the document into a
+     horizontal scroll surface before the clip catches it. */
+  position: relative;
+}
+
+body {
+  overscroll-behavior-y: none;
 }
 
 /* Prevent navbar from blinking/flickering on route changes */
@@ -211,10 +236,17 @@ iframe, embed, object {
 
   h1 {
     @apply tracking-tight text-[1.625rem] md:text-3xl lg:text-4xl;
+    /* ss01 (stylistic alternates 1) + cv11 (character variant 11) on
+       Inter give the headings tighter, more confident geometry —
+       reads as "premium directory" instead of "default sans". Safe to
+       apply globally: variant fonts that don't support these features
+       silently ignore the declaration. */
+    font-feature-settings: "ss01", "cv11";
   }
 
   h2 {
     @apply tracking-tight text-xl md:text-2xl lg:text-3xl;
+    font-feature-settings: "ss01", "cv11";
   }
 
   h3 {

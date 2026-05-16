@@ -29,8 +29,7 @@ const PROVIDER_ROUTE_FILES = [
   "src/pages/provider/Reviews.tsx",
   "src/pages/provider/Notifications.tsx",
   "src/pages/provider/Settings.tsx",
-  "src/pages/provider/PlacementNetwork.tsx",
-  "src/pages/provider/ProUpgrade.tsx",
+  // PlacementNetwork + ProUpgrade removed in monetization rebuild.
   "src/pages/provider/EmbedBadge.tsx",
   "src/pages/provider/Help.tsx",
   "src/pages/provider/KnowledgeBase.tsx",

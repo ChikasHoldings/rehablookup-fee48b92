@@ -2,10 +2,11 @@ import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { cancelSubscriptionAndRefund } from "../_shared/cancel-subscription.ts";
 
 // Version tracking for deployment verification
-const VERSION = "1.1.0";
-const DEPLOYED_AT = "2026-04-06T00:00:00Z";
+const VERSION = "1.2.0";
+const DEPLOYED_AT = "2026-05-16T00:00:00Z";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,6 +28,104 @@ const PRO_PRODUCT_IDS = [
   "prod_TbalOeJZA2ZoJl", // legacy featured
   "prod_TbyzJVNOQL71NN", // featured
 ];
+
+// New flat-fee monetization lookup keys (created by
+// scripts/stripe-setup-monetization.ts). Six keys = three SKUs × two
+// billing intervals. The webhook resolves both billing_period and the
+// tier/addon flags from the lookup_key + price.recurring.interval.
+const LOOKUP_KEYS = {
+  PRO_MONTHLY: "rl_pro_monthly_v1",
+  PRO_ANNUAL: "rl_pro_annual_v1",
+  FEATURED_MONTHLY: "rl_featured_monthly_v1",
+  FEATURED_ANNUAL: "rl_featured_annual_v1",
+  CONCIERGE_MONTHLY: "rl_concierge_monthly_v1",
+  CONCIERGE_ANNUAL: "rl_concierge_annual_v1",
+} as const;
+
+const PRO_KEYS = [LOOKUP_KEYS.PRO_MONTHLY, LOOKUP_KEYS.PRO_ANNUAL] as const;
+const FEATURED_KEYS = [LOOKUP_KEYS.FEATURED_MONTHLY, LOOKUP_KEYS.FEATURED_ANNUAL] as const;
+const CONCIERGE_KEYS = [LOOKUP_KEYS.CONCIERGE_MONTHLY, LOOKUP_KEYS.CONCIERGE_ANNUAL] as const;
+
+// Per-tier full monthly rates in cents. Used both to compute the
+// monthly_equivalent for cancellation math AND, on annual subscriptions,
+// to reconstruct original_annual_cents + discount_applied_cents.
+const FULL_MONTHLY_CENTS = {
+  pro: 9900,        // $99
+  featured: 59900,  // $599
+  concierge: 100000, // $1,000
+} as const;
+
+/**
+ * Inspect a Stripe subscription's items and return:
+ *   - tier:                "pro" if any item matches a Pro lookup key
+ *   - has_featured:        true if any item matches a Featured key
+ *   - has_concierge_partner: true if any item matches a Concierge key
+ *   - billing_period:      "monthly" | "annual" — inferred from the FIRST
+ *                          matched item's recurring.interval. All items
+ *                          on the same subscription share one interval
+ *                          (Stripe requires this for a single subscription).
+ *   - paid_amount_cents:   sum of unit_amount × quantity across all items
+ *                          (= what Stripe just charged this period)
+ *   - original_annual_cents: for annual subscriptions, the un-discounted
+ *                            yearly sticker (full_monthly × 12 × pieces).
+ *                            null for monthly.
+ *   - discount_applied_cents: for annual, original − paid (≈15%). 0 for monthly.
+ * Falls through to {tier:null, matched_new_lookup_keys:false} if no new
+ * lookup keys are present (legacy subscriptions still flow through the
+ * older code path that follows in checkout.session.completed).
+ */
+function deriveTierFlagsFromSubscription(sub: Stripe.Subscription) {
+  let isPro = false;
+  let hasFeatured = false;
+  let hasConcierge = false;
+  let paidAmountCents = 0;
+  let interval: "month" | "year" | null = null;
+  for (const item of sub.items.data) {
+    const lookupKey = item.price.lookup_key as string | null;
+    const itemInterval = item.price.recurring?.interval as "month" | "year" | undefined;
+    if (lookupKey && (PRO_KEYS as readonly string[]).includes(lookupKey)) isPro = true;
+    if (lookupKey && (FEATURED_KEYS as readonly string[]).includes(lookupKey)) hasFeatured = true;
+    if (lookupKey && (CONCIERGE_KEYS as readonly string[]).includes(lookupKey)) hasConcierge = true;
+    if (
+      lookupKey &&
+      itemInterval &&
+      interval === null &&
+      (
+        (PRO_KEYS as readonly string[]).includes(lookupKey) ||
+        (FEATURED_KEYS as readonly string[]).includes(lookupKey) ||
+        (CONCIERGE_KEYS as readonly string[]).includes(lookupKey)
+      )
+    ) {
+      interval = itemInterval;
+    }
+    paidAmountCents += (item.price.unit_amount ?? 0) * (item.quantity ?? 1);
+  }
+  const billingPeriod: "monthly" | "annual" | null =
+    interval === "month" ? "monthly" : interval === "year" ? "annual" : null;
+
+  // Reconstruct the sticker price + discount for annual subscribers.
+  // For monthly, original = null and discount = 0 (no annual sticker).
+  let originalAnnualCents: number | null = null;
+  let discountAppliedCents = 0;
+  if (billingPeriod === "annual" && (isPro || hasFeatured || hasConcierge)) {
+    originalAnnualCents =
+      (isPro ? FULL_MONTHLY_CENTS.pro * 12 : 0) +
+      (hasFeatured ? FULL_MONTHLY_CENTS.featured * 12 : 0) +
+      (hasConcierge ? FULL_MONTHLY_CENTS.concierge * 12 : 0);
+    discountAppliedCents = Math.max(0, originalAnnualCents - paidAmountCents);
+  }
+
+  return {
+    tier: isPro ? "pro" : null,
+    has_featured: hasFeatured,
+    has_concierge_partner: hasConcierge,
+    billing_period: billingPeriod,
+    paid_amount_cents: paidAmountCents,
+    original_annual_cents: originalAnnualCents,
+    discount_applied_cents: discountAppliedCents,
+    matched_new_lookup_keys: isPro || hasFeatured || hasConcierge,
+  };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -336,515 +435,13 @@ Deno.serve(async (req) => {
         });
       }
 
-      // ADDITIONAL LISTING SLOT PURCHASE
-      if (session.mode === "payment" && purchaseType === "additional_listing_slot") {
-        const userId = session.metadata?.user_id;
-        
-        if (userId) {
-          logStep("Processing additional listing slot purchase", { userId, sessionId: session.id });
+      // Legacy `additional_listing_slot`, `lead_unlock`, and
+      // `credit_purchase` checkout sessions are no longer issued —
+      // the monetization rebuild dropped those flows. The handler
+      // blocks that processed them were removed; any in-flight legacy
+      // event will fall through to the no-op below.
 
-          // Update the pending record to completed
-          const { error: updateError } = await supabaseAdmin
-            .from("purchased_listing_slots")
-            .update({
-              status: "completed",
-              stripe_payment_intent_id: session.payment_intent as string,
-              completed_at: new Date().toISOString(),
-            })
-            .eq("stripe_checkout_session_id", session.id)
-            .eq("user_id", userId);
-
-          if (updateError) {
-            logStep("Error updating listing slot purchase", { error: updateError.message });
-          } else {
-            logStep("Listing slot purchase completed successfully");
-
-            // Get user's facility for notification
-            const { data: facilities } = await supabaseAdmin
-              .from("facilities")
-              .select("id")
-              .eq("user_id", userId)
-              .limit(1);
-
-            const facilityId = facilities?.[0]?.id || null;
-
-            // Create provider notification
-            await supabaseAdmin.from("provider_notifications").insert({
-              user_id: userId,
-              facility_id: facilityId,
-              type: "listing_slot_purchased",
-              title: "Additional Listing Slot Purchased",
-              message: "You can now add one more facility listing to your account.",
-              metadata: { session_id: session.id },
-            });
-          }
-        }
-        
-        return new Response(JSON.stringify({ received: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      // LEAD UNLOCK VIA STRIPE (card payment)
-      if (session.mode === "payment" && metadataType === "lead_unlock") {
-        const leadId = session.metadata?.lead_id;
-        const facilityId = session.metadata?.facility_id;
-        const userId = session.metadata?.user_id;
-        const paymentIntentId = session.payment_intent as string;
-
-        if (leadId && facilityId && userId) {
-          logStep("Processing lead unlock payment", { leadId, facilityId, userId });
-
-          // H3 SECURITY: Stripe session metadata is mutable from the dashboard
-          // and must NOT be trusted as authoritative for ownership. Cross-check
-          // that the userId in metadata actually owns the facility being credited.
-          // If a leaked Stripe key (or a malicious admin) edits a session's
-          // metadata before the webhook fires, this check prevents the unlock
-          // from being mis-attributed to another provider.
-          const { data: facilityRow, error: facilityLookupErr } = await supabaseAdmin
-            .from("facilities")
-            .select("id, user_id")
-            .eq("id", facilityId)
-            .maybeSingle();
-
-          if (facilityLookupErr || !facilityRow) {
-            logStep("Lead unlock blocked: facility not found", {
-              leadId, facilityId, userId, error: facilityLookupErr?.message,
-            });
-            await supabaseAdmin.from("admin_notifications").insert({
-              type: "lead_unlock_attribution_failed",
-              title: "Stripe lead unlock blocked: facility missing",
-              message: `Webhook for session ${session.id} referenced facility ${facilityId} which does not exist. Manual review required.`,
-              metadata: { session_id: session.id, lead_id: leadId, facility_id: facilityId, claimed_user_id: userId },
-            });
-            return new Response(JSON.stringify({ received: true, blocked: "facility_missing" }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-
-          if (facilityRow.user_id !== userId) {
-            logStep("Lead unlock blocked: userId/facility ownership mismatch", {
-              leadId, facilityId, claimedUserId: userId, actualOwnerId: facilityRow.user_id,
-            });
-            await supabaseAdmin.from("admin_notifications").insert({
-              type: "lead_unlock_attribution_failed",
-              title: "Stripe lead unlock blocked: ownership mismatch",
-              message:
-                `Webhook for session ${session.id} attempted to credit user ${userId} ` +
-                `for an unlock on facility ${facilityId} owned by ${facilityRow.user_id}. ` +
-                `Possible metadata tampering — manual review required.`,
-              metadata: {
-                session_id: session.id,
-                lead_id: leadId,
-                facility_id: facilityId,
-                claimed_user_id: userId,
-                actual_owner_id: facilityRow.user_id,
-              },
-            });
-            return new Response(JSON.stringify({ received: true, blocked: "ownership_mismatch" }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-
-          // Idempotency: check if already unlocked
-          const { data: existingUnlock } = await supabaseAdmin
-            .from("lead_unlocks")
-            .select("id")
-            .eq("lead_id", leadId)
-            .eq("facility_id", facilityId)
-            .maybeSingle();
-
-          if (existingUnlock) {
-            logStep("Lead already unlocked (duplicate webhook), skipping", { leadId, existingUnlockId: existingUnlock.id });
-          } else {
-            // Get the lead to determine price
-            const amountTotal = session.amount_total || 0;
-
-            // Create unlock record
-            const { error: unlockError } = await supabaseAdmin
-              .from("lead_unlocks")
-              .insert({
-                lead_id: leadId,
-                provider_id: userId,
-                facility_id: facilityId,
-                unlock_price_cents: amountTotal,
-                payment_method: "stripe",
-                stripe_payment_intent_id: paymentIntentId,
-              });
-
-            if (unlockError) {
-              logStep("Error creating lead unlock", { error: unlockError.message });
-            } else {
-              logStep("Lead unlock created via Stripe", { leadId, facilityId, priceCents: amountTotal });
-
-              const unlockTimestamp = new Date().toISOString();
-
-              // Update lead_distributions
-              await supabaseAdmin
-                .from("lead_distributions")
-                .update({ unlocked_at: unlockTimestamp })
-                .eq("lead_id", leadId)
-                .eq("facility_id", facilityId);
-
-              // PARITY FIX (C2): mark lead.status = 'unlocked' so reminders stop
-              // and the provider UI reflects the unlocked state.
-              await supabaseAdmin
-                .from("leads")
-                .update({ status: "unlocked" })
-                .eq("id", leadId)
-                .in("status", ["new", "expired"]);
-
-              // PARITY FIX (C2): stamp ALL reminder columns so the cron
-              // never queues another unlock-reminder email for this lead.
-              await supabaseAdmin.from("leads").update({
-                reminder_1h_sent_at: unlockTimestamp,
-                reminder_2h_sent_at: unlockTimestamp,
-                reminder_6h_sent_at: unlockTimestamp,
-                reminder_12h_sent_at: unlockTimestamp,
-                reminder_20h_sent_at: unlockTimestamp,
-                reminder_24h_sent_at: unlockTimestamp,
-              }).eq("id", leadId);
-
-              // Log credit transaction for record keeping
-              await supabaseAdmin.from("credit_transactions").insert({
-                provider_id: userId,
-                facility_id: facilityId,
-                amount_cents: -amountTotal,
-                transaction_type: "unlock",
-                reference_id: leadId,
-                description: "Lead unlocked via card payment",
-                stripe_payment_intent_id: paymentIntentId,
-                base_price_cents: amountTotal,
-                discount_applied: false,
-                discount_amount_cents: 0,
-                inquiry_type: session.metadata?.inquiry_type || null,
-              });
-
-              // Create provider notification
-              await supabaseAdmin.from("provider_notifications").insert({
-                user_id: userId,
-                facility_id: facilityId,
-                type: "lead_unlocked",
-                title: "Lead Unlocked",
-                message: `A lead has been unlocked via card payment ($${(amountTotal / 100).toFixed(2)}).`,
-                metadata: { lead_id: leadId, amount_cents: amountTotal },
-              });
-
-              // PARITY FIX (C2): track conversion event for analytics, mirror unlock-lead.
-              try {
-                const { data: leadCreated } = await supabaseAdmin
-                  .from("leads")
-                  .select("created_at")
-                  .eq("id", leadId)
-                  .maybeSingle();
-                const unlockTimeHours = leadCreated?.created_at
-                  ? (Date.now() - new Date(leadCreated.created_at).getTime()) / (1000 * 60 * 60)
-                  : null;
-
-                await supabaseAdmin.from("notification_events").insert({
-                  lead_id: leadId,
-                  facility_id: facilityId,
-                  user_id: userId,
-                  notification_stage: "unlock",
-                  channel: "platform",
-                  event_type: "unlocked",
-                  notification_type: "conversion",
-                  metadata: {
-                    price_paid: amountTotal,
-                    time_to_unlock_hours: unlockTimeHours ? Math.round(unlockTimeHours * 10) / 10 : null,
-                    payment_method: "stripe",
-                  },
-                });
-
-                await supabaseAdmin.from("notification_preferences").update({
-                  last_unlock_at: unlockTimestamp,
-                }).eq("user_id", userId);
-              } catch (trackErr) {
-                logStep("WARN - Failed to track Stripe unlock conversion", { error: String(trackErr) });
-              }
-
-              // PARITY FIX (C2): send the unlock-confirmation email to the provider
-              // (the credit-path equivalent in unlock-lead/index.ts).
-              try {
-                if (resend) {
-                  const { data: providerProfile } = await supabaseAdmin
-                    .from("profiles")
-                    .select("email, first_name")
-                    .eq("user_id", userId)
-                    .maybeSingle();
-
-                  const { data: facilityRow } = await supabaseAdmin
-                    .from("facilities")
-                    .select("name")
-                    .eq("id", facilityId)
-                    .maybeSingle();
-
-                  const { data: leadName } = await supabaseAdmin
-                    .from("leads")
-                    .select("name")
-                    .eq("id", leadId)
-                    .maybeSingle();
-
-                  if (providerProfile?.email) {
-                    const providerFirst = providerProfile.first_name || "there";
-                    const facilityNameStr = facilityRow?.name || "your facility";
-                    const seekerFirst = leadName?.name ? leadName.name.split(" ")[0] : "a seeker";
-
-                    await sendEmailWithRetry(supabaseAdmin, resend, {
-                      from: "RehabLookup <no-reply@rehablookup.com>",
-                      to: [providerProfile.email],
-                      subject: `Lead Unlocked — ${seekerFirst}'s contact details are ready`,
-                      html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;"><tr><td align="center" style="padding:40px 20px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);"><tr><td style="background:linear-gradient(135deg,#1B365D 0%,#2a4a7f 100%);padding:32px;text-align:center;"><div style="font-size:40px;margin-bottom:12px;">🔓</div><h1 style="margin:0;color:#fff;font-size:24px;font-weight:700;">Lead Unlocked</h1></td></tr><tr><td style="padding:32px;"><p style="margin:0 0 16px;font-size:16px;color:#1a1a1a;line-height:1.6;">Hi ${providerFirst},</p><p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">You've unlocked a lead for <strong>${facilityNameStr}</strong>. The contact details are now available in your dashboard.</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f9ff;border-radius:12px;margin-bottom:24px;"><tr><td style="padding:20px;"><p style="margin:0 0 8px;font-size:14px;color:#1e40af;"><strong>Amount:</strong> $${(amountTotal / 100).toFixed(2)}</p><p style="margin:0;font-size:14px;color:#1e40af;"><strong>Payment:</strong> Card</p></td></tr></table><p style="margin:0 0 24px;font-size:15px;color:#4b5563;line-height:1.7;">💡 <strong>Tip:</strong> Respond within 1 hour for the best chance of connecting with this lead.</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center"><a href="https://rehablookup.com/provider/inquiries" style="display:inline-block;background:#1B365D;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;">View Lead Details</a></td></tr></table></td></tr><tr><td style="background:#1B365D;padding:24px;text-align:center;"><p style="margin:0;font-size:18px;font-weight:700;color:#fff;">RehabLookup</p><p style="margin:8px 0 0;font-size:12px;color:rgba(255,255,255,0.6);">© ${new Date().getFullYear()} RehabLookup. All rights reserved.</p></td></tr></table></td></tr></table></body></html>`,
-                    }, {
-                      emailType: "lead_unlock_confirmation",
-                      idempotencyKey: `unlock-confirm-${leadId}-${facilityId}`,
-                    });
-                    logStep("Unlock confirmation email sent (Stripe path)");
-                  }
-                }
-              } catch (emailErr) {
-                logStep("WARN - Failed to send Stripe unlock confirmation email", { error: String(emailErr) });
-              }
-
-              // Notify seeker that the facility is reviewing their inquiry
-              try {
-                const { data: leadData } = await supabaseAdmin
-                  .from("leads")
-                  .select("email")
-                  .eq("id", leadId)
-                  .maybeSingle();
-
-                if (leadData?.email) {
-                  // Find the seeker's user_id from their email via seeker_profiles + auth
-                  const { data: seekerUser } = await supabaseAdmin.rpc(
-                    "get_seeker_emails_for_admin"
-                  );
-                  const seekerMatch = (seekerUser || []).find(
-                    (s: { email: string }) => s.email?.toLowerCase() === leadData.email.toLowerCase()
-                  );
-
-                  if (seekerMatch?.user_id) {
-                    // Get facility name for a meaningful notification
-                    const { data: facilityData } = await supabaseAdmin
-                      .from("facilities")
-                      .select("name")
-                      .eq("id", facilityId)
-                      .maybeSingle();
-
-                    const facilityName = facilityData?.name || "A treatment center";
-
-                    await supabaseAdmin.from("seeker_notifications").insert({
-                      user_id: seekerMatch.user_id,
-                      type: "facility_contacted_you",
-                      title: "Facility Reviewing Your Inquiry",
-                      message: `${facilityName} has reviewed your inquiry and may reach out to you soon.`,
-                      link: "/account/requests",
-                      metadata: { lead_id: leadId, facility_id: facilityId },
-                    });
-                    logStep("Seeker notification created for lead unlock", { seekerUserId: seekerMatch.user_id });
-                  }
-                }
-              } catch (seekerNotifErr) {
-                logStep("Non-critical: seeker notification failed", { error: String(seekerNotifErr) });
-              }
-
-              logStep("Lead unlock fully processed via Stripe");
-            }
-          }
-        }
-
-        return new Response(JSON.stringify({ received: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // CREDIT PURCHASE FULFILLMENT
-      if (session.mode === "payment" && metadataType === "credit_purchase") {
-        const amountCents = parseInt(session.metadata?.amount_cents || "0", 10);
-        const bonusCents = parseInt(session.metadata?.bonus_cents || "0", 10);
-        const facilityId = session.metadata?.facility_id;
-        const userId = session.metadata?.user_id;
-        const paymentIntentId = session.payment_intent as string;
-
-        // Validate required fields
-        if (amountCents <= 0 || !userId || !facilityId) {
-          logStep("WARN - Invalid credit purchase metadata", { amountCents, userId, facilityId });
-          return new Response(JSON.stringify({ received: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        // Validate amount is a recognized tier (server-side enforcement)
-        const validTiers = new Set([20000, 50000, 100000]);
-        if (!validTiers.has(amountCents)) {
-          logStep("WARN - Unrecognized credit tier", { amountCents });
-          return new Response(JSON.stringify({ received: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        // Validate bonus matches tier: $500 = 5000 (+10%), $1,000 = 20000 (+20%)
-        const TIER_BONUSES: Record<number, number> = { 20000: 0, 50000: 5000, 100000: 20000 };
-        const expectedBonus = TIER_BONUSES[amountCents] ?? 0;
-        const safeBonusCents = Math.min(bonusCents, expectedBonus);
-        const totalCreditsCents = amountCents + safeBonusCents;
-
-        // HARDENING: Verify actual payment status from Stripe (don't trust event alone)
-        let verifiedAmount: number;
-        try {
-          const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
-          if (pi.status !== "succeeded") {
-            logStep("WARN - PaymentIntent not succeeded, skipping credit grant", { piStatus: pi.status, paymentIntentId });
-            return new Response(JSON.stringify({ received: true }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-          verifiedAmount = pi.amount;
-          if (verifiedAmount !== amountCents) {
-            logStep("WARN - PaymentIntent amount mismatch", { piAmount: verifiedAmount, metadataAmount: amountCents });
-            return new Response(JSON.stringify({ received: true }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-        } catch (piErr) {
-          logStep("ERROR - Could not verify PaymentIntent", { error: String(piErr) });
-          return new Response(JSON.stringify({ error: "Payment verification failed" }), {
-            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        logStep("Processing credit purchase (verified)", { amountCents, bonusCents: safeBonusCents, totalCreditsCents, facilityId, userId });
-
-        // Idempotency check: prevent double-crediting from duplicate webhooks
-        const { data: existingTx } = await supabaseAdmin
-          .from("credit_transactions")
-          .select("id")
-          .eq("reference_id", session.id)
-          .eq("transaction_type", "purchase")
-          .maybeSingle();
-
-        if (existingTx) {
-          logStep("Credit purchase already processed (duplicate webhook), skipping", { sessionId: session.id, existingTxId: existingTx.id });
-        } else {
-          // 1. Insert purchase transaction as idempotency gate
-          const { error: txInsertError } = await supabaseAdmin.from("credit_transactions").insert({
-            provider_id: userId,
-            facility_id: facilityId,
-            amount_cents: amountCents,
-            transaction_type: "purchase",
-            reference_id: session.id,
-            description: `Purchased $${(amountCents / 100).toFixed(0)} in credits`,
-            stripe_payment_intent_id: paymentIntentId,
-          });
-
-          if (txInsertError) {
-            // If insert fails with unique constraint, it's a concurrent duplicate — safe to skip
-            logStep("Credit transaction insert failed (likely duplicate)", { error: txInsertError.message });
-          } else {
-            // 2. If bonus credits, insert separate bonus transaction for audit trail
-            if (safeBonusCents > 0) {
-              const { error: bonusError } = await supabaseAdmin.from("credit_transactions").insert({
-                provider_id: userId,
-                facility_id: facilityId,
-                amount_cents: safeBonusCents,
-                transaction_type: "bonus",
-                reference_id: `${session.id}_bonus`,
-                description: `Bonus credits for $${(amountCents / 100).toFixed(0)} purchase`,
-                stripe_payment_intent_id: paymentIntentId,
-              });
-
-              if (bonusError) {
-                logStep("WARN - Bonus transaction insert failed", { error: bonusError.message });
-              } else {
-                logStep("Bonus credits transaction logged", { bonusCents: safeBonusCents });
-              }
-            }
-
-            // 3. ATOMIC balance increment — eliminates race condition
-            const { data: newBalance, error: creditError } = await supabaseAdmin
-              .rpc("increment_provider_credits", {
-                p_provider_id: userId,
-                p_facility_id: facilityId,
-                p_amount_cents: totalCreditsCents,
-              });
-
-            if (creditError) {
-              logStep("ERROR - Failed to increment credits balance", { error: creditError.message });
-            } else {
-              logStep("Credits added successfully (atomic)", { newBalance, totalCreditsCents });
-
-              // 4. Provider notification
-              const bonusMsg = safeBonusCents > 0
-                ? ` (includes $${(safeBonusCents / 100).toFixed(0)} bonus!)`
-                : "";
-              await supabaseAdmin.from("provider_notifications").insert({
-                user_id: userId,
-                facility_id: facilityId,
-                type: "credits_added",
-                title: "Credits Added",
-                message: `$${(totalCreditsCents / 100).toFixed(0)} in credits added to your account${bonusMsg}`,
-                metadata: {
-                  purchase_amount_cents: amountCents,
-                  bonus_cents: safeBonusCents,
-                  total_credits_cents: totalCreditsCents,
-                  new_balance: newBalance,
-                  payment_intent_id: paymentIntentId,
-                  checkout_session_id: session.id,
-                },
-              });
-
-              // 5. Send credit purchase confirmation email
-              if (resend) {
-                try {
-                  const purchaseEmail = session.customer_email || session.customer_details?.email;
-                  if (purchaseEmail) {
-                    const amountFormatted = (amountCents / 100).toFixed(0);
-                    const totalFormatted = (totalCreditsCents / 100).toFixed(0);
-                    const balanceFormatted = typeof newBalance === "number" ? (newBalance / 100).toFixed(0) : "N/A";
-                    await sendEmailWithRetry(supabaseAdmin, resend, {
-                      from: "RehabLookup <no-reply@rehablookup.com>",
-                      to: [purchaseEmail],
-                      subject: `✅ Credit Purchase Confirmed — $${amountFormatted}`,
-                      html: `
-                        <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto;">
-                          <div style="background-color: #1B365D; background: #1B365D; padding: 30px; border-radius: 12px 12px 0 0;">
-                            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-family: Arial, Helvetica, sans-serif;">✅ Credits Added</h1>
-                          </div>
-                          <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
-                            <p style="color: #374151;">Your credit purchase has been confirmed.</p>
-                            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                              <tr><td style="padding: 8px 0; color: #6b7280;">Purchase Amount</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #374151;">$${amountFormatted}</td></tr>
-                              ${safeBonusCents > 0 ? `<tr><td style="padding: 8px 0; color: #059669;">Bonus Credits</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #059669;">+$${(safeBonusCents / 100).toFixed(0)}</td></tr>` : ""}
-                              <tr style="border-top: 2px solid #e5e7eb;"><td style="padding: 8px 0; font-weight: 700; color: #374151;">Total Credits Added</td><td style="padding: 8px 0; text-align: right; font-weight: 700; color: #374151;">$${totalFormatted}</td></tr>
-                              <tr><td style="padding: 8px 0; color: #6b7280;">New Balance</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #1B365D;">$${balanceFormatted}</td></tr>
-                            </table>
-                            <div style="text-align: center; margin: 30px 0;">
-                              <a href="https://rehablookup.com/provider/billing" style="background: #1B365D; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">View Billing</a>
-                            </div>
-                          </div>
-                          <div style="background-color: #1B365D; background: #1B365D; padding: 16px; border-radius: 0 0 12px 12px; text-align: center;">
-                            <p style="margin: 0; font-size: 13px; color: #cbd5e1; font-family: Arial, Helvetica, sans-serif;">RehabLookup — Connecting families with trusted treatment providers</p>
-                          </div>
-                        </div>
-                      `,
-                    }, { emailType: "credit_purchase_receipt", idempotencyKey: `credit-receipt-${session.id}` });
-                    logStep("Credit purchase confirmation email sent", { email: purchaseEmail });
-                  }
-                } catch (emailErr) {
-                  logStep("Warning: Credit purchase email failed (non-critical)", { error: String(emailErr) });
-                }
-              }
-
-              logStep("Credit purchase fully processed", { newBalance });
-            }
-          }
-        }
-        
-        return new Response(JSON.stringify({ received: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // PRO SUBSCRIPTION ACTIVATION
+      // PRO_SUBSCRIPTION (annual)
       if (session.mode === "subscription" && metadataType === "pro_subscription") {
         const facilityId = session.metadata?.facility_id;
         const userId = session.metadata?.user_id;
@@ -857,8 +454,23 @@ Deno.serve(async (req) => {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
 
+          // Derive new monetization flags from the subscription items.
+          // Falls back to legacy price_cents if no new lookup keys
+          // matched (older subscriptions still flow through here).
+          const flagsCheckout = deriveTierFlagsFromSubscription(subscription);
+          const monthlyEquivalentCents = flagsCheckout.matched_new_lookup_keys
+            ? (FULL_MONTHLY_CENTS.pro +
+                (flagsCheckout.has_featured ? FULL_MONTHLY_CENTS.featured : 0) +
+                (flagsCheckout.has_concierge_partner ? FULL_MONTHLY_CENTS.concierge : 0))
+            : 39900;
+          // Annual subscriptions track period_start AND current_monthly_period_start
+          // (the helpers that read monthly elapsed time look at the latter first,
+          // falling back to period_start for annual). For monthly, both point at the
+          // current 30-day window's start; for annual they stay aligned.
+          const periodStartISO = new Date(subscription.current_period_start * 1000).toISOString();
+
           const { error: proError } = await supabaseAdmin
-            .from("pro_subscriptions")
+            .from("facility_subscriptions")
             .upsert({
               provider_id: userId,
               facility_id: facilityId,
@@ -866,7 +478,18 @@ Deno.serve(async (req) => {
               stripe_customer_id: customerId,
               status: "active",
               unlock_discount_percent: 20,
-              price_cents: 39900,
+              price_cents: monthlyEquivalentCents,
+              tier: "pro",
+              has_featured: flagsCheckout.has_featured,
+              has_concierge_partner: flagsCheckout.has_concierge_partner,
+              billing_period: flagsCheckout.billing_period ?? "annual",
+              paid_amount_cents: flagsCheckout.matched_new_lookup_keys
+                ? flagsCheckout.paid_amount_cents
+                : null,
+              original_annual_cents: flagsCheckout.original_annual_cents,
+              discount_applied_cents: flagsCheckout.discount_applied_cents,
+              period_start: periodStartISO,
+              current_monthly_period_start: periodStartISO,
               started_at: new Date().toISOString(),
               current_period_end: currentPeriodEnd,
               updated_at: new Date().toISOString(),
@@ -954,13 +577,49 @@ Deno.serve(async (req) => {
       });
 
       const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      const mappedStatus = subscription.status === "active" ? "active" 
+      const mappedStatus = subscription.status === "active" ? "active"
         : subscription.status === "past_due" ? "past_due"
         : subscription.status === "canceled" ? "canceled"
         : subscription.status;
 
+      // Detect mid-period add-on removal by comparing DB-stored add-on flags
+      // with the current subscription items. If Featured/Concierge were active
+      // and the lookup key is no longer present in the items, the provider
+      // dropped that add-on — refund + deactivate dependent rows via the
+      // shared cancel module. cancelSubscriptionAndRefund handles flag
+      // persistence + audit row + Stripe refund, so we skip the manual
+      // flag-update below for the affected add-on.
+      const { data: priorSubRow } = await supabaseAdmin
+        .from("facility_subscriptions")
+        .select("id, has_featured, has_concierge_partner")
+        .eq("stripe_subscription_id", subscription.id)
+        .maybeSingle();
+      const currentFlags = deriveTierFlagsFromSubscription(subscription);
+      const droppedFeatured = priorSubRow?.has_featured === true && !currentFlags.has_featured;
+      const droppedConcierge = priorSubRow?.has_concierge_partner === true && !currentFlags.has_concierge_partner;
+      if (priorSubRow && (droppedFeatured || droppedConcierge)) {
+        try {
+          if (droppedFeatured) {
+            const r = await cancelSubscriptionAndRefund(priorSubRow.id, {
+              scope: "addon-featured",
+              reason: "stripe webhook: featured item removed from subscription",
+            });
+            logStep("Featured add-on refunded on item removal", { refundCents: r.featuredRefundCents, refundIds: r.stripeRefundIds });
+          }
+          if (droppedConcierge) {
+            const r = await cancelSubscriptionAndRefund(priorSubRow.id, {
+              scope: "addon-concierge",
+              reason: "stripe webhook: concierge item removed from subscription",
+            });
+            logStep("Concierge add-on refunded on item removal", { refundCents: r.conciergeRefundCents, refundIds: r.stripeRefundIds });
+          }
+        } catch (addonErr) {
+          logStep("ERROR refunding removed add-on", { error: String(addonErr) });
+        }
+      }
+
       const { error: updateError } = await supabaseAdmin
-        .from("pro_subscriptions")
+        .from("facility_subscriptions")
         .update({
           status: mappedStatus,
           current_period_end: currentPeriodEnd,
@@ -976,7 +635,7 @@ Deno.serve(async (req) => {
 
         // Fetch the pro_subscription record for all status-change handling below
         const { data: proSub } = await supabaseAdmin
-          .from("pro_subscriptions")
+          .from("facility_subscriptions")
           .select("provider_id, facility_id")
           .eq("stripe_subscription_id", subscription.id)
           .maybeSingle();
@@ -1241,6 +900,29 @@ Deno.serve(async (req) => {
           });
           logStep("Payment event recorded");
 
+          // On renewal (subscription_cycle), clear the renewal_reminder_*_sent_at
+          // milestones so the daily cron can fire the 60/30/14/7-day reminders
+          // for the new period. First payment of a subscription is
+          // `subscription_create`; we skip resets in that case since the
+          // columns are already NULL on a fresh row.
+          if (invoice.billing_reason === "subscription_cycle" && invoice.subscription) {
+            const { error: resetErr } = await supabaseAdmin
+              .from("facility_subscriptions")
+              .update({
+                renewal_reminder_60d_sent_at: null,
+                renewal_reminder_30d_sent_at: null,
+                renewal_reminder_14d_sent_at: null,
+                renewal_reminder_7d_sent_at: null,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("stripe_subscription_id", invoice.subscription as string);
+            if (resetErr) {
+              logStep("Failed to reset renewal reminder milestones", { error: resetErr.message });
+            } else {
+              logStep("Renewal reminder milestones reset for new period");
+            }
+          }
+
           // Send payment confirmation notification + email to provider (renewals & first payments)
           if (userId && facilityId) {
             const amountFormatted = (invoice.amount_paid / 100).toFixed(2);
@@ -1348,7 +1030,24 @@ Deno.serve(async (req) => {
         const amount = priceItem?.price?.unit_amount || 0;
         const currency = (priceItem?.price?.currency || "usd").toUpperCase();
 
-        if (priceItem?.price?.product) {
+        // Try the new flat-fee monetization lookup keys first.
+        // If the subscription has any of the six (Pro / Featured /
+        // Concierge × monthly / annual), derive tier + addon flags and
+        // billing_period from those. Falls through to the legacy
+        // PRO_PRODUCT_IDS check otherwise.
+        const flags = deriveTierFlagsFromSubscription(subscription);
+        if (flags.matched_new_lookup_keys) {
+          planTier = flags.tier;
+          const intervalSuffix = flags.billing_period === "monthly" ? "monthly" : "annual";
+          planName =
+            flags.has_featured && flags.has_concierge_partner
+              ? `Pro + Featured + Concierge (${intervalSuffix})`
+              : flags.has_featured
+                ? `Pro + Featured (${intervalSuffix})`
+                : flags.has_concierge_partner
+                  ? `Pro + Concierge (${intervalSuffix})`
+                  : `Pro (${intervalSuffix})`;
+        } else if (priceItem?.price?.product) {
           const product = await stripe.products.retrieve(priceItem.price.product as string);
           planName = product.name;
           productId = product.id;
@@ -1528,15 +1227,45 @@ Deno.serve(async (req) => {
             .limit(1);
 
           if (facilities?.[0]) {
-            // Update pro_subscriptions to cancelled
-            await supabaseAdmin
-              .from("pro_subscriptions")
-              .update({ 
-                status: "canceled", 
-                canceled_at: new Date().toISOString(),
-                updated_at: new Date().toISOString() 
-              })
-              .eq("stripe_subscription_id", subscription.id);
+            // Resolve the facility_subscriptions row id so cancelSubscriptionAndRefund
+            // can refund per-tier (Pro + every active add-on), record audit
+            // rows, and flip the row to canceled with has_featured=false +
+            // has_concierge_partner=false in a single transactional call.
+            const { data: subRow } = await supabaseAdmin
+              .from("facility_subscriptions")
+              .select("id")
+              .eq("stripe_subscription_id", subscription.id)
+              .maybeSingle();
+
+            if (subRow?.id) {
+              try {
+                const cancelResult = await cancelSubscriptionAndRefund(subRow.id, {
+                  scope: "all",
+                  reason: subscription.cancellation_details?.reason
+                    ? `stripe webhook: ${subscription.cancellation_details.reason}`
+                    : "stripe webhook: subscription.deleted",
+                });
+                logStep("Cancellation refunds issued", {
+                  totalRefundCents: cancelResult.totalRefundCents,
+                  refundIds: cancelResult.stripeRefundIds,
+                  rowIds: cancelResult.cancellationRowIds,
+                });
+              } catch (cancelErr) {
+                logStep("ERROR running cancelSubscriptionAndRefund", { error: String(cancelErr) });
+                // Fallback: at minimum mark the row canceled so downstream
+                // benefit removal still runs.
+                await supabaseAdmin
+                  .from("facility_subscriptions")
+                  .update({
+                    status: "canceled",
+                    canceled_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", subRow.id);
+              }
+            } else {
+              logStep("No facility_subscriptions row found for cancelled Stripe sub — skipping refund executor", { stripeSubId: subscription.id });
+            }
 
             // DEACTIVATE PRO BENEFITS: remove featured flag and ranking boost from ALL provider facilities
             const providerId = profiles[0].user_id;
@@ -1718,70 +1447,12 @@ Deno.serve(async (req) => {
     }
 
     // ==========================================
-    // Handle payment_intent.payment_failed (placement fees)
-    // ==========================================
-    if (event.type === "payment_intent.payment_failed") {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      const invoiceId = paymentIntent.metadata?.invoice_id;
-      
-      if (invoiceId) {
-        logStep("Placement fee payment failed", { paymentIntentId: paymentIntent.id, invoiceId });
+    // payment_intent.payment_failed handler retired — it processed
+    // placement_invoices failures, which is the dead pay-per-admission
+    // flow. The placement_invoices table was dropped in the
+    // monetization rebuild. International + concierge payment failure
+    // handling continues below.
 
-        // Idempotency: check if this failure event was already recorded
-        const { data: existingFailEvent } = await supabaseAdmin
-          .from('placement_fee_events')
-          .select('id')
-          .eq('invoice_id', invoiceId)
-          .eq('event_type', 'failed')
-          .eq('details->>payment_intent_id', paymentIntent.id)
-          .maybeSingle();
-
-        if (existingFailEvent) {
-          logStep("Payment failure already recorded (duplicate webhook), skipping", { invoiceId, eventId: event.id });
-        } else {
-          const { data: invoice } = await supabaseAdmin
-            .from('placement_invoices')
-            .update({ status: 'failed' })
-            .eq('id', invoiceId)
-            .select('*, facilities(id, name, email, user_id)')
-            .single();
-
-          if (invoice) {
-            await supabaseAdmin.from('placement_fee_events').insert({
-              invoice_id: invoiceId,
-              inquiry_id: invoice.inquiry_id,
-              facility_id: invoice.facility_id,
-              event_type: 'failed',
-              actor_type: 'system',
-              amount_cents: invoice.amount_cents,
-              details: {
-                payment_intent_id: paymentIntent.id,
-                failure_code: paymentIntent.last_payment_error?.code,
-                failure_message: paymentIntent.last_payment_error?.message,
-              },
-            });
-
-            if (invoice.facilities?.user_id) {
-              await supabaseAdmin.from('provider_notifications').insert({
-                user_id: invoice.facilities.user_id,
-                facility_id: invoice.facility_id,
-                type: 'payment_failed',
-                title: 'Placement Fee Payment Failed',
-                message: `Your payment of $${(invoice.amount_cents / 100).toFixed(2)} failed. Please update your payment method.`,
-                metadata: { invoice_id: invoiceId, amount_cents: invoice.amount_cents },
-              });
-            }
-
-            await supabaseAdmin.from('admin_notifications').insert({
-              type: 'placement_payment_failed',
-              title: 'Placement Fee Payment Failed',
-              message: `Payment failed for ${invoice.facilities?.name || 'Unknown'} - $${(invoice.amount_cents / 100).toFixed(2)}`,
-              metadata: { invoice_id: invoiceId, facility_id: invoice.facility_id, amount_cents: invoice.amount_cents },
-            });
-          }
-        }
-      }
-    }
 
     // ==========================================
     // Handle charge.refunded (international payments)

@@ -15,7 +15,7 @@ const prefetchMap: Record<string, () => Promise<unknown>> = {
   "/admin/profile": () => import("@/pages/admin/AdminProfile"),
   "/admin/reviews": () => import("@/pages/admin/AdminReviews"),
   "/admin/concierge": () => import("@/pages/admin/AdminConcierge"),
-  "/admin/placement-revenue": () => import("@/pages/admin/PlacementRevenueDashboard"),
+  // /admin/placement-revenue dashboard removed in monetization rebuild.
   "/admin/support": () => import("@/pages/admin/AdminSupport"),
   "/admin/marketing": () => import("@/pages/admin/AdminMarketing"),
   "/admin/blog": () => import("@/pages/admin/AdminBlog"),

@@ -363,7 +363,7 @@ function PlansStep({
           </div>
           <p className="text-xs font-bold text-foreground">Pro</p>
           <p className="text-base font-bold text-foreground mt-0.5 mb-3">
-            $399<span className="text-[10px] font-normal text-muted-foreground">/mo</span>
+            $99<span className="text-[10px] font-normal text-muted-foreground">/mo · annual</span>
           </p>
           <div className="space-y-1.5">
             {PRO_FEATURES.map((f, i) => (

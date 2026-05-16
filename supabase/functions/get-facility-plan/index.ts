@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
 
     // Check pro_subscriptions table first (new model)
     const { data: proSub } = await supabaseClient
-      .from("pro_subscriptions")
+      .from("facility_subscriptions")
       .select("id, status, current_period_end")
       .eq("facility_id", facilityId)
       .eq("status", "active")

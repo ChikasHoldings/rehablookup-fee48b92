@@ -351,8 +351,16 @@ const ProviderKnowledgeBasePage = lazy(() => import("./pages/provider/KnowledgeB
 const ProviderImageGuidelines = lazy(() => import("./pages/provider/ImageGuidelines"));
 const ProviderAddLocation = lazy(() => import("./pages/provider/AddLocation"));
 const ProviderBillingPage = lazy(() => import("./pages/provider/Billing"));
-const ProviderProUpgradePage = lazy(() => import("./pages/provider/ProUpgrade"));
-const ProviderPlacementNetworkPage = lazy(() => import("./pages/provider/PlacementNetwork"));
+const ProviderBillingCancelPage = lazy(() => import("./pages/provider/BillingCancel"));
+const ProviderBillingPlacementsPage = lazy(() => import("./pages/provider/BillingPlacements"));
+const ProviderBillingConciergePage = lazy(() => import("./pages/provider/BillingConcierge"));
+const ProviderMarketingHub = lazy(() => import("./pages/provider/MarketingHub"));
+const ProviderMarketingFeatured = lazy(() => import("./pages/provider/MarketingFeatured"));
+const ProviderMarketingConcierge = lazy(() => import("./pages/provider/MarketingConcierge"));
+// Pro upgrade page + Placement network removed in monetization rebuild.
+// /provider/pro-upgrade and /provider/placement-network now Navigate
+// to /for-providers so any stale bookmark / external link still lands
+// on the new sales surface.
 
 // Admin Panel pages - lazy load (shell handles Suspense)
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
@@ -377,7 +385,8 @@ const AdminConcierge = lazy(() => import("./pages/admin/AdminConcierge"));
 const AdminConciergeAuditReview = lazy(() => import("./pages/admin/AdminConciergeAuditReview"));
 const AdminConciergeMetrics = lazy(() => import("./pages/admin/AdminConciergeMetrics"));
 const InternationalAgreementTemplate = lazy(() => import("./pages/admin/InternationalAgreementTemplate"));
-const PlacementRevenueDashboard = lazy(() => import("./pages/admin/PlacementRevenueDashboard"));
+// PlacementRevenueDashboard removed in monetization rebuild — admin
+// /admin/placement-revenue Navigate'd to /admin/dashboard below.
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
 const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
@@ -1602,16 +1611,27 @@ const AppInner = () => {
               <Route path="reviews" element={<ProviderReviewsPage />} />
               <Route path="analytics" element={<ProviderAnalyticsPage />} />
               <Route path="credits" element={<Navigate to="/provider/billing?purchase_credits=true" replace />} />
-              <Route path="pro-upgrade" element={<ProviderProUpgradePage />} />
+              <Route path="pro-upgrade" element={<Navigate to="/for-providers" replace />} />
               <Route path="billing" element={<ProviderBillingPage />} />
+              <Route path="subscription" element={<ProviderBillingPage />} />
+              <Route path="billing/cancel" element={<ProviderBillingCancelPage />} />
+              <Route path="billing/placements" element={<ProviderBillingPlacementsPage />} />
+              <Route path="billing/concierge" element={<ProviderBillingConciergePage />} />
+              <Route path="marketing" element={<ProviderMarketingHub />} />
+              <Route path="marketing/featured" element={<ProviderMarketingFeatured />} />
+              <Route path="marketing/concierge" element={<ProviderMarketingConcierge />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="embed-badge" element={<ProviderEmbedBadgePage />} />
               <Route path="notifications" element={<ProviderNotificationsPage />} />
               <Route path="help" element={<ProviderHelpPage />} />
               <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
               <Route path="image-guidelines" element={<ProviderImageGuidelines />} />
-              <Route path="placement-network" element={<ProviderPlacementNetworkPage />} />
-              <Route path="placements" element={<Navigate to="/provider/placement-network" replace />} />
+              {/* placement-network + placements removed — the pay-per-admission
+                  network model retired. Both navigate to the new for-providers
+                  sales surface so stale bookmarks land somewhere useful. */}
+              <Route path="placement-network" element={<Navigate to="/provider/marketing" replace />} />
+              <Route path="placements" element={<Navigate to="/provider/marketing/featured" replace />} />
+              <Route path="placement" element={<Navigate to="/provider/marketing/concierge" replace />} />
             </Route>
 
             {/* Admin Routes */}
@@ -1642,7 +1662,9 @@ const AppInner = () => {
               <Route path="concierge/metrics" element={<AdminConciergeMetrics />} />
               <Route path="international" element={<Navigate to="/admin/concierge" replace />} />
               <Route path="international/agreement" element={<InternationalAgreementTemplate />} />
-              <Route path="placement-revenue" element={<PlacementRevenueDashboard />} />
+              {/* placement-revenue dashboard removed — pay-per-admission
+                  revenue stream retired. */}
+              <Route path="placement-revenue" element={<Navigate to="/admin" replace />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="marketing" element={<AdminMarketing />} />
               <Route path="blog" element={<AdminBlog />} />

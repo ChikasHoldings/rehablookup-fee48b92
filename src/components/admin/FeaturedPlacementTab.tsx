@@ -163,7 +163,7 @@ export function FeaturedPlacementTab() {
       <Alert className="border-amber-200 bg-amber-50">
         <Info className="h-4 w-4 text-amber-600" />
         <AlertDescription className="text-amber-800">
-          <strong>Pro Members Only:</strong> Featured placement is automatically included with Pro subscription ($399/mo). 
+          <strong>Pro Members Only:</strong> Featured placement is automatically included with Pro subscription. 
           Pro facilities are rotated daily using a fairness algorithm to ensure equal exposure.
         </AlertDescription>
       </Alert>

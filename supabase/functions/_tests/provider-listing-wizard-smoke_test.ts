@@ -92,7 +92,7 @@ Deno.test("[purchase-listing-slot] missing/invalid bearer token returns 401 (not
 Deno.test("[purchase-listing-slot] requires active Pro subscription -> 403 when missing", async () => {
   const src = await loadSource(PURCHASE_PATH);
   // The Pro check queries pro_subscriptions with status=active.
-  assertStringIncludes(src, 'from("pro_subscriptions")');
+  assertStringIncludes(src, 'from("facility_subscriptions")');
   assertStringIncludes(src, '.eq("status", "active")');
   // Missing Pro must respond 403 — NOT 401 (that's auth) and NOT 500.
   const re = /No active Pro subscription[\s\S]{0,400}?status:\s*403/;
@@ -192,7 +192,7 @@ Deno.test("[get-facility-plan] missing Stripe key -> safe default { plan: \"free
 Deno.test("[get-facility-plan] active pro_subscriptions row -> { plan: \"pro\" }", async () => {
   const src = await loadSource(PLAN_PATH);
   // DB lookup is the fast path (avoids a Stripe round-trip).
-  assertStringIncludes(src, 'from("pro_subscriptions")');
+  assertStringIncludes(src, 'from("facility_subscriptions")');
   assertStringIncludes(src, '.eq("facility_id", facilityId)');
   assertStringIncludes(src, '.eq("status", "active")');
   // Must enforce that the period hasn't expired.

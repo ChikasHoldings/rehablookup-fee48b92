@@ -33,7 +33,7 @@ export function useProStatus(facilityId?: string) {
 
         // Query pro_subscriptions table with existing columns only
         let queryBuilder = supabase
-          .from("pro_subscriptions")
+          .from("facility_subscriptions")
           .select("id, provider_id, facility_id, status, stripe_subscription_id, current_period_end, unlock_discount_percent, cancel_at_period_end, created_at, updated_at")
           .eq("provider_id", session.user.id);
 

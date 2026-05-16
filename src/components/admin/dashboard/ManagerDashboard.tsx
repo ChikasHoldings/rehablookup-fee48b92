@@ -216,9 +216,9 @@ export function ManagerDashboard() {
     queryKey: ["manager-subscription-stats"],
     queryFn: async () => {
       const [active, trial, canceled] = await Promise.all([
-        supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
-        supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "trialing"),
-        supabase.from("pro_subscriptions").select("id", { count: "exact", head: true }).eq("status", "canceled"),
+        supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).eq("status", "trialing"),
+        supabase.from("facility_subscriptions").select("id", { count: "exact", head: true }).eq("status", "canceled"),
       ]);
       return {
         active: active.count || 0,

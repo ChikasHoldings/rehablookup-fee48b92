@@ -33,7 +33,6 @@ import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
 import { formatPhoneNumber, isValidPhoneNumber } from "@/lib/phoneUtils";
 import { ActivityLogTab } from "@/components/provider/settings/ActivityLogTab";
 import { SessionManagementTab } from "@/components/provider/settings/SessionManagementTab";
-import { UnlockHistoryTab } from "@/components/provider/settings/UnlockHistoryTab";
 import { useLogActivity } from "@/hooks/useActivityLog";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -183,7 +182,7 @@ export default function ProviderSettingsPage() {
 
   // Sync tab from URL
   useEffect(() => {
-    if (urlTab && ["profile", "security", "notifications", "sessions", "activity", "unlock-history"].includes(urlTab)) {
+    if (urlTab && ["profile", "security", "notifications", "sessions", "activity"].includes(urlTab)) {
       setActiveTab(urlTab);
     }
   }, [urlTab]);
@@ -853,13 +852,8 @@ export default function ProviderSettingsPage() {
                 <Activity className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                 Activity
               </TabsTrigger>
-              <TabsTrigger 
-                value="unlock-history" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
-              >
-                <History className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                Unlock History
-              </TabsTrigger>
+              {/* Unlock History tab retired — lead-unlocking removed in
+                  monetization rebuild. */}
             </TabsList>
           </div>
 
@@ -1540,9 +1534,7 @@ export default function ProviderSettingsPage() {
           </TabsContent>
 
           {/* Unlock History Tab */}
-          <TabsContent value="unlock-history" className="mt-6">
-            <UnlockHistoryTab />
-          </TabsContent>
+          {/* unlock-history tab content retired in monetization rebuild. */}
         </Tabs>
       </div>
     </div>

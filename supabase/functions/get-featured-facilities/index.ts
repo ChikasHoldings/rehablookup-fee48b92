@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
       supabaseClient.from("platform_settings").select("setting_value").eq("setting_key", "featured_notification_settings").maybeSingle(),
       supabaseClient.from("platform_settings").select("setting_value").eq("setting_key", "featured_platform_settings").maybeSingle(),
       supabaseClient.from("facilities").select("id, user_id, featured, featured_pinned, last_featured_shown_at, suspended, name, featured_display_order").eq("status", "approved").or("suspended.is.null,suspended.eq.false"),
-      supabaseClient.from("pro_subscriptions").select("facility_id, provider_id").eq("status", "active").gt("current_period_end", new Date().toISOString()),
+      supabaseClient.from("facility_subscriptions").select("facility_id, provider_id").eq("status", "active").gt("current_period_end", new Date().toISOString()),
       supabaseClient.from("profiles").select("user_id, email, first_name, last_name"),
     ]);
 

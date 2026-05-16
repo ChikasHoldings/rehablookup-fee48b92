@@ -28,16 +28,22 @@ import { readFile, readdir, stat } from 'node:fs/promises'
 import { join, extname } from 'node:path'
 
 const FORBIDDEN_PATTERNS = [
-  // Inflated count claims that the live database doesn't justify
+  // Inflated count claims that the live database doesn't justify.
+  // Updated 2026-05: SAMHSA ingest landed and the live count is now
+  // ~3,800 approved facilities, so "3,800+ verified" is defensible.
+  // The 10K / 15K / 20K / 25K / 50K bans below still apply — those
+  // would be inflated against the current row count.
   /\b15,?000\s*\+?\s*(?:verified|rehab|treatment|facilities|centers|programs|locations)/i,
   /\b10,?000\s*\+?\s*(?:verified|rehab|treatment|facilities|centers|programs|locations)/i,
   /\b20,?000\s*\+?\s*(?:verified|rehab|treatment|facilities|centers|programs|locations)/i,
   /\b25,?000\s*\+?\s*(?:verified|rehab|treatment|facilities|centers|programs|locations)/i,
   /\b50,?000\s*\+?\s*(?:verified|rehab|treatment|facilities|centers|programs|locations)/i,
-  // "Search X+ verified" superlative patterns
-  /Search\s+\d{1,3},?\d{3}\+?\s+verified/i,
-  /Compare\s+\d{1,3},?\d{3}\+?\s+verified/i,
-  /Browse\s+\d{1,3},?\d{3}\+?\s+verified/i,
+  // "Search X+ verified" / "Compare X+ verified" / "Browse X+ verified"
+  // — only fire on the inflated 10K-50K range, NOT on legitimate
+  // 3,800+ claims that the database supports.
+  /Search\s+(?:10|15|20|25|30|40|50),?\d{3}\+?\s+verified/i,
+  /Compare\s+(?:10|15|20|25|30|40|50),?\d{3}\+?\s+verified/i,
+  /Browse\s+(?:10|15|20|25|30|40|50),?\d{3}\+?\s+verified/i,
   // "Nation's largest" / "America's most comprehensive" — leave only if defensible
   /\b(?:nation's largest|america's largest|world's largest|biggest)\s+(?:rehab|treatment|recovery|addiction)/i,
 ]
