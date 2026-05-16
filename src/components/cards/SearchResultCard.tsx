@@ -450,8 +450,8 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                     : "shadow-md hover:shadow-lg"
                 )}
               >
-                <span className="md:hidden">Request Info</span>
-                <span className="hidden md:inline">Request Information</span>
+                <span className="md:hidden">Send Message</span>
+                <span className="hidden md:inline">Send Message</span>
                 <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" aria-hidden="true" />
               </Button>
             </Link>

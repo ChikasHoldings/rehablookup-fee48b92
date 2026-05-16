@@ -59,7 +59,7 @@ import { ReportImageDialog } from "@/components/profile/ReportImageDialog";
 import { TrustBadgesInline } from "@/components/trust/TrustBadgesSection";
 import { FacilityReviewsSection } from "@/components/reviews/FacilityReviewsSection";
 import { cn } from "@/lib/utils";
-import { formatPhoneNumber } from "@/lib/phoneUtils";
+import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 import { RehabScorePanel } from "@/components/profile/RehabScorePanel";
@@ -992,22 +992,40 @@ const CenterProfile = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col xs:flex-row items-stretch gap-2 px-3 py-3 sm:px-4 md:px-6 border-t border-border/30 bg-card">
-              <Button
-                size="lg"
-                className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold shadow-sm"
-                onClick={() => handleRequestInfoOpen("hero_request_call")}
-              >
-                <Phone className="h-4 w-4 shrink-0" />
-                <span className="truncate">Request Call</span>
-              </Button>
+              {/* Call — native dialer via tel:. Only renders when the
+                  facility's contact details are exposable (Pro plan,
+                  see showContactDetails) AND the row has a phone. The
+                  global useTelClickTracking handler logs the click via
+                  the standard phone_click event; trackInteraction
+                  preserves the page-local "call" interaction signal. */}
+              {showContactDetails && facility.phone && (
+                <Button
+                  asChild
+                  size="lg"
+                  className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold shadow-sm"
+                >
+                  <a
+                    href={`tel:+1${getPhoneDigits(facility.phone)}`}
+                    onClick={() => trackInteraction("call")}
+                    aria-label={`Call ${facility.name} at ${formatPhoneNumber(facility.phone)}`}
+                    data-cta-location="hero_call"
+                  >
+                    <Phone className="h-4 w-4 shrink-0" />
+                    <span className="truncate whitespace-nowrap">
+                      Call {formatPhoneNumber(facility.phone)}
+                    </span>
+                  </a>
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="lg"
                 className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold"
                 onClick={() => handleRequestInfoOpen("hero_request_info")}
+                aria-label={`Send a message to ${facility.name}`}
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
-                <span className="truncate">Request Info</span>
+                <span className="truncate">Send Message</span>
               </Button>
               {/* Save / favorite — guest favorites persist to localStorage and
                   migrate to user_favorites on signin; authed seekers update the
@@ -1389,13 +1407,14 @@ const CenterProfile = () => {
                   </p>
 
                   <div className="space-y-2.5">
-                    <Button 
-                      size="lg" 
+                    <Button
+                      size="lg"
                       className="w-full gap-2 h-11 text-sm font-semibold"
                       onClick={() => handleRequestInfoOpen("sidebar_request_info")}
+                      aria-label={`Send a message to ${facility.name}`}
                     >
                       <Sparkles className="h-4 w-4" />
-                      Request Info
+                      Send Message
                     </Button>
 
                     {showContactDetails && (
@@ -1420,42 +1439,10 @@ const CenterProfile = () => {
                   </div>
                 </div>
 
-                {/* Quick Facts */}
-                <div className="rounded-2xl bg-card border border-border/40 p-5 shadow-sm">
-                  <h3 className="text-sm font-bold text-foreground mb-3">Quick Facts</h3>
-                  <div className="space-y-0 divide-y divide-border/30">
-                    <div className="flex items-center justify-between py-2 text-xs">
-                      <span className="text-muted-foreground">Type</span>
-                      <span className="font-medium text-foreground">{facility.facility_type}</span>
-                    </div>
-                    {genderLabel && (
-                      <div className="flex items-center justify-between py-2 text-xs">
-                        <span className="text-muted-foreground">Gender</span>
-                        <span className="font-medium text-foreground">{genderLabel}</span>
-                      </div>
-                    )}
-                    {facility.bed_count && (
-                      <div className="flex items-center justify-between py-2 text-xs">
-                        <span className="text-muted-foreground">Capacity</span>
-                        <span className="font-medium text-foreground">{facility.bed_count} beds</span>
-                      </div>
-                    )}
-                    {facility.year_established && (
-                      <div className="flex items-center justify-between py-2 text-xs">
-                        <span className="text-muted-foreground">Established</span>
-                        <span className="font-medium text-foreground">{facility.year_established}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between py-2 text-xs">
-                      <span className="text-muted-foreground">Programs</span>
-                      <span className="font-medium text-foreground">{services.length}</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 text-xs">
-                      <span className="text-muted-foreground">Insurance</span>
-                      <span className="font-medium text-foreground">{insuranceList.length} accepted</span>
-                    </div>
-                  </div>
-                </div>
+                {/* (Quick Facts sidebar card removed — its data already
+                    appears in the page's QuickFactsStrip + the body
+                    sections above. The sidebar now leads with the
+                    primary contact CTAs and Concierge card directly.) */}
 
                 {/* Concierge CTA Card */}
                 <ConciergeCTACard />
@@ -1468,7 +1455,7 @@ const CenterProfile = () => {
             {/* Mobile CTA */}
             <div className="rounded-2xl bg-card border border-border/40 p-5">
               <h3 className="font-display text-base font-bold text-foreground mb-1">
-                Request Information
+                Send a Message
               </h3>
               <p className="text-xs text-muted-foreground mb-4">
                 Take the first step towards recovery.
@@ -1493,42 +1480,9 @@ const CenterProfile = () => {
               </div>
             </div>
 
-            {/* Mobile Quick Facts */}
-            <div className="rounded-2xl bg-card border border-border/40 p-5">
-              <h3 className="text-sm font-bold text-foreground mb-3">Quick Facts</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="p-2.5 rounded-lg bg-muted/40">
-                  <span className="text-xs text-muted-foreground block uppercase tracking-wide">Type</span>
-                  <span className="text-xs font-semibold text-foreground">{facility.facility_type}</span>
-                </div>
-                {genderLabel && (
-                  <div className="p-2.5 rounded-lg bg-muted/40">
-                    <span className="text-xs text-muted-foreground block uppercase tracking-wide">Gender</span>
-                    <span className="text-xs font-semibold text-foreground">{genderLabel}</span>
-                  </div>
-                )}
-                {facility.bed_count && (
-                  <div className="p-2.5 rounded-lg bg-muted/40">
-                    <span className="text-xs text-muted-foreground block uppercase tracking-wide">Capacity</span>
-                    <span className="text-xs font-semibold text-foreground">{facility.bed_count} beds</span>
-                  </div>
-                )}
-                {facility.year_established && (
-                  <div className="p-2.5 rounded-lg bg-muted/40">
-                    <span className="text-xs text-muted-foreground block uppercase tracking-wide">Established</span>
-                    <span className="text-xs font-semibold text-foreground">{facility.year_established}</span>
-                  </div>
-                )}
-                <div className="p-2.5 rounded-lg bg-muted/40">
-                  <span className="text-xs text-muted-foreground block uppercase tracking-wide">Services</span>
-                  <span className="text-xs font-semibold text-foreground">{services.length} programs</span>
-                </div>
-                <div className="p-2.5 rounded-lg bg-muted/40">
-                  <span className="text-xs text-muted-foreground block uppercase tracking-wide">Insurance</span>
-                  <span className="text-xs font-semibold text-foreground">{insuranceList.length} accepted</span>
-                </div>
-              </div>
-            </div>
+            {/* (Mobile Quick Facts card removed alongside the desktop
+                sidebar version — same data already lives in the page's
+                QuickFactsStrip near the top.) */}
 
             <ConciergeCTACard compact />
           </div>
