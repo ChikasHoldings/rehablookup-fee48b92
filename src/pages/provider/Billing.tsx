@@ -1,89 +1,104 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  CreditCard,
-  ExternalLink,
-  Sparkles,
-  ArrowRight,
-  CheckCircle2,
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
-import { useQuery } from "@tanstack/react-query";
-import { getCachedSession } from "@/lib/sessionCache";
-
-interface FacilitySubscription {
-  id: string;
-  status: string | null;
-  tier: string | null;
-  has_featured: boolean | null;
-  has_concierge_partner: boolean | null;
-  billing_period: string | null;
-  paid_amount_cents: number | null;
-  price_cents: number | null;
-  current_period_end: string | null;
-  started_at: string | null;
-  canceled_at: string | null;
-  stripe_customer_id: string | null;
-}
+import {
+  useFacilitySubscription,
+  useInvalidateFacilitySubscription,
+} from "@/hooks/useFacilitySubscription";
+import { CurrentPlanCard } from "@/components/provider/billing/CurrentPlanCard";
+import {
+  PlanComparisonGrid,
+} from "@/components/provider/billing/PlanComparisonGrid";
+import { SwitchToAnnualBanner } from "@/components/provider/billing/SwitchToAnnualBanner";
+import type { BillingInterval } from "@/components/provider/billing/BillingIntervalToggle";
 
 /**
- * Billing — provider subscription summary.
+ * /provider/billing — main billing surface for facilities.
  *
- * Replaces the legacy credit-purchase + auto-reload + $399-Pro UX with
- * a minimal subscription-status surface backed by `facility_subscriptions`.
- * The new annual flat-fee monetization (Pro / Featured / Concierge) is
- * the only model supported here. To start or change a subscription,
- * providers are routed to `/for-providers` (sales) or the Stripe
- * customer portal (manage existing).
+ * Composition:
+ *  • SwitchToAnnualBanner — shown only to monthly Pro subscribers
+ *  • CurrentPlanCard      — current state + Upgrade / Manage / Cancel
+ *  • PlanComparisonGrid   — Pro / Featured / Concierge with interval toggle
+ *  • PendingCheckoutState — appears when ?checkout=success is in URL
+ *
+ * The detailed upgrade wizard, slot picker, and Concierge geo selector
+ * live on follow-up routes (/provider/billing/upgrade,
+ * /provider/billing/placements, /provider/billing/concierge) — this page
+ * is the gateway.
  */
 export default function ProviderBilling() {
   const navigate = useNavigate();
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
   const [searchParams, setSearchParams] = useSearchParams();
+  const isCheckoutReturn = searchParams.get("checkout") === "success";
+
+  // Poll for the subscription_created webhook to land for ~90s after a
+  // successful Stripe Checkout. Stop earlier once the subscription is
+  // active (the effect below clears the polling flag).
+  const [pollingActive, setPollingActive] = useState(isCheckoutReturn);
+  const { data: subscription, isLoading } = useFacilitySubscription(facilityId, {
+    pollWhilePending: pollingActive,
+  });
+  const invalidateSub = useInvalidateFacilitySubscription();
+
   const portalDebounceRef = useRef(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
-  // Clear ?canceled=true after Stripe portal return.
+  // Default the comparison grid's interval toggle to whatever the
+  // subscriber currently has, falling back to monthly for Free.
+  const [interval, setInterval] = useState<BillingInterval>("monthly");
   useEffect(() => {
-    if (searchParams.get("canceled") === "true") {
-      const next = new URLSearchParams(searchParams);
-      next.delete("canceled");
-      setSearchParams(next, { replace: true });
+    if (subscription?.billing_period === "annual") setInterval("annual");
+  }, [subscription?.billing_period]);
+
+  // Cap polling at 90s — if the webhook still hasn't landed by then,
+  // surface a recovery message instead of spinning forever.
+  const [pollingTimedOut, setPollingTimedOut] = useState(false);
+  useEffect(() => {
+    if (!pollingActive) return;
+    const t = setTimeout(() => {
+      setPollingTimedOut(true);
+      setPollingActive(false);
+    }, 90_000);
+    return () => clearTimeout(t);
+  }, [pollingActive]);
+
+  // Stop polling as soon as the subscription lands active.
+  useEffect(() => {
+    if (pollingActive && subscription?.status === "active") {
+      setPollingActive(false);
     }
-  }, [searchParams, setSearchParams]);
+  }, [pollingActive, subscription?.status]);
 
-  const { data: subscription, isLoading } = useQuery({
-    queryKey: ["facility-subscription", facilityId],
-    queryFn: async (): Promise<FacilitySubscription | null> => {
-      if (!facilityId) return null;
-      const session = await getCachedSession();
-      if (!session) return null;
-      const { data, error } = await supabase
-        .from("facility_subscriptions")
-        .select(
-          "id, status, tier, has_featured, has_concierge_partner, billing_period, paid_amount_cents, price_cents, current_period_end, started_at, canceled_at, stripe_customer_id",
-        )
-        .eq("facility_id", facilityId)
-        .maybeSingle();
-      if (error) {
-        console.error("[Billing] subscription fetch failed", error);
-        return null;
-      }
-      return data as FacilitySubscription | null;
-    },
-    enabled: !!facilityId,
-    staleTime: 1000 * 30,
-  });
+  const checkoutPolling = pollingActive && (!subscription || subscription.status !== "active");
 
-  const handleManageSubscription = async () => {
+  // Auto-clear ?checkout=success once the subscription lands active.
+  useEffect(() => {
+    if (isCheckoutReturn && subscription?.status === "active") {
+      const next = new URLSearchParams(searchParams);
+      next.delete("checkout");
+      next.delete("session_id");
+      setSearchParams(next, { replace: true });
+      toast.success("Subscription active. Welcome aboard!");
+      invalidateSub(facilityId);
+    }
+  }, [isCheckoutReturn, subscription?.status, searchParams, setSearchParams, invalidateSub, facilityId]);
+
+  const handleUpgrade = (_target: "pro" | "featured" | "concierge") => {
+    // TODO(monetization PR-3 follow-up): route to /provider/billing/upgrade
+    // multi-step modal with the right preselection. For this PR, navigate
+    // to the sales page where checkout is wired up.
+    navigate("/for-providers#interest");
+  };
+
+  const handleManageBilling = async () => {
     if (portalDebounceRef.current) return;
     portalDebounceRef.current = true;
     setPortalLoading(true);
@@ -108,23 +123,20 @@ export default function ProviderBilling() {
     }
   };
 
-  const isActive = subscription?.status === "active";
-  const tierLabel = subscription
-    ? subscription.has_featured && subscription.has_concierge_partner
-      ? "Pro + Featured + Concierge"
-      : subscription.has_featured
-        ? "Pro + Featured"
-        : subscription.has_concierge_partner
-          ? "Pro + Concierge"
-          : subscription.tier === "pro"
-            ? "Pro"
-            : "Free"
-    : "Free";
+  const isMonthlyPro =
+    subscription?.tier === "pro" &&
+    subscription?.status === "active" &&
+    subscription?.billing_period === "monthly";
 
-  const fmtMoney = (cents: number | null | undefined) =>
-    cents == null
-      ? "—"
-      : `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <Skeleton className="h-12 w-2/3 mb-6" />
+        <Skeleton className="h-48 w-full mb-6" />
+        <Skeleton className="h-80 w-full" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -133,113 +145,56 @@ export default function ProviderBilling() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
-      <div className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
+      <div className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             Billing &amp; Subscription
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage your annual subscription, view invoices, and update your payment method.
+            Manage your plan, payment method, and add-ons.
           </p>
         </div>
 
-        {/* Current subscription card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-primary" />
-              Current subscription
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {isLoading ? (
-              <Skeleton className="h-24 w-full" />
-            ) : (
-              <>
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge
-                    variant={isActive ? "default" : "secondary"}
-                    className={isActive ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-                  >
-                    {tierLabel}
-                  </Badge>
-                  {isActive && (
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Active
-                    </span>
-                  )}
-                  {!isActive && subscription?.status && (
-                    <span className="text-xs text-muted-foreground capitalize">
-                      {subscription.status.replace(/_/g, " ")}
-                    </span>
-                  )}
-                </div>
+        {checkoutPolling && (
+          <Card>
+            <CardContent className="p-5 flex items-center gap-3">
+              <Loader2 className="h-5 w-5 animate-spin text-[#1B365D]" />
+              <div className="flex-1">
+                <p className="font-medium text-slate-900">
+                  {pollingTimedOut
+                    ? "Still finalizing your subscription…"
+                    : "Processing your subscription…"}
+                </p>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  {pollingTimedOut
+                    ? "Your payment was successful, but we're still finalizing the setup. Refresh this page in a minute, or contact support if anything looks off."
+                    : "Your payment succeeded. We're activating your account — this usually takes a few seconds."}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-                <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                  <div>
-                    <dt className="text-muted-foreground">Billing period</dt>
-                    <dd className="font-medium">
-                      {subscription?.billing_period === "annual" ? "Annual" : "—"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Annual total</dt>
-                    <dd className="font-medium">{fmtMoney(subscription?.paid_amount_cents)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Monthly equivalent</dt>
-                    <dd className="font-medium">{fmtMoney(subscription?.price_cents)}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Renewal date</dt>
-                    <dd className="font-medium">
-                      {subscription?.current_period_end
-                        ? new Date(subscription.current_period_end).toLocaleDateString()
-                        : "—"}
-                    </dd>
-                  </div>
-                </dl>
+        {isMonthlyPro && subscription && (
+          <SwitchToAnnualBanner
+            subscription={subscription}
+            onSwitched={() => invalidateSub(facilityId)}
+          />
+        )}
 
-                <div className="flex flex-wrap gap-3 pt-2 border-t">
-                  <Button
-                    onClick={handleManageSubscription}
-                    disabled={portalLoading || !subscription?.stripe_customer_id}
-                    variant="outline"
-                    className="gap-2"
-                  >
-                    {portalLoading ? "Opening…" : "Manage billing"}
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </Button>
-                  {!isActive && (
-                    <Button onClick={() => navigate("/for-providers")} className="gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      Upgrade options
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <CurrentPlanCard
+          subscription={subscription ?? null}
+          onUpgradeClick={() => handleUpgrade("pro")}
+          onManageBillingClick={handleManageBilling}
+          managingPortal={portalLoading}
+        />
 
-        {/* Plan comparison link */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Compare plans</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              See every tier side-by-side — Pro, Pro + Featured, Pro + Concierge Partner — with
-              transparent annual pricing on a single page.
-            </p>
-            <Button asChild variant="outline" className="gap-2">
-              <Link to="/for-providers">
-                View plans &amp; pricing <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <PlanComparisonGrid
+          subscription={subscription ?? null}
+          interval={interval}
+          onIntervalChange={setInterval}
+          onUpgrade={handleUpgrade}
+        />
       </div>
     </>
   );
