@@ -29,40 +29,99 @@ const PRO_PRODUCT_IDS = [
 ];
 
 // New flat-fee monetization lookup keys (created by
-// scripts/stripe-setup-monetization.ts). Webhook derives the tier +
-// addon flags from which of these appear in the subscription items.
+// scripts/stripe-setup-monetization.ts). Six keys = three SKUs × two
+// billing intervals. The webhook resolves both billing_period and the
+// tier/addon flags from the lookup_key + price.recurring.interval.
 const LOOKUP_KEYS = {
-  PRO: "rl_pro_annual_v1",
-  FEATURED: "rl_featured_annual_v1",
-  CONCIERGE: "rl_concierge_annual_v1",
+  PRO_MONTHLY: "rl_pro_monthly_v1",
+  PRO_ANNUAL: "rl_pro_annual_v1",
+  FEATURED_MONTHLY: "rl_featured_monthly_v1",
+  FEATURED_ANNUAL: "rl_featured_annual_v1",
+  CONCIERGE_MONTHLY: "rl_concierge_monthly_v1",
+  CONCIERGE_ANNUAL: "rl_concierge_annual_v1",
+} as const;
+
+const PRO_KEYS = [LOOKUP_KEYS.PRO_MONTHLY, LOOKUP_KEYS.PRO_ANNUAL] as const;
+const FEATURED_KEYS = [LOOKUP_KEYS.FEATURED_MONTHLY, LOOKUP_KEYS.FEATURED_ANNUAL] as const;
+const CONCIERGE_KEYS = [LOOKUP_KEYS.CONCIERGE_MONTHLY, LOOKUP_KEYS.CONCIERGE_ANNUAL] as const;
+
+// Per-tier full monthly rates in cents. Used both to compute the
+// monthly_equivalent for cancellation math AND, on annual subscriptions,
+// to reconstruct original_annual_cents + discount_applied_cents.
+const FULL_MONTHLY_CENTS = {
+  pro: 9900,        // $99
+  featured: 59900,  // $599
+  concierge: 100000, // $1,000
 } as const;
 
 /**
  * Inspect a Stripe subscription's items and return:
- *   - tier:                "pro" if any item matches the Pro lookup key
- *   - has_featured:        true if any item matches the Featured key
- *   - has_concierge_partner: true if any item matches the Concierge key
+ *   - tier:                "pro" if any item matches a Pro lookup key
+ *   - has_featured:        true if any item matches a Featured key
+ *   - has_concierge_partner: true if any item matches a Concierge key
+ *   - billing_period:      "monthly" | "annual" — inferred from the FIRST
+ *                          matched item's recurring.interval. All items
+ *                          on the same subscription share one interval
+ *                          (Stripe requires this for a single subscription).
  *   - paid_amount_cents:   sum of unit_amount × quantity across all items
- * Falls through to {tier:null, ...} if no new lookup keys are present
- * (legacy subscriptions still fall through to the older code path).
+ *                          (= what Stripe just charged this period)
+ *   - original_annual_cents: for annual subscriptions, the un-discounted
+ *                            yearly sticker (full_monthly × 12 × pieces).
+ *                            null for monthly.
+ *   - discount_applied_cents: for annual, original − paid (≈15%). 0 for monthly.
+ * Falls through to {tier:null, matched_new_lookup_keys:false} if no new
+ * lookup keys are present (legacy subscriptions still flow through the
+ * older code path that follows in checkout.session.completed).
  */
 function deriveTierFlagsFromSubscription(sub: Stripe.Subscription) {
   let isPro = false;
   let hasFeatured = false;
   let hasConcierge = false;
   let paidAmountCents = 0;
+  let interval: "month" | "year" | null = null;
   for (const item of sub.items.data) {
-    const lookupKey = item.price.lookup_key;
-    if (lookupKey === LOOKUP_KEYS.PRO) isPro = true;
-    if (lookupKey === LOOKUP_KEYS.FEATURED) hasFeatured = true;
-    if (lookupKey === LOOKUP_KEYS.CONCIERGE) hasConcierge = true;
+    const lookupKey = item.price.lookup_key as string | null;
+    const itemInterval = item.price.recurring?.interval as "month" | "year" | undefined;
+    if (lookupKey && (PRO_KEYS as readonly string[]).includes(lookupKey)) isPro = true;
+    if (lookupKey && (FEATURED_KEYS as readonly string[]).includes(lookupKey)) hasFeatured = true;
+    if (lookupKey && (CONCIERGE_KEYS as readonly string[]).includes(lookupKey)) hasConcierge = true;
+    if (
+      lookupKey &&
+      itemInterval &&
+      interval === null &&
+      (
+        (PRO_KEYS as readonly string[]).includes(lookupKey) ||
+        (FEATURED_KEYS as readonly string[]).includes(lookupKey) ||
+        (CONCIERGE_KEYS as readonly string[]).includes(lookupKey)
+      )
+    ) {
+      interval = itemInterval;
+    }
     paidAmountCents += (item.price.unit_amount ?? 0) * (item.quantity ?? 1);
   }
+  const billingPeriod: "monthly" | "annual" | null =
+    interval === "month" ? "monthly" : interval === "year" ? "annual" : null;
+
+  // Reconstruct the sticker price + discount for annual subscribers.
+  // For monthly, original = null and discount = 0 (no annual sticker).
+  let originalAnnualCents: number | null = null;
+  let discountAppliedCents = 0;
+  if (billingPeriod === "annual" && (isPro || hasFeatured || hasConcierge)) {
+    originalAnnualCents =
+      (isPro ? FULL_MONTHLY_CENTS.pro * 12 : 0) +
+      (hasFeatured ? FULL_MONTHLY_CENTS.featured * 12 : 0) +
+      (hasConcierge ? FULL_MONTHLY_CENTS.concierge * 12 : 0);
+    discountAppliedCents = Math.max(0, originalAnnualCents - paidAmountCents);
+  }
+
   return {
     tier: isPro ? "pro" : null,
     has_featured: hasFeatured,
     has_concierge_partner: hasConcierge,
+    billing_period: billingPeriod,
     paid_amount_cents: paidAmountCents,
+    original_annual_cents: originalAnnualCents,
+    discount_applied_cents: discountAppliedCents,
     matched_new_lookup_keys: isPro || hasFeatured || hasConcierge,
   };
 }
@@ -412,10 +471,15 @@ Deno.serve(async (req) => {
           // matched (older subscriptions still flow through here).
           const flagsCheckout = deriveTierFlagsFromSubscription(subscription);
           const monthlyEquivalentCents = flagsCheckout.matched_new_lookup_keys
-            ? (9900 +
-                (flagsCheckout.has_featured ? 59900 : 0) +
-                (flagsCheckout.has_concierge_partner ? 100000 : 0))
+            ? (FULL_MONTHLY_CENTS.pro +
+                (flagsCheckout.has_featured ? FULL_MONTHLY_CENTS.featured : 0) +
+                (flagsCheckout.has_concierge_partner ? FULL_MONTHLY_CENTS.concierge : 0))
             : 39900;
+          // Annual subscriptions track period_start AND current_monthly_period_start
+          // (the helpers that read monthly elapsed time look at the latter first,
+          // falling back to period_start for annual). For monthly, both point at the
+          // current 30-day window's start; for annual they stay aligned.
+          const periodStartISO = new Date(subscription.current_period_start * 1000).toISOString();
 
           const { error: proError } = await supabaseAdmin
             .from("facility_subscriptions")
@@ -430,11 +494,14 @@ Deno.serve(async (req) => {
               tier: "pro",
               has_featured: flagsCheckout.has_featured,
               has_concierge_partner: flagsCheckout.has_concierge_partner,
-              billing_period: "annual",
+              billing_period: flagsCheckout.billing_period ?? "annual",
               paid_amount_cents: flagsCheckout.matched_new_lookup_keys
                 ? flagsCheckout.paid_amount_cents
                 : null,
-              period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              original_annual_cents: flagsCheckout.original_annual_cents,
+              discount_applied_cents: flagsCheckout.discount_applied_cents,
+              period_start: periodStartISO,
+              current_monthly_period_start: periodStartISO,
               started_at: new Date().toISOString(),
               current_period_end: currentPeriodEnd,
               updated_at: new Date().toISOString(),
@@ -917,21 +984,22 @@ Deno.serve(async (req) => {
         const currency = (priceItem?.price?.currency || "usd").toUpperCase();
 
         // Try the new flat-fee monetization lookup keys first.
-        // If the subscription has any of `rl_pro_annual_v1`,
-        // `rl_featured_annual_v1`, `rl_concierge_annual_v1`, derive
-        // tier + addon flags from those. Falls through to the legacy
+        // If the subscription has any of the six (Pro / Featured /
+        // Concierge × monthly / annual), derive tier + addon flags and
+        // billing_period from those. Falls through to the legacy
         // PRO_PRODUCT_IDS check otherwise.
         const flags = deriveTierFlagsFromSubscription(subscription);
         if (flags.matched_new_lookup_keys) {
           planTier = flags.tier;
+          const intervalSuffix = flags.billing_period === "monthly" ? "monthly" : "annual";
           planName =
             flags.has_featured && flags.has_concierge_partner
-              ? "Pro + Featured + Concierge (annual)"
+              ? `Pro + Featured + Concierge (${intervalSuffix})`
               : flags.has_featured
-                ? "Pro + Featured (annual)"
+                ? `Pro + Featured (${intervalSuffix})`
                 : flags.has_concierge_partner
-                  ? "Pro + Concierge (annual)"
-                  : "Pro (annual)";
+                  ? `Pro + Concierge (${intervalSuffix})`
+                  : `Pro (${intervalSuffix})`;
         } else if (priceItem?.price?.product) {
           const product = await stripe.products.retrieve(priceItem.price.product as string);
           planName = product.name;
