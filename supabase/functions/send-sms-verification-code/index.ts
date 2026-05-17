@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { generateOtpCode } from "../_shared/otp-code.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,15 +10,6 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[SMS-VERIFICATION-SEND] ${step}${detailsStr}`);
 };
-
-// Cryptographically random 6-digit code. Math.random isn't a CSPRNG;
-// for an authentication factor (even short-lived) we use Web Crypto.
-// Mirrors send-verification-code/index.ts:14-20 (email-OTP path).
-function generateSmsCode(): string {
-  const buf = new Uint32Array(1);
-  crypto.getRandomValues(buf);
-  return String(buf[0] % 1_000_000).padStart(6, "0");
-}
 
 Deno.serve(async (req) => {
   const requestId = crypto.randomUUID().slice(0, 8);
@@ -108,8 +100,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Generate 6-digit code (CSPRNG — see generateSmsCode above)
-    const code = generateSmsCode();
+    const code = generateOtpCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
 
     // Store verification code

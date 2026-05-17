@@ -80,10 +80,8 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
         .limit(1)
         .maybeSingle();
       if (data?.tier === "pro") {
-        // The Stripe webhook is the sole writer of profiles.plan='pro'
-        // — the F1 sensitive-column guard rejects any authenticated
-        // client write of that elevation. We only advance the wizard
-        // state row here (which has its own owner-RLS).
+        // profiles.plan='pro' is webhook-only (a DB guard rejects
+        // authenticated client writes); we just advance wizard state.
         await advance({ plan: "pro", current_step: "build" });
         trackEvent("provider_onboarding_step_submit", {
           step_name: "plan",

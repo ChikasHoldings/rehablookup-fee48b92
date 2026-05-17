@@ -164,13 +164,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // C6 fix — server-side flip of profiles.email_verified_at when a
-    // provider profile exists for this email. The F1 sensitive-column
-    // guard trigger on profiles blocks the wizard from doing this
-    // write client-side, so verify-code owns it. UPDATE with no
-    // matching row is a no-op for non-provider flows (concierge /
-    // international / lead intake / review submission), so this is
-    // safe to run unconditionally.
+    // profiles.email_verified_at is a sensitive column rejected for
+    // authenticated client writes; we own the flip here. UPDATE
+    // no-ops for emails without a matching provider profile.
     const { error: profileMarkErr } = await supabase
       .from("profiles")
       .update({ email_verified_at: verifiedAt })

@@ -455,12 +455,6 @@ export default function ClaimWizard() {
                 onJump={setStep}
                 onBack={() => setStep(4)}
                 onSubmitted={async () => {
-                  // C9 fix — claim submit must advance the unified
-                  // provider_onboarding_state cursor + flip
-                  // profiles.onboarding_completed_at. The RPC is
-                  // SECURITY DEFINER so it bypasses the F1 guard
-                  // trigger. Best-effort: a failure here doesn't
-                  // block the user from seeing the success screen.
                   try {
                     await supabase.rpc("complete_provider_onboarding");
                   } catch (e) {

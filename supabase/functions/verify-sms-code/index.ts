@@ -45,17 +45,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // C3 fix — authenticate the caller via the Authorization header
-    // instead of trusting body.userId. Without this, any caller could
-    // attach an attacker-controlled phone to a victim's profile by
-    // passing the victim's userId and a valid OTP for the attacker's
-    // own phone.
+    // Profile writes key off the JWT-authenticated id, never a
+    // body-supplied userId. Anon callers (seeker-intake pre-signup)
+    // still verify the code but skip the profile write.
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const authHeader = req.headers.get("Authorization");
-    let authenticatedUserId: string | null = null;
+    let userId: string | null = null;
     if (authHeader) {
       const token = authHeader.replace(/^Bearer\s+/i, "");
-      const authClient = createClient(supabaseUrl, supabaseServiceKey);
-      const { data: userRes, error: userErr } = await authClient.auth.getUser(token);
+      const { data: userRes, error: userErr } = await supabase.auth.getUser(token);
       if (userErr || !userRes?.user?.id) {
         logStep("Invalid auth token", { requestId, error: userErr?.message });
         return new Response(
@@ -63,16 +61,10 @@ Deno.serve(async (req) => {
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      authenticatedUserId = userRes.user.id;
+      userId = userRes.user.id;
     }
 
     const { phone, code, userType } = body;
-    // Body-supplied userId is ignored for the profile write — the
-    // JWT-authenticated id is authoritative. Anon callers (no auth
-    // header) verify the code but no profile is written; this
-    // preserves backward-compat with the seeker-intake call sites
-    // that verify phones BEFORE the user has an auth session.
-    const userId = authenticatedUserId;
 
     if (!phone || !code) {
       logStep("Missing required fields", { requestId, hasPhone: !!phone, hasCode: !!code });
@@ -83,10 +75,9 @@ Deno.serve(async (req) => {
     }
 
     // Rate limiting: max 10 SMS code verification attempts per phone per 15 minutes
-    const supabaseRL = createClient(supabaseUrl, supabaseServiceKey);
     const normalizedPhone = (phone || "").replace(/\D/g, "");
     if (normalizedPhone) {
-      const rateLimitResult = await checkRateLimit(supabaseRL, {
+      const rateLimitResult = await checkRateLimit(supabase, {
         identifier: `phone:${normalizedPhone}`,
         actionType: 'verify_sms_code',
         maxAttempts: 10,
@@ -107,8 +98,6 @@ Deno.serve(async (req) => {
     }
 
     logStep("Processing verification", { requestId, userType: userType || "unknown", hasUserId: !!userId });
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Find the verification code
     const { data: verificationCode, error: fetchError } = await supabase

@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+import { generateOtpCode } from "../_shared/otp-code.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,14 +10,6 @@ const corsHeaders = {
 
 interface VerificationRequest {
   email: string;
-}
-
-function generateCode(): string {
-  // Cryptographically random 6-digit code. Math.random isn't a CSPRNG;
-  // for an authentication factor (even short-lived) we use Web Crypto.
-  const buf = new Uint32Array(1);
-  crypto.getRandomValues(buf);
-  return String(buf[0] % 1_000_000).padStart(6, "0");
 }
 
 Deno.serve(async (req) => {
@@ -77,7 +70,7 @@ Deno.serve(async (req) => {
       console.warn("Failed to invalidate previous codes:", invalidateError);
     }
 
-    const code = generateCode();
+    const code = generateOtpCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
     // Log without exposing code for security

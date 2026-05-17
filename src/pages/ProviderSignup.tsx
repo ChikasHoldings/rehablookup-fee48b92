@@ -895,10 +895,6 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       // Wizard finished — clear the autosave draft so the next signup starts fresh.
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
 
-      // C9 fix — both list-mode (here) and claim-mode (ClaimWizard)
-      // route the completion writes through the
-      // complete_provider_onboarding() RPC so the F1 sensitive-column
-      // guard on profiles.onboarding_completed_at doesn't reject them.
       try {
         await supabase.rpc("complete_provider_onboarding");
       } catch (e) {

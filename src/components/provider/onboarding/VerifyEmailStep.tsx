@@ -142,9 +142,8 @@ export function VerifyEmailStep({ onAdvance }: { onAdvance: () => void }) {
         return;
       }
 
-      // OTP succeeded. verify-code now writes profiles.email_verified_at
-      // server-side (C6 fix) so the F1 sensitive-column guard doesn't
-      // reject a client write. We just advance the wizard cursor.
+      // profiles.email_verified_at is written by verify-code server-side
+      // (a DB guard rejects authenticated client writes).
       await advance({ current_step: "find_or_list" });
       trackEvent("provider_onboarding_step_submit", {
         step_name: "verify_email",

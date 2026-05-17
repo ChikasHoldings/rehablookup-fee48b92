@@ -37,13 +37,8 @@ import { Loader2, ShieldCheck } from "lucide-react";
 
 type Stage = "form" | "verify" | "finalizing";
 
-/**
- * Accept only same-origin relative paths. Rejects:
- *   - absolute URLs (http://, https://, file://)
- *   - protocol-relative URLs (//evil.example)
- *   - anything that doesn't start with a single '/'
- * Falls back to null so the caller defaults to /provider/onboarding.
- */
+// Reject absolute, protocol-relative, and backslash-escaped paths so a
+// crafted `?returnTo=` can't redirect off-origin after signup.
 function safeReturnTo(raw: string | null): string | null {
   if (!raw) return null;
   if (!raw.startsWith("/")) return null;
