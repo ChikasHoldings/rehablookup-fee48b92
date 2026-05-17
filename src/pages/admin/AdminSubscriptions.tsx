@@ -21,6 +21,7 @@ import {
   ChevronRight,
   ExternalLink,
   Settings2,
+  Sliders,
   Star,
   Download,
 } from "lucide-react";
@@ -59,6 +60,7 @@ import { AtRiskProvidersCard } from "@/components/admin/AtRiskProvidersCard";
 import { RetentionDashboard } from "@/components/admin/RetentionDashboard";
 import { SubscriptionDetailModal } from "@/components/admin/SubscriptionDetailModal";
 import { PlanSettingsTab } from "@/components/admin/PlanSettingsTab";
+import { AddonCapsTab } from "@/components/admin/AddonCapsTab";
 import { FeaturedPlacementTab } from "@/components/admin/FeaturedPlacementTab";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
@@ -429,7 +431,7 @@ export default function AdminSubscriptions() {
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <div className="overflow-x-auto">
-          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 sm:grid sm:w-full sm:max-w-3xl sm:grid-cols-5">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 sm:grid sm:w-full sm:max-w-4xl sm:grid-cols-6">
             <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs sm:text-sm">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -445,6 +447,10 @@ export default function AdminSubscriptions() {
             <TabsTrigger value="retention" className="flex items-center gap-1.5 text-xs sm:text-sm">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Retention</span>
+            </TabsTrigger>
+            <TabsTrigger value="caps" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Sliders className="h-4 w-4" />
+              <span className="hidden sm:inline">Caps</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-1.5 text-xs sm:text-sm">
               <Settings2 className="h-4 w-4" />
@@ -778,6 +784,11 @@ export default function AdminSubscriptions() {
         {/* ═══════ Featured Tab ═══════ */}
         <TabsContent value="featured" className="space-y-6">
           <FeaturedPlacementTab />
+        </TabsContent>
+
+        {/* ═══════ Caps Tab ═══════ */}
+        <TabsContent value="caps" className="space-y-6">
+          <AddonCapsTab />
         </TabsContent>
 
         {/* ═══════ Settings Tab ═══════ */}
