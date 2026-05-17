@@ -31,18 +31,11 @@ interface ProfileForWelcome {
  * onboarding_completed_at IS NOT NULL). On display, sets welcomed_at
  * so the modal never reappears for the same user.
  *
- * Plan-aware offer:
- *   - Free → "Try Pro free for 14 days" CTA. Spec §9 said use
- *     trial_period_days IF configured on the Stripe Pro product.
- *     We don't currently know if it's configured (can't introspect
- *     Stripe from the client). The copy module flags
- *     trialNotYetConfigured=true — when that flag is true we ship
- *     "Upgrade to Pro" instead of "Start free trial" so we don't
- *     promise a trial Stripe won't honor. Flip the flag once trial
- *     is set up in Stripe.
- *   - Pro → "Add Featured" CTA. Featured product exists in Stripe
- *     (STRIPE_PRICE_FEATURED_MONTHLY env var); routes to
- *     /provider/marketing/featured.
+ * Plan-aware offer (no trial — we sell Pro at $99/mo, no free trial):
+ *   - Free → "Upgrade to Pro — $99/month" CTA. Routes to
+ *     /provider/billing?upgrade=pro.
+ *   - Pro → "Add Featured" CTA. Featured is a marketing add-on, not
+ *     a plan. Routes to /provider/marketing/featured.
  */
 export function WelcomeModal() {
   const navigate = useNavigate();
@@ -90,13 +83,11 @@ export function WelcomeModal() {
   const plan = profile.plan === "pro" ? "pro" : "free";
   const offer = plan === "pro" ? WELCOME_COPY.proOffer : WELCOME_COPY.freeOffer;
   const firstName = profile.first_name?.trim() || "there";
-  const ctaUnavailable =
-    plan === "free" && (offer as typeof WELCOME_COPY.freeOffer).trialNotYetConfigured;
 
   async function handleOffer() {
     if (busy) return;
     setBusy(true);
-    trackEvent("welcome_modal_offer_clicked", { plan, offer_type: plan === "pro" ? "featured" : "pro_trial" });
+    trackEvent("welcome_modal_offer_clicked", { plan, offer_type: plan === "pro" ? "featured" : "pro_upgrade" });
     try {
       if (plan === "pro") {
         // Featured add-on — route to the marketing page that owns the
@@ -106,10 +97,7 @@ export function WelcomeModal() {
         return;
       }
 
-      // Free → Pro upgrade. Trial flag flips this between
-      // "Start free trial" (when configured) and "Upgrade to Pro"
-      // (current state). Either way we route to billing — the trial
-      // wiring lives in Stripe itself.
+      // Free → Pro upgrade. No free trial — Pro is $99/month flat.
       navigate("/provider/billing?upgrade=pro");
       setOpen(false);
     } catch (e) {
@@ -123,10 +111,8 @@ export function WelcomeModal() {
     setOpen(false);
   }
 
-  // Adjust copy when the trial isn't configured server-side — we
-  // promise only what Stripe will honor.
-  const offerTitle = plan === "free" && ctaUnavailable ? "Upgrade to Pro anytime" : offer.title;
-  const offerCta = plan === "free" && ctaUnavailable ? "Upgrade to Pro" : offer.cta;
+  const offerTitle = offer.title;
+  const offerCta = offer.cta;
 
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : handleDismiss())}>

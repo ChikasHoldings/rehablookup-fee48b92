@@ -190,7 +190,7 @@ export default function InternationalThankYou() {
           body: {
             email: trimmedEmail,
             password,
-            firstName: firstName || "Seeker",
+            firstName: firstName || "Friend",
             lastName: "User",
             accountType: "seeker",
             autoConfirm: true,

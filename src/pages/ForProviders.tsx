@@ -44,7 +44,7 @@ import { useToast } from "@/hooks/use-toast";
 type BillingInterval = "monthly" | "annual";
 
 interface Tier {
-  id: "free" | "pro" | "pro_featured" | "pro_concierge";
+  id: "free" | "pro";
   name: string;
   monthly: number;          // monthly billed amount in USD
   annual: number;           // annual billed amount in USD (monthly × 12 × 0.85)
@@ -52,18 +52,42 @@ interface Tier {
   blurb: string;
 }
 
-// Annual figures match the canonical sales-page pricing.
-// Pro = 99 × 12 × 0.85 = 1,009.80.  Pro+Featured = 1,009.80 + 6,108.60.
-// Pro+Concierge = 1,009.80 + 10,200.  Bundle = 17,318.40.
+// Two plans: Free and Pro. Featured and Concierge are MARKETING
+// ADD-ONS bolted onto an active Pro subscription — they're not
+// standalone plan tiers. See ADD_ONS below for the add-on display.
+// Annual: Pro = 99 × 12 × 0.85 = 1,009.80 (15% off).
 const TIERS: Tier[] = [
-  { id: "free",          name: "Free",            monthly: 0,    annual: 0,         monthlyEquivOfAnnual: 0,       blurb: "Basic claim" },
-  { id: "pro",           name: "Pro",             monthly: 99,   annual: 1009.80,   monthlyEquivOfAnnual: 84.15,   blurb: "Verified, direct contact" },
-  { id: "pro_featured",  name: "Pro + Featured",  monthly: 698,  annual: 7118.40,   monthlyEquivOfAnnual: 593.20,  blurb: "Pro + rotation placements" },
-  { id: "pro_concierge", name: "Pro + Concierge", monthly: 1099, annual: 11209.80,  monthlyEquivOfAnnual: 934.15,  blurb: "Pro + advisor surfacing" },
+  { id: "free", name: "Free", monthly: 0,  annual: 0,       monthlyEquivOfAnnual: 0,     blurb: "Basic claim" },
+  { id: "pro",  name: "Pro",  monthly: 99, annual: 1009.80, monthlyEquivOfAnnual: 84.15, blurb: "Verified profile, direct contact, lead analytics" },
 ];
 
-const ALL_BUNDLE_MONTHLY = 99 + 599 + 1000;          // $1,698/mo
-const ALL_BUNDLE_ANNUAL = 1009.80 + 6108.60 + 10200; // $17,318.40/yr
+interface AddOn {
+  id: "featured" | "concierge";
+  name: string;
+  monthly: number;
+  annual: number;
+  blurb: string;
+  requires: "pro";
+}
+
+const ADD_ONS: AddOn[] = [
+  {
+    id: "featured",
+    name: "Featured",
+    monthly: 599,
+    annual: 6108.60,
+    blurb: "Priority placement on the homepage and your state directory. Listings see ~4× the profile views.",
+    requires: "pro",
+  },
+  {
+    id: "concierge",
+    name: "Concierge",
+    monthly: 1000,
+    annual: 10200,
+    blurb: "Surfaced by our concierge advisors to high-intent families during placement calls.",
+    requires: "pro",
+  },
+];
 
 const fmtMoney = (n: number) =>
   n === 0 ? "$0" : `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -104,7 +128,7 @@ function HeroSection({ scrollToForm }: { scrollToForm: () => void }) {
               onClick={scrollToForm}
               className="bg-[#CDA223] text-[#1B365D] hover:bg-[#B38C1C] font-semibold shadow-lg hover:shadow-xl transition-all gap-2"
             >
-              Request access — limited launch spots
+              Get started — list or claim your facility
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
@@ -134,13 +158,13 @@ function WhyDifferentSection() {
       Icon: ShieldCheck,
       title: "We don't own treatment centers",
       body:
-        "RehabLookup is independent. We don't run rehabs and never will. Your competitors don't own this directory. Your seekers know who's behind the listings.",
+        "RehabLookup is independent. We don't run rehabs and never will. Your competitors don't own this directory. The families browsing it know who's behind the listings.",
     },
     {
       Icon: PhoneOff,
       title: "We never touch your call",
       body:
-        "When a seeker dials your number on RehabLookup, they reach you. No call routing, no qualifying call center, no intermediation. You pay for placement, not for connections.",
+        "When a family dials your number on RehabLookup, they reach you. No call routing, no qualifying call center, no intermediation. You pay for placement, not for connections.",
     },
     {
       Icon: BadgeDollarSign,
@@ -245,21 +269,22 @@ type CellValue = boolean | string | number;
 
 interface Row {
   label: string;
-  values: [CellValue, CellValue, CellValue, CellValue]; // [free, pro, pro+featured, pro+concierge]
+  values: [CellValue, CellValue]; // [free, pro]
 }
 
 const COMPARISON_ROWS: Row[] = [
-  { label: "Listing visible in directory",                   values: [true, true, true, true] },
-  { label: "Verified badge",                                 values: [false, true, true, true] },
-  { label: "Edit description, treatments, hours",            values: [true, true, true, true] },
-  { label: "Upload logo",                                    values: [true, true, true, true] },
-  { label: "Photo gallery",                                  values: ["5 photos", "10 photos", "10 photos", "10 photos"] },
-  { label: "Video upload",                                   values: [false, true, true, true] },
-  { label: "Contact info visible publicly",                  values: ["From SAMHSA", "Direct line", "Direct line", "Direct line"] },
-  { label: "Inquiries from your listing",                    values: ["Routed to concierge", "Direct to your inbox", "Direct to your inbox", "Direct to your inbox"] },
-  { label: "Respond to reviews",                             values: [false, true, true, true] },
-  { label: "Featured rotation placements",                   values: [false, false, true, false] },
-  { label: "Concierge Partner surfacing",                    values: [false, false, false, true] },
+  { label: "Listing visible in directory",        values: [true, true] },
+  { label: "Verified badge",                      values: [false, true] },
+  { label: "Edit description, treatments, hours", values: [true, true] },
+  { label: "Upload logo",                         values: [true, true] },
+  { label: "Photo gallery",                       values: ["5 photos", "10 photos"] },
+  { label: "Video upload",                        values: [false, "1 video"] },
+  { label: "Contact info visible publicly",       values: ["From SAMHSA", "Direct line"] },
+  { label: "Inquiries from your listing",         values: ["Routed to concierge", "Direct to your inbox"] },
+  { label: "Respond to reviews",                  values: [false, true] },
+  { label: "Lead analytics dashboard",            values: [false, true] },
+  { label: "Priority placement on city + state",  values: [false, true] },
+  { label: "Dedicated support",                   values: [false, true] },
 ];
 
 function CellMark({ value }: { value: CellValue }) {
@@ -337,7 +362,7 @@ function PlanComparisonSection() {
                       scope="col"
                       className={cn(
                         "px-4 py-4 text-center text-sm font-semibold text-slate-700",
-                        t.id === "pro_featured" && "bg-[#1B365D]/[0.04]",
+                        t.id === "pro" && "bg-[#1B365D]/[0.04]",
                       )}
                     >
                       {t.name}
@@ -356,7 +381,7 @@ function PlanComparisonSection() {
                       key={t.id}
                       className={cn(
                         "px-4 py-5 text-center align-top",
-                        t.id === "pro_featured" && "bg-[#1B365D]/[0.06]",
+                        t.id === "pro" && "bg-[#1B365D]/[0.06]",
                       )}
                     >
                       <PriceCell tier={t} interval={interval} />
@@ -374,7 +399,7 @@ function PlanComparisonSection() {
                         key={i}
                         className={cn(
                           "px-4 py-3 text-center align-top",
-                          TIERS[i].id === "pro_featured" && "bg-[#1B365D]/[0.04]",
+                          TIERS[i].id === "pro" && "bg-[#1B365D]/[0.04]",
                         )}
                       >
                         <CellMark value={v} />
@@ -387,8 +412,7 @@ function PlanComparisonSection() {
           </div>
 
           <p className="mt-4 text-sm text-slate-600 italic">
-            Both Featured and Concierge can be added together —{" "}
-            {fmtMoneyWhole(ALL_BUNDLE_MONTHLY)}/mo or {fmtMoney(ALL_BUNDLE_ANNUAL)}/yr.
+            Featured and Concierge are marketing add-ons available on Pro — see below.
           </p>
         </div>
 
@@ -401,7 +425,7 @@ function PlanComparisonSection() {
                 value={t.id}
                 className={cn(
                   "rounded-2xl border border-slate-200 bg-white px-4 shadow-sm",
-                  t.id === "pro_featured" && "ring-1 ring-[#1B365D]/20",
+                  t.id === "pro" && "ring-1 ring-[#1B365D]/20",
                 )}
               >
                 <AccordionTrigger className="py-4 hover:no-underline">
@@ -455,10 +479,66 @@ function PlanComparisonSection() {
             ))}
           </Accordion>
           <p className="mt-4 text-xs text-slate-600 italic">
-            Add Featured and Concierge to Pro together — {fmtMoneyWhole(ALL_BUNDLE_MONTHLY)}/mo
-            or {fmtMoney(ALL_BUNDLE_ANNUAL)}/yr.
+            Featured and Concierge are marketing add-ons available on Pro — see below.
           </p>
         </div>
+      </div>
+    </section>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Add-ons (Featured, Concierge) — NOT plans
+// ──────────────────────────────────────────────────────────────────────
+
+function AddOnsSection() {
+  return (
+    <section id="addons" className="py-14 md:py-20 bg-background">
+      <div className="container px-4 md:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="inline-flex items-center rounded-full bg-[#1B365D]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1B365D]">
+            Pro add-ons
+          </span>
+          <h2 className="mt-4 font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-[#1B365D]">
+            Marketing add-ons for Pro subscribers
+          </h2>
+          <p className="mt-3 text-base md:text-lg text-slate-600">
+            Featured and Concierge aren't separate plans — they're optional
+            marketing layers you can add to an active Pro subscription. Slot
+            availability varies by state.
+          </p>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+          {ADD_ONS.map((a) => (
+            <div
+              key={a.id}
+              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="h-4 w-4 text-[#1B365D]" aria-hidden />
+                <h3 className="font-semibold text-lg text-slate-900">{a.name}</h3>
+                <span className="ml-auto text-[11px] uppercase tracking-wide text-slate-500 font-medium">
+                  Requires Pro
+                </span>
+              </div>
+              <p className="text-[15px] leading-relaxed text-slate-600 mb-4">{a.blurb}</p>
+              <div className="mt-auto pt-3 border-t border-slate-100 flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-[#1B365D]">{fmtMoneyWhole(a.monthly)}</span>
+                <span className="text-sm text-slate-500">/month</span>
+                <span className="ml-auto text-xs text-slate-500">
+                  or {fmtMoney(a.annual)}/yr
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-6 text-center text-xs text-slate-500">
+          Add-ons are managed from your provider dashboard after Pro is active.
+          Featured slots are EKRA-clean rotational placements; Concierge surfacing
+          is non-weighted.
+        </p>
       </div>
     </section>
   );
@@ -556,7 +636,7 @@ function ConciergePartnerSection() {
       <div className="container px-4 md:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-[#1B365D] text-center">
-            Prominent surfacing. Seekers still choose.
+            Prominent surfacing. Families still choose.
           </h2>
 
           <div className="mt-6 space-y-4 text-[15px] md:text-base leading-relaxed text-slate-700">
@@ -760,7 +840,7 @@ interface FormState {
   city: string;
   state: string;
   admissionVolume: "" | "<10/mo" | "10-25/mo" | "25-50/mo" | "50-100/mo" | "100+/mo";
-  tierInterest: "" | "pro" | "pro_featured" | "pro_concierge" | "all";
+  tierInterest: "" | "pro" | "pro_plus_featured" | "pro_plus_concierge" | "pro_plus_all_addons";
   billingInterval: BillingIntervalInterest;
   pricingFrustration: string;
 }
@@ -787,11 +867,14 @@ const VOLUME_CHIPS: Array<{ value: FormState["admissionVolume"]; label: string }
   { value: "100+/mo",    label: "100+/mo" },
 ];
 
+// Pro is the plan. Featured + Concierge are marketing add-ons on top
+// of Pro. The form captures which of these the provider is most
+// interested in so sales can prioritize the follow-up call.
 const TIER_OPTIONS: Array<{ value: FormState["tierInterest"]; label: string }> = [
-  { value: "pro",            label: "Pro ($99/mo or $1,009.80/yr)" },
-  { value: "pro_featured",   label: "Pro + Featured ($698/mo or $7,118.40/yr)" },
-  { value: "pro_concierge",  label: "Pro + Concierge ($1,099/mo or $11,209.80/yr)" },
-  { value: "all",            label: "All three (Pro + Featured + Concierge)" },
+  { value: "pro",                  label: "Pro ($99/mo or $1,009.80/yr)" },
+  { value: "pro_plus_featured",    label: "Pro + Featured add-on" },
+  { value: "pro_plus_concierge",   label: "Pro + Concierge add-on" },
+  { value: "pro_plus_all_addons",  label: "Pro + both add-ons" },
 ];
 
 const BILLING_INTERVAL_CHIPS: Array<{ value: Exclude<BillingIntervalInterest, "">; label: string }> = [
@@ -1210,6 +1293,7 @@ export default function ForProviders() {
       <HeroSection scrollToForm={scrollToForm} />
       <WhyDifferentSection />
       <PlanComparisonSection />
+      <AddOnsSection />
       <FeaturedRotationSection />
       <ConciergePartnerSection />
       <CancellationSection />

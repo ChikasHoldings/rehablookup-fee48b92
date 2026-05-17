@@ -276,7 +276,12 @@ export default function ConciergeThankYou() {
           body: {
             email: trimmedEmail,
             password,
-            firstName: firstName || "Seeker",
+            // Fallbacks intentionally generic — never use "Seeker" as a
+            // user-facing display name. Welcome / greeting copy guards
+            // empty first_name with "Hi there," so a "Friend" / "User"
+            // placeholder only surfaces if the user later sees their
+            // profile name field directly.
+            firstName: firstName || "Friend",
             lastName: lastName || "User",
             accountType: "seeker",
             autoConfirm: true,

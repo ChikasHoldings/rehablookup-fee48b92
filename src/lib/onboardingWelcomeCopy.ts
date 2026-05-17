@@ -21,17 +21,12 @@ export const DASHBOARD_SECTIONS: ModalSection[] = [
 
 export const WELCOME_COPY = {
   freeOffer: {
-    eyebrow: "Pro offer",
-    title: "Try Pro free for 14 days",
+    eyebrow: "Pro plan",
+    title: "Upgrade to Pro — $99/month",
     body:
-      "10 photos, 1 facility video, lead analytics, priority placement on city + state pages. " +
-      "No charge until your trial ends — cancel anytime.",
-    cta: "Start free trial",
-    /** True while we don't yet have a trial_period_days configured on
-     *  the Stripe Pro product. When the trial is configured, flip this
-     *  to false. Until then we render the button as "Upgrade to Pro"
-     *  (no trial) per spec §9. */
-    trialNotYetConfigured: true,
+      "10 photos, 1 facility video, lead analytics, priority placement on city + state pages, " +
+      "and dedicated support. Cancel anytime.",
+    cta: "Upgrade to Pro",
   },
   proOffer: {
     eyebrow: "Featured add-on",

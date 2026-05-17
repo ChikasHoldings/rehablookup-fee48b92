@@ -171,22 +171,22 @@ function freeToProContent(step: number, firstName: string, unsub: string): Seque
         bodyParagraphs: [
           "A West Coast detox program upgraded to Pro last quarter. Within 30 days they were getting 3x the inquiry volume from RehabLookup.",
           "The difference wasn't search — it was conversion. With the enriched profile, 10 photos, the video walkthrough, and the priority slot on their state page, families had everything they needed to message without leaving the listing.",
-          "Pro is $99/month. You can cancel anytime from your dashboard.",
+          "Pro is $99/month flat. Cancel anytime from your dashboard.",
         ],
-        ctaLabel: "Try Pro free for 14 days",
+        ctaLabel: "Upgrade to Pro",
         ctaUrl: upgradeUrl,
         unsubLink: unsub,
       });
     case 5:
     default:
       return template({
-        subject: "Last call — try Pro free for 14 days",
+        subject: "Last touch — Pro is $99/month flat",
         greeting,
         bodyParagraphs: [
-          "We get it — paid subscriptions are a commitment. So we're offering a 14-day free trial of Pro. No charge until your trial ends, cancel anytime.",
-          "You'll see the upgrade in your dashboard immediately: 10 photos, video, priority placement, lead analytics. If it doesn't move the needle in two weeks, cancel and you're back to Free with no harm done.",
+          "Pro is a flat $99/month. No setup fee, no per-lead pricing, no commission on admissions — EKRA-clean by design.",
+          "You'll see the upgrade in your dashboard immediately: 10 photos, video, priority placement, lead analytics. Cancel anytime from billing if it doesn't move the needle.",
         ],
-        ctaLabel: "Start free Pro trial",
+        ctaLabel: "Upgrade to Pro",
         ctaUrl: upgradeUrl,
         unsubLink: unsub,
       });
