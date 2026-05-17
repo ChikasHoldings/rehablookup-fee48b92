@@ -99,7 +99,15 @@ export default function ProviderOnboarding() {
   const { data: profile, isLoading: profileLoading } = useProviderProfile();
 
   const queryStep = searchParams.get("step") as OnboardingStep | null;
-  const serverStep: OnboardingStep = stateRow?.current_step ?? "account";
+  // Round-30 merge: when a signed-in user with a profile lands here
+  // without a state row (e.g. a pre-wizard-era signup who never
+  // finished), infer their starting step from profile flags instead of
+  // re-prompting for Account. Otherwise default to 'account'.
+  const inferredServerStep: OnboardingStep =
+    profile?.email_verified_at ? "find_or_list" :
+    profile ? "verify_email" :
+    "account";
+  const serverStep: OnboardingStep = stateRow?.current_step ?? inferredServerStep;
   // Round-30 merge: anon visitors to /provider/claim/:slug land here
   // with ?returnTo=/provider/claim/:slug. Once email is verified we
   // bounce them to the deep link they came from.
