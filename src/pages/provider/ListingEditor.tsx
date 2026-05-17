@@ -60,6 +60,8 @@ import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
 
 import { useProStatus } from "@/hooks/useProStatus";
+import { PLAN_LIMITS } from "@/lib/planLimits";
+import { FacilityPhoneVerifySection } from "@/components/provider/listing/FacilityPhoneVerifySection";
 import { cn } from "@/lib/utils";
 import {
   ListingTagChip,
@@ -94,6 +96,9 @@ interface Facility {
   gallery_urls: string[] | null;
   year_established: number | null;
   accepts_international_patients: boolean | null;
+  verified_phone: string | null;
+  verified_phone_set_at: string | null;
+  has_facility_verified_contact: boolean | null;
 }
 
 import {
@@ -237,8 +242,11 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   const currentFacilityId = propFacilityId || selectedFacility?.id;
   const { data: proStatus } = useProStatus(currentFacilityId);
   
-  // All providers can upload up to 10 gallery images
-  const galleryLimit = 10;
+  // Gallery cap reflects the active plan — Free 5, Pro 10 (matches the
+  // enforce_facility_plan_photo_cap server-side trigger). proStatus.isPro
+  // is the canonical client-side mirror of profiles.plan='pro' so this
+  // tier-flips automatically when Stripe webhook activates Pro benefits.
+  const galleryLimit = PLAN_LIMITS[proStatus?.isPro ? "pro" : "free"].photos;
 
   // Reset state when facility changes
   useEffect(() => {
@@ -286,7 +294,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
       const { data } = await supabase
         .from("facilities")
-        .select("id, user_id, name, slug, address, city, state, zip_code, phone, email, reply_email, reply_email_verified, reply_email_verified_at, website, description, facility_type, gender_served, bed_count, status, featured, logo_url, gallery_urls, year_established, accepts_international_patients")
+        .select("id, user_id, name, slug, address, city, state, zip_code, phone, email, reply_email, reply_email_verified, reply_email_verified_at, website, description, facility_type, gender_served, bed_count, status, featured, logo_url, gallery_urls, year_established, accepts_international_patients, verified_phone, verified_phone_set_at, has_facility_verified_contact")
         .eq("id", currentFacilityId)
         .eq("user_id", session.user.id)
         .maybeSingle();
@@ -1423,12 +1431,36 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                     <p className="text-sm text-muted-foreground">How families can reach you</p>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField label="Phone Number" required error={fieldErrors.phone} touched={touchedFields.has("phone")}>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input value={facility.phone} onChange={(e) => updateField("phone", e.target.value)} onBlur={(e) => handleFieldBlur("phone", e.target.value)} className={cn("h-11 pl-10", fieldErrors.phone && touchedFields.has("phone") && "border-destructive")} placeholder="(555) 123-4567" />
-                      </div>
-                    </FormField>
+                    <FacilityPhoneVerifySection
+                      value={facility.phone}
+                      onChange={(v) => updateField("phone", v)}
+                      onBlur={() => handleFieldBlur("phone", facility.phone)}
+                      facilityId={facility.id}
+                      alreadyVerified={
+                        !!facility.has_facility_verified_contact &&
+                        !!facility.verified_phone &&
+                        facility.verified_phone.replace(/\D/g, "").slice(-10) ===
+                          facility.phone.replace(/\D/g, "").slice(-10)
+                      }
+                      onVerified={() => {
+                        // Mirror onto local state so the badge persists
+                        // across re-renders before the next facility refetch.
+                        setFacility((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                verified_phone: prev.phone,
+                                verified_phone_set_at: new Date().toISOString(),
+                                has_facility_verified_contact: true,
+                              }
+                            : prev,
+                        );
+                      }}
+                      error={fieldErrors.phone}
+                      touched={touchedFields.has("phone")}
+                      label="Phone Number"
+                      required
+                    />
                     <FormField label="Email Address" error={fieldErrors.email} touched={touchedFields.has("email")}>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
