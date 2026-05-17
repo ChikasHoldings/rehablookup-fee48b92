@@ -44,6 +44,7 @@ import { AccountStep } from "@/components/provider/onboarding/AccountStep";
 import { VerifyEmailStep } from "@/components/provider/onboarding/VerifyEmailStep";
 import { FindOrListStep } from "@/components/provider/onboarding/FindOrListStep";
 import { PlanStep } from "@/components/provider/onboarding/PlanStep";
+import { BuildStep } from "@/components/provider/onboarding/BuildStep";
 import { PlaceholderStep } from "@/components/provider/onboarding/PlaceholderStep";
 
 /** profiles row fields the wizard reads to decide whether to redirect. */
@@ -183,11 +184,7 @@ export default function ProviderOnboarding() {
             <PlanStep onAdvance={() => void refetchState()} onBack={handleBack} />
           )}
           {resolved === "build" && (
-            <PlaceholderStep
-              title="Build your listing"
-              serverStep="build"
-              onBack={handleBack}
-            />
+            <BuildStep onAdvance={() => void refetchState()} onBack={handleBack} />
           )}
           {resolved === "completed" && (
             <CompletedBounce onBounce={() => navigate("/provider/dashboard", { replace: true })} />

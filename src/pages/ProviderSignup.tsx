@@ -47,6 +47,8 @@ import { sanitizeText, sanitizeFacilityName, sanitizePersonName, sanitizeJobTitl
 import { FACILITY_TYPES, FACILITY_TYPE_VALUES, US_STATES, INSURANCE_PROVIDERS, TREATMENT_SERVICES, AGE_GROUPS, ACCREDITATION_OPTIONS } from "@/lib/facilityConstants";
 
 import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/components/ui/password-strength-indicator";
+import { PLAN_LIMITS, resolvePlan } from "@/lib/planLimits";
+import { UpgradeDialog } from "@/components/provider/onboarding/UpgradeDialog";
 
 // Clear all provider-related caches from any previous session
 const clearProviderCaches = () => {
@@ -164,6 +166,34 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
   const [honeypot, setHoneypot] = useState("");
   // Client-side rate limiting for submissions
   const [lastSubmitAttempt, setLastSubmitAttempt] = useState(0);
+
+  // Plan-aware photo cap (Section 8 of the provider onboarding spec).
+  // Free plans cap gallery at 5 photos; Pro lifts the cap to 10. We
+  // also surface an UpgradeDialog when a Free user tries to add past
+  // their cap. Defaults to 'free' until the first profile read so the
+  // cap is correctly conservative if the read fails.
+  const [providerPlan, setProviderPlan] = useState<"free" | "pro">("free");
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+      if (!userId || cancelled) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("plan")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!cancelled) {
+        setProviderPlan(resolvePlan((data as { plan: string | null } | null)?.plan ?? null));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const photoCap = PLAN_LIMITS[providerPlan].photos;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -865,6 +895,31 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       // Wizard finished — clear the autosave draft so the next signup starts fresh.
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
 
+      // Mark the unified onboarding wizard as completed. Best-effort:
+      // the existing /provider/billing redirect is the source of truth
+      // for "post-publish landing"; this is just the wizard-shell
+      // cursor advance so any user revisiting /provider/onboarding
+      // bounces to the dashboard. We also write profiles.
+      // onboarding_completed_at so the wizard's already-onboarded
+      // gate fires.
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user.id;
+        if (userId) {
+          await supabase
+            .from("provider_onboarding_state")
+            .update({ current_step: "completed" } as never)
+            .eq("user_id", userId);
+          await supabase
+            .from("profiles")
+            .update({ onboarding_completed_at: new Date().toISOString() } as never)
+            .eq("user_id", userId);
+        }
+      } catch (e) {
+        console.warn("[ProviderSignup] wizard completion advance failed", e);
+      }
+      try { sessionStorage.removeItem("provider-onboarding-handoff"); } catch { /* ignore */ }
+
       const finalChoice = subscriptionChoiceRef.current;
       if (finalChoice === "free") {
         toast({
@@ -1006,13 +1061,21 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const remainingSlots = 5 - formData.galleryFiles.length;
+    // PLAN_LIMITS gates the cap: 5 photos on Free, 10 on Pro.
+    // Mirror this server-side via the facilities_plan_photo_cap_chk
+    // trigger so a client bypass can't persist over the cap.
+    const remainingSlots = photoCap - formData.galleryFiles.length;
     if (files.length > remainingSlots) {
-      toast({
-        title: "Too many images",
-        description: `You can only upload ${remainingSlots} more image${remainingSlots !== 1 ? "s" : ""}.`,
-        variant: "destructive",
-      });
+      // Free user hitting the cap → pitch Pro instead of just rejecting.
+      if (providerPlan === "free") {
+        setUpgradeOpen(true);
+      } else {
+        toast({
+          title: "Too many images",
+          description: `You can only upload ${remainingSlots} more image${remainingSlots !== 1 ? "s" : ""}.`,
+          variant: "destructive",
+        });
+      }
       return;
     }
 
@@ -1053,6 +1116,12 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Helmet><title>List Your Facility | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        feature="photos"
+        returnTo="/provider/onboarding/new-listing"
+      />
       <Header />
 
       <main className="flex-1 py-8 md:py-16">
