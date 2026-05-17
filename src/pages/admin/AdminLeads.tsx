@@ -196,12 +196,11 @@ export default function AdminLeads() {
   const { data: kpiStats } = useQuery({
     queryKey: ["admin-leads-kpi"],
     queryFn: async () => {
-      const [totalRes, newRes, contactedRes, convertedRes, unlockedRes, redistRes, requestInfoRes, requestCallbackRes] = await Promise.all([
+      const [totalRes, newRes, contactedRes, convertedRes, redistRes, requestInfoRes, requestCallbackRes] = await Promise.all([
         supabase.from("leads").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "contacted"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "converted"),
-        (supabase as any).from("lead_unlocks").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }).in("redistribution_status", ["extended", "redistributed"]),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("inquiry_type", "request_info"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("inquiry_type", "request_callback"),
@@ -209,7 +208,8 @@ export default function AdminLeads() {
       return {
         total: totalRes.count || 0, newCount: newRes.count || 0,
         contacted: contactedRes.count || 0, converted: convertedRes.count || 0,
-        unlocked: unlockedRes.count || 0, redistributed: redistRes.count || 0,
+        unlocked: 0,  // lead_unlocks retired with EKRA refactor
+        redistributed: redistRes.count || 0,
         requestInfo: requestInfoRes.count || 0, requestCallback: requestCallbackRes.count || 0,
       };
     },
@@ -283,19 +283,9 @@ export default function AdminLeads() {
     return new Map(facilities.map(f => [f.id, f]));
   }, [facilities]);
 
-  // Batch unlock status
-  const leadIds = useMemo(() => (leads || []).map(l => l.id), [leads]);
-  const { data: unlockMap } = useQuery({
-    queryKey: ["admin-leads-unlock-map", leadIds],
-    queryFn: async () => {
-      if (!leadIds.length) return {};
-      const { data } = await (supabase as any).from("lead_unlocks").select("lead_id, unlocked_at, facility_id").in("lead_id", leadIds);
-      const map: Record<string, { unlocked_at: string; facility_id: string }> = {};
-      data?.forEach((u: any) => { map[u.lead_id] = u; });
-      return map;
-    },
-    enabled: leadIds.length > 0,
-  });
+  // Batch unlock status retired with the EKRA refactor — lead_unlocks
+  // table dropped. The "Unlocked" badge in the table renders as empty.
+  const unlockMap: Record<string, { unlocked_at: string; facility_id: string }> = {};
 
   const filteredLeads = useMemo(() => leads || [], [leads]);
   

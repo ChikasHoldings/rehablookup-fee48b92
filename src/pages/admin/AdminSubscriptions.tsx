@@ -282,20 +282,23 @@ export default function AdminSubscriptions() {
     },
   });
 
+  // EKRA flat-fee: per-facility unlock counts retired. The "Leads this month"
+  // column now counts qualified leads received this month directly from
+  // public.leads (no unlock model).
   const { data: leadCounts, error: leadCountsError } = useQuery({
     queryKey: ["admin-subscription-lead-counts"],
     queryFn: async () => {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
-      const { data } = await (supabase as any)
-        .from("lead_unlocks")
+      const { data } = await supabase
+        .from("leads")
         .select("facility_id")
         .gte("created_at", startOfMonth.toISOString())
         .limit(5000);
       const counts: Record<string, number> = {};
-      data?.forEach((u) => {
-        if (u.facility_id) counts[u.facility_id] = (counts[u.facility_id] || 0) + 1;
+      data?.forEach((l) => {
+        if (l.facility_id) counts[l.facility_id] = (counts[l.facility_id] || 0) + 1;
       });
       return counts;
     },

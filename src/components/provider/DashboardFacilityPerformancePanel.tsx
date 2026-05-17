@@ -40,27 +40,23 @@ function useFacilityPerformanceMetrics(facilityId: string | undefined) {
         .eq("id", facilityId)
         .single();
 
-      // Fetch leads — bounded to prevent unbounded scans on large providers
+      // Fetch leads — bounded to prevent unbounded scans on large providers.
+      // EKRA flat-fee: every lead is "unlocked" to the facility owner; the
+      // pay-per-unlock model is retired so "unlocked" now means "responded
+      // to" (the meaningful conversion signal for analytics).
       const { data: leads } = await (supabase as any)
         .from("leads_provider_view")
-        .select("id, status, created_at, is_unlocked, provider_response_status")
-        .eq("facility_id", facilityId)
-        .limit(2000);
-
-      // Fetch unlocks — bounded
-      const { data: unlocks } = await (supabase as any)
-        .from("lead_unlocks")
-        .select("lead_id, created_at")
+        .select("id, status, created_at, provider_response_status")
         .eq("facility_id", facilityId)
         .limit(2000);
 
       const allLeads = leads || [];
-      const allUnlocks = unlocks || [];
-      const leadsReceived = allLeads.length;
-      const leadsUnlocked = allUnlocks.length;
-      const contactAttempts = allLeads.filter(
+      const respondedLeads = allLeads.filter(
         l => l.provider_response_status && l.provider_response_status !== "pending"
-      ).length;
+      );
+      const leadsReceived = allLeads.length;
+      const leadsUnlocked = respondedLeads.length;
+      const contactAttempts = respondedLeads.length;
       const conversionRate = leadsReceived > 0
         ? Math.round((leadsUnlocked / leadsReceived) * 100)
         : 0;
@@ -83,8 +79,9 @@ function useFacilityPerformanceMetrics(facilityId: string | undefined) {
           return d >= weekStart && d < weekEnd;
         }).length;
 
-        const weekUnlocked = allUnlocks.filter(u => {
-          const d = new Date(u.created_at);
+        // "unlocked" repurposed to mean "responded to" in the flat-fee model.
+        const weekUnlocked = respondedLeads.filter(l => {
+          const d = new Date(l.created_at);
           return d >= weekStart && d < weekEnd;
         }).length;
 
@@ -115,17 +112,24 @@ function useAllFacilitiesComparison(facilityIds: string[]) {
 
       const results = await Promise.all(
         facilityIds.map(async fid => {
-          const [{ data: facility }, { data: leads }, { data: unlocks }] = await Promise.all([
+          const [{ data: facility }, { data: leads }] = await Promise.all([
             supabase.from("facilities").select("name").eq("id", fid).single(),
-            (supabase as any).from("leads_provider_view").select("id").eq("facility_id", fid).limit(2000),
-            (supabase as any).from("lead_unlocks").select("lead_id").eq("facility_id", fid).limit(2000),
+            (supabase as any).from("leads_provider_view")
+              .select("id, provider_response_status")
+              .eq("facility_id", fid)
+              .limit(2000),
           ]);
           const name = facility?.name || "Unknown";
           const shortName = name.length > 16 ? name.slice(0, 14) + "…" : name;
+          // EKRA flat-fee: "unlocked" repurposed to "responded to".
+          const respondedCount = (leads || []).filter(
+            (l: { provider_response_status?: string | null }) =>
+              l.provider_response_status && l.provider_response_status !== "pending"
+          ).length;
           return {
             name: shortName,
             leads: (leads || []).length,
-            unlocked: (unlocks || []).length,
+            unlocked: respondedCount,
           };
         })
       );

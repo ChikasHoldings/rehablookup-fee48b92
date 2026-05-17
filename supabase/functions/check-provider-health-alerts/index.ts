@@ -30,12 +30,15 @@ const PRO_PRODUCT_IDS = [
   "prod_TbyzJVNOQL71NN",
 ];
 
-// Plan configuration for the new monetization model
-// Free: 1 facility, pay-per-unlock
-// Pro ($399/mo): 5 facilities, 20% discount on unlocks
+// Plan configuration (EKRA flat-fee model):
+//   Free: 1 facility, directory listing + family contact form, no per-lead fees
+//   Pro ($99/mo): 5 facilities, verified badge, lead analytics, +50 ranking,
+//                 10 photos + video, Marketing Hub unlocked
+// unlock_discount is vestigial — kept on the type to avoid touching every
+// caller — and is always 0.
 const getPlanConfig = (productId: string | null): { facility_limit: number; name: string; unlock_discount: number } => {
   if (productId && PRO_PRODUCT_IDS.includes(productId)) {
-    return { facility_limit: 5, name: "Pro", unlock_discount: 20 };
+    return { facility_limit: 5, name: "Pro", unlock_discount: 0 };
   }
   return { facility_limit: 1, name: "Free", unlock_discount: 0 };
 };

@@ -351,7 +351,7 @@ function LockedLeadRow({
               onClick={(e) => e.stopPropagation()}
             >
               <Crown className="h-3 w-3" />
-              Upgrade to Pro and save 20% on this lead
+              Upgrade to Pro for analytics, priority placement, and more
             </Link>
           )}
         </div>

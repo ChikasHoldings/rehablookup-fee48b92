@@ -190,13 +190,15 @@ export default function ProviderInquiriesPage() {
     return inquiry?.is_unlocked === true;
   }, [inquiries]);
 
-  // Compute stats from all inquiries (unfiltered)
+  // Compute stats from all inquiries (unfiltered). In the EKRA flat-fee
+  // model every lead is "unlocked" (the leads_provider_view synthesizes
+  // is_unlocked=true), so the locked count is always 0 and the unlocked
+  // bucket collapses to "any lead that hasn't been responded to yet".
   const stats = useMemo(() => {
-    const locked = inquiries.filter(i => !i.is_unlocked).length;
-    const unlocked = inquiries.filter(i => i.is_unlocked && !i.provider_response_status).length;
+    const unlocked = inquiries.filter(i => !i.provider_response_status).length;
     const contacted = inquiries.filter(i => i.provider_response_status === "contacted").length;
     const responded = inquiries.filter(i => i.provider_response_status === "responded").length;
-    return { total: inquiries.length, locked, unlocked, contacted, responded };
+    return { total: inquiries.length, locked: 0, unlocked, contacted, responded };
   }, [inquiries]);
 
   // Filter inquiries

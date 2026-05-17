@@ -223,8 +223,10 @@ export function FeaturedAnalyticsDashboard() {
       const avgCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
       const avgConversion = totalClicks > 0 ? (totalLeads / totalClicks) * 100 : 0;
       
-      // Estimate revenue: Pro tier (annual) * number of subscribers
-      const estimatedRevenue = featuredIds.length * 399;
+      // Estimate Featured Add-On MRR: $599/mo per active Featured subscriber
+      // (canonical pricing — see _shared/featured-addon.ts and the marketing
+      // pages). Monthly figure; annualize by multiplying by 12 if needed.
+      const estimatedRevenue = featuredIds.length * 599;
 
       // Calculate comparison metrics
       const avgLeadsPerProvider = featuredIds.length > 0 ? totalLeads / featuredIds.length : 0;

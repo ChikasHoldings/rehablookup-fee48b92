@@ -272,7 +272,8 @@ export default function AddLocationPage() {
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
               <p className="text-sm text-muted-foreground text-center">
-                Upgrade to Pro to list up to 5 facilities and get 20% off all lead unlocks.
+                Upgrade to Pro ($99/mo) to list up to 5 facilities, with verified
+                badge, lead analytics, priority placement, and Marketing Hub access.
               </p>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => navigate(-1)}>

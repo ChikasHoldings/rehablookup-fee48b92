@@ -32,8 +32,10 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 
 export function DashboardPlacementPanel({ facilityIds, isPro: _isPro }: DashboardPlacementPanelProps) {
   // `isPro` is kept on the interface for callers that already pass it but is
-  // no longer used to gate the panel — placements are open to all providers,
-  // Pro only earns a 20% fee discount on the placement-fee charge itself.
+  // no longer used to gate the panel — concierge placements are surfaced to
+  // every provider via advisor matching. The Concierge add-on ($1,000/mo)
+  // adds the verified-partner badge for matching; there are no per-placement
+  // fees in the EKRA flat-fee model.
   void _isPro;
   const queryClient = useQueryClient();
 
@@ -79,9 +81,9 @@ export function DashboardPlacementPanel({ facilityIds, isPro: _isPro }: Dashboar
     return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
   }, [facilityIds, queryClient]);
 
-  // Placement network is open to all providers; Pro just gets a 20% fee
-  // discount. The full panel renders for free + Pro alike; the upgrade nudge
-  // appears as a small banner inside the panel (below) when not Pro.
+  // Placement network is open to all providers (concierge advisors surface
+  // every approved facility). The Concierge add-on adds a verified-partner
+  // badge in advisor matching; no per-placement fees in the flat-fee model.
   if (isLoading) {
     return <Skeleton className="h-48 rounded-lg" />;
   }

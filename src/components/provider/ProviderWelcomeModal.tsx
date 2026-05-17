@@ -46,19 +46,19 @@ async function trackWelcomeEvent(eventType: string, metadata?: Record<string, un
 
 const FREE_FEATURES = [
   "1 facility listing",
-  "Direct inquiries",
-  "Pay-per-lead unlocks",
-  "Placement network",
-  "Performance tracking",
+  "Direct inquiries — no per-lead fees",
+  "Up to 5 photos",
+  "Family contact form",
+  "Basic dashboard",
 ];
 
 const PRO_FEATURES = [
   "Up to 5 listings",
-  "20% off unlocks",
-  "20% off placements",
-  "Featured exposure",
-  "Priority visibility",
-  "Advanced analytics",
+  "Verified badge",
+  "Lead analytics + response insights",
+  "Priority placement (+50 ranking)",
+  "10 photos + 1 facility video",
+  "Marketing Hub (Featured + Concierge add-ons)",
 ];
 
 export function ProviderWelcomeModal({ 

@@ -332,8 +332,9 @@ export function PlanSettingsTab() {
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• {PLAN_DETAILS.free.location_limit} facility listing</li>
-                <li>• Receive locked leads</li>
-                <li>• Pay per unlock ($25-39)</li>
+                <li>• Family contact form — full lead details</li>
+                <li>• Up to 5 photos</li>
+                <li>• No per-lead fees</li>
               </ul>
             </div>
 
@@ -345,9 +346,10 @@ export function PlanSettingsTab() {
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Up to {PLAN_DETAILS.pro.location_limit} facility listings</li>
-                <li>• Every qualified lead delivered with full contact details</li>
-                <li>• Analytics dashboard</li>
-                <li>• Priority support</li>
+                <li>• Verified badge + lead analytics</li>
+                <li>• Priority placement (+50 ranking)</li>
+                <li>• 10 photos + 1 facility video</li>
+                <li>• Marketing Hub (Featured + Concierge)</li>
               </ul>
             </div>
           </div>

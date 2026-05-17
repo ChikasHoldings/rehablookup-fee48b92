@@ -92,53 +92,13 @@ export function ProviderOverviewTab({
     },
   });
 
-  // Fetch unlock count
-  const { data: unlockCount } = useQuery({
-    queryKey: ["admin-provider-unlock-count", provider.user_id, facilityIds],
-    queryFn: async () => {
-      const { count } = await (supabase as any)
-        .from("lead_unlocks")
-        .select("id", { count: "exact", head: true })
-        .in("facility_id", facilityIds);
-      return count || 0;
-    },
-  });
-
-  // Fetch total amount spent (all debit transactions)
-  const { data: totalSpent } = useQuery({
-    queryKey: ["admin-provider-total-spent", provider.user_id],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("credit_transactions")
-        .select("amount_cents, transaction_type")
-        .eq("provider_id", provider.user_id);
-      let spent = 0;
-      data?.forEach((tx) => {
-        if (["unlock", "placement_fee"].includes(tx.transaction_type)) {
-          spent += tx.amount_cents;
-        }
-      });
-      return spent;
-    },
-  });
-
-  // Fetch total purchased (all credit transactions)
-  const { data: totalPurchased } = useQuery({
-    queryKey: ["admin-provider-total-purchased", provider.user_id],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("credit_transactions")
-        .select("amount_cents, transaction_type")
-        .eq("provider_id", provider.user_id);
-      let purchased = 0;
-      data?.forEach((tx) => {
-        if (["purchase", "admin_credit"].includes(tx.transaction_type)) {
-          purchased += tx.amount_cents;
-        }
-      });
-      return purchased;
-    },
-  });
+  // Unlock count, total spent (per-unlock), and total purchased credits all
+  // retired with the EKRA flat-fee refactor. The lead_unlocks +
+  // credit_transactions tables were dropped; the KPIs hard-code 0 to keep
+  // the layout stable while the model is gone.
+  const unlockCount = 0;
+  const totalSpent = 0;
+  const totalPurchased = 0;
 
   // Fetch staff across ALL facilities
   const { data: staffMembers, isLoading: loadingStaff } = useQuery({

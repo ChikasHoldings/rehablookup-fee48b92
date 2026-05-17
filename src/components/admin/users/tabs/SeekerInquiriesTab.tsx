@@ -82,19 +82,14 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
         facilities?.forEach((f: any) => { fMap[f.id] = f; });
       }
 
-      // Fetch unlock status
-      const leadIds = data.map((l: any) => l.id);
-      const { data: unlocks } = await (supabase as any)
-        .from("lead_unlocks")
-        .select("lead_id, unlocked_at, facility_id")
-        .in("lead_id", leadIds);
-      const unlockMap: Record<string, any> = {};
-      unlocks?.forEach((u: any) => { unlockMap[u.lead_id] = u; });
-
+      // Unlock state retired with the EKRA flat-fee refactor — lead_unlocks
+      // table dropped. Every lead is visible to its facility owner; the
+      // legacy "Unlocked" badge/filter stays in the layout but always reads
+      // as 0 / never-unlocked.
       return data.map((l: any) => ({
         ...l,
         facility: fMap[l.facility_id] || null,
-        unlock: unlockMap[l.id] || null,
+        unlock: null,
       }));
     },
     enabled: !!seekerEmail,

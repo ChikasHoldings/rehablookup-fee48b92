@@ -51,18 +51,9 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
     },
   });
 
-  // Fetch unlock counts
-  const { data: unlockData } = useQuery({
-    queryKey: ["admin-provider-analytics-unlocks", provider.user_id, dateRange],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("lead_unlocks")
-        .select("id, unlocked_at")
-        .in("facility_id", facilityIds)
-        .gte("unlocked_at", startDate.toISOString());
-      return data || [];
-    },
-  });
+  // Unlock counts retired with the EKRA flat-fee refactor — lead_unlocks
+  // table dropped. Every lead is visible to the facility owner now.
+  const unlockData: { id: string; unlocked_at: string }[] = [];
 
   // Aggregate totals
   const totals = {
@@ -71,7 +62,7 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
     calls: events?.filter((e) => e.event_type === "click_to_call").length || 0,
     webClicks: events?.filter((e) => e.event_type === "website_click").length || 0,
     leads: leadData?.length || 0,
-    unlocks: unlockData?.length || 0,
+    unlocks: unlockData.length,
   };
 
   // Build daily chart data

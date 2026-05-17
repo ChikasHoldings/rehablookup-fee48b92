@@ -86,23 +86,9 @@ export function ProviderDetailModal({
     enabled: !!provider?.user_id && open,
   });
 
-  const { data: creditBalance } = useQuery({
-    queryKey: ["admin-provider-credits", provider?.user_id],
-    queryFn: async () => {
-      if (!provider?.user_id) return 0;
-      const { data } = await (supabase as any)
-        .from("credit_transactions")
-        .select("amount_cents, transaction_type")
-        .eq("provider_id", provider.user_id);
-      let balance = 0;
-      data?.forEach((tx) => {
-        if (["purchase", "refund", "admin_credit"].includes(tx.transaction_type)) balance += tx.amount_cents;
-        else if (["unlock", "placement_fee"].includes(tx.transaction_type)) balance -= tx.amount_cents;
-      });
-      return balance;
-    },
-    enabled: !!provider?.user_id && open,
-  });
+  // Credit balance retired with the EKRA flat-fee refactor — credit_transactions
+  // table dropped. The "Credit Balance" KPI in the modal always reads as 0.
+  const creditBalance = 0;
 
   const { data: selectedProviderPro } = useQuery({
     queryKey: ["admin-provider-pro", provider?.id],
