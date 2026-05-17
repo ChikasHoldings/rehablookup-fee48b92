@@ -1,14 +1,34 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "1.0.2";
+const VERSION = "1.0.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PRO_PRICE_ID = "price_1Sel1C9fxdThyiakWLfgbl9K";
+// Pro monthly Stripe price. We resolve this by lookup_key at request
+// time (not at module load) so the function picks up price rotations
+// automatically. The legacy hardcoded `price_1Sel1C9fxdThyiakWLfgbl9K`
+// is retained as a fallback for any transitional state where the
+// lookup_key briefly isn't attached.
+const PRO_LOOKUP_KEY = "rl_pro_monthly_v1";
+const PRO_PRICE_ID_FALLBACK = "price_1Sel1C9fxdThyiakWLfgbl9K";
+
+async function resolveProPriceId(stripe: Stripe): Promise<string> {
+  try {
+    const found = await stripe.prices.list({
+      lookup_keys: [PRO_LOOKUP_KEY],
+      active: true,
+      limit: 1,
+    });
+    if (found.data[0]?.id) return found.data[0].id;
+  } catch (e) {
+    console.warn("[CREATE-CHECKOUT] lookup_key resolution failed; falling back", e);
+  }
+  return PRO_PRICE_ID_FALLBACK;
+}
 
 function isSameOrigin(candidate: unknown, origin: string): candidate is string {
   if (typeof candidate !== "string" || candidate.length === 0) return false;
@@ -63,6 +83,13 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
+    // Resolve the active Pro price by lookup_key. Falls back to the
+    // legacy hardcoded id if the lookup_key isn't attached yet (e.g.
+    // mid-deploy before admin-attach-stripe-lookup-keys has run on the
+    // env). After round 27 the lookup keys are configured in Stripe.
+    const proPriceId = await resolveProPriceId(stripe);
+    logStep(requestId, "Pro price resolved", { proPriceId });
+
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined;
@@ -116,8 +143,8 @@ Deno.serve(async (req) => {
     if (existingSubscription) {
       const currentPriceId = existingSubscription.items.data[0]?.price.id;
       
-      // Already on Pro
-      if (currentPriceId === PRO_PRICE_ID) {
+      // Already on Pro (current OR legacy hardcoded price)
+      if (currentPriceId === proPriceId || currentPriceId === PRO_PRICE_ID_FALLBACK) {
         return new Response(
           JSON.stringify({ error: "You are already on the Pro plan", alreadySubscribed: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -126,16 +153,16 @@ Deno.serve(async (req) => {
 
       // Upgrading from legacy plan to Pro
       if (action === "upgrade") {
-        logStep(requestId, "Updating existing subscription to Pro", { 
+        logStep(requestId, "Updating existing subscription to Pro", {
           subscriptionId: existingSubscription.id,
           fromPrice: currentPriceId,
-          toPrice: PRO_PRICE_ID
+          toPrice: proPriceId,
         });
 
         await stripe.subscriptions.update(existingSubscription.id, {
           items: [{
             id: existingSubscription.items.data[0].id,
-            price: PRO_PRICE_ID,
+            price: proPriceId,
           }],
           proration_behavior: 'create_prorations',
           metadata: {
@@ -193,7 +220,7 @@ Deno.serve(async (req) => {
       payment_method_types: ["card"],
       line_items: [
         {
-          price: PRO_PRICE_ID,
+          price: proPriceId,
           quantity: 1,
         },
       ],
@@ -214,7 +241,7 @@ Deno.serve(async (req) => {
         plan: "pro",
         plan_tier: "pro",
         plan_name: "Pro",
-        // PRO_PRICE_ID is configured as a monthly Stripe price. Setting
+        // rl_pro_monthly_v1 resolves to a monthly Stripe price. Setting
         // billing_period explicitly so the webhook does NOT fall back to
         // its "annual" default when deriveTierFlagsFromSubscription
         // can't infer the interval from a lookup-key match.
