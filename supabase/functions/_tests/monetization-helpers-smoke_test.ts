@@ -182,6 +182,42 @@ Deno.test("stripe-webhook: Pro path uses the shared activateProBenefits helper",
 });
 
 // ─────────────────────────────────────────────────────────────────────────
+// send-verification-code + verify-code (signup OTP pipeline)
+// ─────────────────────────────────────────────────────────────────────────
+
+Deno.test("send-verification-code: defaults purpose='signup' which the CHECK constraint allows", async () => {
+  const src = await readSrc("../send-verification-code/index.ts");
+  // The bug was: deployed v2.0.0 defaults purpose='signup' but the CHECK
+  // constraint only allowed ('general','claim_verification'). Migration
+  // 20260612000000 expanded the constraint. Both pieces must coexist.
+  assertStringIncludes(src, '"signup"');
+  assertStringIncludes(src, "purpose");
+});
+
+Deno.test("send-verification-code: per-(email, purpose) rate-limit + invalidate-then-insert", async () => {
+  const src = await readSrc("../send-verification-code/index.ts");
+  assertStringIncludes(src, "MAX_PER_10MIN");
+  // Previous codes for the SAME purpose are invalidated before the new INSERT.
+  assertStringIncludes(src, '.eq("purpose", purpose)');
+  assertStringIncludes(src, "Invalidate previous unused codes");
+});
+
+Deno.test("verify-code: signup success marks auth.users.email_confirmed_at", async () => {
+  const src = await readSrc("../verify-code/index.ts");
+  assertStringIncludes(src, "markAuthUserConfirmed");
+  assertStringIncludes(src, "email_confirm: true");
+  assertStringIncludes(src, "auth.admin.updateUserById");
+});
+
+Deno.test("verify-code: legacy-purpose fallback for clients that don't pass purpose", async () => {
+  const src = await readSrc("../verify-code/index.ts");
+  // Legacy ClaimWizard's confirm-claim-verification-code, older mobile
+  // clients, etc. send no purpose — fallback lookup ignores the purpose
+  // filter rather than 400-ing.
+  assertStringIncludes(src, "legacy");
+});
+
+// ─────────────────────────────────────────────────────────────────────────
 // drain-addon-waitlist
 // ─────────────────────────────────────────────────────────────────────────
 
