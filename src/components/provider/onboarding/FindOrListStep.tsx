@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Loader2, Search, ShieldCheck } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, Building2, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -22,19 +21,17 @@ interface FindOrListStepProps {
 }
 
 /**
- * Step 3 — Find or List, with inline phone verification.
+ * Step 3 — Find or List.
  *
- * Two-part screen per Section 6 of the wizard spec.
+ * Single-section screen: a facility-search input. The provider either
+ * picks an existing public listing to claim, or types a new facility
+ * name to list from scratch.
  *
- * Top: phone verification card. Skipped entirely when
- * profiles.phone_verified_at is set. Otherwise renders the existing
- * PhoneVerificationStep component (handles send-sms-verification-code
- * + verify-sms-code internally) and collapses to a green check on
- * success.
- *
- * Bottom: single facility-search input. The search is gated behind a
- * verified phone — until the phone is verified, the search section is
- * disabled with a tooltip pointing back to the phone card.
+ * Phone verification was removed from this step (2026-05-17) to reduce
+ * mid-funnel friction. Verification now auto-triggers in the listing
+ * details step (Step 4) the moment the provider enters a valid facility
+ * phone number — at which point asking for verification is contextually
+ * obvious instead of a gating obstacle here.
  *
  * Branch actions:
  *   - Select an unclaimed facility row → mode='claim',
@@ -58,36 +55,10 @@ interface FacilityRow {
   is_claimed: boolean | null;
 }
 
-function useProviderProfile() {
-  return useQuery({
-    queryKey: ["provider-onboarding-profile-phone"],
-    queryFn: async (): Promise<{
-      user_id: string | null;
-      phone: string | null;
-      phone_verified_at: string | null;
-    } | null> => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user.id;
-      if (!userId) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id, phone, phone_verified_at")
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (error) {
-        console.warn("[FindOrList] profile read failed", error);
-        return { user_id: userId, phone: null, phone_verified_at: null };
-      }
-      return (data as unknown as { user_id: string; phone: string | null; phone_verified_at: string | null }) ?? null;
-    },
-    staleTime: 1000 * 5,
-  });
-}
-
-function useFacilitySearch(query: string, enabled: boolean) {
+function useFacilitySearch(query: string) {
   return useQuery({
     queryKey: ["provider-onboarding-facility-search", query],
-    enabled: enabled && query.trim().length > 0,
+    enabled: query.trim().length > 0,
     queryFn: async (): Promise<FacilityRow[]> => {
       const q = query.trim();
       if (q.length === 0) return [];
@@ -192,13 +163,9 @@ function FacilityRowItem({
 }
 
 export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
-  const queryClient = useQueryClient();
-  const { data: profile, refetch: refetchProfile } = useProviderProfile();
   const { data: stateRow, advance } = useProviderOnboardingState();
-  const phoneVerified = !!profile?.phone_verified_at;
 
   const [query, setQuery] = useState("");
-  const [phone, setPhone] = useState(profile?.phone ?? "");
   const [busy, setBusy] = useState(false);
   const debouncedQuery = useDebounce(query, 300);
 
@@ -207,23 +174,7 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
   const seededId = stateRow?.selected_facility_id ?? null;
   const { data: seededFacility } = useSeedFacility(seededId);
 
-  const { data: results = [], isFetching: searchLoading } = useFacilitySearch(
-    debouncedQuery,
-    phoneVerified,
-  );
-
-  useEffect(() => {
-    if (profile?.phone && profile.phone !== phone) setPhone(profile.phone);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.phone]);
-
-  async function handlePhoneVerified() {
-    // The verify-sms-code edge fn writes profiles.phone + phone_verified_at
-    // server-side. Invalidate so the search section unlocks.
-    await queryClient.invalidateQueries({ queryKey: ["provider-onboarding-profile-phone"] });
-    await refetchProfile();
-    toast.success("Phone verified.");
-  }
+  const { data: results = [], isFetching: searchLoading } = useFacilitySearch(debouncedQuery);
 
   async function handleSelectExisting(facilityId: string) {
     if (busy) return;
@@ -277,8 +228,8 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
   }
 
   const showZeroResults = useMemo(
-    () => phoneVerified && debouncedQuery.trim().length > 0 && !searchLoading && results.length === 0,
-    [phoneVerified, debouncedQuery, searchLoading, results.length],
+    () => debouncedQuery.trim().length > 0 && !searchLoading && results.length === 0,
+    [debouncedQuery, searchLoading, results.length],
   );
 
   return (
@@ -292,58 +243,15 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
           Find or list your facility
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          Verify your phone, then search to claim an existing listing or list a new one.
+          Search to claim an existing listing, or list a new facility from scratch.
+          We'll verify your facility phone in the next step.
         </p>
       </header>
 
-      {/* Phone verification card */}
-      <section
-        className={cn(
-          "rounded-xl border p-4 sm:p-5",
-          phoneVerified
-            ? "border-emerald-200 bg-emerald-50/40"
-            : "border-slate-200 bg-white",
-        )}
-        aria-label="Phone verification"
-      >
-        {phoneVerified ? (
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" aria-hidden />
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-emerald-900">Phone verified</p>
-              <p className="text-xs text-emerald-700 truncate">{profile?.phone}</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-start gap-2.5 mb-3">
-              <ShieldCheck className="h-5 w-5 text-[#1B365D] flex-shrink-0 mt-0.5" aria-hidden />
-              <div>
-                <p className="text-sm font-medium text-slate-900">Verify your phone to continue</p>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  We use this to coordinate claim verifications and lead handoffs. Standard message rates apply.
-                </p>
-              </div>
-            </div>
-            <PhoneVerificationStep
-              phone={phone}
-              onPhoneChange={setPhone}
-              userId={profile?.user_id ?? undefined}
-              userType="provider"
-              isVerified={false}
-              onVerified={handlePhoneVerified}
-            />
-          </>
-        )}
-      </section>
-
-      {/* Facility search section — gated on phone verification */}
-      <section
-        className={cn("space-y-3", !phoneVerified && "opacity-50 pointer-events-none select-none")}
-        aria-disabled={!phoneVerified}
-      >
+      {/* Facility search section */}
+      <section className="space-y-3">
         {/* Pre-seeded claim-intent facility */}
-        {seededFacility && phoneVerified && (
+        {seededFacility && (
           <div className="rounded-lg border-2 border-[#1B365D]/30 bg-[#1B365D]/5 p-3.5">
             <p className="text-xs uppercase tracking-wide text-[#1B365D] font-semibold mb-2">
               Continue with this facility
@@ -372,10 +280,9 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
               id="facility-search"
               type="search"
               autoComplete="off"
-              placeholder={phoneVerified ? "e.g. Sunrise Recovery Center" : "Verify your phone first"}
+              placeholder="e.g. Sunrise Recovery Center"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              disabled={!phoneVerified}
               className="pl-9 h-10"
             />
           </div>
@@ -383,11 +290,7 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
 
         {/* Results */}
         <div className="min-h-[60px]">
-          {!phoneVerified ? (
-            <p className="text-xs text-slate-500">
-              The search will activate once your phone is verified above.
-            </p>
-          ) : query.trim().length === 0 ? (
+          {query.trim().length === 0 ? (
             <p className="text-xs text-slate-500">
               Start typing your facility name to see matches.
             </p>
@@ -434,7 +337,7 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
         </div>
 
         {/* Bottom List-new affordance — always available when there's a query */}
-        {phoneVerified && query.trim().length > 0 && results.length > 0 && (
+        {query.trim().length > 0 && results.length > 0 && (
           <div className="pt-2">
             <button
               type="button"

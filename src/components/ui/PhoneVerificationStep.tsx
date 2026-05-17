@@ -16,6 +16,18 @@ interface PhoneVerificationStepProps {
   isVerified?: boolean;
   onVerified?: () => void;
   className?: string;
+  /**
+   * Optional label override. Defaults to "Phone Number". Pass e.g.
+   * "Facility Phone *" when the same number doubles as the public
+   * callback line for a listing.
+   */
+  label?: string;
+  /**
+   * Optional helper line shown beneath the input on the verified state.
+   * Defaults to "Your phone is verified. You'll receive SMS alerts for
+   * new leads."
+   */
+  verifiedHelper?: string;
 }
 
 export function PhoneVerificationStep({
@@ -26,6 +38,8 @@ export function PhoneVerificationStep({
   isVerified = false,
   onVerified,
   className = "",
+  label = "Phone Number",
+  verifiedHelper = "Your phone is verified. You'll receive SMS alerts for new leads.",
 }: PhoneVerificationStepProps) {
   const [showVerification, setShowVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
@@ -171,7 +185,7 @@ export function PhoneVerificationStep({
         <div className="flex items-center justify-between">
           <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
             <Phone className="h-4 w-4 text-muted-foreground" />
-            Phone Number
+            {label}
           </Label>
           {localVerified && (
             <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
@@ -213,9 +227,7 @@ export function PhoneVerificationStep({
         </div>
         
         {localVerified && (
-          <p className="text-xs text-muted-foreground">
-            Your phone is verified. You'll receive SMS alerts for new leads.
-          </p>
+          <p className="text-xs text-muted-foreground">{verifiedHelper}</p>
         )}
       </div>
 

@@ -6,9 +6,13 @@
  * navigation but the server is the source of truth — jumping ahead
  * bounces the visitor back to their authoritative current step.
  *
- * Persistent stepper (5 visible tiles: Account → Verify → Find or List
- * → Plan → Build/Edit; verify_email + verify_phone collapse into one
- * "Verify" tile).
+ * Persistent stepper (5 visible tiles: Account → Verify Email → Find or
+ * List → Plan → Build/Edit). Phone verification was moved out of the
+ * wizard on 2026-05-17 and now auto-triggers inline in the listing-
+ * details step the moment the provider enters a valid facility phone.
+ * The legacy 'verify_phone' substep is retained in the state machine
+ * for backward compatibility with in-flight rows and resolves to the
+ * "Find or List" tile.
  *
  * Resume contract:
  *  - Signed-out + no row: render Step 1 (Account). After submit, the

@@ -40,6 +40,8 @@ import {
   X,
 } from "lucide-react";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
+import { useFacilityPhoneVerification } from "@/hooks/useFacilityPhoneVerification";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
@@ -123,6 +125,44 @@ const insuranceProviders = [...INSURANCE_PROVIDERS];
 const facilityTypes = FACILITY_TYPES.map(t => t.value);
 const accreditationOptions = [...ACCREDITATION_OPTIONS];
 const states = [...US_STATES];
+
+/**
+ * Facility-phone input with auto-triggered verification.
+ *
+ * Wraps <PhoneVerificationStep>: the "Verify" button surfaces the moment
+ * the provider types a valid 10-digit number; on success the field
+ * collapses to a green verified badge. Verification state is mirrored
+ * back onto profiles.phone + phone_verified_at by the verify-sms-code
+ * edge function. If the provider has already verified this number in a
+ * prior session (or in another tab), useFacilityPhoneVerification skips
+ * the prompt entirely.
+ *
+ * Defined here (not as its own file) because it has zero callers outside
+ * this listing-details step and keeping it local makes the page's
+ * intent clearer.
+ */
+function FacilityPhoneInputWithVerification({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const { userId, isVerifiedForCurrentNumber, markVerified } =
+    useFacilityPhoneVerification(value);
+  return (
+    <PhoneVerificationStep
+      phone={value}
+      onPhoneChange={onChange}
+      userId={userId ?? undefined}
+      userType="provider"
+      isVerified={isVerifiedForCurrentNumber}
+      onVerified={markVerified}
+      label="Facility Phone *"
+      verifiedHelper="Your facility phone is verified. We use it for lead handoffs and claim verification."
+    />
+  );
+}
 
 export default function ProviderSignup({ initialStep }: { initialStep?: number } = {}) {
   const [currentStep, setCurrentStep] = useState(initialStep ?? 1);
@@ -1357,16 +1397,15 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <Label htmlFor="facilityPhone" className="text-sm font-medium">Facility Phone *</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
-                        <PhoneInput
-                          id="facilityPhone"
-                          value={formData.facilityPhone}
-                          onChange={(value) => updateFormData("facilityPhone", value)}
-                          className="pl-10 h-10"
-                        />
-                      </div>
+                      {/* Inline phone verification auto-triggers as soon as the
+                          provider enters a valid 10-digit number. Wizard Step 3
+                          no longer asks for phone verification; this is where
+                          we collect + verify it because the number is also the
+                          listing's public callback line. */}
+                      <FacilityPhoneInputWithVerification
+                        value={formData.facilityPhone}
+                        onChange={(value) => updateFormData("facilityPhone", value)}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="facilityEmail" className="text-sm font-medium">Facility Email</Label>

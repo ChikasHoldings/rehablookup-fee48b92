@@ -8,10 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
  * "can the user jump here?" gate (only completed steps + the current
  * step are reachable; future steps bounce back).
  *
- * The two verification sub-steps (verify_email, verify_phone) collapse
- * to a single "Verify" tile in the visible stepper — see VISIBLE_STEPS
- * below. The server still tracks them separately so the wizard can
- * resume mid-verification on refresh.
+ * `verify_phone` is retained in the canonical list for backward
+ * compatibility with any in-flight onboarding_state rows that were
+ * created before the 2026-05-17 refactor that moved phone verification
+ * out of Step 3 and into the listing-details step. The wizard no longer
+ * advances any user TO 'verify_phone', and the shell routes both
+ * 'verify_phone' and 'find_or_list' to the same FindOrListStep so
+ * existing rows resume seamlessly.
  */
 export const ONBOARDING_STEPS = [
   "account",
@@ -41,11 +44,16 @@ export interface ProviderOnboardingStateRow {
   updated_at: string;
 }
 
-/** Visible stepper tiles. verify_email + verify_phone collapse into one. */
+/**
+ * Visible stepper tiles. The legacy 'verify_phone' substep is grouped
+ * with 'find_or_list' so any in-flight row carrying that value lands on
+ * the Find-or-List tile (which is where the user would have been
+ * advanced next anyway).
+ */
 export const VISIBLE_STEPS = [
   { key: "account",       label: "Account",       group: ["account"] },
-  { key: "verify",        label: "Verify",        group: ["verify_email", "verify_phone"] },
-  { key: "find_or_list",  label: "Find or List",  group: ["find_or_list"] },
+  { key: "verify",        label: "Verify Email",  group: ["verify_email"] },
+  { key: "find_or_list",  label: "Find or List",  group: ["find_or_list", "verify_phone"] },
   { key: "plan",          label: "Plan",          group: ["plan"] },
   { key: "build",         label: "Build / Edit",  group: ["build"] },
 ] as const;

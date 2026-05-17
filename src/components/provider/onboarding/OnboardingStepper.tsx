@@ -8,8 +8,8 @@ import {
 } from "@/hooks/useProviderOnboardingState";
 
 interface OnboardingStepperProps {
-  /** The step the visible stepper "is on". For verify_email + verify_phone
-   *  this collapses to the "verify" tile. */
+  /** The step the visible stepper "is on". The legacy verify_phone
+   *  substep maps to the "Find or List" tile (see VISIBLE_STEPS). */
   current: OnboardingStep;
   /** The server's authoritative current step. Used as the reachability
    *  ceiling for clicks. */
@@ -20,9 +20,8 @@ interface OnboardingStepperProps {
 }
 
 /**
- * Persistent top-of-wizard stepper. Collapses verify_email + verify_phone
- * into one "Verify" tile so the visible count stays at 5
- * (Account → Verify → Find or List → Plan → Build/Edit).
+ * Persistent top-of-wizard stepper. The 5 visible tiles are
+ * Account → Verify Email → Find or List → Plan → Build/Edit.
  *
  * - Completed tiles render with a check icon and are clickable (back nav).
  * - Current tile is highlighted, non-interactive (already there).
@@ -33,8 +32,8 @@ export function OnboardingStepper({
   serverCurrent,
   onSelect,
 }: OnboardingStepperProps) {
-  // Find which visible tile contains the current step. verify_email and
-  // verify_phone both map to the "verify" tile.
+  // Find which visible tile contains the current step. The legacy
+  // verify_phone substep is grouped with find_or_list (see VISIBLE_STEPS).
   const currentVisibleIdx = VISIBLE_STEPS.findIndex((s) =>
     s.group.includes(current as never),
   );
