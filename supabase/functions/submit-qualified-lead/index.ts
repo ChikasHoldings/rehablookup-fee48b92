@@ -1226,22 +1226,44 @@ Deno.serve(async (req) => {
         return errorResponse(500, "concierge_insert_failed", "Failed to route inquiry.");
       }
 
-      // Fire-and-forget upsell notification to the Free facility. We
-      // intentionally don't block the seeker on this — the
-      // concierge_inquiries row is the source of truth; the
-      // notification is just a courtesy.
-      supabase.functions
-        .invoke("notify-free-tier-inquiry-redirect", {
-          body: {
-            facility_id: data.facilityId,
-            inquiry_id: inquiryRow.id,
-            level_of_care: data.levelOfCare ?? null,
-            insurance: data.insuranceProvider ?? data.insuranceType ?? null,
-            urgency: validatedUrgency,
-            location: data.locationCityState ?? data.locationZip ?? null,
-          },
-        })
-        .catch((err) => log(requestId, "WARN", "Notify edge function failed (non-blocking)", { err: String(err) }));
+      // Notify the Free facility of the redirect. We don't block the
+      // seeker on it — the concierge_inquiries row is the source of
+      // truth — but a hard failure should surface to ops via
+      // admin_notifications so courtesy outreach isn't silently lost
+      // during provider outages.
+      void (async () => {
+        try {
+          const { error } = await supabase.functions.invoke(
+            "notify-free-tier-inquiry-redirect",
+            {
+              body: {
+                facility_id: data.facilityId,
+                inquiry_id: inquiryRow.id,
+                level_of_care: data.levelOfCare ?? null,
+                insurance: data.insuranceProvider ?? data.insuranceType ?? null,
+                urgency: validatedUrgency,
+                location: data.locationCityState ?? data.locationZip ?? null,
+              },
+            },
+          );
+          if (error) {
+            log(requestId, "WARN", "Notify edge function returned error", { err: String(error) });
+            await supabase.from("admin_notifications").insert({
+              type: "free_tier_redirect_notify_failure",
+              title: "Free-tier redirect notification failed",
+              message: `Could not notify Free facility ${data.facilityId} of redirected inquiry ${inquiryRow.id}.`,
+              metadata: {
+                facility_id: data.facilityId,
+                inquiry_id: inquiryRow.id,
+                request_id: requestId,
+                last_error: String(error),
+              } as Record<string, unknown>,
+            });
+          }
+        } catch (err) {
+          log(requestId, "WARN", "Notify edge function threw (non-blocking)", { err: String(err) });
+        }
+      })();
 
       return new Response(
         JSON.stringify({
