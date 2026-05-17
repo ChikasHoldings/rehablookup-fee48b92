@@ -101,19 +101,25 @@ function deriveTierFlagsFromSubscription(sub: Stripe.Subscription) {
     if (lookupKey && (PRO_KEYS as readonly string[]).includes(lookupKey)) isPro = true;
     if (lookupKey && (FEATURED_KEYS as readonly string[]).includes(lookupKey)) hasFeatured = true;
     if (lookupKey && (CONCIERGE_KEYS as readonly string[]).includes(lookupKey)) hasConcierge = true;
-    if (
-      lookupKey &&
-      itemInterval &&
-      interval === null &&
-      (
-        (PRO_KEYS as readonly string[]).includes(lookupKey) ||
-        (FEATURED_KEYS as readonly string[]).includes(lookupKey) ||
-        (CONCIERGE_KEYS as readonly string[]).includes(lookupKey)
-      )
-    ) {
+    // Take the first available recurring interval, regardless of whether
+    // the price carries one of our flat-fee lookup keys. Legacy Pro
+    // subscriptions (created via create-checkout's hardcoded
+    // PRO_PRICE_ID, which has no lookup_key) still need to record their
+    // billing_period — otherwise the caller's fallback "annual" default
+    // mis-classifies a monthly Pro subscription. Also picks up future
+    // price rotations where we forgot to attach a lookup_key.
+    if (interval === null && itemInterval) {
       interval = itemInterval;
     }
     paidAmountCents += (item.price.unit_amount ?? 0) * (item.quantity ?? 1);
+  }
+  // Fall back: if the checkout metadata tagged this as a Pro
+  // subscription but no lookup_key matched (legacy create-checkout
+  // path), treat the whole subscription as Pro.
+  const metaType = ((sub.metadata as Record<string, string> | null)?.type ?? "").toLowerCase();
+  const metaPlanTier = ((sub.metadata as Record<string, string> | null)?.plan_tier ?? "").toLowerCase();
+  if (!isPro && (metaType === "pro_subscription" || metaPlanTier === "pro")) {
+    isPro = true;
   }
   const billingPeriod: "monthly" | "annual" | null =
     interval === "month" ? "monthly" : interval === "year" ? "annual" : null;

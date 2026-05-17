@@ -212,7 +212,13 @@ Deno.serve(async (req) => {
         type: "pro_subscription",
         facility_id: facilityId || "",
         plan: "pro",
+        plan_tier: "pro",
         plan_name: "Pro",
+        // PRO_PRICE_ID is configured as a monthly Stripe price. Setting
+        // billing_period explicitly so the webhook does NOT fall back to
+        // its "annual" default when deriveTierFlagsFromSubscription
+        // can't infer the interval from a lookup-key match.
+        billing_period: "monthly",
       },
       subscription_data: {
         metadata: {
@@ -220,14 +226,19 @@ Deno.serve(async (req) => {
           type: "pro_subscription",
           facility_id: facilityId || "",
           plan: "pro",
+          plan_tier: "pro",
           plan_name: "Pro",
+          billing_period: "monthly",
           created_via: "checkout",
         },
       },
-      // Custom text for the checkout page
+      // Custom text shown on the Stripe Checkout page. EKRA flat-fee
+      // model: no per-lead unlocks, no per-placement charges. The Pro
+      // plan unlocks verified badge, lead analytics, priority placement,
+      // and Marketing Hub (Featured + Concierge add-ons).
       custom_text: {
         submit: {
-          message: "Get 20% off all lead unlocks and featured placement immediately after checkout.",
+          message: "Cancel anytime. Pro unlocks verified badge, lead analytics, priority placement, and the Marketing Hub.",
         },
       },
       // Allow tax ID collection for business customers

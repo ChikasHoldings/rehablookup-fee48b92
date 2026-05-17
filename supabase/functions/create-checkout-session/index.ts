@@ -1,45 +1,35 @@
 // ============================================================================
-// create-checkout-session v1.0.0
+// create-checkout-session v1.1.0
 // ----------------------------------------------------------------------------
-// Authenticated endpoint for purchasing add-ons (Featured today; Concierge
-// follows the same pattern). The Pro upgrade flow keeps its own
-// `create-checkout` function because Pro is the gateway tier.
+// Authenticated Stripe Checkout entry for:
+//   1. intent="initial_subscription" + product="pro" — Pro upgrade from
+//      the provider Billing page (monthly or annual). NEW in v1.1.0;
+//      Billing.tsx calls this path. (The wizard's separate Pro flow
+//      uses create-signup-checkout.)
+//   2. intent="add_addon" + product="featured"|"concierge" —
+//      add-ons purchased from the MarketingHub. Requires the caller's
+//      facility to be on active Pro.
 //
 // Body:
 //   {
 //     facility_id: uuid,
-//     intent: "add_addon",
+//     intent: "initial_subscription" | "add_addon",
 //     billing_period: "monthly" | "annual",
-//     items: [{ product: "featured" | "concierge" }],
+//     items: [{ product: "pro" | "featured" | "concierge" }],
 //   }
 //
-// Behavior:
-//   1. Authenticate via Authorization JWT.
-//   2. Verify the caller owns the facility AND the facility has an
-//      active Pro subscription (Featured/Concierge are Pro-gated).
-//   3. Resolve the Stripe price by lookup key
-//      (rl_featured_monthly_v1 / rl_featured_annual_v1 etc.).
-//   4. 30-min single-flight: if an open Checkout session for the same
-//      customer + same add-on type was created in the last 30 min,
-//      return its URL. Combined with Stripe's idempotency key, this
-//      blocks double-billing across tab dupes / network retries.
-//   5. Create a NEW Stripe subscription Checkout session with
-//      success_url + cancel_url back to /provider/marketing/<addon>
-//      and metadata identifying the add-on type + facility id. The
-//      webhook keys off metadata.type === "featured_addon" to activate.
-//
 // Returns:
-//   200 { url: stripeCheckoutUrl }
+//   200 { url, sessionId }            — caller redirects to Stripe Checkout
 //   400 validation
 //   401 auth
-//   403 facility not owned by caller, or caller not Pro
+//   403 not facility owner
 //   404 facility / price not found
-//   409 already-has-this-addon
+//   409 already-has-this-addon (or already on Pro, for initial_subscription)
 // ============================================================================
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -61,12 +51,14 @@ const log = (level: "INFO" | "WARN" | "ERROR", msg: string, details?: unknown) =
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-const LOOKUP_KEYS: Record<"featured" | "concierge", { monthly: string; annual: string }> = {
-  featured: { monthly: "rl_featured_monthly_v1", annual: "rl_featured_annual_v1" },
+const LOOKUP_KEYS: Record<"pro" | "featured" | "concierge", { monthly: string; annual: string }> = {
+  pro:       { monthly: "rl_pro_monthly_v1",       annual: "rl_pro_annual_v1" },
+  featured:  { monthly: "rl_featured_monthly_v1",  annual: "rl_featured_annual_v1" },
   concierge: { monthly: "rl_concierge_monthly_v1", annual: "rl_concierge_annual_v1" },
 };
 
-type AddOnProduct = "featured" | "concierge";
+type Product = "pro" | "featured" | "concierge";
+type Intent = "initial_subscription" | "add_addon";
 type Billing = "monthly" | "annual";
 
 Deno.serve(async (req) => {
@@ -103,54 +95,85 @@ Deno.serve(async (req) => {
     try { body = await req.json(); } catch { return json(400, { error: "Invalid JSON", code: "BAD_JSON" }); }
 
     const facilityId = String(body.facility_id ?? "").trim();
-    const intent = String(body.intent ?? "").trim();
+    const intent = String(body.intent ?? "").trim() as Intent;
     const billingPeriod = String(body.billing_period ?? "").trim() as Billing;
     const item0 = (body.items ?? [])[0];
-    const product = String(item0?.product ?? "").trim() as AddOnProduct;
+    const product = String(item0?.product ?? "").trim() as Product;
 
     if (!UUID_REGEX.test(facilityId)) return json(400, { error: "facility_id must be a valid UUID", code: "INVALID_FACILITY_ID" });
-    if (intent !== "add_addon") return json(400, { error: "intent must be 'add_addon'", code: "INVALID_INTENT" });
+    if (intent !== "initial_subscription" && intent !== "add_addon") {
+      return json(400, { error: "intent must be 'initial_subscription' or 'add_addon'", code: "INVALID_INTENT" });
+    }
     if (billingPeriod !== "monthly" && billingPeriod !== "annual") {
       return json(400, { error: "billing_period must be 'monthly' or 'annual'", code: "INVALID_BILLING_PERIOD" });
     }
-    if (product !== "featured" && product !== "concierge") {
-      return json(400, { error: "items[0].product must be 'featured' or 'concierge'", code: "INVALID_PRODUCT" });
+    if (intent === "initial_subscription" && product !== "pro") {
+      return json(400, { error: "items[0].product must be 'pro' for initial_subscription", code: "INVALID_PRODUCT" });
+    }
+    if (intent === "add_addon" && product !== "featured" && product !== "concierge") {
+      return json(400, { error: "items[0].product must be 'featured' or 'concierge' for add_addon", code: "INVALID_PRODUCT" });
     }
 
     const svc = createClient(SUPABASE_URL, SUPABASE_SRK);
     const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2025-08-27.basil" });
 
-    // ---- Authorize: caller must own the facility AND the row must
-    //      already have an active Pro subscription. ----
+    // ---- Authorization: caller must own the facility. ----
+    const { data: facility, error: facilityErr } = await svc
+      .from("facilities")
+      .select("id, user_id")
+      .eq("id", facilityId)
+      .maybeSingle();
+    if (facilityErr) {
+      log("ERROR", "facilities lookup failed", { error: facilityErr.message });
+      return json(500, { error: "Internal error", code: "DB_ERROR" });
+    }
+    if (!facility) return json(404, { error: "Facility not found", code: "FACILITY_NOT_FOUND" });
+    if ((facility as { user_id: string | null }).user_id !== userId) {
+      return json(403, { error: "Not the owner of this facility", code: "NOT_OWNER" });
+    }
+
+    // ---- Subscription state lookup (intent-specific). ----
     const { data: facSub, error: facSubErr } = await svc
       .from("facility_subscriptions")
-      .select("id, facility_id, provider_id, tier, status, has_featured, has_concierge_partner, stripe_customer_id, featured_stripe_subscription_id")
+      .select("id, tier, status, has_featured, has_concierge_partner, stripe_customer_id, current_period_end")
       .eq("facility_id", facilityId)
       .maybeSingle();
     if (facSubErr) {
       log("ERROR", "facility_subscriptions lookup failed", { error: facSubErr.message });
       return json(500, { error: "Internal error", code: "DB_ERROR" });
     }
-    if (!facSub) {
-      return json(409, {
-        error: "This facility has no active subscription. Upgrade to Pro before adding Featured.",
-        code: "NO_SUBSCRIPTION",
-      });
-    }
-    if ((facSub as { provider_id: string }).provider_id !== userId) {
-      return json(403, { error: "Not the owner of this facility", code: "NOT_OWNER" });
-    }
-    if ((facSub as { tier: string | null }).tier !== "pro" || (facSub as { status: string }).status !== "active") {
-      return json(409, {
-        error: "Featured requires an active Pro subscription. Upgrade to Pro first.",
-        code: "PRO_REQUIRED",
-      });
-    }
-    if (product === "featured" && (facSub as { has_featured: boolean }).has_featured === true) {
-      return json(409, { error: "Featured is already active on this facility.", code: "ALREADY_ACTIVE" });
-    }
-    if (product === "concierge" && (facSub as { has_concierge_partner: boolean }).has_concierge_partner === true) {
-      return json(409, { error: "Concierge is already active on this facility.", code: "ALREADY_ACTIVE" });
+    const activePro =
+      facSub &&
+      (facSub as { tier: string | null }).tier === "pro" &&
+      (facSub as { status: string }).status === "active";
+
+    if (intent === "initial_subscription") {
+      if (activePro) {
+        return json(409, {
+          error: "This facility already has an active Pro subscription.",
+          code: "ALREADY_PRO",
+        });
+      }
+    } else {
+      // add_addon
+      if (!facSub) {
+        return json(409, {
+          error: "This facility has no active subscription. Upgrade to Pro first.",
+          code: "NO_SUBSCRIPTION",
+        });
+      }
+      if (!activePro) {
+        return json(409, {
+          error: `${product[0].toUpperCase()}${product.slice(1)} requires an active Pro subscription.`,
+          code: "PRO_REQUIRED",
+        });
+      }
+      if (product === "featured" && (facSub as { has_featured: boolean }).has_featured === true) {
+        return json(409, { error: "Featured is already active on this facility.", code: "ALREADY_ACTIVE" });
+      }
+      if (product === "concierge" && (facSub as { has_concierge_partner: boolean }).has_concierge_partner === true) {
+        return json(409, { error: "Concierge is already active on this facility.", code: "ALREADY_ACTIVE" });
+      }
     }
 
     // ---- Resolve Stripe price by lookup key ----
@@ -169,73 +192,83 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ---- Resolve Stripe customer (must exist — Pro is on file) ----
-    const storedCustomerId = (facSub as { stripe_customer_id: string | null }).stripe_customer_id;
+    // ---- Resolve Stripe customer ----
+    const storedCustomerId = facSub
+      ? (facSub as { stripe_customer_id: string | null }).stripe_customer_id
+      : null;
     let customerId = storedCustomerId ?? undefined;
     if (!customerId) {
       const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
       customerId = customers.data[0]?.id;
     }
-    if (!customerId) {
-      return json(409, {
-        error: "No Stripe customer record found. Please contact support.",
-        code: "CUSTOMER_NOT_FOUND",
+    // For initial_subscription on a brand-new account there may be no
+    // Stripe customer yet; Stripe will create one inline at Checkout.
+
+    // ---- Reuse open session within 30 min (single-flight). ----
+    const reuseTag =
+      intent === "initial_subscription" ? "pro_subscription" : `${product}_addon`;
+    if (customerId) {
+      const thirtyMinAgo = Math.floor((Date.now() - 30 * 60 * 1000) / 1000);
+      const recentSessions = await stripe.checkout.sessions.list({
+        customer: customerId,
+        limit: 10,
+        created: { gte: thirtyMinAgo },
       });
+      const openSession = recentSessions.data.find(
+        (s) =>
+          s.status === "open" &&
+          s.mode === "subscription" &&
+          s.metadata?.type === reuseTag &&
+          s.metadata?.facility_id === facilityId &&
+          !!s.url,
+      );
+      if (openSession?.url) {
+        log("INFO", "Reusing open Checkout session", { sessionId: openSession.id });
+        return json(200, { url: openSession.url, sessionId: openSession.id, reused: true });
+      }
     }
 
-    // ---- Single-flight: open Checkout session reuse ----
-    const thirtyMinAgo = Math.floor((Date.now() - 30 * 60 * 1000) / 1000);
-    const recentSessions = await stripe.checkout.sessions.list({
-      customer: customerId,
-      limit: 10,
-      created: { gte: thirtyMinAgo },
-    });
-    const reuseTag = `${product}_addon`;
-    const openSession = recentSessions.data.find(
-      (s) =>
-        s.status === "open" &&
-        s.mode === "subscription" &&
-        s.metadata?.type === reuseTag &&
-        s.metadata?.facility_id === facilityId &&
-        !!s.url,
-    );
-    if (openSession?.url) {
-      log("INFO", "Reusing open Checkout session", { sessionId: openSession.id });
-      return json(200, { url: openSession.url, sessionId: openSession.id, reused: true });
-    }
-
-    // ---- Create Checkout session ----
+    // ---- Build success / cancel URLs per intent. ----
     const origin = req.headers.get("origin") || "https://rehablookup.com";
-    const successPath =
-      product === "featured" ? "/provider/billing/placements" : "/provider/billing/concierge";
-    const cancelPath =
-      product === "featured" ? "/provider/marketing/featured" : "/provider/marketing/concierge";
+    let successPath: string;
+    let cancelPath: string;
+    if (intent === "initial_subscription") {
+      successPath = `/provider/billing?checkout=success&plan=pro&session_id={CHECKOUT_SESSION_ID}`;
+      cancelPath = `/provider/billing?checkout=cancel`;
+    } else if (product === "featured") {
+      successPath = `/provider/billing/placements?addon=featured&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+      cancelPath = `/provider/marketing/featured?checkout=cancel`;
+    } else {
+      successPath = `/provider/billing/concierge?addon=concierge&checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+      cancelPath = `/provider/marketing/concierge?checkout=cancel`;
+    }
 
-    const idempotencyKey = `create-addon-checkout:${userId}:${facilityId}:${product}:${billingPeriod}:${Math.floor(Date.now() / (5 * 60 * 1000))}`;
+    const idempotencyKey = `create-checkout:${userId}:${facilityId}:${reuseTag}:${billingPeriod}:${Math.floor(Date.now() / (5 * 60 * 1000))}`;
+
+    const checkoutMetadata = {
+      type: reuseTag,
+      facility_id: facilityId,
+      provider_user_id: userId,
+      billing_period: billingPeriod,
+      // The webhook keys off plan_tier to know whether to call
+      // activateProBenefits. Pro initial_subscription always tags this.
+      ...(intent === "initial_subscription" ? { plan_tier: "pro" } : {}),
+    };
 
     const session = await stripe.checkout.sessions.create(
       {
-        customer: customerId,
+        ...(customerId
+          ? { customer: customerId, customer_update: { name: "auto", address: "auto" } }
+          : { customer_email: userEmail }),
         mode: "subscription",
         payment_method_types: ["card"],
         billing_address_collection: "auto",
-        customer_update: { name: "auto", address: "auto" },
         line_items: [{ price: price.id, quantity: 1 }],
-        success_url: `${origin}${successPath}?addon=${product}&checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${origin}${cancelPath}?checkout=cancel`,
-        metadata: {
-          type: `${product}_addon`,
-          facility_id: facilityId,
-          provider_user_id: userId,
-          billing_period: billingPeriod,
-        },
+        success_url: `${origin}${successPath}`,
+        cancel_url: `${origin}${cancelPath}`,
+        metadata: checkoutMetadata,
         subscription_data: {
-          metadata: {
-            type: `${product}_addon`,
-            facility_id: facilityId,
-            provider_user_id: userId,
-            billing_period: billingPeriod,
-          },
+          metadata: checkoutMetadata,
         },
       },
       { idempotencyKey },
@@ -246,7 +279,12 @@ Deno.serve(async (req) => {
       return json(502, { error: "Stripe returned a malformed session", code: "STRIPE_BAD_RESPONSE" });
     }
 
-    log("INFO", "Checkout session created", { sessionId: session.id, product, billingPeriod });
+    log("INFO", "Checkout session created", {
+      sessionId: session.id,
+      intent,
+      product,
+      billingPeriod,
+    });
     return json(200, { url: session.url, sessionId: session.id });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
