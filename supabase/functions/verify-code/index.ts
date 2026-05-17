@@ -149,7 +149,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Code matches! Mark as verified with timestamp
     const { error: updateError } = await supabase
       .from("email_verification_codes")
-      .update({ 
+      .update({
         verified: true,
         verified_at: new Date().toISOString() // Track actual verification time
       })

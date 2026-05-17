@@ -41,6 +41,7 @@ import {
 } from "@/hooks/useProviderOnboardingState";
 import { OnboardingStepper } from "@/components/provider/onboarding/OnboardingStepper";
 import { AccountStep } from "@/components/provider/onboarding/AccountStep";
+import { VerifyEmailStep } from "@/components/provider/onboarding/VerifyEmailStep";
 import { PlaceholderStep } from "@/components/provider/onboarding/PlaceholderStep";
 
 /** profiles row fields the wizard reads to decide whether to redirect. */
@@ -161,11 +162,7 @@ export default function ProviderOnboarding() {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7 shadow-sm">
           {resolved === "account" && <AccountStep onAdvance={() => void refetchState()} />}
           {resolved === "verify_email" && (
-            <PlaceholderStep
-              title="Verify your email"
-              serverStep="verify_email"
-              onBack={handleBack}
-            />
+            <VerifyEmailStep onAdvance={() => void refetchState()} />
           )}
           {resolved === "verify_phone" && (
             <PlaceholderStep

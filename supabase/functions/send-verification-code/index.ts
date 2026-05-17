@@ -12,7 +12,11 @@ interface VerificationRequest {
 }
 
 function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  // Cryptographically random 6-digit code. Math.random isn't a CSPRNG;
+  // for an authentication factor (even short-lived) we use Web Crypto.
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return String(buf[0] % 1_000_000).padStart(6, "0");
 }
 
 Deno.serve(async (req) => {
