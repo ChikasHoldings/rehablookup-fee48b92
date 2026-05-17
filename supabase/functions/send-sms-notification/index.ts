@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("phone, phone_verified")
+      .select("phone, phone_verified, sms_opted_out_at")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -128,6 +128,17 @@ Deno.serve(async (req) => {
       logStep("No phone number for user", { requestId, userId: userId.slice(0, 8) });
       return new Response(
         JSON.stringify({ success: true, sent: false, reason: "No phone number on file", requestId }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // TCPA: refuse to send to a number that replied STOP. The
+    // twilio-sms-inbound webhook sets sms_opted_out_at when it receives
+    // any STOP-class keyword (STOP/STOPALL/UNSUBSCRIBE/CANCEL/END/QUIT).
+    if (profile.sms_opted_out_at) {
+      logStep("User opted out of SMS", { requestId, userId: userId.slice(0, 8) });
+      return new Response(
+        JSON.stringify({ success: true, sent: false, reason: "User opted out via STOP", requestId }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
