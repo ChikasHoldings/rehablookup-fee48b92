@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,8 +74,40 @@ export function AddFeaturedPlacementForm({
   };
 
   const valueRequired = type !== "homepage" && type !== "search";
+
+  const resolvedValue = !type
+    ? ""
+    : !valueRequired
+      ? type === "homepage" ? "national" : "global"
+      : rawValue.trim().length > 0
+        ? normalizeValue(type as PlacementType, rawValue)
+        : "";
+
+  const { data: availability, isFetching: availabilityLoading } = useQuery({
+    queryKey: ["placement-availability", type, resolvedValue],
+    enabled: !!type && resolvedValue.length > 0,
+    queryFn: async (): Promise<{ cap: number; used: number; remaining: number } | null> => {
+      const { data, error } = await supabase.rpc("get_placement_availability", {
+        p_type: type,
+        p_value: resolvedValue,
+      });
+      if (error) {
+        console.warn("[AddFeaturedPlacementForm] availability lookup failed", error);
+        return null;
+      }
+      const row = (data as { cap: number; used: number; remaining: number }[] | null)?.[0];
+      return row ?? null;
+    },
+    staleTime: 1000 * 15,
+  });
+
+  const slotsFull = availability !== null && availability !== undefined && availability.remaining <= 0;
+
   const canSubmit =
-    type !== "" && (!valueRequired || rawValue.trim().length > 0) && !submitting;
+    type !== "" &&
+    (!valueRequired || rawValue.trim().length > 0) &&
+    !submitting &&
+    !slotsFull;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,7 +161,13 @@ export function AddFeaturedPlacementForm({
       });
     } catch (err) {
       console.error("[AddFeaturedPlacementForm] add failed", err);
-      toast.error(err instanceof Error ? err.message : "Failed to add placement");
+      const msg = err instanceof Error ? err.message : "Failed to add placement";
+      // Surface the trigger's cap-exceeded raise cleanly. PostgREST
+      // wraps the SQL message; trim to the meaningful prefix.
+      const friendly = msg.includes("Featured slot cap reached")
+        ? "This placement scope is full. Pick a different value or contact support to join the waitlist."
+        : msg;
+      toast.error(friendly);
     } finally {
       setSubmitting(false);
     }
@@ -216,6 +254,39 @@ export function AddFeaturedPlacementForm({
           )}
         </div>
       </div>
+
+      {type && resolvedValue && (
+        <div
+          className={
+            "rounded-md border px-3 py-2 text-xs " +
+            (slotsFull
+              ? "border-red-200 bg-red-50 text-red-800"
+              : "border-slate-200 bg-slate-50 text-slate-700")
+          }
+        >
+          {availabilityLoading ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+              Checking availability…
+            </span>
+          ) : availability ? (
+            slotsFull ? (
+              <span>
+                <strong>Cap reached</strong> — {availability.used} of {availability.cap}{" "}
+                slots in use for this scope. Try a different value or join the
+                waitlist by contacting support.
+              </span>
+            ) : (
+              <span>
+                <strong>{availability.remaining}</strong> of {availability.cap} slots
+                available for this scope ({availability.used} currently in use).
+              </span>
+            )
+          ) : (
+            <span className="text-slate-500">Cap data unavailable; submit will still try.</span>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center justify-end gap-2 pt-1">
         <Button

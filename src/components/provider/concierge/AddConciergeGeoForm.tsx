@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Loader2, Plus, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,8 +65,28 @@ export function AddConciergeGeoForm({
   const [ekraAck, setEkraAck] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const { data: availability, isFetching: availabilityLoading } = useQuery({
+    queryKey: ["concierge-availability", state, city.trim()],
+    enabled: state.length === 2,
+    queryFn: async (): Promise<{ cap: number; used: number; remaining: number } | null> => {
+      const { data, error } = await supabase.rpc("get_concierge_availability", {
+        p_state: state,
+        p_city: city.trim().length > 0 ? city.trim() : null,
+      });
+      if (error) {
+        console.warn("[AddConciergeGeoForm] availability lookup failed", error);
+        return null;
+      }
+      const row = (data as { cap: number; used: number; remaining: number }[] | null)?.[0];
+      return row ?? null;
+    },
+    staleTime: 1000 * 15,
+  });
+
+  const slotsFull = availability !== null && availability !== undefined && availability.remaining <= 0;
+
   const canSubmit =
-    state.length === 2 && locs.size > 0 && ekraAck && !submitting;
+    state.length === 2 && locs.size > 0 && ekraAck && !submitting && !slotsFull;
 
   const reset = () => {
     setState("");
@@ -132,7 +152,11 @@ export function AddConciergeGeoForm({
       queryClient.invalidateQueries({ queryKey: ["concierge-geos", subscriptionId] });
     } catch (err) {
       console.error("[AddConciergeGeoForm] add failed", err);
-      toast.error(err instanceof Error ? err.message : "Failed to add geo");
+      const msg = err instanceof Error ? err.message : "Failed to add geo";
+      const friendly = msg.includes("Concierge partner cap reached")
+        ? "This geography is full. Pick a different city or contact support to join the waitlist."
+        : msg;
+      toast.error(friendly);
     } finally {
       setSubmitting(false);
     }
@@ -234,6 +258,42 @@ export function AddConciergeGeoForm({
           <p className="mt-1.5 text-[11px] text-slate-500">Pick at least one level of care.</p>
         )}
       </div>
+
+      {state.length === 2 && (
+        <div
+          className={
+            "rounded-md border px-3 py-2 text-xs " +
+            (slotsFull
+              ? "border-red-200 bg-red-50 text-red-800"
+              : "border-slate-200 bg-slate-50 text-slate-700")
+          }
+        >
+          {availabilityLoading ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+              Checking availability…
+            </span>
+          ) : availability ? (
+            slotsFull ? (
+              <span>
+                <strong>Cap reached</strong> — {availability.used} of {availability.cap}{" "}
+                partner slots in use for {state}
+                {city.trim().length > 0 ? `, ${city.trim()}` : ""}. Try a
+                different city or join the waitlist by contacting support.
+              </span>
+            ) : (
+              <span>
+                <strong>{availability.remaining}</strong> of {availability.cap} partner
+                slots available for {state}
+                {city.trim().length > 0 ? `, ${city.trim()}` : ""} ({availability.used}{" "}
+                currently in use).
+              </span>
+            )
+          ) : (
+            <span className="text-slate-500">Cap data unavailable; submit will still try.</span>
+          )}
+        </div>
+      )}
 
       <div className="rounded-md border border-violet-200 bg-violet-50/40 p-3">
         <label className="flex items-start gap-2.5 cursor-pointer">
