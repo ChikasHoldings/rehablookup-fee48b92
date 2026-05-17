@@ -15,6 +15,37 @@ const logStep = (step: string, details?: unknown) => {
 const RETRY_INTERVALS_DAYS = [0, 2, 4]; // Days from last attempt
 const MAX_RETRIES = 3;
 
+/**
+ * Strip Stripe-issued identifiers and other sensitive tokens out of an
+ * error message before persisting to placement_invoices.failure_reason
+ * or admin_notifications.metadata. Stripe error strings frequently
+ * include cus_, pm_, pi_, ch_, card_, ic_, txn_ prefixes that aren't
+ * secret per se but leak the customer's payment relationship into
+ * tables that admin readers shouldn't necessarily see in full.
+ *
+ * Also caps length at 500 chars so a multi-paragraph traceback doesn't
+ * bloat the notifications table.
+ */
+function sanitizeStripeError(raw: string): string {
+  if (!raw) return raw;
+  return raw
+    .replace(/\b(cus|pm|pi|ch|card|ic|txn|seti|si|sub|sk_live|sk_test|pk_live|pk_test|rk_live|rk_test|whsec|re|in)_[A-Za-z0-9]{6,}/g, "<redacted_$1_id>")
+    .slice(0, 500);
+}
+
+/**
+ * Detect Stripe 429 rate-limit responses so the loop backs off
+ * instead of hammering the API and risking secondary penalties.
+ */
+function isRateLimitError(err: unknown): boolean {
+  if (!err) return false;
+  const anyErr = err as { statusCode?: number; code?: string; type?: string };
+  if (anyErr.statusCode === 429) return true;
+  if (anyErr.type === "StripeRateLimitError") return true;
+  if (typeof anyErr.code === "string" && anyErr.code.toLowerCase().includes("rate_limit")) return true;
+  return false;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -205,8 +236,20 @@ Deno.serve(async (req) => {
         }
 
       } catch (paymentError) {
-        const errorMessage = paymentError instanceof Error ? paymentError.message : String(paymentError);
+        const rawMessage = paymentError instanceof Error ? paymentError.message : String(paymentError);
+        const errorMessage = sanitizeStripeError(rawMessage);
         logStep("Payment retry failed", { invoiceId: invoice.id, error: errorMessage });
+
+        // Round-30 rate-limit backoff. If Stripe returns 429, ALL
+        // subsequent invoices in this batch will also 429. Sleep 2s
+        // and break the loop so the cron's next run picks up the
+        // remaining invoices instead of burning quota.
+        if (isRateLimitError(paymentError)) {
+          logStep("Stripe rate-limit hit — aborting batch", { invoiceId: invoice.id });
+          await new Promise((r) => setTimeout(r, 2000));
+          results.push({ invoiceId: invoice.id, success: false, error: "rate_limit_aborted" });
+          break;
+        }
 
         const newRetryCount = invoice.retry_count + 1;
 
