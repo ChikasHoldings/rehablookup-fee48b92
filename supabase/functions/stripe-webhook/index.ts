@@ -1,23 +1,23 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
-import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
-import { cancelSubscriptionAndRefund } from "../_shared/cancel-subscription.ts";
+import { sendEmailWithRetry } from "./_shared/resilient-email-sender.ts";
+import { cancelSubscriptionAndRefund } from "./_shared/cancel-subscription.ts";
 import {
   activateProBenefits,
   deactivateProBenefits,
   notifyProBenefitsPartialFailure,
-} from "../_shared/pro-benefits.ts";
+} from "./_shared/pro-benefits.ts";
 import {
   activateFeaturedAddon,
   deactivateFeaturedAddon,
   notifyFeaturedAddonPartialFailure,
-} from "../_shared/featured-addon.ts";
+} from "./_shared/featured-addon.ts";
 import {
   activateConciergePartner,
   deactivateConciergePartner,
   notifyConciergeAddonPartialFailure,
-} from "../_shared/concierge-addon.ts";
+} from "./_shared/concierge-addon.ts";
 
 // Version tracking for deployment verification
 const VERSION = "1.2.0";
