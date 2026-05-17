@@ -155,6 +155,9 @@ const DELIVERY_FAILURE_TYPES = [
   "message_sms_delivery_failure",
   "tour_sms_delivery_failure",
   "free_tier_redirect_notify_failure",
+  "dunning_total_delivery_failure",
+  "pro_activation_db_failure",
+  "cancellation_split_brain",
 ];
 
 export default function AdminNotifications() {
