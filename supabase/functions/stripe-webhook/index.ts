@@ -203,6 +203,20 @@ Deno.serve(async (req) => {
           eventId: event.id,
           error: claimError.message,
         });
+        // Surface dedup-claim failures to an admin so silent retries
+        // don't accumulate unnoticed. Best-effort insert.
+        await supabaseAdmin.from("admin_notifications").insert({
+          type: "webhook_dedup_failure",
+          title: "Stripe webhook dedup-claim failed",
+          message: `claim_stripe_webhook_event errored for ${event.type} (${event.id}). Event was processed but downstream side-effects may run twice on retry.`,
+          metadata: {
+            stripe_event_id: event.id,
+            stripe_event_type: event.type,
+            error: claimError.message,
+          },
+        }).then(({ error: notifyErr }) => {
+          if (notifyErr) logStep("WARN - admin_notifications insert failed", { error: notifyErr.message });
+        });
       } else if (claimed === false) {
         logStep("Duplicate Stripe event ignored", { eventId: event.id, type: event.type });
         return new Response(JSON.stringify({ received: true, duplicate: true }), {

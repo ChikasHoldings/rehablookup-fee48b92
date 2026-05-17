@@ -1,21 +1,22 @@
 /**
- * Claim Wizard — multi-step provider flow
- * ───────────────────────────────────────
- * Reached via /provider/claim/:slug from the "Claim This Listing" entry
- * point on unclaimed facility pages.
+ * Claim Wizard — five-step provider claim flow at /provider/claim/:slug.
  *
- * Phase 2 of the wizard ships steps 1-2:
- *   Step 1 — Confirm facility
- *   Step 2 — Your role (claimant info)
- *   Steps 3-5 — placeholder ("Coming soon"); built out in later phases.
+ *   1. Confirm facility
+ *   2. Your role (claimant info) — persists via submit-facility-claim
+ *   3. Verification (email-domain / SMS-to-facility-phone / docs)
+ *   4. Enrichment (services, photos, etc.)
+ *   5. Review & submit
  *
- * Auth gate: anon visitors are bounced to /auth/signup with a returnTo
- * pointing back here (and `claim=1` so the entry point UI can react).
+ * Entry contract:
+ *   - Anon visitors → /auth/signup?returnTo=/provider/claim/:slug
+ *   - Signed-in users who never went through /provider/onboarding (no
+ *     plan selection on file) → /provider/onboarding?intent=claim&
+ *     facility_id=<id>, so they pick Free vs Pro before claiming.
+ *   - Signed-in users with a plan selection → enter here directly.
  *
  * Persistence: wizard state lives in sessionStorage keyed by
- * `claim-wizard-${slug}` so a refresh doesn't lose progress. DB-side
- * persistence happens via submit-facility-claim on step 2 submission;
- * subsequent steps will update the same claim row.
+ * `claim-wizard-${slug}`. submit-facility-claim writes the canonical
+ * row on step 2; subsequent steps update it.
  */
 
 import {
@@ -306,12 +307,16 @@ export default function ClaimWizard() {
     if (slug) persistState(slug, state);
   }, [slug, state]);
 
-  // Auth gate. If signed out, bounce to /auth/signup with returnTo so the
-  // user can come back. The `claim=1` query param is informational; signup
-  // pages can react if they want a different copy variant.
+  // Auth gate + plan-selection gate. Signed-out → /auth/signup with
+  // returnTo. Signed-in but never went through the wizard (no plan on
+  // either profiles.plan or provider_onboarding_state.plan) → bounce
+  // back to /provider/onboarding so they select Free vs Pro before
+  // claiming.
   useEffect(() => {
     let cancelled = false;
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
       if (cancelled) return;
       if (!session?.user) {
         const returnTo = `/provider/claim/${slug ?? ""}`;
@@ -319,10 +324,35 @@ export default function ClaimWizard() {
         navigate(`/auth/signup?${search}`, { replace: true });
         return;
       }
-      setCurrentUserId(session.user.id);
+      const userId = session.user.id;
+      const [{ data: profile }, { data: stateRow }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("plan, onboarding_completed_at")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase
+          .from("provider_onboarding_state")
+          .select("plan, current_step, selected_facility_id")
+          .eq("user_id", userId)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+      const hasPlan =
+        (profile as { plan?: string | null } | null)?.plan != null ||
+        (stateRow as { plan?: string | null } | null)?.plan != null ||
+        (profile as { onboarding_completed_at?: string | null } | null)?.onboarding_completed_at != null;
+      if (!hasPlan) {
+        const facilityId = (stateRow as { selected_facility_id?: string | null } | null)?.selected_facility_id ?? null;
+        const params = new URLSearchParams({ intent: "claim" });
+        if (facilityId) params.set("facility_id", facilityId);
+        navigate(`/provider/onboarding?${params.toString()}`, { replace: true });
+        return;
+      }
+      setCurrentUserId(userId);
       setCurrentUserEmail(session.user.email ?? null);
       setAuthChecking(false);
-    });
+    })();
     return () => {
       cancelled = true;
     };

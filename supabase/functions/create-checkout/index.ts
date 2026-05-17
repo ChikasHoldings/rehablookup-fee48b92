@@ -72,6 +72,28 @@ Deno.serve(async (req) => {
       customerId = customers.data[0].id;
       logStep(requestId, "Found existing customer", { customerId });
 
+      // Single-flight guard against double-billing from tab duplicates.
+      // If an open Checkout session for this user exists from the last
+      // 30 minutes, return its URL instead of creating a new session.
+      const thirtyMinAgo = Math.floor((Date.now() - 30 * 60 * 1000) / 1000);
+      const recentSessions = await stripe.checkout.sessions.list({
+        customer: customerId,
+        limit: 5,
+        created: { gte: thirtyMinAgo },
+      });
+      const openSession = recentSessions.data.find(
+        (s) => s.status === "open" && s.mode === "subscription" && s.url,
+      );
+      if (openSession?.url) {
+        logStep(requestId, "Reusing open Checkout session (single-flight)", {
+          sessionId: openSession.id,
+        });
+        return new Response(
+          JSON.stringify({ url: openSession.url, sessionId: openSession.id, requestId, reused: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+        );
+      }
+
       // Check for existing active subscription
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,

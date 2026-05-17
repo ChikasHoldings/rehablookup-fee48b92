@@ -26,7 +26,9 @@ export default function NewListingForm() {
 
   useEffect(() => {
     let cancelled = false;
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
       if (cancelled) return;
       if (!session?.user) {
         const search = new URLSearchParams({
@@ -35,8 +37,25 @@ export default function NewListingForm() {
         navigate(`/auth/signup?${search}`, { replace: true });
         return;
       }
+      // Plan-selection gate. A user who lands here without picking
+      // a plan (e.g., direct URL, abandoned wizard) must go through
+      // the wizard's PlanStep before publishing a listing.
+      const userId = session.user.id;
+      const [{ data: profile }, { data: stateRow }] = await Promise.all([
+        supabase.from("profiles").select("plan, onboarding_completed_at").eq("user_id", userId).maybeSingle(),
+        supabase.from("provider_onboarding_state").select("plan").eq("user_id", userId).maybeSingle(),
+      ]);
+      if (cancelled) return;
+      const hasPlan =
+        (profile as { plan?: string | null } | null)?.plan != null ||
+        (stateRow as { plan?: string | null } | null)?.plan != null ||
+        (profile as { onboarding_completed_at?: string | null } | null)?.onboarding_completed_at != null;
+      if (!hasPlan) {
+        navigate("/provider/onboarding?step=plan", { replace: true });
+        return;
+      }
       setChecking(false);
-    });
+    })();
     return () => {
       cancelled = true;
     };

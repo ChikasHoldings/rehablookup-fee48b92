@@ -242,13 +242,13 @@ export default function ClaimSubmitted() {
 
             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:items-center sm:justify-between pt-3 border-t">
               <Button asChild variant="outline" size="sm">
-                <Link to="/provider/onboarding">
-                  <ArrowLeft className="h-4 w-4 mr-1.5" aria-hidden />
-                  Back to onboarding
-                </Link>
+                <Link to="/provider/claims">View my claims</Link>
               </Button>
               <Button asChild>
-                <Link to="/provider/claims">View my claims</Link>
+                <Link to="/provider/dashboard">
+                  Go to dashboard
+                  <ArrowRight className="h-4 w-4 ml-1.5" aria-hidden />
+                </Link>
               </Button>
             </div>
           </Card>

@@ -101,6 +101,27 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
         return;
       }
 
+      // Defensive profile-row upsert. The handle_new_provider() trigger
+      // (migration 20260529000000) should have already inserted a row
+      // when register-provider-account called admin.createUser, but
+      // the wizard's downstream writes assume a row exists. A
+      // duplicate-key error here is the happy path.
+      const userId = data.userId as string;
+      const { error: profileErr } = await supabase
+        .from("profiles")
+        .upsert(
+          {
+            user_id: userId,
+            first_name: firstName.trim().slice(0, 80),
+            last_name: lastName.trim().slice(0, 80),
+            email: email.trim().slice(0, 255),
+          } as never,
+          { onConflict: "user_id" },
+        );
+      if (profileErr) {
+        console.warn("[AccountStep] profile upsert warning", profileErr);
+      }
+
       // Seed onboarding state. If the user entered the wizard with
       // ?intent=claim&facility_id=…, prefill selected_facility_id so the
       // Find or List step jumps straight to "Continue with this facility".

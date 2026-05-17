@@ -46,7 +46,6 @@ import { VerifyEmailStep } from "@/components/provider/onboarding/VerifyEmailSte
 import { FindOrListStep } from "@/components/provider/onboarding/FindOrListStep";
 import { PlanStep } from "@/components/provider/onboarding/PlanStep";
 import { BuildStep } from "@/components/provider/onboarding/BuildStep";
-import { PlaceholderStep } from "@/components/provider/onboarding/PlaceholderStep";
 
 /** profiles row fields the wizard reads to decide whether to redirect. */
 interface ProfileGate {
@@ -183,14 +182,7 @@ export default function ProviderOnboarding() {
           {resolved === "verify_email" && (
             <VerifyEmailStep onAdvance={() => void refetchState()} />
           )}
-          {resolved === "verify_phone" && (
-            <PlaceholderStep
-              title="Verify your phone"
-              serverStep="verify_phone"
-              onBack={handleBack}
-            />
-          )}
-          {resolved === "find_or_list" && (
+          {(resolved === "verify_phone" || resolved === "find_or_list") && (
             <FindOrListStep
               onAdvance={() => void refetchState()}
               onBack={handleBack}
