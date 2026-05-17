@@ -8,6 +8,11 @@ import {
   deactivateProBenefits,
   notifyProBenefitsPartialFailure,
 } from "../_shared/pro-benefits.ts";
+import {
+  activateFeaturedAddon,
+  deactivateFeaturedAddon,
+  notifyFeaturedAddonPartialFailure,
+} from "../_shared/featured-addon.ts";
 
 // Version tracking for deployment verification
 const VERSION = "1.2.0";
@@ -996,7 +1001,7 @@ Deno.serve(async (req) => {
       const customerId = subscription.customer as string;
       logStep("Subscription created", { subscriptionId: subscription.id, customerId });
 
-      // Idempotency: check if this event was already processed
+      // Idempotency: skip if already processed.
       const { data: existingSubCreated } = await supabaseAdmin
         .from("subscription_events")
         .select("id")
@@ -1006,6 +1011,74 @@ Deno.serve(async (req) => {
       if (existingSubCreated) {
         logStep("Subscription created event already processed, skipping", { eventId: event.id });
       } else {
+
+      // Add-on subscriptions (Featured/Concierge purchased separately
+      // from Pro) carry a metadata.type marker set by create-checkout-
+      // session. Route those to the dedicated activation helpers and
+      // skip the Pro-subscription path below.
+      const subMetadataType = subscription.metadata?.type as string | undefined;
+      const addonFacilityId = subscription.metadata?.facility_id as string | undefined;
+
+      if (subMetadataType === "featured_addon" && addonFacilityId) {
+        const periodEnd = subscription.current_period_end
+          ? new Date(subscription.current_period_end * 1000).toISOString()
+          : null;
+        const addonResult = await activateFeaturedAddon(supabaseAdmin, {
+          facilityId: addonFacilityId,
+          stripeSubscriptionId: subscription.id,
+          currentPeriodEnd: periodEnd,
+        });
+        logStep("Featured add-on activated via subscription.created", {
+          facilityId: addonFacilityId,
+          stripeSubId: subscription.id,
+          placementsInserted: addonResult.placements_inserted,
+          placementsReactivated: addonResult.placements_reactivated,
+          failed: addonResult.failed.length,
+        });
+        await notifyFeaturedAddonPartialFailure(supabaseAdmin, {
+          eventType: "customer.subscription.created",
+          facilityId: addonFacilityId,
+          stripeSubscriptionId: subscription.id,
+          stripeEventId: event.id,
+          result: addonResult,
+        });
+
+        await supabaseAdmin.from("subscription_events").insert({
+          event_type: "featured_addon_activated",
+          stripe_event_id: event.id,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscription.id,
+          facility_id: addonFacilityId,
+          plan_tier: null,
+          status: subscription.status,
+          metadata: {
+            placements_inserted: addonResult.placements_inserted,
+            placements_reactivated: addonResult.placements_reactivated,
+          },
+        });
+
+        const { data: facSubProvider } = await supabaseAdmin
+          .from("facility_subscriptions")
+          .select("provider_id")
+          .eq("facility_id", addonFacilityId)
+          .maybeSingle();
+        if (facSubProvider) {
+          await supabaseAdmin.from("provider_notifications").insert({
+            user_id: (facSubProvider as { provider_id: string }).provider_id,
+            facility_id: addonFacilityId,
+            type: "featured_addon_active",
+            title: "Featured is live",
+            message:
+              "Your facility is now in the Featured rotation on the homepage, statewide directory, your city, and global search results.",
+            metadata: { stripe_subscription_id: subscription.id },
+          });
+        }
+
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const customer = await stripe.customers.retrieve(customerId);
       
       if (!customer.deleted) {
@@ -1215,6 +1288,49 @@ Deno.serve(async (req) => {
       if (existingDeleteEvent) {
         logStep("Subscription deleted event already processed, skipping", { eventId: event.id });
       } else {
+
+      // Add-on subscriptions (Featured/Concierge) — keyed off
+      // metadata.type set when the sub was created via
+      // create-checkout-session. Deactivate the helper's row(s) and
+      // skip the full Pro cancellation path below.
+      const delMetadataType = subscription.metadata?.type as string | undefined;
+      const delAddonFacilityId = subscription.metadata?.facility_id as string | undefined;
+      if (delMetadataType === "featured_addon") {
+        const deactivateRes = await deactivateFeaturedAddon(supabaseAdmin, {
+          facilityId: delAddonFacilityId,
+          stripeSubscriptionId: subscription.id,
+        });
+        logStep("Featured add-on deactivated via subscription.deleted", {
+          stripeSubId: subscription.id,
+          placementsDeactivated: deactivateRes.placements_deactivated,
+          failed: deactivateRes.failed.length,
+        });
+        await notifyFeaturedAddonPartialFailure(supabaseAdmin, {
+          eventType: "customer.subscription.deleted",
+          facilityId: delAddonFacilityId,
+          stripeSubscriptionId: subscription.id,
+          stripeEventId: event.id,
+          result: deactivateRes,
+        });
+
+        await supabaseAdmin.from("subscription_events").insert({
+          event_type: "featured_addon_deactivated",
+          stripe_event_id: event.id,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscription.id,
+          facility_id: delAddonFacilityId ?? null,
+          plan_tier: null,
+          status: "canceled",
+          metadata: {
+            placements_deactivated: deactivateRes.placements_deactivated,
+          },
+        });
+
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const customer = await stripe.customers.retrieve(customerId);
       
       if (!customer.deleted) {
