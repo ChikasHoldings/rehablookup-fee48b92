@@ -69,10 +69,118 @@ const PLACEMENT_TYPES = [
 export function AddonCapsTab() {
   return (
     <div className="space-y-8">
+      <WaitlistDemandCard />
       <FeaturedCapsCard />
       <ConciergeCapsCard />
       <WaitlistCard />
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Waitlist demand — top-N scopes by queue depth
+// ─────────────────────────────────────────────────────────────────────────
+
+interface DemandRow {
+  addon_type: "featured" | "concierge";
+  scope_label: string;
+  scope_key: string;
+  scope_type: string | null;
+  scope_value: string | null;
+  geo_state: string | null;
+  geo_city: string | null;
+  cap: number;
+  used: number;
+  waiting_count: number;
+  invited_count: number;
+  oldest_request: string | null;
+}
+
+function WaitlistDemandCard() {
+  const { data: rows, isLoading } = useQuery({
+    queryKey: ["admin-waitlist-demand"],
+    queryFn: async (): Promise<DemandRow[]> => {
+      const { data, error } = await supabase.rpc("get_waitlist_demand_summary", {
+        p_limit: 20,
+      });
+      if (error) {
+        if (error.code === "42501" || error.message?.includes("Admin only")) {
+          return [];
+        }
+        throw error;
+      }
+      return (data ?? []) as unknown as DemandRow[];
+    },
+    staleTime: 1000 * 30,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Where demand is hottest</CardTitle>
+        <CardDescription className="text-xs">
+          Top scopes by waitlist depth. Use this to decide which caps to
+          raise. Each row shows current cap, in-use, and how many providers
+          are queued behind.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : !rows || rows.length === 0 ? (
+          <p className="text-sm text-slate-500 italic">
+            No active waitlist entries. Caps are sized comfortably for current demand.
+          </p>
+        ) : (
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b border-slate-200">
+                  <th className="px-3 py-2 font-medium text-slate-700">Add-on</th>
+                  <th className="px-3 py-2 font-medium text-slate-700">Scope</th>
+                  <th className="px-3 py-2 font-medium text-slate-700">Cap</th>
+                  <th className="px-3 py-2 font-medium text-slate-700">In use</th>
+                  <th className="px-3 py-2 font-medium text-slate-700">Waiting</th>
+                  <th className="px-3 py-2 font-medium text-slate-700">Invited</th>
+                  <th className="px-3 py-2 font-medium text-slate-700">
+                    Oldest waiter
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {rows.map((r) => {
+                  const heat =
+                    r.waiting_count + r.invited_count >= Math.max(1, r.cap)
+                      ? "text-red-700 font-medium"
+                      : r.waiting_count + r.invited_count > 0
+                        ? "text-amber-700 font-medium"
+                        : "text-slate-700";
+                  return (
+                    <tr key={r.scope_key}>
+                      <td className="px-3 py-2">
+                        <Badge variant="outline" className="font-normal capitalize">
+                          {r.addon_type}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-2 font-mono text-xs">{r.scope_label}</td>
+                      <td className="px-3 py-2">{r.cap}</td>
+                      <td className="px-3 py-2">{r.used}</td>
+                      <td className={"px-3 py-2 " + heat}>{r.waiting_count}</td>
+                      <td className="px-3 py-2 text-slate-600">{r.invited_count}</td>
+                      <td className="px-3 py-2 text-slate-600">
+                        {r.oldest_request
+                          ? new Date(r.oldest_request).toLocaleDateString()
+                          : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
