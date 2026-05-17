@@ -536,7 +536,6 @@ export default function ProviderInquiriesPage() {
               <InquiryDetailPanel
                 inquiry={selectedInquiry}
                 isUnlocked={selectedInquiry.is_unlocked === true}
-                onUnlockSuccess={handleUnlockSuccess}
               />
             ) : isLoading ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted/20 gap-3">

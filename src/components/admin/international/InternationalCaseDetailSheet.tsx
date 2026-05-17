@@ -861,7 +861,9 @@ function FacilityInvoiceSection({ caseId, invoiceId, feeStatus, feeCents, onActi
             {invoice && (
               <div className="text-sm text-muted-foreground space-y-1">
                 <div>Facility: {invoice.facilities?.name || "Unknown"}</div>
-                {invoice.sent_at && <div>Sent: {format(new Date(invoice.sent_at), "MMM d, yyyy")}</div>}
+                {(invoice as unknown as { sent_at?: string }).sent_at && (
+                  <div>Sent: {format(new Date((invoice as unknown as { sent_at: string }).sent_at), "MMM d, yyyy")}</div>
+                )}
                 {invoice.due_date && <div>Due: {format(new Date(invoice.due_date), "MMM d, yyyy")}</div>}
                 {invoice.paid_at && <div>Paid: {format(new Date(invoice.paid_at), "MMM d, yyyy")}</div>}
               </div>
@@ -894,13 +896,17 @@ function FacilityInvoiceSection({ caseId, invoiceId, feeStatus, feeCents, onActi
                 </Button>
               )}
 
-              {/* View in Stripe - if we have stripe_invoice_id */}
-              {invoice?.stripe_invoice_id && (
-                <Button 
-                  size="sm" 
+              {/* View in Stripe - if we have stripe_invoice_id.
+                  The column isn't in the current schema; cast guards
+                  the optional read so the UI surfaces it when a
+                  migration adds the column without needing a code
+                  change here. */}
+              {(invoice as unknown as { stripe_invoice_id?: string })?.stripe_invoice_id && (
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => {
-                    const id = invoice.stripe_invoice_id;
+                    const id = (invoice as unknown as { stripe_invoice_id?: string }).stripe_invoice_id;
                     if (id && /^[a-zA-Z0-9_-]+$/.test(id)) {
                       window.open(`https://dashboard.stripe.com/invoices/${id}`, "_blank");
                     }

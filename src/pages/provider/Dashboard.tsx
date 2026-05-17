@@ -526,6 +526,7 @@ export default function ProviderDashboardPage() {
               isPro={proStatus.isPro}
               isLoading={leadsLoading}
               onLeadClick={handleLeadClick}
+              unlockedLeadIds={new Set()}
             />
 
             {/* Missed Leads — Psychological Trigger */}

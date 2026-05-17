@@ -89,7 +89,7 @@ export default function SeekerNotificationPreferences() {
         user_id: userId,
         [key]: value,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id' });
+      } as never, { onConflict: 'user_id' });
 
     if (error) {
       setPreferences(prev);

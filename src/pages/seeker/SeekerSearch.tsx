@@ -248,7 +248,7 @@ export default function SeekerSearch() {
     // since they admit everyone.
     if (selectedGenders.length > 0) {
       results = results.filter((f) => {
-        const g = (f.genderServed || "").toLowerCase();
+        const g = ((f as unknown as { genderServed?: string }).genderServed || "").toLowerCase();
         if (!g || g.includes("all") || g.includes("co-ed") || g.includes("coed")) return true;
         return selectedGenders.some((sel) => {
           if (sel === "co-ed") return g.includes("co-ed") || g.includes("coed") || g.includes("all");

@@ -47,7 +47,7 @@ export function ProviderPerformanceFeedback({ facilityId }: ProviderPerformanceF
           .in("id", leadIds);
 
         if (leads && leads.length > 0) {
-          const leadMap = new Map(leads.map(l => [l.id, new Date(l.created_at)]));
+          const leadMap = new Map<string, Date>(leads.map((l: { id: string; created_at: string }) => [l.id, new Date(l.created_at)]));
           let totalMinutes = 0;
           let count = 0;
           for (const unlock of recentUnlocks) {

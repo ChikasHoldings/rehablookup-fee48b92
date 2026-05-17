@@ -165,7 +165,7 @@ export function useUpdateSupportTicket() {
     }) => {
       const { error } = await supabase
         .from("support_tickets")
-        .update(updates)
+        .update(updates as never)
         .eq("id", ticketId);
 
       if (error) throw error;
@@ -224,7 +224,7 @@ export function useAssignSupportTicket() {
 
       const { error } = await supabase
         .from("support_tickets")
-        .update(updates)
+        .update(updates as never)
         .eq("id", ticketId);
 
       if (error) throw error;

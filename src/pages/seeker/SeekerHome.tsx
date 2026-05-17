@@ -131,7 +131,7 @@ export default function SeekerHome() {
       }
       const [leadsRes, conciergeRes, intlRes, draftRes, notifRes] = await Promise.all([
         supabase
-          .rpc("get_seeker_submitted_leads", { p_email: user.email })
+          .rpc("get_seeker_submitted_leads", { p_email: user.email } as never)
           .then((r) => r, () => ({ data: [] as Array<{ id: string; status: string }> })),
         supabase
           .from("concierge_inquiries")

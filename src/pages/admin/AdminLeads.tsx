@@ -249,7 +249,7 @@ export default function AdminLeads() {
       const to = from + pageSize - 1;
       let query = supabase
         .from("leads")
-        .select("id, facility_id, original_facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, qualified, quality_flag, redistribution_status, assignment_status, age_range, gender, preferred_contact, lead_score, lead_score_label, credit_cost, exclusive_until, extended_until, assigned_at, lead_expired_at, shared_with")
+        .select("id, facility_id, original_facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, qualified, quality_flag, redistribution_status, assignment_status, age_range, gender, preferred_contact, exclusive_until, extended_until, assigned_at, lead_expired_at, shared_with")
         .order("created_at", { ascending: false })
         .range(from, to);
 
@@ -264,7 +264,7 @@ export default function AdminLeads() {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Lead[];
+      return data as unknown as Lead[];
     },
   });
 

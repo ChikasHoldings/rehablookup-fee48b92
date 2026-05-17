@@ -89,10 +89,13 @@ export function useCaseTransition() {
         ...(extraFields || {}),
       };
 
-      // Optimistic locking: only update if status still matches
+      // Optimistic locking: only update if status still matches.
+      // Cast bypasses Supabase's strict RejectExcessProperties shape
+      // — the payload mixes typed columns (status, timestamps) with
+      // optional extraFields (caller-supplied dynamic keys).
       const { data: updated, error } = await supabase
         .from("concierge_inquiries")
-        .update(updatePayload)
+        .update(updatePayload as never)
         .eq("id", caseId)
         .eq("status", fromStatus)
         .select("id")

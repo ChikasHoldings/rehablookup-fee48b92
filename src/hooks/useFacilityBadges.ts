@@ -46,9 +46,12 @@ export function useFacilityBadges(facilityId: string | undefined) {
           .eq("facility_id", facilityId)
           .eq("status", "active")
           .maybeSingle(),
-        // Use leads_provider_view for accurate count (RLS on leads blocks non-unlocked)
+        // leads_provider_view was retired with the pay-per-unlock
+        // model. Fall back to the leads table directly — RLS on leads
+        // already restricts to rows the provider can see under the
+        // flat-fee subscription model.
         supabase
-          .from("leads_provider_view")
+          .from("leads")
           .select("id", { count: "exact", head: true })
           .eq("facility_id", facilityId),
       ]);

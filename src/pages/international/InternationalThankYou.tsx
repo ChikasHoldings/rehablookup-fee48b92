@@ -226,7 +226,11 @@ export default function InternationalThankYou() {
       }
       const signUpData = {
         user: { id: regData.userId, user_metadata: { account_type: "seeker" } },
-      } as { user: { id: string; user_metadata: { account_type: string } } | null };
+        session: null,
+      } as {
+        user: { id: string; user_metadata: { account_type: string } } | null;
+        session: { access_token: string; refresh_token: string } | null;
+      };
 
       if (signUpData.user) {
         // Create seeker profile
@@ -234,7 +238,7 @@ export default function InternationalThankYou() {
           user_id: signUpData.user.id,
           first_name: firstName,
           email: trimmedEmail,
-        });
+        } as never);
 
         // Link international cases to this user
         await supabase

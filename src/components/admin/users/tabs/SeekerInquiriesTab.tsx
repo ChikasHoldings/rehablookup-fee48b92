@@ -64,7 +64,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
       if (!seekerEmail) return [];
       const { data } = await supabase
         .from("leads")
-        .select("id, facility_id, name, email, phone, status, source, inquiry_type, created_at, urgency, quality_flag, lead_score_label, lead_score")
+        .select("id, facility_id, name, email, phone, status, source, inquiry_type, created_at, urgency, quality_flag")
         .eq("email", seekerEmail)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -219,9 +219,6 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
                           {lead.status}
                         </Badge>
                         {lead.urgency && <Badge variant="secondary" className="text-xs">{lead.urgency}</Badge>}
-                        {lead.lead_score_label && (
-                          <Badge variant="secondary" className="text-xs">{lead.lead_score_label} ({lead.lead_score})</Badge>
-                        )}
                         {lead.unlock ? (
                           <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 text-xs">
                             <Unlock className="h-3 w-3" />Unlocked {lead.unlock.unlocked_at && format(new Date(lead.unlock.unlocked_at), "MMM d")}

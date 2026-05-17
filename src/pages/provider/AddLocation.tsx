@@ -470,8 +470,8 @@ export default function AddLocationPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {US_STATES.map((state) => (
-                        <SelectItem key={state.value} value={state.value}>
-                          {state.label}
+                        <SelectItem key={state} value={state}>
+                          {state}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -209,7 +209,7 @@ export default function SeekerSaved() {
           </div>
           {facilities.length > pagination.pageSize && (
             <PaginationFooter
-              currentPage={pagination.page}
+              page={pagination.page}
               totalPages={pagination.totalPages}
               pageSize={pagination.pageSize}
               totalItems={facilities.length}

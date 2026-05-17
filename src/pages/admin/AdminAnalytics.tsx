@@ -172,13 +172,16 @@ export default function AdminAnalytics() {
     };
   }, [dateRange]);
 
-  // Fetch facilities for location filtering (with lead_limit_override)
+  // Fetch facilities for location filtering. The legacy
+  // lead_limit_override column was dropped during the monetization
+  // rebuild (PR-1) — pay-per-unlock model no longer exists; the
+  // platform runs flat-fee Pro/Featured subscriptions only.
   const { data: facilities, error: facilitiesError } = useQuery({
     queryKey: ["admin-analytics-facilities"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("facilities")
-        .select("id, name, city, state, status, lead_limit_override")
+        .select("id, name, city, state, status")
         .limit(5000);
       if (error) throw error;
       return data || [];
@@ -520,9 +523,12 @@ export default function AdminAnalytics() {
           new Date(l.created_at) >= monthStart
         ).length;
 
-        // Use facility's lead_limit_override if set (legacy), otherwise no limit in pay-per-unlock model
-        const leadLimit = (facility as any).lead_limit_override || 0;
-        const usagePercentage = leadLimit > 0 ? (monthlyLeads / leadLimit) * 100 : 0;
+        // Legacy lead_limit_override column was dropped during the
+        // monetization rebuild (pay-per-unlock model retired).
+        // Capacity is unbounded under flat-fee Pro/Featured; surface
+        // the raw monthly inquiry count without a derived utilization %.
+        const leadLimit = 0;
+        const usagePercentage = 0;
 
         return {
           id: facility.id,

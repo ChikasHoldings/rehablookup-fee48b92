@@ -72,6 +72,9 @@ interface DBArticle {
    *  the end-of-article FeaturedStrip. NULL means no Featured strip
    *  renders on this article. */
   featured_placement_bucket: string | null;
+  /** Last-modified timestamp surfaced in article JSON-LD + the
+   *  byline "updated" line. Set by the DB on row write. */
+  updated_at?: string;
 }
 
 // Helper function to parse content with internal links and Markdown formatting.

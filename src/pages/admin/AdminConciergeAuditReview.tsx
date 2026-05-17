@@ -71,7 +71,7 @@ export default function AdminConciergeAuditReview() {
         console.error("[AdminConciergeAuditReview] fetch failed", error);
         return [];
       }
-      return (data ?? []) as AuditRow[];
+      return (data ?? []) as unknown as AuditRow[];
     },
     staleTime: 1000 * 30,
   });

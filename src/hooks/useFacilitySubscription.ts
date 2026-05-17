@@ -79,7 +79,7 @@ export function useFacilitySubscription(
         console.error("[useFacilitySubscription] fetch failed", error);
         return null;
       }
-      return (data as FacilitySubscriptionRow | null) ?? null;
+      return (data as unknown as FacilitySubscriptionRow | null) ?? null;
     },
     enabled: !!facilityId,
     staleTime: 1000 * 30,

@@ -374,21 +374,21 @@ export default function AdminSubscriptions() {
     });
   }, [filteredSubscriptions, sortColumn, sortDirection]);
 
-  const handleSort = (col: SortColumn) => {
-    if (sortColumn === col) setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortColumn(col); setSortDirection("asc"); }
-    setCurrentPage(1);
-  };
-
-  // setCurrentPage is a stable setter from usePagination
-  useEffect(() => { setCurrentPage(1); }, [debouncedSearch, planFilter, statusFilter, setCurrentPage]);
-
   /* ───── Pagination ───── */
   const { page: currentPage, pageSize: itemsPerPage, totalPages, setPage: setCurrentPage, setPageSize: setItemsPerPage } = usePagination({
     tableId: "admin-subscriptions",
     defaultPageSize: 10,
     totalItems: sortedSubscriptions.length,
   });
+
+  const handleSort = (col: SortColumn) => {
+    if (sortColumn === col) setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortColumn(col); setSortDirection("asc"); }
+    setCurrentPage(1);
+  };
+
+  // Reset to first page whenever the filter / search inputs change.
+  useEffect(() => { setCurrentPage(1); }, [debouncedSearch, planFilter, statusFilter, setCurrentPage]);
   const paginatedSubscriptions = sortedSubscriptions.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage

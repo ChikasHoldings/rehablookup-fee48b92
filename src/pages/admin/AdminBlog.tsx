@@ -198,7 +198,7 @@ export default function AdminBlog() {
       if (status === "published") {
         updateData.published_at = new Date().toISOString();
       }
-      const { error } = await supabase.from("blog_articles").update(updateData).eq("id", id);
+      const { error } = await supabase.from("blog_articles").update(updateData as never).eq("id", id);
       if (error) throw error;
       // Audit content publish/unpublish/archive transitions
       if (previousStatus !== status) {

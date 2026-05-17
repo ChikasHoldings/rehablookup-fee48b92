@@ -183,12 +183,12 @@ export default function AdminInsuranceVerifications() {
       }
       const { error } = await supabase
         .from("insurance_verification_requests")
-        .update(patch)
+        .update(patch as never)
         .eq("id", input.id);
       if (error) throw error;
       try {
         await logAdminAction({
-          action: AdminAuditActions.SETTING_UPDATE,
+          actionType: "insurance_verification_updated",
           targetType: "insurance_verification_request",
           targetId: input.id,
           details: { status: input.status },

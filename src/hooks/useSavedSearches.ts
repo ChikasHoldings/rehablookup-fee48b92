@@ -76,11 +76,11 @@ export function useSavedSearches() {
       };
       const { data, error } = await supabase
         .from("saved_searches")
-        .insert(payload)
+        .insert(payload as never)
         .select("*")
         .single();
       if (error) throw error;
-      return data as SavedSearch;
+      return data as unknown as SavedSearch;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
@@ -92,7 +92,7 @@ export function useSavedSearches() {
       if (!user) throw new Error("Not authenticated");
       const { data, error } = await supabase
         .from("saved_searches")
-        .update(patch)
+        .update(patch as never)
         .eq("id", id)
         .eq("user_id", user.id)
         .select("*")

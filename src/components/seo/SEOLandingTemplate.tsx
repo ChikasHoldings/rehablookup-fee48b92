@@ -284,7 +284,7 @@ export function SEOLandingTemplate({
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
               {displayFacilities.map((facility) => {
                 // Unified facility card visual — matches /rehab-centers.
-                const f = facility as Record<string, unknown>;
+                const f = facility as unknown as Record<string, unknown>;
                 const center = {
                   id: String(f.id),
                   name: String(f.name ?? ""),

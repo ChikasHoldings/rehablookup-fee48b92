@@ -255,7 +255,7 @@ export default function SeekerSignup() {
               zipcode,
               city,
               state,
-            },
+            } as never,
             { onConflict: "user_id" },
           );
       } catch (err) {

@@ -40,7 +40,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
     queryFn: async () => {
       const { data: inqs } = await supabase
         .from("concierge_inquiries")
-        .select("id, status, created_at, updated_at, primary_concern, level_of_care, user_name, user_email, user_phone, payment_status, preferred_city, preferred_state, assigned_advisor_id, matched_facility_ids, admin_matched_facility_ids, placed_facility_id, placement_confirmed, placement_confirmed_at, timeline_urgency, admission_status, admission_notes, tour_coordination_status, seeker_confirmed, seeker_confirmed_at, seeker_feedback, seeker_rating, closed_at, notes, provider_fee_status, provider_fee_cents, introductions_sent_at, introductions_sent_count, match_count")
+        .select("id, status, created_at, updated_at, primary_concern, level_of_care, user_name, user_email, user_phone, payment_status, preferred_city, preferred_state, assigned_advisor_id, matched_facility_ids, admin_matched_facility_ids, placed_facility_id, placement_confirmed, placement_confirmed_at, timeline_urgency, admission_status, admission_notes, tour_coordination_status, seeker_confirmed, seeker_confirmed_at, seeker_feedback, seeker_rating, closed_at, notes, introductions_sent_at, introductions_sent_count, match_count")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
@@ -332,15 +332,9 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
               <p className="text-muted-foreground">Tour Status</p>
               <p className="font-medium mt-0.5 capitalize">{placement.tour_coordination_status?.replace(/_/g, " ") || "—"}</p>
             </div>
-            <div>
-              <p className="text-muted-foreground">Provider Fee</p>
-              <p className="font-medium mt-0.5">
-                {placement.provider_fee_cents ? `$${(placement.provider_fee_cents / 100).toFixed(0)}` : "—"}
-                {placement.provider_fee_status && placement.provider_fee_status !== "pending" && (
-                  <span className="text-muted-foreground ml-1">({placement.provider_fee_status})</span>
-                )}
-              </p>
-            </div>
+            {/* (Provider Fee field removed — per-admission fees were
+                retired during the monetization rebuild; the platform
+                runs flat-fee Pro/Featured subscriptions only.) */}
             <div>
               <p className="text-muted-foreground">Client Rating</p>
               <p className="font-medium mt-0.5 flex items-center gap-1">

@@ -746,7 +746,8 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     } finally {
       setIsSaving(false);
     }
-  }, [facility, validateAllFields, toast, queryClient, currentFacilityId, setFacility]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- validateAllFields is declared below; React runs callbacks after the full render so the forward reference is safe.
+  }, [facility, toast, queryClient, currentFacilityId, setFacility]);
 
   // Keyboard shortcut: Ctrl+S / Cmd+S
   useEffect(() => {

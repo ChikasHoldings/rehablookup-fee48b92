@@ -305,7 +305,11 @@ export default function ConciergeThankYou() {
       // Shape compatibility with the rest of this handler.
       const authData = {
         user: { id: regData.userId, user_metadata: { account_type: "seeker" } },
-      } as { user: { id: string; user_metadata: { account_type: string } } | null };
+        session: signInErr ? null : { access_token: "", refresh_token: "" },
+      } as {
+        user: { id: string; user_metadata: { account_type: string } } | null;
+        session: { access_token: string; refresh_token: string } | null;
+      };
 
       if (signInErr) {
         console.warn("[ConciergeThankYou] signInWithPassword failed", signInErr.message);
@@ -325,7 +329,7 @@ export default function ConciergeThankYou() {
             first_name: firstName || "",
             last_name: lastName || "",
             email: trimmedEmail,
-          }, { onConflict: "user_id" });
+          } as never, { onConflict: "user_id" });
 
         if (profileError) {
           console.error("Profile creation error:", profileError);

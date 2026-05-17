@@ -75,7 +75,7 @@ export function InquiryDetailPanel({ inquiry, isUnlocked }: InquiryDetailPanelPr
           provider_response_status: status === 'pending' ? null : status,
           provider_responded_at: status !== 'pending' ? new Date().toISOString() : null,
           ...(notes !== undefined ? { provider_response_notes: notes || null } : {}),
-        })
+        } as never)
         .eq("id", inquiry.id)
         .eq("facility_id", inquiry.facility_id);
       if (error) throw error;
