@@ -1,24 +1,1854 @@
-import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
-import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
-import { sendEmailWithRetry } from "./_shared/resilient-email-sender.ts";
-import { cancelSubscriptionAndRefund } from "./_shared/cancel-subscription.ts";
-import {
-  activateProBenefits,
-  deactivateProBenefits,
-  notifyProBenefitsPartialFailure,
-} from "./_shared/pro-benefits.ts";
-import {
-  activateFeaturedAddon,
-  deactivateFeaturedAddon,
-  notifyFeaturedAddonPartialFailure,
-} from "./_shared/featured-addon.ts";
-import {
-  activateConciergePartner,
-  deactivateConciergePartner,
-  notifyConciergeAddonPartialFailure,
-} from "./_shared/concierge-addon.ts";
+// ⚠ AUTO-GENERATED HEADER ⚠
+// _shared modules have been inlined into this file so that
+// `supabase functions deploy --use-api` (server-side bundler)
+// doesn't need to resolve any local relative imports. The
+// canonical sources live under supabase/functions/_shared/ —
+// don't edit the inlined copies below; edit the originals and
+// re-run `scripts/inline-stripe-webhook-shared.sh`.
 
+// ── URL imports (dedup'd) ──────────────────────────────────
+import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
+
+// ── inlined from _shared/subscription-math.ts ─────────────
+// subscription-math.ts
+// ─────────────────────
+// Pure, deterministic refund + proration math for the
+// Pro / Featured / Concierge subscription model — monthly default,
+// annual = 15%-discount upsell.
+//
+// Two-branch rule:
+//   • Monthly subscribers: Stripe handles cancellation natively. We
+//     don't issue refunds — you used the month you paid for. The
+//     math functions still return a deterministic shape so callers
+//     can record a 0-refund audit row.
+//   • Annual subscribers: custom math. months_used × full_monthly_rate
+//     is what we keep; the rest is refunded. The 15% discount is
+//     forfeited on partial years.
+//
+// HARD RULE: this module is pure. No DB calls, no Stripe calls,
+// no environment reads, no I/O. Every input arrives as a parameter.
+// Every output is computed in cents (integer math) so currency
+// rounding stays auditable. The implementation is identical in
+// Deno (edge functions) and Node/Vitest (in-repo tests).
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const DAYS_PER_MONTH = 30;
+const DAYS_PER_YEAR = 365;
+const ONE_HOUR_MS = 60 * 60 * 1000;
+
+/**
+ * Spec rule: "Partial months round UP. No free partial months."
+ *
+ * Edge cases:
+ *   • elapsed < 1 hour       → 0 months  (instant-cancel grace)
+ *   • exactly N × 30 days    → N months  (no extra month for the boundary)
+ *   • elapsed > 0 and < 30d  → 1 month
+ *   • negative elapsed       → 0 months  (now before periodStart — clamp)
+ */
+export function computeMonthsUsed(periodStart: Date, now: Date): number {
+  const elapsedMs = now.getTime() - periodStart.getTime();
+  if (elapsedMs < ONE_HOUR_MS) return 0;
+  const elapsedDays = elapsedMs / MS_PER_DAY;
+  return Math.ceil(elapsedDays / DAYS_PER_MONTH);
+}
+
+export type BillingPeriod = "monthly" | "annual";
+
+export interface CancellationRefundInput {
+  /** Which billing cadence the subscriber is on. Drives the refund branch. */
+  billingPeriod: BillingPeriod;
+  /** Amount actually paid in cents.
+   *   • monthly: the monthly amount charged ($99 / $599 / $1,000)
+   *   • annual:  the discounted annual ($1,009.80 / $6,108.60 / $10,200) */
+  paidAmountCents: number;
+  /** Full UN-discounted monthly rate in cents (Pro=9900, Featured=59900, Concierge=100000).
+   *  Only meaningful on the annual branch — monthly cancellation never refunds. */
+  fullMonthlyRateCents: number;
+  /** When the current billing period started. */
+  periodStart: Date;
+  /** When the period would end (only used to short-circuit refund=0 if already past). */
+  periodEnd?: Date;
+  /** Override the "now" timestamp — defaults to actual now. */
+  now?: Date;
+}
+
+export interface CancellationRefundResult {
+  monthsUsed: number;
+  chargeForUseCents: number;
+  refundCents: number;
+}
+
+/**
+ * Two-branch cancellation math:
+ *
+ *   billingPeriod === 'monthly'
+ *     The subscriber paid for the current month and used it. Refund
+ *     is always 0; we treat the whole month as charged. Stripe's
+ *     cancel-at-period-end handles the "no further renewals" piece
+ *     natively, so this function exists only to produce a deterministic
+ *     audit-row shape (and to centralise the "no monthly refund" policy
+ *     so it can't drift across handlers).
+ *     Returns: { monthsUsed: 1, chargeForUseCents: paidAmountCents, refundCents: 0 }
+ *
+ *   billingPeriod === 'annual'
+ *     Spec formula:
+ *       months_used    = ceil((now - period_start) / 30 days) (special cases above)
+ *       charge_for_use = months_used × full_monthly_rate_cents
+ *       refund         = max(0, paid_amount_cents − charge_for_use)
+ *
+ * Idempotency note: this is purely deterministic — same inputs yield
+ * same outputs forever. Callers store the result in
+ * `subscription_cancellations` keyed by subscription_id + scope so a
+ * retry produces a no-op insert.
+ */
+export function computeCancellationRefund(
+  input: CancellationRefundInput,
+): CancellationRefundResult {
+  const paid = Math.max(0, Math.floor(input.paidAmountCents));
+
+  // Monthly branch: no refund, ever. Stripe handles the cancel-at-
+  // period-end + final invoice. We log a 0-refund row for audit.
+  if (input.billingPeriod === "monthly") {
+    return {
+      monthsUsed: 1,
+      chargeForUseCents: paid,
+      refundCents: 0,
+    };
+  }
+
+  // Annual branch: existing math.
+  const now = input.now ?? new Date();
+  const monthlyRate = Math.max(0, Math.floor(input.fullMonthlyRateCents));
+
+  // Cancellation requested after the period already ended — no refund.
+  // Stripe wouldn't have charged a renewal yet (different event); this
+  // path covers race conditions where the cancel webhook fires after
+  // period_end. Refund = 0.
+  if (input.periodEnd && now.getTime() >= input.periodEnd.getTime()) {
+    const monthsUsed = computeMonthsUsed(input.periodStart, input.periodEnd);
+    return {
+      monthsUsed,
+      chargeForUseCents: monthsUsed * monthlyRate,
+      refundCents: 0,
+    };
+  }
+
+  const monthsUsed = computeMonthsUsed(input.periodStart, now);
+  const chargeForUseCents = monthsUsed * monthlyRate;
+  const refundCents = Math.max(0, paid - chargeForUseCents);
+
+  return { monthsUsed, chargeForUseCents, refundCents };
+}
+
+export interface UpgradeProrationInput {
+  /** Which interval the EXISTING parent subscription is on. Drives the branch. */
+  currentBillingPeriod: BillingPeriod;
+  /** The add-on's full annual price in cents BEFORE the 15% discount.
+   *  Featured = 599 × 12 × 100 = 718800. Concierge = 1000 × 12 × 100 = 1200000.
+   *  The 15% discount only applies at next renewal, not on the partial period.
+   *  Only used on the annual branch. */
+  addonFullAnnualCents: number;
+  /** The add-on's monthly rate in cents (Featured=59900, Concierge=100000).
+   *  Returned as the caller's reference rate when the monthly branch fires;
+   *  Stripe-native proration uses this when computing the partial month. */
+  addonMonthlyCents: number;
+  /** End of the parent subscription's current period. */
+  periodEnd: Date;
+  /** Override the "now" timestamp — defaults to actual now. */
+  now?: Date;
+}
+
+export interface UpgradeProrationResult {
+  /** Where the charge originates.
+   *   • 'stripe-native': the caller should let Stripe prorate on the
+   *     subscriptions.update call (proration_behavior: 'create_prorations').
+   *     proratedChargeCents is null in that case — Stripe computes it.
+   *   • 'computed': we calculated proratedChargeCents in this module. */
+  handledBy: "stripe-native" | "computed";
+  daysRemaining: number;
+  dailyRateCents: number;
+  proratedChargeCents: number | null;
+}
+
+/**
+ * Two-branch upgrade proration:
+ *
+ *   currentBillingPeriod === 'monthly'
+ *     Stripe handles partial-month proration natively when you add a
+ *     subscription item with proration_behavior: 'create_prorations'.
+ *     We return handledBy: 'stripe-native' and a null proratedChargeCents
+ *     — the caller should NOT compute its own number, just pass through
+ *     to Stripe.
+ *
+ *   currentBillingPeriod === 'annual'
+ *     Custom math, since we want the add-on to align with the parent
+ *     annual period:
+ *       daily_rate       = addon_full_annual_cents / 365
+ *       days_remaining   = floor((period_end - now) / 1 day)   (whole days only)
+ *       prorated_charge  = round(daily_rate × days_remaining)
+ *     If days_remaining <= 0 (upgrade after period_end) → prorated_charge = 0.
+ *     The caller should NOT issue a Stripe charge in that case.
+ *
+ * `daysRemaining` is floored (no partial days charged) and
+ * `proratedChargeCents` is rounded to the nearest cent — both choices
+ * documented here so the rounding behavior is transparent and auditable.
+ */
+export function computeUpgradeProration(
+  input: UpgradeProrationInput,
+): UpgradeProrationResult {
+  const now = input.now ?? new Date();
+  const elapsedMs = input.periodEnd.getTime() - now.getTime();
+  const daysRemaining = elapsedMs > 0 ? Math.floor(elapsedMs / MS_PER_DAY) : 0;
+
+  if (input.currentBillingPeriod === "monthly") {
+    // Stripe handles the partial-month charge natively. We surface the
+    // monthly daily-rate equivalent for any UI that wants to show the
+    // customer a preview, but the authoritative number comes from Stripe.
+    const monthlyCents = Math.max(0, Math.floor(input.addonMonthlyCents));
+    const monthlyDailyRate = Math.round(monthlyCents / DAYS_PER_MONTH);
+    return {
+      handledBy: "stripe-native",
+      daysRemaining,
+      dailyRateCents: monthlyDailyRate,
+      proratedChargeCents: null,
+    };
+  }
+
+  // Annual branch: existing math.
+  const addonAnnualCents = Math.max(0, Math.floor(input.addonFullAnnualCents));
+  // Daily rate stored as a fractional value temporarily; we only
+  // round the FINAL charge so the daily-rate display can show
+  // accurate cents-with-fractional precision if needed.
+  const dailyRateFloat = addonAnnualCents / DAYS_PER_YEAR;
+  const proratedChargeCents = Math.round(dailyRateFloat * daysRemaining);
+
+  return {
+    handledBy: "computed",
+    daysRemaining,
+    dailyRateCents: Math.round(dailyRateFloat),
+    proratedChargeCents,
+  };
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Tier constants — single source of truth for the math.
+//
+// `fullMonthlyRateCents` is the UN-discounted monthly figure used in
+// the cancellation formula (full monthly rate × months used). This
+// is intentionally HIGHER than the discounted annual ÷ 12 because the
+// spec says cancelling mid-year forfeits the 15% discount.
+//
+// `discountedAnnualCents` is what Stripe actually charges at renewal
+// (or initial purchase) — full_annual × 0.85.
+//
+// `fullAnnualCents` is full_monthly × 12, used for upgrade proration
+// (no discount applies on a partial period).
+// ──────────────────────────────────────────────────────────────────────
+
+export const TIER_PRICING = {
+  pro: {
+    fullMonthlyRateCents: 9900,
+    fullAnnualCents: 9900 * 12,                  // 118800
+    discountedAnnualCents: Math.round(9900 * 12 * 0.85), // 100980
+  },
+  featured: {
+    fullMonthlyRateCents: 59900,
+    fullAnnualCents: 59900 * 12,                 // 718800
+    // Spec-canonical value: $6,108.60. Pure arithmetic gives $6,109.80
+    // (59900 × 12 × 0.85 = 610980); the $1.20 delta is a $-rounding
+    // choice the spec made. Stripe charges 610860 cents and the math
+    // module must match so the refund formula stays self-consistent.
+    discountedAnnualCents: 610860, // $6,108.60
+  },
+  concierge: {
+    fullMonthlyRateCents: 100000,
+    fullAnnualCents: 100000 * 12,                // 1200000
+    discountedAnnualCents: Math.round(100000 * 12 * 0.85), // 1020000
+  },
+} as const;
+
+export type TierName = keyof typeof TIER_PRICING;
+
+// ── inlined from _shared/cancel-subscription.ts ─────────────
+// cancel-subscription.ts
+// ──────────────────────
+// Executor for facility-subscription cancellation. Computes refund(s)
+// using subscription-math.ts (pure), issues Stripe refunds, records
+// audit rows in subscription_cancellations, deactivates dependent
+// featured_placements / concierge_partner_facilities, and updates the
+// facility_subscriptions row's flags.
+//
+// Idempotency: callers can invoke this any number of times for the
+// same (subscription_id, scope). The function looks up existing
+// subscription_cancellations rows by `subscription_id` + the
+// reason-tag suffix ("scope:pro" / "scope:featured" / "scope:concierge")
+// before issuing any Stripe refund. A second call returns the existing
+// refund totals without double-charging.
+//
+// All Stripe writes go through the existing _shared/stripe.ts helper.
+// All Postgres writes are scoped to a single supabase client built
+// with the SERVICE_ROLE key (callers don't pass clients — kept
+// internal so privilege boundaries don't leak).
+
+export type CancelScope = "all" | "addon-featured" | "addon-concierge";
+
+export interface CancelResult {
+  proRefundCents?: number;
+  featuredRefundCents?: number;
+  conciergeRefundCents?: number;
+  totalRefundCents: number;
+  stripeRefundIds: string[];
+  cancellationRowIds: string[];
+}
+
+/** Reason-tag stored in `subscription_cancellations.reason` so the
+ *  idempotency lookup can detect "this scope already cancelled". */
+const SCOPE_TAGS = {
+  pro: "scope:pro",
+  featured: "scope:featured",
+  concierge: "scope:concierge",
+} as const;
+
+interface FacilitySubscription {
+  id: string;
+  facility_id: string;
+  provider_id: string | null;
+  stripe_subscription_id: string | null;
+  stripe_customer_id: string | null;
+  status: string;
+  tier: string;
+  has_featured: boolean;
+  has_concierge_partner: boolean;
+  paid_amount_cents: number | null;
+  price_cents: number;
+  /** 'monthly' | 'annual' — drives the refund branch in subscription-math.
+   *  Default 'annual' guards rows from before the monthly+annual schema
+   *  correction; the webhook keeps this column in sync going forward. */
+  billing_period: "monthly" | "annual";
+  period_start: string | null;
+  current_period_end: string | null;
+  canceled_at: string | null;
+}
+
+function clientFromEnv(): SupabaseClient {
+  return createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } },
+  );
+}
+
+function stripeFromEnv(): Stripe {
+  return new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
+    apiVersion: "2025-04-30.basil" as Stripe.LatestApiVersion,
+  });
+}
+
+/**
+ * Look up the most-recent successful Stripe charge for a subscription
+ * (the renewal or initial invoice). Returns the charge id so refunds
+ * target the right payment intent.
+ */
+async function findRefundableChargeId(
+  stripe: Stripe,
+  stripeSubId: string | null,
+): Promise<string | null> {
+  if (!stripeSubId) return null;
+  try {
+    const invoices = await stripe.invoices.list({ subscription: stripeSubId, limit: 5 });
+    for (const inv of invoices.data) {
+      if (inv.status === "paid" && inv.charge) {
+        return typeof inv.charge === "string" ? inv.charge : inv.charge.id;
+      }
+    }
+  } catch (err) {
+    console.error("[cancel-subscription] findRefundableChargeId failed", err);
+  }
+  return null;
+}
+
+/**
+ * Idempotency: check if we've already recorded a cancellation row for
+ * (subscription_id, scope_tag). Returns the existing row when found.
+ */
+async function findExistingCancellation(
+  supabase: SupabaseClient,
+  subscriptionId: string,
+  scopeTag: string,
+): Promise<{ id: string; refund_amount_cents: number; stripe_refund_id: string | null } | null> {
+  const { data } = await supabase
+    .from("subscription_cancellations")
+    .select("id, refund_amount_cents, stripe_refund_id")
+    .eq("subscription_id", subscriptionId)
+    .eq("reason", scopeTag)
+    .maybeSingle();
+  return (data as { id: string; refund_amount_cents: number; stripe_refund_id: string | null } | null) ?? null;
+}
+
+/**
+ * Refund one tier (or add-on) and record the audit row. Returns the
+ * refund amount in cents (0 if math says no refund) and the Stripe
+ * refund id (null when amount = 0 or no Stripe charge found).
+ *
+ * Skips entirely if an existing cancellation row for this scope is
+ * already present — that's how idempotency is enforced.
+ */
+async function refundOnePiece(args: {
+  supabase: SupabaseClient;
+  stripe: Stripe;
+  subscription: FacilitySubscription;
+  tier: TierName;
+  scopeTag: string;
+  paidAmountCents: number;
+  triggeredBy?: string | null;
+  reasonNote?: string | null;
+}): Promise<{ refundCents: number; stripeRefundId: string | null; rowId: string | null }> {
+  const { supabase, stripe, subscription, tier, scopeTag, paidAmountCents, triggeredBy, reasonNote } = args;
+
+  // Idempotency
+  const existing = await findExistingCancellation(supabase, subscription.id, scopeTag);
+  if (existing) {
+    return {
+      refundCents: existing.refund_amount_cents,
+      stripeRefundId: existing.stripe_refund_id,
+      rowId: existing.id,
+    };
+  }
+
+  const fullMonthlyRateCents = TIER_PRICING[tier].fullMonthlyRateCents;
+  const periodStart = subscription.period_start
+    ? new Date(subscription.period_start)
+    : new Date();
+  const periodEnd = subscription.current_period_end
+    ? new Date(subscription.current_period_end)
+    : undefined;
+
+  const refund = computeCancellationRefund({
+    billingPeriod: subscription.billing_period,
+    paidAmountCents,
+    fullMonthlyRateCents,
+    periodStart,
+    periodEnd,
+  });
+
+  // Issue Stripe refund (only when > 0 AND we have a charge to refund).
+  let stripeRefundId: string | null = null;
+  if (refund.refundCents > 0) {
+    const chargeId = await findRefundableChargeId(stripe, subscription.stripe_subscription_id);
+    if (chargeId) {
+      try {
+        const refundObj = await stripe.refunds.create({
+          charge: chargeId,
+          amount: refund.refundCents,
+          reason: triggeredBy ? "duplicate" : "requested_by_customer",
+          metadata: {
+            subscription_id: subscription.id,
+            facility_id: subscription.facility_id,
+            scope: scopeTag,
+            note: reasonNote ?? "",
+            triggered_by: triggeredBy ?? "",
+          },
+        });
+        stripeRefundId = refundObj.id;
+      } catch (err) {
+        console.error(`[cancel-subscription] Stripe refund failed (${scopeTag})`, err);
+        // Continue — we still record the cancellation row with stripe_refund_id=null
+        // so an admin can issue the refund manually if needed. Throwing here would
+        // leave the subscription in a half-cancelled state.
+        await notifyAdmin(supabase, {
+          type: "subscription_refund_failed",
+          title: `Refund failed for ${scopeTag}`,
+          message: `Stripe refund of ${refund.refundCents}¢ failed for facility_subscriptions.id=${subscription.id} (charge=${chargeId}, ${scopeTag}). Cancellation row recorded without refund; manual refund required.`,
+          metadata: {
+            facility_subscription_id: subscription.id,
+            charge_id: chargeId,
+            scope_tag: scopeTag,
+            attempted_refund_cents: refund.refundCents,
+            error: err instanceof Error ? err.message : String(err),
+          },
+        });
+      }
+    } else {
+      console.warn(
+        `[cancel-subscription] no refundable charge for sub ${subscription.id} (${scopeTag}) — recording cancellation without Stripe refund`,
+      );
+      if (refund.refundCents > 0) {
+        await notifyAdmin(supabase, {
+          type: "subscription_refund_missing_charge",
+          title: `No refundable charge for ${scopeTag}`,
+          message: `Owed ${refund.refundCents}¢ for facility_subscriptions.id=${subscription.id} (${scopeTag}) but no underlying Stripe charge was found. Manual review required.`,
+          metadata: {
+            facility_subscription_id: subscription.id,
+            stripe_subscription_id: subscription.stripe_subscription_id,
+            scope_tag: scopeTag,
+            owed_refund_cents: refund.refundCents,
+          },
+        });
+      }
+    }
+  }
+
+  // Audit row
+  const { data: inserted, error } = await supabase
+    .from("subscription_cancellations")
+    .insert({
+      subscription_id: subscription.id,
+      months_used: refund.monthsUsed,
+      full_monthly_rate_cents: fullMonthlyRateCents,
+      paid_amount_cents: paidAmountCents,
+      charged_for_use_cents: refund.chargeForUseCents,
+      refund_amount_cents: refund.refundCents,
+      stripe_refund_id: stripeRefundId,
+      reason: scopeTag,
+      canceled_by: triggeredBy ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (error || !inserted) {
+    console.error(`[cancel-subscription] failed to insert cancellation row (${scopeTag})`, error);
+    await notifyAdmin(supabase, {
+      type: "subscription_cancellation_row_insert_failed",
+      title: `Cancellation audit row insert failed (${scopeTag})`,
+      message: `subscription_cancellations insert errored for facility_subscriptions.id=${subscription.id} (${scopeTag}). Refund may still have been issued; reconcile manually.`,
+      metadata: {
+        facility_subscription_id: subscription.id,
+        scope_tag: scopeTag,
+        attempted_refund_cents: refund.refundCents,
+        stripe_refund_id: stripeRefundId,
+        error: error?.message ?? "unknown",
+      },
+    });
+    return { refundCents: refund.refundCents, stripeRefundId, rowId: null };
+  }
+  return { refundCents: refund.refundCents, stripeRefundId, rowId: (inserted as { id: string }).id };
+}
+
+/**
+ * Best-effort admin alert. Never throws — failure to notify is itself
+ * just console-logged so it can't cascade and break the refund path.
+ */
+async function notifyAdmin(
+  supabase: SupabaseClient,
+  args: { type: string; title: string; message: string; metadata: Record<string, unknown> },
+): Promise<void> {
+  try {
+    await supabase.from("admin_notifications").insert({
+      type: args.type,
+      title: args.title,
+      message: args.message,
+      metadata: args.metadata,
+    });
+  } catch (err) {
+    console.warn("[cancel-subscription] admin notification insert failed", err);
+  }
+}
+
+/**
+ * Deactivate every featured_placements row tied to a subscription.
+ * Idempotent — re-running just bumps deactivated_at on rows already
+ * inactive (the WHERE active=true filter scopes this safely).
+ */
+async function deactivateFeaturedPlacements(supabase: SupabaseClient, subscriptionId: string): Promise<void> {
+  const { error } = await supabase
+    .from("featured_placements")
+    .update({ active: false, deactivated_at: new Date().toISOString() })
+    .eq("subscription_id", subscriptionId)
+    .eq("active", true);
+  if (error) console.error("[cancel-subscription] deactivateFeaturedPlacements failed", error);
+}
+
+async function deactivateConciergePartner(supabase: SupabaseClient, subscriptionId: string): Promise<void> {
+  const { error } = await supabase
+    .from("concierge_partner_facilities")
+    .update({ active: false, deactivated_at: new Date().toISOString() })
+    .eq("subscription_id", subscriptionId)
+    .eq("active", true);
+  if (error) console.error("[cancel-subscription] deactivateConciergePartner failed", error);
+}
+
+/**
+ * Public API.
+ *
+ * scope='all'              — cancel Pro AND every active add-on. Three
+ *                            separate refunds, three audit rows.
+ * scope='addon-featured'   — cancel JUST Featured. Pro stays active.
+ * scope='addon-concierge'  — cancel JUST Concierge Partner.
+ *
+ * Idempotent on (subscription_id, scope). The webhook's
+ * stripe_webhook_events guard provides outer idempotency; this
+ * function's per-scope cancellation lookup provides inner idempotency
+ * so an admin manual call AFTER the webhook has already cancelled
+ * Pro doesn't double-refund.
+ */
+export async function cancelSubscriptionAndRefund(
+  subscriptionId: string,
+  options: {
+    scope: CancelScope;
+    reason?: string;
+    triggeredBy?: string | null;
+  },
+): Promise<CancelResult> {
+  const supabase = clientFromEnv();
+  const stripe = stripeFromEnv();
+
+  const { data: subRow, error: subError } = await supabase
+    .from("facility_subscriptions")
+    .select(
+      "id, facility_id, provider_id, stripe_subscription_id, stripe_customer_id, status, tier, has_featured, has_concierge_partner, paid_amount_cents, price_cents, billing_period, period_start, current_period_end, canceled_at",
+    )
+    .eq("id", subscriptionId)
+    .single();
+
+  if (subError || !subRow) {
+    throw new Error(`facility_subscription ${subscriptionId} not found`);
+  }
+  const subscription = subRow as FacilitySubscription;
+
+  const refundIds: string[] = [];
+  const rowIds: string[] = [];
+  const result: CancelResult = {
+    totalRefundCents: 0,
+    stripeRefundIds: refundIds,
+    cancellationRowIds: rowIds,
+  };
+
+  // Per-tier paid amount. For annual subscribers, this is the
+  // discounted annual ($1,009.80 / $6,108.60 / $10,200). For monthly,
+  // it's the monthly amount actually charged this period (full rate,
+  // no discount). The math module returns refund=0 on the monthly
+  // branch regardless, so this value just feeds the audit row.
+  const isMonthly = subscription.billing_period === "monthly";
+  const paidForPro = isMonthly
+    ? TIER_PRICING.pro.fullMonthlyRateCents
+    : TIER_PRICING.pro.discountedAnnualCents;
+  const paidForFeatured = isMonthly
+    ? TIER_PRICING.featured.fullMonthlyRateCents
+    : TIER_PRICING.featured.discountedAnnualCents;
+  const paidForConcierge = isMonthly
+    ? TIER_PRICING.concierge.fullMonthlyRateCents
+    : TIER_PRICING.concierge.discountedAnnualCents;
+
+  if (options.scope === "all") {
+    // 1) Pro
+    const pro = await refundOnePiece({
+      supabase, stripe, subscription,
+      tier: "pro",
+      scopeTag: SCOPE_TAGS.pro,
+      paidAmountCents: paidForPro,
+      triggeredBy: options.triggeredBy ?? null,
+      reasonNote: options.reason ?? null,
+    });
+    result.proRefundCents = pro.refundCents;
+    if (pro.stripeRefundId) refundIds.push(pro.stripeRefundId);
+    if (pro.rowId) rowIds.push(pro.rowId);
+
+    // 2) Featured (only if currently held)
+    if (subscription.has_featured) {
+      const f = await refundOnePiece({
+        supabase, stripe, subscription,
+        tier: "featured",
+        scopeTag: SCOPE_TAGS.featured,
+        paidAmountCents: paidForFeatured,
+        triggeredBy: options.triggeredBy ?? null,
+        reasonNote: options.reason ?? null,
+      });
+      result.featuredRefundCents = f.refundCents;
+      if (f.stripeRefundId) refundIds.push(f.stripeRefundId);
+      if (f.rowId) rowIds.push(f.rowId);
+    }
+
+    // 3) Concierge (only if currently held)
+    if (subscription.has_concierge_partner) {
+      const c = await refundOnePiece({
+        supabase, stripe, subscription,
+        tier: "concierge",
+        scopeTag: SCOPE_TAGS.concierge,
+        paidAmountCents: paidForConcierge,
+        triggeredBy: options.triggeredBy ?? null,
+        reasonNote: options.reason ?? null,
+      });
+      result.conciergeRefundCents = c.refundCents;
+      if (c.stripeRefundId) refundIds.push(c.stripeRefundId);
+      if (c.rowId) rowIds.push(c.rowId);
+    }
+
+    // 4) Deactivate dependent rows
+    await deactivateFeaturedPlacements(supabase, subscription.id);
+    await deactivateConciergePartner(supabase, subscription.id);
+
+    // 5) Mark subscription cancelled
+    await supabase
+      .from("facility_subscriptions")
+      .update({
+        status: "canceled",
+        canceled_at: new Date().toISOString(),
+        has_featured: false,
+        has_concierge_partner: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", subscription.id);
+  } else if (options.scope === "addon-featured") {
+    if (!subscription.has_featured) {
+      return result; // nothing to do
+    }
+    const f = await refundOnePiece({
+      supabase, stripe, subscription,
+      tier: "featured",
+      scopeTag: SCOPE_TAGS.featured,
+      paidAmountCents: paidForFeatured,
+      triggeredBy: options.triggeredBy ?? null,
+      reasonNote: options.reason ?? null,
+    });
+    result.featuredRefundCents = f.refundCents;
+    if (f.stripeRefundId) refundIds.push(f.stripeRefundId);
+    if (f.rowId) rowIds.push(f.rowId);
+
+    await deactivateFeaturedPlacements(supabase, subscription.id);
+    await supabase
+      .from("facility_subscriptions")
+      .update({ has_featured: false, updated_at: new Date().toISOString() })
+      .eq("id", subscription.id);
+  } else if (options.scope === "addon-concierge") {
+    if (!subscription.has_concierge_partner) {
+      return result;
+    }
+    const c = await refundOnePiece({
+      supabase, stripe, subscription,
+      tier: "concierge",
+      scopeTag: SCOPE_TAGS.concierge,
+      paidAmountCents: paidForConcierge,
+      triggeredBy: options.triggeredBy ?? null,
+      reasonNote: options.reason ?? null,
+    });
+    result.conciergeRefundCents = c.refundCents;
+    if (c.stripeRefundId) refundIds.push(c.stripeRefundId);
+    if (c.rowId) rowIds.push(c.rowId);
+
+    await deactivateConciergePartner(supabase, subscription.id);
+    await supabase
+      .from("facility_subscriptions")
+      .update({ has_concierge_partner: false, updated_at: new Date().toISOString() })
+      .eq("id", subscription.id);
+  }
+
+  result.totalRefundCents =
+    (result.proRefundCents ?? 0) +
+    (result.featuredRefundCents ?? 0) +
+    (result.conciergeRefundCents ?? 0);
+
+  return result;
+}
+
+// ── inlined from _shared/concierge-addon.ts ─────────────
+// ============================================================================
+// Concierge Marketing Add-On activation / deactivation — single source of truth.
+//
+// activateConciergePartner:
+//   - Flip facility_subscriptions.has_concierge_partner=true, store the
+//     Concierge Stripe sub id alongside the canonical (Pro) row keyed on
+//     facility_id.
+//   - Auto-opt-in the facility to the concierge network (so it becomes
+//     match-eligible immediately) and stamp concierge_opted_in_at.
+//     concierge_terms_accepted_at stays null — explicit terms acceptance
+//     is collected by BillingConcierge so the EKRA paper-trail is honest.
+//   - Seed one concierge_partner_facilities row for the facility's home
+//     geo (state + city) with a broad level_of_care default, so the
+//     facility is instantly eligible for advisor matching in its own
+//     home market. Provider refines via BillingConcierge "Add geo".
+//   - Re-activate any previously deactivated partner rows on re-purchase
+//     (UNIQUE on (facility_id, geo_state, geo_city) ⇒ rebuy after
+//     cancel flips active=true rather than inserting).
+//
+// deactivateConciergePartner:
+//   - Flip has_concierge_partner=false, clear concierge_stripe_subscription_id.
+//   - Mark all active concierge_partner_facilities rows for this sub
+//     active=false, deactivated_at=now().
+//   - Does NOT auto-revert concierge_network_opted_in — that's the
+//     provider's choice (they may want to stay opted in unpaid, just
+//     without the partner badge).
+//
+// Idempotent under Stripe webhook retries.
+// ============================================================================
+
+interface FacilityRow {
+  id: string;
+  state: string | null;
+  city: string | null;
+  concierge_network_opted_in: boolean | null;
+  concierge_opted_in_at: string | null;
+  concierge_accepted_care_types: string[] | null;
+}
+
+// Broad default LoC seed — mirrors the levelOfCareMap used by
+// match-concierge-intake (detox / inpatient / residential / php / iop /
+// outpatient / sober_living). Over-broad here is fine; the matching
+// algorithm intersects with the seeker's specific LoC need.
+const DEFAULT_LEVELS_OF_CARE = [
+  "detox",
+  "inpatient",
+  "residential",
+  "php",
+  "iop",
+  "outpatient",
+  "sober_living",
+] as const;
+
+export interface ActivateConciergeResult {
+  has_concierge_partner_set: boolean;
+  network_opted_in_set: boolean;
+  partner_rows_inserted: number;
+  partner_rows_reactivated: number;
+  failed: { step: string; error: string }[];
+}
+
+export async function activateConciergePartner(
+  supabase: SupabaseClient,
+  args: {
+    facilityId: string;
+    stripeSubscriptionId: string;
+    currentPeriodEnd: string | null;
+  },
+): Promise<ActivateConciergeResult> {
+  const result: ActivateConciergeResult = {
+    has_concierge_partner_set: false,
+    network_opted_in_set: false,
+    partner_rows_inserted: 0,
+    partner_rows_reactivated: 0,
+    failed: [],
+  };
+
+  const { data: facSubRow, error: subLookupErr } = await supabase
+    .from("facility_subscriptions")
+    .select("id, facility_id, has_concierge_partner, concierge_stripe_subscription_id")
+    .eq("facility_id", args.facilityId)
+    .maybeSingle();
+  if (subLookupErr) {
+    result.failed.push({ step: "subscription_lookup", error: subLookupErr.message });
+    return result;
+  }
+  if (!facSubRow) {
+    result.failed.push({
+      step: "subscription_lookup",
+      error: "no facility_subscriptions row exists; Pro upgrade must precede Concierge",
+    });
+    return result;
+  }
+
+  const facSubId = (facSubRow as { id: string }).id;
+
+  // 1. Flip the partner flag + record the Stripe sub id.
+  const { error: flagErr } = await supabase
+    .from("facility_subscriptions")
+    .update({
+      has_concierge_partner: true,
+      concierge_stripe_subscription_id: args.stripeSubscriptionId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", facSubId);
+  if (flagErr) {
+    result.failed.push({ step: "flag_update", error: flagErr.message });
+    return result;
+  }
+  result.has_concierge_partner_set = true;
+
+  // 2. Read the facility to seed geo + opt-in.
+  const { data: facility, error: facErr } = await supabase
+    .from("facilities")
+    .select(
+      "id, state, city, concierge_network_opted_in, concierge_opted_in_at, concierge_accepted_care_types",
+    )
+    .eq("id", args.facilityId)
+    .maybeSingle();
+  if (facErr) {
+    result.failed.push({ step: "facility_lookup", error: facErr.message });
+    return result;
+  }
+  if (!facility) {
+    result.failed.push({ step: "facility_lookup", error: "facility row not found" });
+    return result;
+  }
+  const fac = facility as FacilityRow;
+
+  // 3. Auto-opt-in to the matching network if not already in (matching
+  //    gates on concierge_network_opted_in=true). Don't auto-set
+  //    concierge_terms_accepted_at — that's collected in the UI.
+  if (!fac.concierge_network_opted_in) {
+    const optInUpdate: Record<string, unknown> = {
+      concierge_network_opted_in: true,
+      updated_at: new Date().toISOString(),
+    };
+    if (!fac.concierge_opted_in_at) {
+      optInUpdate.concierge_opted_in_at = new Date().toISOString();
+    }
+    // Seed broad default accepted-care-types if the field is null/empty
+    // so the facility scores in the careType dimension of matching.
+    if (!fac.concierge_accepted_care_types || (Array.isArray(fac.concierge_accepted_care_types) && fac.concierge_accepted_care_types.length === 0)) {
+      optInUpdate.concierge_accepted_care_types = [...DEFAULT_LEVELS_OF_CARE];
+    }
+    const { error: optInErr } = await supabase
+      .from("facilities")
+      .update(optInUpdate)
+      .eq("id", args.facilityId);
+    if (optInErr) {
+      result.failed.push({ step: "network_opt_in", error: optInErr.message });
+    } else {
+      result.network_opted_in_set = true;
+    }
+  }
+
+  // 4. Seed the home-geo concierge_partner_facilities row. UNIQUE on
+  //    (facility_id, geo_state, geo_city) — re-purchase reactivates.
+  if (fac.state && fac.state.trim().length > 0) {
+    const geoState = fac.state.trim().toUpperCase();
+    const geoCity = fac.city && fac.city.trim().length > 0 ? fac.city.trim() : null;
+
+    const { data: existing } = await supabase
+      .from("concierge_partner_facilities")
+      .select("id, active")
+      .eq("facility_id", args.facilityId)
+      .eq("geo_state", geoState)
+      .eq("geo_city", geoCity as never)
+      .maybeSingle();
+
+    if (existing) {
+      const wasInactive = (existing as { active: boolean }).active === false;
+      if (wasInactive) {
+        const { error: reactErr } = await supabase
+          .from("concierge_partner_facilities")
+          .update({
+            subscription_id: facSubId,
+            level_of_care: [...DEFAULT_LEVELS_OF_CARE],
+            active: true,
+            activated_at: new Date().toISOString(),
+            deactivated_at: null,
+          })
+          .eq("id", (existing as { id: string }).id);
+        if (reactErr) {
+          result.failed.push({ step: "partner_row_reactivate", error: reactErr.message });
+        } else {
+          result.partner_rows_reactivated++;
+        }
+      }
+    } else {
+      const { error: insErr } = await supabase.from("concierge_partner_facilities").insert({
+        facility_id: args.facilityId,
+        subscription_id: facSubId,
+        geo_state: geoState,
+        geo_city: geoCity,
+        level_of_care: [...DEFAULT_LEVELS_OF_CARE],
+        active: true,
+        activated_at: new Date().toISOString(),
+      });
+      if (insErr) {
+        result.failed.push({ step: "partner_row_insert", error: insErr.message });
+      } else {
+        result.partner_rows_inserted++;
+      }
+    }
+  }
+
+  return result;
+}
+
+export interface DeactivateConciergeResult {
+  has_concierge_partner_cleared: boolean;
+  partner_rows_deactivated: number;
+  failed: { step: string; error: string }[];
+}
+
+export async function deactivateConciergePartner(
+  supabase: SupabaseClient,
+  args: { facilityId?: string; stripeSubscriptionId?: string },
+): Promise<DeactivateConciergeResult> {
+  const result: DeactivateConciergeResult = {
+    has_concierge_partner_cleared: false,
+    partner_rows_deactivated: 0,
+    failed: [],
+  };
+
+  let query = supabase
+    .from("facility_subscriptions")
+    .select("id, facility_id, has_concierge_partner");
+  if (args.facilityId) {
+    query = query.eq("facility_id", args.facilityId);
+  } else if (args.stripeSubscriptionId) {
+    query = query.eq("concierge_stripe_subscription_id", args.stripeSubscriptionId);
+  } else {
+    result.failed.push({ step: "lookup_args", error: "either facilityId or stripeSubscriptionId required" });
+    return result;
+  }
+  const { data: facSubRow, error: lookupErr } = await query.maybeSingle();
+  if (lookupErr) {
+    result.failed.push({ step: "subscription_lookup", error: lookupErr.message });
+    return result;
+  }
+  if (!facSubRow) {
+    return result;
+  }
+
+  const facSubId = (facSubRow as { id: string }).id;
+
+  const { error: flagErr } = await supabase
+    .from("facility_subscriptions")
+    .update({
+      has_concierge_partner: false,
+      concierge_stripe_subscription_id: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", facSubId);
+  if (flagErr) {
+    result.failed.push({ step: "flag_clear", error: flagErr.message });
+  } else {
+    result.has_concierge_partner_cleared = true;
+  }
+
+  const { data: deactivatedRows, error: partnerErr } = await supabase
+    .from("concierge_partner_facilities")
+    .update({ active: false, deactivated_at: new Date().toISOString() })
+    .eq("subscription_id", facSubId)
+    .eq("active", true)
+    .select("id");
+  if (partnerErr) {
+    result.failed.push({ step: "partner_rows_deactivate", error: partnerErr.message });
+  } else {
+    result.partner_rows_deactivated = (deactivatedRows ?? []).length;
+  }
+
+  return result;
+}
+
+export async function notifyConciergeAddonPartialFailure(
+  supabase: SupabaseClient,
+  args: {
+    eventType: string;
+    facilityId?: string;
+    stripeSubscriptionId?: string;
+    stripeEventId?: string | null;
+    result: ActivateConciergeResult | DeactivateConciergeResult;
+  },
+): Promise<void> {
+  if (args.result.failed.length === 0) return;
+  try {
+    await supabase.from("admin_notifications").insert({
+      type: "concierge_addon_partial_failure",
+      title: `Concierge add-on sync had ${args.result.failed.length} failure(s)`,
+      message:
+        `Event ${args.eventType} for facility ${args.facilityId ?? "?"} / sub ${args.stripeSubscriptionId ?? "?"} ` +
+        `couldn't fully sync the Concierge partner state. Steps that failed: ` +
+        args.result.failed.map((f) => f.step).join(", "),
+      metadata: {
+        facility_id: args.facilityId ?? null,
+        stripe_subscription_id: args.stripeSubscriptionId ?? null,
+        stripe_event_id: args.stripeEventId ?? null,
+        event_type: args.eventType,
+        failures: args.result.failed,
+      },
+    });
+  } catch (err) {
+    console.warn("[concierge-addon] admin notification failed", err);
+  }
+}
+
+// ── inlined from _shared/featured-addon.ts ─────────────
+// ============================================================================
+// Featured Add-On activation / deactivation — single source of truth.
+//
+// activateFeaturedAddon:
+//   - Flip facility_subscriptions.has_featured=true, store the Featured
+//     Stripe sub id alongside the canonical (Pro) row keyed on facility_id.
+//   - Seed featured_placements rows for the facility's geography so the
+//     facility appears in homepage / state / city / search rotations on
+//     purchase. Treatment-type + insurance slots remain provider-driven
+//     via the slot-selector UI (BillingPlacements add-flow).
+//   - Re-activate any previously deactivated placements (re-purchase
+//     after a cancel/refund).
+//
+// deactivateFeaturedAddon:
+//   - Flip has_featured=false, clear featured_stripe_subscription_id.
+//   - Set all featured_placements rows for this subscription to
+//     active=false, deactivated_at=now().
+//
+// Idempotency: both helpers are safe to re-run on Stripe retries.
+// has_featured flips are guarded; placement seeding uses upsert
+// semantics; deactivation is a WHERE active=true filter.
+// ============================================================================
+
+interface FacilityRow {
+  id: string;
+  state: string | null;
+  city: string | null;
+}
+
+export interface ActivateFeaturedResult {
+  has_featured_set: boolean;
+  placements_inserted: number;
+  placements_reactivated: number;
+  failed: { step: string; error: string }[];
+}
+
+// Slugify matches src/lib/featuredBucket.ts so server-side seeds line up
+// with the bucket tokens client-side resolveSearchBucket() produces.
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function buildSeedPlacements(facility: FacilityRow): { type: string; value: string }[] {
+  const out: { type: string; value: string }[] = [];
+  // National homepage pool — `"national"` matches the token used by
+  // src/pages/Index.tsx and src/lib/featuredBucket.ts.
+  out.push({ type: "homepage", value: "national" });
+  // State pool — state is stored as a 2-letter abbreviation in
+  // facilities.state; the rotation accepts either form.
+  if (facility.state && facility.state.trim().length > 0) {
+    out.push({ type: "state", value: facility.state.trim().toUpperCase() });
+  }
+  // City pool — slugified to match the resolveSearchBucket() output.
+  if (facility.city && facility.city.trim().length > 0) {
+    out.push({ type: "city", value: slugify(facility.city) });
+  }
+  return out;
+}
+
+export async function activateFeaturedAddon(
+  supabase: SupabaseClient,
+  args: {
+    facilityId: string;
+    stripeSubscriptionId: string;
+    currentPeriodEnd: string | null;
+  },
+): Promise<ActivateFeaturedResult> {
+  const result: ActivateFeaturedResult = {
+    has_featured_set: false,
+    placements_inserted: 0,
+    placements_reactivated: 0,
+    failed: [],
+  };
+
+  const { data: facSubRow, error: subLookupErr } = await supabase
+    .from("facility_subscriptions")
+    .select("id, facility_id, has_featured, featured_stripe_subscription_id")
+    .eq("facility_id", args.facilityId)
+    .maybeSingle();
+  if (subLookupErr) {
+    result.failed.push({ step: "subscription_lookup", error: subLookupErr.message });
+    return result;
+  }
+  if (!facSubRow) {
+    result.failed.push({
+      step: "subscription_lookup",
+      error: "no facility_subscriptions row exists; Pro upgrade must precede Featured",
+    });
+    return result;
+  }
+
+  const facSubId = (facSubRow as { id: string }).id;
+
+  const { error: flagErr } = await supabase
+    .from("facility_subscriptions")
+    .update({
+      has_featured: true,
+      featured_stripe_subscription_id: args.stripeSubscriptionId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", facSubId);
+  if (flagErr) {
+    result.failed.push({ step: "flag_update", error: flagErr.message });
+    return result;
+  }
+  result.has_featured_set = true;
+
+  const { data: facility, error: facErr } = await supabase
+    .from("facilities")
+    .select("id, state, city")
+    .eq("id", args.facilityId)
+    .maybeSingle();
+  if (facErr) {
+    result.failed.push({ step: "facility_lookup", error: facErr.message });
+    return result;
+  }
+  if (!facility) {
+    result.failed.push({ step: "facility_lookup", error: "facility row not found" });
+    return result;
+  }
+
+  const seeds = buildSeedPlacements(facility as FacilityRow);
+
+  for (const seed of seeds) {
+    const { data: existing } = await supabase
+      .from("featured_placements")
+      .select("id, active")
+      .eq("facility_id", args.facilityId)
+      .eq("placement_type", seed.type)
+      .eq("placement_value", seed.value)
+      .maybeSingle();
+
+    if (existing) {
+      const wasInactive = (existing as { active: boolean }).active === false;
+      if (wasInactive) {
+        const { error: reactErr } = await supabase
+          .from("featured_placements")
+          .update({
+            subscription_id: facSubId,
+            active: true,
+            activated_at: new Date().toISOString(),
+            deactivated_at: null,
+          })
+          .eq("id", (existing as { id: string }).id);
+        if (reactErr) {
+          result.failed.push({
+            step: `placement_reactivate:${seed.type}:${seed.value}`,
+            error: reactErr.message,
+          });
+        } else {
+          result.placements_reactivated++;
+        }
+      }
+      continue;
+    }
+
+    const { error: insErr } = await supabase.from("featured_placements").insert({
+      facility_id: args.facilityId,
+      subscription_id: facSubId,
+      placement_type: seed.type,
+      placement_value: seed.value,
+      active: true,
+      activated_at: new Date().toISOString(),
+    });
+    if (insErr) {
+      result.failed.push({
+        step: `placement_insert:${seed.type}:${seed.value}`,
+        error: insErr.message,
+      });
+    } else {
+      result.placements_inserted++;
+    }
+  }
+
+  return result;
+}
+
+export interface DeactivateFeaturedResult {
+  has_featured_cleared: boolean;
+  placements_deactivated: number;
+  failed: { step: string; error: string }[];
+}
+
+export async function deactivateFeaturedAddon(
+  supabase: SupabaseClient,
+  args: { facilityId?: string; stripeSubscriptionId?: string },
+): Promise<DeactivateFeaturedResult> {
+  const result: DeactivateFeaturedResult = {
+    has_featured_cleared: false,
+    placements_deactivated: 0,
+    failed: [],
+  };
+
+  let query = supabase
+    .from("facility_subscriptions")
+    .select("id, facility_id, has_featured");
+  if (args.facilityId) {
+    query = query.eq("facility_id", args.facilityId);
+  } else if (args.stripeSubscriptionId) {
+    query = query.eq("featured_stripe_subscription_id", args.stripeSubscriptionId);
+  } else {
+    result.failed.push({ step: "lookup_args", error: "either facilityId or stripeSubscriptionId required" });
+    return result;
+  }
+  const { data: facSubRow, error: lookupErr } = await query.maybeSingle();
+  if (lookupErr) {
+    result.failed.push({ step: "subscription_lookup", error: lookupErr.message });
+    return result;
+  }
+  if (!facSubRow) {
+    return result;
+  }
+
+  const facSubId = (facSubRow as { id: string }).id;
+
+  const { error: flagErr } = await supabase
+    .from("facility_subscriptions")
+    .update({
+      has_featured: false,
+      featured_stripe_subscription_id: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", facSubId);
+  if (flagErr) {
+    result.failed.push({ step: "flag_clear", error: flagErr.message });
+  } else {
+    result.has_featured_cleared = true;
+  }
+
+  const { data: deactivatedRows, error: placeErr } = await supabase
+    .from("featured_placements")
+    .update({ active: false, deactivated_at: new Date().toISOString() })
+    .eq("subscription_id", facSubId)
+    .eq("active", true)
+    .select("id");
+  if (placeErr) {
+    result.failed.push({ step: "placement_deactivate", error: placeErr.message });
+  } else {
+    result.placements_deactivated = (deactivatedRows ?? []).length;
+  }
+
+  return result;
+}
+
+export async function notifyFeaturedAddonPartialFailure(
+  supabase: SupabaseClient,
+  args: {
+    eventType: string;
+    facilityId?: string;
+    stripeSubscriptionId?: string;
+    stripeEventId?: string | null;
+    result: ActivateFeaturedResult | DeactivateFeaturedResult;
+  },
+): Promise<void> {
+  if (args.result.failed.length === 0) return;
+  try {
+    await supabase.from("admin_notifications").insert({
+      type: "featured_addon_partial_failure",
+      title: `Featured add-on sync had ${args.result.failed.length} failure(s)`,
+      message:
+        `Event ${args.eventType} for facility ${args.facilityId ?? "?"} / sub ${args.stripeSubscriptionId ?? "?"} ` +
+        `couldn't fully sync the Featured add-on state. Steps that failed: ` +
+        args.result.failed.map((f) => f.step).join(", "),
+      metadata: {
+        facility_id: args.facilityId ?? null,
+        stripe_subscription_id: args.stripeSubscriptionId ?? null,
+        stripe_event_id: args.stripeEventId ?? null,
+        event_type: args.eventType,
+        failures: args.result.failed,
+      },
+    });
+  } catch (err) {
+    console.warn("[featured-addon] admin notification failed", err);
+  }
+}
+
+// ── inlined from _shared/pro-benefits.ts ─────────────
+// ============================================================================
+// Pro benefits activation / deactivation — single source of truth.
+//
+// Both checkout.session.completed (pro_subscription mode) and
+// customer.subscription.created (Stripe-portal upgrades, admin manual subs,
+// etc.) call activateProBenefits() so the benefits flip happens regardless
+// of which event arrives first. subscription.deleted + the cancel-subscription
+// shared module call deactivateProBenefits() to revert.
+//
+// Idempotency: benefit flips guard on `facilities.featured`. The +50 ranking
+// boost is applied only when featured transitions false → true.
+// ============================================================================
+
+const RANKING_BOOST = 50;
+
+export interface ActivateResult {
+  facilitiesUpdated: string[];
+  alreadyActive: string[];
+  failed: { id: string; error: string }[];
+  profilePlanMirrored: boolean;
+  profileMirrorError?: string;
+}
+
+/**
+ * Activate Pro benefits for every facility owned by the provider:
+ *  - `facilities.featured = true`
+ *  - `facilities.calculated_ranking_score += 50` (only when transitioning
+ *    from `featured=false`, so retries are no-ops)
+ * Also mirrors `profiles.plan = 'pro'` (drives the photo-cap trigger).
+ *
+ * @param userId  The provider's auth user id.
+ */
+export async function activateProBenefits(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<ActivateResult> {
+  const result: ActivateResult = {
+    facilitiesUpdated: [],
+    alreadyActive: [],
+    failed: [],
+    profilePlanMirrored: false,
+  };
+
+  // Mirror profile plan first so the photo-cap trigger sees the upgrade
+  // even if a downstream facility update is in flight.
+  const { error: planErr } = await supabase
+    .from("profiles")
+    .update({ plan: "pro" })
+    .eq("user_id", userId);
+  if (planErr) {
+    result.profileMirrorError = planErr.message;
+  } else {
+    result.profilePlanMirrored = true;
+  }
+
+  const { data: facilities, error: facListErr } = await supabase
+    .from("facilities")
+    .select("id, featured, calculated_ranking_score")
+    .eq("user_id", userId);
+  if (facListErr) {
+    result.failed.push({ id: "*list*", error: facListErr.message });
+    return result;
+  }
+
+  for (const f of facilities ?? []) {
+    const facilityId = (f as { id: string }).id;
+    const alreadyBoosted = (f as { featured?: boolean | null }).featured === true;
+    if (alreadyBoosted) {
+      result.alreadyActive.push(facilityId);
+      continue;
+    }
+    const currentScore = (f as { calculated_ranking_score?: number | null }).calculated_ranking_score ?? 0;
+    const { error: updErr } = await supabase
+      .from("facilities")
+      .update({
+        featured: true,
+        calculated_ranking_score: currentScore + RANKING_BOOST,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", facilityId);
+    if (updErr) {
+      result.failed.push({ id: facilityId, error: updErr.message });
+    } else {
+      result.facilitiesUpdated.push(facilityId);
+    }
+  }
+
+  return result;
+}
+
+export interface DeactivateResult {
+  facilitiesReverted: string[];
+  failed: { id: string; error: string }[];
+  profilePlanReverted: boolean;
+  profileMirrorError?: string;
+}
+
+/**
+ * Revert Pro benefits for every facility owned by the provider:
+ *  - `facilities.featured = false`
+ *  - `facilities.calculated_ranking_score -= 50` (only when currently
+ *    featured, so retries are no-ops; clamps to 0)
+ * Also mirrors `profiles.plan = 'free'`.
+ */
+export async function deactivateProBenefits(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<DeactivateResult> {
+  const result: DeactivateResult = {
+    facilitiesReverted: [],
+    failed: [],
+    profilePlanReverted: false,
+  };
+
+  const { error: planErr } = await supabase
+    .from("profiles")
+    .update({ plan: "free" })
+    .eq("user_id", userId);
+  if (planErr) {
+    result.profileMirrorError = planErr.message;
+  } else {
+    result.profilePlanReverted = true;
+  }
+
+  const { data: facilities, error: facListErr } = await supabase
+    .from("facilities")
+    .select("id, featured, calculated_ranking_score")
+    .eq("user_id", userId);
+  if (facListErr) {
+    result.failed.push({ id: "*list*", error: facListErr.message });
+    return result;
+  }
+
+  for (const f of facilities ?? []) {
+    const facilityId = (f as { id: string }).id;
+    const wasBoosted = (f as { featured?: boolean | null }).featured === true;
+    if (!wasBoosted) continue;
+    const currentScore = (f as { calculated_ranking_score?: number | null }).calculated_ranking_score ?? 0;
+    const newScore = Math.max(0, currentScore - RANKING_BOOST);
+    const { error: updErr } = await supabase
+      .from("facilities")
+      .update({
+        featured: false,
+        calculated_ranking_score: newScore,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", facilityId);
+    if (updErr) {
+      result.failed.push({ id: facilityId, error: updErr.message });
+    } else {
+      result.facilitiesReverted.push(facilityId);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Post an admin_notifications row when benefit activation/deactivation
+ * partially fails. Best-effort — failure to notify is itself logged but
+ * not propagated.
+ */
+export async function notifyProBenefitsPartialFailure(
+  supabase: SupabaseClient,
+  args: {
+    userId: string;
+    eventType: string;
+    result: ActivateResult | DeactivateResult;
+    stripeEventId?: string | null;
+  },
+): Promise<void> {
+  const failures = args.result.failed.length;
+  const mirrorErr = "profileMirrorError" in args.result ? args.result.profileMirrorError : undefined;
+  if (failures === 0 && !mirrorErr) return;
+  try {
+    await supabase.from("admin_notifications").insert({
+      type: "pro_benefits_partial_failure",
+      title: `Pro benefits sync had ${failures + (mirrorErr ? 1 : 0)} failure(s)`,
+      message:
+        `Event ${args.eventType} for user ${args.userId} couldn't fully apply Pro benefits. ` +
+        (mirrorErr ? `Profile mirror error: ${mirrorErr}. ` : "") +
+        (failures > 0 ? `Failed facility updates: ${failures}.` : ""),
+      metadata: {
+        user_id: args.userId,
+        event_type: args.eventType,
+        stripe_event_id: args.stripeEventId ?? null,
+        profile_mirror_error: mirrorErr ?? null,
+        failed_facilities: args.result.failed,
+      },
+    });
+  } catch (err) {
+    console.warn("[pro-benefits] admin notification failed", err);
+  }
+}
+
+// ── inlined from _shared/resilient-email-sender.ts ─────────────
+/**
+ * Resilient Email Sender
+ * 
+ * Wraps Resend with:
+ * - Automatic retry with exponential backoff (up to 3 attempts)
+ * - Suppressed email checking
+ * - Full send tracking (sent/failed/retried/dlq) via email_tracking_events
+ * - Dead-letter logging for persistent failures
+ * 
+ * Usage:
+ *   import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+ *   const result = await sendEmailWithRetry(supabase, resend, { ...emailParams }, { emailType: "provider_welcome" });
+ */
+
+interface EmailParams {
+  from: string;
+  to: string | string[];
+  subject: string;
+  html: string;
+  headers?: Record<string, string>;
+  replyTo?: string | string[];
+}
+
+interface SendOptions {
+  /** Category for tracking (e.g., "provider_welcome", "lead_notification"). REQUIRED. */
+  emailType: string;
+  /**
+   * Unique key for idempotency. STRONGLY RECOMMENDED for any event-driven
+   * email so retries (function re-invocations, cron re-runs, webhook re-deliveries)
+   * never produce duplicate sends. Format: `<event>-<id>` (e.g. `lead-new-${leadId}-${facilityId}`).
+   */
+  idempotencyKey?: string;
+  /** Max retry attempts (default: 3) */
+  maxRetries?: number;
+  /** Whether to check suppressed_emails before sending (default: true) */
+  checkSuppression?: boolean;
+  /** Additional metadata to store with the tracking event */
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Default inter-send delay for bulk email loops (ms).
+ * Keeps sends well under Resend's 10 req/s rate limit.
+ * Import and use: `await sleep(BULK_SEND_DELAY_MS)` after each send in a loop.
+ */
+export const BULK_SEND_DELAY_MS = 200;
+
+/** Default max emails per single function invocation */
+export const BULK_BATCH_LIMIT = 50;
+
+interface SendResult {
+  success: boolean;
+  /** True if the email was already sent (idempotency dedup) */
+  deduplicated?: boolean;
+  /** True if the recipient is suppressed */
+  suppressed?: boolean;
+  /** Resend email ID on success */
+  emailId?: string;
+  /** Error message on failure */
+  error?: string;
+  /** Number of attempts made */
+  attempts: number;
+  /** Whether the email was sent to dead-letter after all retries */
+  deadLettered?: boolean;
+  /** ISO timestamp of the original "sent" event when deduplicated. */
+  firstSentAt?: string;
+}
+
+// SupabaseClient generic enough for service role usage
+// deno-lint-ignore no-explicit-any
+type SupabaseClient = any;
+
+const LOG_PREFIX = "[RESILIENT-EMAIL]";
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Send an email with retry logic, tracking, and suppression checking.
+ */
+export async function sendEmailWithRetry(
+  supabase: SupabaseClient,
+  resend: InstanceType<typeof Resend>,
+  params: EmailParams,
+  options: SendOptions = { emailType: "general" }
+): Promise<SendResult> {
+  const {
+    emailType = "general",
+    idempotencyKey,
+    maxRetries = 3,
+    checkSuppression = true,
+    metadata,
+  } = options;
+
+  // Normalize to array
+  const toArray = Array.isArray(params.to) ? params.to : [params.to];
+  const normalizedParams = { ...params, to: toArray };
+  const recipientEmail = toArray[0]?.toLowerCase();
+  if (!recipientEmail) {
+    return { success: false, error: "No recipient email", attempts: 0 };
+  }
+
+  // 1. Idempotency check
+  if (idempotencyKey) {
+    const { data: existing } = await supabase
+      .from("email_tracking_events")
+      .select("id, created_at")
+      .eq("email_id", idempotencyKey)
+      .eq("email_type", emailType)
+      .eq("event_type", "sent")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      console.log(`${LOG_PREFIX} Dedup hit: ${idempotencyKey}`);
+      return {
+        success: true,
+        deduplicated: true,
+        attempts: 0,
+        emailId: idempotencyKey,
+        firstSentAt: existing.created_at ?? undefined,
+      };
+    }
+  }
+
+  // 2. Suppression check
+  if (checkSuppression) {
+    const { data: suppressed } = await supabase
+      .from("suppressed_emails")
+      .select("email")
+      .eq("email", recipientEmail)
+      .maybeSingle();
+
+    if (suppressed) {
+      console.log(`${LOG_PREFIX} Suppressed: ${recipientEmail}`);
+      await trackEvent(supabase, {
+        emailId: idempotencyKey || crypto.randomUUID(),
+        emailType,
+        eventType: "suppressed",
+        recipientEmail,
+        metadata: { ...metadata, reason: "suppressed_email" },
+      });
+      return { success: false, suppressed: true, attempts: 0 };
+    }
+  }
+
+  // 3. Retry loop with exponential backoff
+  const trackingId = idempotencyKey || crypto.randomUUID();
+  let lastError = "";
+
+  // Auto-generate plain-text fallback for better deliverability
+  const plainText = normalizedParams.html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/tr>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<a[^>]+href="([^"]*)"[^>]*>([^<]*)<\/a>/gi, "$2 ($1)")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const sendParams: Record<string, unknown> = {
+        from: normalizedParams.from,
+        to: normalizedParams.to,
+        subject: normalizedParams.subject,
+        html: normalizedParams.html,
+        text: plainText,
+      };
+      if (normalizedParams.headers) sendParams.headers = normalizedParams.headers;
+      if (normalizedParams.replyTo) sendParams.reply_to = normalizedParams.replyTo;
+
+      // deno-lint-ignore no-explicit-any
+      const { data, error } = await (resend.emails as any).send(sendParams);
+
+      if (error) {
+        lastError = error.message || JSON.stringify(error);
+        console.error(`${LOG_PREFIX} Attempt ${attempt}/${maxRetries} failed:`, lastError);
+
+        // Don't retry on permanent errors (validation, domain issues)
+        if (isPermanentError(lastError)) {
+          await trackEvent(supabase, {
+            emailId: trackingId,
+            emailType,
+            eventType: "failed",
+            recipientEmail,
+            metadata: { ...metadata, error: lastError, attempt, permanent: true },
+          });
+          return { success: false, error: lastError, attempts: attempt };
+        }
+
+        // Track retry
+        if (attempt < maxRetries) {
+          await trackEvent(supabase, {
+            emailId: trackingId,
+            emailType,
+            eventType: "retry",
+            recipientEmail,
+            metadata: { ...metadata, error: lastError, attempt },
+          });
+          // Exponential backoff: 1s, 2s, 4s
+          await sleep(1000 * Math.pow(2, attempt - 1));
+        }
+        continue;
+      }
+
+      // Success
+      await trackEvent(supabase, {
+        emailId: trackingId,
+        emailType,
+        eventType: "sent",
+        recipientEmail,
+        metadata: { ...metadata, resendId: data?.id, attempt },
+      });
+
+      console.log(`${LOG_PREFIX} Sent to ${recipientEmail} (attempt ${attempt})`);
+      return { success: true, emailId: data?.id, attempts: attempt };
+
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
+      console.error(`${LOG_PREFIX} Attempt ${attempt}/${maxRetries} exception:`, lastError);
+
+      if (attempt < maxRetries) {
+        await trackEvent(supabase, {
+          emailId: trackingId,
+          emailType,
+          eventType: "retry",
+          recipientEmail,
+          metadata: { ...metadata, error: lastError, attempt },
+        });
+        await sleep(1000 * Math.pow(2, attempt - 1));
+      }
+    }
+  }
+
+  // All retries exhausted — dead-letter
+  await trackEvent(supabase, {
+    emailId: trackingId,
+    emailType,
+    eventType: "dlq",
+    recipientEmail,
+    metadata: { ...metadata, error: lastError, maxRetries },
+  });
+
+  // Persist to email_send_failures so admins can review on the daily digest.
+  // Failures here must NEVER break the caller — swallow any insert error.
+  try {
+    await supabase.from("email_send_failures").insert({
+      email_type: emailType,
+      recipient_email: recipientEmail,
+      subject: normalizedParams.subject,
+      error_message: lastError,
+      attempts: maxRetries,
+      idempotency_key: idempotencyKey ?? null,
+      metadata: metadata ?? null,
+    });
+  } catch (err) {
+    console.error(`${LOG_PREFIX} DLQ insert failed:`, err);
+  }
+
+  console.error(`${LOG_PREFIX} Dead-lettered after ${maxRetries} attempts: ${recipientEmail}`);
+  return { success: false, error: lastError, attempts: maxRetries, deadLettered: true };
+}
+
+/**
+ * Determine if an error is permanent (no point retrying).
+ */
+function isPermanentError(errorMsg: string): boolean {
+  const lower = errorMsg.toLowerCase();
+  return (
+    lower.includes("validation_error") ||
+    lower.includes("verify a domain") ||
+    lower.includes("invalid") && lower.includes("email") ||
+    lower.includes("missing required") ||
+    lower.includes("not found") ||
+    lower.includes("blocked") ||
+    lower.includes("spam")
+  );
+}
+
+/**
+ * Track an email event in email_tracking_events.
+ */
+async function trackEvent(
+  supabase: SupabaseClient,
+  params: {
+    emailId: string;
+    emailType: string;
+    eventType: string;
+    recipientEmail: string;
+    metadata?: Record<string, unknown>;
+  }
+) {
+  try {
+    await supabase.from("email_tracking_events").insert({
+      email_id: params.emailId,
+      email_type: params.emailType,
+      event_type: params.eventType,
+      recipient_email: params.recipientEmail,
+      event_data: params.metadata || null,
+    });
+  } catch (err) {
+    // Never let tracking failures break email sending
+    console.error(`${LOG_PREFIX} Tracking insert failed:`, err);
+  }
+}
+
+// ── stripe-webhook entrypoint body ─────────────────────────
 // Version tracking for deployment verification
 const VERSION = "1.2.0";
 const DEPLOYED_AT = "2026-05-16T00:00:00Z";
