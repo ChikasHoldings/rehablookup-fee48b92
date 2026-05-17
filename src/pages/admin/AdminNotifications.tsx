@@ -145,28 +145,42 @@ const getNotificationBadge = (type: string) => {
 };
 
 const PAYMENT_TYPES = ["payment_failed", "payment_delinquent", "placement_payment_failed"];
-const SECURITY_TYPES = ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"];
+const SECURITY_TYPES = ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock", "security_auto_block"];
 // Round-30 delivery-failure surfacing: SMS / notify-edge-fn callers
 // insert these types when Twilio or downstream functions hard-fail
 // after retry. Surfaced as a group so ops can spot outages quickly.
 const DELIVERY_FAILURE_TYPES = [
+  // SMS retry exhaustion
   "lead_sms_delivery_failure",
   "concierge_sms_delivery_failure",
   "message_sms_delivery_failure",
   "tour_sms_delivery_failure",
   "free_tier_redirect_notify_failure",
+  // Dunning / email cascade exhaustion
   "dunning_total_delivery_failure",
+  "dunning_email_failed",
+  "resend_api_failure",
+  // Stripe webhook / subscription / refund half-states
   "pro_activation_db_failure",
   "cancellation_split_brain",
   "out_of_band_subscription_refund",
   "subscription_cancel_refund_failed",
+  "subscription_refund_failed",
+  "subscription_cancellation_row_insert_failed",
   "webhook_dedup_failure",
+  // Add-on / Pro benefits partial-apply failures
+  "pro_benefits_partial_failure",
+  "featured_addon_partial_failure",
+  "concierge_addon_partial_failure",
+  "addon_waitlist_invite_email_failed",
+  "international_invoice_failed",
+  "placement_charge_failed",
+  // Lead pipeline silent-failure escalations
   "lead_distribution_insert_failure",
   "lead_notification_failure",
   "lead_notification_event_failure",
   "lead_email_log_failure",
   "lead_status_update_failure",
-  "resend_api_failure",
 ];
 
 export default function AdminNotifications() {

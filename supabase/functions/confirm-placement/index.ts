@@ -295,6 +295,21 @@ Deno.serve(async (req) => {
           actor_type: "system",
         });
         logStep(requestId, "Charge failed — admin can retry from billing tab");
+        // Round-30: also surface to admin_notifications so the failure
+        // is visible in the bell icon, not buried in case-events log.
+        try {
+          await supabaseService.from("admin_notifications").insert({
+            type: "placement_charge_failed",
+            title: "Placement fee charge failed",
+            message: `Concierge placement admitted but the placement fee charge failed for facility ${facilityId}. Inquiry ${inquiryId}. Error: ${chargeResult?.error || "Unknown"}. Retry from billing tab.`,
+            metadata: {
+              inquiry_id: inquiryId,
+              facility_id: facilityId,
+              error: chargeResult?.error || "Unknown",
+              request_id: requestId,
+            } as Record<string, unknown>,
+          });
+        } catch { /* best-effort */ }
       }
     } catch (chargeError) {
       logStep(requestId, "Warning: Charge failed", { error: String(chargeError) });
@@ -304,6 +319,19 @@ Deno.serve(async (req) => {
           event_type: "charge_failed",
           event_data: { error: String(chargeError), facility_id: facilityId },
           actor_type: "system",
+        });
+      } catch { /* best-effort */ }
+      try {
+        await supabaseService.from("admin_notifications").insert({
+          type: "placement_charge_failed",
+          title: "Placement fee charge threw",
+          message: `Placement admitted but the placement-charge call threw for facility ${facilityId}. Inquiry ${inquiryId}. Error: ${String(chargeError).slice(0, 300)}. Retry from billing tab.`,
+          metadata: {
+            inquiry_id: inquiryId,
+            facility_id: facilityId,
+            error: String(chargeError),
+            request_id: requestId,
+          } as Record<string, unknown>,
         });
       } catch { /* best-effort */ }
     }
