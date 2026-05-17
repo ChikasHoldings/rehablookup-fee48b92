@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
 
     const { data: notifPrefs, error: prefsError } = await supabase
       .from("notification_preferences")
-      .select("sms_lead_alerts")
+      .select("sms_lead_alerts, notify_new_leads")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -102,8 +102,19 @@ Deno.serve(async (req) => {
       logStep("Error fetching notification preferences", { requestId, error: prefsError.message });
     }
 
-    if (!notifPrefs?.sms_lead_alerts) {
-      logStep("SMS alerts disabled for user", { requestId, userId: userId.slice(0, 8) });
+    // Respect the master switch — when the provider has turned off
+    // lead-related notifications entirely, no SMS regardless of the
+    // per-channel sms_lead_alerts toggle. Default to TRUE for both
+    // when prefs are missing (matches submit-qualified-lead behavior).
+    const masterEnabled = notifPrefs?.notify_new_leads ?? true;
+    const smsChannelEnabled = notifPrefs?.sms_lead_alerts ?? false;
+    if (!masterEnabled || !smsChannelEnabled) {
+      logStep("SMS alerts disabled for user", {
+        requestId,
+        userId: userId.slice(0, 8),
+        masterEnabled,
+        smsChannelEnabled,
+      });
       return new Response(
         JSON.stringify({ success: true, sent: false, reason: "SMS alerts disabled", requestId }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
