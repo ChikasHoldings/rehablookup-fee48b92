@@ -1,5 +1,5 @@
 // ============================================================================
-// drain-addon-waitlist v1.0.0
+// drain-addon-waitlist v1.0.1
 // ----------------------------------------------------------------------------
 // Cron-triggered drain. For every open waitlist row whose scope currently
 // has at least one free slot, send the requester an "invite" email via
@@ -11,15 +11,18 @@
 // Schedule: pg_cron job 'drain-addon-waitlist' every 5 minutes
 // (see migration 20260605000000_addon_waitlist_drain_cron.sql).
 //
-// Authorization: protected with verify_jwt:true + a hard-coded service-role
-// check on the JWT's role claim so the cron's `Authorization: Bearer
-// <service_role_key>` is the only legitimate caller. Direct invocation
-// returns 403.
+// Authorization: verify_jwt:true at the platform level validates the JWT
+// signature; this function additionally asserts the JWT's role claim is
+// 'service_role' so non-cron callers (with any other valid JWT) are
+// rejected with 403. We do NOT compare against env SUPABASE_SERVICE_ROLE_KEY
+// literally because Supabase has migrated to sb_secret_* keys for new
+// projects while the legacy JWT-shaped service-role keys still pass
+// platform validation; comparing literals breaks across key formats.
 // ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 
-const VERSION = "1.0.0";
+const VERSION = "1.0.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,6 +41,20 @@ const log = (level: "INFO" | "WARN" | "ERROR", msg: string, details?: unknown) =
   const d = details ? ` | ${JSON.stringify(details)}` : "";
   console.log(`[DRAIN-ADDON-WAITLIST] [${VERSION}] [${level}] ${msg}${d}`);
 };
+
+/** Decode a JWT payload without verifying signature. The platform's
+ *  verify_jwt:true has already validated the signature; we only need
+ *  the role claim. */
+function jwtRole(token: string): string | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof payload?.role === "string" ? payload.role : null;
+  } catch {
+    return null;
+  }
+}
 
 interface WaitlistRow {
   id: string;
@@ -103,13 +120,14 @@ Deno.serve(async (req) => {
       return json(500, { error: "Server misconfigured" });
     }
 
-    // Service-role gate: only the cron may invoke. The cron passes the
-    // service_role JWT in Authorization (see migration). Anything else
-    // is rejected.
+    // Service-role gate via the JWT's `role` claim. verify_jwt:true at
+    // the platform level already validated the signature, so we trust
+    // the payload here.
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token || token !== SUPABASE_SRK) {
-      log("WARN", "Rejected non-service-role call");
+    const role = jwtRole(token);
+    if (role !== "service_role") {
+      log("WARN", "Rejected non-service-role call", { role });
       return json(403, { error: "Forbidden" });
     }
 

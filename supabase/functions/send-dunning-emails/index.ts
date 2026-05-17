@@ -27,7 +27,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 
-const VERSION = "1.0.0";
+const VERSION = "1.0.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,6 +46,20 @@ const log = (level: "INFO" | "WARN" | "ERROR", msg: string, details?: unknown) =
   const d = details ? ` | ${JSON.stringify(details)}` : "";
   console.log(`[SEND-DUNNING-EMAILS] [${VERSION}] [${level}] ${msg}${d}`);
 };
+
+/** Decode a JWT payload without verifying signature. The platform's
+ *  verify_jwt:true has already validated the signature; we only need
+ *  the role claim. */
+function jwtRole(token: string): string | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof payload?.role === "string" ? payload.role : null;
+  } catch {
+    return null;
+  }
+}
 
 type Milestone = "day_1" | "day_3" | "day_7";
 const MILESTONES: { token: Milestone; daysElapsed: number; order: number }[] = [
@@ -161,8 +175,9 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token || token !== SUPABASE_SRK) {
-      log("WARN", "Rejected non-service-role call");
+    const role = jwtRole(token);
+    if (role !== "service_role") {
+      log("WARN", "Rejected non-service-role call", { role });
       return json(403, { error: "Forbidden" });
     }
 

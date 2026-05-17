@@ -185,9 +185,11 @@ Deno.test("stripe-webhook: Pro path uses the shared activateProBenefits helper",
 // drain-addon-waitlist
 // ─────────────────────────────────────────────────────────────────────────
 
-Deno.test("drain-addon-waitlist: service-role gate present", async () => {
+Deno.test("drain-addon-waitlist: service-role gate via JWT role claim", async () => {
   const src = await readSrc("../drain-addon-waitlist/index.ts");
-  assertStringIncludes(src, "token !== SUPABASE_SRK");
+  // v1.0.1 switched from literal SRK comparison to JWT role-claim check
+  // because Supabase migrated to sb_secret_* keys for new projects.
+  assertStringIncludes(src, 'role !== "service_role"');
   assertStringIncludes(src, "Forbidden");
 });
 
