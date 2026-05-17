@@ -43,6 +43,7 @@ import { OnboardingStepper } from "@/components/provider/onboarding/OnboardingSt
 import { AccountStep } from "@/components/provider/onboarding/AccountStep";
 import { VerifyEmailStep } from "@/components/provider/onboarding/VerifyEmailStep";
 import { FindOrListStep } from "@/components/provider/onboarding/FindOrListStep";
+import { PlanStep } from "@/components/provider/onboarding/PlanStep";
 import { PlaceholderStep } from "@/components/provider/onboarding/PlaceholderStep";
 
 /** profiles row fields the wizard reads to decide whether to redirect. */
@@ -179,11 +180,7 @@ export default function ProviderOnboarding() {
             />
           )}
           {resolved === "plan" && (
-            <PlaceholderStep
-              title="Choose your plan"
-              serverStep="plan"
-              onBack={handleBack}
-            />
+            <PlanStep onAdvance={() => void refetchState()} onBack={handleBack} />
           )}
           {resolved === "build" && (
             <PlaceholderStep

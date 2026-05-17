@@ -10,6 +10,17 @@ const corsHeaders = {
 
 const PRO_PRICE_ID = "price_1Sel1C9fxdThyiakWLfgbl9K";
 
+function isSameOrigin(candidate: unknown, origin: string): candidate is string {
+  if (typeof candidate !== "string" || candidate.length === 0) return false;
+  try {
+    const u = new URL(candidate);
+    const o = new URL(origin);
+    return u.origin === o.origin;
+  } catch {
+    return false;
+  }
+}
+
 const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
   const timestamp = new Date().toISOString();
   console.log(`[CREATE-CHECKOUT] [${VERSION}] [${requestId}] [${timestamp}] ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
@@ -32,8 +43,8 @@ Deno.serve(async (req) => {
   try {
     logStep(requestId, "Function started");
 
-    const { promoCode, action, facilityId } = await req.json();
-    logStep(requestId, "Request received", { action, facilityId, promoCode: promoCode ? "provided" : "none" });
+    const { promoCode, action, facilityId, successUrl, cancelUrl } = await req.json();
+    logStep(requestId, "Request received", { action, facilityId, promoCode: promoCode ? "provided" : "none", hasCustomUrls: !!(successUrl || cancelUrl) });
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
@@ -165,8 +176,15 @@ Deno.serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${origin}/provider/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/provider/billing?canceled=true`,
+      // Callers (e.g. /provider/onboarding wizard) can override these to
+      // route the post-Checkout return into their own flow. We validate
+      // overrides are same-origin to prevent open-redirect abuse.
+      success_url: isSameOrigin(successUrl, origin)
+        ? successUrl
+        : `${origin}/provider/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: isSameOrigin(cancelUrl, origin)
+        ? cancelUrl
+        : `${origin}/provider/billing?canceled=true`,
       metadata: {
         user_id: user.id,
         type: "pro_subscription",
