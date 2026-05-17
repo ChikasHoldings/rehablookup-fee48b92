@@ -4,6 +4,7 @@ import { Loader2, BellRing, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Props =
   | {
@@ -20,27 +21,40 @@ type Props =
       levelOfCare: string[];
     };
 
+interface ExistingEntry {
+  id: string;
+  status: string;
+  auto_invite_opt_out: boolean | null;
+}
+
 /**
- * Shared "Join the waitlist" CTA. Looks up whether the caller already
- * has an open waitlist entry for the requested scope, shows a confirmed
- * state if so, otherwise lets them opt in. Opt-in writes to
- * addon_waitlist under the caller's JWT (RLS gates requested_by=auth.uid()).
+ * Shared "Join the waitlist" CTA. When the user already has an open
+ * entry, shows position-in-line ("#3 of 8"). Provides an opt-out
+ * checkbox at signup so providers can request admin-only outreach
+ * instead of the auto-invite email.
  */
 export function JoinAddonWaitlistButton(props: Props) {
   const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
+  const [optOut, setOptOut] = useState(false);
 
   const queryKey =
     props.addonType === "featured"
       ? ["addon-waitlist-mine", props.facilityId, "featured", props.scopeType, props.scopeValue]
-      : ["addon-waitlist-mine", props.facilityId, "concierge", props.geoState, props.geoCity ?? "*"];
+      : [
+          "addon-waitlist-mine",
+          props.facilityId,
+          "concierge",
+          props.geoState,
+          props.geoCity ?? "*",
+        ];
 
   const { data: existing, isFetching } = useQuery({
     queryKey,
-    queryFn: async (): Promise<{ id: string; status: string } | null> => {
+    queryFn: async (): Promise<ExistingEntry | null> => {
       let q = supabase
         .from("addon_waitlist")
-        .select("id, status")
+        .select("id, status, auto_invite_opt_out")
         .eq("facility_id", props.facilityId)
         .eq("addon_type", props.addonType)
         .in("status", ["waiting", "invited"]);
@@ -59,7 +73,25 @@ export function JoinAddonWaitlistButton(props: Props) {
         console.warn("[JoinAddonWaitlistButton] lookup failed", error);
         return null;
       }
-      return (data as { id: string; status: string } | null) ?? null;
+      return (data as ExistingEntry | null) ?? null;
+    },
+    staleTime: 1000 * 30,
+  });
+
+  const { data: position } = useQuery({
+    queryKey: ["addon-waitlist-position", existing?.id],
+    enabled: !!existing?.id,
+    queryFn: async (): Promise<{ queue_position: number; queue_total: number } | null> => {
+      const { data, error } = await supabase.rpc("get_addon_waitlist_position", {
+        p_waitlist_id: existing!.id,
+      });
+      if (error) {
+        console.warn("[JoinAddonWaitlistButton] position lookup failed", error);
+        return null;
+      }
+      const row = (data as { queue_position: number | null; queue_total: number | null }[] | null)?.[0];
+      if (!row || row.queue_position == null || row.queue_total == null) return null;
+      return { queue_position: row.queue_position, queue_total: row.queue_total };
     },
     staleTime: 1000 * 30,
   });
@@ -77,6 +109,7 @@ export function JoinAddonWaitlistButton(props: Props) {
         addon_type: props.addonType,
         facility_id: props.facilityId,
         requested_by: userId,
+        auto_invite_opt_out: optOut,
       };
       if (props.addonType === "featured") {
         row.scope_type = props.scopeType;
@@ -97,7 +130,11 @@ export function JoinAddonWaitlistButton(props: Props) {
         }
         return;
       }
-      toast.success("Added to the waitlist. An admin will reach out when a slot frees.");
+      toast.success(
+        optOut
+          ? "Added to the waitlist. We'll only contact you manually — no auto-emails."
+          : "Added to the waitlist. We'll email you the moment a slot opens.",
+      );
       queryClient.invalidateQueries({ queryKey });
     } catch (err) {
       console.error("[JoinAddonWaitlistButton] join failed", err);
@@ -117,30 +154,47 @@ export function JoinAddonWaitlistButton(props: Props) {
   }
 
   if (existing) {
+    const positionLabel = position
+      ? ` (#${position.queue_position} of ${position.queue_total})`
+      : "";
     return (
       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
         <Check className="h-3.5 w-3.5" aria-hidden />
         {existing.status === "invited"
           ? "Invited — check your email for next steps"
-          : "On the waitlist — we'll be in touch"}
+          : `On the waitlist — we'll be in touch${positionLabel}`}
       </span>
     );
   }
 
   return (
-    <Button
-      size="sm"
-      variant="outline"
-      onClick={handleJoin}
-      disabled={submitting}
-      className="h-7 gap-1.5 text-xs border-red-300 text-red-800 hover:bg-red-100"
-    >
-      {submitting ? (
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-      ) : (
-        <BellRing className="h-3.5 w-3.5" />
-      )}
-      Join the waitlist
-    </Button>
+    <div className="space-y-2">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={handleJoin}
+        disabled={submitting}
+        className="h-7 gap-1.5 text-xs border-red-300 text-red-800 hover:bg-red-100"
+      >
+        {submitting ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <BellRing className="h-3.5 w-3.5" />
+        )}
+        Join the waitlist
+      </Button>
+      <label className="flex items-start gap-1.5 cursor-pointer text-[11px] text-slate-600">
+        <Checkbox
+          checked={optOut}
+          onCheckedChange={(c) => setOptOut(c === true)}
+          disabled={submitting}
+          className="mt-0.5 h-3.5 w-3.5"
+        />
+        <span>
+          Skip auto-email when a slot opens — our team will reach out manually
+          when it's your turn.
+        </span>
+      </label>
+    </div>
   );
 }

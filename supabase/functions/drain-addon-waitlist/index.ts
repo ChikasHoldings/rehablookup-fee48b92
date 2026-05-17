@@ -50,6 +50,7 @@ interface WaitlistRow {
   geo_city: string | null;
   level_of_care: string[] | null;
   requested_at: string;
+  auto_invite_opt_out: boolean | null;
 }
 
 function emailHtml(args: {
@@ -120,9 +121,10 @@ Deno.serve(async (req) => {
     const { data: waiting, error: waitErr } = await svc
       .from("addon_waitlist")
       .select(
-        "id, addon_type, facility_id, requested_by, scope_type, scope_value, geo_state, geo_city, level_of_care, requested_at",
+        "id, addon_type, facility_id, requested_by, scope_type, scope_value, geo_state, geo_city, level_of_care, requested_at, auto_invite_opt_out",
       )
       .eq("status", "waiting")
+      .eq("auto_invite_opt_out", false)
       .order("requested_at", { ascending: true })
       .limit(200);
     if (waitErr) {

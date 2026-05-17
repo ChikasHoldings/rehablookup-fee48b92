@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { AddConciergeGeoForm } from "@/components/provider/concierge/AddConciergeGeoForm";
+import { MyWaitlistEntries } from "@/components/provider/MyWaitlistEntries";
 
 interface ConciergeGeoRow {
   id: string;
@@ -236,6 +237,8 @@ export default function BillingConcierge() {
         {periodEndStr}; removing opens the slot for another facility immediately.
         You can re-claim before {periodEndStr} at no additional charge.
       </p>
+
+      {facilityId && <MyWaitlistEntries facilityId={facilityId} addonType="concierge" />}
 
       <AlertDialog open={!!confirmRemove} onOpenChange={(open) => !open && setConfirmRemove(null)}>
         <AlertDialogContent>

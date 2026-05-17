@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 import { AddFeaturedPlacementForm } from "@/components/provider/featured/AddFeaturedPlacementForm";
+import { MyWaitlistEntries } from "@/components/provider/MyWaitlistEntries";
 
 interface FeaturedPlacementRow {
   id: string;
@@ -352,6 +353,8 @@ export default function BillingPlacements() {
         re-claim before {periodEndStr} at no additional charge. After that date, you
         must re-purchase to claim the slot again.
       </p>
+
+      {facilityId && <MyWaitlistEntries facilityId={facilityId} addonType="featured" />}
 
       <AlertDialog open={!!confirmRemove} onOpenChange={(open) => !open && setConfirmRemove(null)}>
         <AlertDialogContent>
