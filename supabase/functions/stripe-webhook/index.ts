@@ -3351,23 +3351,30 @@ Deno.serve(async (req) => {
                 });
               } catch (cancelErr) {
                 logStep("ERROR running cancelSubscriptionAndRefund", { error: String(cancelErr) });
-                // Surface to admin so the silent fallback (mark canceled
-                // without refund) is visible.
-                await supabaseAdmin.from("admin_notifications").insert({
-                  type: "subscription_cancel_refund_failed",
-                  title: "Refund executor failed on subscription.deleted",
-                  message: `cancelSubscriptionAndRefund threw for facility_subscriptions.id=${subRow.id} (stripe_sub=${subscription.id}). Refund and benefit-revert did NOT complete; row was force-canceled. Manual review required.`,
-                  metadata: {
-                    facility_subscription_id: subRow.id,
-                    stripe_subscription_id: subscription.id,
-                    stripe_event_id: event.id,
-                    error: String(cancelErr),
-                  },
-                }).then(({ error: notifyErr }) => {
+                // Round-30: await the admin notification so we know
+                // whether it landed, and check the fallback DB update
+                // — if BOTH fail, we've fully lost the signal and must
+                // console.error so ops sees it in function logs.
+                let adminNotifyOk = false;
+                try {
+                  const { error: notifyErr } = await supabaseAdmin.from("admin_notifications").insert({
+                    type: "subscription_cancel_refund_failed",
+                    title: "Refund executor failed on subscription.deleted",
+                    message: `cancelSubscriptionAndRefund threw for facility_subscriptions.id=${subRow.id} (stripe_sub=${subscription.id}). Attempting force-cancel; manual review required.`,
+                    metadata: {
+                      facility_subscription_id: subRow.id,
+                      stripe_subscription_id: subscription.id,
+                      stripe_event_id: event.id,
+                      error: String(cancelErr),
+                    },
+                  });
+                  adminNotifyOk = !notifyErr;
                   if (notifyErr) logStep("WARN admin notify failed", { error: notifyErr.message });
-                });
+                } catch (notifyThrowErr) {
+                  logStep("WARN admin notify threw", { error: String(notifyThrowErr) });
+                }
                 // Fallback: at minimum mark the row canceled.
-                await supabaseAdmin
+                const { error: fallbackErr } = await supabaseAdmin
                   .from("facility_subscriptions")
                   .update({
                     status: "canceled",
@@ -3375,6 +3382,17 @@ Deno.serve(async (req) => {
                     updated_at: new Date().toISOString(),
                   })
                   .eq("id", subRow.id);
+                if (fallbackErr) {
+                  logStep("CRITICAL fallback row-cancel ALSO failed", { error: fallbackErr.message });
+                  if (!adminNotifyOk) {
+                    console.error(
+                      `[stripe-webhook] CRITICAL: Stripe subscription ${subscription.id} ` +
+                      `was canceled but BOTH the refund executor AND the fallback ` +
+                      `row-cancel + admin notification failed. The facility_subscriptions row ` +
+                      `is now permanently inconsistent with Stripe. Manual reconciliation REQUIRED.`,
+                    );
+                  }
+                }
               }
             } else {
               logStep("No facility_subscriptions row found for cancelled Stripe sub — skipping refund executor", { stripeSubId: subscription.id });

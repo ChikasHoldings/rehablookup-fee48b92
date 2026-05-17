@@ -159,6 +159,8 @@ const DELIVERY_FAILURE_TYPES = [
   "pro_activation_db_failure",
   "cancellation_split_brain",
   "out_of_band_subscription_refund",
+  "subscription_cancel_refund_failed",
+  "webhook_dedup_failure",
 ];
 
 export default function AdminNotifications() {
