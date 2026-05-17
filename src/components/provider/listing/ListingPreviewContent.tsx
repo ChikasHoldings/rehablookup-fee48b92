@@ -353,7 +353,7 @@ export function ListingPreviewContent({ facilitySlug }: ListingPreviewContentPro
           <div className="flex flex-wrap gap-2">
             <Button size="sm" disabled className="pointer-events-none">
               <Phone className="h-4 w-4 mr-1.5" />
-              Send Message
+              Message Center
             </Button>
             <Button size="sm" variant="outline" disabled className="pointer-events-none">
               <Globe className="h-4 w-4 mr-1.5" />

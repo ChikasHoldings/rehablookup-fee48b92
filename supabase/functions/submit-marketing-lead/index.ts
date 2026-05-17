@@ -402,7 +402,7 @@ function getLeadConfirmationEmail(firstName: string, facilityCount: number): str
                     <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #0f766e;">📞 What happens next?</p>
                     <ul style="margin: 0; padding: 0 0 0 20px; color: #115e59; font-size: 14px; line-height: 1.8;">
                       <li>Review the matched facilities on our website</li>
-                      <li>Click "Send Message" to connect directly with any facility</li>
+                      <li>Click "Message Center" to connect directly with any facility</li>
                       <li>You can also try our Concierge Service for personalized help</li>
                     </ul>
                   </td>

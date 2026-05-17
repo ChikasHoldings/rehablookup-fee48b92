@@ -542,7 +542,7 @@ export default function SeekerSignup() {
                     <Phone className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-medium">Send a Message</p>
+                    <p className="font-medium">Message Center</p>
                     <p className="text-sm text-white/70">Connect directly with treatment centers</p>
                   </div>
                 </div>

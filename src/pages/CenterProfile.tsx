@@ -528,24 +528,17 @@ const CenterProfile = () => {
   }, [facility?.id, facility?.name, facility?.slug, trackClickToCall, trackWebsiteClick]);
 
   const handleRequestInfoOpen = useCallback((cta_location: string) => {
-    // Unclaimed listings have no provider to inquire to. Previously the
-    // modal was gated on `is_claimed` so clicking these CTAs silently did
-    // nothing. Route the seeker to the free concierge intake instead with
-    // state/city/treatment prefill so the funnel still converts.
-    if (claimFlags && !claimFlags.is_claimed && facility) {
-      const params = new URLSearchParams();
-      if (facility.state) params.set("state", facility.state);
-      if (facility.city) params.set("city", facility.city);
-      if (facility.facility_type) params.set("treatment", facility.facility_type);
-      params.set("ref", "unclaimed_profile");
-      params.set("facility_slug", facility.slug);
-      navigate(`/concierge?${params.toString()}`);
-      void cta_location;
-      return;
-    }
+    // Always open the Message Center modal in-place. Previously the
+    // handler redirected unclaimed facilities to /concierge to route
+    // through the concierge intake, but that broke the user
+    // expectation that "Message Center" is a modal-opening button.
+    // The modal itself handles the unclaimed case internally by
+    // routing the inquiry through the concierge match flow on submit,
+    // so the seeker still ends up in the right pipeline without the
+    // jarring page change.
     setRequestModalOpen(true);
     void cta_location;
-  }, [claimFlags, facility, navigate]);
+  }, []);
 
   // Show skeleton while:
   // - the slug isn't ready yet (route param still resolving), OR
@@ -1033,10 +1026,10 @@ const CenterProfile = () => {
                 size="lg"
                 className="flex-1 min-w-0 gap-2 h-11 text-sm font-semibold"
                 onClick={() => handleRequestInfoOpen("hero_request_info")}
-                aria-label={`Send a message to ${facility.name}`}
+                aria-label={`Open Message Center for ${facility.name}`}
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
-                <span className="truncate">Send Message</span>
+                <span className="truncate">Message Center</span>
               </Button>
               {/* Save / favorite — guest favorites persist to localStorage and
                   migrate to user_favorites on signin; authed seekers update the
@@ -1422,10 +1415,10 @@ const CenterProfile = () => {
                       size="lg"
                       className="w-full gap-2 h-11 text-sm font-semibold"
                       onClick={() => handleRequestInfoOpen("sidebar_request_info")}
-                      aria-label={`Send a message to ${facility.name}`}
+                      aria-label={`Open Message Center for ${facility.name}`}
                     >
                       <Sparkles className="h-4 w-4" />
-                      Send Message
+                      Message Center
                     </Button>
 
                     {showContactDetails && (
@@ -1466,7 +1459,7 @@ const CenterProfile = () => {
             {/* Mobile CTA */}
             <div className="rounded-2xl bg-card border border-border/40 p-5">
               <h3 className="font-display text-base font-bold text-foreground mb-1">
-                Send a Message
+                Message Center
               </h3>
               <p className="text-xs text-muted-foreground mb-4">
                 Take the first step towards recovery.

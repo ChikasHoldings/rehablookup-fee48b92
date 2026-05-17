@@ -1,6 +1,7 @@
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { Badge } from "@/components/ui/badge";
 import { 
   MapPin, 
@@ -102,6 +103,11 @@ function getInitials(name: string): string {
 export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardProps>(function SearchResultCard({ center, featured }, ref) {
   const [logoError, setLogoError] = useState(false);
   const [heroImageError, setHeroImageError] = useState(false);
+  // Local modal state so clicking the inquiry CTA opens the form
+  // inline instead of redirecting to /center/:slug?inquiry=info.
+  // The modal is keyed to this card's facility so each result row
+  // owns its own form lifecycle.
+  const [inquiryOpen, setInquiryOpen] = useState(false);
   const internalRef = useRef<HTMLElement>(null);
   const cardRef = ref || internalRef;
   const hasTrackedImpression = useRef(false);
@@ -425,9 +431,8 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
 
           {/* Actions Footer */}
           <div className="flex flex-col sm:flex-row items-stretch gap-2 mt-auto">
-            <Link 
-              to={`${detailsUrl}?inquiry=info`}
-              state={{ fromSearch: true, inquiryType: 'request_info' }}
+            <Button
+              size="default"
               onClick={() => {
                 handleFeaturedClick();
                 trackEvent("card_request_info_click", {
@@ -436,25 +441,19 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                   surface: "search_card",
                   is_featured: !!showFeaturedBadge,
                 });
+                setInquiryOpen(true);
               }}
-              className="flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
-              aria-label={`Request information from ${center.name}`}
+              aria-label={`Open Message Center for ${center.name}`}
+              className={cn(
+                "flex-1 h-10 text-sm font-semibold gap-2 rounded-lg group/btn",
+                showFeaturedBadge
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-500/25"
+                  : "shadow-md hover:shadow-lg"
+              )}
             >
-              <Button 
-                size="default"
-                tabIndex={-1}
-                className={cn(
-                  "w-full h-10 text-sm font-semibold gap-2 rounded-lg group/btn",
-                  showFeaturedBadge 
-                    ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 shadow-lg shadow-amber-500/25"
-                    : "shadow-md hover:shadow-lg"
-                )}
-              >
-                <span className="md:hidden">Send Message</span>
-                <span className="hidden md:inline">Send Message</span>
-                <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" aria-hidden="true" />
-              </Button>
-            </Link>
+              <span>Message Center</span>
+              <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" aria-hidden="true" />
+            </Button>
             <Link 
               to={buildConciergeHref({
                 location: `${center.city}, ${center.state}`,
@@ -502,6 +501,22 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
           </Link>
         </div>
       </div>
+      {/* Inquiry modal — opens in-place from the Message Center
+          button so the seeker stays on /search-results instead of
+          being redirected to the facility detail page. */}
+      <RequestInfoModal
+        open={inquiryOpen}
+        onOpenChange={setInquiryOpen}
+        facility={{
+          id: center.id ?? null,
+          name: center.name,
+          city: center.city,
+          state: center.state,
+          slug: (center as { slug?: string | null }).slug ?? null,
+          logo_url: (center as { logo_url?: string | null }).logo_url ?? null,
+          featured: !!showFeaturedBadge,
+        }}
+      />
     </article>
   );
 }));
