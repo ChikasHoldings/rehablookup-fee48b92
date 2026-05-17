@@ -1898,42 +1898,75 @@ function Step4Enrichment({
   const [saving, setSaving] = useState(false);
 
   // One-time seed: pull doc-upload entries from step 3 into the accreditations
-  // list so the user can flesh them out (type, number, issuing authority).
-  // Also pre-fill the corrected-contact website with whatever the view has.
+  // list, pre-fill corrected-contact from the facility row, AND pre-fill
+  // description / services / insurance from the existing facility so SAMHSA
+  // claimers can EDIT existing data rather than starting blank. The fetch
+  // is best-effort: a failure here just leaves the section empty.
   useEffect(() => {
     if (state.step4Seeded) return;
-    setState((p) => {
-      const seededAccreditations: AccreditationEntry[] =
-        p.accreditations.length === 0 && p.uploadedDocs.length > 0
-          ? p.uploadedDocs.map((doc) => ({
-              id:
-                typeof crypto !== "undefined" && "randomUUID" in crypto
-                  ? crypto.randomUUID()
-                  : `${Date.now()}-${Math.random()}`,
-              type: "",
-              number: "",
-              issuing_authority: "",
-              document_path: doc.path,
-              document_name: doc.name,
-            }))
-          : p.accreditations;
+    let cancelled = false;
+    (async () => {
+      const [servicesRes, insuranceRes] = await Promise.all([
+        supabase
+          .from("facility_services")
+          .select("service_name")
+          .eq("facility_id", facility.id),
+        supabase
+          .from("facility_insurance")
+          .select("insurance_name")
+          .eq("facility_id", facility.id),
+      ]);
+      if (cancelled) return;
+      const existingServices = (servicesRes.data ?? [])
+        .map((r) => (r as { service_name: string | null }).service_name)
+        .filter((s): s is string => !!s && s.length > 0);
+      const existingInsurances = (insuranceRes.data ?? [])
+        .map((r) => (r as { insurance_name: string | null }).insurance_name)
+        .filter((s): s is string => !!s && s.length > 0);
 
-      const seededContact: CorrectedContact =
-        p.correctedContact.phone || p.correctedContact.email || p.correctedContact.website
-          ? p.correctedContact
-          : {
-              phone: facility.phone ?? "",
-              email: "",
-              website: facility.website ?? "",
-            };
+      setState((p) => {
+        const seededAccreditations: AccreditationEntry[] =
+          p.accreditations.length === 0 && p.uploadedDocs.length > 0
+            ? p.uploadedDocs.map((doc) => ({
+                id:
+                  typeof crypto !== "undefined" && "randomUUID" in crypto
+                    ? crypto.randomUUID()
+                    : `${Date.now()}-${Math.random()}`,
+                type: "",
+                number: "",
+                issuing_authority: "",
+                document_path: doc.path,
+                document_name: doc.name,
+              }))
+            : p.accreditations;
 
-      return {
-        ...p,
-        step4Seeded: true,
-        accreditations: seededAccreditations,
-        correctedContact: seededContact,
-      };
-    });
+        const seededContact: CorrectedContact =
+          p.correctedContact.phone || p.correctedContact.email || p.correctedContact.website
+            ? p.correctedContact
+            : {
+                phone: facility.phone ?? "",
+                email: "",
+                website: facility.website ?? "",
+              };
+
+        return {
+          ...p,
+          step4Seeded: true,
+          accreditations: seededAccreditations,
+          correctedContact: seededContact,
+          description:
+            p.description.length > 0
+              ? p.description
+              : (facility.description ?? ""),
+          services: p.services.length > 0 ? p.services : existingServices,
+          insurances:
+            p.insurances.length > 0 ? p.insurances : existingInsurances,
+        };
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time seed
   }, []);
 
