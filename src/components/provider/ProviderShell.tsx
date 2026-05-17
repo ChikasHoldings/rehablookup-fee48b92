@@ -6,6 +6,7 @@ import { ProviderSidebar } from "./ProviderSidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { ProviderErrorBoundary } from "./ProviderErrorBoundary";
 import { WelcomeModal } from "./WelcomeModal";
+import { DunningBanner } from "./DunningBanner";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useProviderData } from "@/hooks/useProviderData";
@@ -260,6 +261,7 @@ function ProviderShellContent() {
           ref={mainContentRef}
           className="flex-1 min-w-0 min-h-0 overflow-x-hidden overflow-y-auto bg-muted/30"
         >
+          <DunningBanner />
           <ProviderErrorBoundary>
             <Suspense fallback={null}>
               <Outlet />

@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
+import { AddFeaturedPlacementForm } from "@/components/provider/featured/AddFeaturedPlacementForm";
 
 interface FeaturedPlacementRow {
   id: string;
@@ -273,8 +274,19 @@ export default function BillingPlacements() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-base">Active placements</CardTitle>
+          {facilityId && subscription?.id && (
+            <AddFeaturedPlacementForm
+              facilityId={facilityId}
+              subscriptionId={subscription.id}
+              onAdded={() =>
+                queryClient.invalidateQueries({
+                  queryKey: ["featured-placements", subscription.id],
+                })
+              }
+            />
+          )}
         </CardHeader>
         <CardContent>
           {placementsLoading ? (
@@ -285,11 +297,9 @@ export default function BillingPlacements() {
                 You have no active Featured placements yet.
               </p>
               <p className="mt-1 text-sm text-slate-600">
-                Pick state, city, treatment, or insurance pages to rotate on.
+                Use "Add a placement" above to pick state, city, treatment, or
+                insurance pages to rotate on.
               </p>
-              <Button asChild className="mt-4 bg-[#1B365D] hover:bg-[#142a4a]">
-                <Link to="/provider/billing">Choose placements</Link>
-              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto -mx-4 md:mx-0">

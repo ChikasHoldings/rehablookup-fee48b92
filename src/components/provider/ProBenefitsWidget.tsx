@@ -90,7 +90,15 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
             );
           })}
         </div>
-        <div className="mt-3 pt-2.5 border-t border-amber-500/20">
+        <div className="mt-3 pt-2.5 border-t border-amber-500/20 space-y-2">
+          {proStatus.currentPeriodEnd && (
+            <p className="text-[11px] text-amber-800/80 text-center">
+              {proStatus.cancelAtPeriodEnd ? "Ends " : "Renews "}
+              {new Date(proStatus.currentPeriodEnd).toLocaleDateString("en-US", {
+                month: "short", day: "numeric", year: "numeric",
+              })}
+            </p>
+          )}
           <Button
             variant="ghost"
             size="sm"

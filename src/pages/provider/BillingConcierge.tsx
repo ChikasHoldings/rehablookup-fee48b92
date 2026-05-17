@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
+import { AddConciergeGeoForm } from "@/components/provider/concierge/AddConciergeGeoForm";
 
 interface ConciergeGeoRow {
   id: string;
@@ -152,8 +153,19 @@ export default function BillingConcierge() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-base">Active geos</CardTitle>
+          {facilityId && subscription?.id && (
+            <AddConciergeGeoForm
+              facilityId={facilityId}
+              subscriptionId={subscription.id}
+              onAdded={() =>
+                queryClient.invalidateQueries({
+                  queryKey: ["concierge-geos", subscription.id],
+                })
+              }
+            />
+          )}
         </CardHeader>
         <CardContent>
           {geosLoading ? (
@@ -164,12 +176,9 @@ export default function BillingConcierge() {
                 You have no active Concierge Partner geos yet.
               </p>
               <p className="mt-1 text-sm text-slate-600">
-                Pick the cities and levels of care you want our advisors to
-                surface you for.
+                Use "Add a geography" above to pick a state, city, and the
+                levels of care you want advisors to surface you for.
               </p>
-              <Button asChild className="mt-4 bg-[#1B365D] hover:bg-[#142a4a]">
-                <Link to="/provider/billing">Choose geos</Link>
-              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto -mx-4 md:mx-0">
