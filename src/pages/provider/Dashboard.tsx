@@ -25,6 +25,7 @@ import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -152,6 +153,44 @@ export default function ProviderDashboardPage() {
       setProfilePromptDismissedFields(localStorage.getItem(`profile-prompt-dismissed-${facilityId}`));
     }
   }, [facilityId]);
+
+  // Round-30 audit recovery: a user who timed out of PlanStep's
+  // Pro-confirmation poll (Stripe webhook lag > 30s) lands here with
+  // profile.onboarding_completed_at still NULL. If the subscription
+  // DID land in the meantime, complete onboarding now so the wizard
+  // doesn't re-trap them on next reload.
+  useEffect(() => {
+    if (!profile) return;
+    if (profile.onboarding_completed_at) return;
+    let cancelled = false;
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData.session?.user.id;
+      if (!uid) return;
+      const { data: sub } = await supabase
+        .from("facility_subscriptions")
+        .select("tier, status")
+        .eq("provider_id", uid)
+        .eq("status", "active")
+        .eq("tier", "pro")
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (sub?.tier === "pro") {
+        try {
+          await supabase.rpc("complete_provider_onboarding");
+          // Refetch so the rest of the dashboard re-renders with
+          // onboarding_completed_at set + Pro benefits visible.
+          toast.success("Pro is active — welcome to RehabLookup.");
+        } catch (e) {
+          console.warn("[Dashboard] post-timeout Pro recovery RPC failed", e);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+    // Only react to the profile object identity flipping — don't
+    // re-run on every render.
+  }, [profile?.onboarding_completed_at]);
 
   // Fetch recent leads using PII-safe view (masks locked lead contact info at DB level)
   const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({

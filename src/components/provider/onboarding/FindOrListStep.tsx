@@ -407,6 +407,15 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
             <p className="text-xs uppercase tracking-wide text-[#1B365D] font-semibold mb-2">
               Continue with this facility
             </p>
+            {seededFacility.is_claimed && (
+              // Round-30 audit fix: deep-link to an already-claimed
+              // facility used to dead-end inside ClaimWizard. Surface
+              // it here so the user can search for theirs instead.
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mb-2">
+                Heads-up — this facility was already claimed by another
+                provider. You can still search for the right one below.
+              </p>
+            )}
             <ul className="space-y-2">
               <FacilityRowItem
                 facility={seededFacility}
@@ -417,6 +426,17 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
                 onSelect={() => handleSelectExisting(seededFacility.id)}
               />
             </ul>
+          </div>
+        )}
+        {seededId && !seededFacility && (
+          // Deep link with a facility_id that doesn't resolve in
+          // public_facilities (deleted, unapproved, RLS-blocked).
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3.5">
+            <p className="text-sm text-amber-900">
+              We couldn't find the facility you were trying to claim. It
+              may have been removed or is awaiting approval. Search below
+              to find the correct one, or list a new facility.
+            </p>
           </div>
         )}
 

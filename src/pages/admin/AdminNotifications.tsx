@@ -162,6 +162,7 @@ const DELIVERY_FAILURE_TYPES = [
   "resend_api_failure",
   // Stripe webhook / subscription / refund half-states
   "pro_activation_db_failure",
+  "pro_activation_poll_timeout",
   "cancellation_split_brain",
   "out_of_band_subscription_refund",
   "subscription_cancel_refund_failed",

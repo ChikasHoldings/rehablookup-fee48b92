@@ -220,12 +220,33 @@ export function VerifyEmailStep({ onAdvance }: { onAdvance: () => void }) {
   }
 
   async function handleChangeEmail() {
-    // Sign the user out + clear local state so the wizard re-renders
-    // Step 1 (Account). The unverified profiles row + the
-    // verify_email onboarding-state row stay behind — when the user
-    // signs up again with a different email, the row's user_id
-    // doesn't match the new auth.uid() so a fresh row is created on
-    // the next AccountStep submit.
+    // Round-30 audit fix: previously left orphan rows behind. Now we
+    // delete the unverified profiles + onboarding_state rows for the
+    // current session BEFORE signing out, so a "change email" doesn't
+    // accumulate stale rows in the DB. RLS lets the current user
+    // delete their own rows.
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData.session?.user.id;
+      if (uid) {
+        // Onboarding state row first (FK-safe regardless of order, but
+        // this is the one the wizard reads on next visit).
+        await supabase
+          .from("provider_onboarding_state")
+          .delete()
+          .eq("user_id", uid);
+        // Profiles row only if email is still unverified — verified
+        // profiles belong to real users and shouldn't be deleted from
+        // a change-email click.
+        await supabase
+          .from("profiles")
+          .delete()
+          .eq("user_id", uid)
+          .is("email_verified_at", null);
+      }
+    } catch (e) {
+      console.warn("[VerifyEmailStep] orphan cleanup on change-email failed", e);
+    }
     await supabase.auth.signOut();
     window.location.assign("/provider/onboarding");
   }

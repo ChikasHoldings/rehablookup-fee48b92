@@ -92,10 +92,14 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
   }, []);
 
   async function confirmProSubscription() {
-    // Poll facility_subscriptions for an active Pro row for up to 10s.
-    // The webhook normally lands within 1-2s, but we never want the
-    // user to see a "stuck" state if the webhook is delayed.
-    const deadline = Date.now() + 10_000;
+    // Poll facility_subscriptions for an active Pro row. Round-30
+    // audit raised the timeout from 10s → 30s — the Stripe webhook
+    // normally lands within 1-2s, but cold-start + network + DB
+    // contention can stretch to ~15s under load. 30s is well within
+    // user attention span and dramatically reduces the "stuck"
+    // outcome. The dashboard ProBenefitsWidget also runs a fallback
+    // poll so even a 30s timeout here is recoverable on reload.
+    const deadline = Date.now() + 30_000;
     while (Date.now() < deadline) {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData.session?.user.id;
@@ -137,32 +141,45 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
         confirmPollRef.current = window.setTimeout(resolve, 750);
       });
     }
-    // Timed out. The webhook may still land — leave the wizard at the
-    // plan step; the user can reload and we'll poll again, or contact
-    // support if Stripe charged but no subscription row appeared.
+    // Timed out. The webhook may still land — route the user to the
+    // dashboard where the fallback fast-track runs on mount and will
+    // pick up a late-arriving subscription. Leaving them stranded on
+    // the plan step was the round-30 audit's #1 critical issue.
     setConfirmingPro(false);
-    toast.error(
-      "We couldn't confirm your subscription. Reload in a minute, or contact support if you were charged.",
+    toast.message(
+      "Your payment is being processed — heading to your dashboard. If Pro doesn't activate within a minute, reload the dashboard or contact support.",
     );
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData.session?.user.id;
+      if (uid) {
+        // Surface to admin so a webhook-delay > 30s is visible in ops.
+        await supabase.from("admin_notifications").insert({
+          type: "pro_activation_poll_timeout",
+          title: "Pro activation polling timed out",
+          message:
+            `User ${uid} completed Stripe Checkout but the facility_subscriptions row didn't appear within 30s. Routed to dashboard with fallback recovery.`,
+          metadata: { user_id: uid } as Record<string, unknown>,
+        });
+      }
+    } catch { /* best-effort */ }
+    navigate("/provider/dashboard", { replace: true });
   }
 
   async function handleFree() {
     if (busy) return;
     setBusy("free");
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user.id;
-      if (userId) {
-        await supabase
-          .from("profiles")
-          .update({ plan: "free" } as never)
-          .eq("user_id", userId);
-      }
-      await advance({ plan: "free", current_step: "completed" });
-      try {
-        await supabase.rpc("complete_provider_onboarding");
-      } catch (e) {
-        console.warn("[PlanStep] complete_provider_onboarding failed", e);
+      // Round-30 audit fix: atomic plan + state + onboarding-complete
+      // via single SECURITY DEFINER RPC. Previously the client did 3
+      // separate writes; if the first one (profiles.plan='free')
+      // failed silently, the user was marked complete with plan=NULL.
+      const { error: rpcErr } = await supabase.rpc(
+        "complete_provider_onboarding_with_plan",
+        { p_plan: "free" },
+      );
+      if (rpcErr) {
+        throw rpcErr;
       }
       trackEvent("provider_onboarding_step_submit", {
         step_name: "plan",
