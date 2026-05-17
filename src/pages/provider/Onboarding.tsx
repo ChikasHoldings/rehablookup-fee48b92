@@ -1,59 +1,137 @@
 /**
- * Provider Onboarding picker
- * ──────────────────────────
- * Two-card picker shown after /auth/signup completes. Lets the new provider
- * choose between listing a brand-new facility or claiming an existing
- * (SAMHSA-imported / unverified) listing.
+ * Unified provider onboarding wizard — /provider/onboarding.
  *
- * Auth gate: if the visitor isn't signed in, kick them to /login?type=provider
- * (preserving `?returnTo` if present). Already-registered providers landing
- * here while signed out are sent to login — not signup — to keep entry
- * paths consistent with the rest of the provider panel.
+ * One route that renders the current step based on the server-side
+ * `provider_onboarding_state.current_step`. ?step=… can be used for back
+ * navigation but the server is the source of truth — jumping ahead
+ * bounces the visitor back to their authoritative current step.
  *
- * "Claim an existing listing" routes to the public rehab-centers search
- * page with ?intent=claim — that mode highlights the "Claim This Listing"
- * CTA on each facility profile and skips seeker conversion prompts.
+ * Persistent stepper (5 visible tiles: Account → Verify → Find or List
+ * → Plan → Build/Edit; verify_email + verify_phone collapse into one
+ * "Verify" tile).
+ *
+ * Resume contract:
+ *  - Signed-out + no row: render Step 1 (Account). After submit, the
+ *    Account step seeds the onboarding-state row with
+ *    current_step='verify_email' and signs the user in.
+ *  - Signed-in + row exists + onboarding_completed_at IS NULL: render
+ *    the step that matches current_step.
+ *  - Signed-in + already-onboarded
+ *    (profiles.onboarding_completed_at IS NOT NULL): redirect to
+ *    /provider/dashboard with a flash toast "You're already onboarded."
+ *  - ?intent=claim&facility_id=… on a signed-out visitor: the param
+ *    survives through Account submit and the AccountStep seeds
+ *    selected_facility_id when the row is created.
  */
 
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo } from "react";
+import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Building2, ShieldCheck, ArrowRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  useProviderOnboardingState,
+  ONBOARDING_STEPS,
+  canReach,
+  type OnboardingStep,
+} from "@/hooks/useProviderOnboardingState";
+import { OnboardingStepper } from "@/components/provider/onboarding/OnboardingStepper";
+import { AccountStep } from "@/components/provider/onboarding/AccountStep";
+import { PlaceholderStep } from "@/components/provider/onboarding/PlaceholderStep";
+
+/** profiles row fields the wizard reads to decide whether to redirect. */
+interface ProfileGate {
+  onboarding_completed_at: string | null;
+  email_verified_at: string | null;
+  phone_verified_at: string | null;
+}
+
+function useProviderProfile() {
+  return useQuery({
+    queryKey: ["provider-onboarding-profile"],
+    queryFn: async (): Promise<ProfileGate | null> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+      if (!userId) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("onboarding_completed_at, email_verified_at, phone_verified_at")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) {
+        console.error("[Onboarding] profile load failed", error);
+        return null;
+      }
+      return (data as unknown as ProfileGate) ?? null;
+    },
+    staleTime: 1000 * 5,
+  });
+}
 
 export default function ProviderOnboarding() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [checking, setChecking] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const { data: stateRow, isLoading: stateLoading, refetch: refetchState } =
+    useProviderOnboardingState();
+  const { data: profile, isLoading: profileLoading } = useProviderProfile();
+
+  const queryStep = searchParams.get("step") as OnboardingStep | null;
+  const serverStep: OnboardingStep = stateRow?.current_step ?? "account";
+
+  // Resolved visible step: ?step= when the user can reach it, otherwise
+  // serverStep (and we silently strip the param). Already-onboarded
+  // users are redirected below before this resolves.
+  const resolved: OnboardingStep = useMemo(() => {
+    if (!queryStep) return serverStep;
+    if (!ONBOARDING_STEPS.includes(queryStep)) return serverStep;
+    if (!canReach(queryStep, serverStep)) return serverStep;
+    return queryStep;
+  }, [queryStep, serverStep]);
+
+  // Strip a stale ?step= if the user tried to jump ahead. Surfaced as a
+  // toast so the redirect isn't silent.
   useEffect(() => {
-    let cancelled = false;
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (cancelled) return;
-      if (!session?.user) {
-        const returnTo = searchParams.get("returnTo") ?? "/provider/onboarding";
-        const search = new URLSearchParams({ type: "provider", returnTo }).toString();
-        navigate(`/login?${search}`, { replace: true });
-        return;
-      }
-      setChecking(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [navigate, searchParams]);
+    if (queryStep && !canReach(queryStep, serverStep)) {
+      toast.message("Let's finish the current step first.");
+      const next = new URLSearchParams(searchParams);
+      next.delete("step");
+      setSearchParams(next, { replace: true });
+    }
+  }, [queryStep, serverStep, searchParams, setSearchParams]);
 
-  if (checking) {
+  // Already-onboarded → bounce to dashboard.
+  if (profile?.onboarding_completed_at) {
+    toast.success("You're already onboarded.");
+    return <Navigate to="/provider/dashboard" replace />;
+  }
+
+  if (stateLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
       </div>
     );
   }
+
+  const handleSelectStep = (target: OnboardingStep) => {
+    if (target === serverStep) return;
+    const next = new URLSearchParams(searchParams);
+    if (target === serverStep) next.delete("step");
+    else next.set("step", target);
+    setSearchParams(next, { replace: false });
+  };
+
+  const handleBack = () => {
+    const idx = ONBOARDING_STEPS.indexOf(resolved);
+    if (idx <= 0) return;
+    const prev = ONBOARDING_STEPS[idx - 1];
+    handleSelectStep(prev);
+  };
 
   return (
     <>
@@ -62,67 +140,79 @@ export default function ProviderOnboarding() {
         <meta name="robots" content="noindex" />
       </Helmet>
       <Header />
-      <main className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14 max-w-4xl">
-        <header className="text-center mb-8 md:mb-10">
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-            How would you like to get started?
+      <main className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 max-w-3xl">
+        <header className="mb-6 md:mb-8">
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-slate-900">
+            List or claim your facility
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-xl mx-auto">
-            Pick the path that matches your facility. You can always add more
-            listings later from your dashboard.
+          <p className="text-sm text-slate-600 mt-1.5">
+            One quick flow — account, verification, and your listing.
           </p>
         </header>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="p-6 md:p-7 flex flex-col gap-4 hover:border-primary/40 transition-colors">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-primary" aria-hidden />
-            </div>
-            <div className="space-y-1.5">
-              <h2 className="font-semibold text-lg">List a new facility</h2>
-              <p className="text-sm text-muted-foreground">
-                Add a treatment center that isn't already on RehabLookup. You'll
-                supply the facility details, services, and any photos you want
-                to publish.
-              </p>
-            </div>
-            <Button
-              className="mt-auto w-full gap-2"
-              onClick={() => navigate("/provider/onboarding/new-listing")}
-            >
-              List a new facility
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Button>
-          </Card>
-
-          <Card className="p-6 md:p-7 flex flex-col gap-4 hover:border-primary/40 transition-colors">
-            <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5 text-emerald-600" aria-hidden />
-            </div>
-            <div className="space-y-1.5">
-              <h2 className="font-semibold text-lg">Claim an existing listing</h2>
-              <p className="text-sm text-muted-foreground">
-                Take ownership of a listing that was created from public SAMHSA
-                records. Verify your role, then enrich the listing in one flow.
-              </p>
-            </div>
-            <Button
-              variant="secondary"
-              className="mt-auto w-full gap-2"
-              onClick={() => navigate("/rehab-centers?intent=claim")}
-            >
-              Find my facility
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Tip: search by your facility name or city, then click
-              <span className="font-medium text-foreground"> &ldquo;Claim This Listing&rdquo; </span>
-              on its profile.
-            </p>
-          </Card>
+        <div className="mb-6">
+          <OnboardingStepper
+            current={resolved}
+            serverCurrent={serverStep}
+            onSelect={handleSelectStep}
+          />
         </div>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7 shadow-sm">
+          {resolved === "account" && <AccountStep onAdvance={() => void refetchState()} />}
+          {resolved === "verify_email" && (
+            <PlaceholderStep
+              title="Verify your email"
+              serverStep="verify_email"
+              onBack={handleBack}
+            />
+          )}
+          {resolved === "verify_phone" && (
+            <PlaceholderStep
+              title="Verify your phone"
+              serverStep="verify_phone"
+              onBack={handleBack}
+            />
+          )}
+          {resolved === "find_or_list" && (
+            <PlaceholderStep
+              title="Find or list your facility"
+              serverStep="find_or_list"
+              onBack={handleBack}
+            />
+          )}
+          {resolved === "plan" && (
+            <PlaceholderStep
+              title="Choose your plan"
+              serverStep="plan"
+              onBack={handleBack}
+            />
+          )}
+          {resolved === "build" && (
+            <PlaceholderStep
+              title="Build your listing"
+              serverStep="build"
+              onBack={handleBack}
+            />
+          )}
+          {resolved === "completed" && (
+            <CompletedBounce onBounce={() => navigate("/provider/dashboard", { replace: true })} />
+          )}
+        </section>
       </main>
       <Footer />
     </>
+  );
+}
+
+function CompletedBounce({ onBounce }: { onBounce: () => void }) {
+  useEffect(() => {
+    onBounce();
+  }, [onBounce]);
+  return (
+    <div className="flex items-center gap-2 text-sm text-slate-600">
+      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+      Finishing up…
+    </div>
   );
 }

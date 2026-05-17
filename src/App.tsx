@@ -1262,11 +1262,12 @@ const AppInner = () => {
             <Route path="/provider-resources" element={<PublicRouteGuard><ProviderResources /></PublicRouteGuard>} />
             {/* /provider-guides hub — canonical redirect to /provider-resources (which lists all guides) */}
             <Route path="/provider-guides" element={<Navigate to="/provider-resources" replace />} />
-            {/* Phase 1: split signup from facility creation. Old signup
-                URL redirects to the new auth-only flow. The legacy multi-step
-                ProviderSignup component is reused at /provider/onboarding/new-listing
-                (mounted with initialStep={3} so it skips the auth steps). */}
-            <Route path="/provider-signup" element={<Navigate to="/auth/signup" replace />} />
+            {/* /provider-signup is the legacy entry. Redirected to the
+                unified onboarding wizard so seekers and providers landing
+                on old links / search results / footer CTAs end up in the
+                same place. The wizard owns Account → Verify → Find or
+                List → Plan → Build/Edit. */}
+            <Route path="/provider-signup" element={<Navigate to="/provider/onboarding" replace />} />
             <Route path="/auth/signup" element={<AuthSignup />} />
             <Route path="/provider/onboarding" element={<ProviderOnboarding />} />
             <Route path="/provider/onboarding/new-listing" element={<NewListingForm />} />

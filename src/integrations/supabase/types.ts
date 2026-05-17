@@ -1720,6 +1720,8 @@ export type Database = {
           bed_count: string | null
           calculated_ranking_score: number | null
           city: string
+          claim_owner_id: string | null
+          claim_status: string | null
           claimed_at: string | null
           concierge_accepted_care_types: Json | null
           concierge_accepted_insurance: Json | null
@@ -1782,6 +1784,8 @@ export type Database = {
           bed_count?: string | null
           calculated_ranking_score?: number | null
           city: string
+          claim_owner_id?: string | null
+          claim_status?: string | null
           claimed_at?: string | null
           concierge_accepted_care_types?: Json | null
           concierge_accepted_insurance?: Json | null
@@ -1844,6 +1848,8 @@ export type Database = {
           bed_count?: string | null
           calculated_ranking_score?: number | null
           city?: string
+          claim_owner_id?: string | null
+          claim_status?: string | null
           claimed_at?: string | null
           concierge_accepted_care_types?: Json | null
           concierge_accepted_insurance?: Json | null
@@ -4495,47 +4501,62 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          email_verified_at: string | null
           first_name: string
           id: string
           job_title: string | null
           last_name: string
+          onboarding_completed_at: string | null
           phone: string | null
           phone_verified: boolean | null
           phone_verified_at: string | null
+          plan: string | null
           primary_contact_name: string | null
           timezone: string | null
+          unsubscribed_provider_emails_at: string | null
           updated_at: string
           user_id: string
+          welcomed_at: string | null
         }
         Insert: {
           created_at?: string
           email: string
+          email_verified_at?: string | null
           first_name: string
           id?: string
           job_title?: string | null
           last_name: string
+          onboarding_completed_at?: string | null
           phone?: string | null
           phone_verified?: boolean | null
           phone_verified_at?: string | null
+          plan?: string | null
           primary_contact_name?: string | null
           timezone?: string | null
+          unsubscribed_provider_emails_at?: string | null
           updated_at?: string
           user_id: string
+          welcomed_at?: string | null
         }
         Update: {
           created_at?: string
           email?: string
+          email_verified_at?: string | null
           first_name?: string
           id?: string
           job_title?: string | null
           last_name?: string
+          onboarding_completed_at?: string | null
           phone?: string | null
           phone_verified?: boolean | null
           phone_verified_at?: string | null
+          plan?: string | null
           primary_contact_name?: string | null
           timezone?: string | null
+          unsubscribed_provider_emails_at?: string | null
           updated_at?: string
           user_id?: string
+          welcomed_at?: string | null
         }
         Relationships: []
       }
@@ -4770,6 +4791,60 @@ export type Database = {
           {
             foreignKeyName: "provider_onboarding_drip_facility_id_fkey"
             columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_onboarding_state: {
+        Row: {
+          created_at: string
+          current_step: string
+          draft_facility_data: Json | null
+          id: string
+          initial_facility_name: string | null
+          mode: string | null
+          plan: string | null
+          selected_facility_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_step?: string
+          draft_facility_data?: Json | null
+          id?: string
+          initial_facility_name?: string | null
+          mode?: string | null
+          plan?: string | null
+          selected_facility_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_step?: string
+          draft_facility_data?: Json | null
+          id?: string
+          initial_facility_name?: string | null
+          mode?: string | null
+          plan?: string | null
+          selected_facility_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_onboarding_state_selected_facility_id_fkey"
+            columns: ["selected_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_onboarding_state_selected_facility_id_fkey"
+            columns: ["selected_facility_id"]
             isOneToOne: false
             referencedRelation: "public_facilities"
             referencedColumns: ["id"]
