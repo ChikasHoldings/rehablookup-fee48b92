@@ -1,22 +1,35 @@
 // ============================================================================
-// register-provider-account v1.1.0
+// register-provider-account v1.2.0
 // ----------------------------------------------------------------------------
 // Replaces client-side supabase.auth.signUp() for the provider signup path so
 // we NEVER trigger Supabase's built-in email-confirmation magic link. We use
-// admin.createUser with email_confirm:false (no email sent), then our own
-// 6-digit OTP via send-verification-code, then verify-code marks the user
-// confirmed server-side. After confirmation the client signs in with password.
+// admin.createUser, then our own 6-digit OTP via send-verification-code,
+// then verify-code marks email_verified_at server-side on the profiles row.
 //
-// `autoConfirm:true` is allowed for seeker flows that arrive from an intake
-// form where the email was already used as the contact channel (concierge,
-// international placement). Provider signups never set this.
+// CRITICAL CHANGE in v1.2.0 (2026-05-17 round 19 signup repair):
+//   We now ALWAYS set email_confirm:true at the auth level. The previous
+//   v1.1.0 set email_confirm:false for providers under the assumption that
+//   Supabase Auth allows password sign-in for unconfirmed users — that
+//   assumption was wrong for this project (Auth has "Confirm email"
+//   required), and every wizard signup hit "Email not confirmed" on the
+//   immediate signInWithPassword call, surfacing "Account created, but we
+//   couldn't sign you in" toast. 4 unconfirmed accounts were stuck.
+//
+//   The auth-level email_confirmed_at flag becomes the "may sign in with
+//   password" flag. Real email ownership verification is still required
+//   downstream and is tracked separately on profiles.email_verified_at
+//   (written by verify-code only after the 6-digit OTP succeeds). The
+//   wizard's downstream steps (find_or_list, plan, build, …) gate on the
+//   profile-level flag, NOT the auth-level flag. So flipping auth.users.
+//   email_confirmed_at upfront only enables password sign-in — it does
+//   NOT bypass the OTP gate.
 //
 // Body: { email, password, firstName, lastName, accountType?: 'provider'|'seeker', autoConfirm?: boolean }
-// Returns: { userId } on success.
+// Returns: { userId, autoConfirmed: true } on success.
 // ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,10 +78,6 @@ Deno.serve(async (req) => {
     const firstName = String(body.firstName ?? "").trim().slice(0, 80);
     const lastName = String(body.lastName ?? "").trim().slice(0, 80);
     const accountType = body.accountType === "seeker" ? "seeker" : "provider";
-    // Auto-confirm is only honored for seeker flows arriving from intake forms
-    // (concierge / international thank-you). Provider signups always go through
-    // the 6-digit OTP step.
-    const autoConfirm = accountType === "seeker" && body.autoConfirm === true;
 
     if (!email || !EMAIL_REGEX.test(email)) return json(400, { error: "Valid email required", code: "INVALID_EMAIL" });
     if (!password || password.length < 8) return json(400, { error: "Password must be at least 8 characters", code: "WEAK_PASSWORD" });
@@ -100,10 +109,14 @@ Deno.serve(async (req) => {
       log("WARN", "cross-account check failed; continuing", { error: String(e) });
     }
 
+    // email_confirm:true unlocks signInWithPassword. The 6-digit OTP gate
+    // remains the real verification — VerifyEmailStep blocks until the user
+    // enters the code, then verify-code writes profiles.email_verified_at.
+    // Downstream wizard steps gate on the profile flag.
     const { data: createRes, error: createErr } = await svc.auth.admin.createUser({
       email,
       password,
-      email_confirm: autoConfirm,
+      email_confirm: true,
       user_metadata: {
         account_type: accountType,
         first_name: firstName,
@@ -129,8 +142,8 @@ Deno.serve(async (req) => {
       return json(500, { error: "Failed to create account", code: "CREATE_FAILED" });
     }
 
-    log("INFO", "Account created", { userId, accountType, autoConfirm });
-    return json(200, { success: true, userId, autoConfirmed: autoConfirm });
+    log("INFO", "Account created", { userId, accountType, signinReady: true });
+    return json(200, { success: true, userId, autoConfirmed: true });
   } catch (e) {
     log("ERROR", "unhandled", { error: e instanceof Error ? e.message : String(e) });
     return json(500, { error: "Internal error", code: "UNHANDLED" });

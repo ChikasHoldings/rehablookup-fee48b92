@@ -12,7 +12,7 @@
 // ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "2.1.0";
+const VERSION = "2.2.0";
 const MAX_ATTEMPTS = 5;
 
 const corsHeaders = {
@@ -50,11 +50,24 @@ async function markAuthUserConfirmed(
     const users = (data as any)?.users ?? [];
     const user = users.find((u: { email?: string }) => u.email?.toLowerCase() === email);
     if (!user) return;
-    if (user.email_confirmed_at) return;
-    const { error: updErr } = await svc.auth.admin.updateUserById(user.id, {
-      email_confirm: true,
-    });
-    if (updErr) log("WARN", "updateUserById email_confirm failed", { error: updErr.message });
+    if (!user.email_confirmed_at) {
+      const { error: updErr } = await svc.auth.admin.updateUserById(user.id, {
+        email_confirm: true,
+      });
+      if (updErr) log("WARN", "updateUserById email_confirm failed", { error: updErr.message });
+    }
+    // ALSO mark profiles.email_verified_at — wizard's source of truth for
+    // downstream steps. The auth-level email_confirmed_at flag is now set
+    // upfront by register-provider-account v1.2.0 (it's just the "may sign
+    // in with password" flag); profile-level email_verified_at is the
+    // post-OTP gate. Match by user_id to handle multi-account-per-email
+    // edge cases cleanly.
+    const { error: profErr } = await svc
+      .from("profiles")
+      .update({ email_verified_at: new Date().toISOString() })
+      .eq("user_id", user.id)
+      .is("email_verified_at", null);
+    if (profErr) log("WARN", "profiles.email_verified_at update failed", { error: profErr.message });
   } catch (e) {
     log("WARN", "markAuthUserConfirmed threw", { error: String(e) });
   }

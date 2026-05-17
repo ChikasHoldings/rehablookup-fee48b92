@@ -87,15 +87,28 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
       }
 
       // Sign in so the upsert below runs under the user's RLS context.
-      // The user is NOT considered verified until Step 2 finishes; we
-      // gate that downstream via profiles.email_verified_at.
+      // register-provider-account v1.2.0 sets email_confirm:true upfront so
+      // password sign-in succeeds. The user is NOT considered verified
+      // until Step 2 finishes — that's gated downstream via
+      // profiles.email_verified_at, written by verify-code only after the
+      // 6-digit OTP succeeds. So a session here only unlocks navigating
+      // the wizard; nothing externally consequential happens without OTP.
       const { error: signInErr } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
       if (signInErr) {
+        // Stale unconfirmed user from before v1.2.0? Surface a helpful
+        // message instead of the generic "couldn't sign you in". The user
+        // can recover by signing in directly (which triggers our OTP flow)
+        // or resetting their password.
+        const isEmailNotConfirmed =
+          /email.*not.*confirm/i.test(signInErr.message ?? "") ||
+          /unconfirm/i.test(signInErr.message ?? "");
         toast.error(
-          "Account created, but we couldn't sign you in. Please use the sign-in form.",
+          isEmailNotConfirmed
+            ? "Your account exists but isn't fully activated. Use 'Sign in' on the login page — we'll send you a fresh verification code."
+            : signInErr.message || "Couldn't sign you in. Please try the sign-in form.",
         );
         setSubmitting(false);
         return;

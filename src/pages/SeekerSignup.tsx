@@ -206,9 +206,10 @@ export default function SeekerSignup() {
 
       // Create the auth account via register-provider-account
       // (accountType="seeker") so Supabase NEVER sends a magic-link
-      // confirmation email. autoConfirm=false because seekers also go through
-      // the 6-digit OTP step right after this, which flips email_confirmed_at
-      // server-side via verify-code.
+      // confirmation email. v1.2.0 sets email_confirm:true upfront so
+      // signInWithPassword works immediately; real email ownership is
+      // gated downstream by the 6-digit OTP, which writes
+      // profiles.email_verified_at via verify-code.
       const { data: regData, error: regErr } = await supabase.functions.invoke(
         "register-provider-account",
         {
