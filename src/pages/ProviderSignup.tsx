@@ -911,22 +911,15 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         // Non-blocking - continue even if notification fails
       }
 
-      // 12. Send welcome email to provider (with idempotency key)
-      try {
-        await supabase.functions.invoke("send-provider-welcome-email", {
-          body: {
-            facilityId,
-            facilityName: safeFacilityName,
-            providerEmail: formData.email,
-            providerFirstName: safeFirstName,
-            selectedPlan: "free",
-            idempotencyKey: `welcome-${facilityId}`,
-          },
-        });
-      } catch (welcomeError) {
-        console.error("Welcome email error:", welcomeError);
-        // Non-blocking - continue even if email fails
-      }
+      // 12. Welcome email — round-30 merge removed this duplicate.
+      // VerifyEmailStep fires send-provider-welcome-email with
+      // idempotency key `welcome-<email>-<plan>` the moment OTP
+      // verification succeeds (works for both new-list AND claim flows
+      // since both go through wizard verify_email). Firing again here
+      // with a facilityId-keyed idempotency key delivered a second
+      // welcome email to every new-listing provider — friction, not
+      // value. The post-publish offer email below is the right surface
+      // for facility-aware messaging.
 
       // 12b. Send welcome offer email (with idempotency key)
       try {
