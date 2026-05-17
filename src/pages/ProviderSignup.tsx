@@ -895,26 +895,12 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       // Wizard finished — clear the autosave draft so the next signup starts fresh.
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
 
-      // Mark the unified onboarding wizard as completed. Best-effort:
-      // the existing /provider/billing redirect is the source of truth
-      // for "post-publish landing"; this is just the wizard-shell
-      // cursor advance so any user revisiting /provider/onboarding
-      // bounces to the dashboard. We also write profiles.
-      // onboarding_completed_at so the wizard's already-onboarded
-      // gate fires.
+      // C9 fix — both list-mode (here) and claim-mode (ClaimWizard)
+      // route the completion writes through the
+      // complete_provider_onboarding() RPC so the F1 sensitive-column
+      // guard on profiles.onboarding_completed_at doesn't reject them.
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData.session?.user.id;
-        if (userId) {
-          await supabase
-            .from("provider_onboarding_state")
-            .update({ current_step: "completed" } as never)
-            .eq("user_id", userId);
-          await supabase
-            .from("profiles")
-            .update({ onboarding_completed_at: new Date().toISOString() } as never)
-            .eq("user_id", userId);
-        }
+        await supabase.rpc("complete_provider_onboarding");
       } catch (e) {
         console.warn("[ProviderSignup] wizard completion advance failed", e);
       }

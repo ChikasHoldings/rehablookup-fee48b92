@@ -142,18 +142,9 @@ export function VerifyEmailStep({ onAdvance }: { onAdvance: () => void }) {
         return;
       }
 
-      // OTP succeeded. Persist the canonical wizard-side gate AND advance
-      // onboarding state to find_or_list. verify-code itself stays
-      // generic (used by concierge / international / lead-intake) so we
-      // do these wizard-specific writes here instead.
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user.id;
-      if (userId) {
-        await supabase
-          .from("profiles")
-          .update({ email_verified_at: new Date().toISOString() })
-          .eq("user_id", userId);
-      }
+      // OTP succeeded. verify-code now writes profiles.email_verified_at
+      // server-side (C6 fix) so the F1 sensitive-column guard doesn't
+      // reject a client write. We just advance the wizard cursor.
       await advance({ current_step: "find_or_list" });
       trackEvent("provider_onboarding_step_submit", {
         step_name: "verify_email",

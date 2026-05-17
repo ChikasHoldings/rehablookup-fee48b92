@@ -80,13 +80,10 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
         .limit(1)
         .maybeSingle();
       if (data?.tier === "pro") {
-        // Mirror onto profiles.plan in case the webhook hasn't done it
-        // (it currently doesn't — Section 7 followup). Best-effort:
-        // a failure here doesn't block advancing the wizard.
-        await supabase
-          .from("profiles")
-          .update({ plan: "pro" } as never)
-          .eq("user_id", userId);
+        // The Stripe webhook is the sole writer of profiles.plan='pro'
+        // — the F1 sensitive-column guard rejects any authenticated
+        // client write of that elevation. We only advance the wizard
+        // state row here (which has its own owner-RLS).
         await advance({ plan: "pro", current_step: "build" });
         trackEvent("provider_onboarding_step_submit", {
           step_name: "plan",

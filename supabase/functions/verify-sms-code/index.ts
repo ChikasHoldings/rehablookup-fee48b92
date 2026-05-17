@@ -45,7 +45,34 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { phone, code, userId, userType } = body;
+    // C3 fix — authenticate the caller via the Authorization header
+    // instead of trusting body.userId. Without this, any caller could
+    // attach an attacker-controlled phone to a victim's profile by
+    // passing the victim's userId and a valid OTP for the attacker's
+    // own phone.
+    const authHeader = req.headers.get("Authorization");
+    let authenticatedUserId: string | null = null;
+    if (authHeader) {
+      const token = authHeader.replace(/^Bearer\s+/i, "");
+      const authClient = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: userRes, error: userErr } = await authClient.auth.getUser(token);
+      if (userErr || !userRes?.user?.id) {
+        logStep("Invalid auth token", { requestId, error: userErr?.message });
+        return new Response(
+          JSON.stringify({ error: "Invalid authentication", requestId }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      authenticatedUserId = userRes.user.id;
+    }
+
+    const { phone, code, userType } = body;
+    // Body-supplied userId is ignored for the profile write — the
+    // JWT-authenticated id is authoritative. Anon callers (no auth
+    // header) verify the code but no profile is written; this
+    // preserves backward-compat with the seeker-intake call sites
+    // that verify phones BEFORE the user has an auth session.
+    const userId = authenticatedUserId;
 
     if (!phone || !code) {
       logStep("Missing required fields", { requestId, hasPhone: !!phone, hasCode: !!code });

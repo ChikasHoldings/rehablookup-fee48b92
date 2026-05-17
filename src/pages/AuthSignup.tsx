@@ -37,10 +37,25 @@ import { Loader2, ShieldCheck } from "lucide-react";
 
 type Stage = "form" | "verify" | "finalizing";
 
+/**
+ * Accept only same-origin relative paths. Rejects:
+ *   - absolute URLs (http://, https://, file://)
+ *   - protocol-relative URLs (//evil.example)
+ *   - anything that doesn't start with a single '/'
+ * Falls back to null so the caller defaults to /provider/onboarding.
+ */
+function safeReturnTo(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//")) return null;
+  if (raw.startsWith("/\\")) return null;
+  return raw;
+}
+
 export default function AuthSignup() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+  const returnTo = safeReturnTo(searchParams.get("returnTo"));
 
   const [stage, setStage] = useState<Stage>("form");
   const [submitting, setSubmitting] = useState(false);

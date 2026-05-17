@@ -1078,6 +1078,21 @@ Deno.serve(async (req) => {
           }
         }
 
+        // C2 fix — mirror plan='pro' onto profiles so the photo-cap
+        // trigger (enforce_facility_plan_photo_cap) sees the upgrade.
+        // Service-role bypasses the F1 sensitive-column-guard trigger.
+        if (profile?.user_id && planTier === "pro") {
+          const { error: planMirrorErr } = await supabaseAdmin
+            .from("profiles")
+            .update({ plan: "pro" })
+            .eq("user_id", profile.user_id);
+          if (planMirrorErr) {
+            logStep("WARN — profiles.plan mirror failed", { error: planMirrorErr.message });
+          } else {
+            logStep("profiles.plan mirrored to pro", { userId: profile.user_id });
+          }
+        }
+
         // UPGRADE: Un-suspend any previously suspended facilities
         if (profile?.user_id && planTier === "pro") {
           const { data: suspendedFacilities } = await supabaseAdmin

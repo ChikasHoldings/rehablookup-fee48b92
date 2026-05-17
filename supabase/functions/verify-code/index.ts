@@ -147,11 +147,12 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Code matches! Mark as verified with timestamp
+    const verifiedAt = new Date().toISOString();
     const { error: updateError } = await supabase
       .from("email_verification_codes")
       .update({
         verified: true,
-        verified_at: new Date().toISOString() // Track actual verification time
+        verified_at: verifiedAt
       })
       .eq("id", verificationRecord.id);
 
@@ -161,6 +162,22 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: "Failed to verify code. Please try again." }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // C6 fix — server-side flip of profiles.email_verified_at when a
+    // provider profile exists for this email. The F1 sensitive-column
+    // guard trigger on profiles blocks the wizard from doing this
+    // write client-side, so verify-code owns it. UPDATE with no
+    // matching row is a no-op for non-provider flows (concierge /
+    // international / lead intake / review submission), so this is
+    // safe to run unconditionally.
+    const { error: profileMarkErr } = await supabase
+      .from("profiles")
+      .update({ email_verified_at: verifiedAt })
+      .eq("email", normalizedEmail)
+      .is("email_verified_at", null);
+    if (profileMarkErr) {
+      console.warn("[verify-code] profile email_verified_at flip warned:", profileMarkErr.message);
     }
 
     console.log(`Email verified successfully: ${normalizedEmail}`);
