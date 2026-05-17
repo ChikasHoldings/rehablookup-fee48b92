@@ -352,6 +352,34 @@ export default function ClaimWizard() {
     );
   }, [currentUserEmail]);
 
+  // Round-30 merge: pre-fill claimant name + phone from profiles so
+  // Step 2 doesn't ask for data we already have. The user only needs
+  // to confirm and pick their role at the facility.
+  useEffect(() => {
+    if (!currentUserId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, phone")
+        .eq("user_id", currentUserId)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const fullName = [data.first_name, data.last_name]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      setState((prev) => ({
+        ...prev,
+        claimantName: prev.claimantName || fullName,
+        claimantPhone: prev.claimantPhone || (data.phone ?? ""),
+      }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserId]);
+
   const { facility, claimFlags, loading, notFound } = useFacilityBySlug(slug);
 
   const setStep = useCallback((next: number) => {
@@ -680,13 +708,13 @@ function Step2YourRole({
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-primary" aria-hidden />
           <h1 className="font-display text-xl md:text-2xl font-bold text-foreground">
-            Tell us who you are
+            Confirm who you are
           </h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          We'll use this to verify your relationship to the facility. None of
-          it gets published until you finish all the steps and we approve the
-          claim.
+          We've pre-filled what we know from your account — pick your role at
+          the facility and continue. Nothing gets published until your claim
+          is approved.
         </p>
       </header>
 

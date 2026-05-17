@@ -172,16 +172,6 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Subscription choice was historically captured by Step 8 here, but
-  // round-30 merge moved Plan selection to AFTER the listing build in
-  // the unified wizard (PlanStep at /provider/onboarding?step=plan).
-  // We still keep the ref so handleSubmit can run unchanged; the wizard
-  // assumes Free until the user explicitly upgrades in PlanStep.
-  const subscriptionChoiceRef = useRef<"free" | "pro_monthly" | "pro_annual">("free");
-  // facility_id captured after handleSubmit creates the facility, so
-  // step 8's "Continue to payment" can hand it to create-signup-checkout
-  // without a second DB round-trip.
-  const createdFacilityIdRef = useRef<string | null>(null);
 
   // Check if user is already logged in
   useEffect(() => {
@@ -196,6 +186,37 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       }
     });
   }, [navigate, initialStep]);
+
+  // Round-30 merge: when mounted in resume mode (the unified wizard
+  // already collected first/last name + email in Step 1), pre-fill
+  // formData so downstream welcome-email + admin-notification payloads
+  // aren't blank. Step 1's UI is hidden in this mode but the data is
+  // still referenced by the publish handler.
+  useEffect(() => {
+    if (!initialStep || initialStep < 3) return;
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user.id;
+      if (!uid) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, email, phone")
+        .eq("user_id", uid)
+        .maybeSingle();
+      if (cancelled || !profile) return;
+      setFormData((prev) => ({
+        ...prev,
+        firstName: prev.firstName || (profile.first_name ?? ""),
+        lastName: prev.lastName || (profile.last_name ?? ""),
+        email: prev.email || (profile.email ?? session?.user.email ?? ""),
+        phone: prev.phone || (profile.phone ?? ""),
+      }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialStep]);
 
   // Anti-bot honeypot
   const [honeypot, setHoneypot] = useState("");
@@ -653,7 +674,6 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       }
 
       const facilityId = facilityData.id;
-      createdFacilityIdRef.current = facilityId;
       if (import.meta.env.DEV) console.log("[ProviderSignup] Facility created, facilityId:", facilityId.substring(0, 8) + "...");
 
       // 4-7: Insert related data in parallel (services, age groups, insurance, accreditations)
@@ -1921,7 +1941,6 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
                     // Round-30 merge: Step 7 is now the final UI step;
                     // "Publish listing" submits and routes to the wizard
                     // PlanStep where Free/Pro is picked.
-                    subscriptionChoiceRef.current = "free";
                     void handleSubmit();
                   }}
                   disabled={!canProceed() || isSubmitting}
