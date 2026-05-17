@@ -3,7 +3,6 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
-import { FacilityCard, type FacilityCardData } from "@/components/cards/FacilityCard";
 import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
@@ -284,34 +283,42 @@ export function SEOLandingTemplate({
           ) : displayFacilities.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
               {displayFacilities.map((facility) => {
+                // Unified facility card visual — matches /rehab-centers.
                 const f = facility as Record<string, unknown>;
-                const cardData: FacilityCardData = {
+                const center = {
                   id: String(f.id),
                   name: String(f.name ?? ""),
                   slug: (f.slug as string | null) ?? null,
                   city: String(f.city ?? ""),
                   state: String(f.state ?? ""),
-                  facility_type:
-                    (f.facility_type as string | null) ??
-                    (f.facilityType as string | null) ??
-                    null,
-                  description: (f.description as string | null) ?? null,
+                  zipCode: "",
+                  address: "",
+                  phone: String(f.phone ?? ""),
+                  description: String(f.description ?? ""),
+                  programOverview: "",
+                  featured: Boolean(f.hasFeaturedSubscription ?? f.featured),
+                  rating: null,
+                  reviewCount: 0,
+                  amenities: [],
+                  image: null,
+                  isFromDatabase: true,
                   logo_url:
                     (f.logo_url as string | null) ??
                     (f.logoUrl as string | null) ??
                     null,
-                  phone: (f.phone as string | null) ?? null,
                   verified: (f.verified as boolean | null) ?? null,
-                  is_claimed: f.is_claimed as boolean | undefined,
-                };
+                  facilityType:
+                    (f.facility_type as string | null) ??
+                    (f.facilityType as string | null) ??
+                    null,
+                  treatmentTypes: cardChildData?.services.get(facility.id) ?? [],
+                  insuranceAccepted: cardChildData?.insurance.get(facility.id) ?? [],
+                } as Parameters<typeof TreatmentCenterCard>[0]["center"];
                 return (
-                  <FacilityCard
+                  <TreatmentCenterCard
                     key={facility.id}
-                    facility={cardData}
-                    services={cardChildData?.services.get(facility.id) ?? []}
-                    insurance={cardChildData?.insurance.get(facility.id) ?? []}
-                    ageGroups={cardChildData?.ageGroups.get(facility.id) ?? []}
-                    accreditations={cardChildData?.accreditations.get(facility.id) ?? []}
+                    center={center}
+                    featured={Boolean(f.hasFeaturedSubscription ?? f.featured)}
                   />
                 );
               })}

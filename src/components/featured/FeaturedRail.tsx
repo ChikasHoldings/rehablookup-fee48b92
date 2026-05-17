@@ -1,4 +1,4 @@
-import { FacilityCard, type FacilityCardData } from "@/components/cards/FacilityCard";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useFeaturedRotation, useLogFeaturedPhoneClick, type PlacementType } from "@/hooks/useFeaturedRotation";
 import { FeaturedTooltip } from "./FeaturedTooltip";
 
@@ -32,9 +32,9 @@ const DEFAULT_SLOT_COUNT: Record<PlacementType, number> = {
  *   • the bucket has zero eligible Featured subscribers
  *   • `placement_value` is null (caller hasn't resolved it yet)
  *
- * Never shows an empty state — a Featured rail with "no sponsored
- * placements yet" would be noise. Better to be absent until paid
- * inventory exists.
+ * Card visual matches /rehab-centers (TreatmentCenterCard) for cross-
+ * site consistency. The component is largely superseded by
+ * LandingFeaturedSection; kept here so any direct callers stay valid.
  */
 export function FeaturedRail({
   placement_type,
@@ -53,9 +53,6 @@ export function FeaturedRail({
     placement_value: placement_value ?? "",
   });
 
-  // Silent absence: don't render anything during the initial fetch or
-  // when the bucket has no eligible subscribers. Page rendering is
-  // unaffected.
   if (isLoading || !data || data.facilities.length === 0) return null;
 
   return (
@@ -69,28 +66,39 @@ export function FeaturedRail({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {data.facilities.map((f) => {
-          // Adapt the rotation response to the FacilityCard shape.
-          const cardData: FacilityCardData = {
+          const center = {
             id: f.facility_id,
             name: f.name,
             slug: f.slug,
             city: f.city,
             state: f.state,
-            facility_type: f.facility_type,
-            description: f.description,
+            zipCode: "",
+            address: "",
+            phone: f.display_phone ?? "",
+            description: f.sponsored_tagline ?? f.description ?? "",
+            programOverview: "",
+            featured: true,
+            rating: null,
+            reviewCount: 0,
+            amenities: [],
+            image: null,
+            isFromDatabase: true,
             logo_url: f.logo_url,
-            phone: f.display_phone,
             verified: f.verified,
-            is_claimed: true, // featured subscribers are always claimed
-          };
+            facilityType: f.facility_type,
+            treatmentTypes: f.top_levels_of_care ?? [],
+            insuranceAccepted: f.top_insurance ?? [],
+            hasFeaturedSubscription: true,
+            isPro: true,
+          } as Parameters<typeof TreatmentCenterCard>[0]["center"];
           return (
-            <FacilityCard
+            <div
               key={f.facility_id}
-              facility={cardData}
-              featured
-              phoneOverride={f.display_phone}
-              onPhoneClick={() => logClick(f.facility_id)}
-            />
+              data-cta-location="featured_rail"
+              onClickCapture={() => logClick(f.facility_id)}
+            >
+              <TreatmentCenterCard center={center} featured />
+            </div>
           );
         })}
       </div>

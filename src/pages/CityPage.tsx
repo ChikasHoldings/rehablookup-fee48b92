@@ -10,7 +10,6 @@ import {
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
-import { FacilityCard, type FacilityCardData } from "@/components/cards/FacilityCard";
 import { FeaturedRail } from "@/components/featured/FeaturedRail";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { useFacilityChildData } from "@/hooks/useFacilityChildData";
@@ -423,31 +422,18 @@ const CityPage = () => {
             <>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {cityCenters.slice(0, 12).map((center) => {
-                  // Adapter — the legacy snapshot row shape uses camelCase
-                  // for some fields (logoUrl, facilityType); FacilityCard
-                  // reads snake_case from the view. Map both paths.
-                  const c = center as Record<string, unknown>;
-                  const cardData: FacilityCardData = {
-                    id: String(c.id),
-                    name: String(c.name ?? ""),
-                    slug: (c.slug as string | null) ?? null,
-                    city: String(c.city ?? ""),
-                    state: String(c.state ?? ""),
-                    facility_type: (c.facility_type as string | null) ?? (c.facilityType as string | null) ?? null,
-                    description: (c.description as string | null) ?? null,
-                    logo_url: (c.logo_url as string | null) ?? (c.logoUrl as string | null) ?? null,
-                    phone: (c.phone as string | null) ?? null,
-                    verified: (c.verified as boolean | null) ?? null,
-                    is_claimed: (c.is_claimed as boolean | undefined) ?? (c.isFromDatabase ? undefined : undefined),
-                  };
+                  // Unified card visual matches /rehab-centers — render
+                  // TreatmentCenterCard against the existing center row.
+                  // The card reads its own fields; we just need to pass
+                  // through the loose shape it tolerates.
                   return (
-                    <FacilityCard
+                    <TreatmentCenterCard
                       key={center.id}
-                      facility={cardData}
-                      services={childData?.services.get(String(c.id)) ?? []}
-                      insurance={childData?.insurance.get(String(c.id)) ?? []}
-                      ageGroups={childData?.ageGroups.get(String(c.id)) ?? []}
-                      accreditations={childData?.accreditations.get(String(c.id)) ?? []}
+                      center={center as unknown as Parameters<typeof TreatmentCenterCard>[0]["center"]}
+                      featured={Boolean(
+                        (center as unknown as Record<string, unknown>).hasFeaturedSubscription ??
+                          (center as unknown as Record<string, unknown>).featured,
+                      )}
                     />
                   );
                 })}

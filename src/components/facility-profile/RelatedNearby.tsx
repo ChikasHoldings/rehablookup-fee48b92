@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { MapPin, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { FacilityCard, type FacilityCardData } from "@/components/cards/FacilityCard";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -99,29 +99,33 @@ export function RelatedNearby({ facility, limit = 3, className }: RelatedNearbyP
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {rows.map((r) => {
-          const card: FacilityCardData = {
+          // Unified facility card — matches /rehab-centers visual.
+          // TreatmentCenterCard reads its own loose shape from the
+          // center object.
+          const center = {
             id: r.id,
             name: r.name,
             slug: r.slug,
             city: r.city,
             state: r.state,
-            facility_type: r.facility_type,
-            description: r.description,
+            zipCode: "",
+            address: "",
+            phone: r.phone ?? "",
+            description: r.description ?? "",
+            programOverview: "",
+            featured: false,
+            rating: null,
+            reviewCount: 0,
+            amenities: [],
+            image: null,
+            isFromDatabase: true,
             logo_url: r.logo_url,
-            phone: r.phone,
             verified: r.verified,
-            is_claimed: r.is_claimed ?? undefined,
-          };
-          return (
-            <FacilityCard
-              key={r.id}
-              facility={card}
-              services={kids?.services.get(r.id) ?? []}
-              insurance={kids?.insurance.get(r.id) ?? []}
-              ageGroups={kids?.ageGroups.get(r.id) ?? []}
-              accreditations={kids?.accreditations.get(r.id) ?? []}
-            />
-          );
+            facilityType: r.facility_type,
+            treatmentTypes: kids?.services.get(r.id) ?? [],
+            insuranceAccepted: kids?.insurance.get(r.id) ?? [],
+          } as Parameters<typeof TreatmentCenterCard>[0]["center"];
+          return <TreatmentCenterCard key={r.id} center={center} />;
         })}
       </div>
       <div className="mt-6 text-center">

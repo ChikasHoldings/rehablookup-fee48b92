@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Search, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
-import { FacilityCard, type FacilityCardData } from "@/components/cards/FacilityCard";
+import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -9,26 +9,50 @@ import { buildConciergeHref } from "@/lib/conciergeHref";
 
 // Adapts the legacy snapshot row shape (camelCase facilityType/logoUrl)
 // AND the new public_facilities row shape (snake_case facility_type/logo_url)
-// into the single FacilityCardData shape FacilityCard reads.
-function toCardData(facility: Record<string, unknown>): FacilityCardData {
+// into the shape TreatmentCenterCard reads (matches the /rehab-centers
+// canonical card visual).
+function toCardData(
+  facility: Record<string, unknown>,
+  services: string[],
+  insurance: string[],
+) {
+  const isFeatured = Boolean(
+    facility.hasFeaturedSubscription ?? facility.featured ?? facility.isFeatured,
+  );
   return {
     id: String(facility.id),
     name: String(facility.name ?? ""),
     slug: (facility.slug as string | null) ?? null,
     city: String(facility.city ?? ""),
     state: String(facility.state ?? ""),
-    facility_type:
-      (facility.facility_type as string | null) ??
-      (facility.facilityType as string | null) ??
-      null,
-    description: (facility.description as string | null) ?? null,
+    zipCode: String(facility.zip_code ?? facility.zipCode ?? ""),
+    address: String(facility.address ?? ""),
+    phone: String(facility.phone ?? ""),
+    treatmentTypes: services,
+    insuranceAccepted: insurance,
+    description: String(facility.description ?? ""),
+    programOverview: "",
+    featured: isFeatured,
+    rating: (facility.googleRating as number | null) ?? null,
+    reviewCount: (facility.googleReviewCount as number) ?? 0,
+    amenities: [],
+    image: (facility.image as string | null) ?? null,
+    isFromDatabase: true,
     logo_url:
       (facility.logo_url as string | null) ??
       (facility.logoUrl as string | null) ??
       null,
-    phone: (facility.phone as string | null) ?? null,
+    hasFeaturedSubscription: isFeatured,
+    isPro: Boolean(facility.isPro ?? facility.is_pro),
     verified: (facility.verified as boolean | null) ?? null,
-    is_claimed: facility.is_claimed as boolean | undefined,
+    year_established: (facility.year_established as number | null) ?? null,
+    facilityType:
+      (facility.facility_type as string | null) ??
+      (facility.facilityType as string | null) ??
+      null,
+    insuranceAcceptedList: insurance,
+    googleRating: (facility.googleRating as number | null) ?? null,
+    googleReviewCount: (facility.googleReviewCount as number | null) ?? null,
   };
 }
 
@@ -77,16 +101,15 @@ export function ResponsiveListingGrid({
   const { data: childData } = useFacilityChildData(visibleIds);
 
   const renderCard = (facility: Record<string, unknown>) => {
-    const card = toCardData(facility);
-    const id = String(facility.id ?? card.id);
+    const id = String(facility.id ?? "");
+    const services = childData?.services.get(id) ?? [];
+    const insurance = childData?.insurance.get(id) ?? [];
+    const card = toCardData(facility, services, insurance);
     return (
-      <FacilityCard
+      <TreatmentCenterCard
         key={id || card.name}
-        facility={card}
-        services={childData?.services.get(id) ?? []}
-        insurance={childData?.insurance.get(id) ?? []}
-        ageGroups={childData?.ageGroups.get(id) ?? []}
-        accreditations={childData?.accreditations.get(id) ?? []}
+        center={card}
+        featured={card.featured}
       />
     );
   };
