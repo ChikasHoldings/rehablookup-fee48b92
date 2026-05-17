@@ -117,7 +117,7 @@ export default function ProviderClaims() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (cancelled) return;
       if (!session?.user) {
-        navigate("/auth/signup?returnTo=/provider/claims", { replace: true });
+        navigate("/provider/onboarding?returnTo=/provider/claims", { replace: true });
         return;
       }
       setAuthChecking(false);

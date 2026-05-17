@@ -68,7 +68,7 @@ export default function ClaimSubmitted() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (cancelled) return;
       if (!session?.user) {
-        navigate("/auth/signup", { replace: true });
+        navigate("/provider/onboarding", { replace: true });
         return;
       }
       setCurrentUserId(session.user.id);
@@ -245,8 +245,8 @@ export default function ClaimSubmitted() {
                 <Link to="/provider/claims">View my claims</Link>
               </Button>
               <Button asChild>
-                <Link to="/provider/dashboard">
-                  Go to dashboard
+                <Link to="/provider/onboarding?step=plan">
+                  Pick your plan
                   <ArrowRight className="h-4 w-4 ml-1.5" aria-hidden />
                 </Link>
               </Button>

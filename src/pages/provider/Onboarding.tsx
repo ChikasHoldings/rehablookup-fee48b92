@@ -80,6 +80,16 @@ function useProviderProfile() {
   });
 }
 
+// Reject absolute, protocol-relative, and backslash-escaped paths so a
+// crafted `?returnTo=` can't redirect off-origin once email verifies.
+function safeReturnTo(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//")) return null;
+  if (raw.startsWith("/\\")) return null;
+  return raw;
+}
+
 export default function ProviderOnboarding() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -90,6 +100,10 @@ export default function ProviderOnboarding() {
 
   const queryStep = searchParams.get("step") as OnboardingStep | null;
   const serverStep: OnboardingStep = stateRow?.current_step ?? "account";
+  // Round-30 merge: anon visitors to /provider/claim/:slug land here
+  // with ?returnTo=/provider/claim/:slug. Once email is verified we
+  // bounce them to the deep link they came from.
+  const returnTo = safeReturnTo(searchParams.get("returnTo"));
 
   // Resolved visible step: ?step= when the user can reach it, otherwise
   // serverStep (and we silently strip the param). Already-onboarded
@@ -126,6 +140,14 @@ export default function ProviderOnboarding() {
     // We intentionally re-fire on serverStep change (after each step
     // submit advances the cursor) and on direct ?step= back-navigation.
   }, [resolved, stateRow]);
+
+  // Round-30 merge: once the user is past email verification, bounce
+  // them to their returnTo deep link (e.g. /provider/claim/:slug).
+  // This lets anon /provider/claim/:slug visitors resume the claim flow
+  // automatically after the wizard's Account + VerifyEmail steps.
+  if (returnTo && profile?.email_verified_at) {
+    return <Navigate to={returnTo} replace />;
+  }
 
   // Already-onboarded → bounce to dashboard.
   if (profile?.onboarding_completed_at) {

@@ -21,7 +21,10 @@ interface OnboardingStepperProps {
 
 /**
  * Persistent top-of-wizard stepper. The 5 visible tiles are
- * Account → Verify Email → Find or List → Plan → Build/Edit.
+ * Account → Verify Email → Find or List → Build/Edit → Plan.
+ *
+ * Round-30 merge: Plan moved to AFTER Build so users build their listing
+ * first, then pick Free or Pro at the end.
  *
  * - Completed tiles render with a check icon and are clickable (back nav).
  * - Current tile is highlighted, non-interactive (already there).

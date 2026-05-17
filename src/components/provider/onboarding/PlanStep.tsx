@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, CreditCard, Loader2, Sparkles, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,22 +16,24 @@ interface PlanStepProps {
 }
 
 /**
- * Step 4 — Plan picker (Free vs Pro).
+ * Step 5 — Plan picker (Free vs Pro). Final step of the unified wizard.
  *
- * Free path: server-side advance + go to build step. No Stripe.
+ * Round-30 merge: this step runs AFTER the listing is built/claimed.
+ *
+ * Free path: mark onboarding complete + go to dashboard. No Stripe.
  * Pro path:  hand the user to Stripe Checkout. On return:
  *            - ?checkout=cancel → toast + stay on this step.
  *            - ?checkout=success → render "Confirming your subscription..."
  *              and poll facility_subscriptions for an active Pro row
- *              for up to 10 seconds. Once we see one, mirror
- *              profiles.plan='pro' (in case the webhook hasn't run
- *              that mirror yet) and advance to build.
+ *              for up to 10 seconds. Once we see one, mark complete and
+ *              go to the dashboard.
  *
  * The webhook (stripe-webhook fn) is the source of truth for
  * facility_subscriptions; we don't duplicate its work. We just read
  * what it produces.
  */
 export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { advance } = useProviderOnboardingState();
   const [busy, setBusy] = useState<"free" | "pro" | null>(null);
@@ -53,7 +55,34 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
     if (checkoutResult === "success") {
       setConfirmingPro(true);
       void confirmProSubscription();
+      return;
     }
+    // Round-30 merge: if the user is already Pro (e.g. they paid under
+    // the old pre-build plan ordering, then completed building under
+    // the new ordering), fast-track them out of this step.
+    void (async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user.id;
+        if (!userId) return;
+        const { data: sub } = await supabase
+          .from("facility_subscriptions")
+          .select("tier, status")
+          .eq("provider_id", userId)
+          .eq("status", "active")
+          .eq("tier", "pro")
+          .limit(1)
+          .maybeSingle();
+        if (sub?.tier === "pro") {
+          await advance({ plan: "pro", current_step: "completed" });
+          try { await supabase.rpc("complete_provider_onboarding"); } catch { /* ignore */ }
+          toast.success("Pro is active. Welcome to RehabLookup.");
+          navigate("/provider/dashboard", { replace: true });
+        }
+      } catch (e) {
+        console.warn("[PlanStep] pro fast-track check failed", e);
+      }
+    })();
     return () => {
       if (confirmPollRef.current != null) {
         window.clearTimeout(confirmPollRef.current);
@@ -81,21 +110,27 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
         .maybeSingle();
       if (data?.tier === "pro") {
         // profiles.plan='pro' is webhook-only (a DB guard rejects
-        // authenticated client writes); we just advance wizard state.
-        await advance({ plan: "pro", current_step: "build" });
+        // authenticated client writes); we mark onboarding complete and
+        // head to the dashboard.
+        await advance({ plan: "pro", current_step: "completed" });
+        try {
+          await supabase.rpc("complete_provider_onboarding");
+        } catch (e) {
+          console.warn("[PlanStep] complete_provider_onboarding failed", e);
+        }
         trackEvent("provider_onboarding_step_submit", {
           step_name: "plan",
           mode: null,
           plan: "pro",
         });
-        toast.success("Pro is active. Let's build your listing.");
-        // Strip the checkout param + advance.
+        toast.success("Pro is active. Welcome to RehabLookup.");
         const next = new URLSearchParams(searchParams);
         next.delete("checkout");
         next.delete("session_id");
         setSearchParams(next, { replace: true });
         setConfirmingPro(false);
         onAdvance();
+        navigate("/provider/dashboard", { replace: true });
         return;
       }
       await new Promise((resolve) => {
@@ -123,13 +158,20 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
           .update({ plan: "free" } as never)
           .eq("user_id", userId);
       }
-      await advance({ plan: "free", current_step: "build" });
+      await advance({ plan: "free", current_step: "completed" });
+      try {
+        await supabase.rpc("complete_provider_onboarding");
+      } catch (e) {
+        console.warn("[PlanStep] complete_provider_onboarding failed", e);
+      }
       trackEvent("provider_onboarding_step_submit", {
         step_name: "plan",
         mode: null,
         plan: "free",
       });
+      toast.success("You're all set. Welcome to RehabLookup.");
       onAdvance();
+      navigate("/provider/dashboard", { replace: true });
     } catch (e) {
       console.error("[PlanStep] free select failed", e);
       toast.error("Couldn't save your plan. Please try again.");
@@ -191,13 +233,13 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
       <header>
         <div className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wide text-[#1B365D] font-semibold mb-1">
           <CreditCard className="h-3.5 w-3.5" aria-hidden />
-          Step 4 of 5
+          Final step
         </div>
         <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
           Choose your plan
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          You can upgrade or downgrade later from your dashboard.
+          Your listing is live. Stay on Free or upgrade to Pro — you can switch anytime from your dashboard.
         </p>
       </header>
 

@@ -14,7 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
 import { EmailVerificationStep } from "@/components/provider/EmailVerificationStep";
-import { SubscriptionChoiceStep } from "@/components/signup/SubscriptionChoiceStep";
 import {
   Select,
   SelectContent,
@@ -108,6 +107,8 @@ const generateSessionToken = (): string => {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 };
 
+// Round-30 merge: Step 8 (Plan) removed — Plan selection now lives in
+// the unified wizard PlanStep that runs after listing publish.
 const steps = [
   { id: 1, name: "Account", icon: User },
   { id: 2, name: "Verify", icon: ShieldCheck },
@@ -116,7 +117,6 @@ const steps = [
   { id: 5, name: "Services", icon: Stethoscope },
   { id: 6, name: "Insurance", icon: CreditCard },
   { id: 7, name: "Review", icon: CheckCircle },
-  { id: 8, name: "Plan", icon: CreditCard },
 ];
 
 // Use shared constants - single source of truth
@@ -172,17 +172,12 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Subscription choice — picked on step 8 (Subscription). Defaults to
-  // Pro Monthly on the commercial new-listing path (initialStep>=3 = the
-  // "List your facility" CTA); the ClaimWizard wires its own
-  // SubscriptionChoiceStep with default='free' for claim-entry users.
-  const [subscriptionChoice, setSubscriptionChoice] = useState<
-    "free" | "pro_monthly" | "pro_annual"
-  >("pro_monthly");
-  // Ref mirror so handleSubmit can read the latest choice synchronously
-  // — the SubscriptionChoiceStep's onSelect calls setState + handleSubmit
-  // in the same tick, and React state wouldn't reflect the update yet.
-  const subscriptionChoiceRef = useRef<"free" | "pro_monthly" | "pro_annual">("pro_monthly");
+  // Subscription choice was historically captured by Step 8 here, but
+  // round-30 merge moved Plan selection to AFTER the listing build in
+  // the unified wizard (PlanStep at /provider/onboarding?step=plan).
+  // We still keep the ref so handleSubmit can run unchanged; the wizard
+  // assumes Free until the user explicitly upgrades in PlanStep.
+  const subscriptionChoiceRef = useRef<"free" | "pro_monthly" | "pro_annual">("free");
   // facility_id captured after handleSubmit creates the facility, so
   // step 8's "Continue to payment" can hand it to create-signup-checkout
   // without a second DB round-trip.
@@ -342,7 +337,9 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
   };
 
   const nextStep = () => {
-    if (currentStep < 8) {
+    // Round-30 merge: max step is 7 (Review). Step 8 (Subscription) was
+    // collapsed into the wizard's PlanStep which runs AFTER publish.
+    if (currentStep < 7) {
       setCurrentStep(currentStep + 1);
       window.scrollTo(0, 0);
     }
@@ -403,7 +400,7 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
           });
           submittingRef.current = false;
           setIsSubmitting(false);
-          navigate("/auth/signup");
+          navigate("/provider/onboarding");
           return;
         }
         userId = session.user.id;
@@ -928,62 +925,35 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         // Non-blocking
       }
 
-      // 13. Branch by subscription choice (step 8 captured this).
-      //   Free → /provider/billing with an upgrade-soft-banner flag.
-      //   Pro Monthly / Pro Annual → Stripe Checkout (create-signup-checkout).
+      // 13. Round-30 merge: advance onboarding state to 'plan' and route
+      //   into the unified PlanStep at /provider/onboarding?step=plan.
+      //   The PlanStep handles Free (mark complete + dashboard) and Pro
+      //   (Stripe Checkout). No more page-level subscription picker.
       analytics.signupComplete('provider', 'email');
-      // Wizard finished — clear the autosave draft so the next signup starts fresh.
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
-
-      try {
-        await supabase.rpc("complete_provider_onboarding");
-      } catch (e) {
-        console.warn("[ProviderSignup] wizard completion advance failed", e);
-      }
       try { sessionStorage.removeItem("provider-onboarding-handoff"); } catch { /* ignore */ }
 
-      const finalChoice = subscriptionChoiceRef.current;
-      if (finalChoice === "free") {
-        toast({
-          title: "Welcome to RehabLookup!",
-          description: "Your free listing is being prepared. Upgrade to Pro anytime to unlock direct contact display.",
-        });
-        navigate("/provider/billing?signup=free");
-        return;
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const uid = sessionData.session?.user.id;
+        if (uid) {
+          await supabase
+            .from("provider_onboarding_state")
+            .upsert(
+              { user_id: uid, current_step: "plan" } as never,
+              { onConflict: "user_id" },
+            );
+        }
+      } catch (e) {
+        console.warn("[ProviderSignup] onboarding state advance failed", e);
       }
 
-      // Pro path — kick off Stripe Checkout. handleSubmit already runs
-      // inside the submittingRef guard, so we keep the loading state on
-      // through the redirect; if Stripe fails we surface a toast and
-      // fall back to /provider/billing so the user isn't stranded.
-      try {
-        const { data, error } = await supabase.functions.invoke("create-signup-checkout", {
-          body: {
-            facility_id: facilityId,
-            billing_period: finalChoice === "pro_annual" ? "annual" : "monthly",
-            flow: "new-listing",
-          },
-        });
-        if (error) throw error;
-        if (data?.error || !data?.url) {
-          throw new Error(data?.error ?? "Stripe Checkout URL missing");
-        }
-        const url = new URL(data.url);
-        if (!url.hostname.endsWith("stripe.com")) {
-          throw new Error("Invalid Stripe Checkout URL");
-        }
-        window.location.assign(data.url);
-        // Fall-through is fine — the page is unloading.
-        return;
-      } catch (checkoutErr) {
-        console.error("[ProviderSignup] create-signup-checkout failed", checkoutErr);
-        toast({
-          title: "Couldn't start payment",
-          description: "Your listing is created but payment didn't start. Open billing to retry.",
-          variant: "destructive",
-        });
-        navigate("/provider/billing?signup=payment_failed");
-      }
+      toast({
+        title: "Listing published",
+        description: "One last step — pick your plan.",
+      });
+      navigate("/provider/onboarding?step=plan");
+      return;
     } catch (error: any) {
       console.error("Signup error:", error);
       toast({
@@ -1046,11 +1016,6 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         return true; // Insurance is optional — some facilities are self-pay only
       case 7:
         return formData.agreeToTerms;
-      case 8:
-        // SubscriptionChoiceStep manages its own internal state and CTA,
-        // so we don't gate the navigation Continue button — the step's
-        // own button drives submission.
-        return true;
       default:
         return false;
     }
@@ -1917,25 +1882,9 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
               </div>
             )}
 
-            {/* Step 8: Subscription choice */}
-            {currentStep === 8 && (
-              <div key="step-8-subscription" className="animate-step-enter rounded-xl border border-border bg-card p-6 shadow-sm">
-                <SubscriptionChoiceStep
-                  defaultChoice={subscriptionChoice}
-                  submitting={isSubmitting}
-                  onSelect={(choice) => {
-                    setSubscriptionChoice(choice);
-                    subscriptionChoiceRef.current = choice;
-                    // Defer to handleSubmit so the existing create-account
-                    // + create-facility logic runs first. handleSubmit
-                    // reads subscriptionChoiceRef and branches — Free
-                    // goes straight to /provider/billing, Pro kicks off
-                    // Stripe Checkout via create-signup-checkout.
-                    void handleSubmit();
-                  }}
-                />
-              </div>
-            )}
+            {/* Step 8 (Subscription) removed in round-30 merge — Plan
+                selection now lives at /provider/onboarding?step=plan
+                AFTER the listing is published. */}
 
             {/* Navigation Buttons */}
             <div className="mt-8 flex justify-between gap-4">
@@ -1968,12 +1917,18 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
 
               {currentStep === 7 && (
                 <Button
-                  onClick={nextStep}
-                  disabled={!canProceed()}
+                  onClick={() => {
+                    // Round-30 merge: Step 7 is now the final UI step;
+                    // "Publish listing" submits and routes to the wizard
+                    // PlanStep where Free/Pro is picked.
+                    subscriptionChoiceRef.current = "free";
+                    void handleSubmit();
+                  }}
+                  disabled={!canProceed() || isSubmitting}
                   className="ml-auto"
                   size="default"
                 >
-                  Continue
+                  {isSubmitting ? "Publishing…" : "Publish listing"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               )}

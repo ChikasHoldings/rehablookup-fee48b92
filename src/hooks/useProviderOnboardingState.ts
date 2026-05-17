@@ -8,21 +8,25 @@ import { supabase } from "@/integrations/supabase/client";
  * "can the user jump here?" gate (only completed steps + the current
  * step are reachable; future steps bounce back).
  *
- * `verify_phone` is retained in the canonical list for backward
- * compatibility with any in-flight onboarding_state rows that were
- * created before the 2026-05-17 refactor that moved phone verification
- * out of Step 3 and into the listing-details step. The wizard no longer
- * advances any user TO 'verify_phone', and the shell routes both
- * 'verify_phone' and 'find_or_list' to the same FindOrListStep so
- * existing rows resume seamlessly.
+ * Round-30 merge: 'plan' moved to AFTER 'build'. Providers now build
+ * their listing first (defaults to Free) and pick Pro at the end where
+ * the value prop is clearest — eliminating the "why am I paying before
+ * I see the product" friction. In-flight rows sitting at the old 'plan'
+ * step are handled by the migration in
+ * 20260517060000_reorder_onboarding_plan_after_build.sql.
+ *
+ * `verify_phone` is retained for backward compatibility with any
+ * in-flight onboarding_state rows from before the 2026-05-17 refactor.
+ * Both 'verify_phone' and 'find_or_list' resolve to FindOrListStep so
+ * those rows resume seamlessly.
  */
 export const ONBOARDING_STEPS = [
   "account",
   "verify_email",
   "verify_phone",
   "find_or_list",
-  "plan",
   "build",
+  "plan",
   "completed",
 ] as const;
 
@@ -54,8 +58,8 @@ export const VISIBLE_STEPS = [
   { key: "account",       label: "Account",       group: ["account"] },
   { key: "verify",        label: "Verify Email",  group: ["verify_email"] },
   { key: "find_or_list",  label: "Find or List",  group: ["find_or_list", "verify_phone"] },
-  { key: "plan",          label: "Plan",          group: ["plan"] },
   { key: "build",         label: "Build / Edit",  group: ["build"] },
+  { key: "plan",          label: "Plan",          group: ["plan"] },
 ] as const;
 
 export function stepIndex(step: OnboardingStep): number {

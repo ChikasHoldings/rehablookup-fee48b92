@@ -8,7 +8,9 @@
  *   5. Review & submit
  *
  * Entry contract:
- *   - Anon visitors → /auth/signup?returnTo=/provider/claim/:slug
+ *   - Anon visitors → /provider/onboarding?returnTo=/provider/claim/:slug&intent=claim
+ *     (round-30 merge: unified wizard handles account + verify, then
+ *     bounces back here via returnTo)
  *   - Signed-in users who never went through /provider/onboarding (no
  *     plan selection on file) → /provider/onboarding?intent=claim&
  *     facility_id=<id>, so they pick Free vs Pro before claiming.
@@ -319,37 +321,19 @@ export default function ClaimWizard() {
       const session = sessionData.session;
       if (cancelled) return;
       if (!session?.user) {
+        // Round-30 merge: anon visitors land in the unified onboarding
+        // wizard. Once they finish AccountStep + VerifyEmailStep, the
+        // returnTo brings them back here automatically.
         const returnTo = `/provider/claim/${slug ?? ""}`;
-        const search = new URLSearchParams({ returnTo, claim: "1" }).toString();
-        navigate(`/auth/signup?${search}`, { replace: true });
+        const search = new URLSearchParams({ returnTo, intent: "claim" }).toString();
+        navigate(`/provider/onboarding?${search}`, { replace: true });
         return;
       }
-      const userId = session.user.id;
-      const [{ data: profile }, { data: stateRow }] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("plan, onboarding_completed_at")
-          .eq("user_id", userId)
-          .maybeSingle(),
-        supabase
-          .from("provider_onboarding_state")
-          .select("plan, current_step, selected_facility_id")
-          .eq("user_id", userId)
-          .maybeSingle(),
-      ]);
-      if (cancelled) return;
-      const hasPlan =
-        (profile as { plan?: string | null } | null)?.plan != null ||
-        (stateRow as { plan?: string | null } | null)?.plan != null ||
-        (profile as { onboarding_completed_at?: string | null } | null)?.onboarding_completed_at != null;
-      if (!hasPlan) {
-        const facilityId = (stateRow as { selected_facility_id?: string | null } | null)?.selected_facility_id ?? null;
-        const params = new URLSearchParams({ intent: "claim" });
-        if (facilityId) params.set("facility_id", facilityId);
-        navigate(`/provider/onboarding?${params.toString()}`, { replace: true });
-        return;
-      }
-      setCurrentUserId(userId);
+      // Round-30 merge: the no-plan gate that previously redirected
+      // signed-in claimers without a plan back to the wizard was
+      // removed. Plan is now the LAST step (PlanStep), running AFTER
+      // the claim submits.
+      setCurrentUserId(session.user.id);
       setCurrentUserEmail(session.user.email ?? null);
       setAuthChecking(false);
     })();
@@ -485,10 +469,23 @@ export default function ClaimWizard() {
                 onJump={setStep}
                 onBack={() => setStep(4)}
                 onSubmitted={async () => {
+                  // Round-30 merge: advance to wizard PlanStep instead
+                  // of marking onboarding complete. Plan selection now
+                  // happens AFTER the claim is submitted, in the unified
+                  // wizard.
                   try {
-                    await supabase.rpc("complete_provider_onboarding");
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    const uid = sessionData.session?.user.id;
+                    if (uid) {
+                      await supabase
+                        .from("provider_onboarding_state")
+                        .upsert(
+                          { user_id: uid, current_step: "plan" } as never,
+                          { onConflict: "user_id" },
+                        );
+                    }
                   } catch (e) {
-                    console.warn("[ClaimWizard] onboarding completion advance failed", e);
+                    console.warn("[ClaimWizard] onboarding state advance failed", e);
                   }
                   navigate(`/provider/claim/${facility.slug}/submitted`, {
                     replace: true,

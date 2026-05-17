@@ -321,7 +321,7 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
       await advance({
         mode: "claim",
         selected_facility_id: facilityId,
-        current_step: "plan",
+        current_step: "build",
       } as Partial<ProviderOnboardingStateRow>);
       trackEvent("provider_onboarding_step_submit", {
         step_name: "find_or_list",
@@ -348,7 +348,7 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
         // Clear a stale claim-mode pre-seed so the wizard's list-new
         // branch doesn't inherit a different facility_id.
         selected_facility_id: null,
-        current_step: "plan",
+        current_step: "build",
       } as Partial<ProviderOnboardingStateRow>);
       trackEvent("provider_onboarding_step_submit", {
         step_name: "find_or_list",
