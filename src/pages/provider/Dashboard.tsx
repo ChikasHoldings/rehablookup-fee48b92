@@ -435,7 +435,7 @@ export default function ProviderDashboardPage() {
                 </p>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
                   <Button asChild size="sm" variant="default" className="bg-rose-600 hover:bg-rose-700">
-                    <Link to="/provider/locations/new">Add facility now</Link>
+                    <Link to="/provider/add-location">Add facility now</Link>
                   </Button>
                   <Button size="sm" variant="ghost" onClick={dismissSignupRecovery}>
                     Dismiss

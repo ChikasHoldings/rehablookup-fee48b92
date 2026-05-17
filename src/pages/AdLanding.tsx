@@ -263,8 +263,8 @@ export default function AdLanding() {
         <title>Find Treatment Options | RehabLookup</title>
         <meta name="description" content="Get help exploring treatment options today. Share a few details and we'll help connect you with appropriate treatment options — no obligation." />
         <meta name="robots" content="noindex, nofollow" />
-        <link rel="canonical" href="https://rehablookup.com/lp/ad" />
-        <meta name="robots" content="noindex, nofollow" />
+        {/* No canonical: this is a noindex paid-ad landing surface mounted at
+            /ads/:slug; pointing to a generic /lp/ad URL was misleading. */}
       </Helmet>
       
       {/* Minimal header with logo only */}

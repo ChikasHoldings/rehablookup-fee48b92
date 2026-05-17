@@ -1647,7 +1647,11 @@ const AppInner = () => {
               <Route path="inquiries" element={<ProviderInquiriesPage />} />
               <Route path="reviews" element={<ProviderReviewsPage />} />
               <Route path="analytics" element={<ProviderAnalyticsPage />} />
-              <Route path="credits" element={<Navigate to="/provider/billing?purchase_credits=true" replace />} />
+              {/* Legacy /provider/credits — the credit-purchase flow was retired
+                  during the EKRA flat-fee refactor. Send any stale bookmarks
+                  straight to billing where the active Pro / add-on state is
+                  displayed. */}
+              <Route path="credits" element={<Navigate to="/provider/billing" replace />} />
               <Route path="pro-upgrade" element={<Navigate to="/for-providers" replace />} />
               <Route path="billing" element={<ProviderBillingPage />} />
               <Route path="subscription" element={<ProviderBillingPage />} />
