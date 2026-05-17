@@ -247,11 +247,21 @@ Deno.serve(async (req) => {
       sessionConfig.allow_promotion_codes = true;
     }
 
-    const session = await stripe.checkout.sessions.create(sessionConfig);
+    // Stripe-side idempotency key — bucketed per user per 5-minute window
+    // so a network retry of the same Create-Session call always returns the
+    // same session id (Stripe stores idempotency keys for 24 h). Combined
+    // with the open-session reuse above this gives belt-and-braces
+    // double-billing protection.
+    const idempotencyBucket = Math.floor(Date.now() / (5 * 60 * 1000));
+    const idempotencyKey = `create-checkout:${user.id}:${idempotencyBucket}`;
+    const session = await stripe.checkout.sessions.create(sessionConfig, {
+      idempotencyKey,
+    });
 
-    logStep(requestId, "Checkout session created", { 
-      sessionId: session.id, 
+    logStep(requestId, "Checkout session created", {
+      sessionId: session.id,
       hasDiscount: !!discounts,
+      idempotencyKey,
     });
 
     return new Response(JSON.stringify({ url: session.url, sessionId: session.id, requestId }), {

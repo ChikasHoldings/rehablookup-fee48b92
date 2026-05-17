@@ -3,6 +3,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 import { cancelSubscriptionAndRefund } from "../_shared/cancel-subscription.ts";
+import {
+  activateProBenefits,
+  deactivateProBenefits,
+  notifyProBenefitsPartialFailure,
+} from "../_shared/pro-benefits.ts";
 
 // Version tracking for deployment verification
 const VERSION = "1.2.0";
@@ -514,52 +519,22 @@ Deno.serve(async (req) => {
           } else {
             logStep("Pro subscription activated", { facilityId, currentPeriodEnd });
 
-            // ACTIVATE PRO BENEFITS ON FACILITY
-            // 1. Set featured = true for homepage/search placement
-            // 2. Add +50 ranking boost to calculated_ranking_score
-            const { data: currentFacility } = await supabaseAdmin
-              .from("facilities")
-              .select("calculated_ranking_score")
-              .eq("id", facilityId)
-              .maybeSingle();
-
-            const currentScore = currentFacility?.calculated_ranking_score ?? 0;
-            const { error: facilityUpdateError } = await supabaseAdmin
-              .from("facilities")
-              .update({
-                featured: true,
-                calculated_ranking_score: currentScore + 50,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", facilityId);
-
-            if (facilityUpdateError) {
-              logStep("Error activating facility Pro benefits", { error: facilityUpdateError.message });
-            } else {
-              logStep("Facility Pro benefits activated (featured + ranking boost)", { facilityId });
-            }
-
-            // Also activate featured on ALL other facilities owned by this provider
-            const { data: otherFacilities } = await supabaseAdmin
-              .from("facilities")
-              .select("id, calculated_ranking_score")
-              .eq("user_id", userId)
-              .neq("id", facilityId);
-
-            if (otherFacilities && otherFacilities.length > 0) {
-              for (const f of otherFacilities) {
-                const fScore = f.calculated_ranking_score ?? 0;
-                await supabaseAdmin
-                  .from("facilities")
-                  .update({
-                    featured: true,
-                    calculated_ranking_score: fScore + 50,
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq("id", f.id);
-              }
-              logStep("Pro benefits applied to all provider facilities", { count: otherFacilities.length });
-            }
+            // Activate Pro benefits across every facility the provider
+            // owns. The shared helper guards on `featured === true` so
+            // a webhook retry doesn't double-apply the +50 ranking
+            // boost. profiles.plan mirror is part of the helper.
+            const proResult = await activateProBenefits(supabaseAdmin, userId);
+            logStep("Pro benefits activation result (checkout.session.completed)", {
+              updated: proResult.facilitiesUpdated.length,
+              already: proResult.alreadyActive.length,
+              failed: proResult.failed.length,
+            });
+            await notifyProBenefitsPartialFailure(supabaseAdmin, {
+              userId,
+              eventType: "checkout.session.completed",
+              result: proResult,
+              stripeEventId: event.id,
+            });
 
             await supabaseAdmin.from("provider_notifications").insert({
               user_id: userId,
@@ -1092,18 +1067,25 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Pro upgrade — mirror profiles.plan (drives the photo-cap
-        // trigger) and lift any prior suspensions.
+        // Pro upgrade — activate full benefits (profile.plan mirror,
+        // facilities.featured, +50 ranking) via the shared helper. The
+        // helper is idempotent so this branch is safe to re-enter on
+        // webhook retry. Partial failures emit an admin notification.
         if (profile?.user_id && planTier === "pro") {
-          const { error: planMirrorErr } = await supabaseAdmin
-            .from("profiles")
-            .update({ plan: "pro" })
-            .eq("user_id", profile.user_id);
-          if (planMirrorErr) {
-            logStep("WARN — profiles.plan mirror failed", { error: planMirrorErr.message });
-          } else {
-            logStep("profiles.plan mirrored to pro", { userId: profile.user_id });
-          }
+          const proResult = await activateProBenefits(supabaseAdmin, profile.user_id);
+          logStep("Pro benefits activation result", {
+            userId: profile.user_id,
+            updated: proResult.facilitiesUpdated.length,
+            already: proResult.alreadyActive.length,
+            failed: proResult.failed.length,
+            profileMirrored: proResult.profilePlanMirrored,
+          });
+          await notifyProBenefitsPartialFailure(supabaseAdmin, {
+            userId: profile.user_id,
+            eventType: "customer.subscription.created",
+            result: proResult,
+            stripeEventId: event.id,
+          });
 
           const { data: suspendedFacilities } = await supabaseAdmin
             .from("facilities")
@@ -1277,8 +1259,22 @@ Deno.serve(async (req) => {
                 });
               } catch (cancelErr) {
                 logStep("ERROR running cancelSubscriptionAndRefund", { error: String(cancelErr) });
-                // Fallback: at minimum mark the row canceled so downstream
-                // benefit removal still runs.
+                // Surface to admin so the silent fallback (mark canceled
+                // without refund) is visible.
+                await supabaseAdmin.from("admin_notifications").insert({
+                  type: "subscription_cancel_refund_failed",
+                  title: "Refund executor failed on subscription.deleted",
+                  message: `cancelSubscriptionAndRefund threw for facility_subscriptions.id=${subRow.id} (stripe_sub=${subscription.id}). Refund and benefit-revert did NOT complete; row was force-canceled. Manual review required.`,
+                  metadata: {
+                    facility_subscription_id: subRow.id,
+                    stripe_subscription_id: subscription.id,
+                    stripe_event_id: event.id,
+                    error: String(cancelErr),
+                  },
+                }).then(({ error: notifyErr }) => {
+                  if (notifyErr) logStep("WARN admin notify failed", { error: notifyErr.message });
+                });
+                // Fallback: at minimum mark the row canceled.
                 await supabaseAdmin
                   .from("facility_subscriptions")
                   .update({
@@ -1292,26 +1288,29 @@ Deno.serve(async (req) => {
               logStep("No facility_subscriptions row found for cancelled Stripe sub — skipping refund executor", { stripeSubId: subscription.id });
             }
 
-            // DEACTIVATE PRO BENEFITS: remove featured flag and ranking boost from ALL provider facilities
+            // Revert Pro benefits via the shared helper (idempotent on
+            // featured=false; mirrors profiles.plan='free').
             const providerId = profiles[0].user_id;
+            const revertResult = await deactivateProBenefits(supabaseAdmin, providerId);
+            logStep("Pro benefits revert result", {
+              reverted: revertResult.facilitiesReverted.length,
+              failed: revertResult.failed.length,
+              profileReverted: revertResult.profilePlanReverted,
+            });
+            await notifyProBenefitsPartialFailure(supabaseAdmin, {
+              userId: providerId,
+              eventType: "customer.subscription.deleted",
+              result: revertResult,
+              stripeEventId: event.id,
+            });
+
+            // DOWNGRADE: re-read the full facility set for the
+            // suspend-extras step below.
             const { data: allFacilities } = await supabaseAdmin
               .from("facilities")
-              .select("id, calculated_ranking_score")
+              .select("id")
               .eq("user_id", providerId);
-
             if (allFacilities) {
-              for (const f of allFacilities) {
-                const currentScore = f.calculated_ranking_score ?? 0;
-                await supabaseAdmin
-                  .from("facilities")
-                  .update({
-                    featured: false,
-                    calculated_ranking_score: Math.max(0, currentScore - 50),
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq("id", f.id);
-              }
-              logStep("Pro benefits removed from all provider facilities", { count: allFacilities.length });
 
               // DOWNGRADE: Suspend extra facilities beyond the free-tier limit of 1
               // Keep the oldest facility (by created_at) active, suspend the rest

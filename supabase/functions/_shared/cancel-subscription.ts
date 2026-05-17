@@ -191,11 +191,36 @@ async function refundOnePiece(args: {
         // Continue — we still record the cancellation row with stripe_refund_id=null
         // so an admin can issue the refund manually if needed. Throwing here would
         // leave the subscription in a half-cancelled state.
+        await notifyAdmin(supabase, {
+          type: "subscription_refund_failed",
+          title: `Refund failed for ${scopeTag}`,
+          message: `Stripe refund of ${refund.refundCents}¢ failed for facility_subscriptions.id=${subscription.id} (charge=${chargeId}, ${scopeTag}). Cancellation row recorded without refund; manual refund required.`,
+          metadata: {
+            facility_subscription_id: subscription.id,
+            charge_id: chargeId,
+            scope_tag: scopeTag,
+            attempted_refund_cents: refund.refundCents,
+            error: err instanceof Error ? err.message : String(err),
+          },
+        });
       }
     } else {
       console.warn(
         `[cancel-subscription] no refundable charge for sub ${subscription.id} (${scopeTag}) — recording cancellation without Stripe refund`,
       );
+      if (refund.refundCents > 0) {
+        await notifyAdmin(supabase, {
+          type: "subscription_refund_missing_charge",
+          title: `No refundable charge for ${scopeTag}`,
+          message: `Owed ${refund.refundCents}¢ for facility_subscriptions.id=${subscription.id} (${scopeTag}) but no underlying Stripe charge was found. Manual review required.`,
+          metadata: {
+            facility_subscription_id: subscription.id,
+            stripe_subscription_id: subscription.stripe_subscription_id,
+            scope_tag: scopeTag,
+            owed_refund_cents: refund.refundCents,
+          },
+        });
+      }
     }
   }
 
@@ -218,9 +243,41 @@ async function refundOnePiece(args: {
 
   if (error || !inserted) {
     console.error(`[cancel-subscription] failed to insert cancellation row (${scopeTag})`, error);
+    await notifyAdmin(supabase, {
+      type: "subscription_cancellation_row_insert_failed",
+      title: `Cancellation audit row insert failed (${scopeTag})`,
+      message: `subscription_cancellations insert errored for facility_subscriptions.id=${subscription.id} (${scopeTag}). Refund may still have been issued; reconcile manually.`,
+      metadata: {
+        facility_subscription_id: subscription.id,
+        scope_tag: scopeTag,
+        attempted_refund_cents: refund.refundCents,
+        stripe_refund_id: stripeRefundId,
+        error: error?.message ?? "unknown",
+      },
+    });
     return { refundCents: refund.refundCents, stripeRefundId, rowId: null };
   }
   return { refundCents: refund.refundCents, stripeRefundId, rowId: (inserted as { id: string }).id };
+}
+
+/**
+ * Best-effort admin alert. Never throws — failure to notify is itself
+ * just console-logged so it can't cascade and break the refund path.
+ */
+async function notifyAdmin(
+  supabase: SupabaseClient,
+  args: { type: string; title: string; message: string; metadata: Record<string, unknown> },
+): Promise<void> {
+  try {
+    await supabase.from("admin_notifications").insert({
+      type: args.type,
+      title: args.title,
+      message: args.message,
+      metadata: args.metadata,
+    });
+  } catch (err) {
+    console.warn("[cancel-subscription] admin notification insert failed", err);
+  }
 }
 
 /**
