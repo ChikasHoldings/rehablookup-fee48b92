@@ -116,10 +116,57 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("[provider-self-cancel-subscription] failed", err);
+
+    // Round-30 split-brain guard: cancelSubscriptionAndRefund may have
+    // issued the Stripe refund(s) before throwing. If the DB write to
+    // mark the row 'canceled' didn't happen, the user keeps Pro/Featured/
+    // Concierge benefits AFTER getting refunded. Attempt a synchronous
+    // fallback that just flips the status flag, then surface to admin
+    // so a human reconciles whatever state Stripe is in vs the DB.
+    const errMessage = err instanceof Error ? err.message : String(err);
+    let fallbackOk = false;
+    try {
+      const { error: fbErr } = await admin
+        .from("facility_subscriptions")
+        .update({
+          status: "canceled",
+          canceled_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", parsed.data.subscription_id);
+      fallbackOk = !fbErr;
+      if (fbErr) {
+        console.error("[provider-self-cancel-subscription] fallback DB update failed", fbErr);
+      }
+    } catch (fbCatch) {
+      console.error("[provider-self-cancel-subscription] fallback DB update threw", fbCatch);
+    }
+    try {
+      await admin.from("admin_notifications").insert({
+        type: "cancellation_split_brain",
+        title: "Self-cancel failed mid-flight",
+        message:
+          `cancelSubscriptionAndRefund threw for subscription ${parsed.data.subscription_id} ` +
+          `(scope=${parsed.data.scope}, user=${user.id}). Error: ${errMessage}. ` +
+          `Fallback row-status update ${fallbackOk ? "succeeded" : "ALSO FAILED"}. ` +
+          `Reconcile with Stripe.`,
+        metadata: {
+          subscription_id: parsed.data.subscription_id,
+          scope: parsed.data.scope,
+          user_id: user.id,
+          last_error: errMessage,
+          fallback_ok: fallbackOk,
+        } as Record<string, unknown>,
+      });
+    } catch (adminErr) {
+      console.error("[provider-self-cancel-subscription] admin_notifications insert failed", adminErr);
+    }
+
     return new Response(
       JSON.stringify({
-        error: err instanceof Error ? err.message : "Cancellation failed",
+        error: errMessage,
         code: "execution_failed",
+        partial_recovery: fallbackOk,
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

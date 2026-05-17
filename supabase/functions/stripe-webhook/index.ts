@@ -2361,7 +2361,36 @@ Deno.serve(async (req) => {
             }, { onConflict: "facility_id" });
 
           if (proError) {
+            // Round-30 surfacing: the customer paid Stripe but the DB
+            // never recorded the subscription. Without surfacing this,
+            // ops doesn't know the activation failed and the user
+            // sees "free" with no Pro benefits. Insert an admin alert
+            // so this is visible + actionable. We deliberately DO NOT
+            // send a "Pro activated" notification to the provider
+            // here, because that would be a lie.
             logStep("Error creating pro_subscription", { error: proError.message });
+            try {
+              await supabaseAdmin.from("admin_notifications").insert({
+                type: "pro_activation_db_failure",
+                title: "Pro activation failed at DB write",
+                message:
+                  `Stripe charged the customer (event ${event.id}) but the ` +
+                  `facility_subscriptions upsert failed: ${proError.message}. ` +
+                  `User ${userId} / facility ${facilityId} / subscription ${subscriptionId}. ` +
+                  `Manual reconciliation required.`,
+                metadata: {
+                  user_id: userId,
+                  facility_id: facilityId,
+                  stripe_subscription_id: subscriptionId,
+                  stripe_event_id: event.id,
+                  db_error: proError.message,
+                } as Record<string, unknown>,
+              });
+            } catch (adminErr) {
+              logStep("admin_notifications insert failed (pro activation)", {
+                error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+              });
+            }
           } else {
             logStep("Pro subscription activated", { facilityId, currentPeriodEnd });
 

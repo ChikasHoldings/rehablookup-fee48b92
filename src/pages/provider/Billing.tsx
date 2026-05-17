@@ -170,7 +170,9 @@ export default function ProviderSubscription() {
         {checkoutPolling && (
           <Card>
             <CardContent className="p-5 flex items-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-[#1B365D]" />
+              {pollingTimedOut ? null : (
+                <Loader2 className="h-5 w-5 animate-spin text-[#1B365D]" />
+              )}
               <div className="flex-1">
                 <p className="font-medium text-slate-900">
                   {pollingTimedOut
@@ -179,10 +181,23 @@ export default function ProviderSubscription() {
                 </p>
                 <p className="text-xs text-slate-600 mt-0.5">
                   {pollingTimedOut
-                    ? "Your payment was successful, but we're still finalizing the setup. Refresh this page in a minute, or contact support if anything looks off."
+                    ? "Your payment was successful, but the activation is taking longer than usual. Try checking now, or contact support if it stays in this state."
                     : "Your payment succeeded. We're activating your account — this usually takes a few seconds."}
                 </p>
               </div>
+              {pollingTimedOut && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setPollingTimedOut(false);
+                    setPollingActive(true);
+                    invalidateSub(facilityId);
+                  }}
+                >
+                  Check now
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
