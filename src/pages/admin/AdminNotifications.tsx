@@ -146,6 +146,16 @@ const getNotificationBadge = (type: string) => {
 
 const PAYMENT_TYPES = ["payment_failed", "payment_delinquent", "placement_payment_failed"];
 const SECURITY_TYPES = ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"];
+// Round-30 delivery-failure surfacing: SMS / notify-edge-fn callers
+// insert these types when Twilio or downstream functions hard-fail
+// after retry. Surfaced as a group so ops can spot outages quickly.
+const DELIVERY_FAILURE_TYPES = [
+  "lead_sms_delivery_failure",
+  "concierge_sms_delivery_failure",
+  "message_sms_delivery_failure",
+  "tour_sms_delivery_failure",
+  "free_tier_redirect_notify_failure",
+];
 
 export default function AdminNotifications() {
   const navigate = useNavigate();
@@ -233,6 +243,8 @@ export default function AdminNotifications() {
       notifications = notifications.filter(n => PAYMENT_TYPES.includes(n.type));
     } else if (typeFilter === "security_types") {
       notifications = notifications.filter(n => SECURITY_TYPES.includes(n.type));
+    } else if (typeFilter === "delivery_failures") {
+      notifications = notifications.filter(n => DELIVERY_FAILURE_TYPES.includes(n.type));
     } else if (typeFilter !== "all") {
       notifications = notifications.filter(n => n.type === typeFilter);
     }
@@ -353,6 +365,7 @@ export default function AdminNotifications() {
 
   const paymentIssuesCount = useMemo(() => allNotifications.filter((n) => PAYMENT_TYPES.includes(n.type)).length, [allNotifications]);
   const securityAlertsCount = useMemo(() => allNotifications.filter((n) => SECURITY_TYPES.includes(n.type)).length, [allNotifications]);
+  const deliveryFailuresCount = useMemo(() => allNotifications.filter((n) => DELIVERY_FAILURE_TYPES.includes(n.type)).length, [allNotifications]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -471,6 +484,21 @@ export default function AdminNotifications() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
+              {paymentIssuesCount > 0 && (
+                <SelectItem value="payment_types">
+                  ⚠ Payment Issues ({paymentIssuesCount})
+                </SelectItem>
+              )}
+              {securityAlertsCount > 0 && (
+                <SelectItem value="security_types">
+                  🛡 Security Alerts ({securityAlertsCount})
+                </SelectItem>
+              )}
+              {deliveryFailuresCount > 0 && (
+                <SelectItem value="delivery_failures">
+                  📩 Delivery Failures ({deliveryFailuresCount})
+                </SelectItem>
+              )}
               {notificationTypes.map(type => (
                 <SelectItem key={type} value={type}>
                   {type.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
