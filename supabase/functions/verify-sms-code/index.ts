@@ -140,6 +140,33 @@ Deno.serve(async (req) => {
 
     logStep("Code verified successfully", { requestId });
 
+    // Anti-abuse: a phone that's already verified on a DIFFERENT
+    // account can't be re-verified onto this one. Spec §6:
+    // "Block reuse of a phone already verified on another account."
+    // We check provider profiles + seeker profiles so the rule
+    // applies across user types.
+    if (userId) {
+      const conflictTable = userType === "seeker" ? "seeker_profiles" : "profiles";
+      const { data: conflictRow } = await supabase
+        .from(conflictTable)
+        .select("user_id")
+        .eq("phone", phone)
+        .not("phone_verified_at", "is", null)
+        .neq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+      if (conflictRow) {
+        logStep("Phone already verified on another account", { requestId });
+        return new Response(
+          JSON.stringify({
+            error: "This phone number is already verified on another account. Use a different number or contact support.",
+            requestId,
+          }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     // Mark code as verified
     await supabase
       .from("phone_verification_codes")

@@ -42,6 +42,7 @@ import {
 import { OnboardingStepper } from "@/components/provider/onboarding/OnboardingStepper";
 import { AccountStep } from "@/components/provider/onboarding/AccountStep";
 import { VerifyEmailStep } from "@/components/provider/onboarding/VerifyEmailStep";
+import { FindOrListStep } from "@/components/provider/onboarding/FindOrListStep";
 import { PlaceholderStep } from "@/components/provider/onboarding/PlaceholderStep";
 
 /** profiles row fields the wizard reads to decide whether to redirect. */
@@ -172,9 +173,8 @@ export default function ProviderOnboarding() {
             />
           )}
           {resolved === "find_or_list" && (
-            <PlaceholderStep
-              title="Find or list your facility"
-              serverStep="find_or_list"
+            <FindOrListStep
+              onAdvance={() => void refetchState()}
               onBack={handleBack}
             />
           )}
