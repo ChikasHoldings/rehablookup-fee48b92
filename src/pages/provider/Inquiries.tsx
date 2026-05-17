@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Users, Search, X, ChevronLeft, Lock, KeyRound, Inbox, ShieldCheck, MailQuestion } from "lucide-react";
 import {
   Select,
@@ -447,18 +447,28 @@ export default function ProviderInquiriesPage() {
                     )}
                   </div>
                   <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1.5">
-                    {hasFilters ? "No matching inquiries" : "No leads yet"}
+                    {hasFilters
+                      ? "No matching inquiries"
+                      : facilityIds.length === 0
+                        ? "No facility yet"
+                        : "No leads yet"}
                   </h3>
                   <p className="text-sm text-muted-foreground max-w-sm mb-5">
                     {hasFilters
                       ? "Try adjusting your search or filters to see more results."
-                      : "When a family submits an inquiry to one of your listings, it will appear here. New leads arrive locked to protect family privacy until you choose to unlock them."}
+                      : facilityIds.length === 0
+                        ? "You don't have any facilities yet. Add a listing to start receiving leads."
+                        : "When a family submits an inquiry to one of your listings, it will appear here. New leads arrive locked to protect family privacy until you choose to unlock them."}
                   </p>
 
                   {hasFilters ? (
                     <Button variant="outline" size="sm" onClick={clearFilters}>
                       <X className="h-4 w-4 mr-1.5" />
                       Clear filters
+                    </Button>
+                  ) : facilityIds.length === 0 ? (
+                    <Button asChild size="sm">
+                      <Link to="/provider/listings">Add a listing</Link>
                     </Button>
                   ) : (
                     <div className="w-full max-w-sm rounded-lg border bg-muted/30 p-4 text-left space-y-3">

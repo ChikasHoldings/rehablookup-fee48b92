@@ -220,8 +220,14 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
     if (lead.assigned_at) events.push({ date: lead.assigned_at, label: "Lead Created & Assigned", detail: assignedFacility?.name || "Facility", icon: Building2, color: "bg-chart-3/10 text-chart-3" });
 
     distributions?.forEach((d: any) => {
-      if (!d.is_original) events.push({ date: d.distributed_at, label: "Redistributed", detail: facilityMap.get(d.facility_id)?.name || "Provider", icon: Share2, color: "bg-info/10 text-info" });
-      if (d.notification_sent_at) events.push({ date: d.notification_sent_at, label: "Provider Notified", detail: facilityMap.get(d.facility_id)?.name, icon: Send, color: "bg-muted text-muted-foreground" });
+      // Round-30 audit: facilityMap.get() returns undefined when the
+      // referenced facility was deleted but the distribution row
+      // survived. Was rendering literal "undefined" in the UI; now
+      // surfaces "(deleted facility)" so admins can spot the broken
+      // reference and reconcile.
+      const facName = facilityMap.get(d.facility_id)?.name ?? "(deleted facility)";
+      if (!d.is_original) events.push({ date: d.distributed_at, label: "Redistributed", detail: facName, icon: Share2, color: "bg-info/10 text-info" });
+      if (d.notification_sent_at) events.push({ date: d.notification_sent_at, label: "Provider Notified", detail: facName, icon: Send, color: "bg-muted text-muted-foreground" });
     });
 
     unlockData?.forEach((u: any) => {

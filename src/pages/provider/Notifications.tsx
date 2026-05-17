@@ -184,6 +184,14 @@ function NotificationItem({
       navigate("/provider/placement-network");
     } else if (notification.type === "review_received") {
       navigate("/provider/reviews");
+    } else {
+      // Round-30 audit: was a silent no-op for unknown types (typos,
+      // new types not yet routed). Provider clicked, nothing
+      // happened, no signal. Fallback to the dashboard so the click
+      // always goes somewhere, and warn so future-rolled-out types
+      // surface during testing.
+      console.warn("[Notifications] unrouted notification type, falling back to dashboard", { type: notification.type });
+      navigate("/provider/dashboard");
     }
   };
 

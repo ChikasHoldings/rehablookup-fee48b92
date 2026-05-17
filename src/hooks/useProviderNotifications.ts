@@ -147,7 +147,19 @@ export function useProviderNotifications() {
             });
           }
         )
-        .subscribe();
+        .subscribe((status, err) => {
+          // Round-30 audit: previously no status handler. If realtime
+          // disconnected (network blip, Supabase outage, channel error),
+          // the provider stopped receiving notifications silently — bell
+          // icon stale, leads invisible. Now: on a closed/errored
+          // channel, invalidate the React Query cache so the
+          // polling-based fallback (staleTime 30s) refetches and the
+          // provider doesn't sit on stale data.
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            console.warn("[useProviderNotifications] realtime subscription degraded", { status, err });
+            queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
+          }
+        });
     };
 
     setupSubscription();
