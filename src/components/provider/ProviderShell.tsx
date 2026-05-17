@@ -17,6 +17,7 @@ import { useSentryBreadcrumbs } from "@/hooks/useSentryBreadcrumbs";
 import { useUserRole } from "@/hooks/useUserRole";
 import { prefetchAdjacentRoutes, preloadProviderPages } from "@/lib/routePrefetch";
 import { scrollContainerToTop } from "@/hooks/useScrollToTop";
+import { isOnboardingPath, resolveProviderPostLoginPath } from "@/lib/providerLanding";
 
 // Preload all provider pages on module load for instant navigation
 preloadProviderPages();
@@ -120,6 +121,36 @@ function ProviderShellContent() {
       });
     }
   }, [role, isAuthenticated]);
+
+  // Resume-from-where-you-stopped: any authenticated provider whose
+  // onboarding isn't complete and who lands on a non-onboarding
+  // provider route (e.g. /provider/dashboard via bookmark, deep link,
+  // or stale session) gets bounced into the wizard. The wizard's
+  // own state machine then routes them to the exact step they left
+  // off on. We only fire once per shell mount (hasOnboardingRedirected)
+  // and skip if we already started another redirect (hasRedirected).
+  const hasOnboardingRedirected = useRef(false);
+  useEffect(() => {
+    if (role !== "provider" || !isAuthenticated) return;
+    if (hasRedirected.current || hasOnboardingRedirected.current) return;
+    if (isOnboardingPath(location.pathname)) return;
+
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id || cancelled) return;
+      const { path, reason } = await resolveProviderPostLoginPath(
+        session.user.id,
+        null,
+      );
+      if (cancelled || hasRedirected.current || hasOnboardingRedirected.current) return;
+      if (reason === "onboarding_incomplete" || reason === "profile_missing") {
+        hasOnboardingRedirected.current = true;
+        navigate(path, { replace: true });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [role, isAuthenticated, location.pathname, navigate]);
 
   // Listen for auth changes
   useEffect(() => {

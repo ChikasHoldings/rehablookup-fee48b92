@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import headerLogo from "@/assets/logo-header.webp";
+import { resolveProviderPostLoginPath } from "@/lib/providerLanding";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Please enter a valid email address" }).max(255),
@@ -254,7 +255,14 @@ export default function Login() {
             .maybeSingle();
           
           if (profile) {
-            navigate(returnTo || "/provider/dashboard", { replace: true });
+            // Mid-onboarding providers resume in the wizard instead of
+            // landing on an empty dashboard. The helper consults
+            // profiles.onboarding_completed_at + the wizard state row.
+            const { path } = await resolveProviderPostLoginPath(
+              session.user.id,
+              returnTo,
+            );
+            navigate(path, { replace: true });
             return;
           }
           
@@ -509,11 +517,20 @@ export default function Login() {
             },
           });
           
+          // Resume mid-onboarding providers in the wizard instead of
+          // landing them on an empty dashboard.
+          const { path, reason } = await resolveProviderPostLoginPath(
+            data.session.user.id,
+            returnTo,
+          );
           toast({
             title: "Welcome back!",
-            description: "Signed in to your provider account.",
+            description:
+              reason === "onboarding_incomplete"
+                ? "Picking up where you left off."
+                : "Signed in to your provider account.",
           });
-          navigate(returnTo || "/provider/dashboard", { replace: true });
+          navigate(path, { replace: true });
         } else {
           toast({
             title: "Welcome back!",
