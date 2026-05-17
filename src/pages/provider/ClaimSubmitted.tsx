@@ -112,6 +112,18 @@ export default function ClaimSubmitted() {
     };
   }, [facility?.id, currentUserId]);
 
+  // C9 safety net — re-fire the completion RPC here so a refresh of the
+  // /submitted page recovers if ClaimWizard's onSubmitted handler was
+  // interrupted before its RPC call. The RPC is idempotent (uses
+  // COALESCE on onboarding_completed_at so it won't clobber an earlier
+  // timestamp) and gated on auth.uid().
+  useEffect(() => {
+    if (!claim) return;
+    void supabase.rpc("complete_provider_onboarding").catch((e) => {
+      console.warn("[ClaimSubmitted] completion advance failed", e);
+    });
+  }, [claim]);
+
   const headline = useMemo(() => {
     if (!claim) return "Thanks — your claim is in.";
     if (claim.verification_status === "verified") {
