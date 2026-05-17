@@ -977,8 +977,8 @@ function Step3Verification({
           </h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Pick the verification method that works for you. Email and SMS are
-          instant; document review takes 1–2 business days.
+          We picked the fastest verification method based on what's on file.
+          You can switch methods below if needed.
         </p>
       </header>
 
@@ -1077,6 +1077,21 @@ function apexDomain(host: string): string {
   return parts.length >= 2 ? parts.slice(-2).join(".") : host;
 }
 
+/**
+ * Round-30 merge: the 3-way verification picker was replaced with an
+ * auto-router that selects the single best method based on what's on
+ * file:
+ *   1. Email-domain match — if the signed-in claimant's email lives on
+ *      the facility's web apex domain (near-instant verification).
+ *   2. SMS to the facility phone — if no email match but a phone is on
+ *      file. Requires explicit consent (operator must be at the
+ *      facility to receive the code).
+ *   3. Document upload — fallback for facilities with neither a website
+ *      nor a phone, or when both fail.
+ *
+ * A small "verify a different way" disclosure preserves the safety
+ * valve so operators aren't stranded if auto-detection is wrong.
+ */
 function MethodPicker({
   facility,
   claimantEmail,
@@ -1087,9 +1102,7 @@ function MethodPicker({
 }: MethodPickerProps) {
   const hasWebsite = !!facility.website?.trim();
   const hasPhone = !!facility.phone?.trim();
-  // Recommend email_domain when the signed-in claimant's email already lives
-  // on the facility's web apex domain — that path is single-click verifiable.
-  const emailDomainRecommended = (() => {
+  const emailDomainMatch = (() => {
     if (!hasWebsite || !claimantEmail) return false;
     const facilityHost = hostnameFromUrl(facility.website);
     if (!facilityHost) return false;
@@ -1099,8 +1112,15 @@ function MethodPicker({
     if (!emailHost) return false;
     return apexDomain(emailHost) === apexDomain(facilityHost);
   })();
+  const bestMethod: VerificationMethod = emailDomainMatch
+    ? "email_domain"
+    : hasPhone
+      ? "sms_phone"
+      : "document_upload";
+
   const [smsConfirmOpen, setSmsConfirmOpen] = useState(false);
   const [smsSending, setSmsSending] = useState(false);
+  const [showAlternatives, setShowAlternatives] = useState(false);
 
   async function handleSmsSend() {
     setSmsSending(true);
@@ -1136,45 +1156,107 @@ function MethodPicker({
     }
   }
 
+  // ── Primary auto-method panel ────────────────────────────────────
+  let primary: { heading: string; sub: string; cta: string; icon: typeof Mail; onCta: () => void };
+  if (bestMethod === "email_domain") {
+    primary = {
+      icon: Mail,
+      heading: `We'll verify by email at ${apexDomain(hostnameFromUrl(facility.website) ?? "")}`,
+      sub: `Your signed-in email (${claimantEmail}) already lives on this facility's domain — we'll send a 6-digit code there.`,
+      cta: "Send verification code",
+      onCta: () => onPick("email_domain"),
+    };
+  } else if (bestMethod === "sms_phone") {
+    primary = {
+      icon: MessageSquare,
+      heading: `We'll text a code to the facility phone`,
+      sub: `We'll send a 6-digit code to ${maskPhone(facility.phone)}. You must be at the facility to receive it.`,
+      cta: "Send SMS code",
+      onCta: () => setSmsConfirmOpen(true),
+    };
+  } else {
+    primary = {
+      icon: FileText,
+      heading: "We'll verify with documents",
+      sub: "Upload a JCAHO/CARF certificate, state license, or DEA registration. Our team reviews within 1–2 business days.",
+      cta: "Continue to upload",
+      onCta: () => onPick("document_upload"),
+    };
+  }
+
   return (
     <>
-      <div className="grid gap-3 lg:grid-cols-3">
-        <MethodCard
-          icon={Mail}
-          heading="Verify with work email"
-          subtext={
-            emailDomainRecommended
-              ? "Your signed-in email already lives on this facility's domain — this will be near-instant."
-              : "Send a 6-digit code to your email at the facility's web domain. Fastest method."
-          }
-          available={hasWebsite}
-          unavailableReason={
-            hasWebsite ? undefined : "This facility doesn't have a website on file."
-          }
-          ctaLabel="Use email"
-          recommended={emailDomainRecommended}
-          onSelect={() => onPick("email_domain")}
-        />
-        <MethodCard
-          icon={MessageSquare}
-          heading="Verify with SMS"
-          subtext="We'll text a 6-digit code to the facility's listed number. You'll need to be there to receive it."
-          available={hasPhone}
-          unavailableReason={
-            hasPhone ? undefined : "This facility doesn't have a phone on file."
-          }
-          ctaLabel="Use SMS"
-          onSelect={() => setSmsConfirmOpen(true)}
-        />
-        <MethodCard
-          icon={FileText}
-          heading="Verify with a document"
-          subtext="Upload a JCAHO/CARF certificate, state license, or DEA registration. Our team reviews within 1–2 business days."
-          available
-          ctaLabel="Use document"
-          onSelect={() => onPick("document_upload")}
-        />
+      <div className="rounded-md border border-primary/40 bg-primary/[0.04] p-4 sm:p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center">
+            <primary.icon className="h-4 w-4 text-primary" aria-hidden />
+          </div>
+          <h3 className="font-semibold text-sm sm:text-base text-foreground">
+            {primary.heading}
+          </h3>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {primary.sub}
+        </p>
+        <Button onClick={primary.onCta} size="sm" className="w-full sm:w-auto">
+          {primary.cta}
+          <ArrowRight className="h-4 w-4 ml-1.5" aria-hidden />
+        </Button>
       </div>
+
+      {/* Alternatives disclosure — collapsed by default so the user
+          sees one CTA, not three. Only the OTHER methods (not the
+          primary) show up here. */}
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={() => setShowAlternatives((v) => !v)}
+          className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+        >
+          {showAlternatives ? "Hide other verification methods" : "Verify a different way"}
+        </button>
+      </div>
+
+      {showAlternatives && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {bestMethod !== "email_domain" && (
+            <MethodCard
+              icon={Mail}
+              heading="Work email"
+              subtext={
+                hasWebsite
+                  ? "Send a 6-digit code to your email at the facility's web domain."
+                  : "Unavailable — no website on file."
+              }
+              available={hasWebsite}
+              unavailableReason={hasWebsite ? undefined : "This facility doesn't have a website on file."}
+              ctaLabel="Use email"
+              onSelect={() => onPick("email_domain")}
+            />
+          )}
+          {bestMethod !== "sms_phone" && (
+            <MethodCard
+              icon={MessageSquare}
+              heading="SMS"
+              subtext="We'll text a 6-digit code to the facility's listed number."
+              available={hasPhone}
+              unavailableReason={hasPhone ? undefined : "No phone on file."}
+              ctaLabel="Use SMS"
+              onSelect={() => setSmsConfirmOpen(true)}
+            />
+          )}
+          {bestMethod !== "document_upload" && (
+            <MethodCard
+              icon={FileText}
+              heading="Document upload"
+              subtext="JCAHO/CARF, state license, or DEA registration. Reviewed in 1–2 business days."
+              available
+              ctaLabel="Use document"
+              onSelect={() => onPick("document_upload")}
+            />
+          )}
+        </div>
+      )}
 
       <div className="flex justify-start pt-2 border-t">
         <Button variant="outline" onClick={onBack} size="sm">
