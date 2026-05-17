@@ -329,6 +329,335 @@ async function trackEvent(
   }
 }
 
+// ── submit-qualified-lead entrypoint body ─────────────────────────
+// ⚠ AUTO-GENERATED HEADER ⚠
+// _shared modules have been inlined into this file so that
+// `supabase functions deploy --use-api` (server-side bundler)
+// can deploy without resolving local relative imports. The
+// canonical sources live under supabase/functions/_shared/ —
+// don't edit the inlined copies below; edit the originals and
+// re-run `python3 scripts/inline-shared.py submit-qualified-lead`.
+
+// ── URL imports (dedup'd) ──────────────────────────────────
+// ── inlined from _shared/resilient-email-sender.ts ─────────────
+/**
+ * Resilient Email Sender
+ * 
+ * Wraps Resend with:
+ * - Automatic retry with exponential backoff (up to 3 attempts)
+ * - Suppressed email checking
+ * - Full send tracking (sent/failed/retried/dlq) via email_tracking_events
+ * - Dead-letter logging for persistent failures
+ * 
+ * Usage:
+ *   import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+ *   const result = await sendEmailWithRetry(supabase, resend, { ...emailParams }, { emailType: "provider_welcome" });
+ */
+
+interface EmailParams {
+  from: string;
+  to: string | string[];
+  subject: string;
+  html: string;
+  headers?: Record<string, string>;
+  replyTo?: string | string[];
+}
+
+interface SendOptions {
+  /** Category for tracking (e.g., "provider_welcome", "lead_notification"). REQUIRED. */
+  emailType: string;
+  /**
+   * Unique key for idempotency. STRONGLY RECOMMENDED for any event-driven
+   * email so retries (function re-invocations, cron re-runs, webhook re-deliveries)
+   * never produce duplicate sends. Format: `<event>-<id>` (e.g. `lead-new-${leadId}-${facilityId}`).
+   */
+  idempotencyKey?: string;
+  /** Max retry attempts (default: 3) */
+  maxRetries?: number;
+  /** Whether to check suppressed_emails before sending (default: true) */
+  checkSuppression?: boolean;
+  /** Additional metadata to store with the tracking event */
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Default inter-send delay for bulk email loops (ms).
+ * Keeps sends well under Resend's 10 req/s rate limit.
+ * Import and use: `await sleep(BULK_SEND_DELAY_MS)` after each send in a loop.
+ */
+export const BULK_SEND_DELAY_MS = 200;
+
+/** Default max emails per single function invocation */
+export const BULK_BATCH_LIMIT = 50;
+
+interface SendResult {
+  success: boolean;
+  /** True if the email was already sent (idempotency dedup) */
+  deduplicated?: boolean;
+  /** True if the recipient is suppressed */
+  suppressed?: boolean;
+  /** Resend email ID on success */
+  emailId?: string;
+  /** Error message on failure */
+  error?: string;
+  /** Number of attempts made */
+  attempts: number;
+  /** Whether the email was sent to dead-letter after all retries */
+  deadLettered?: boolean;
+  /** ISO timestamp of the original "sent" event when deduplicated. */
+  firstSentAt?: string;
+}
+
+// SupabaseClient generic enough for service role usage
+// deno-lint-ignore no-explicit-any
+type SupabaseClient = any;
+
+const LOG_PREFIX = "[RESILIENT-EMAIL]";
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Send an email with retry logic, tracking, and suppression checking.
+ */
+export async function sendEmailWithRetry(
+  supabase: SupabaseClient,
+  resend: InstanceType<typeof Resend>,
+  params: EmailParams,
+  options: SendOptions = { emailType: "general" }
+): Promise<SendResult> {
+  const {
+    emailType = "general",
+    idempotencyKey,
+    maxRetries = 3,
+    checkSuppression = true,
+    metadata,
+  } = options;
+
+  // Normalize to array
+  const toArray = Array.isArray(params.to) ? params.to : [params.to];
+  const normalizedParams = { ...params, to: toArray };
+  const recipientEmail = toArray[0]?.toLowerCase();
+  if (!recipientEmail) {
+    return { success: false, error: "No recipient email", attempts: 0 };
+  }
+
+  // 1. Idempotency check
+  if (idempotencyKey) {
+    const { data: existing } = await supabase
+      .from("email_tracking_events")
+      .select("id, created_at")
+      .eq("email_id", idempotencyKey)
+      .eq("email_type", emailType)
+      .eq("event_type", "sent")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      console.log(`${LOG_PREFIX} Dedup hit: ${idempotencyKey}`);
+      return {
+        success: true,
+        deduplicated: true,
+        attempts: 0,
+        emailId: idempotencyKey,
+        firstSentAt: existing.created_at ?? undefined,
+      };
+    }
+  }
+
+  // 2. Suppression check
+  if (checkSuppression) {
+    const { data: suppressed } = await supabase
+      .from("suppressed_emails")
+      .select("email")
+      .eq("email", recipientEmail)
+      .maybeSingle();
+
+    if (suppressed) {
+      console.log(`${LOG_PREFIX} Suppressed: ${recipientEmail}`);
+      await trackEvent(supabase, {
+        emailId: idempotencyKey || crypto.randomUUID(),
+        emailType,
+        eventType: "suppressed",
+        recipientEmail,
+        metadata: { ...metadata, reason: "suppressed_email" },
+      });
+      return { success: false, suppressed: true, attempts: 0 };
+    }
+  }
+
+  // 3. Retry loop with exponential backoff
+  const trackingId = idempotencyKey || crypto.randomUUID();
+  let lastError = "";
+
+  // Auto-generate plain-text fallback for better deliverability
+  const plainText = normalizedParams.html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/tr>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<a[^>]+href="([^"]*)"[^>]*>([^<]*)<\/a>/gi, "$2 ($1)")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const sendParams: Record<string, unknown> = {
+        from: normalizedParams.from,
+        to: normalizedParams.to,
+        subject: normalizedParams.subject,
+        html: normalizedParams.html,
+        text: plainText,
+      };
+      if (normalizedParams.headers) sendParams.headers = normalizedParams.headers;
+      if (normalizedParams.replyTo) sendParams.reply_to = normalizedParams.replyTo;
+
+      // deno-lint-ignore no-explicit-any
+      const { data, error } = await (resend.emails as any).send(sendParams);
+
+      if (error) {
+        lastError = error.message || JSON.stringify(error);
+        console.error(`${LOG_PREFIX} Attempt ${attempt}/${maxRetries} failed:`, lastError);
+
+        // Don't retry on permanent errors (validation, domain issues)
+        if (isPermanentError(lastError)) {
+          await trackEvent(supabase, {
+            emailId: trackingId,
+            emailType,
+            eventType: "failed",
+            recipientEmail,
+            metadata: { ...metadata, error: lastError, attempt, permanent: true },
+          });
+          return { success: false, error: lastError, attempts: attempt };
+        }
+
+        // Track retry
+        if (attempt < maxRetries) {
+          await trackEvent(supabase, {
+            emailId: trackingId,
+            emailType,
+            eventType: "retry",
+            recipientEmail,
+            metadata: { ...metadata, error: lastError, attempt },
+          });
+          // Exponential backoff: 1s, 2s, 4s
+          await sleep(1000 * Math.pow(2, attempt - 1));
+        }
+        continue;
+      }
+
+      // Success
+      await trackEvent(supabase, {
+        emailId: trackingId,
+        emailType,
+        eventType: "sent",
+        recipientEmail,
+        metadata: { ...metadata, resendId: data?.id, attempt },
+      });
+
+      console.log(`${LOG_PREFIX} Sent to ${recipientEmail} (attempt ${attempt})`);
+      return { success: true, emailId: data?.id, attempts: attempt };
+
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
+      console.error(`${LOG_PREFIX} Attempt ${attempt}/${maxRetries} exception:`, lastError);
+
+      if (attempt < maxRetries) {
+        await trackEvent(supabase, {
+          emailId: trackingId,
+          emailType,
+          eventType: "retry",
+          recipientEmail,
+          metadata: { ...metadata, error: lastError, attempt },
+        });
+        await sleep(1000 * Math.pow(2, attempt - 1));
+      }
+    }
+  }
+
+  // All retries exhausted — dead-letter
+  await trackEvent(supabase, {
+    emailId: trackingId,
+    emailType,
+    eventType: "dlq",
+    recipientEmail,
+    metadata: { ...metadata, error: lastError, maxRetries },
+  });
+
+  // Persist to email_send_failures so admins can review on the daily digest.
+  // Failures here must NEVER break the caller — swallow any insert error.
+  try {
+    await supabase.from("email_send_failures").insert({
+      email_type: emailType,
+      recipient_email: recipientEmail,
+      subject: normalizedParams.subject,
+      error_message: lastError,
+      attempts: maxRetries,
+      idempotency_key: idempotencyKey ?? null,
+      metadata: metadata ?? null,
+    });
+  } catch (err) {
+    console.error(`${LOG_PREFIX} DLQ insert failed:`, err);
+  }
+
+  console.error(`${LOG_PREFIX} Dead-lettered after ${maxRetries} attempts: ${recipientEmail}`);
+  return { success: false, error: lastError, attempts: maxRetries, deadLettered: true };
+}
+
+/**
+ * Determine if an error is permanent (no point retrying).
+ */
+function isPermanentError(errorMsg: string): boolean {
+  const lower = errorMsg.toLowerCase();
+  return (
+    lower.includes("validation_error") ||
+    lower.includes("verify a domain") ||
+    lower.includes("invalid") && lower.includes("email") ||
+    lower.includes("missing required") ||
+    lower.includes("not found") ||
+    lower.includes("blocked") ||
+    lower.includes("spam")
+  );
+}
+
+/**
+ * Track an email event in email_tracking_events.
+ */
+async function trackEvent(
+  supabase: SupabaseClient,
+  params: {
+    emailId: string;
+    emailType: string;
+    eventType: string;
+    recipientEmail: string;
+    metadata?: Record<string, unknown>;
+  }
+) {
+  try {
+    await supabase.from("email_tracking_events").insert({
+      email_id: params.emailId,
+      email_type: params.emailType,
+      event_type: params.eventType,
+      recipient_email: params.recipientEmail,
+      event_data: params.metadata || null,
+    });
+  } catch (err) {
+    // Never let tracking failures break email sending
+    console.error(`${LOG_PREFIX} Tracking insert failed:`, err);
+  }
+}
+
 // ── inlined from _shared/email-input-diagnostics.ts ─────────────
 /**
  * Shared diagnostics helpers for email validation failures.
@@ -1366,8 +1695,13 @@ Deno.serve(async (req) => {
 
     log(requestId, "INFO", "Lead inserted", { leadId: lead.id });
 
-    // Create initial distribution record
-    await supabase
+    // Create initial distribution record. Round-30 audit: this insert
+    // was unguarded — if it failed (FK, RLS, constraint, DB timeout)
+    // the seeker still got a 200 and the lead row existed, but
+    // analytics + redistribution queries that join on lead_distributions
+    // had a missing row. Now: capture error, surface to admin, AND log
+    // hard so ops can reconcile.
+    const { error: distErr } = await supabase
       .from("lead_distributions")
       .insert({
         lead_id: lead.id,
@@ -1377,6 +1711,26 @@ Deno.serve(async (req) => {
         notification_sent: true,
         notification_sent_at: now.toISOString(),
       });
+    if (distErr) {
+      log(requestId, "ERROR", "lead_distributions insert failed", { error: distErr.message });
+      try {
+        await supabase.from("admin_notifications").insert({
+          type: "lead_distribution_insert_failure",
+          title: "Lead distribution record not created",
+          message: `Lead ${lead.id} was inserted but lead_distributions insert failed: ${distErr.message}. Analytics/redistribution joins will show a missing row.`,
+          metadata: {
+            lead_id: lead.id,
+            facility_id: data.facilityId,
+            request_id: requestId,
+            db_error: distErr.message,
+          } as Record<string, unknown>,
+        });
+      } catch (adminErr) {
+        log(requestId, "WARN", "admin_notifications insert failed (dist)", {
+          error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+        });
+      }
+    }
 
     // ===== NON-BLOCKING NOTIFICATIONS (with idempotency) =====
     // Send seeker confirmation email — idempotency keyed to lead ID
@@ -1565,7 +1919,7 @@ Deno.serve(async (req) => {
 
     if (inAppEnabled) {
       try {
-        await supabase.from("provider_notifications").insert({
+        const { error: notifErr } = await supabase.from("provider_notifications").insert({
           user_id: facility.user_id,
           facility_id: facility.id,
           type: isHighIntent ? "high_intent_lead" : "new_lead",
@@ -1585,17 +1939,41 @@ Deno.serve(async (req) => {
           },
           read: false,
         });
+        if (notifErr) throw notifErr;
       } catch (notifError) {
+        // Round-30 audit: this catch previously only logged to console.
+        // If the insert fails (RLS, FK, constraint), the provider never
+        // sees an in-app alert AND ops has no signal. Now surfaced.
         log(requestId, "WARN", "Failed to create in-app notification", { error: String(notifError) });
+        try {
+          await supabase.from("admin_notifications").insert({
+            type: "lead_notification_failure",
+            title: "Provider in-app lead notification failed",
+            message: `provider_notifications insert failed for lead ${lead.id} → provider ${facility.user_id} (facility ${facility.id}). Lead row exists but provider has no in-app alert.`,
+            metadata: {
+              lead_id: lead.id,
+              provider_user_id: facility.user_id,
+              facility_id: facility.id,
+              request_id: requestId,
+              error: notifError instanceof Error ? notifError.message : String(notifError),
+            } as Record<string, unknown>,
+          });
+        } catch (adminErr) {
+          log(requestId, "WARN", "admin_notifications insert failed (provider notif)", {
+            error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+          });
+        }
       }
     } else {
       log(requestId, "INFO", "In-app channel disabled by preference; skipping");
     }
 
 
-    // Track instant notification event
+    // Track instant notification event. Round-30 audit: catch was
+    // console-log-only; billing + analytics depend on this table to
+    // prove a lead was notified. Insert failure → admin alert.
     try {
-      await supabase.from("notification_events").insert({
+      const { error: trackErr } = await supabase.from("notification_events").insert({
         lead_id: lead.id,
         facility_id: facility.id,
         user_id: facility.user_id,
@@ -1605,8 +1983,27 @@ Deno.serve(async (req) => {
         notification_type: isHighIntent ? "high_intent" : "new_lead",
         metadata: { credit_cost: lead.credit_cost, urgency: data.urgency },
       });
+      if (trackErr) throw trackErr;
     } catch (trackError) {
       log(requestId, "WARN", "Failed to track notification event", { error: String(trackError) });
+      try {
+        await supabase.from("admin_notifications").insert({
+          type: "lead_notification_event_failure",
+          title: "Lead notification audit trail missing",
+          message: `notification_events insert failed for lead ${lead.id} → facility ${facility.id}. Lead was notified but billing/analytics audit row is missing.`,
+          metadata: {
+            lead_id: lead.id,
+            facility_id: facility.id,
+            user_id: facility.user_id,
+            request_id: requestId,
+            error: trackError instanceof Error ? trackError.message : String(trackError),
+          } as Record<string, unknown>,
+        });
+      } catch (adminErr) {
+        log(requestId, "WARN", "admin_notifications insert failed (notif event)", {
+          error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+        });
+      }
     }
 
     log(requestId, "INFO", "Inquiry submitted successfully", { leadId: lead.id });

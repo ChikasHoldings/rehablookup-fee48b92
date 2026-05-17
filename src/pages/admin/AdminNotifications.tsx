@@ -161,6 +161,12 @@ const DELIVERY_FAILURE_TYPES = [
   "out_of_band_subscription_refund",
   "subscription_cancel_refund_failed",
   "webhook_dedup_failure",
+  "lead_distribution_insert_failure",
+  "lead_notification_failure",
+  "lead_notification_event_failure",
+  "lead_email_log_failure",
+  "lead_status_update_failure",
+  "resend_api_failure",
 ];
 
 export default function AdminNotifications() {
