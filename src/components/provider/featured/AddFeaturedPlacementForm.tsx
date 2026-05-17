@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { JoinAddonWaitlistButton } from "@/components/provider/JoinAddonWaitlistButton";
 
 type PlacementType =
   | "homepage"
@@ -165,7 +166,7 @@ export function AddFeaturedPlacementForm({
       // Surface the trigger's cap-exceeded raise cleanly. PostgREST
       // wraps the SQL message; trim to the meaningful prefix.
       const friendly = msg.includes("Featured slot cap reached")
-        ? "This placement scope is full. Pick a different value or contact support to join the waitlist."
+        ? "This placement scope just filled up. Pick a different value or join the waitlist."
         : msg;
       toast.error(friendly);
     } finally {
@@ -271,11 +272,18 @@ export function AddFeaturedPlacementForm({
             </span>
           ) : availability ? (
             slotsFull ? (
-              <span>
-                <strong>Cap reached</strong> — {availability.used} of {availability.cap}{" "}
-                slots in use for this scope. Try a different value or join the
-                waitlist by contacting support.
-              </span>
+              <div className="space-y-2">
+                <p>
+                  <strong>Cap reached</strong> — {availability.used} of {availability.cap}{" "}
+                  slots in use for this scope.
+                </p>
+                <JoinAddonWaitlistButton
+                  addonType="featured"
+                  facilityId={facilityId}
+                  scopeType={type as string}
+                  scopeValue={resolvedValue}
+                />
+              </div>
             ) : (
               <span>
                 <strong>{availability.remaining}</strong> of {availability.cap} slots

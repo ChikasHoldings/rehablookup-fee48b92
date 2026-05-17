@@ -71,7 +71,209 @@ export function AddonCapsTab() {
     <div className="space-y-8">
       <FeaturedCapsCard />
       <ConciergeCapsCard />
+      <WaitlistCard />
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Waitlist queue
+// ─────────────────────────────────────────────────────────────────────────
+
+interface WaitlistRow {
+  id: string;
+  addon_type: "featured" | "concierge";
+  facility_id: string;
+  requested_by: string;
+  scope_type: string | null;
+  scope_value: string | null;
+  geo_state: string | null;
+  geo_city: string | null;
+  level_of_care: string[] | null;
+  status: string;
+  requested_at: string;
+  invited_at: string | null;
+  notes: string | null;
+}
+
+function WaitlistCard() {
+  const queryClient = useQueryClient();
+  const [addonFilter, setAddonFilter] = useState<string>("__all__");
+
+  const { data: rows, isLoading } = useQuery({
+    queryKey: ["admin-waitlist", addonFilter],
+    queryFn: async (): Promise<WaitlistRow[]> => {
+      let q = supabase
+        .from("addon_waitlist")
+        .select(
+          "id, addon_type, facility_id, requested_by, scope_type, scope_value, geo_state, geo_city, level_of_care, status, requested_at, invited_at, notes",
+        )
+        .in("status", ["waiting", "invited"])
+        .order("requested_at", { ascending: true });
+      if (addonFilter !== "__all__") q = q.eq("addon_type", addonFilter);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as WaitlistRow[];
+    },
+    staleTime: 1000 * 30,
+  });
+
+  async function markInvited(id: string) {
+    const { error } = await supabase
+      .from("addon_waitlist")
+      .update({ status: "invited", invited_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Marked as invited");
+    queryClient.invalidateQueries({ queryKey: ["admin-waitlist", addonFilter] });
+  }
+
+  async function markFulfilled(id: string) {
+    const { error } = await supabase
+      .from("addon_waitlist")
+      .update({ status: "fulfilled", closed_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Marked as fulfilled");
+    queryClient.invalidateQueries({ queryKey: ["admin-waitlist", addonFilter] });
+  }
+
+  async function expire(id: string) {
+    if (!confirm("Mark this waitlist entry as expired? The provider sees their entry close.")) return;
+    const { error } = await supabase
+      .from("addon_waitlist")
+      .update({ status: "expired", closed_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Marked expired");
+    queryClient.invalidateQueries({ queryKey: ["admin-waitlist", addonFilter] });
+  }
+
+  function scopeLabel(r: WaitlistRow): string {
+    if (r.addon_type === "featured") {
+      return `${r.scope_type ?? "?"}=${r.scope_value ?? "?"}`;
+    }
+    return `${r.geo_state ?? "?"}${r.geo_city ? "/" + r.geo_city : " (statewide)"}`;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Open waitlist queue</CardTitle>
+        <CardDescription className="text-xs">
+          Providers who opted in when a scope was full. The system already wrote
+          an admin_notification when each entry's slot freed up — use this view
+          to track follow-through.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <Label className="text-xs">Filter by add-on</Label>
+          <Select value={addonFilter} onValueChange={setAddonFilter}>
+            <SelectTrigger className="mt-1 w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All add-ons</SelectItem>
+              <SelectItem value="featured">Featured</SelectItem>
+              <SelectItem value="concierge">Concierge</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : !rows || rows.length === 0 ? (
+          <p className="text-sm text-slate-500 italic">
+            No open waitlist entries. Nice — no one is waiting.
+          </p>
+        ) : (
+          <div className="overflow-x-auto -mx-4 md:mx-0">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b border-slate-200">
+                  <th className="px-3 py-2 font-medium text-slate-700">Add-on</th>
+                  <th className="px-3 py-2 font-medium text-slate-700">Scope</th>
+                  <th className="px-3 py-2 font-medium text-slate-700">Facility</th>
+                  <th className="px-3 py-2 font-medium text-slate-700">Requested</th>
+                  <th className="px-3 py-2 font-medium text-slate-700">Status</th>
+                  <th className="px-3 py-2 font-medium text-slate-700 text-right">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {rows.map((r) => (
+                  <tr key={r.id}>
+                    <td className="px-3 py-2">
+                      <Badge variant="outline" className="font-normal capitalize">
+                        {r.addon_type}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs">{scopeLabel(r)}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{r.facility_id.slice(0, 8)}…</td>
+                    <td className="px-3 py-2 text-slate-600">
+                      {new Date(r.requested_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-3 py-2">
+                      <Badge
+                        variant="outline"
+                        className={
+                          r.status === "invited"
+                            ? "border-blue-300 bg-blue-50 text-blue-800"
+                            : "border-amber-300 bg-amber-50 text-amber-800"
+                        }
+                      >
+                        {r.status}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-2 text-right space-x-1">
+                      {r.status === "waiting" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs"
+                          onClick={() => markInvited(r.id)}
+                        >
+                          Mark invited
+                        </Button>
+                      )}
+                      {r.status === "invited" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs"
+                          onClick={() => markFulfilled(r.id)}
+                        >
+                          Mark fulfilled
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => expire(r.id)}
+                      >
+                        Expire
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

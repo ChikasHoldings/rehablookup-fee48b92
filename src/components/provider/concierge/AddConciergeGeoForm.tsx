@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { JoinAddonWaitlistButton } from "@/components/provider/JoinAddonWaitlistButton";
 
 const US_STATE_ABBRS: { code: string; name: string }[] = [
   { code: "AL", name: "Alabama" }, { code: "AK", name: "Alaska" }, { code: "AZ", name: "Arizona" },
@@ -154,7 +155,7 @@ export function AddConciergeGeoForm({
       console.error("[AddConciergeGeoForm] add failed", err);
       const msg = err instanceof Error ? err.message : "Failed to add geo";
       const friendly = msg.includes("Concierge partner cap reached")
-        ? "This geography is full. Pick a different city or contact support to join the waitlist."
+        ? "This geography just filled up. Pick a different city or join the waitlist."
         : msg;
       toast.error(friendly);
     } finally {
@@ -275,12 +276,20 @@ export function AddConciergeGeoForm({
             </span>
           ) : availability ? (
             slotsFull ? (
-              <span>
-                <strong>Cap reached</strong> — {availability.used} of {availability.cap}{" "}
-                partner slots in use for {state}
-                {city.trim().length > 0 ? `, ${city.trim()}` : ""}. Try a
-                different city or join the waitlist by contacting support.
-              </span>
+              <div className="space-y-2">
+                <p>
+                  <strong>Cap reached</strong> — {availability.used} of {availability.cap}{" "}
+                  partner slots in use for {state}
+                  {city.trim().length > 0 ? `, ${city.trim()}` : ""}.
+                </p>
+                <JoinAddonWaitlistButton
+                  addonType="concierge"
+                  facilityId={facilityId}
+                  geoState={state}
+                  geoCity={city.trim().length > 0 ? city.trim() : null}
+                  levelOfCare={Array.from(locs)}
+                />
+              </div>
             ) : (
               <span>
                 <strong>{availability.remaining}</strong> of {availability.cap} partner
