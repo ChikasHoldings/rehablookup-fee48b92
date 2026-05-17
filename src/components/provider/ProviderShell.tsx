@@ -5,6 +5,7 @@ import { ProviderHeader } from "./ProviderHeader";
 import { ProviderSidebar } from "./ProviderSidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { ProviderErrorBoundary } from "./ProviderErrorBoundary";
+import { WelcomeModal } from "./WelcomeModal";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useProviderData } from "@/hooks/useProviderData";
@@ -265,6 +266,11 @@ function ProviderShellContent() {
             </Suspense>
           </ProviderErrorBoundary>
         </main>
+        {/* One-time post-onboarding welcome. Self-gates: only shows
+            when profiles.welcomed_at is null AND
+            onboarding_completed_at is set, so it's a no-op for every
+            other render of every other provider page. */}
+        <WelcomeModal />
       </div>
 
       {/* Row 3 — Mobile Bottom Navigation (in-flow, not fixed) */}
