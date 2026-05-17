@@ -99,7 +99,7 @@ const providerLinks: FooterLink[] = [
   { name: "Marketing Strategies", path: "/provider-guides/rehab-marketing-strategies" },
   { name: "Lead Generation", path: "/provider-guides/addiction-treatment-lead-generation" },
   { name: "Provider FAQ", path: "/provider-faq" },
-  { name: "List Your Facility", path: "/provider-signup", highlight: true },
+  { name: "List Your Facility", path: "/provider/onboarding", highlight: true },
 ];
 
 const companyLinks: FooterLink[] = [

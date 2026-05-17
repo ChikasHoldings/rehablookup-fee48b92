@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { PLANS, type Plan } from "@/lib/planConstants";
+import { trackEvent } from "@/lib/analytics";
 import { useProviderOnboardingState } from "@/hooks/useProviderOnboardingState";
 
 interface PlanStepProps {
@@ -87,6 +88,11 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
           .update({ plan: "pro" } as never)
           .eq("user_id", userId);
         await advance({ plan: "pro", current_step: "build" });
+        trackEvent("provider_onboarding_step_submit", {
+          step_name: "plan",
+          mode: null,
+          plan: "pro",
+        });
         toast.success("Pro is active. Let's build your listing.");
         // Strip the checkout param + advance.
         const next = new URLSearchParams(searchParams);
@@ -123,6 +129,11 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
           .eq("user_id", userId);
       }
       await advance({ plan: "free", current_step: "build" });
+      trackEvent("provider_onboarding_step_submit", {
+        step_name: "plan",
+        mode: null,
+        plan: "free",
+      });
       onAdvance();
     } catch (e) {
       console.error("[PlanStep] free select failed", e);

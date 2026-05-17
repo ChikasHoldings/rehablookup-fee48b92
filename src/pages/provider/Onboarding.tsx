@@ -29,6 +29,7 @@ import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { trackEvent } from "@/lib/analytics";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Loader2 } from "lucide-react";
@@ -107,6 +108,21 @@ export default function ProviderOnboarding() {
       setSearchParams(next, { replace: true });
     }
   }, [queryStep, serverStep, searchParams, setSearchParams]);
+
+  // Section 10 — analytics: fire provider_onboarding_step_view each
+  // time the resolved step changes. mode/plan are stamped from the
+  // current state row so the funnel-view rows carry attribution.
+  useEffect(() => {
+    if (!stateRow) return;
+    if (resolved === "completed") return;
+    trackEvent("provider_onboarding_step_view", {
+      step_name: resolved,
+      mode: stateRow.mode ?? null,
+      plan: stateRow.plan ?? null,
+    });
+    // We intentionally re-fire on serverStep change (after each step
+    // submit advances the cursor) and on direct ?step= back-navigation.
+  }, [resolved, stateRow]);
 
   // Already-onboarded → bounce to dashboard.
   if (profile?.onboarding_completed_at) {

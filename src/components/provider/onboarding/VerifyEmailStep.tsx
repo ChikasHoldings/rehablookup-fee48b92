@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 import { useProviderOnboardingState } from "@/hooks/useProviderOnboardingState";
 
 /**
@@ -154,6 +155,11 @@ export function VerifyEmailStep({ onAdvance }: { onAdvance: () => void }) {
           .eq("user_id", userId);
       }
       await advance({ current_step: "find_or_list" });
+      trackEvent("provider_onboarding_step_submit", {
+        step_name: "verify_email",
+        mode: null,
+        plan: null,
+      });
 
       toast.success("Email verified.");
       onAdvance();

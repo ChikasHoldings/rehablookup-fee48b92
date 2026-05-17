@@ -181,7 +181,7 @@ export function ProviderSEOPageLayout({
                 {heroSubheadline}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link to="/provider-signup">
+                <Link to="/provider/onboarding">
                   <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-8 h-13 shadow-lg hover:shadow-xl transition-all">
                     List Your Facility — It's Free
                     <ArrowRight className="h-5 w-5" />
@@ -286,7 +286,7 @@ export function ProviderSEOPageLayout({
                             List your facility on RehabLookup for free and start receiving verified patient inquiries from families actively seeking treatment.
                           </p>
                           <div className="flex flex-col sm:flex-row gap-2">
-                            <Link to="/provider-signup">
+                            <Link to="/provider/onboarding">
                               <Button className="gap-2 h-11 px-6 font-semibold shadow-md hover:shadow-lg transition-all whitespace-nowrap">
                                 Get Listed Free
                                 <ArrowRight className="h-4 w-4" />
@@ -389,7 +389,7 @@ export function ProviderSEOPageLayout({
               {ctaSubheadline}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
-              <Link to="/provider-signup">
+              <Link to="/provider/onboarding">
                 <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-10 h-14 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">
                   List Your Facility — It's Free
                   <ArrowRight className="h-5 w-5" />

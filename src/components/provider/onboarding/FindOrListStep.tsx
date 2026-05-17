@@ -10,6 +10,7 @@ import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
+import { trackEvent } from "@/lib/analytics";
 import {
   useProviderOnboardingState,
   type ProviderOnboardingStateRow,
@@ -233,6 +234,12 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
         selected_facility_id: facilityId,
         current_step: "plan",
       } as Partial<ProviderOnboardingStateRow>);
+      trackEvent("provider_onboarding_step_submit", {
+        step_name: "find_or_list",
+        mode: "claim",
+        plan: null,
+        has_facility_match: true,
+      });
       onAdvance();
     } catch (e) {
       console.error("[FindOrList] select-facility failed", e);
@@ -255,6 +262,12 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
         selected_facility_id: null,
         current_step: "plan",
       } as Partial<ProviderOnboardingStateRow>);
+      trackEvent("provider_onboarding_step_submit", {
+        step_name: "find_or_list",
+        mode: "list",
+        plan: null,
+        has_facility_match: false,
+      });
       onAdvance();
     } catch (e) {
       console.error("[FindOrList] list-new failed", e);

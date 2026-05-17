@@ -285,7 +285,11 @@ export function FacilityCard({
         </Link>
         {isUnclaimed ? (
           <Link
-            to={facility.slug ? `/provider/claim/${facility.slug}` : "/provider-signup"}
+            to={
+              facility.id
+                ? `/provider/onboarding?intent=claim&facility_id=${facility.id}`
+                : "/provider/onboarding"
+            }
             className="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-emerald-300 hover:text-emerald-700"
           >
             Claim This Listing

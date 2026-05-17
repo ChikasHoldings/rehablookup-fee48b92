@@ -278,18 +278,17 @@ export default function SeekerFacilityProfile() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Route "Claim This Listing" through the wizard. Signed-out visitors
-  // detour via /auth/signup with a returnTo back to the wizard.
+  // Route "Claim This Listing" through the unified onboarding wizard
+  // at /provider/onboarding. The wizard reads ?intent=claim&facility_id=
+  // and pre-seeds selected_facility_id after account creation.
   const handleClaimClick = useCallback(() => {
-    if (!facility?.slug) return;
-    const target = `/provider/claim/${facility.slug}`;
-    if (!currentUserId) {
-      const search = new URLSearchParams({ returnTo: target, claim: "1" }).toString();
-      navigate(`/auth/signup?${search}`);
-      return;
-    }
-    navigate(target);
-  }, [facility?.slug, currentUserId, navigate]);
+    if (!facility?.id) return;
+    const search = new URLSearchParams({
+      intent: "claim",
+      facility_id: facility.id,
+    }).toString();
+    navigate(`/provider/onboarding?${search}`);
+  }, [facility?.id, navigate]);
 
   const { data: facilityPlan = "free" } = useQuery({
     queryKey: ["facility-plan", facility?.id],

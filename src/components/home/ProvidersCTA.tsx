@@ -148,7 +148,7 @@ export function ProvidersCTA() {
               </Button>
 
               <Link
-                to="/provider-signup"
+                to="/provider/onboarding"
                 className="text-sm font-medium text-white/90 hover:text-white underline underline-offset-4 decoration-white/40 hover:decoration-white transition-colors"
               >
                 Already listed? Claim your profile →

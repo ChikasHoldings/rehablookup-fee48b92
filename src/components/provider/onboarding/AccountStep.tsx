@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { validateEmail } from "@/lib/facilitySanitization";
+import { trackEvent } from "@/lib/analytics";
 import { useProviderOnboardingState } from "@/hooks/useProviderOnboardingState";
 
 /**
@@ -108,6 +109,11 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
         ...(intent === "claim" && claimFacilityId
           ? { selected_facility_id: claimFacilityId, mode: "claim" }
           : {}),
+      });
+      trackEvent("provider_onboarding_step_submit", {
+        step_name: "account",
+        mode: intent === "claim" && claimFacilityId ? "claim" : null,
+        plan: null,
       });
 
       onAdvance();

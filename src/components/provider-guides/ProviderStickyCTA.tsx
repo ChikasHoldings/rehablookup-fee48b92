@@ -41,7 +41,7 @@ export function ProviderStickyCTA() {
             List your facility free
           </p>
           <div className="flex items-center gap-2 shrink-0">
-            <Link to="/provider-signup">
+            <Link to="/provider/onboarding">
               <Button size="sm" variant="secondary" className="gap-1.5 h-8 text-xs font-semibold px-4">
                 Get Started
                 <ArrowRight className="h-3 w-3" />

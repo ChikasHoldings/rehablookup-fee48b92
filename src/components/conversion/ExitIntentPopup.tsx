@@ -17,6 +17,7 @@ const SUPPRESSED_ROUTES = [
   "/signup",
   "/seeker/signup",
   "/provider-signup",
+  "/provider/onboarding",
   "/lp/",
 ];
 

@@ -435,18 +435,22 @@ const CenterProfile = () => {
     refetchOnReconnect: false,
   });
 
-  // Route the "Claim This Listing" affordances through the wizard. Signed-out
-  // visitors detour via /auth/signup with a returnTo back to the wizard.
+  // Route the "Claim This Listing" affordances through the unified
+  // onboarding wizard at /provider/onboarding so seekers see one
+  // consistent entry path. The wizard reads ?intent=claim&facility_id=
+  // and pre-seeds selected_facility_id once the user finishes account
+  // creation. Signed-in providers land in the wizard at their current
+  // resume step; the wizard's claim-seed is still applied. Signed-out
+  // visitors are bounced to /auth/signup by the wizard if they haven't
+  // started yet — no separate detour needed here.
   const handleClaimClick = useCallback(() => {
-    if (!facility?.slug) return;
-    const target = `/provider/claim/${facility.slug}`;
-    if (!currentUserId) {
-      const search = new URLSearchParams({ returnTo: target, claim: "1" }).toString();
-      navigate(`/auth/signup?${search}`);
-      return;
-    }
-    navigate(target);
-  }, [facility?.slug, currentUserId, navigate]);
+    if (!facility?.id) return;
+    const search = new URLSearchParams({
+      intent: "claim",
+      facility_id: facility.id,
+    }).toString();
+    navigate(`/provider/onboarding?${search}`);
+  }, [facility?.id, navigate]);
 
   // Claim-state flags are now sourced directly from the shared loader's
   // result (baked into `facility` by the queryFn above). When the flags
