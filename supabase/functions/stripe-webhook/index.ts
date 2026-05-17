@@ -3563,12 +3563,13 @@ Deno.serve(async (req) => {
 
 
     // ==========================================
-    // Handle charge.refunded (international payments)
+    // Handle charge.refunded (international payments + out-of-band
+    // subscription refunds via Stripe dashboard)
     // ==========================================
     if (event.type === "charge.refunded") {
       const charge = event.data.object as Stripe.Charge;
       const paymentIntentId = charge.payment_intent as string;
-      
+
       if (paymentIntentId) {
         logStep("Processing refund", { chargeId: charge.id, paymentIntentId });
 
@@ -3610,6 +3611,60 @@ Deno.serve(async (req) => {
                 payment_intent_id: paymentIntentId,
               },
             });
+          }
+        } else {
+          // Round-30: out-of-band subscription refund detection.
+          // If an admin issues a refund via Stripe dashboard for a
+          // Pro/Featured/Concierge subscription (not via the
+          // cancel-subscription helper), our own audit trail
+          // never records it. Look up the customer and surface to
+          // admin so the in-DB state can be reconciled.
+          const customerId = typeof charge.customer === "string"
+            ? charge.customer
+            : charge.customer?.id ?? null;
+          if (customerId) {
+            const { data: facSub } = await supabaseAdmin
+              .from("facility_subscriptions")
+              .select("id, facility_id, provider_id, tier, status")
+              .eq("stripe_customer_id", customerId)
+              .maybeSingle();
+            if (facSub) {
+              const refundId = charge.refunds?.data?.[0]?.id ?? null;
+              const refundAmountCents = charge.amount_refunded ?? null;
+              logStep("Out-of-band subscription refund detected", {
+                customerId,
+                facSubId: facSub.id,
+                refundAmountCents,
+              });
+              try {
+                await supabaseAdmin.from("admin_notifications").insert({
+                  type: "out_of_band_subscription_refund",
+                  title: "Out-of-band subscription refund (Stripe dashboard)",
+                  message:
+                    `A Stripe-dashboard refund was issued for subscription ` +
+                    `${facSub.id} (tier=${facSub.tier}, status=${facSub.status}, ` +
+                    `customer=${customerId}). ` +
+                    `Refund ${refundAmountCents != null ? `$${(refundAmountCents/100).toFixed(2)}` : "(amount unknown)"} ` +
+                    `via charge ${charge.id}. The cancel-subscription helper was bypassed; ` +
+                    `reconcile DB state if the subscription should be canceled.`,
+                  metadata: {
+                    facility_subscription_id: facSub.id,
+                    facility_id: facSub.facility_id,
+                    provider_id: facSub.provider_id,
+                    tier: facSub.tier,
+                    current_status: facSub.status,
+                    stripe_charge_id: charge.id,
+                    stripe_refund_id: refundId,
+                    stripe_customer_id: customerId,
+                    refund_amount_cents: refundAmountCents,
+                  } as Record<string, unknown>,
+                });
+              } catch (adminErr) {
+                logStep("admin_notifications insert failed (oob refund)", {
+                  error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+                });
+              }
+            }
           }
         }
       }

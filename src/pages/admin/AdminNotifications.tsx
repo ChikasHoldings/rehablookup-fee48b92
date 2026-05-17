@@ -158,6 +158,7 @@ const DELIVERY_FAILURE_TYPES = [
   "dunning_total_delivery_failure",
   "pro_activation_db_failure",
   "cancellation_split_brain",
+  "out_of_band_subscription_refund",
 ];
 
 export default function AdminNotifications() {
