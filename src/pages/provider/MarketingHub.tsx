@@ -45,7 +45,7 @@ export default function MarketingHub() {
           <p className="mt-1 text-sm text-muted-foreground">
             {isPro
               ? "Grow your facility's visibility with these add-ons. Each is billed separately from your Pro subscription and can be added or removed anytime."
-              : "Pro-only add-ons that amplify your listing. Upgrade to Pro to unlock."}
+              : "Pro-only add-ons that amplify your listing. Upgrade to Pro to access."}
           </p>
         </div>
 

@@ -75,7 +75,6 @@ interface NotificationPreferences {
   lead_notification_frequency: 'instant' | 'daily_digest' | 'weekly_digest' | 'none';
   notify_new_leads: boolean;
   notify_lead_status_changes: boolean;
-  notify_lead_limit_warnings: boolean;
   notify_facility_views: boolean;
   digest_time: string;
   followup_reminders_enabled: boolean;
@@ -166,7 +165,6 @@ export default function ProviderSettingsPage() {
   const [leadNotificationFrequency, setLeadNotificationFrequency] = useState<'instant' | 'daily_digest' | 'weekly_digest' | 'none'>('instant');
   const [notifyNewLeads, setNotifyNewLeads] = useState(true);
   const [notifyLeadStatusChanges, setNotifyLeadStatusChanges] = useState(true);
-  const [notifyLeadLimitWarnings, setNotifyLeadLimitWarnings] = useState(true);
   const [notifyFacilityViews, setNotifyFacilityViews] = useState(false);
   const [digestTime, setDigestTime] = useState('09:00');
   const [followupRemindersEnabled, setFollowupRemindersEnabled] = useState(true);
@@ -206,7 +204,7 @@ export default function ProviderSettingsPage() {
 
       const { data, error } = await supabase
         .from("notification_preferences")
-        .select("email_lead_alerts, email_weekly_digest, email_product_updates, sms_lead_alerts, browser_notifications, lead_notification_frequency, notify_new_leads, notify_lead_status_changes, notify_lead_limit_warnings, notify_facility_views, digest_time, followup_reminders_enabled, default_snooze_duration")
+        .select("email_lead_alerts, email_weekly_digest, email_product_updates, sms_lead_alerts, browser_notifications, lead_notification_frequency, notify_new_leads, notify_lead_status_changes, notify_facility_views, digest_time, followup_reminders_enabled, default_snooze_duration")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -262,7 +260,6 @@ export default function ProviderSettingsPage() {
       leadNotificationFrequency: notificationPrefs.lead_notification_frequency || 'instant',
       notifyNewLeads: notificationPrefs.notify_new_leads ?? true,
       notifyLeadStatusChanges: notificationPrefs.notify_lead_status_changes ?? true,
-      notifyLeadLimitWarnings: notificationPrefs.notify_lead_limit_warnings ?? true,
       notifyFacilityViews: notificationPrefs.notify_facility_views ?? false,
       digestTime: notificationPrefs.digest_time || '09:00',
       followupRemindersEnabled: notificationPrefs.followup_reminders_enabled ?? true,
@@ -281,7 +278,6 @@ export default function ProviderSettingsPage() {
       leadNotificationFrequency !== initialNotificationState.leadNotificationFrequency ||
       notifyNewLeads !== initialNotificationState.notifyNewLeads ||
       notifyLeadStatusChanges !== initialNotificationState.notifyLeadStatusChanges ||
-      notifyLeadLimitWarnings !== initialNotificationState.notifyLeadLimitWarnings ||
       notifyFacilityViews !== initialNotificationState.notifyFacilityViews ||
       digestTime !== initialNotificationState.digestTime ||
       followupRemindersEnabled !== initialNotificationState.followupRemindersEnabled ||
@@ -290,7 +286,7 @@ export default function ProviderSettingsPage() {
   }, [
     emailLeadAlerts, emailWeeklyDigest, emailProductUpdates, smsLeadAlerts,
     browserNotifications, leadNotificationFrequency, notifyNewLeads,
-    notifyLeadStatusChanges, notifyLeadLimitWarnings, notifyFacilityViews,
+    notifyLeadStatusChanges, notifyFacilityViews,
     digestTime, followupRemindersEnabled, defaultSnoozeDuration,
     initialNotificationState
   ]);
@@ -324,7 +320,6 @@ export default function ProviderSettingsPage() {
       setLeadNotificationFrequency(notificationPrefs.lead_notification_frequency || 'instant');
       setNotifyNewLeads(notificationPrefs.notify_new_leads ?? true);
       setNotifyLeadStatusChanges(notificationPrefs.notify_lead_status_changes ?? true);
-      setNotifyLeadLimitWarnings(notificationPrefs.notify_lead_limit_warnings ?? true);
       setNotifyFacilityViews(notificationPrefs.notify_facility_views ?? false);
       setDigestTime(notificationPrefs.digest_time || '09:00');
       setFollowupRemindersEnabled(notificationPrefs.followup_reminders_enabled ?? true);
@@ -355,7 +350,6 @@ export default function ProviderSettingsPage() {
       setLeadNotificationFrequency(notificationPrefs.lead_notification_frequency || 'instant');
       setNotifyNewLeads(notificationPrefs.notify_new_leads ?? true);
       setNotifyLeadStatusChanges(notificationPrefs.notify_lead_status_changes ?? true);
-      setNotifyLeadLimitWarnings(notificationPrefs.notify_lead_limit_warnings ?? true);
       setNotifyFacilityViews(notificationPrefs.notify_facility_views ?? false);
       setDigestTime(notificationPrefs.digest_time || '09:00');
       setFollowupRemindersEnabled(notificationPrefs.followup_reminders_enabled ?? true);
@@ -394,7 +388,6 @@ export default function ProviderSettingsPage() {
       lead_notification_frequency: leadNotificationFrequency,
       notify_new_leads: notifyNewLeads,
       notify_lead_status_changes: notifyLeadStatusChanges,
-      notify_lead_limit_warnings: notifyLeadLimitWarnings,
       notify_facility_views: notifyFacilityViews,
       digest_time: digestTime,
       followup_reminders_enabled: followupRemindersEnabled,
@@ -1364,7 +1357,6 @@ export default function ProviderSettingsPage() {
                       {[
                         { checked: notifyNewLeads, onChange: setNotifyNewLeads, label: "New Leads", desc: "When a new lead is available" },
                         { checked: notifyLeadStatusChanges, onChange: setNotifyLeadStatusChanges, label: "Status Changes", desc: "When lead status updates" },
-                        { checked: notifyLeadLimitWarnings, onChange: setNotifyLeadLimitWarnings, label: "Low Balance", desc: "When credits are running low" },
                         { checked: notifyFacilityViews, onChange: setNotifyFacilityViews, label: "Profile Views", desc: "Weekly view summary" },
                       ].map((item, idx) => (
                         <div key={idx} className="flex items-center justify-between py-2.5">

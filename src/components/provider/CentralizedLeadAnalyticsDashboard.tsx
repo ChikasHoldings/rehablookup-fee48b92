@@ -38,8 +38,8 @@ const STATUS_BADGES: Record<string, string> = {
 };
 
 const FUNNEL_STAGES = [
-  { key: "new" as const, label: "New", color: "bg-blue-500", textColor: "text-blue-600", desc: "Awaiting unlock" },
-  { key: "contacted" as const, label: "Contacted", color: "bg-amber-500", textColor: "text-amber-600", desc: "Unlocked & reached out" },
+  { key: "new" as const, label: "New", color: "bg-blue-500", textColor: "text-blue-600", desc: "Awaiting response" },
+  { key: "contacted" as const, label: "Contacted", color: "bg-amber-500", textColor: "text-amber-600", desc: "Provider reached out" },
   { key: "qualified" as const, label: "Qualified", color: "bg-purple-500", textColor: "text-purple-600", desc: "Good fit confirmed" },
   { key: "converted" as const, label: "Converted", color: "bg-emerald-500", textColor: "text-emerald-600", desc: "Admitted" },
 ];

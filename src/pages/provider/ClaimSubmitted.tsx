@@ -224,14 +224,15 @@ export default function ClaimSubmitted() {
                       While you wait — preview Pro
                     </p>
                     <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                      The moment your claim is approved you'll be able to activate Pro and unlock
-                      a 20% discount on every lead unlock, featured placement on state &amp; city
-                      pages, and a search-ranking boost. Most facilities see Pro pay for itself
-                      after ~50 lead unlocks.
+                      The moment your claim is approved you can activate Pro ($99/mo): a verified
+                      badge, priority placement in search, 10 photos plus video on your profile,
+                      unlimited facility listings, analytics, and access to the Marketing Hub
+                      (Featured + Concierge add-ons). All leads are delivered to you with full
+                      contact details — no per-lead fees, ever.
                     </p>
                   </div>
                   <Button asChild className="gap-1.5 shrink-0">
-                    <Link to="/provider/pro-upgrade">
+                    <Link to="/provider/billing">
                       See Pro pricing
                       <ArrowRight className="h-4 w-4" />
                     </Link>

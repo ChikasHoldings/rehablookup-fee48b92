@@ -209,7 +209,7 @@ export default function ProviderDashboardPage() {
     retry: 2,
   });
 
-  // Fetch total leads count via secure DB function (bypasses RLS unlock restriction for accurate counts)
+  // Fetch total leads count via SECURITY DEFINER RPC so counts are accurate regardless of view-level row filtering.
   const { data: totalLeadsCount = 0 } = useQuery({
     queryKey: ["total-leads-count", facilityId],
     queryFn: async (): Promise<number> => {

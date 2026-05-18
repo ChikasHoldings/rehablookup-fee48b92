@@ -55,8 +55,11 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
 
       const leads = data || [];
       const received = leads.length;
-      const unlocked = leads.filter(l => l.is_unlocked).length;
-      const missed = leads.filter(l => l.status === "expired" || (l.status === "new" && !l.is_unlocked)).length;
+      // "Responded" = provider acted on the lead (contacted/qualified/converted).
+      // Reuses the `unlocked` field name in the WeeklyKPIs interface for
+      // backward-compat with callers that still read `kpis.unlocked`.
+      const unlocked = leads.filter(l => l.status && l.status !== "new" && l.status !== "expired").length;
+      const missed = leads.filter(l => l.status === "expired").length;
       const estimatedRevenueLostCents = missed * AVG_REVENUE_PER_LEAD_CENTS;
 
       return { received, unlocked, missed, estimatedRevenueLostCents };
@@ -67,26 +70,25 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
     retry: 2,
   });
 
-  const unlockedThisWeek = kpis?.unlocked ?? 0;
-  const lockedThisWeek = Math.max(0, (kpis?.received ?? 0) - unlockedThisWeek);
+  const respondedThisWeek = kpis?.unlocked ?? 0;
+  const receivedThisWeek = kpis?.received ?? 0;
 
   const metrics = [
     {
       label: "Total Leads",
       value: totalLeadsCount,
-      subtitle: `${unlockedThisWeek} delivered this week`,
+      subtitle: `${receivedThisWeek} received this week`,
       icon: Inbox,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
     },
     {
-      label: "Locked",
-      value: lockedThisWeek,
-      subtitle: "masked preview",
-      icon: AlertTriangle,
-      iconBg: "bg-warning/10",
-      iconColor: "text-warning",
-      highlight: lockedThisWeek > 0,
+      label: "Responded",
+      value: respondedThisWeek,
+      subtitle: "this week",
+      icon: TrendingUp,
+      iconBg: "bg-emerald-500/10",
+      iconColor: "text-emerald-600",
     },
     {
       label: "Impressions",
@@ -111,10 +113,7 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
         {metrics.map((m) => (
           <Card
             key={m.label}
-            className={cn(
-              "border-border/40 transition-colors",
-              (m as any).highlight && "border-destructive/30 bg-destructive/[0.02]"
-            )}
+            className="border-border/40 transition-colors"
           >
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2.5">
@@ -129,10 +128,7 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
                     <Skeleton className="h-6 w-10 mt-0.5" />
                   ) : (
                     <>
-                      <p className={cn(
-                        "text-lg sm:text-xl font-bold leading-tight tabular-nums",
-                        (m as any).highlight ? "text-destructive" : "text-foreground"
-                      )}>
+                      <p className="text-lg sm:text-xl font-bold leading-tight tabular-nums text-foreground">
                         {m.value}
                       </p>
                       {m.subtitle && (

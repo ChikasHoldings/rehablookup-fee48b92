@@ -102,27 +102,6 @@ export default function ProviderInquiriesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional run-once effect on mount; reads URL params to seed state
   }, []);
 
-  // Per-lead Stripe-paid unlock reconciliation retired in the
-  // monetization rebuild — the pay-per-unlock model was dropped and
-  // the verify-unlock-payment edge function deleted. Any stale
-  // `?unlock_success=…&session_id=…` params from a legacy URL are
-  // stripped silently so they don't loop.
-  useEffect(() => {
-    if (
-      searchParams.get("unlock_success") ||
-      searchParams.get("session_id") ||
-      searchParams.get("lead")
-    ) {
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete("unlock_success");
-      newParams.delete("session_id");
-      newParams.delete("lead");
-      setSearchParams(newParams, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-
   // Get all facility IDs
   const facilityIds = useMemo(() => facilities.map(f => f.id), [facilities]);
 

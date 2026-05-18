@@ -95,7 +95,7 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
   };
 
   const currentStatus = (inquiry.provider_response_status || 'pending') as ResponseStatus;
-  // Data from leads_provider_view is already masked/unmasked at the DB level
+  // PII is exposed directly from leads_provider_view to the facility owner.
   const displayName = inquiry.name;
   const displayEmail = inquiry.email;
   const displayPhone = inquiry.phone;

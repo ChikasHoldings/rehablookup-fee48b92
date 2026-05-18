@@ -240,9 +240,9 @@ function WelcomeStep({
           </div>
         </div>
 
-        {/* Welcome Offer — exclusive banner */}
+        {/* Pro upgrade nudge */}
         <button
-          onClick={() => onNavigate("billing", "welcome_offer")}
+          onClick={() => onNavigate("billing", "welcome_pro_nudge")}
           className={cn(
             "w-full rounded-xl px-4 py-3.5 text-left",
             "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20",
@@ -251,24 +251,20 @@ function WelcomeStep({
             "transition-all group relative overflow-hidden"
           )}
         >
-          <div className="absolute top-0 right-0 px-2 py-0.5 bg-red-500 text-white text-[8px] font-bold uppercase tracking-wider rounded-bl-lg">
-            Limited Time
-          </div>
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/40">
               <Gift className="h-4.5 w-4.5 text-amber-600 dark:text-amber-400" />
             </div>
-            <div className="flex-1 min-w-0 pr-12">
-              <p className="text-[13px] font-bold text-foreground leading-tight">🎁 Welcome Credit Offer</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-foreground leading-tight">Unlock the full toolkit with Pro</p>
               <p className="text-[11px] text-amber-800 dark:text-amber-300/80 leading-snug mt-1">
-                Get up to <strong>$200 bonus credits</strong> on your first top-up. Respond to inquiries faster — don't let leads slip away.
+                $99/mo — verified badge, priority placement, 10 photos + video, unlimited facilities, and the Marketing Hub.
               </p>
             </div>
           </div>
-          <div className="mt-2.5 flex items-center justify-between">
-            <span className="text-[10px] text-amber-700/70 dark:text-amber-400/60">Exclusive to new providers</span>
+          <div className="mt-2.5 flex items-center justify-end">
             <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-              Claim Now <ChevronRight className="h-3 w-3" />
+              See plans <ChevronRight className="h-3 w-3" />
             </span>
           </div>
         </button>
