@@ -6,7 +6,6 @@ import { useCallback } from "react";
 export interface ProStatusData {
   isPro: boolean;
   status: 'active' | 'canceled' | 'past_due' | 'inactive';
-  unlockDiscountPercent: number;
   currentPeriodEnd: string | null;
   facilityId: string | null;
   stripeSubscriptionId: string | null;
@@ -16,7 +15,6 @@ export interface ProStatusData {
 const DEFAULT_PRO_STATUS: ProStatusData = {
   isPro: false,
   status: 'inactive',
-  unlockDiscountPercent: 0,
   currentPeriodEnd: null,
   facilityId: null,
   stripeSubscriptionId: null,
@@ -31,10 +29,9 @@ export function useProStatus(facilityId?: string) {
         const session = await getCachedSession();
         if (!session) return DEFAULT_PRO_STATUS;
 
-        // Query pro_subscriptions table with existing columns only
         let queryBuilder = supabase
           .from("facility_subscriptions")
-          .select("id, provider_id, facility_id, status, stripe_subscription_id, current_period_end, unlock_discount_percent, cancel_at_period_end, created_at, updated_at")
+          .select("id, provider_id, facility_id, status, stripe_subscription_id, current_period_end, cancel_at_period_end, created_at, updated_at")
           .eq("provider_id", session.user.id);
 
         if (facilityId) {
@@ -65,7 +62,6 @@ export function useProStatus(facilityId?: string) {
         return {
           isPro: isActive,
           status: (data.status || 'inactive') as ProStatusData['status'],
-          unlockDiscountPercent: isActive ? (data.unlock_discount_percent ?? 20) : 0,
           currentPeriodEnd: data.current_period_end,
           facilityId: data.facility_id,
           stripeSubscriptionId: data.stripe_subscription_id,

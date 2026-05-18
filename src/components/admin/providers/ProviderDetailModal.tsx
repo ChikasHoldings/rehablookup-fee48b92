@@ -96,7 +96,7 @@ export function ProviderDetailModal({
       if (!provider?.id) return null;
       const { data } = await supabase
         .from("facility_subscriptions")
-        .select("id, facility_id, status, price_cents, current_period_end, stripe_subscription_id, unlock_discount_percent, created_at")
+        .select("id, facility_id, status, price_cents, current_period_end, stripe_subscription_id, created_at")
         .eq("facility_id", provider.id)
         .eq("status", "active")
         .maybeSingle();

@@ -65,7 +65,6 @@ export type Lead = {
   preferred_contact: string;
   lead_score: number | null;
   lead_score_label: string | null;
-  credit_cost: number | null;
   exclusive_until: string | null;
   extended_until: string | null;
   assigned_at: string | null;

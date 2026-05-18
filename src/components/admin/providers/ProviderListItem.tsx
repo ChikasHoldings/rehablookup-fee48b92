@@ -79,7 +79,6 @@ export type ProSubscription = {
   id: string;
   facility_id: string;
   status: string;
-  unlock_discount_percent: number;
   current_period_end: string | null;
 };
 

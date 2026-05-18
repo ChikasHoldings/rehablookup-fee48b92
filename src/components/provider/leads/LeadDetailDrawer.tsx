@@ -24,7 +24,6 @@ import {
   Sparkles,
   BellOff,
   Bell,
-  Lock,
   Smartphone,
 } from "lucide-react";
 import {
@@ -85,18 +84,14 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
   const queryClient = useQueryClient();
   const { trackContact } = useLeadContactTracking();
 
-  // EKRA flat-fee model: every lead delivered to its facility owner is
-  // fully accessible — credit-based unlocks + Pro-gated PII reveal are
-  // retired. `isLocked: false` keeps the legacy locked-state JSX
-  // unreachable until the dead branches are deleted in a follow-up.
+  // EKRA flat-fee model: every lead is fully accessible to its facility
+  // owner. Credit-based unlocks + Pro-gated PII reveal are retired.
   const displayInfo = lead ? {
     name: lead.name,
     email: lead.email,
     phone: lead.phone,
     initials: lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase(),
-    isLocked: false,
   } : null;
-  const isUnlocked = true;
 
   // Fetch notes for this lead
   const { data: notes = [], isLoading: notesLoading } = useQuery({
@@ -239,9 +234,6 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                 <DialogTitle className="text-xl">
                   {displayInfo?.name || "Unknown Lead"}
                 </DialogTitle>
-                {displayInfo?.isLocked && (
-                  <Lock className="h-4 w-4 text-muted-foreground" />
-                )}
               </div>
               <DialogDescription className="flex items-center gap-2 mt-1">
                 <Calendar className="h-3.5 w-3.5" />
@@ -352,41 +344,10 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                   Contact Information
-                  {displayInfo?.isLocked && (
-                    <Badge variant="outline" className="gap-1 text-xs">
-                      <Lock className="h-3 w-3" />
-                      Locked
-                    </Badge>
-                  )}
                 </h3>
-                
-                {displayInfo?.isLocked ? (
-                  /* Locked State - Show unlock prompt */
-                  <div className="p-6 rounded-lg bg-muted/30 text-center space-y-4">
-                    <div className="h-12 w-12 rounded-full bg-muted mx-auto flex items-center justify-center">
-                      <Lock className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">Contact Details Locked</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Unlock to view phone and email
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <Phone className="h-4 w-4" />
-                        {displayInfo.phone}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Mail className="h-4 w-4" />
-                        {displayInfo.email}
-                      </span>
-                    </div>
-                    {/* Lead unlocking retired in monetization rebuild. */}
-                  </div>
-                ) : (
-                  /* Unlocked State - Show full contact info with instant CTAs */
-                  <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
+
+                {/* Full contact info with instant CTAs */}
+                <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
                     {/* Quick Action CTAs */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <Button 
@@ -509,7 +470,6 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
                     </div>
                     </div>
                   </div>
-                )}
               </div>
 
               {/* Message */}
@@ -754,32 +714,19 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
               {/* Quick Actions */}
               <Separator />
               <div className="flex flex-wrap gap-2">
-                <Button 
-                  variant="outline" 
-                  className="gap-2" 
-                  disabled={displayInfo?.isLocked}
-                  asChild={!displayInfo?.isLocked}
-                >
-                  {displayInfo?.isLocked ? (
-                    <>
-                      <Phone className="h-4 w-4" />
-                      Unlock to Call
-                    </>
-                  ) : (
+                <Button variant="outline" className="gap-2" asChild>
                   <a href={`tel:${lead.phone}`}>
                     <Phone className="h-4 w-4" />
                     Call Lead
                   </a>
-                  )}
                 </Button>
-                <Button 
-                  variant="default" 
+                <Button
+                  variant="default"
                   className="gap-2"
                   onClick={() => setEmailDialogOpen(true)}
-                  disabled={displayInfo?.isLocked}
                 >
                   <Mail className="h-4 w-4" />
-                  {displayInfo?.isLocked ? "Unlock to Email" : "Email Lead"}
+                  Email Lead
                 </Button>
               </div>
             </div>
@@ -787,14 +734,12 @@ export function LeadDetailDrawer({ lead, open, onOpenChange }: LeadDetailDrawerP
         </DialogContent>
       </Dialog>
 
-      {/* Email Dialog - Only render with real data when unlocked */}
-      {isUnlocked && (
-        <EmailLeadDialog
-          lead={lead}
-          open={emailDialogOpen}
-          onOpenChange={setEmailDialogOpen}
-        />
-      )}
+      {/* Email Dialog */}
+      <EmailLeadDialog
+        lead={lead}
+        open={emailDialogOpen}
+        onOpenChange={setEmailDialogOpen}
+      />
     </>
   );
 }

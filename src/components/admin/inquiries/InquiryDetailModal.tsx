@@ -42,10 +42,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
 
   // Legacy lead_unlocks table dropped — surface an empty array so the
   // existing "unlock history" UI section degrades to its empty state.
-  // Type `any[]` so downstream conditional accesses don't break the
-  // type-checker; the array is empty at runtime so they never fire.
-  const unlockData: any[] = [];
-
   // Fetch distribution details
   const { data: distributions } = useQuery({
     queryKey: ["inquiry-distributions", lead?.id],
@@ -207,7 +203,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
 
   const assignedFacility = lead?.facility_id ? facilityMap.get(lead.facility_id) : providerInfo?.facility;
   const originalFacility = lead?.original_facility_id ? facilityMap.get(lead.original_facility_id) : null;
-  const isUnlocked = (unlockData?.length || 0) > 0;
   const isRedistributed = lead?.redistribution_status === "extended" || lead?.redistribution_status === "redistributed";
   const getInitials = () => lead?.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
 
@@ -230,16 +225,12 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
       if (d.notification_sent_at) events.push({ date: d.notification_sent_at, label: "Provider Notified", detail: facName, icon: Send, color: "bg-muted text-muted-foreground" });
     });
 
-    unlockData?.forEach((u: any) => {
-      events.push({ date: u.unlocked_at, label: "Lead Unlocked", detail: `$${(u.unlock_price_cents / 100).toFixed(2)} via ${u.payment_method}`, icon: Unlock, color: "bg-success/10 text-success" });
-    });
-
     if (lead.provider_responded_at) events.push({ date: lead.provider_responded_at, label: "Provider Responded", detail: lead.provider_response_status, icon: CheckCircle, color: "bg-success/10 text-success" });
     if (lead.lead_expired_at) events.push({ date: lead.lead_expired_at, label: "Lead Expired", detail: "Exclusive window ended", icon: Clock, color: "bg-muted text-muted-foreground" });
     if (relatedPlacement) events.push({ date: relatedPlacement.created_at, label: "Converted to Placement", detail: relatedPlacement.primary_concern || "Case created", icon: Handshake, color: "bg-purple-500/10 text-purple-600" });
 
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [lead, unlockData, distributions, relatedPlacement, assignedFacility, facilityMap]);
+  }, [lead, distributions, relatedPlacement, assignedFacility, facilityMap]);
 
   if (!lead) return null;
 
@@ -283,11 +274,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                 <Badge variant="secondary" className="h-5 text-xs gap-1">
                   <MessageSquare className="h-3 w-3" />{lead.inquiry_type === "request_callback" ? "Callback" : lead.inquiry_type === "tour_request" ? "Tour" : "Info"}
                 </Badge>
-                {isUnlocked ? (
-                  <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 h-5 text-xs"><Unlock className="h-3 w-3" />Unlocked</Badge>
-                ) : (
-                  <Badge variant="outline" className="bg-muted text-muted-foreground border-border gap-1 h-5 text-xs"><Lock className="h-3 w-3" />Locked</Badge>
-                )}
                 {isRedistributed && (
                   <Badge variant="outline" className="bg-info/10 text-info border-info/30 gap-1 h-5 text-xs"><Share2 className="h-3 w-3" />Redistributed</Badge>
                 )}
@@ -320,11 +306,9 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
             <TabsContent value="overview" className="m-0 data-[state=inactive]:hidden">
               <div className="p-5 space-y-5">
                 {/* KPI Strip */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {[
                     { label: "Lead Score", value: lead.lead_score ?? "—", icon: Star, color: "text-warning" },
-                    { label: "Credit Cost", value: lead.credit_cost ? `$${(lead.credit_cost / 100).toFixed(0)}` : "—", icon: CreditCard, color: "text-primary" },
-                    { label: "Unlocks", value: unlockData?.length || 0, icon: Unlock, color: "text-success" },
                     { label: "Distributions", value: distributions?.length || 0, icon: Share2, color: "text-info" },
                   ].map((kpi) => (
                     <div key={kpi.label} className="p-3 rounded-xl border bg-card text-center">
@@ -377,16 +361,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                           lead.status === "contacted" && "bg-chart-3/10 text-chart-3 border-chart-3/30",
                           lead.status === "converted" && "bg-success/10 text-success border-success/30",
                         )}>{lead.status}</Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Unlocked</span>
-                        {isUnlocked ? (
-                          <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 text-xs">
-                            <Unlock className="h-3 w-3" />Yes — {format(new Date(unlockData![0].unlocked_at), "MMM d, h:mm a")}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs"><Lock className="h-3 w-3 mr-1" />No</Badge>
-                        )}
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Distribution</span>

@@ -25,11 +25,9 @@ export function ProviderLeadsTab({ provider, providerFacilities }: ProviderLeads
   const facilityIds = providerFacilities?.map((f) => f.id) || [provider.id];
   const filteredIds = facilityFilter === "all" ? facilityIds : [facilityFilter];
 
-  // Fetch leads across all facilities. The pay-per-unlock model and
-  // its companion columns (lead_score, credit_cost) were retired
-  // during the monetization rebuild — every paid plan is now a flat-
-  // fee Pro/Featured subscription. Lead rows themselves still exist;
-  // we just no longer surface unlock pricing or score.
+  // Fetch leads across all facilities. Lead pricing/unlocks were
+  // retired with the credit model; every lead is delivered for free
+  // to its facility owner under the flat-fee Pro subscription.
   const { data: leads, isLoading } = useQuery({
     queryKey: ["admin-provider-all-leads", provider.user_id, facilityFilter],
     queryFn: async () => {
