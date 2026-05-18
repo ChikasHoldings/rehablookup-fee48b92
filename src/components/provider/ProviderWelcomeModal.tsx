@@ -53,7 +53,7 @@ const FREE_FEATURES = [
 ];
 
 const PRO_FEATURES = [
-  "Up to 5 listings",
+  "Unlimited listings",
   "Verified badge",
   "Lead analytics + response insights",
   "Priority placement (+50 ranking)",
@@ -118,8 +118,8 @@ export function ProviderWelcomeModal({
     const allowedTargets: Record<string, string> = {
       listings: "/provider/listings",
       dashboard: "/provider",
-      "pro-upgrade": "/provider/pro-upgrade",
-      billing: "/provider/billing?purchase_credits=true",
+      "pro-upgrade": "/provider/billing?upgrade=pro",
+      billing: "/provider/billing?upgrade=pro",
     };
     if (!allowedTargets[target]) return;
     
@@ -224,8 +224,8 @@ function WelcomeStep({
             {[
               { icon: Building2, title: "List facility", desc: "Programs & insurance" },
               { icon: Users, title: "Get inquiries", desc: "From your listing page" },
-              { icon: Zap, title: "Unlock leads", desc: "View contact details" },
-              { icon: Shield, title: "Placements", desc: "Pre-screened referrals" },
+              { icon: Zap, title: "Reach families", desc: "Full contact details on Pro" },
+              { icon: Shield, title: "Concierge", desc: "Pre-screened referrals" },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-2.5 rounded-lg bg-muted/50 px-3 py-2.5">
                 <div className="flex-shrink-0 flex h-7 w-7 items-center justify-center rounded-md bg-primary/10">

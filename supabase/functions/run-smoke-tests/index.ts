@@ -85,10 +85,7 @@ const ILLEGAL_PROBES: Array<{ from: string; to: string }> = [
 // "Missing inquiry_id" vs "Provide an inquiry id") don't break the suite —
 // we just need confidence that the message names the correct field.
 type EdgeFn =
-  | "confirm-placement"
   | "admin-manage-invoice"
-  | "charge-placement-fee"
-  | "unlock-lead"
   | "send-concierge-introduction"
   | "respond-international-case";
 
@@ -99,23 +96,10 @@ type EdgeFn =
  * changes without losing field-level assertion strength.
  */
 const FIELD_KEYWORDS: Record<EdgeFn, Record<string, string[]>> = {
-  "confirm-placement": {
-    inquiryId:        ["inquiryid", "inquiry_id", "inquiry id"],
-    facilityId:       ["facilityid", "facility_id", "facility id"],
-    confirmationType: ["confirmationtype", "confirmation_type", "confirmation type"],
-  },
   "admin-manage-invoice": {
     invoiceId: ["invoiceid", "invoice_id", "invoice id"],
     reason:    ["reason"],
     amount:    ["amount", "newamount", "new_amount", "new amount"],
-  },
-  "charge-placement-fee": {
-    inquiryId:  ["inquiryid", "inquiry_id", "inquiry id"],
-    facilityId: ["facilityid", "facility_id", "facility id"],
-  },
-  "unlock-lead": {
-    leadId:     ["leadid", "lead_id", "lead id"],
-    facilityId: ["facilityid", "facility_id", "facility id"],
   },
   "send-concierge-introduction": {
     inquiryId:      ["inquiryid", "inquiry_id", "inquiry id"],
@@ -141,33 +125,6 @@ type RequiredFieldProbe = {
   expectField: string;
 };
 const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
-  {
-    name: "confirm-placement: missing inquiryId",
-    fn: "confirm-placement",
-    body: { facilityId: "00000000-0000-0000-0000-000000000000", confirmationType: "admin" },
-    expectStatus: 400,
-    expectCode: "MISSING_FIELD_INQUIRY_ID",
-    expectField: "inquiryId",
-  },
-  {
-    name: "confirm-placement: missing facilityId",
-    fn: "confirm-placement",
-    body: { inquiryId: "00000000-0000-0000-0000-000000000000", confirmationType: "admin" },
-    expectStatus: 400,
-    expectCode: "MISSING_FIELD_FACILITY_ID",
-    expectField: "facilityId",
-  },
-  {
-    name: "confirm-placement: missing confirmationType",
-    fn: "confirm-placement",
-    body: {
-      inquiryId: "00000000-0000-0000-0000-000000000000",
-      facilityId: "00000000-0000-0000-0000-000000000000",
-    },
-    expectStatus: 400,
-    expectCode: "MISSING_FIELD_CONFIRMATION_TYPE",
-    expectField: "confirmationType",
-  },
   {
     name: "admin-manage-invoice: missing invoiceId",
     fn: "admin-manage-invoice",
@@ -195,40 +152,6 @@ const REQUIRED_FIELD_PROBES: RequiredFieldProbe[] = [
     expectStatus: 400,
     expectCode: "MISSING_FIELD_AMOUNT",
     expectField: "amount",
-  },
-  // ── charge-placement-fee ──
-  {
-    name: "charge-placement-fee: missing inquiryId",
-    fn: "charge-placement-fee",
-    body: { facilityId: "00000000-0000-0000-0000-000000000000" },
-    expectStatus: 400,
-    expectCode: "MISSING_FIELD_INQUIRY_ID",
-    expectField: "inquiryId",
-  },
-  {
-    name: "charge-placement-fee: missing facilityId",
-    fn: "charge-placement-fee",
-    body: { inquiryId: "00000000-0000-0000-0000-000000000000" },
-    expectStatus: 400,
-    expectCode: "MISSING_FIELD_FACILITY_ID",
-    expectField: "facilityId",
-  },
-  // ── unlock-lead ──
-  {
-    name: "unlock-lead: missing leadId",
-    fn: "unlock-lead",
-    body: { facilityId: "00000000-0000-0000-0000-000000000000" },
-    expectStatus: 400,
-    expectCode: "MISSING_FIELD_LEAD_ID",
-    expectField: "leadId",
-  },
-  {
-    name: "unlock-lead: missing facilityId",
-    fn: "unlock-lead",
-    body: { leadId: "11111111-1111-1111-8111-111111111111" },
-    expectStatus: 400,
-    expectCode: "MISSING_FIELD_FACILITY_ID",
-    expectField: "facilityId",
   },
   // ── send-concierge-introduction ──
   {

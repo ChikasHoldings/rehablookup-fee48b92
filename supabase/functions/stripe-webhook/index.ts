@@ -2236,113 +2236,13 @@ Deno.serve(async (req) => {
         });
       }
 
-      // DEPRECATED: Domestic concierge is now FREE. This handler is retained only as a
-      // safety net for any legacy in-flight Stripe sessions that may still resolve.
-      // No new checkout sessions are created — create-concierge-checkout has been removed.
-      if (session.mode === "payment" && session.metadata?.service === "concierge_placement") {
-        const email = session.customer_email || "";
-        const userId = session.metadata?.user_id || null;
-        const checkoutSessionId = session.id;
-        const paymentIntentId = session.payment_intent as string;
-
-        logStep("Processing domestic concierge payment", { 
-          sessionId: checkoutSessionId, 
-          email,
-          userId 
-        });
-
-        // Check if inquiry already exists — search by checkout_session_id first, then draft_id fallback
-        let existingInquiry: { id: string; payment_status: string } | null = null;
-        
-        const { data: bySession } = await supabaseAdmin
-          .from("concierge_inquiries")
-          .select("id, payment_status")
-          .eq("checkout_session_id", checkoutSessionId)
-          .maybeSingle();
-        
-        existingInquiry = bySession;
-
-        // Fallback: look up by draft_id from Stripe metadata
-        if (!existingInquiry && session.metadata?.draft_id) {
-          const { data: byDraft } = await supabaseAdmin
-            .from("concierge_inquiries")
-            .select("id, payment_status")
-            .eq("draft_id", session.metadata.draft_id)
-            .maybeSingle();
-          
-          if (byDraft) {
-            existingInquiry = byDraft;
-            logStep("Found existing inquiry by draft_id fallback", { draftId: session.metadata.draft_id, inquiryId: byDraft.id });
-          }
-        }
-
-        if (existingInquiry) {
-          // Update payment status and link checkout session if not already paid
-          const updatePayload: Record<string, unknown> = {
-            checkout_session_id: checkoutSessionId,
-            stripe_payment_intent_id: paymentIntentId,
-            stripe_customer_id: session.customer as string,
-            updated_at: new Date().toISOString(),
-          };
-
-          if (existingInquiry.payment_status !== "paid" && existingInquiry.payment_status !== "succeeded") {
-            updatePayload.payment_status = "paid";
-          }
-
-          await supabaseAdmin
-            .from("concierge_inquiries")
-            .update(updatePayload)
-            .eq("id", existingInquiry.id);
-          logStep("Updated existing inquiry payment status", { inquiryId: existingInquiry.id });
-        } else {
-          // Create pending inquiry record (safety net — only if no draft exists at all)
-          const { error: inquiryError } = await supabaseAdmin
-            .from("concierge_inquiries")
-            .insert({
-              user_id: userId || null,
-              user_name: "Pending Intake",
-              user_email: email,
-              user_phone: "",
-              status: "pending_intake",
-              payment_status: "paid",
-              payment_amount_cents: 0,
-              checkout_session_id: checkoutSessionId,
-              stripe_payment_intent_id: paymentIntentId,
-              stripe_customer_id: session.customer as string,
-              idempotency_key: `intake_${checkoutSessionId}`,
-              intake_data: {},
-            });
-
-          if (inquiryError) {
-            logStep("Error creating pending concierge inquiry", { error: inquiryError.message });
-          } else {
-            logStep("Pending concierge inquiry created for follow-up");
-
-            // Create admin notification for abandoned payment
-            await supabaseAdmin.from("admin_notifications").insert({
-              type: "concierge_payment_pending_intake",
-              title: "Concierge Payment - Pending Intake",
-              message: `Payment received from ${email || "unknown"} but intake form not yet submitted`,
-              metadata: {
-                session_id: checkoutSessionId,
-                payment_intent_id: paymentIntentId,
-                email,
-                user_id: userId,
-              },
-            });
-          }
-        }
-
-        return new Response(JSON.stringify({ received: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Legacy `additional_listing_slot`, `lead_unlock`, and
-      // `credit_purchase` checkout sessions are no longer issued —
-      // the monetization rebuild dropped those flows. The handler
-      // blocks that processed them were removed; any in-flight legacy
-      // event will fall through to the no-op below.
+      // Legacy `additional_listing_slot`, `lead_unlock`, `credit_purchase`,
+      // and `concierge_placement` (domestic $299) checkout sessions are no
+      // longer issued — the monetization rebuild dropped those flows. The
+      // handler blocks that processed them were removed; any in-flight
+      // legacy event falls through to the no-op below. The corresponding
+      // edge functions (create-concierge-checkout, purchase-credits,
+      // purchase-listing-slot, verify-unlock-payment) return HTTP 410.
 
       // PRO_SUBSCRIPTION (annual)
       if (session.mode === "subscription" && metadataType === "pro_subscription") {

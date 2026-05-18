@@ -55,14 +55,10 @@ export const ERROR_CODES = {
     retryable: false,
     emittedBy: [
       "send-provider-welcome-email",
-      "send-provider-welcome-offer-email",
-      "submit-placement-case",
       "submit-international-intake",
       "submit-concierge-intake",
       "save-placement-draft",
       "save-international-placement-draft",
-      "charge-placement-fee",
-      "confirm-placement",
       "delete-provider-account",
       "admin-delete-provider",
       "send-provider-support",
@@ -76,8 +72,6 @@ export const ERROR_CODES = {
     retryable: false,
     emittedBy: [
       "send-provider-welcome-email",
-      "send-provider-welcome-offer-email",
-      "submit-placement-case",
       "submit-international-intake",
       "submit-concierge-intake",
       "save-placement-draft",
@@ -113,8 +107,6 @@ export const ERROR_CODES = {
     retryable: false,
     emittedBy: [
       "send-provider-welcome-email",
-      "send-provider-welcome-offer-email",
-      "submit-placement-case",
       "submit-international-intake",
       "submit-concierge-intake",
       "save-placement-draft",
@@ -181,7 +173,6 @@ export const ERROR_CODES = {
     retryable: false,
     emittedBy: [
       "send-provider-welcome-email",
-      "send-provider-welcome-offer-email",
     ],
   },
   phone_rejected: {
@@ -215,23 +206,8 @@ export const ERROR_CODES = {
   },
 
   // ---------- Business logic ----------
-  facility_missing: {
-    code: "facility_missing",
-    httpStatus: 404,
-    category: "business",
-    description: "Referenced facility does not exist or is not accessible.",
-    retryable: false,
-    emittedBy: ["confirm-placement", "charge-placement-fee"],
-  },
-  lead_expired: {
-    code: "lead_expired",
-    httpStatus: 410,
-    category: "business",
-    description:
-      "Lead is past its 24-hour redistribution window and can no longer be acted on.",
-    retryable: false,
-    emittedBy: ["confirm-placement"],
-  },
+  // (facility_missing and lead_expired were emitted only by confirm-placement
+  //  / charge-placement-fee, both retired in the monetization rebuild.)
 
   // ---------- Integration / downstream ----------
   email_send_failed: {
@@ -243,7 +219,6 @@ export const ERROR_CODES = {
     retryable: true,
     emittedBy: [
       "send-provider-support",
-      "send-abandoned-placement-email",
       "process-provider-drip",
     ],
   },
@@ -255,15 +230,6 @@ export const ERROR_CODES = {
       "Provider welcome email could not be sent via Resend after retries.",
     retryable: true,
     emittedBy: ["send-provider-welcome-email"],
-  },
-  welcome_offer_email_send_failed: {
-    code: "welcome_offer_email_send_failed",
-    httpStatus: 502,
-    category: "integration",
-    description:
-      "Provider welcome-offer email could not be sent via Resend after retries.",
-    retryable: true,
-    emittedBy: ["send-provider-welcome-offer-email"],
   },
   admin_email_send_failed: {
     code: "admin_email_send_failed",
@@ -307,9 +273,7 @@ export const ERROR_CODES = {
     retryable: false,
     emittedBy: [
       "send-provider-welcome-email",
-      "send-provider-welcome-offer-email",
       "send-provider-support",
-      "send-abandoned-placement-email",
     ],
   },
   payment_failed: {
@@ -319,32 +283,7 @@ export const ERROR_CODES = {
     description:
       "Stripe charge or PaymentIntent failed (declined, insufficient funds, etc.).",
     retryable: false,
-    emittedBy: ["charge-placement-fee", "save-provider-payment-method"],
-  },
-  charge_failed: {
-    code: "charge_failed",
-    httpStatus: 502,
-    category: "integration",
-    description:
-      "Stripe charge call returned a non-success status due to a Stripe-side error.",
-    retryable: true,
-    emittedBy: ["charge-placement-fee"],
-  },
-  stripe_payment_failed: {
-    code: "stripe_payment_failed",
-    httpStatus: 502,
-    category: "integration",
-    description: "Stripe API errored while creating or confirming a payment.",
-    retryable: true,
-    emittedBy: ["charge-placement-fee", "confirm-placement"],
-  },
-  facility_invoice_payment_failed: {
-    code: "facility_invoice_payment_failed",
-    httpStatus: 502,
-    category: "integration",
-    description: "Invoice charge against the facility's saved method failed.",
-    retryable: true,
-    emittedBy: ["confirm-placement", "charge-placement-fee"],
+    emittedBy: ["save-provider-payment-method"],
   },
   international_invoice_failed: {
     code: "international_invoice_failed",
@@ -359,9 +298,9 @@ export const ERROR_CODES = {
     code: "case_create_failed",
     httpStatus: 500,
     category: "integration",
-    description: "Database insert into placement_cases failed.",
+    description: "Database insert into international_placement_cases failed.",
     retryable: true,
-    emittedBy: ["submit-placement-case", "submit-international-intake"],
+    emittedBy: ["submit-international-intake"],
   },
   draft_create_failed: {
     code: "draft_create_failed",
@@ -379,24 +318,8 @@ export const ERROR_CODES = {
     retryable: true,
     emittedBy: ["save-placement-draft", "save-international-placement-draft"],
   },
-  lead_unlock_attribution_failed: {
-    code: "lead_unlock_attribution_failed",
-    httpStatus: 500,
-    category: "integration",
-    description:
-      "Attempted to attribute a lead unlock to a facility but the database write failed.",
-    retryable: true,
-    emittedBy: ["confirm-placement"],
-  },
-  unlock_rollback_failed: {
-    code: "unlock_rollback_failed",
-    httpStatus: 500,
-    category: "integration",
-    description:
-      "Compensating rollback of a lead unlock failed after a downstream error.",
-    retryable: true,
-    emittedBy: ["confirm-placement"],
-  },
+  // (lead_unlock_attribution_failed and unlock_rollback_failed were emitted
+  //  only by confirm-placement, retired in the monetization rebuild.)
 
   // ---------- Success-path informational codes ----------
   email_sent: {
@@ -408,7 +331,6 @@ export const ERROR_CODES = {
     retryable: false,
     emittedBy: [
       "send-provider-welcome-email",
-      "send-provider-welcome-offer-email",
     ],
   },
   email_deduplicated: {
@@ -420,7 +342,6 @@ export const ERROR_CODES = {
     retryable: false,
     emittedBy: [
       "send-provider-welcome-email",
-      "send-provider-welcome-offer-email",
     ],
   },
 
@@ -434,21 +355,16 @@ export const ERROR_CODES = {
     retryable: true,
     emittedBy: [
       "send-provider-welcome-email",
-      "send-provider-welcome-offer-email",
-      "submit-placement-case",
       "submit-international-intake",
       "submit-concierge-intake",
       "save-placement-draft",
       "save-international-placement-draft",
-      "charge-placement-fee",
-      "confirm-placement",
       "delete-provider-account",
       "admin-delete-provider",
       "send-provider-support",
       "track-provider-event",
       "notify-admin-provider-signup",
       "process-provider-drip",
-      "send-abandoned-placement-email",
     ],
   },
 } as const satisfies Record<string, ErrorCodeSpec>;

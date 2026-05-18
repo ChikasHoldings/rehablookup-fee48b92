@@ -921,22 +921,9 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       // value. The post-publish offer email below is the right surface
       // for facility-aware messaging.
 
-      // 12b. Send welcome offer email (with idempotency key)
-      try {
-        await supabase.functions.invoke("send-provider-welcome-offer-email", {
-          body: {
-            facilityId,
-            facilityName: safeFacilityName,
-            providerEmail: formData.email,
-            providerFirstName: safeFirstName,
-            selectedPlan: "free",
-            idempotencyKey: `welcome-offer-${facilityId}`,
-          },
-        });
-      } catch (offerError) {
-        console.error("Welcome offer email error:", offerError);
-        // Non-blocking
-      }
+      // 12b. The legacy welcome-credits offer email was retired with the
+      //   flat-fee Pro $99/mo monetization. PlanStep + WelcomeModal handle
+      //   the Pro upsell now.
 
       // 13. Round-30 merge: advance onboarding state to 'plan' and route
       //   into the unified PlanStep at /provider/onboarding?step=plan.

@@ -106,23 +106,9 @@ Deno.test("Edge: stripe-webhook records 9900 cents on intl checkout", () => {
   );
 });
 
-// ── 5. Provider placement fee defaults intact ──────────────────────────────
-Deno.test("Edge: charge-placement-fee defaults are $1k domestic / $3k intl", () => {
-  const src = read("supabase/functions/charge-placement-fee/index.ts");
-  assertStringIncludes(src, "domestic: 100000");
-  assertStringIncludes(src, "international: 300000");
-});
-
-// ── 6. International detection is structural, not heuristic ────────────────
-Deno.test("Edge: charge-placement-fee uses explicit isInternational flag", () => {
-  const src = read("supabase/functions/charge-placement-fee/index.ts");
-  // Must NOT classify intl based on a payment_amount_cents threshold.
-  assert(
-    !/payment_amount_cents\s*[><=!]+\s*\d+/.test(src),
-    "Must not use payment_amount_cents heuristic to detect international",
-  );
-  assertStringIncludes(src, "isIntl = isInternational === true");
-});
+// ── 5–6. charge-placement-fee retired with the domestic pay-per-admission
+//   model (EKRA compliance). The function returns HTTP 410. Tests for its
+//   defaults + intl heuristic were removed alongside the source.
 
 // ── 7. Global sweep — no stray $299 / 29900 references ─────────────────────
 async function* walk(dir: string): AsyncGenerator<string> {

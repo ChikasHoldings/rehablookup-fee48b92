@@ -56,10 +56,6 @@ const FRIENDLY_MESSAGES: Partial<Record<ErrorCode, FriendlyMessage>> = {
     title: "Couldn't send welcome email",
     description: "We'll retry shortly. You can keep using your account.",
   },
-  welcome_offer_email_send_failed: {
-    title: "Couldn't send welcome email",
-    description: "We'll retry shortly. You can keep using your account.",
-  },
 };
 
 const DEFAULT_MESSAGE: FriendlyMessage = {

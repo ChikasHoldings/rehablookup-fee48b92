@@ -175,7 +175,6 @@ const DELIVERY_FAILURE_TYPES = [
   "concierge_addon_partial_failure",
   "addon_waitlist_invite_email_failed",
   "international_invoice_failed",
-  "placement_charge_failed",
   "featured_addon_activation_failed",
   "concierge_addon_activation_failed",
   "payment_failed_orphan_customer",
