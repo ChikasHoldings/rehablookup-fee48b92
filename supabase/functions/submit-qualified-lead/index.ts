@@ -947,6 +947,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Round-31 bug fix: hoist `now` to top of handler. The free-tier
+    // redirect flow at line ~1204 used `now.toISOString()` before the
+    // Pro-tier flow declared `const now = new Date()` further down,
+    // throwing ReferenceError on every Free-tier submission.
+    const now = new Date();
+
     // Extract client IP for rate limiting
     const clientIp = extractClientIp(req);
 
@@ -1281,7 +1287,7 @@ Deno.serve(async (req) => {
     }
 
     // ===== LEAD INSERTION (Pro-tier flow — unchanged below) =====
-    const now = new Date();
+    // `now` is hoisted to the top of the handler (round-31 fix); reuse it.
     const exclusiveUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const extendedUntil = new Date(now.getTime() + 72 * 60 * 60 * 1000);
 
