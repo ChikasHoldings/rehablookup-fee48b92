@@ -26,9 +26,24 @@ def read(p):
         return f.read()
 
 # Discover which _shared modules the entrypoint actually imports.
+# Anchor on line-start `^import` so we don't match the same string
+# inside a usage-docstring comment (which would otherwise cause an
+# already-inlined file to re-inline the same module on re-run).
 entry = read(src_path)
-shared_imports = re.findall(r'from "\.\./_shared/([^"]+\.ts)"', entry)
+shared_imports = re.findall(
+    r'^import\s+[^;]+?\s+from\s+"\.\./_shared/([^"]+\.ts)"',
+    entry,
+    flags=re.M,
+)
 print(f"Entry imports {len(shared_imports)} _shared module(s): {shared_imports}", file=sys.stderr)
+if not shared_imports:
+    # Either there are no _shared deps OR the file is already inlined.
+    # If we see the auto-generated header marker, refuse to re-inline.
+    if "AUTO-GENERATED HEADER" in entry and "inlined from _shared/" in entry:
+        print("File appears already inlined; refusing to re-inline. "
+              "Edit the canonical _shared sources + this file's entrypoint, "
+              "then drop the inlined sections + re-run.", file=sys.stderr)
+        sys.exit(2)
 
 # Transitively collect deps from _shared imports.
 to_visit = list(shared_imports)
@@ -45,7 +60,7 @@ while to_visit:
     content = read(path)
     shared_files[name] = content
     # Find sibling relative imports inside this file
-    for m in re.finditer(r'from "\./([^"]+\.ts)"', content):
+    for m in re.finditer(r'^import\s+[^;]+?\s+from\s+"\./([^"]+\.ts)"', content, flags=re.M):
         sib = m.group(1)
         if sib not in visited:
             to_visit.append(sib)
