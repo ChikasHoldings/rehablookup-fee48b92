@@ -1,17 +1,21 @@
 /**
- * NewListingForm
- * ──────────────
- * Mount point for the existing multi-step ProviderSignup form, post-auth.
- * Round-30 merge: the wizard's BuildStep now auto-redirects here as soon
- * as the wizard reaches it; the user no longer sees an interstitial
- * "Continue to builder" screen. Plan selection has been moved AFTER this
- * route — ProviderSignup's Step 7 "Publish" now advances onboarding-state
- * to current_step='plan' and redirects to /provider/onboarding?step=plan.
+ * NewListingForm — facility-build wizard host (post-auth).
+ * ────────────────────────────────────────────────────────────────────
+ * Phase W consolidation: this is the ONLY entry point into the
+ * facility-build wizard (steps 3-7 of ProviderSignup). The legacy auth
+ * + email-verify steps (1-2) in ProviderSignup are no longer reachable
+ * — ProviderSignup now hard-pins its entry floor at `initialStep` and
+ * blocks back-navigation below it.
  *
- * Renders ProviderSignup with `initialStep={3}` so it skips the auth-account
- * and email-verification stages (already handled in the wizard) and jumps
- * straight to the Facility step. ProviderSignup detects this mode and
- * resolves `userId` from the active session.
+ * Canonical flow:
+ *   1. /provider/onboarding → AccountStep   (create account)
+ *   2.                     → VerifyEmailStep (6-digit code)
+ *   3.                     → FindOrListStep (choose claim vs list)
+ *      claim path → /provider/claim/:slug (ClaimWizard)
+ *      list path  → /provider/onboarding/new-listing → THIS file →
+ *                   ProviderSignup steps 3-7
+ *   4. ProviderSignup step 7 publish → /provider/onboarding?step=plan
+ *   5. PlanStep → /provider/dashboard
  *
  * Auth gate: signed-out visitors land in the unified onboarding wizard
  * with a returnTo pointing here.

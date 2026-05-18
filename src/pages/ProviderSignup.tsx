@@ -13,7 +13,9 @@ import { BackToTop } from "@/components/ui/back-to-top";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
-import { EmailVerificationStep } from "@/components/provider/EmailVerificationStep";
+// EmailVerificationStep import removed in phase W — the unified wizard
+// (/provider/onboarding → VerifyEmailStep) handles email verification
+// before this file ever renders.
 import {
   Select,
   SelectContent,
@@ -165,10 +167,23 @@ function FacilityPhoneInputWithVerification({
 }
 
 export default function ProviderSignup({ initialStep }: { initialStep?: number } = {}) {
-  const [currentStep, setCurrentStep] = useState(initialStep ?? 1);
+  // Phase W consolidation: ProviderSignup is now ONLY the post-auth
+  // facility-build wizard (steps 3-7). Account + email verification
+  // run upstream in /provider/onboarding (AccountStep + VerifyEmailStep
+  // in src/components/provider/onboarding/). The legacy steps 1-2
+  // remain in this file for historical reference but are unreachable
+  // because (a) the only caller — NewListingForm — always passes
+  // initialStep={3}, (b) entry floor below blocks prevStep / stepper
+  // clicks from descending below initialStep.
+  const entryStep = initialStep ?? 3;
+  const [currentStep, setCurrentStep] = useState(entryStep);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const [emailVerified, setEmailVerified] = useState(false);
+  // emailVerified is always true when we enter here — the wizard's
+  // VerifyEmailStep is a hard gate upstream. Kept for compatibility
+  // with the legacy step-2 JSX below (never rendered).
+  const [emailVerified, setEmailVerified] = useState(true);
+  void emailVerified;
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -367,16 +382,19 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
   };
 
   const prevStep = () => {
-    if (currentStep > 1) {
+    // Floor at entryStep so a user who landed here from the unified
+    // wizard at step 3 can't walk back into the orphaned account /
+    // email-verify steps (they already finished those upstream).
+    if (currentStep > entryStep) {
       setCurrentStep(currentStep - 1);
       window.scrollTo(0, 0);
     }
   };
 
-  const handleEmailVerified = () => {
-    setEmailVerified(true);
-    setCurrentStep(3); // Move to Facility step
-  };
+  // handleEmailVerified removed in phase W — the upstream
+  // /provider/onboarding → VerifyEmailStep is the only path that
+  // updates email verification state, and ProviderSignup is mounted
+  // strictly post-verification at initialStep=3.
 
   const handleSubmit = async () => {
     // Prevent double submissions (useRef survives React StrictMode double-fire)
@@ -1139,19 +1157,21 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
 
               {/* Step indicators */}
               <div className="mt-5 flex justify-center gap-2">
-                {steps.map((step) => (
+                {steps.filter((step) => step.id >= entryStep).map((step) => (
                   <button
                     key={step.id}
                     onClick={() => {
-                      // Only allow navigating to previously completed steps (not forward)
-                      if (step.id < currentStep && !(step.id === 2 && emailVerified)) {
+                      // Only allow navigating to previously completed steps,
+                      // bounded below by the entry floor — so post-auth users
+                      // can't click back into the orphaned step 1/2 cards.
+                      if (step.id < currentStep && step.id >= entryStep) {
                         setCurrentStep(step.id);
                       }
                     }}
-                    disabled={step.id >= currentStep || (step.id === 2 && emailVerified)}
+                    disabled={step.id >= currentStep || step.id < entryStep}
                     className={cn(
                       "flex items-center justify-center transition-all",
-                      step.id === 2 && emailVerified && "cursor-not-allowed opacity-50"
+                      step.id < entryStep && "hidden",
                     )}
                     title={step.name}
                   >
@@ -1313,14 +1333,11 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
               </div>
             )}
 
-            {/* Step 2: Email Verification */}
-            {currentStep === 2 && (
-              <EmailVerificationStep
-                email={formData.email}
-                onVerified={handleEmailVerified}
-                onBack={() => setCurrentStep(1)}
-              />
-            )}
+            {/* Step 2 (Email Verification) consolidated upstream into
+                /provider/onboarding → VerifyEmailStep
+                (src/components/provider/onboarding/VerifyEmailStep.tsx).
+                Removed in phase W; legacy import was deleted from
+                src/components/provider/EmailVerificationStep.tsx. */}
 
             {/* Step 3: Facility Info */}
             {currentStep === 3 && (
@@ -1888,7 +1905,7 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
 
             {/* Navigation Buttons */}
             <div className="mt-8 flex justify-between gap-4">
-              {currentStep > 1 && currentStep !== 2 && (
+              {currentStep > entryStep && (
                 <Button
                   variant="outline"
                   onClick={prevStep}
@@ -1899,11 +1916,8 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
                   Back
                 </Button>
               )}
-              {currentStep === 2 && (
-                <div />
-              )}
 
-              {currentStep < 7 && currentStep !== 2 && (
+              {currentStep < 7 && (
                 <Button
                   onClick={nextStep}
                   disabled={!canProceed()}
