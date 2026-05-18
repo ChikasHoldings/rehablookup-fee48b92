@@ -47,6 +47,78 @@ export type Database = {
         }
         Relationships: []
       }
+      addon_waitlist: {
+        Row: {
+          addon_type: string
+          auto_invite_opt_out: boolean
+          closed_at: string | null
+          expires_at: string | null
+          facility_id: string
+          geo_city: string | null
+          geo_state: string | null
+          id: string
+          invited_at: string | null
+          level_of_care: string[] | null
+          notes: string | null
+          requested_at: string
+          requested_by: string
+          scope_type: string | null
+          scope_value: string | null
+          status: string
+        }
+        Insert: {
+          addon_type: string
+          auto_invite_opt_out?: boolean
+          closed_at?: string | null
+          expires_at?: string | null
+          facility_id: string
+          geo_city?: string | null
+          geo_state?: string | null
+          id?: string
+          invited_at?: string | null
+          level_of_care?: string[] | null
+          notes?: string | null
+          requested_at?: string
+          requested_by: string
+          scope_type?: string | null
+          scope_value?: string | null
+          status?: string
+        }
+        Update: {
+          addon_type?: string
+          auto_invite_opt_out?: boolean
+          closed_at?: string | null
+          expires_at?: string | null
+          facility_id?: string
+          geo_city?: string | null
+          geo_state?: string | null
+          id?: string
+          invited_at?: string | null
+          level_of_care?: string[] | null
+          notes?: string | null
+          requested_at?: string
+          requested_by?: string
+          scope_type?: string | null
+          scope_value?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addon_waitlist_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "addon_waitlist_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_audit_log: {
         Row: {
           action_type: string
@@ -816,6 +888,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      concierge_geo_caps: {
+        Row: {
+          geo_city: string
+          geo_state: string
+          max_slots: number
+          notes: string | null
+        }
+        Insert: {
+          geo_city?: string
+          geo_state: string
+          max_slots: number
+          notes?: string | null
+        }
+        Update: {
+          geo_city?: string
+          geo_state?: string
+          max_slots?: number
+          notes?: string | null
+        }
+        Relationships: []
       }
       concierge_inquiries: {
         Row: {
@@ -1711,6 +1804,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      emails_outbox: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          metadata: Json
+          scheduled_for: string
+          sent_at: string | null
+          sequence: string
+          skipped_reason: string | null
+          status: string
+          step: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          metadata?: Json
+          scheduled_for: string
+          sent_at?: string | null
+          sequence: string
+          skipped_reason?: string | null
+          status?: string
+          step: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          metadata?: Json
+          scheduled_for?: string
+          sent_at?: string | null
+          sequence?: string
+          skipped_reason?: string | null
+          status?: string
+          step?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       facilities: {
         Row: {
@@ -2644,16 +2785,20 @@ export type Database = {
           billing_period: string
           cancel_at_period_end: boolean
           canceled_at: string | null
+          concierge_stripe_subscription_id: string | null
           created_at: string
           current_monthly_period_start: string | null
           current_period_end: string | null
           discount_applied_cents: number | null
+          dunning_milestones_sent: string[]
           facility_id: string
+          featured_stripe_subscription_id: string | null
           has_concierge_partner: boolean
           has_featured: boolean
           id: string
           original_annual_cents: number | null
           paid_amount_cents: number | null
+          past_due_since: string | null
           payment_method_warning_sent_at: string | null
           period_start: string | null
           price_cents: number
@@ -2675,16 +2820,20 @@ export type Database = {
           billing_period?: string
           cancel_at_period_end?: boolean
           canceled_at?: string | null
+          concierge_stripe_subscription_id?: string | null
           created_at?: string
           current_monthly_period_start?: string | null
           current_period_end?: string | null
           discount_applied_cents?: number | null
+          dunning_milestones_sent?: string[]
           facility_id: string
+          featured_stripe_subscription_id?: string | null
           has_concierge_partner?: boolean
           has_featured?: boolean
           id?: string
           original_annual_cents?: number | null
           paid_amount_cents?: number | null
+          past_due_since?: string | null
           payment_method_warning_sent_at?: string | null
           period_start?: string | null
           price_cents?: number
@@ -2706,16 +2855,20 @@ export type Database = {
           billing_period?: string
           cancel_at_period_end?: boolean
           canceled_at?: string | null
+          concierge_stripe_subscription_id?: string | null
           created_at?: string
           current_monthly_period_start?: string | null
           current_period_end?: string | null
           discount_applied_cents?: number | null
+          dunning_milestones_sent?: string[]
           facility_id?: string
+          featured_stripe_subscription_id?: string | null
           has_concierge_partner?: boolean
           has_featured?: boolean
           id?: string
           original_annual_cents?: number | null
           paid_amount_cents?: number | null
+          past_due_since?: string | null
           payment_method_warning_sent_at?: string | null
           period_start?: string | null
           price_cents?: number
@@ -3438,6 +3591,13 @@ export type Database = {
             referencedRelation: "leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lead_contact_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lead_distributions: {
@@ -3496,6 +3656,13 @@ export type Database = {
             referencedRelation: "leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lead_distributions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lead_email_resend_attempts: {
@@ -3532,6 +3699,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_email_resend_attempts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
             referencedColumns: ["id"]
           },
         ]
@@ -3601,6 +3775,13 @@ export type Database = {
             referencedRelation: "leads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lead_emails_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lead_notes: {
@@ -3631,6 +3812,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
             referencedColumns: ["id"]
           },
         ]
@@ -3710,6 +3898,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "lead_routing_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_provider_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lead_routing_logs_requested_facility_id_fkey"
             columns: ["requested_facility_id"]
             isOneToOne: false
@@ -3766,6 +3961,7 @@ export type Database = {
           previous_treatment_details: string | null
           primary_substance: string[] | null
           provider_responded_at: string | null
+          provider_response_notes: string | null
           provider_response_status: string | null
           qualification_reason: string | null
           qualified: boolean | null
@@ -3830,6 +4026,7 @@ export type Database = {
           previous_treatment_details?: string | null
           primary_substance?: string[] | null
           provider_responded_at?: string | null
+          provider_response_notes?: string | null
           provider_response_status?: string | null
           qualification_reason?: string | null
           qualified?: boolean | null
@@ -3894,6 +4091,7 @@ export type Database = {
           previous_treatment_details?: string | null
           primary_substance?: string[] | null
           provider_responded_at?: string | null
+          provider_response_notes?: string | null
           provider_response_status?: string | null
           qualification_reason?: string | null
           qualified?: boolean | null
@@ -4512,6 +4710,8 @@ export type Database = {
           phone_verified_at: string | null
           plan: string | null
           primary_contact_name: string | null
+          sms_opted_in_at: string | null
+          sms_opted_out_at: string | null
           timezone: string | null
           unsubscribed_provider_emails_at: string | null
           updated_at: string
@@ -4532,6 +4732,8 @@ export type Database = {
           phone_verified_at?: string | null
           plan?: string | null
           primary_contact_name?: string | null
+          sms_opted_in_at?: string | null
+          sms_opted_out_at?: string | null
           timezone?: string | null
           unsubscribed_provider_emails_at?: string | null
           updated_at?: string
@@ -4552,6 +4754,8 @@ export type Database = {
           phone_verified_at?: string | null
           plan?: string | null
           primary_contact_name?: string | null
+          sms_opted_in_at?: string | null
+          sms_opted_out_at?: string | null
           timezone?: string | null
           unsubscribed_provider_emails_at?: string | null
           updated_at?: string
@@ -5506,6 +5710,45 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_inbound_log: {
+        Row: {
+          action: string | null
+          body: string
+          from_phone: string
+          id: string
+          keyword: string | null
+          matched_user_id: string | null
+          raw_payload: Json | null
+          received_at: string
+          to_phone: string
+          twilio_message_sid: string | null
+        }
+        Insert: {
+          action?: string | null
+          body: string
+          from_phone: string
+          id?: string
+          keyword?: string | null
+          matched_user_id?: string | null
+          raw_payload?: Json | null
+          received_at?: string
+          to_phone: string
+          twilio_message_sid?: string | null
+        }
+        Update: {
+          action?: string | null
+          body?: string
+          from_phone?: string
+          id?: string
+          keyword?: string | null
+          matched_user_id?: string | null
+          raw_payload?: Json | null
+          received_at?: string
+          to_phone?: string
+          twilio_message_sid?: string | null
+        }
+        Relationships: []
+      }
       staged_directory: {
         Row: {
           accreditation_number: string | null
@@ -6316,6 +6559,197 @@ export type Database = {
       }
     }
     Views: {
+      leads_provider_view: {
+        Row: {
+          age_range: string | null
+          assigned_at: string | null
+          assignment_reason: string | null
+          assignment_status: string | null
+          best_time_to_call: string | null
+          budget_preference: string | null
+          co_occurring_conditions: string[] | null
+          created_at: string | null
+          dual_diagnosis: string | null
+          email: string | null
+          employment_status: string | null
+          exclusive_until: string | null
+          exclusivity: string | null
+          extended_until: string | null
+          facility_id: string | null
+          gender: string | null
+          id: string | null
+          inquiry_type: string | null
+          insurance_provider: string | null
+          insurance_type: string | null
+          is_unlocked: boolean | null
+          lead_expired_at: string | null
+          lead_score: number | null
+          lead_score_label: string | null
+          legal_involvement: string | null
+          level_of_care: string | null
+          location_city_state: string | null
+          location_zip: string | null
+          message: string | null
+          name: string | null
+          original_facility_id: string | null
+          phone: string | null
+          preferred_contact: string | null
+          previous_treatment: string | null
+          previous_treatment_details: string | null
+          primary_substance: string[] | null
+          provider_responded_at: string | null
+          provider_response_notes: string | null
+          provider_response_status: string | null
+          quality_flag: string | null
+          readiness_level: string | null
+          redistribution_status: string | null
+          relationship_to_patient: string | null
+          shared_with: string[] | null
+          snooze_until: string | null
+          source: string | null
+          special_needs: string[] | null
+          status: string | null
+          urgency: string | null
+          veteran_status: string | null
+          who_seeking_help: string | null
+        }
+        Insert: {
+          age_range?: string | null
+          assigned_at?: string | null
+          assignment_reason?: string | null
+          assignment_status?: string | null
+          best_time_to_call?: string | null
+          budget_preference?: string | null
+          co_occurring_conditions?: string[] | null
+          created_at?: string | null
+          dual_diagnosis?: string | null
+          email?: string | null
+          employment_status?: string | null
+          exclusive_until?: string | null
+          exclusivity?: string | null
+          extended_until?: string | null
+          facility_id?: string | null
+          gender?: string | null
+          id?: string | null
+          inquiry_type?: string | null
+          insurance_provider?: string | null
+          insurance_type?: string | null
+          is_unlocked?: never
+          lead_expired_at?: string | null
+          lead_score?: never
+          lead_score_label?: never
+          legal_involvement?: string | null
+          level_of_care?: string | null
+          location_city_state?: string | null
+          location_zip?: string | null
+          message?: string | null
+          name?: string | null
+          original_facility_id?: string | null
+          phone?: string | null
+          preferred_contact?: string | null
+          previous_treatment?: string | null
+          previous_treatment_details?: string | null
+          primary_substance?: string[] | null
+          provider_responded_at?: string | null
+          provider_response_notes?: string | null
+          provider_response_status?: string | null
+          quality_flag?: string | null
+          readiness_level?: string | null
+          redistribution_status?: string | null
+          relationship_to_patient?: string | null
+          shared_with?: string[] | null
+          snooze_until?: string | null
+          source?: string | null
+          special_needs?: string[] | null
+          status?: string | null
+          urgency?: string | null
+          veteran_status?: string | null
+          who_seeking_help?: string | null
+        }
+        Update: {
+          age_range?: string | null
+          assigned_at?: string | null
+          assignment_reason?: string | null
+          assignment_status?: string | null
+          best_time_to_call?: string | null
+          budget_preference?: string | null
+          co_occurring_conditions?: string[] | null
+          created_at?: string | null
+          dual_diagnosis?: string | null
+          email?: string | null
+          employment_status?: string | null
+          exclusive_until?: string | null
+          exclusivity?: string | null
+          extended_until?: string | null
+          facility_id?: string | null
+          gender?: string | null
+          id?: string | null
+          inquiry_type?: string | null
+          insurance_provider?: string | null
+          insurance_type?: string | null
+          is_unlocked?: never
+          lead_expired_at?: string | null
+          lead_score?: never
+          lead_score_label?: never
+          legal_involvement?: string | null
+          level_of_care?: string | null
+          location_city_state?: string | null
+          location_zip?: string | null
+          message?: string | null
+          name?: string | null
+          original_facility_id?: string | null
+          phone?: string | null
+          preferred_contact?: string | null
+          previous_treatment?: string | null
+          previous_treatment_details?: string | null
+          primary_substance?: string[] | null
+          provider_responded_at?: string | null
+          provider_response_notes?: string | null
+          provider_response_status?: string | null
+          quality_flag?: string | null
+          readiness_level?: string | null
+          redistribution_status?: string | null
+          relationship_to_patient?: string | null
+          shared_with?: string[] | null
+          snooze_until?: string | null
+          source?: string | null
+          special_needs?: string[] | null
+          status?: string | null
+          urgency?: string | null
+          veteran_status?: string | null
+          who_seeking_help?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_original_facility_id_fkey"
+            columns: ["original_facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_original_facility_id_fkey"
+            columns: ["original_facility_id"]
+            isOneToOne: false
+            referencedRelation: "public_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_facilities: {
         Row: {
           accepts_international_patients: boolean | null
@@ -6446,37 +6880,6 @@ export type Database = {
         Args: { p_inquiry_id: string; p_new_status: string; p_reason?: string }
         Returns: undefined
       }
-      admin_get_lead_unlock_audit: {
-        Args: {
-          p_facility_id?: string
-          p_from?: string
-          p_limit?: number
-          p_offset?: number
-          p_provider_id?: string
-          p_to?: string
-        }
-        Returns: {
-          facility_city: string
-          facility_id: string
-          facility_name: string
-          facility_state: string
-          lead_created_at: string
-          lead_id: string
-          lead_level_of_care: string
-          lead_location: string
-          lead_source: string
-          payment_method: string
-          provider_email: string
-          provider_first_name: string
-          provider_id: string
-          provider_last_name: string
-          stripe_payment_intent_id: string
-          total_count: number
-          unlock_id: string
-          unlock_price_cents: number
-          unlocked_at: string
-        }[]
-      }
       assess_login_risk: {
         Args: {
           p_browser?: string
@@ -6548,6 +6951,11 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      complete_provider_onboarding: { Args: never; Returns: Json }
+      complete_provider_onboarding_with_plan: {
+        Args: { p_plan: string }
+        Returns: Json
+      }
       compute_cancellation_refund: {
         Args: { p_cancel_at?: string; p_subscription_id: string }
         Returns: {
@@ -6569,6 +6977,13 @@ export type Database = {
       generate_facility_slug: {
         Args: { p_city: string; p_name: string; p_state: string }
         Returns: string
+      }
+      get_addon_waitlist_position: {
+        Args: { p_waitlist_id: string }
+        Returns: {
+          queue_position: number
+          queue_total: number
+        }[]
       }
       get_admin_dashboard_stats: { Args: never; Returns: Json }
       get_admin_profile: {
@@ -6609,6 +7024,14 @@ export type Database = {
           phone: string
           status: string
           user_id: string
+        }[]
+      }
+      get_concierge_availability: {
+        Args: { p_city?: string; p_state: string }
+        Returns: {
+          cap: number
+          remaining: number
+          used: number
         }[]
       }
       get_facility_leads_count: {
@@ -6673,11 +7096,15 @@ export type Database = {
         }[]
       }
       get_pending_leads_count: { Args: { p_user_id: string }; Returns: number }
-      get_pro_discount: { Args: { p_facility_id: string }; Returns: number }
-      get_provider_credit_balance: {
-        Args: { p_provider_id: string }
-        Returns: number
+      get_placement_availability: {
+        Args: { p_type: string; p_value: string }
+        Returns: {
+          cap: number
+          remaining: number
+          used: number
+        }[]
       }
+      get_pro_discount: { Args: { p_facility_id: string }; Returns: number }
       get_provider_engagement_summary: {
         Args: { p_facility_ids: string[]; p_from: string; p_to: string }
         Returns: Json
@@ -6798,13 +7225,6 @@ export type Database = {
           note: string
         }[]
       }
-      get_seeker_lead_unlock_info: {
-        Args: { p_lead_id: string }
-        Returns: {
-          facility_id: string
-          unlocked_at: string
-        }[]
-      }
       get_seeker_phones_for_admin: {
         Args: never
         Returns: {
@@ -6826,26 +7246,6 @@ export type Database = {
           urgency: string
         }[]
       }
-      get_unlocked_lead_data: {
-        Args: { p_facility_id: string; p_lead_id: string }
-        Returns: {
-          created_at: string
-          email: string
-          facility_id: string
-          id: string
-          insurance_type: string
-          level_of_care: string
-          location_city_state: string
-          location_zip: string
-          message: string
-          name: string
-          phone: string
-          primary_substance: string[]
-          source: string
-          status: string
-          urgency: string
-        }[]
-      }
       get_user_sessions_safe: {
         Args: { p_user_id: string }
         Returns: {
@@ -6858,6 +7258,23 @@ export type Database = {
           last_active_at: string
           location: string
           os: string
+        }[]
+      }
+      get_waitlist_demand_summary: {
+        Args: { p_limit?: number }
+        Returns: {
+          addon_type: string
+          cap: number
+          geo_city: string
+          geo_state: string
+          invited_count: number
+          oldest_request: string
+          scope_key: string
+          scope_label: string
+          scope_type: string
+          scope_value: string
+          used: number
+          waiting_count: number
         }[]
       }
       has_active_pro: { Args: { p_facility_id: string }; Returns: boolean }
@@ -6879,14 +7296,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      increment_provider_credits: {
-        Args: {
-          p_amount_cents: number
-          p_facility_id: string
-          p_provider_id: string
-        }
-        Returns: number
-      }
+      immutable_unaccent: { Args: { "": string }; Returns: string }
       is_admin: { Args: { p_user_id: string }; Returns: boolean }
       is_admin_session_active: { Args: { p_user_id: string }; Returns: boolean }
       is_approved_facility: { Args: { _facility_id: string }; Returns: boolean }
@@ -6898,19 +7308,6 @@ export type Database = {
         Args: { p_identifier: string }
         Returns: boolean
       }
-      is_lead_unlocked:
-        | {
-            Args: { p_facility_id: string; p_lead_id: string }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_facility_id: string
-              p_lead_id: string
-              p_provider_id: string
-            }
-            Returns: boolean
-          }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_rate_limit_event: {
         Args: {
@@ -7002,6 +7399,20 @@ export type Database = {
         }
         Returns: string
       }
+      search_provider_facilities: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          city: string
+          id: string
+          is_claimed: boolean
+          logo_url: string
+          match_score: number
+          name: string
+          slug: string
+          state: string
+          total_matches: number
+        }[]
+      }
       seeker_confirm_placement: {
         Args: { p_facility_id: string; p_inquiry_id: string }
         Returns: undefined
@@ -7028,20 +7439,6 @@ export type Database = {
       try_acquire_auto_reload_lock: {
         Args: { p_provider_id: string }
         Returns: boolean
-      }
-      unlock_lead_atomic: {
-        Args: {
-          p_base_price_cents: number
-          p_discount_amount_cents: number
-          p_discount_applied: boolean
-          p_facility_id: string
-          p_inquiry_type: string
-          p_lead_id: string
-          p_payment_method?: string
-          p_provider_id: string
-          p_unlock_price_cents: number
-        }
-        Returns: Json
       }
       user_has_provider_profile: {
         Args: { p_user_id: string }
@@ -7198,3 +7595,4 @@ export const Constants = {
     },
   },
 } as const
+
