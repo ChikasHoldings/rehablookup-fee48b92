@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, AlertTriangle, Star, MapPin } from 'lucide-react';
+import { Loader2, AlertTriangle, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ProviderReview } from '@/hooks/useProviderReviews';
@@ -45,6 +45,16 @@ export const FlagReviewDialog = memo(function FlagReviewDialog({ review, open, o
   const handleSubmit = async () => {
     if (!review || !reason) {
       toast.error('Please select a reason');
+      return;
+    }
+
+    // Re-flag guard. The card hides the Flag button when a dispute already
+    // exists, but a stale UI (slow realtime / two tabs) could still surface
+    // the dialog. Short-circuit before hitting the DB to avoid a duplicate
+    // dispute row + spurious admin notification.
+    if (review.dispute) {
+      toast.error('This review is already flagged');
+      handleClose();
       return;
     }
 
@@ -112,13 +122,11 @@ export const FlagReviewDialog = memo(function FlagReviewDialog({ review, open, o
               </div>
               <div>
                 <p className="text-sm font-medium">{review.user_display_name}</p>
-                {(review.reviewer_city || review.reviewer_state) && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {[review.reviewer_city, review.reviewer_state].filter(Boolean).join(', ')}
-                  </p>
-                )}
-                <div className="flex items-center gap-1 mt-0.5">
+                <div
+                  className="flex items-center gap-1 mt-0.5"
+                  role="img"
+                  aria-label={`Rated ${review.rating} out of 5 stars`}
+                >
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
@@ -128,6 +136,7 @@ export const FlagReviewDialog = memo(function FlagReviewDialog({ review, open, o
                           ? "fill-amber-400 text-amber-400"
                           : "fill-muted text-muted"
                       )}
+                      aria-hidden
                     />
                   ))}
                 </div>

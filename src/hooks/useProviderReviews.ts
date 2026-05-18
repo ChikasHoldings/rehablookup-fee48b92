@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useProviderFacilities } from './useProviderFacilities';
 
@@ -11,13 +11,12 @@ export interface ProviderReview {
   status: string;
   helpful_count: number;
   disputed: boolean;
+  reviewer_display_name: string | null;
   created_at: string;
   updated_at: string;
   user_display_name?: string;
   reviewer_first_name?: string;
   reviewer_last_initial?: string;
-  reviewer_city?: string;
-  reviewer_state?: string;
   response?: ReviewResponse | null;
   dispute?: ReviewDispute | null;
   // Facility info for centralized view
@@ -76,6 +75,12 @@ export function useProviderReviews() {
     return map;
   }, [facilities]);
 
+  // Coalesce concurrent refetches: realtime listeners + explicit save-then-refetch
+  // calls can both fire within the same tick. Track the in-flight request and
+  // drop overlapping calls to avoid double-fetch storms.
+  const inFlightRef = useRef<Promise<void> | null>(null);
+  const lastFetchAtRef = useRef<number>(0);
+
   const fetchReviews = useCallback(async () => {
     if (facilityIds.length === 0) {
       setReviews([]);
@@ -83,94 +88,94 @@ export function useProviderReviews() {
       return;
     }
 
+    // Coalesce: if a fetch fired in the last 250ms, drop this one.
+    const now = Date.now();
+    if (inFlightRef.current) return inFlightRef.current;
+    if (now - lastFetchAtRef.current < 250) return;
+
     setIsLoading(true);
     setIsError(false);
-    try {
-      // Fetch all data in parallel for better performance
-      const [reviewsResult, responsesResult, disputesResult] = await Promise.all([
-        supabase
-          .from('facility_reviews')
-          .select('id, user_id, facility_id, rating, review_text, status, helpful_count, disputed, created_at, updated_at, reviewer_display_name')
-          .in('facility_id', facilityIds)
-          .eq('status', 'approved')
-          .order('created_at', { ascending: false })
-          .limit(2000),
-        supabase
-          .from('review_responses')
-          .select('id, review_id, facility_id, responder_user_id, response_text, status, created_at, updated_at')
-          .in('facility_id', facilityIds)
-          .limit(5000),
-        supabase
-          .from('review_disputes')
-          .select('id, review_id, facility_id, disputed_by, reason, details, status, admin_notes, resolved_by, resolved_at, created_at')
-          .in('facility_id', facilityIds)
-          .limit(5000)
-      ]);
+    const work = (async () => {
+      try {
+        // Fetch reviews + responses + disputes in parallel. We deliberately
+        // do NOT fetch seeker_profiles here — RLS restricts it to the owning
+        // user + admins, so the call would return an empty set for providers
+        // anyway. The snapshot `reviewer_display_name` stored on the review
+        // row at submission time is the canonical display source.
+        const [reviewsResult, responsesResult, disputesResult] = await Promise.all([
+          supabase
+            .from('facility_reviews')
+            .select('id, user_id, facility_id, rating, review_text, status, helpful_count, disputed, created_at, updated_at, reviewer_display_name')
+            .in('facility_id', facilityIds)
+            .eq('status', 'approved')
+            .order('created_at', { ascending: false })
+            .limit(2000),
+          supabase
+            .from('review_responses')
+            .select('id, review_id, facility_id, responder_user_id, response_text, status, created_at, updated_at')
+            .in('facility_id', facilityIds)
+            .limit(5000),
+          supabase
+            .from('review_disputes')
+            .select('id, review_id, facility_id, disputed_by, reason, details, status, admin_notes, resolved_by, resolved_at, created_at')
+            .in('facility_id', facilityIds)
+            .limit(5000)
+        ]);
 
-      if (reviewsResult.error) {
-        console.error('Error fetching reviews:', reviewsResult.error);
-        setIsError(true);
-        setIsLoading(false);
-        return;
-      }
-
-      const reviewsData = reviewsResult.data || [];
-      const responseMap = new Map(responsesResult.data?.map(r => [r.review_id, r]) || []);
-      const disputeMap = new Map(disputesResult.data?.map(d => [d.review_id, d]) || []);
-
-      // Fetch user profile info only if we have reviews
-      let profileMap = new Map<string, { display_name: string | null; first_name: string | null; last_name: string | null; city: string | null; state: string | null }>();
-      const userIds = [...new Set(reviewsData.map(r => r.user_id))];
-      
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('seeker_profiles')
-          .select('user_id, display_name, first_name, last_name, city, state')
-          .in('user_id', userIds);
-        
-        profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-      }
-
-      const enrichedReviews: ProviderReview[] = reviewsData.map(review => {
-        const profile = profileMap.get(review.user_id);
-        // Prefer stored snapshot name (name at time of review)
-        const storedName = (review as any).reviewer_display_name as string | null;
-        let displayName = storedName?.trim() || null;
-        if (!displayName) {
-          // Build full name from live profile (first + full last name, not just initial)
-          const fn = (profile?.first_name || profile?.display_name?.split(' ')[0] || '').trim();
-          const ln = (profile?.last_name || profile?.display_name?.split(' ').slice(1).join(' ') || '').trim();
-          if (fn) displayName = fn + (ln ? ` ${ln}` : '');
+        if (reviewsResult.error) {
+          console.error('[useProviderReviews] reviews fetch error:', reviewsResult.error);
+          setIsError(true);
+          return;
         }
-        displayName = displayName || 'Verified Reviewer';
-        const nameParts = displayName.split(' ');
-        const firstName = nameParts[0] || 'Verified';
-        const lastName = nameParts.slice(1).join(' ') || '';
-        const facilityInfo = facilityMap.get(review.facility_id);
-        
-        return {
-          ...review,
-          disputed: review.disputed || false,
-          user_display_name: displayName,
-          reviewer_first_name: firstName,
-          reviewer_last_initial: lastName ? lastName.charAt(0) : '',
-          reviewer_city: profile?.city || null,
-          reviewer_state: profile?.state || null,
-          response: responseMap.get(review.id) || null,
-          dispute: disputeMap.get(review.id) || null,
-          facility_name: facilityInfo?.name,
-          facility_city: facilityInfo?.city,
-          facility_state: facilityInfo?.state,
-        };
-      });
+        if (responsesResult.error) {
+          console.error('[useProviderReviews] responses fetch error:', responsesResult.error);
+        }
+        if (disputesResult.error) {
+          console.error('[useProviderReviews] disputes fetch error:', disputesResult.error);
+        }
 
-      setReviews(enrichedReviews);
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
-    }
+        const reviewsData = reviewsResult.data || [];
+        const responseMap = new Map(responsesResult.data?.map(r => [r.review_id, r]) || []);
+        const disputeMap = new Map(disputesResult.data?.map(d => [d.review_id, d]) || []);
+
+        const enrichedReviews: ProviderReview[] = reviewsData.map(review => {
+          const storedName = review.reviewer_display_name;
+          const displayName = storedName?.trim() || 'Verified Reviewer';
+          const nameParts = displayName.split(/\s+/).filter(Boolean);
+          const firstName = nameParts[0] || 'Verified';
+          // Show only last initial to the provider — matches the public
+          // ReviewsList privacy model. Snapshots stored as "First L." remain
+          // a single token; snapshots stored as "First Last" are truncated.
+          const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1].charAt(0) : '';
+          const renderedName = lastInitial ? `${firstName} ${lastInitial}.` : firstName;
+          const facilityInfo = facilityMap.get(review.facility_id);
+
+          return {
+            ...review,
+            disputed: review.disputed || false,
+            user_display_name: renderedName,
+            reviewer_first_name: firstName,
+            reviewer_last_initial: lastInitial,
+            response: responseMap.get(review.id) || null,
+            dispute: disputeMap.get(review.id) || null,
+            facility_name: facilityInfo?.name,
+            facility_city: facilityInfo?.city,
+            facility_state: facilityInfo?.state,
+          };
+        });
+
+        setReviews(enrichedReviews);
+      } catch (error) {
+        console.error('[useProviderReviews] unexpected error:', error);
+        setIsError(true);
+      } finally {
+        setIsLoading(false);
+        lastFetchAtRef.current = Date.now();
+        inFlightRef.current = null;
+      }
+    })();
+    inFlightRef.current = work;
+    return work;
   }, [facilityIds, facilityMap]);
 
   useEffect(() => {
@@ -205,14 +210,16 @@ export function useProviderReviews() {
     return () => { supabase.removeChannel(channel); };
   }, [facilityIds, fetchReviews]);
 
-  // Calculate stats from reviews using useMemo to prevent recalculation
+  // Calculate stats from reviews. The `disputed` count uses `!!r.dispute`
+  // (matches the page-level filtered stats + the Disputed tab predicate) so
+  // the stat card and tab badge never drift.
   const stats = useMemo<ReviewStats>(() => {
     const totalReviews = reviews.length;
     const averageRating = totalReviews > 0
       ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews) * 10) / 10
       : null;
     const needsResponse = reviews.filter(r => !r.response).length;
-    const disputed = reviews.filter(r => r.dispute && r.dispute.status === 'pending').length;
+    const disputed = reviews.filter(r => !!r.dispute).length;
 
     return { totalReviews, averageRating, needsResponse, disputed };
   }, [reviews]);
@@ -309,10 +316,9 @@ export function useProviderReviews() {
 
     if (disputeError) return { error: disputeError };
 
-    // Flipping facility_reviews.disputed=true is now done by a DB trigger on
-    // review_disputes insert; the client-side UPDATE here historically only
-    // succeeded under permissive RLS and silently failed otherwise. Notify
-    // admins + refresh.
+    // The UI drives the "Disputed" badge off the joined `review_disputes`
+    // row (not the legacy `facility_reviews.disputed` boolean), so no
+    // post-insert update is needed here. Notify admins + refresh.
     supabase.functions
       .invoke('send-review-notification', {
         body: {
