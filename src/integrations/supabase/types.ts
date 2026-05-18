@@ -4427,7 +4427,6 @@ export type Database = {
           last_unlock_at: string | null
           lead_notification_frequency: string | null
           notify_facility_views: boolean | null
-          notify_lead_limit_warnings: boolean | null
           notify_lead_status_changes: boolean | null
           notify_new_leads: boolean | null
           sms_escalation_enabled: boolean | null
@@ -4451,7 +4450,6 @@ export type Database = {
           last_unlock_at?: string | null
           lead_notification_frequency?: string | null
           notify_facility_views?: boolean | null
-          notify_lead_limit_warnings?: boolean | null
           notify_lead_status_changes?: boolean | null
           notify_new_leads?: boolean | null
           sms_escalation_enabled?: boolean | null
@@ -4475,7 +4473,6 @@ export type Database = {
           last_unlock_at?: string | null
           lead_notification_frequency?: string | null
           notify_facility_views?: boolean | null
-          notify_lead_limit_warnings?: boolean | null
           notify_lead_status_changes?: boolean | null
           notify_new_leads?: boolean | null
           sms_escalation_enabled?: boolean | null
@@ -5117,39 +5114,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      purchased_listing_slots: {
-        Row: {
-          completed_at: string | null
-          created_at: string
-          id: string
-          price_cents: number
-          status: string
-          stripe_checkout_session_id: string | null
-          stripe_payment_intent_id: string | null
-          user_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          price_cents?: number
-          status?: string
-          stripe_checkout_session_id?: string | null
-          stripe_payment_intent_id?: string | null
-          user_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          price_cents?: number
-          status?: string
-          stripe_checkout_session_id?: string | null
-          stripe_payment_intent_id?: string | null
-          user_id?: string
-        }
-        Relationships: []
       }
       rate_limit_log: {
         Row: {
@@ -7181,7 +7145,6 @@ export type Database = {
           zip_code: string
         }[]
       }
-      get_purchased_slot_count: { Args: { p_user_id: string }; Returns: number }
       get_seeker_emails_for_admin: {
         Args: never
         Returns: {
