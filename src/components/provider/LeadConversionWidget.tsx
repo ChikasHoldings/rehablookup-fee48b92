@@ -43,7 +43,7 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
       // a future view change broadens the row set.
       const { data, error } = await (supabase as any)
         .from("leads_provider_view")
-        .select("id, status, created_at, provider_responded_at, qualified, facility_id")
+        .select("id, status, created_at, provider_responded_at, facility_id")
         .in("facility_id", facilityIds)
         .gte("created_at", startOfLastMonth.toISOString())
         .order("created_at", { ascending: false })

@@ -109,7 +109,7 @@ export function ProviderPerformanceFeedback({ facilityId }: ProviderPerformanceF
   if (stats.leadsThisWeek > 0 && stats.missedLeads === 0) {
     insights.push({
       icon: Zap,
-      text: `All ${stats.unlockedThisWeek} leads unlocked this week — keep it up!`,
+      text: `You responded to all ${stats.unlockedThisWeek} leads this week — keep it up!`,
       type: "success",
     });
   }

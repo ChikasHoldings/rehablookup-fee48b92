@@ -1,12 +1,10 @@
 import React, { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Handshake, Clock, CheckCircle, ArrowRight } from "lucide-react";
+import { Handshake, Clock, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 interface DashboardPlacementPanelProps {
@@ -94,21 +92,14 @@ export function DashboardPlacementPanel({ facilityIds, isPro: _isPro }: Dashboar
   return (
     <Card>
       <CardHeader className="pb-2 px-4 pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Handshake className="h-4 w-4 text-primary" />
-            <CardTitle className="text-sm font-semibold">Placement Opportunities</CardTitle>
-            {pendingCount > 0 && (
-              <Badge className="bg-blue-500/10 text-blue-600 border-blue-200 text-[10px] px-1.5 py-0">
-                {pendingCount} new
-              </Badge>
-            )}
-          </div>
-          <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" asChild>
-            <Link to="/provider/placement-network">
-              View All <ArrowRight className="h-3 w-3 ml-1" />
-            </Link>
-          </Button>
+        <div className="flex items-center gap-2">
+          <Handshake className="h-4 w-4 text-primary" />
+          <CardTitle className="text-sm font-semibold">Placement Opportunities</CardTitle>
+          {pendingCount > 0 && (
+            <Badge className="bg-blue-500/10 text-blue-600 border-blue-200 text-[10px] px-1.5 py-0">
+              {pendingCount} new
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-4">

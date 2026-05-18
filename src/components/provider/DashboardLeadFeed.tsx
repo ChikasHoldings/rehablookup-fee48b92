@@ -3,7 +3,6 @@ import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
 import { Link } from "react-router-dom";
 import {
   Lock,
-  Unlock,
   Phone,
   Mail,
   MapPin,
@@ -14,11 +13,8 @@ import {
   Building2,
   ChevronRight,
   Users,
-  Sparkles,
   Crown,
-  CalendarClock,
   Heart,
-  Shield,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,8 +28,6 @@ import type { Lead } from "@/components/provider/leads/LeadDetailPanel";
 
 interface DashboardLeadFeedProps {
   leads: Lead[];
-  unlockedLeadIds: Set<string>;
-  facilityId: string;
   facilityName?: string;
   isPro: boolean;
   isLoading: boolean;
@@ -70,8 +64,6 @@ const URGENCY_CONFIG: Record<string, { label: string; class: string }> = {
 
 export function DashboardLeadFeed({
   leads,
-  unlockedLeadIds,
-  facilityId,
   facilityName,
   isPro,
   isLoading,
@@ -126,7 +118,11 @@ export function DashboardLeadFeed({
         ) : (
           <div className="divide-y">
             {leads.map((lead) => {
-              const isUnlocked = unlockedLeadIds.has(lead.id);
+              // Post-EKRA flat-fee retirement (20260517010300_*), every lead
+              // owned by the facility is unlocked. The view's `is_unlocked`
+              // column already reflects this; fall back to true to avoid
+              // ever masking PII the caller is entitled to read.
+              const isUnlocked = lead.is_unlocked !== false;
               return isUnlocked ? (
                 <UnlockedLeadRow
                   key={lead.id}
@@ -138,7 +134,6 @@ export function DashboardLeadFeed({
                 <LockedLeadRow
                   key={lead.id}
                   lead={lead}
-                  facilityId={facilityId}
                   facilityName={facilityName}
                   isPro={isPro}
                   onClick={() => onLeadClick(lead)}
@@ -253,13 +248,11 @@ function UnlockedLeadRow({
 // ── Locked Lead Row ──
 function LockedLeadRow({
   lead,
-  facilityId,
   facilityName,
   isPro,
   onClick,
 }: {
   lead: Lead;
-  facilityId: string;
   facilityName?: string;
   isPro: boolean;
   onClick: () => void;
@@ -334,19 +327,15 @@ function LockedLeadRow({
             </span>
           </div>
 
-          {/* Row 4: Countdown + Unlock CTA */}
+          {/* Row 4: Countdown */}
           <div className="flex items-center gap-2 mt-2.5 flex-wrap">
             <LeadCountdownBadge createdAt={lead.created_at} />
-            
-            <div className="ml-auto flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              {/* Lead unlocking retired. */}
-            </div>
           </div>
 
           {/* Pro upgrade nudge for Free users */}
           {!isPro && (
             <Link
-              to="/provider/pro-upgrade"
+              to="/provider/billing"
               className="mt-2 flex items-center gap-1.5 text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors font-medium"
               onClick={(e) => e.stopPropagation()}
             >

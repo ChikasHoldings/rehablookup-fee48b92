@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, MousePointer, Users, TrendingUp, Star, ArrowUpRight } from "lucide-react";
+import { Eye, MousePointer, Users, TrendingUp, Star, ArrowUpRight, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useFacilitySubscription } from "@/hooks/useFacilitySubscription";
 
 interface FeaturedAnalyticsWidgetProps {
   facilityId: string;
@@ -20,7 +21,10 @@ interface AnalyticsData {
 }
 
 export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetProps) {
-  const { data: analytics, isLoading } = useQuery({
+  const { data: subscription } = useFacilitySubscription(facilityId);
+  const hasFeatured = subscription?.has_featured === true;
+
+  const { data: analytics, isLoading, isError } = useQuery({
     queryKey: ["featured-analytics-provider", facilityId],
     queryFn: async (): Promise<AnalyticsData> => {
       // Get last 30 days of analytics
@@ -63,8 +67,33 @@ export function FeaturedAnalyticsWidget({ facilityId }: FeaturedAnalyticsWidgetP
         conversionRate,
       };
     },
+    enabled: !!facilityId && hasFeatured,
     staleTime: 5 * 60 * 1000,
+    retry: 2,
   });
+
+  // Hide the widget entirely for Pro users without the Featured add-on.
+  // Showing a "Featured Performance" panel with all zeros is misleading.
+  if (!hasFeatured) return null;
+
+  if (isError) {
+    return (
+      <Card className="border-amber-200 bg-gradient-to-br from-amber-50/50 to-background dark:from-amber-950/20">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Star className="h-4 w-4 text-amber-500" />
+            <CardTitle className="text-base">Featured Performance</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            Couldn't load Featured analytics. Refresh to retry.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (

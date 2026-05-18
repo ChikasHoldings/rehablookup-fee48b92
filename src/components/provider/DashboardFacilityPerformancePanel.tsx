@@ -181,7 +181,7 @@ export function DashboardFacilityPerformancePanel({ isPro }: DashboardFacilityPe
               className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md"
               asChild
             >
-              <Link to="/provider/pro-upgrade">
+              <Link to="/provider/billing">
                 <Crown className="h-3.5 w-3.5 mr-1.5" />
                 Upgrade to Pro
               </Link>
@@ -194,7 +194,7 @@ export function DashboardFacilityPerformancePanel({ isPro }: DashboardFacilityPe
               <span className="text-sm font-semibold">Facility Performance</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {["Leads Received", "Leads Unlocked", "Conversion Rate", "Contact Attempts"].map(t => (
+              {["Leads Received", "Leads Responded", "Conversion Rate", "Contact Attempts"].map(t => (
                 <div key={t} className="rounded-md border p-2.5">
                   <p className="text-xs text-muted-foreground">{t}</p>
                   <p className="text-lg font-bold text-foreground mt-1">--</p>
@@ -248,8 +248,8 @@ export function DashboardFacilityPerformancePanel({ isPro }: DashboardFacilityPe
             {/* KPI cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <MiniKPI icon={MessageSquare} label="Leads Received" value={metrics.leadsReceived} color="blue" />
-              <MiniKPI icon={Eye} label="Leads Unlocked" value={metrics.leadsUnlocked} color="primary" />
-              <MiniKPI icon={Target} label="Conversion Rate" value={`${metrics.conversionRate}%`} color="emerald" />
+              <MiniKPI icon={Eye} label="Leads Responded" value={metrics.leadsUnlocked} color="primary" />
+              <MiniKPI icon={Target} label="Response Rate" value={`${metrics.conversionRate}%`} color="emerald" />
               <MiniKPI icon={Phone} label="Contact Attempts" value={metrics.contactAttempts} color="purple" />
             </div>
 
@@ -275,7 +275,7 @@ export function DashboardFacilityPerformancePanel({ isPro }: DashboardFacilityPe
                         }}
                       />
                       <Line type="monotone" dataKey="leads" name="Leads" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
-                      <Line type="monotone" dataKey="unlocked" name="Unlocked" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="unlocked" name="Responded" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -308,13 +308,13 @@ export function DashboardFacilityPerformancePanel({ isPro }: DashboardFacilityPe
                     }}
                   />
                   <Bar dataKey="leads" name="Leads" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={12} />
-                  <Bar dataKey="unlocked" name="Unlocked" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} barSize={12} />
+                  <Bar dataKey="unlocked" name="Responded" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} barSize={12} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="flex items-center justify-center gap-4 mt-1">
               <LegendDot color="hsl(var(--primary))" label="Leads" />
-              <LegendDot color="hsl(142, 71%, 45%)" label="Unlocked" />
+              <LegendDot color="hsl(142, 71%, 45%)" label="Responded" />
             </div>
           </div>
         )}

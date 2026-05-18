@@ -507,7 +507,7 @@ export default function ProviderDashboardPage() {
                       </Link>
                     ) : (
                       <Link
-                        to="/provider/pro-upgrade"
+                        to="/provider/billing"
                         className="group relative inline-flex items-center gap-2 pl-2.5 pr-3.5 py-2 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-xs font-semibold text-muted-foreground hover:text-primary"
                       >
                         <div className="h-5 w-5 rounded-md bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
@@ -537,12 +537,10 @@ export default function ProviderDashboardPage() {
             {/* Lead Feed — Core Money Section */}
             <DashboardLeadFeed
               leads={recentLeads}
-              facilityId={facilityId || ""}
               facilityName={facility?.name}
               isPro={proStatus.isPro}
               isLoading={leadsLoading}
               onLeadClick={handleLeadClick}
-              unlockedLeadIds={new Set()}
             />
 
             {/* Missed Leads — Psychological Trigger */}
@@ -569,8 +567,6 @@ export default function ProviderDashboardPage() {
 
           {/* Right Column - Sidebar */}
           <div className="lg:col-span-4 space-y-3 sm:space-y-4">
-
-            {/* Credit spending stats moved to DashboardTopBar — single credit widget */}
 
             {/* Alerts */}
             <div className="space-y-2.5">
