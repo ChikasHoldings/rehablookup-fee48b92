@@ -28,10 +28,13 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
 
   const handleSelectFacility = (facilityId: string) => {
     const facility = facilities.find(f => f.id === facilityId);
-    if (facility) {
-      setSelectedFacility(facility);
-      onEditListing(facilityId);
-    }
+    if (!facility) return;
+    // Suspended listings are read-only via the editor — block the click
+    // here to avoid a confusing "open then immediately hit a paused
+    // banner" jump. Owners reactivate via support per the section copy.
+    if (facility.suspended) return;
+    setSelectedFacility(facility);
+    onEditListing(facilityId);
   };
 
   const handlePreview = (facility: { name: string; slug: string }) => {
@@ -41,10 +44,11 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
 
   if (isLoading) {
     return (
-      <div className="min-h-full bg-background">
+      <div className="min-h-full bg-background" aria-busy="true">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+            <span className="sr-only">Loading your facility listings…</span>
           </div>
         </div>
       </div>
@@ -97,49 +101,62 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
         </div>
 
         {/* Listings Grid */}
-        <div className="space-y-4">
-          {/* Active Facilities */}
-          {facilities.filter(f => !f.suspended).map((facility) => (
-            <ListingCard
-              key={facility.id}
-              facility={facility}
-              onSelect={handleSelectFacility}
-              onPreview={handlePreview}
-            />
-          ))}
-
-          {/* Suspended Facilities Section — legacy state from when Pro
-              cancellation auto-suspended extras; left visible so any
-              historically-paused listings are still surfaced for the
-              owner to reactivate via support. */}
-          {facilities.some(f => f.suspended) && (
-            <div className="space-y-3 pt-4 border-t border-dashed border-border/60">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">Paused Listings</span>
-                <span className="text-xs">(contact support to reactivate)</span>
+        {facilities.length === 0 ? (
+          // Genuine empty state — no facilities at all. AddListingCard
+          // is rendered with a richer subtitle ("You don't have any
+          // facilities yet — add your first.") for first-time providers.
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-6 py-12 text-center">
+              <div className="mx-auto mb-3 h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Building2 className="h-6 w-6 text-primary" aria-hidden />
               </div>
-              {facilities.filter(f => f.suspended).map((facility) => (
-                <ListingCard
-                  key={facility.id}
-                  facility={facility}
-                  onSelect={handleSelectFacility}
-                  onPreview={handlePreview}
-                />
-              ))}
+              <h2 className="text-base font-semibold text-foreground">
+                No listings yet
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
+                Add your first facility to start receiving inquiries. The
+                process takes about 10 minutes and our team reviews new
+                listings within 24-48 hours.
+              </p>
             </div>
-          )}
+            <AddListingCard used={0} onAddClick={onAddListing} />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Active Facilities */}
+            {facilities.filter(f => !f.suspended).map((facility) => (
+              <ListingCard
+                key={facility.id}
+                facility={facility}
+                onSelect={handleSelectFacility}
+                onPreview={handlePreview}
+              />
+            ))}
 
-          {/* Add New Listing Card */}
-          <AddListingCard used={used} onAddClick={onAddListing} />
-        </div>
+            {/* Suspended Facilities Section — legacy state from when Pro
+                cancellation auto-suspended extras; left visible so any
+                historically-paused listings are still surfaced for the
+                owner to reactivate via support. */}
+            {facilities.some(f => f.suspended) && (
+              <div className="space-y-3 pt-4 border-t border-dashed border-border/60">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <AlertCircle className="h-4 w-4" aria-hidden />
+                  <span className="text-sm font-medium">Paused Listings</span>
+                  <span className="text-xs">(contact support to reactivate)</span>
+                </div>
+                {facilities.filter(f => f.suspended).map((facility) => (
+                  <ListingCard
+                    key={facility.id}
+                    facility={facility}
+                    onSelect={handleSelectFacility}
+                    onPreview={handlePreview}
+                  />
+                ))}
+              </div>
+            )}
 
-        {/* Empty State - only shown when no facilities exist */}
-        {facilities.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">
-              You haven't created any listings yet. Get started by adding your first facility.
-            </p>
+            {/* Add New Listing Card */}
+            <AddListingCard used={used} onAddClick={onAddListing} />
           </div>
         )}
       </div>

@@ -68,15 +68,24 @@ const getStatusConfig = (status: string) => {
 
 export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps) {
   const isSuspended = facility.suspended === true;
-  const statusConfig = isSuspended 
-    ? { label: "Paused", description: "Upgrade to reactivate", icon: Lock, dotColor: "bg-muted-foreground", badgeClass: "bg-muted text-muted-foreground border-border" }
+  const statusConfig = isSuspended
+    // Legacy state from the credit-era listing-cap model: when a Pro
+    // subscription was cancelled, the trigger auto-suspended extras.
+    // Pro now grants unlimited facilities (Phase D) so new suspensions
+    // are not possible; any rows still flagged are historical and need
+    // a support hand to clear.
+    ? { label: "Paused", description: "Contact support to reactivate", icon: Lock, dotColor: "bg-muted-foreground", badgeClass: "bg-muted text-muted-foreground border-border" }
     : getStatusConfig(facility.status);
   const StatusIcon = statusConfig.icon;
   const createdDate = format(new Date(facility.created_at), "MMM d, yyyy");
-  
+  // Only animate the status dot when the listing is actively in a
+  // "live" state. Pending/draft/paused dots pulsing draws unnecessary
+  // attention and clashes with prefers-reduced-motion accessibility.
+  const shouldPulseDot = facility.status === "approved" && !isSuspended;
+
   // Get the main image (first gallery image or logo as fallback)
   const mainImage = facility.gallery_urls?.[0] || facility.logo_url;
-  
+
   // Build full address string - handle missing fields gracefully
   const addressParts = [
     facility.address,
@@ -85,7 +94,10 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
   ].filter(Boolean);
   const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : `${facility.city}, ${facility.state}`;
 
-  // Fetch profile views count from provider_events (profile_view only, excludes impressions)
+  // Profile-view count (excludes raw impression rows). The card is
+  // re-rendered every time the parent list refetches; staleTime + a
+  // long-ish gc keep the counts cached so a 10-facility page doesn't
+  // fire 20 head-count queries on each navigation back to the index.
   const { data: viewsData } = useQuery({
     queryKey: ['facility-views-count', facility.id],
     queryFn: async () => {
@@ -94,13 +106,15 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
         .select('id', { count: 'exact', head: true })
         .eq('facility_id', facility.id)
         .eq('event_type', 'profile_view');
-      
+
       if (error) throw error;
       return count || 0;
     },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
   });
 
-  // Fetch leads count
+  // Leads count (live leads through leads_provider_view).
   const { data: leadsData } = useQuery({
     queryKey: ['facility-leads-count', facility.id],
     queryFn: async () => {
@@ -108,10 +122,12 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
         .from('leads_provider_view')
         .select('id', { count: 'exact', head: true })
         .eq('facility_id', facility.id);
-      
+
       if (error) throw error;
       return count || 0;
     },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
   });
 
   return (
@@ -140,8 +156,24 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
             {/* Status Badge */}
             <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
-              <Badge variant="outline" className={cn("gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-medium backdrop-blur-md bg-background/90 shadow-sm", statusConfig.badgeClass)}>
-                <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse", statusConfig.dotColor)} />
+              <Badge
+                variant="outline"
+                className={cn(
+                  "gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-medium backdrop-blur-md bg-background/90 shadow-sm",
+                  statusConfig.badgeClass,
+                )}
+                aria-label={`Status: ${statusConfig.label}`}
+              >
+                <span
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    statusConfig.dotColor,
+                    // Only "Live" listings pulse; non-live dots remain static
+                    // (and respect prefers-reduced-motion via motion-safe:).
+                    shouldPulseDot && "motion-safe:animate-pulse",
+                  )}
+                  aria-hidden
+                />
                 {statusConfig.label}
               </Badge>
             </div>
@@ -196,23 +228,25 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
                     size="sm"
                     className="gap-1 sm:gap-1.5 h-7 sm:h-8 px-2 sm:px-2.5 text-[11px] sm:text-xs"
                     onClick={() => onPreview({ name: facility.name, slug: facility.slug! })}
+                    aria-label={`Preview ${facility.name}'s public profile`}
                   >
-                    <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden />
                     <span className="hidden xs:inline sm:inline">Preview</span>
                   </Button>
                 )}
                 {isSuspended ? (
-                  <Badge variant="outline" className="text-[10px] sm:text-xs text-muted-foreground">
-                    <Lock className="h-3 w-3 mr-1" />
-                    Upgrade to Pro to reactivate
+                  <Badge variant="outline" className="text-[10px] sm:text-xs text-muted-foreground gap-1">
+                    <Lock className="h-3 w-3" aria-hidden />
+                    Contact support
                   </Badge>
                 ) : (
                   <Button
                     size="sm"
                     className="gap-1 sm:gap-1.5 h-7 sm:h-8 px-2.5 sm:px-3 text-[11px] sm:text-xs"
                     onClick={() => onSelect(facility.id)}
+                    aria-label={`Edit ${facility.name}`}
                   >
-                    <Edit3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <Edit3 className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden />
                     <span>Edit</span>
                   </Button>
                 )}

@@ -14,26 +14,39 @@ interface AddListingCardProps {
  * with the credit/unlock monetization model).
  */
 export function AddListingCard({ used, onAddClick }: AddListingCardProps) {
+  const subtitle = used === 0
+    ? "You don't have any facilities yet — add your first."
+    : `You have ${used} ${used === 1 ? "listing" : "listings"}. Pro includes unlimited additions.`;
+
   return (
     <Card
-      className="border-2 border-dashed border-primary/30 hover:border-primary/50 bg-primary/5 hover:bg-primary/10 transition-all duration-200 cursor-pointer group"
+      role="button"
+      tabIndex={0}
+      aria-label="Add a new facility listing"
+      className="border-2 border-dashed border-primary/30 hover:border-primary/50 bg-primary/5 hover:bg-primary/10 transition-all duration-200 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
       onClick={onAddClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onAddClick();
+        }
+      }}
     >
       <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
           <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors shrink-0">
-            <Plus className="h-5 w-5 sm:h-7 sm:w-7 text-primary" />
+            <Plus className="h-5 w-5 sm:h-7 sm:w-7 text-primary" aria-hidden />
           </div>
           <div className="flex-1 text-center sm:text-left">
             <h3 className="font-semibold text-foreground text-sm sm:text-base mb-0.5 sm:mb-1 group-hover:text-primary transition-colors">
               Add New Listing
             </h3>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Create another facility listing ({used} {used === 1 ? "currently" : "currently"})
+              {subtitle}
             </p>
           </div>
-          <Button className="gap-2 shrink-0 w-full sm:w-auto h-9 sm:h-10 text-sm">
-            <Building2 className="h-4 w-4" />
+          <Button className="gap-2 shrink-0 w-full sm:w-auto h-9 sm:h-10 text-sm" tabIndex={-1}>
+            <Building2 className="h-4 w-4" aria-hidden />
             Add Facility
           </Button>
         </div>

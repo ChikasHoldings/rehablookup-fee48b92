@@ -570,14 +570,28 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         setShowSaved(true);
         setTimeout(() => setShowSaved(false), 2000);
       } else {
+        // Surface auto-save failures so providers don't think their
+        // typing was saved when it silently wasn't. `hasChanges` stays
+        // true on error so the floating save bar continues to nag and
+        // the next 3-second debounce will retry automatically.
         console.error("[ListingEditor] Auto-save failed:", error.message);
+        toast({
+          title: "Auto-save failed",
+          description: "Your latest changes weren't saved. Click Save Changes or try again — we'll keep retrying.",
+          variant: "destructive",
+        });
       }
     } catch (networkErr) {
       console.error("[ListingEditor] Auto-save network error:", networkErr);
+      toast({
+        title: "Auto-save offline",
+        description: "We couldn't reach the server. Check your connection — your local edits are still in the form.",
+        variant: "destructive",
+      });
     } finally {
       setIsAutoSaving(false);
     }
-  }, [facility, isSaving, currentFacilityId, queryClient]); // toast is stable from useToast; removing it silences the unnecessary-dep warning
+  }, [facility, isSaving, currentFacilityId, queryClient, toast]);
 
   // Auto-save effect
   useEffect(() => {
