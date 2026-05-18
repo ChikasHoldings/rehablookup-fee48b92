@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getNotificationRoute } from "@/lib/providerNotificationTypes";
 
 export interface ProviderNotification {
   id: string;
@@ -21,6 +22,11 @@ const NOTIFICATION_SOUND_URL = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA
 export function useProviderNotifications() {
   const queryClient = useQueryClient();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // IDs of notifications with an in-flight mark-as-read / delete
+  // mutation. The realtime UPDATE handler skips events for these so an
+  // in-flight optimistic state isn't briefly overwritten by Stripe's
+  // replay of the now-stale row.
+  const inFlightMutationsRef = useRef<Set<string>>(new Set());
 
   // Initialize audio element on mount
   useEffect(() => {
@@ -46,23 +52,37 @@ export function useProviderNotifications() {
     }
   }, []);
 
-  const showBrowserNotification = useCallback((title: string, body: string) => {
-    if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
-      const notification = new Notification(title, {
-        body,
-        icon: "/favicon.svg",
-        tag: "rehablookup-lead",
-      });
-      notification.onclick = () => {
-        window.focus();
-        window.location.href = "/provider/inquiries";
-        notification.close();
-      };
-      setTimeout(() => notification.close(), 5000);
-    }
-  }, []);
+  const showBrowserNotification = useCallback(
+    (
+      title: string,
+      body: string,
+      type: string | null | undefined,
+      metadata: Record<string, unknown> | null | undefined,
+    ) => {
+      if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
+        // Use the type itself as the tag so a per-type notification
+        // collapses (Stripe sends two payment_failed events in a row?
+        // user sees one banner, not two). Lead-style types still
+        // collapse against the legacy "rehablookup-lead" tag.
+        const tag = type ? `rehablookup-${type}` : "rehablookup-notification";
+        const notification = new Notification(title, {
+          body,
+          icon: "/favicon.svg",
+          tag,
+        });
+        const route = getNotificationRoute(type, metadata ?? null);
+        notification.onclick = () => {
+          window.focus();
+          window.location.href = route;
+          notification.close();
+        };
+        setTimeout(() => notification.close(), 5000);
+      }
+    },
+    [],
+  );
 
-  const { data: notifications = [], isLoading, error } = useQuery({
+  const { data: notifications = [], isLoading, error, refetch } = useQuery({
     queryKey: ["provider-notifications"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -79,6 +99,7 @@ export function useProviderNotifications() {
       return (data || []) as ProviderNotification[];
     },
     staleTime: 30 * 1000,
+    retry: 1,
   });
 
   // Real-time subscription for instant updates - filtered by user_id
@@ -101,11 +122,21 @@ export function useProviderNotifications() {
           },
           (payload) => {
             const newNotification = payload.new as ProviderNotification;
-            
-            // Play sound and show browser notification
-            playNotificationSound();
-            showBrowserNotification(newNotification.title, newNotification.message);
-            
+
+            // Only chime + raise an OS banner when the tab is in the
+            // background. Foreground users see the in-app row land
+            // immediately; replaying a sound while they're already
+            // looking at the dropdown is just noise.
+            if (typeof document !== "undefined" && document.hidden) {
+              playNotificationSound();
+              showBrowserNotification(
+                newNotification.title,
+                newNotification.message,
+                newNotification.type,
+                newNotification.metadata,
+              );
+            }
+
             // Update cache immediately for instant UI update
             queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
               if (!old) return [newNotification];
@@ -125,6 +156,12 @@ export function useProviderNotifications() {
           },
           (payload) => {
             const updatedNotification = payload.new as ProviderNotification;
+            // Skip realtime UPDATEs whose row currently has an
+            // optimistic-update mutation in flight. Without this, the
+            // server-side row (still showing read=false to the realtime
+            // pipeline mid-write) overwrites our optimistic read=true
+            // state and the row briefly flips back to unread.
+            if (inFlightMutationsRef.current.has(updatedNotification.id)) return;
             queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
               if (!old) return old;
               return old.map(n => n.id === updatedNotification.id ? updatedNotification : n);
@@ -183,15 +220,16 @@ export function useProviderNotifications() {
       return notificationId;
     },
     onMutate: async (notificationId) => {
+      inFlightMutationsRef.current.add(notificationId);
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
-      
+
       // Optimistically update
       queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
         if (!old) return old;
         return old.map((n) => (n.id === notificationId ? { ...n, read: true } : n));
       });
-      
+
       return { previousNotifications };
     },
     onError: (error: Error, _, context) => {
@@ -200,7 +238,8 @@ export function useProviderNotifications() {
       }
       toast.error("Failed to mark as read");
     },
-    onSettled: () => {
+    onSettled: (_data, _err, notificationId) => {
+      if (notificationId) inFlightMutationsRef.current.delete(notificationId);
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
     },
   });
@@ -253,15 +292,16 @@ export function useProviderNotifications() {
       return notificationId;
     },
     onMutate: async (notificationId) => {
+      inFlightMutationsRef.current.add(notificationId);
       await queryClient.cancelQueries({ queryKey: ["provider-notifications"] });
       const previousNotifications = queryClient.getQueryData<ProviderNotification[]>(["provider-notifications"]);
-      
+
       // Optimistically remove
       queryClient.setQueryData<ProviderNotification[]>(["provider-notifications"], (old) => {
         if (!old) return old;
         return old.filter((n) => n.id !== notificationId);
       });
-      
+
       return { previousNotifications };
     },
     onError: (error: Error, _, context) => {
@@ -273,7 +313,8 @@ export function useProviderNotifications() {
     onSuccess: () => {
       toast.success("Notification deleted");
     },
-    onSettled: () => {
+    onSettled: (_data, _err, notificationId) => {
+      if (notificationId) inFlightMutationsRef.current.delete(notificationId);
       queryClient.invalidateQueries({ queryKey: ["provider-notifications"] });
     },
   });
@@ -317,6 +358,7 @@ export function useProviderNotifications() {
     unreadCount,
     isLoading,
     error,
+    refetch,
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
     deleteNotification: deleteNotificationMutation.mutate,

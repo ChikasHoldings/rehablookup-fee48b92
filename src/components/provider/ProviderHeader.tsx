@@ -3,25 +3,20 @@ import { ListingPreviewModal } from "./listing/ListingPreviewModal";
 import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { 
-  ChevronDown, 
-  LogOut, 
-  Settings, 
-  CreditCard, 
-  Building2, 
+import {
+  ChevronDown,
+  LogOut,
+  Settings,
+  CreditCard,
+  Building2,
   ExternalLink,
   Eye,
   Bell,
   Search,
   X,
-  UserPlus,
-  MessageSquare,
-  Shield,
-  AlertTriangle,
   BellOff,
   HelpCircle,
   Crown,
-  Star,
   Sparkles,
   MapPin,
   Check,
@@ -52,6 +47,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProviderNotifications } from "@/hooks/useProviderNotifications";
+import {
+  getNotificationEntry,
+  getNotificationRoute,
+} from "@/lib/providerNotificationTypes";
 import { ProviderSearchCommand } from "./ProviderSearchCommand";
 import { useProviderFacilities, type ProviderFacility } from "@/hooks/useProviderFacilities";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -66,44 +65,10 @@ interface ProviderHeaderProps {
   onLogout: () => void;
 }
 
-const notificationIcons: Record<string, React.ReactNode> = {
-  // Lead types
-  new_lead: <UserPlus className="h-4 w-4 text-primary" />,
-  high_intent_lead: <UserPlus className="h-4 w-4 text-orange-500" />,
-  lead_received: <UserPlus className="h-4 w-4 text-primary" />,
-  lead_reminder: <Bell className="h-4 w-4 text-amber-500" />,
-  lead_expired: <AlertTriangle className="h-4 w-4 text-destructive" />,
-  lead_status_changed: <MessageSquare className="h-4 w-4 text-primary" />,
-  lead_redistributed: <UserPlus className="h-4 w-4 text-primary" />,
-  // Billing types
-  subscription_updated: <CreditCard className="h-4 w-4 text-accent-foreground" />,
-  subscription_active: <Crown className="h-4 w-4 text-amber-500" />,
-  subscription_renewal: <CreditCard className="h-4 w-4 text-purple-500" />,
-  subscription_cancelled: <AlertTriangle className="h-4 w-4 text-destructive" />,
-  payment_failed: <AlertCircle className="h-4 w-4 text-destructive" />,
-  lead_limit_warning: <AlertTriangle className="h-4 w-4 text-amber-500" />,
-  concierge_invoice_issued: <CreditCard className="h-4 w-4 text-purple-500" />,
-  concierge_invoice_paid: <CreditCard className="h-4 w-4 text-green-500" />,
-  // Listing types
-  listing_approved: <Shield className="h-4 w-4 text-green-500" />,
-  listing_rejected: <AlertCircle className="h-4 w-4 text-destructive" />,
-  listing_needs_edits: <AlertTriangle className="h-4 w-4 text-amber-500" />,
-  featured_activated: <Star className="h-4 w-4 text-amber-500" />,
-  featured_expired: <Star className="h-4 w-4 text-muted-foreground" />,
-  image_flagged: <AlertTriangle className="h-4 w-4 text-destructive" />,
-  credential_verified: <Shield className="h-4 w-4 text-green-500" />,
-  credential_rejected: <AlertCircle className="h-4 w-4 text-destructive" />,
-  // Placement types
-  placement_introduction: <UserPlus className="h-4 w-4 text-indigo-500" />,
-  concierge_seeker_confirmed: <Check className="h-4 w-4 text-green-500" />,
-  concierge_placement_complete: <Check className="h-4 w-4 text-green-500" />,
-  tour_request: <MessageSquare className="h-4 w-4 text-blue-500" />,
-  tour_confirmed: <Check className="h-4 w-4 text-green-500" />,
-  tour_cancelled: <AlertTriangle className="h-4 w-4 text-destructive" />,
-  // Review & system
-  review_received: <MessageSquare className="h-4 w-4 text-yellow-500" />,
-  system: <Settings className="h-4 w-4 text-muted-foreground" />,
-};
+// Notification icon/label/routing is now a single source of truth in
+// src/lib/providerNotificationTypes.tsx — the dropdown reads from it
+// directly so a new backend-emitted type appears here automatically
+// once it's added to the registry.
 
 // Facility limits now handled by useFacilityLimits hook
 
@@ -164,39 +129,13 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    
-    const metadata = notification.metadata as Record<string, any> | null;
-    if (metadata?.link) {
-      navigate(metadata.link);
-      return;
-    }
-    
-    // Lead-related notification types — route to inquiries
-    const leadTypes = [
-      "new_lead", "high_intent_lead", "lead_received", "lead_status_changed",
-      "lead_redistributed", "lead_reminder", "lead_expired",
-    ];
-    const billingTypes = [
-      "subscription_updated", "subscription_active", "subscription_renewal",
-      "subscription_cancelled", "payment_failed", "lead_limit_warning",
-      "concierge_invoice_issued", "concierge_invoice_paid",
-    ];
-    const listingTypes = ["listing_approved", "listing_rejected", "listing_needs_edits", "featured_activated", "featured_expired", "image_flagged", "credential_verified", "credential_rejected"];
-    const placementTypes = ["placement_introduction", "concierge_seeker_confirmed", "concierge_placement_complete", "tour_request", "tour_confirmed", "tour_cancelled"];
-
-    if (leadTypes.includes(notification.type)) {
-      navigate("/provider/inquiries");
-    } else if (billingTypes.includes(notification.type)) {
-      navigate("/provider/settings");
-    } else if (listingTypes.includes(notification.type)) {
-      navigate("/provider/listings");
-    } else if (placementTypes.includes(notification.type)) {
-      navigate("/provider/placement-network");
-    } else if (notification.type === "review_received") {
-      navigate("/provider/reviews");
-    } else {
-      navigate("/provider/notifications");
-    }
+    // Registry-driven routing — single source of truth in
+    // providerNotificationTypes.tsx. Honours metadata.link first, falls
+    // back to the type's canonical route, and lands unknown types on
+    // /provider/dashboard (with a dev warning) instead of silently
+    // bouncing to /provider/settings (the previous billing fallback
+    // had the wrong target anyway).
+    navigate(getNotificationRoute(notification.type, notification.metadata));
   };
 
   const handleFacilitySelect = (facility: ProviderFacility) => {
@@ -282,7 +221,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                       onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="mt-0.5 shrink-0">
-                        {notificationIcons[notification.type] || notificationIcons.system}
+                        {getNotificationEntry(notification.type).icon}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between w-full gap-2">
