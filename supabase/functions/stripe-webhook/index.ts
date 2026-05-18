@@ -1850,7 +1850,7 @@ async function trackEvent(
 
 // ── stripe-webhook entrypoint body ─────────────────────────
 // Version tracking for deployment verification
-const VERSION = "1.2.0";
+const VERSION = "1.3.0";
 const DEPLOYED_AT = "2026-05-16T00:00:00Z";
 
 const corsHeaders = {
@@ -2380,7 +2380,6 @@ Deno.serve(async (req) => {
               stripe_subscription_id: subscriptionId,
               stripe_customer_id: customerId,
               status: "active",
-              unlock_discount_percent: 20,
               price_cents: monthlyEquivalentCents,
               tier: "pro",
               has_featured: flagsCheckout.has_featured,
@@ -2454,7 +2453,7 @@ Deno.serve(async (req) => {
               facility_id: facilityId,
               type: "subscription_active",
               title: "Pro Subscription Activated!",
-              message: "You now have 20% off all lead unlocks, featured placement, priority search ranking, and can list up to 5 facilities.",
+              message: "Featured placement, priority search ranking, and unlimited facility listings are now active.",
               metadata: { subscription_id: subscriptionId },
             });
           }
@@ -2588,7 +2587,7 @@ Deno.serve(async (req) => {
             facility_id: proSub.facility_id,
             type: "subscription_recovered",
             title: "Pro Subscription Restored",
-            message: "Your payment was received and your Pro benefits have been fully restored — featured placement, ranking boost, and lead discounts are all active again.",
+            message: "Your payment was received and your Pro benefits have been fully restored — featured placement and ranking boost are active again.",
             metadata: { subscription_id: subscription.id },
           });
           logStep("Recovery notification sent to provider");
@@ -2924,7 +2923,7 @@ Deno.serve(async (req) => {
               type: "payment_confirmation",
               title: isRenewal ? "Subscription Renewed" : "Payment Confirmed",
               message: isRenewal
-                ? `Your ${planName} subscription has been renewed. ${currencyUpper} ${amountFormatted} charged.${isPro ? " Your 20% discount on leads and placement fees continues." : ""}`
+                ? `Your ${planName} subscription has been renewed. ${currencyUpper} ${amountFormatted} charged.`
                 : `Payment of ${currencyUpper} ${amountFormatted} for ${planName} confirmed.`,
               metadata: {
                 amount_cents: invoice.amount_paid,
@@ -2948,9 +2947,8 @@ Deno.serve(async (req) => {
                 const proBenefits = isPro
                   ? `<div style="background: #ecfdf5; border-left: 4px solid #059669; padding: 15px; margin: 20px 0;">
                        <p style="margin: 0; color: #047857; font-weight: 600;">Your Pro Benefits Are Active</p>
-                       <p style="margin: 8px 0 0; color: #047857;">✓ 20% discount on lead unlocks & placement fees</p>
-                       <p style="margin: 4px 0 0; color: #047857;">✓ Featured placement & priority ranking</p>
-                       <p style="margin: 4px 0 0; color: #047857;">✓ Up to 5 facility listings</p>
+                       <p style="margin: 8px 0 0; color: #047857;">✓ Featured placement & priority ranking</p>
+                       <p style="margin: 4px 0 0; color: #047857;">✓ Unlimited facility listings</p>
                      </div>`
                   : "";
 
@@ -3760,7 +3758,7 @@ Deno.serve(async (req) => {
               facility_id: facilities[0].id,
               type: "subscription_cancelled",
               title: "Pro Subscription Cancelled",
-              message: "Your Pro benefits have been removed. Upgrade again to restore discounts and featured placement.",
+              message: "Your Pro benefits have been removed. Upgrade again to restore featured placement.",
               metadata: { subscription_id: subscription.id },
             });
 
@@ -3812,13 +3810,12 @@ Deno.serve(async (req) => {
                           <p style="color: #374151;">Your Pro subscription for <strong>${facilities[0].name}</strong> has been cancelled.</p>
                           <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
                             <p style="margin: 0; color: #92400e; font-weight: 600;">What This Means</p>
-                            <p style="margin: 8px 0 0; color: #92400e;">• Lead unlock & placement fee discounts (20%) removed</p>
-                            <p style="margin: 4px 0 0; color: #92400e;">• Featured placement & priority ranking removed</p>
+                            <p style="margin: 8px 0 0; color: #92400e;">• Featured placement & priority ranking removed</p>
                             <p style="margin: 4px 0 0; color: #92400e;">• Extra listings paused (data preserved)</p>
                           </div>
                           <p style="color: #374151;">Your data is safe — nothing has been deleted. You can resubscribe anytime to restore all Pro benefits.</p>
                           <div style="text-align: center; margin: 30px 0;">
-                            <a href="https://rehablookup.com/provider/pro-upgrade" style="background: #1B365D; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">Resubscribe to Pro</a>
+                            <a href="https://rehablookup.com/provider/billing" style="background: #1B365D; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">Resubscribe to Pro</a>
                           </div>
                         </div>
                       </div>

@@ -2813,7 +2813,6 @@ export type Database = {
           stripe_subscription_id: string | null
           switch_to_monthly_at_renewal: boolean
           tier: string
-          unlock_discount_percent: number
           updated_at: string
         }
         Insert: {
@@ -2848,7 +2847,6 @@ export type Database = {
           stripe_subscription_id?: string | null
           switch_to_monthly_at_renewal?: boolean
           tier?: string
-          unlock_discount_percent?: number
           updated_at?: string
         }
         Update: {
@@ -2883,7 +2881,6 @@ export type Database = {
           stripe_subscription_id?: string | null
           switch_to_monthly_at_renewal?: boolean
           tier?: string
-          unlock_discount_percent?: number
           updated_at?: string
         }
         Relationships: [
