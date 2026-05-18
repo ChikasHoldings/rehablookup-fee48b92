@@ -1,24 +1,36 @@
 #!/usr/bin/env bash
-# Deploy the 5 round-30/31-patched functions still pending live deploy.
-# Run from the repo root with SUPABASE_ACCESS_TOKEN exported (or after
-# `supabase login`). All 5 files are already inlined for --use-api.
+# Deploy the round-30/31-patched functions still pending live deploy.
+# Run from anywhere with SUPABASE_ACCESS_TOKEN exported (or after
+# `supabase login`). Files are inlined for --use-api.
+#
+# Status as of 2026-05-18:
+#   • admin-cancel-subscription       — DEPLOYED via MCP
+#   • provider-self-cancel-subscription — DEPLOYED via MCP
+#   • submit-qualified-lead           — DEPLOYED via MCP (v8)
+#   • send-concierge-notifications    — DEPLOYED via MCP (v7)
+#   • stripe-webhook                  — PENDING (172KB; exceeds MCP per-call budget)
+#
+# This script targets the remaining function. Pass `--all` to re-deploy
+# the entire batch (idempotent — just bumps versions).
 set -e
 PROJECT_REF="mldbxpntzcjalgjmwnqa"
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 git pull origin claude/phase2-deployment-5WYOn
 
-# Order: most-critical first. stripe-webhook carries 8 fixes; the
-# cancel pair shares the round-31 _shared/cancel-subscription.ts
-# helper fix; submit-qualified-lead has 5 lead-pipeline fixes;
-# send-concierge-notifications has 2 SMS retry patches.
-FUNCTIONS=(
-  stripe-webhook
-  admin-cancel-subscription
-  provider-self-cancel-subscription
-  submit-qualified-lead
-  send-concierge-notifications
-)
+if [ "${1:-}" = "--all" ]; then
+  FUNCTIONS=(
+    stripe-webhook
+    admin-cancel-subscription
+    provider-self-cancel-subscription
+    submit-qualified-lead
+    send-concierge-notifications
+  )
+else
+  FUNCTIONS=(
+    stripe-webhook
+  )
+fi
 
 failed=()
 for fn in "${FUNCTIONS[@]}"; do
@@ -39,7 +51,7 @@ supabase functions list --project-ref "$PROJECT_REF" | \
 
 echo ""
 if [ ${#failed[@]} -eq 0 ]; then
-  echo "✓ All 5 deployed successfully"
+  echo "✓ All ${#FUNCTIONS[@]} deployed successfully"
 else
   echo "✗ FAILED: ${failed[*]}"
   exit 1
