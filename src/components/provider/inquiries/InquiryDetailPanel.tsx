@@ -1,14 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, format } from "date-fns";
 import {
   MapPin, Phone, Mail, MessageSquare, User, Building2,
   PhoneCall, CheckCircle, XCircle, Copy, ExternalLink, Calendar, Loader2, FileText,
-  Clock, Shield, Heart, DollarSign, AlertTriangle, Users
+  Clock, Shield, Heart, DollarSign, AlertTriangle, Users, RotateCcw
 } from "lucide-react";
 import { ResponseTemplatesDrawer } from "@/components/provider/inquiries/ResponseTemplatesDrawer";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -16,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
 import { formatSourceLabel } from "@/lib/sourceLabels";
+import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
 
 type ResponseStatus = 'pending' | 'contacted' | 'responded' | 'closed';
 
@@ -61,8 +61,20 @@ interface InquiryDetailPanelProps {
 
 export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
   const queryClient = useQueryClient();
+  const { trackContact } = useLeadContactTracking();
   const [responseNotes, setResponseNotes] = useState("");
-  
+  // Track which specific status button is in-flight so the spinner only
+  // renders on the button the provider just clicked (instead of every
+  // non-active button).
+  const [pendingStatus, setPendingStatus] = useState<ResponseStatus | null>(null);
+
+  // Clear local-only state when switching to a different inquiry —
+  // otherwise notes typed for lead A would carry over to lead B's textarea.
+  useEffect(() => {
+    setResponseNotes("");
+    setPendingStatus(null);
+  }, [inquiry.id]);
+
   const updateStatus = useMutation({
     mutationFn: async ({ status, notes }: { status: ResponseStatus; notes?: string }) => {
       // BUGFIX: Scope update to both lead id AND facility_id for defence-in-depth.
@@ -80,14 +92,29 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
       if (error) throw error;
     },
     onSuccess: (_, { status }) => {
+      // Targeted invalidation — the broad `["provider-inquiries"]` prefix
+      // would invalidate every cached facility-set as well; constrain to
+      // the keys we know about.
       queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-      toast.success(`Status updated to ${status}`);
+      queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-kpi-strip"] });
+      // Clear the notes textarea on success so the next status change
+      // starts with a fresh note. The previous note is still visible
+      // below the textarea via `inquiry.provider_response_notes`.
+      setResponseNotes("");
+      toast.success(status === "pending" ? "Reverted to pending" : `Marked as ${status}`);
     },
     onError: (err) => {
       console.error("[InquiryDetail] Status update failed:", err);
       toast.error("Failed to update status. Please try again.");
     },
+    onSettled: () => setPendingStatus(null),
   });
+
+  const handleStatusClick = (status: ResponseStatus) => {
+    setPendingStatus(status);
+    updateStatus.mutate({ status, notes: responseNotes || undefined });
+  };
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -160,7 +187,11 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
                     <Copy className="h-4 w-4" />
                   </Button>
                   <Button size="sm" className="gap-1.5" asChild>
-                    <a href={`tel:${displayPhone}`}>
+                    <a
+                      href={`tel:${displayPhone}`}
+                      onClick={() => trackContact(inquiry.id, inquiry.facility_id, "call")}
+                      aria-label={`Call ${displayName}`}
+                    >
                       <PhoneCall className="h-4 w-4" />
                       Call
                     </a>
@@ -189,7 +220,11 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
                     <Copy className="h-4 w-4" />
                   </Button>
                   <Button size="sm" variant="outline" className="gap-1.5" asChild>
-                    <a href={`mailto:${displayEmail}`}>
+                    <a
+                      href={`mailto:${displayEmail}`}
+                      onClick={() => trackContact(inquiry.id, inquiry.facility_id, "email")}
+                      aria-label={`Email ${displayName}`}
+                    >
                       <Mail className="h-4 w-4" />
                       Email
                     </a>
@@ -216,26 +251,50 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
               Response Status
             </h3>
             <div className="flex items-center gap-2 flex-wrap">
-              {statusButtons.map(({ status, label, icon: Icon, activeClass }) => (
+              {statusButtons.map(({ status, label, icon: Icon, activeClass }) => {
+                const showSpinner = updateStatus.isPending && pendingStatus === status;
+                return (
+                  <Button
+                    key={status}
+                    variant={currentStatus === status ? "default" : "outline"}
+                    size="sm"
+                    className={cn(
+                      "gap-1.5 transition-all",
+                      currentStatus === status && activeClass,
+                    )}
+                    onClick={() => handleStatusClick(status)}
+                    disabled={updateStatus.isPending}
+                    aria-label={`Mark inquiry as ${label.toLowerCase()}`}
+                    aria-pressed={currentStatus === status}
+                  >
+                    {showSpinner ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Icon className="h-3.5 w-3.5" />
+                    )}
+                    {label}
+                  </Button>
+                );
+              })}
+              {/* Allow reverting a tracked status back to pending — useful
+                  when an admin mis-clicks or wants to re-queue a lead. */}
+              {currentStatus !== "pending" && (
                 <Button
-                  key={status}
-                  variant={currentStatus === status ? "default" : "outline"}
+                  variant="ghost"
                   size="sm"
-                  className={cn(
-                    "gap-1.5 transition-all",
-                    currentStatus === status && activeClass
-                  )}
-                  onClick={() => updateStatus.mutate({ status, notes: responseNotes || undefined })}
+                  className="gap-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => handleStatusClick("pending")}
                   disabled={updateStatus.isPending}
+                  aria-label="Revert to pending"
                 >
-                  {updateStatus.isPending && currentStatus !== status ? (
+                  {updateStatus.isPending && pendingStatus === "pending" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Icon className="h-3.5 w-3.5" />
+                    <RotateCcw className="h-3.5 w-3.5" />
                   )}
-                  {label}
+                  Reset
                 </Button>
-              ))}
+              )}
             </div>
             {inquiry.provider_responded_at && (
               <p className="text-xs text-muted-foreground">

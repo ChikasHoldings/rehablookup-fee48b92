@@ -815,8 +815,14 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
                 </Button>
                 <Button
                   onClick={handleSend}
-                  disabled={!selectedTemplate || sendEmail.isPending || !replyEmailVerified}
+                  disabled={
+                    !selectedTemplate ||
+                    sendEmail.isPending ||
+                    !replyEmailVerified ||
+                    templateValidation.errors.length > 0
+                  }
                   className="flex-1 gap-2 rounded-lg shadow-md shadow-primary/20"
+                  aria-disabled={templateValidation.errors.length > 0 || !replyEmailVerified}
                 >
                   {sendEmail.isPending ? (
                     <>

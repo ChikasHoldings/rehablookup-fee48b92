@@ -17,6 +17,7 @@ import { isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useDebounce } from "@/hooks/useDebounce";
 import { toast } from "sonner";
 
 import { InquiryListItem } from "@/components/provider/inquiries/InquiryListItem";
@@ -80,6 +81,11 @@ export default function ProviderInquiriesPage() {
   
   const [selectedInquiry, setSelectedInquiry] = useState<LeadWithFacility | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  // Debounce the search input so typing in the box doesn't re-filter the
+  // entire client-side list on every keystroke (perceivable jank at
+  // 1000+ leads). 200ms is fast enough to feel instant while skipping
+  // the work for partial words.
+  const debouncedSearchQuery = useDebounce(searchQuery, 200);
   const [statusFilter, setStatusFilter] = useState<string>(statusParam || "all");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
@@ -153,11 +159,13 @@ export default function ProviderInquiriesPage() {
     }
   }, [inquiriesError]);
 
-  // Poll for new leads every 30 seconds (Realtime disabled for PII safety).
+  // Poll for new leads every 30 seconds (Realtime disabled for PII
+  // safety). Skip the round-trip when the tab is hidden.
   useEffect(() => {
     if (facilityIds.length === 0) return;
     const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
+      if (typeof document !== "undefined" && document.hidden) return;
+      queryClient.invalidateQueries({ queryKey: ["provider-inquiries", facilityIds] });
     }, 30000);
     return () => clearInterval(interval);
   }, [facilityIds, queryClient]);
@@ -171,11 +179,12 @@ export default function ProviderInquiriesPage() {
     return { total: inquiries.length, new: newCount, contacted, responded };
   }, [inquiries]);
 
-  // Filter inquiries
+  // Filter inquiries (uses the debounced search query so re-filtering
+  // only happens after the user pauses typing).
   const filteredInquiries = useMemo(() => {
     return inquiries.filter(inquiry => {
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
+      if (debouncedSearchQuery) {
+        const q = debouncedSearchQuery.toLowerCase();
         const locationMatch = inquiry.location_city_state?.toLowerCase().includes(q);
         const careMatch = inquiry.level_of_care?.toLowerCase().includes(q);
         const nameMatch = inquiry.name?.toLowerCase().includes(q);
@@ -189,7 +198,7 @@ export default function ProviderInquiriesPage() {
         if (statusFilter === "responded" && inquiry.provider_response_status !== "responded") return false;
         if (statusFilter === "closed" && inquiry.provider_response_status !== "closed") return false;
       }
-      
+
       if (facilityFilter !== "all" && inquiry.facility_id !== facilityFilter) return false;
       if (dateRange.from || dateRange.to) {
         const d = new Date(inquiry.created_at);
@@ -199,7 +208,7 @@ export default function ProviderInquiriesPage() {
       }
       return true;
     });
-  }, [inquiries, searchQuery, statusFilter, facilityFilter, dateRange]);
+  }, [inquiries, debouncedSearchQuery, statusFilter, facilityFilter, dateRange]);
 
   // Pagination over filtered inquiries (numbered, persisted page size).
   const {
@@ -217,11 +226,12 @@ export default function ProviderInquiriesPage() {
   });
   const visibleInquiries = paginate(filteredInquiries);
 
-  // Reset to page 1 when any inquiry filter changes.
+  // Reset to page 1 when any inquiry filter changes. Use the debounced
+  // search value so we don't reset on every keystroke mid-typing.
   useEffect(() => {
     resetPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, statusFilter, facilityFilter, dateRange.from, dateRange.to]);
+  }, [debouncedSearchQuery, statusFilter, facilityFilter, dateRange.from, dateRange.to]);
 
 
   const clearFilters = () => {
@@ -231,7 +241,7 @@ export default function ProviderInquiriesPage() {
     setDateRange({ from: undefined, to: undefined });
   };
 
-  const hasFilters = searchQuery || statusFilter !== "all" || facilityFilter !== "all" || dateRange.from || dateRange.to;
+  const hasFilters = debouncedSearchQuery || statusFilter !== "all" || facilityFilter !== "all" || dateRange.from || dateRange.to;
 
   const handleSelectInquiry = (inquiry: LeadWithFacility) => {
     setSelectedInquiry(inquiry);
@@ -296,12 +306,14 @@ export default function ProviderInquiriesPage() {
 
       {/* Stats */}
       {(!isMobile || mobileView === 'list') && !isLoading && inquiries.length > 0 && (
-        <InquiriesStatsHeader
-          total={stats.total}
-          new={stats.new}
-          contacted={stats.contacted}
-          responded={stats.responded}
-        />
+        <div className="flex-shrink-0 px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3 border-b bg-card">
+          <InquiriesStatsHeader
+            total={stats.total}
+            new={stats.new}
+            contacted={stats.contacted}
+            responded={stats.responded}
+          />
+        </div>
       )}
 
 
@@ -376,8 +388,12 @@ export default function ProviderInquiriesPage() {
           )}>
             <div className="flex-1 overflow-auto">
               {isLoading ? (
+                // Render the same number of skeleton rows as the user's
+                // persisted page size, so the visible list height
+                // matches what they'll see post-load (no jarring jump).
+                // Capped at 8 to keep the initial paint quick.
                 <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3" aria-busy="true" aria-label="Loading inquiries">
-                  {[1, 2, 3, 4, 5].map(i => (
+                  {Array.from({ length: Math.min(pageSize, 8) }).map((_, i) => (
                     <div
                       key={i}
                       className="rounded-lg border bg-card p-3 sm:p-4 space-y-2.5"
@@ -432,7 +448,7 @@ export default function ProviderInquiriesPage() {
                     </Button>
                   ) : facilityIds.length === 0 ? (
                     <Button asChild size="sm">
-                      <Link to="/provider/listings">Add a listing</Link>
+                      <Link to="/provider/listings?new=1">Create your first listing</Link>
                     </Button>
                   ) : (
                     <div className="w-full max-w-sm rounded-lg border bg-muted/30 p-4 text-left space-y-3">
