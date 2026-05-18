@@ -174,7 +174,7 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
                     className="h-8 text-xs gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0 shadow-sm shrink-0"
                     asChild
                   >
-                    <Link to="/provider/settings">
+                    <Link to="/provider/billing">
                       <Sparkles className="h-3.5 w-3.5" />
                       Upgrade to Pro
                       <ArrowRight className="h-3 w-3" />
@@ -192,7 +192,7 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
               <span>
                 Great response rate! <span className="font-medium text-foreground">Upgrade to Pro</span> to receive every qualified lead with full contact details.
               </span>
-              <Link to="/provider/settings" className="ml-auto text-primary font-medium hover:underline shrink-0">
+              <Link to="/provider/billing" className="ml-auto text-primary font-medium hover:underline shrink-0">
                 Learn more
               </Link>
             </div>

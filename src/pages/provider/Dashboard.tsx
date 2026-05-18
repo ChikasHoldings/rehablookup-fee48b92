@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { 
-  CheckCircle, 
-  Clock, 
-  AlertCircle, 
-  Users, 
+import {
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Users,
   CreditCard,
   Building2,
-  Eye,
   FileEdit,
   Phone,
   AlertTriangle,
@@ -37,7 +36,6 @@ import { ProBenefitsWidget } from "@/components/provider/ProBenefitsWidget";
 import { ProMultiFacilityOverview } from "@/components/provider/ProMultiFacilityOverview";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
 import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
-import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
 import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
 
 import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
@@ -130,7 +128,6 @@ export default function ProviderDashboardPage() {
   
   const facility = selectedFacility || providerData?.facility;
   const profile = providerData?.profile;
-  const viewsCount = providerData?.viewsCount ?? 0;
   const userName = profile?.first_name || "";
   const facilityIds = facilities?.map(f => f.id) ?? [];
 
@@ -142,7 +139,6 @@ export default function ProviderDashboardPage() {
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [profilePromptDismissedFields, setProfilePromptDismissedFields] = useState<string | null>(() => {
     if (!facilityId) return null;
     return localStorage.getItem(`profile-prompt-dismissed-${facilityId}`);
@@ -250,22 +246,6 @@ export default function ProviderDashboardPage() {
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 2,
     refetchOnMount: true,
-  });
-
-  // Fetch concierge introductions count for this facility
-  const { data: conciergeCount = 0 } = useQuery({
-    queryKey: ["concierge-count", facilityId],
-    queryFn: async (): Promise<number> => {
-      if (!facilityId) return 0;
-      const { count, error } = await supabase
-        .from("concierge_introductions")
-        .select("id", { count: "exact", head: true })
-        .eq("facility_id", facilityId);
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!facilityId,
-    staleTime: 1000 * 60 * 5,
   });
 
   const { data: servicesCount = 0 } = useQuery({
@@ -429,9 +409,6 @@ export default function ProviderDashboardPage() {
 
   const statusConfig = facility ? getStatusConfig(facility.status) : getStatusConfig("inactive");
   const StatusIcon = statusConfig.icon;
-  // Only link to a real public profile when a slug exists. Avoid UUID-based
-  // legacy URLs (/rehab-centers/{uuid}) which render a "Not Found" page.
-  const profileUrl = facility?.slug ? `/center/${facility.slug}` : null;
 
   // Note: urgent-leads counting moved to the server-side `urgentLeadsCount`
   // query above so the alert reflects ALL stale leads (not just the 4 most
@@ -778,16 +755,6 @@ export default function ProviderDashboardPage() {
           onOpenChange={setDrawerOpen}
         />
       </div>
-
-      {/* Preview Modal */}
-      {facility?.slug && (
-        <ListingPreviewModal
-          open={previewOpen}
-          onOpenChange={setPreviewOpen}
-          facilityName={facility.name}
-          facilitySlug={facility.slug}
-        />
-      )}
     </div>
   );
 }
