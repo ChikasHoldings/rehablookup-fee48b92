@@ -17,10 +17,7 @@ import { useFacilityAnalytics, type AnalyticsRange, type FacilityAnalyticsRespon
 // `VITE_INDUSTRY_AVG_CTR` (percent value, e.g. "0.65"). Default 0.65%
 // reflects the rehab-directory baseline at time of build; revisit as we
 // accumulate live data.
-const BENCHMARK_CTR_PCT = Number(
-  // eslint-disable-next-line no-undef
-  (typeof import.meta !== "undefined" && (import.meta as { env?: Record<string, string> }).env?.VITE_INDUSTRY_AVG_CTR) ?? 0.65,
-);
+const BENCHMARK_CTR_PCT = Number(import.meta.env.VITE_INDUSTRY_AVG_CTR ?? 0.65);
 
 const RANGE_OPTIONS: Array<{ value: AnalyticsRange; label: string }> = [
   { value: "last_7d", label: "7 days" },

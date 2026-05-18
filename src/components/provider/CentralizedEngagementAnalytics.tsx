@@ -62,8 +62,15 @@ export function CentralizedEngagementAnalytics({ dateRange, facilityId }: Centra
   const totalInquiries = leadAnalytics?.allTimeLeads || 0;
 
   const hasData = !!analytics && (periodImpressions > 0 || periodProfileViews > 0 || periodClickToCalls > 0 || periodWebsiteClicks > 0 || periodInquiries > 0);
+  const hasAnyHistoricalData = totalImpressions > 0 || totalProfileViews > 0 || totalInquiries > 0;
+  const isDateFiltered = !!(dateRange?.from || dateRange?.to);
 
-  if (!hasData) return <EmptyEngagement hasApprovedListing={hasApprovedListing} />;
+  if (!hasData) {
+    // Distinguish "you have data but not in this window" from "you have no
+    // data at all" — the first nudges the user to widen the range, the
+    // second nudges them to complete their listing.
+    return <EmptyEngagement hasApprovedListing={hasApprovedListing} reason={isDateFiltered && hasAnyHistoricalData ? "filtered" : "no-data"} />;
+  }
 
   const hasMultipleFacilities = !facilityId && analytics?.facilityBreakdown && analytics.facilityBreakdown.length > 1;
 
@@ -316,7 +323,26 @@ function EngagementSkeleton() {
   );
 }
 
-function EmptyEngagement({ hasApprovedListing }: { hasApprovedListing: boolean }) {
+function EmptyEngagement({
+  hasApprovedListing,
+  reason = "no-data",
+}: {
+  hasApprovedListing: boolean;
+  reason?: "no-data" | "filtered";
+}) {
+  if (reason === "filtered") {
+    return (
+      <div className="py-14 flex flex-col items-center text-center">
+        <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center mb-3">
+          <TrendingUp className="h-6 w-6 text-muted-foreground" />
+        </div>
+        <h3 className="text-sm font-semibold text-foreground mb-1">No data in this range</h3>
+        <p className="text-xs text-muted-foreground max-w-sm">
+          Try widening the date range or switching to All Time to see your historical engagement.
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="py-14 flex flex-col items-center text-center">
       <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center mb-3">

@@ -1,11 +1,11 @@
 import React from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Trophy, TrendingUp, ArrowUpRight, Eye, MessageSquare, Target, Building2, AlertCircle, RefreshCw } from "lucide-react";
 import { useCentralizedEngagementAnalytics } from "@/hooks/useCentralizedEngagementAnalytics";
 import { useCentralizedLeadAnalytics } from "@/hooks/useCentralizedLeadAnalytics";
-import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { type DateRange } from "@/hooks/useLeadAnalytics";
 import { cn } from "@/lib/utils";
 
@@ -14,18 +14,9 @@ interface ProviderPerformanceAnalyticsProps {
   facilityId?: string;
 }
 
-const BAR_COLORS = [
-  "hsl(217, 91%, 60%)",
-  "hsl(142, 71%, 45%)",
-  "hsl(280, 65%, 60%)",
-  "hsl(38, 92%, 50%)",
-  "hsl(0, 84%, 60%)",
-];
-
 export function ProviderPerformanceAnalytics({ dateRange, facilityId }: ProviderPerformanceAnalyticsProps) {
   const { data: engagement, isLoading: engLoading, isError: engError, refetch: refetchEng } = useCentralizedEngagementAnalytics(dateRange, facilityId);
   const { data: leads, isLoading: leadsLoading, isError: leadsError, refetch: refetchLeads } = useCentralizedLeadAnalytics(dateRange, facilityId);
-  const { facilities } = useProviderFacilities();
 
   if (engLoading || leadsLoading) {
     return (
@@ -49,12 +40,9 @@ export function ProviderPerformanceAnalytics({ dateRange, facilityId }: Provider
         <p className="text-xs text-muted-foreground max-w-sm mb-4">
           There was an error loading your performance metrics. Please try again.
         </p>
-        <button
-          className="inline-flex items-center gap-1.5 text-xs font-medium border rounded-md px-3 py-1.5 hover:bg-muted/50 transition-colors"
-          onClick={() => { void refetchEng(); void refetchLeads(); }}
-        >
-          <RefreshCw className="h-3.5 w-3.5" /> Retry
-        </button>
+        <Button variant="outline" size="sm" onClick={() => { void refetchEng(); void refetchLeads(); }}>
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+        </Button>
       </div>
     );
   }
