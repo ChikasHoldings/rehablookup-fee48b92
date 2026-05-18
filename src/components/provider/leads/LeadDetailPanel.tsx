@@ -62,7 +62,6 @@ import { EmailLeadDialog } from "./EmailLeadDialog";
 
 import { cn } from "@/lib/utils";
 import { formatSourceLabel } from "@/lib/sourceLabels";
-import { useProStatus } from "@/hooks/useProStatus";
 
 export interface Lead {
   id: string;
@@ -160,21 +159,18 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
   const queryClient = useQueryClient();
   const { trackContact } = useLeadContactTracking();
   
-  // PII reveal is driven entirely by the Pro tier; leads_provider_view
-  // returns full PII for Pro subscribers and masked previews for Free.
-  const { data: proStatus } = useProStatus();
-  const isUnlocked = !!proStatus?.isPro;
-  
-  // Display info directly from view data (already masked/unmasked by DB)
+  // EKRA flat-fee model: every lead delivered to its facility owner is
+  // fully accessible — credit-based unlocks + Pro-gated PII reveal are
+  // retired. `isLocked: false` keeps the legacy locked-state JSX
+  // unreachable until the dead branches are deleted in a follow-up.
   const displayInfo = lead ? {
     name: lead.name,
     email: lead.email,
     phone: lead.phone,
-    initials: isUnlocked 
-      ? lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
-      : "??",
-    isLocked: !isUnlocked,
+    initials: lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase(),
+    isLocked: false,
   } : null;
+  const isUnlocked = true;
 
   const { data: notes = [] } = useQuery({
     queryKey: ["lead-notes", lead?.id],

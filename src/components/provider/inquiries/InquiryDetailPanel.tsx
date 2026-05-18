@@ -57,10 +57,9 @@ interface InquiryDetailPanelProps {
     co_occurring_conditions: string[] | null;
     special_needs: string[] | null;
   };
-  isUnlocked: boolean;
 }
 
-export function InquiryDetailPanel({ inquiry, isUnlocked }: InquiryDetailPanelProps) {
+export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
   const queryClient = useQueryClient();
   const [responseNotes, setResponseNotes] = useState("");
   
@@ -134,9 +133,8 @@ export function InquiryDetailPanel({ inquiry, isUnlocked }: InquiryDetailPanelPr
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-5 space-y-6">
-        {/* Contact Actions (only if unlocked) */}
-        {isUnlocked && (
-          <div className="space-y-3">
+        {/* Contact Actions */}
+        <div className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Contact Information
             </h3>
@@ -211,33 +209,9 @@ export function InquiryDetailPanel({ inquiry, isUnlocked }: InquiryDetailPanelPr
               }
             />
           </div>
-        )}
 
-        {/* Locked Contact Preview */}
-        {!isUnlocked && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Contact Information
-            </h3>
-            <div className="bg-muted/30 border border-dashed rounded-lg p-4 text-center space-y-2">
-              <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                <Phone className="h-4 w-4" />
-                <span>{displayPhone}</span>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <span>{displayEmail}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Unlock this inquiry to view full contact details
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Status Management (only if unlocked) */}
-        {isUnlocked && (
-          <div className="space-y-3">
+        {/* Status Management */}
+        <div className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Response Status
             </h3>
@@ -285,7 +259,6 @@ export function InquiryDetailPanel({ inquiry, isUnlocked }: InquiryDetailPanelPr
               )}
             </div>
           </div>
-        )}
 
         <Separator />
 
@@ -405,8 +378,8 @@ export function InquiryDetailPanel({ inquiry, isUnlocked }: InquiryDetailPanelPr
           </>
         )}
 
-        {/* Message - only visible when unlocked */}
-        {isUnlocked && inquiry.message && (
+        {/* Message */}
+        {inquiry.message && (
           <>
             <Separator />
             <div className="space-y-3">

@@ -13,7 +13,7 @@ interface ProBenefitsWidgetProps {
 
 export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
   const { data: proStatus, isLoading } = useProStatus();
-  const { limit: locationLimit, used: usedLocations } = useFacilityLimits();
+  const { used: usedLocations } = useFacilityLimits();
 
   // Don't show if not Pro or still loading
   if (isLoading || !proStatus?.isPro) {
@@ -37,8 +37,8 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
     },
     {
       icon: Building2,
-      label: `${usedLocations}/${locationLimit} locations`,
-      description: "Multiple facilities",
+      label: `${usedLocations} location${usedLocations === 1 ? "" : "s"}`,
+      description: "Add unlimited facilities",
       color: "text-violet-600",
       bgColor: "bg-violet-500/10",
     },

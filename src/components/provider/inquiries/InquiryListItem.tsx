@@ -1,9 +1,8 @@
 import { formatDistanceToNow, differenceInHours } from "date-fns";
-import { MapPin, Lock, Unlock, Phone, MessageSquare, ShieldCheck, Users } from "lucide-react";
+import { MapPin, Phone, MessageSquare, ShieldCheck, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
-
 
 interface InquiryListItemProps {
   inquiry: {
@@ -20,19 +19,16 @@ interface InquiryListItemProps {
     message: string | null;
     source: string | null;
   };
-  isUnlocked: boolean;
   isSelected: boolean;
   onClick: () => void;
 }
 
-export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: InquiryListItemProps) {
+export function InquiryListItem({ inquiry, isSelected, onClick }: InquiryListItemProps) {
   const isRedistributed = inquiry.source === "redistributed" || inquiry.source === "rerouted";
   const hoursOld = differenceInHours(new Date(), new Date(inquiry.created_at));
   const isExclusive = !isRedistributed && hoursOld < 24;
 
   const getStatusIndicator = () => {
-    if (!isUnlocked) return { color: "bg-muted-foreground/40", label: "Locked" };
-    
     switch (inquiry.provider_response_status) {
       case 'contacted':
         return { color: "bg-blue-500", label: "Contacted" };
@@ -41,7 +37,7 @@ export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: In
       case 'closed':
         return { color: "bg-slate-400", label: "Closed" };
       default:
-        return { color: "bg-amber-500", label: "Unlocked" };
+        return { color: "bg-amber-500", label: "New" };
     }
   };
 
@@ -53,8 +49,7 @@ export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: In
       className={cn(
         "group relative flex items-start gap-3 p-4 cursor-pointer border-b border-border transition-colors",
         "hover:bg-muted/50",
-        isSelected && "bg-primary/5 border-l-2 border-l-primary",
-        !isUnlocked && "opacity-90"
+        isSelected && "bg-primary/5 border-l-2 border-l-primary"
       )}
     >
       {/* Status indicator dot */}
@@ -78,14 +73,9 @@ export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: In
               Shared
             </Badge>
           ) : null}
-          {isUnlocked ? (
-            <Unlock className="h-3.5 w-3.5 text-emerald-600" />
-          ) : (
-            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-          )}
           {inquiry.urgency && (
-            <Badge 
-              variant="outline" 
+            <Badge
+              variant="outline"
               className={cn(
                 "text-xs px-1.5 py-0",
                 inquiry.urgency === 'Urgent' && "border-red-300 text-red-600 dark:border-red-800 dark:text-red-400",
@@ -113,12 +103,10 @@ export function InquiryListItem({ inquiry, isUnlocked, isSelected, onClick }: In
 
         {/* Contact preview */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
-          <span className={cn("font-medium truncate", !isUnlocked && "blur-[2px] select-none text-muted-foreground/50")}>
-            {inquiry.name}
-          </span>
-          <span className={cn("flex items-center gap-1", !isUnlocked && "blur-[2px] select-none text-muted-foreground/50")}>
+          <span className="font-medium truncate">{inquiry.name}</span>
+          <span className="flex items-center gap-1">
             <Phone className="h-3 w-3" />
-            {isUnlocked ? inquiry.phone : "(•••) •••-••••"}
+            {inquiry.phone}
           </span>
         </div>
 

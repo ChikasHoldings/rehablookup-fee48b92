@@ -2358,14 +2358,14 @@ Deno.serve(async (req) => {
           const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
 
           // Derive new monetization flags from the subscription items.
-          // Falls back to legacy price_cents if no new lookup keys
-          // matched (older subscriptions still flow through here).
+          // Falls back to bare Pro ($99/mo) if no new lookup keys
+          // matched. The pre-rebuild $399 bundle is fully retired.
           const flagsCheckout = deriveTierFlagsFromSubscription(subscription);
           const monthlyEquivalentCents = flagsCheckout.matched_new_lookup_keys
             ? (FULL_MONTHLY_CENTS.pro +
                 (flagsCheckout.has_featured ? FULL_MONTHLY_CENTS.featured : 0) +
                 (flagsCheckout.has_concierge_partner ? FULL_MONTHLY_CENTS.concierge : 0))
-            : 39900;
+            : FULL_MONTHLY_CENTS.pro;
           // Annual subscriptions track period_start AND current_monthly_period_start
           // (the helpers that read monthly elapsed time look at the latter first,
           // falling back to period_start for annual). For monthly, both point at the

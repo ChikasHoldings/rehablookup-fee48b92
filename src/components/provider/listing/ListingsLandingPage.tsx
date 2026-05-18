@@ -1,8 +1,7 @@
-import { useState, useCallback } from "react";
-import { Building2, Loader2, Lock, AlertCircle, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { Building2, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
-import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ListingCard } from "./ListingCard";
 import { AddListingCard } from "./AddListingCard";
@@ -20,9 +19,9 @@ interface PreviewState {
 
 export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLandingPageProps) {
   const { facilities, isLoading, isError, refetch: refetchFacilities } = useProviderFacilities();
-  const { limit, used, canAddMore, canPurchaseSlot, planTier, isLoading: limitsLoading, refetch: refetchLimits } = useFacilityLimits();
   const { setSelectedFacility } = useSelectedFacility();
-  
+  const used = facilities.length;
+
   // Preview modal state
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewFacility, setPreviewFacility] = useState<PreviewState | null>(null);
@@ -40,19 +39,7 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
     setPreviewOpen(true);
   };
 
-  const handleAddClick = () => {
-    if (canAddMore) {
-      onAddListing();
-    }
-  };
-
-  // Callback when a slot is purchased - refetch all data
-  const handleSlotPurchased = useCallback(() => {
-    refetchLimits();
-    refetchFacilities();
-  }, [refetchLimits, refetchFacilities]);
-
-  if (isLoading || limitsLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-full bg-background">
         <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
@@ -101,7 +88,9 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
                 My Listings
               </h1>
               <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
-                Manage your facility listings ({used} of {limit})
+                {used === 0
+                  ? "Manage your facility listings"
+                  : `Manage your facility listings (${used} active)`}
               </p>
             </div>
           </div>
@@ -119,13 +108,16 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
             />
           ))}
 
-          {/* Suspended Facilities Section */}
+          {/* Suspended Facilities Section — legacy state from when Pro
+              cancellation auto-suspended extras; left visible so any
+              historically-paused listings are still surfaced for the
+              owner to reactivate via support. */}
           {facilities.some(f => f.suspended) && (
             <div className="space-y-3 pt-4 border-t border-dashed border-border/60">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Lock className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4" />
                 <span className="text-sm font-medium">Paused Listings</span>
-                <span className="text-xs">(Upgrade to Pro to reactivate)</span>
+                <span className="text-xs">(contact support to reactivate)</span>
               </div>
               {facilities.filter(f => f.suspended).map((facility) => (
                 <ListingCard
@@ -139,15 +131,7 @@ export function ListingsLandingPage({ onEditListing, onAddListing }: ListingsLan
           )}
 
           {/* Add New Listing Card */}
-          <AddListingCard
-            canAdd={canAddMore}
-            used={used}
-            limit={limit}
-            planTier={planTier}
-            canPurchaseSlot={canPurchaseSlot}
-            onAddClick={handleAddClick}
-            onSlotPurchased={handleSlotPurchased}
-          />
+          <AddListingCard used={used} onAddClick={onAddListing} />
         </div>
 
         {/* Empty State - only shown when no facilities exist */}

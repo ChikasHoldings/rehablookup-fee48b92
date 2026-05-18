@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
-import { Users, Search, X, ChevronLeft, Lock, KeyRound, Inbox, ShieldCheck, MailQuestion } from "lucide-react";
+import { Users, Search, X, ChevronLeft, Inbox, ShieldCheck, MailQuestion } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -184,21 +184,13 @@ export default function ProviderInquiriesPage() {
     return () => clearInterval(interval);
   }, [facilityIds, queryClient]);
 
-  // Helper to check if a lead is unlocked
-  const isLeadUnlocked = useCallback((leadId: string): boolean => {
-    const inquiry = inquiries.find(i => i.id === leadId);
-    return inquiry?.is_unlocked === true;
-  }, [inquiries]);
-
-  // Compute stats from all inquiries (unfiltered). In the EKRA flat-fee
-  // model every lead is "unlocked" (the leads_provider_view synthesizes
-  // is_unlocked=true), so the locked count is always 0 and the unlocked
-  // bucket collapses to "any lead that hasn't been responded to yet".
+  // Stats: every lead delivered to the provider is fully accessible (the
+  // credit-based lock/unlock model is retired). "new" = no response logged yet.
   const stats = useMemo(() => {
-    const unlocked = inquiries.filter(i => !i.provider_response_status).length;
+    const newCount = inquiries.filter(i => !i.provider_response_status).length;
     const contacted = inquiries.filter(i => i.provider_response_status === "contacted").length;
     const responded = inquiries.filter(i => i.provider_response_status === "responded").length;
-    return { total: inquiries.length, locked: 0, unlocked, contacted, responded };
+    return { total: inquiries.length, new: newCount, contacted, responded };
   }, [inquiries]);
 
   // Filter inquiries
@@ -212,12 +204,9 @@ export default function ProviderInquiriesPage() {
         const facilityMatch = inquiry.facility_name?.toLowerCase().includes(q);
         if (!locationMatch && !careMatch && !nameMatch && !facilityMatch) return false;
       }
-      
+
       if (statusFilter !== "all") {
-        const unlocked = inquiry.is_unlocked === true;
-        if (statusFilter === "new" && inquiry.status !== "new") return false;
-        if (statusFilter === "locked" && unlocked) return false;
-        if (statusFilter === "unlocked" && (!unlocked || inquiry.provider_response_status)) return false;
+        if (statusFilter === "new" && inquiry.provider_response_status) return false;
         if (statusFilter === "contacted" && inquiry.provider_response_status !== "contacted") return false;
         if (statusFilter === "responded" && inquiry.provider_response_status !== "responded") return false;
         if (statusFilter === "closed" && inquiry.provider_response_status !== "closed") return false;
@@ -331,8 +320,7 @@ export default function ProviderInquiriesPage() {
       {(!isMobile || mobileView === 'list') && !isLoading && inquiries.length > 0 && (
         <InquiriesStatsHeader
           total={stats.total}
-          locked={stats.locked}
-          unlocked={stats.unlocked}
+          new={stats.new}
           contacted={stats.contacted}
           responded={stats.responded}
         />
@@ -360,8 +348,6 @@ export default function ProviderInquiriesPage() {
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="new">New</SelectItem>
-                <SelectItem value="locked">Locked</SelectItem>
-                <SelectItem value="unlocked">Unlocked</SelectItem>
                 <SelectItem value="contacted">Contacted</SelectItem>
                 <SelectItem value="responded">Responded</SelectItem>
                 <SelectItem value="closed">Closed</SelectItem>
@@ -458,7 +444,7 @@ export default function ProviderInquiriesPage() {
                       ? "Try adjusting your search or filters to see more results."
                       : facilityIds.length === 0
                         ? "You don't have any facilities yet. Add a listing to start receiving leads."
-                        : "When a family submits an inquiry to one of your listings, it will appear here. New leads arrive locked to protect family privacy until you choose to unlock them."}
+                        : "When a family submits an inquiry to one of your listings, it will appear here with full contact details so you can respond right away."}
                   </p>
 
                   {hasFilters ? (
@@ -473,30 +459,8 @@ export default function ProviderInquiriesPage() {
                   ) : (
                     <div className="w-full max-w-sm rounded-lg border bg-muted/30 p-4 text-left space-y-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        How unlocking works
+                        How leads work
                       </p>
-                      <div className="flex items-start gap-3">
-                        <div className="h-7 w-7 rounded-full bg-background border flex items-center justify-center flex-shrink-0">
-                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                        </div>
-                        <div className="text-xs sm:text-sm">
-                          <p className="font-medium text-foreground">Leads arrive locked</p>
-                          <p className="text-muted-foreground">
-                            You'll see care needs, location, and urgency — contact details stay masked.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="h-7 w-7 rounded-full bg-background border flex items-center justify-center flex-shrink-0">
-                          <KeyRound className="h-3.5 w-3.5 text-primary" />
-                        </div>
-                        <div className="text-xs sm:text-sm">
-                          <p className="font-medium text-foreground">Unlock to reveal contact</p>
-                          <p className="text-muted-foreground">
-                            One click uses credits to reveal name, phone, and email instantly.
-                          </p>
-                        </div>
-                      </div>
                       <div className="flex items-start gap-3">
                         <div className="h-7 w-7 rounded-full bg-background border flex items-center justify-center flex-shrink-0">
                           <ShieldCheck className="h-3.5 w-3.5 text-primary" />
@@ -517,7 +481,6 @@ export default function ProviderInquiriesPage() {
                     <InquiryListItem
                       key={inquiry.id}
                       inquiry={inquiry}
-                      isUnlocked={inquiry.is_unlocked === true}
                       isSelected={selectedInquiry?.id === inquiry.id}
                       onClick={() => handleSelectInquiry(inquiry)}
                     />
@@ -545,10 +508,7 @@ export default function ProviderInquiriesPage() {
         {(!isMobile || mobileView === 'detail') && (
           <div className="flex-1 overflow-hidden">
             {selectedInquiry ? (
-              <InquiryDetailPanel
-                inquiry={selectedInquiry}
-                isUnlocked={selectedInquiry.is_unlocked === true}
-              />
+              <InquiryDetailPanel inquiry={selectedInquiry} />
             ) : isLoading ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted/20 gap-3">
                 <Skeleton className="h-16 w-16 rounded-full" />
@@ -564,7 +524,7 @@ export default function ProviderInquiriesPage() {
                   Your inbox is ready
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-md">
-                  New family inquiries will land here automatically. Each lead arrives locked — unlock with credits to reveal contact details and reach out.
+                  New family inquiries will land here automatically with full contact details so you can respond right away.
                 </p>
               </div>
             ) : (

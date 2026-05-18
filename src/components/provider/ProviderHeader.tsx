@@ -121,7 +121,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
     confirmFacilitySwitch, 
     cancelFacilitySwitch 
   } = useSelectedFacility();
-  const { canAddMore, planTier, limit: locationLimit } = useFacilityLimits();
+  const { planTier } = useFacilityLimits();
 
   const recentNotifications = notifications.slice(0, 5);
   const isPro = planTier === "pro";
@@ -404,7 +404,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Locations</span>
                   </div>
                   <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                    {facilities.length}/{locationLimit}
+                    {facilities.length}
                   </span>
                 </div>
 
@@ -530,28 +530,16 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
                   </div>
                 )}
 
-                {/* Add Location Link */}
-                {canAddMore ? (
-                  <Link 
-                    to="/provider/add-location" 
-                    className="flex items-center gap-2.5 mx-1.5 mt-1 px-2 py-2 rounded-md text-primary hover:bg-primary/5 transition-colors"
-                  >
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center border border-dashed border-primary/30">
-                      <Plus className="h-4 w-4" />
-                    </div>
-                    <span className="text-sm font-medium">Add Location</span>
-                  </Link>
-                ) : (
-                  <Link
-                    to="/provider/settings"
-                    className="flex items-center gap-2.5 mx-1.5 mt-1 px-2 py-2 rounded-md hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                    <span className="text-sm text-muted-foreground">Upgrade to Pro</span>
-                  </Link>
-                )}
+                {/* Add Location Link — no per-plan cap. */}
+                <Link
+                  to="/provider/add-location"
+                  className="flex items-center gap-2.5 mx-1.5 mt-1 px-2 py-2 rounded-md text-primary hover:bg-primary/5 transition-colors"
+                >
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center border border-dashed border-primary/30">
+                    <Plus className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm font-medium">Add Location</span>
+                </Link>
               </div>
               
               <DropdownMenuSeparator className="my-0" />

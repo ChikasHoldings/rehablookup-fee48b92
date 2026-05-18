@@ -123,7 +123,7 @@ export default function ProviderDashboardPage() {
   
   const { data: providerData, isLoading, isPlaceholderData } = useProviderData(facilityId);
   const { facilities } = useProviderFacilities();
-  const { limit: locationLimit, used: usedLocations, planTier, isLoading: proLoading } = useFacilityLimits();
+  const { planTier } = useFacilityLimits();
   const proStatus = { isPro: planTier === "pro" };
   
   const facility = selectedFacility || providerData?.facility;
@@ -534,11 +534,10 @@ export default function ProviderDashboardPage() {
               />
             )}
 
-            {/* Lead Feed — Core Money Section */}
+            {/* Lead Feed */}
             <DashboardLeadFeed
               leads={recentLeads}
               facilityName={facility?.name}
-              isPro={proStatus.isPro}
               isLoading={leadsLoading}
               onLeadClick={handleLeadClick}
             />
@@ -570,7 +569,7 @@ export default function ProviderDashboardPage() {
 
             {/* Alerts */}
             <div className="space-y-2.5">
-              {/* Locked Inquiries Alert */}
+              {/* Inquiries Available */}
               {totalLeadsCount > 0 && (
                 <Card className="border-success/30 bg-success/5">
                   <CardContent className="p-3.5">
@@ -580,9 +579,9 @@ export default function ProviderDashboardPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">
-                          <span className="tabular-nums">{totalLeadsCount}</span> Inquir{totalLeadsCount !== 1 ? 'ies' : 'y'} Available
+                          <span className="tabular-nums">{totalLeadsCount}</span> Inquir{totalLeadsCount !== 1 ? 'ies' : 'y'}
                         </p>
-                        <p className="text-xs text-muted-foreground">Unlock to view details</p>
+                        <p className="text-xs text-muted-foreground">Tap to view full details</p>
                       </div>
                       <Button size="sm" className="h-9 sm:h-8 text-xs bg-success hover:bg-success/90" asChild>
                         <Link to="/provider/inquiries">
