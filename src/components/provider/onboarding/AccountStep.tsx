@@ -70,13 +70,29 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
           },
         },
       );
+      // Surface "already registered" errors as a sign-in prompt instead
+      // of a generic failure toast. register-provider-account returns
+      // 409 with code='email_in_use' when the email is taken; older
+      // deployments may return the raw "already exists" string, so we
+      // match both.
+      const detectAlreadyRegistered = (msg: string | undefined): boolean =>
+        !!msg && /already (registered|in use|exists)|duplicate/i.test(msg);
+
       if (error) {
-        toast.error(error.message || "Sign-up failed. Please try again.");
+        if (detectAlreadyRegistered(error.message)) {
+          toast.error("An account with this email already exists. Use the sign-in page instead.");
+        } else {
+          toast.error(error.message || "Sign-up failed. Please try again.");
+        }
         setSubmitting(false);
         return;
       }
       if (data?.error) {
-        toast.error(data.error);
+        if (detectAlreadyRegistered(data.error) || data?.code === "email_in_use") {
+          toast.error("An account with this email already exists. Use the sign-in page instead.");
+        } else {
+          toast.error(data.error);
+        }
         setSubmitting(false);
         return;
       }

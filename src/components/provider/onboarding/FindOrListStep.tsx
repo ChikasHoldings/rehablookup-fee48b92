@@ -316,6 +316,20 @@ export function FindOrListStep({ onAdvance, onBack }: FindOrListStepProps) {
 
   async function handleSelectExisting(facilityId: string) {
     if (busy) return;
+    // Guard: refuse to advance into the claim flow for a facility that's
+    // already owned by another provider. The seeded-facility card and
+    // the search-result list both surface the "already claimed" warning
+    // banner, but the row click handler used to advance anyway —
+    // ClaimWizard would then dead-end with a 403 at the verification
+    // step. Bouncing here keeps the user in find/list with a clear toast.
+    const candidate =
+      seededFacility?.id === facilityId
+        ? seededFacility
+        : results.find((r) => r.id === facilityId);
+    if (candidate?.is_claimed) {
+      toast.error("This facility was already claimed by another provider.");
+      return;
+    }
     setBusy(true);
     try {
       await advance({

@@ -94,7 +94,9 @@ export function VerifyEmailStep({ onAdvance }: { onAdvance: () => void }) {
       if (data?.error) {
         if (data.errorCode === "RATE_LIMITED") {
           setError("Too many codes requested. Please wait a few minutes before trying again.");
-        } else if (data.errorCode === "EMAIL_BLOCKED") {
+        } else if (data.errorCode === "EMAIL_BLOCKED" || data.errorCode === "EMAIL_SUPPRESSED") {
+          // Phase R added EMAIL_SUPPRESSED for hard-bounce / unsubscribe
+          // hits; treat the same as EMAIL_BLOCKED for the user.
           setError("This email address can't receive messages. Try a different one.");
         } else if (data.errorCode === "INVALID_EMAIL") {
           setError("That email address doesn't look right.");

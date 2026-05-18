@@ -103,10 +103,21 @@ export default function ProviderOnboarding() {
   // without a state row (e.g. a pre-wizard-era signup who never
   // finished), infer their starting step from profile flags instead of
   // re-prompting for Account. Otherwise default to 'account'.
+  //
+  // Round-31 audit fix: previously this computed during the loading
+  // window where stateLoading=true but profileLoading=false (or vice
+  // versa), causing the resolved-step memo below to flip from
+  // `account` → `verify_email` → real-server-step as each query
+  // settled. Visible as a one-frame flash of the wrong step. We now
+  // hold the inference until BOTH queries have a definitive answer.
   const inferredServerStep: OnboardingStep =
-    profile?.email_verified_at ? "find_or_list" :
-    profile ? "verify_email" :
-    "account";
+    stateLoading || profileLoading
+      ? "account"
+      : profile?.email_verified_at
+        ? "find_or_list"
+        : profile
+          ? "verify_email"
+          : "account";
   const serverStep: OnboardingStep = stateRow?.current_step ?? inferredServerStep;
   // Round-30 merge: anon visitors to /provider/claim/:slug land here
   // with ?returnTo=/provider/claim/:slug. Once email is verified we

@@ -182,7 +182,16 @@ export default function ProviderDashboardPage() {
         try {
           await supabase.rpc("complete_provider_onboarding");
           // Refetch so the rest of the dashboard re-renders with
-          // onboarding_completed_at set + Pro benefits visible.
+          // onboarding_completed_at set + Pro benefits visible. The
+          // previous version had this comment but the invalidate call
+          // was missing — the toast surfaced "Pro is active" but the
+          // gated widgets (ProBenefitsWidget, FeaturedAnalyticsWidget)
+          // wouldn't appear until the next manual reload.
+          await queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+          await queryClient.invalidateQueries({ queryKey: ["pro-status"] });
+          await queryClient.invalidateQueries({
+            queryKey: ["facility-subscription"],
+          });
           toast.success("Pro is active — welcome to RehabLookup.");
         } catch (e) {
           console.warn("[Dashboard] post-timeout Pro recovery RPC failed", e);
