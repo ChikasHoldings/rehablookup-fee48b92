@@ -4,9 +4,9 @@ import { format, formatDistanceToNow } from "date-fns";
 import {
   CheckCircle, Ban, Star, Shield, RefreshCw, ExternalLink,
   MapPin, Phone, Globe, Mail, Image, Flag, ZoomIn, AlertTriangle,
-  MessageSquare, Wallet, Users, Handshake, LayoutList,
-  BadgeCheck, Crown, Eye, MousePointerClick, Monitor,
-  Calendar, Clock, Building2, DollarSign, UserCircle,
+  MessageSquare, Users, Handshake, LayoutList,
+  Crown, Eye, MousePointerClick, Monitor,
+  Calendar, Clock, Building2, UserCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,6 @@ interface ProviderOverviewTabProps {
   provider: Facility;
   proSubscription: any;
   providerProfile: any;
-  creditBalance: number;
   providerFacilities: Facility[];
   providerLeads: any[];
   placementStats: { introductions: number; placements: number };
@@ -42,7 +41,6 @@ export function ProviderOverviewTab({
   provider,
   proSubscription,
   providerProfile,
-  creditBalance,
   providerFacilities,
   providerLeads,
   placementStats,
@@ -91,14 +89,6 @@ export function ProviderOverviewTab({
       return count || 0;
     },
   });
-
-  // Unlock count, total spent (per-unlock), and total purchased credits all
-  // retired with the EKRA flat-fee refactor. The lead_unlocks +
-  // credit_transactions tables were dropped; the KPIs hard-code 0 to keep
-  // the layout stable while the model is gone.
-  const unlockCount = 0;
-  const totalSpent = 0;
-  const totalPurchased = 0;
 
   // Fetch staff across ALL facilities
   const { data: staffMembers, isLoading: loadingStaff } = useQuery({
@@ -246,23 +236,19 @@ export function ProviderOverviewTab({
 
       <Separator />
 
-      {/* KPI Cards - Row 1: Financial + Core */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <KPICard icon={Wallet} label="Credit Balance" value={`$${((creditBalance || 0) / 100).toFixed(2)}`} color="text-emerald-500" />
-        <KPICard icon={DollarSign} label="Total Spent" value={`$${((totalSpent || 0) / 100).toFixed(2)}`} color="text-destructive" />
-        <KPICard icon={DollarSign} label="Total Purchased" value={`$${((totalPurchased || 0) / 100).toFixed(2)}`} color="text-blue-500" />
+      {/* KPI Cards - Core */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
         <KPICard icon={Users} label="Total Leads" value={String(providerLeads?.length || 0)} color="text-blue-500" />
         <KPICard icon={Handshake} label="Placements" value={String(placementStats?.placements || 0)} color="text-purple-500" />
       </div>
 
-      {/* KPI Cards - Row 2: Engagement */}
-      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
+      {/* KPI Cards - Engagement */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <KPICard icon={Eye} label="Impressions" value={String(engagementMetrics?.impressions || 0)} color="text-muted-foreground" small />
         <KPICard icon={Monitor} label="Profile Views" value={String(engagementMetrics?.profile_views || 0)} color="text-blue-400" small />
         <KPICard icon={Phone} label="Click-to-Call" value={String(engagementMetrics?.click_to_call || 0)} color="text-emerald-400" small />
         <KPICard icon={MousePointerClick} label="Web Clicks" value={String(engagementMetrics?.website_clicks || 0)} color="text-amber-400" small />
         <KPICard icon={Star} label="Reviews" value={String(reviewCount || 0)} color="text-orange-400" small />
-        <KPICard icon={BadgeCheck} label="Unlocked" value={String(unlockCount || 0)} color="text-chart-3" small />
       </div>
 
       <Separator />

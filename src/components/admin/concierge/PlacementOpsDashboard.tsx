@@ -23,8 +23,6 @@ interface CaseRow {
   admission_status?: string;
   admission_substatus?: string;
   tour_coordination_status?: string;
-  provider_fee_status?: string | null;
-  provider_fee_cents?: number | null;
   seeker_confirmed?: boolean | null;
   created_at: string;
   updated_at: string;

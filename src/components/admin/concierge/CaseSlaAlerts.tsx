@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { differenceInHours } from "date-fns";
-import { AlertTriangle, Flame, Clock, Zap, UserX, MessageSquareOff, HelpCircle, CalendarOff, Receipt } from "lucide-react";
+import { AlertTriangle, Flame, Clock, Zap, UserX, MessageSquareOff, HelpCircle, CalendarOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,6 @@ export interface CaseSlaData {
   payment_status?: string;
   tour_coordination_status?: string;
   admission_status?: string;
-  provider_fee_status?: string | null;
   placement_confirmed?: boolean | null;
   seeker_confirmed?: boolean | null;
   introductions_sent_count?: number | null;
@@ -41,11 +40,10 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
     const hoursSinceUpdate = differenceInHours(now, updatedAt);
     const hoursSinceCreation = differenceInHours(now, createdAt);
 
-    // Skip closed/completed cases
-    if (caseData.status === "closed" || caseData.status === "completed") return [];
-    const isPlacedComplete = ["admitted", "billed"].includes(caseData.status) &&
-      (caseData.provider_fee_status === "paid" || caseData.provider_fee_status === "waived");
-    if (isPlacedComplete) return [];
+    // Skip closed/completed/admitted/billed cases. Under the EKRA-compliant
+    // flat-fee model, domestic concierge has no provider fee, so once a case
+    // reaches "admitted" or "billed" there's no further SLA to monitor.
+    if (["closed", "completed", "admitted", "billed"].includes(caseData.status)) return [];
 
     // 1. High urgency case flag
     if (caseData.timeline_urgency === "immediate") {
@@ -140,20 +138,9 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
       });
     }
 
-    // 9. Billing pending after admission
-    if (
-      ["admitted", "billed"].includes(caseData.status) &&
-      caseData.provider_fee_status !== "paid" &&
-      caseData.provider_fee_status !== "waived"
-    ) {
-      const placedHours = hoursSinceUpdate;
-      alerts.push({
-        key: "billing-pending",
-        icon: Receipt,
-        label: placedHours >= 72 ? "Invoice overdue" : "Invoice pending",
-        severity: placedHours >= 72 ? "critical" : "warning",
-      });
-    }
+    // (Alert #9 "Billing pending after admission" retired with the
+    // domestic-concierge fee removal — the early return above already
+    // excludes admitted/billed cases from any SLA scrutiny.)
 
     return alerts;
   }, [caseData]);

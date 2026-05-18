@@ -26,9 +26,7 @@ interface CaseSnapshot {
   placement_confirmed?: boolean | null;
   admission_status?: string;
   tour_coordination_status?: string;
-  provider_fee_status?: string | null;
   seeker_confirmed?: boolean | null;
-  provider_fee_cents?: number | null;
 }
 
 /** Returns the single most important next-action label for the case list table */

@@ -27,7 +27,11 @@ function getTimestampFields(toStatus: string): Record<string, unknown> {
     case "admitted":
       return { placement_confirmed: true, placement_confirmed_at: now, admission_status: "admitted", admission_substatus: "admitted" };
     case "billed":
-      return { provider_fee_status: "invoiced" };
+      // Domestic concierge is free under the EKRA-compliant flat-fee model
+      // (no provider_fee_status column exists on concierge_inquiries).
+      // The "billed" pipeline stage is retained as an audit checkpoint;
+      // no extra column update is required beyond the status change.
+      return {};
     case "completed":
       return { closed_at: now };
     case "closed":

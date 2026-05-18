@@ -154,7 +154,7 @@ const helpTopics = [
     icon: Crown,
     title: "Pro Membership",
     description: "See Pro benefits and pricing",
-    link: "/provider/pro-upgrade"
+    link: "/provider/billing?upgrade=pro"
   },
 ];
 

@@ -131,7 +131,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
         </ul>
       </nav>
 
-      {/* Credit Balance & Pro Status Card */}
+      {/* Pro Status Card */}
       <div className="p-2 border-t border-border">
         <div className={cn(
           "rounded-lg p-2.5 transition-all",

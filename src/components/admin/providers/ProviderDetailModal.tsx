@@ -86,10 +86,6 @@ export function ProviderDetailModal({
     enabled: !!provider?.user_id && open,
   });
 
-  // Credit balance retired with the EKRA flat-fee refactor — credit_transactions
-  // table dropped. The "Credit Balance" KPI in the modal always reads as 0.
-  const creditBalance = 0;
-
   const { data: selectedProviderPro } = useQuery({
     queryKey: ["admin-provider-pro", provider?.id],
     queryFn: async () => {
@@ -225,7 +221,6 @@ export function ProviderDetailModal({
                 provider={provider}
                 proSubscription={selectedProviderPro}
                 providerProfile={providerProfile}
-                creditBalance={creditBalance || 0}
                 providerFacilities={providerFacilities || []}
                 providerLeads={providerLeads || []}
                 placementStats={placementStats || { introductions: 0, placements: 0 }}

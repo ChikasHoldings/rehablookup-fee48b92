@@ -483,7 +483,7 @@ Deno.serve(async (req) => {
   try {
     const { data: confirmedWithoutVerification } = await supabase
       .from("concierge_inquiries")
-      .select("id, placed_facility_id, placement_confirmed_at, provider_fee_cents")
+      .select("id, placed_facility_id, placement_confirmed_at")
       .eq("placement_confirmed", true)
       .not("placed_facility_id", "is", null);
 
@@ -506,9 +506,11 @@ Deno.serve(async (req) => {
           admin_confirmed: true,
           admin_confirmed_at: inquiry.placement_confirmed_at || new Date().toISOString(),
           verification_status: "admin_override",
-          billing_status: inquiry.provider_fee_cents ? "invoiced" : "confirmed",
-          billing_amount_cents: inquiry.provider_fee_cents,
-          billing_due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          // Domestic concierge has no provider fee under the EKRA-compliant
+          // flat-fee model — the provider_fee_cents column was dropped.
+          billing_status: "confirmed",
+          billing_amount_cents: null,
+          billing_due_date: null,
         });
         created++;
       }
