@@ -2050,20 +2050,23 @@ Deno.serve(async (req) => {
       );
 
       if (claimError) {
-        logStep("WARN - claim_stripe_webhook_event failed, processing anyway", {
+        // Round-31 audit fix: previously the dedup-failure path
+        // logged + alerted but kept processing. That risks double-
+        // activation on retry (duplicate provider_notifications,
+        // duplicate Pro benefits, possible double-refund attempts).
+        // The safer outcome is to surface to admin AND return 500 so
+        // Stripe retries the event later — the next retry is far
+        // more likely to find the dedup table healthy than to land
+        // a duplicate side-effect after a flaky retry.
+        logStep("ERROR - claim_stripe_webhook_event failed; returning 500 so Stripe retries", {
           eventId: event.id,
           error: claimError.message,
         });
-        // Round-30: await the insert so the warning isn't lost in a
-        // dangling Promise if a subsequent handler throws. If the
-        // insert itself fails, console.error at the highest visibility
-        // since admin_notifications is the only surface for this kind
-        // of infra hiccup.
         try {
           const { error: notifyErr } = await supabaseAdmin.from("admin_notifications").insert({
             type: "webhook_dedup_failure",
             title: "Stripe webhook dedup-claim failed",
-            message: `claim_stripe_webhook_event errored for ${event.type} (${event.id}). Event was processed but downstream side-effects may run twice on retry.`,
+            message: `claim_stripe_webhook_event errored for ${event.type} (${event.id}). Webhook returned 500 so Stripe retries. If retries keep failing, check stripe_webhook_events table + RPC health.`,
             metadata: {
               stripe_event_id: event.id,
               stripe_event_type: event.type,
@@ -2076,6 +2079,10 @@ Deno.serve(async (req) => {
         } catch (insertErr) {
           console.error("[stripe-webhook] CRITICAL: dedup-failure admin notification threw", insertErr);
         }
+        return new Response(
+          JSON.stringify({ error: "dedup_claim_failed", retryable: true }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       } else if (claimed === false) {
         logStep("Duplicate Stripe event ignored", { eventId: event.id, type: event.type });
         return new Response(JSON.stringify({ received: true, duplicate: true }), {
@@ -2083,7 +2090,30 @@ Deno.serve(async (req) => {
         });
       }
     } catch (dedupErr) {
-      logStep("WARN - dedup check threw, processing anyway", { error: String(dedupErr) });
+      // Round-31 audit fix: same as the !claimError branch — if the
+      // dedup machinery is unavailable, return 500 so Stripe retries,
+      // rather than risk processing the event twice on a flaky retry
+      // window. Stripe will give up after ~3 days of retries, by
+      // which time the dedup table will be healthy again.
+      logStep("ERROR - dedup check threw; returning 500 so Stripe retries", { error: String(dedupErr) });
+      try {
+        await supabaseAdmin.from("admin_notifications").insert({
+          type: "webhook_dedup_failure",
+          title: "Stripe webhook dedup-claim threw",
+          message: `dedup check for ${event.type} (${event.id}) threw: ${String(dedupErr).slice(0, 300)}. Returning 500 so Stripe retries.`,
+          metadata: {
+            stripe_event_id: event.id,
+            stripe_event_type: event.type,
+            error: String(dedupErr),
+          },
+        });
+      } catch (insertErr) {
+        console.error("[stripe-webhook] CRITICAL: dedup-threw admin notification ALSO failed", insertErr);
+      }
+      return new Response(
+        JSON.stringify({ error: "dedup_check_threw", retryable: true }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     // ==========================================
@@ -2449,9 +2479,24 @@ Deno.serve(async (req) => {
       });
 
       const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      const mappedStatus = subscription.status === "active" ? "active"
+      // Round-31 audit fix: 'incomplete' (3DS/SCA pending payment) was
+      // falling through and getting stored as the raw Stripe enum,
+      // but the rest of the app treats anything-not-canceled as
+      // active. A provider who hit a 3DS challenge would see Pro
+      // active when it actually wasn't yet. Map explicitly:
+      //   incomplete        → past_due (gates benefits the same way)
+      //   incomplete_expired → canceled (the 23h window timed out)
+      //   trialing          → active (we don't offer trials but if
+      //                       Stripe creates one, treat as active)
+      const mappedStatus =
+        subscription.status === "active" ? "active"
+        : subscription.status === "trialing" ? "active"
         : subscription.status === "past_due" ? "past_due"
+        : subscription.status === "incomplete" ? "past_due"
+        : subscription.status === "incomplete_expired" ? "canceled"
         : subscription.status === "canceled" ? "canceled"
+        : subscription.status === "unpaid" ? "past_due"
+        : subscription.status === "paused" ? "past_due"
         : subscription.status;
 
       // Detect mid-period add-on removal by comparing DB-stored add-on flags
@@ -2625,11 +2670,42 @@ Deno.serve(async (req) => {
           .select("id, name")
           .eq("user_id", profile.user_id)
           .limit(1);
-        
+
         if (facilities?.[0]) {
           facilityName = facilities[0].name;
           facilityId = facilities[0].id;
         }
+      }
+
+      // Round-31 audit fix: if neither profile nor facility resolved,
+      // the Stripe customer is detached from our app (deleted account,
+      // out-of-band data wipe, email change). Don't send a customer-
+      // facing email — they may be a stale or stranger inbox. Just
+      // record an admin alert and exit so ops can reconcile.
+      if (!profile && !facilityId) {
+        logStep("Payment failed but no matching profile or facility — skipping customer email", { customerEmail });
+        try {
+          await supabaseAdmin.from("admin_notifications").insert({
+            type: "payment_failed_orphan_customer",
+            title: "Payment failed for orphaned Stripe customer",
+            message:
+              `Stripe customer ${customerId} (${customerEmail}) had a payment fail ` +
+              `but no matching profiles or facilities row exists. ` +
+              `Likely a deleted-app-side account or stale email. Manual reconcile in Stripe.`,
+            metadata: {
+              customer_id: customerId,
+              customer_email: customerEmail,
+              invoice_id: invoice.id,
+              amount_due: amountDue,
+              currency,
+            } as Record<string, unknown>,
+          });
+        } catch (adminErr) {
+          console.error("[stripe-webhook] orphan-customer admin notify failed", adminErr);
+        }
+        return new Response(JSON.stringify({ received: true, orphan: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
       // Create admin notification
@@ -2921,8 +2997,17 @@ Deno.serve(async (req) => {
           result: addonResult,
         });
 
+        // Round-31 audit fix: previously even a fully-failed activation
+        // (e.g. no Pro subscription row exists) still wrote
+        // 'featured_addon_activated' to subscription_events AND sent
+        // "Featured is live" to the provider. The customer paid Stripe
+        // but had no placements. Now: if has_featured_set is false,
+        // surface a critical admin alert + DO NOT send the
+        // false-positive notification.
+        const activationOk = addonResult.has_featured_set === true;
+
         await supabaseAdmin.from("subscription_events").insert({
-          event_type: "featured_addon_activated",
+          event_type: activationOk ? "featured_addon_activated" : "featured_addon_activation_failed",
           stripe_event_id: event.id,
           stripe_customer_id: customerId,
           stripe_subscription_id: subscription.id,
@@ -2932,8 +3017,38 @@ Deno.serve(async (req) => {
           metadata: {
             placements_inserted: addonResult.placements_inserted,
             placements_reactivated: addonResult.placements_reactivated,
+            failed: addonResult.failed,
           },
         });
+
+        if (!activationOk) {
+          // Customer paid but activation didn't land. Critical: alert
+          // ops so the manual recovery (often: create the missing
+          // facility_subscriptions row, then retry) can happen.
+          try {
+            await supabaseAdmin.from("admin_notifications").insert({
+              type: "featured_addon_activation_failed",
+              title: "Featured add-on activation FAILED after payment",
+              message:
+                `Stripe subscription ${subscription.id} was created for ` +
+                `featured_addon on facility ${addonFacilityId}, but the ` +
+                `activation helper returned failed steps: ` +
+                `${JSON.stringify(addonResult.failed).slice(0, 300)}. ` +
+                `Customer paid but Featured is NOT live. Manual recovery required.`,
+              metadata: {
+                facility_id: addonFacilityId,
+                stripe_subscription_id: subscription.id,
+                stripe_event_id: event.id,
+                failed_steps: addonResult.failed,
+              } as Record<string, unknown>,
+            });
+          } catch (adminErr) {
+            console.error("[stripe-webhook] admin notify failed (featured addon fail)", adminErr);
+          }
+          return new Response(JSON.stringify({ received: true, activation_failed: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
 
         const { data: facSubProvider } = await supabaseAdmin
           .from("facility_subscriptions")
@@ -2982,8 +3097,13 @@ Deno.serve(async (req) => {
           result: concierge,
         });
 
+        // Round-31 audit fix: don't write 'activated' event or send
+        // "Concierge is live" notification if activation actually
+        // failed (e.g. no Pro subscription row exists for facility).
+        const conciergeActivationOk = concierge.has_concierge_partner_set === true;
+
         await supabaseAdmin.from("subscription_events").insert({
-          event_type: "concierge_addon_activated",
+          event_type: conciergeActivationOk ? "concierge_addon_activated" : "concierge_addon_activation_failed",
           stripe_event_id: event.id,
           stripe_customer_id: customerId,
           stripe_subscription_id: subscription.id,
@@ -2994,8 +3114,35 @@ Deno.serve(async (req) => {
             partner_rows_inserted: concierge.partner_rows_inserted,
             partner_rows_reactivated: concierge.partner_rows_reactivated,
             network_opted_in_set: concierge.network_opted_in_set,
+            failed: concierge.failed,
           },
         });
+
+        if (!conciergeActivationOk) {
+          try {
+            await supabaseAdmin.from("admin_notifications").insert({
+              type: "concierge_addon_activation_failed",
+              title: "Concierge add-on activation FAILED after payment",
+              message:
+                `Stripe subscription ${subscription.id} was created for ` +
+                `concierge_addon on facility ${addonFacilityId}, but the ` +
+                `activation helper returned failed steps: ` +
+                `${JSON.stringify(concierge.failed).slice(0, 300)}. ` +
+                `Customer paid but Concierge is NOT live. Manual recovery required.`,
+              metadata: {
+                facility_id: addonFacilityId,
+                stripe_subscription_id: subscription.id,
+                stripe_event_id: event.id,
+                failed_steps: concierge.failed,
+              } as Record<string, unknown>,
+            });
+          } catch (adminErr) {
+            console.error("[stripe-webhook] admin notify failed (concierge addon fail)", adminErr);
+          }
+          return new Response(JSON.stringify({ received: true, activation_failed: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
 
         const { data: facSubProvider } = await supabaseAdmin
           .from("facility_subscriptions")

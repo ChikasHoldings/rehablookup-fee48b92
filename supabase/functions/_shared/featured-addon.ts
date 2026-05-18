@@ -51,14 +51,27 @@ function buildSeedPlacements(facility: FacilityRow): { type: string; value: stri
   // National homepage pool — `"national"` matches the token used by
   // src/pages/Index.tsx and src/lib/featuredBucket.ts.
   out.push({ type: "homepage", value: "national" });
-  // State pool — state is stored as a 2-letter abbreviation in
-  // facilities.state; the rotation accepts either form.
+  // State pool — only seed if state matches a US 2-letter code OR
+  // a longer US state name string (defensive against junk data).
+  // Round-31 audit: validate format so we don't pollute the state
+  // bucket with garbage placement_values.
   if (facility.state && facility.state.trim().length > 0) {
-    out.push({ type: "state", value: facility.state.trim().toUpperCase() });
+    const stateTrimmed = facility.state.trim().toUpperCase();
+    if (/^[A-Z]{2}$/.test(stateTrimmed) || /^[A-Z][A-Z\s.-]{1,30}$/.test(stateTrimmed)) {
+      out.push({ type: "state", value: stateTrimmed });
+    }
   }
   // City pool — slugified to match the resolveSearchBucket() output.
+  // Round-31 audit: skip if the slug is empty after sanitization
+  // (e.g. city="!!!" or "(Unknown)" → after sanitization could be
+  // empty or "unknown"). Empty slug would pollute the city bucket
+  // with a "" key. Also skip the literal "unknown" so misnamed
+  // facilities don't all share a placement bucket.
   if (facility.city && facility.city.trim().length > 0) {
-    out.push({ type: "city", value: slugify(facility.city) });
+    const citySlug = slugify(facility.city);
+    if (citySlug.length >= 2 && citySlug !== "unknown" && citySlug !== "n-a") {
+      out.push({ type: "city", value: citySlug });
+    }
   }
   return out;
 }
