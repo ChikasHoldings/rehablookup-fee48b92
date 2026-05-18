@@ -10,6 +10,9 @@ import {
   Loader2,
   Settings2,
   CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,6 +25,22 @@ import { SwitchToAnnualBanner } from "@/components/provider/billing/SwitchToAnnu
 import { SwitchToMonthlyAtRenewalBanner } from "@/components/provider/billing/SwitchToMonthlyAtRenewalBanner";
 import { ProUpgradeChoices } from "@/components/provider/subscription/ProUpgradeChoices";
 import { fmtMoney, TIER_PRICING } from "@/lib/billingPricing";
+
+/**
+ * Validate a Stripe URL returned by an edge function before we hand it
+ * to window.open / window.location. Requires https + an *.stripe.com
+ * host. A malicious edge function response can otherwise redirect the
+ * user to a phishing target that just has "stripe.com" in the URL.
+ */
+function isSafeStripeUrl(rawUrl: string | null | undefined): rawUrl is string {
+  if (!rawUrl) return false;
+  try {
+    const u = new URL(rawUrl);
+    return u.protocol === "https:" && u.hostname.endsWith("stripe.com");
+  } catch {
+    return false;
+  }
+}
 
 /**
  * /provider/subscription — Subscription management.
@@ -43,7 +62,12 @@ export default function ProviderSubscription() {
   const isCheckoutReturn = searchParams.get("checkout") === "success";
 
   const [pollingActive, setPollingActive] = useState(isCheckoutReturn);
-  const { data: subscription, isLoading } = useFacilitySubscription(facilityId, {
+  const {
+    data: subscription,
+    isLoading,
+    isError,
+    refetch: refetchSubscription,
+  } = useFacilitySubscription(facilityId, {
     pollWhilePending: pollingActive,
   });
   const invalidateSub = useInvalidateFacilitySubscription();
@@ -85,13 +109,10 @@ export default function ProviderSubscription() {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      if (data?.url) {
-        const url = new URL(data.url);
-        if (!url.hostname.endsWith("stripe.com")) throw new Error("Invalid portal URL");
-        window.open(data.url, "_blank");
-      } else {
-        throw new Error("No portal URL returned");
+      if (!isSafeStripeUrl(data?.url)) {
+        throw new Error(data?.url ? "Invalid portal URL" : "No portal URL returned");
       }
+      window.open(data.url, "_blank", "noopener,noreferrer");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to open billing portal.";
       console.error("[Subscription] portal error", err);
@@ -114,11 +135,8 @@ export default function ProviderSubscription() {
         },
       });
       if (error) throw error;
-      if (data?.error || !data?.url) {
-        throw new Error(data?.error ?? "Checkout URL missing");
-      }
-      const url = new URL(data.url);
-      if (!url.hostname.endsWith("stripe.com")) {
+      if (data?.error) throw new Error(data.error);
+      if (!isSafeStripeUrl(data?.url)) {
         throw new Error("Invalid checkout URL");
       }
       window.location.assign(data.url);
@@ -128,7 +146,20 @@ export default function ProviderSubscription() {
     }
   };
 
-  const isPro = subscription?.tier === "pro" && subscription?.status === "active";
+  // Status semantics:
+  //   active            → Pro is live
+  //   trialing          → Pro is live (Stripe trial)
+  //   past_due | unpaid → Pro is technically still live but the latest
+  //                       invoice failed; surface a payment-issue banner
+  //   incomplete        → Checkout finished but the first invoice hasn't
+  //                       cleared; pending state
+  //   canceled          → Not Pro
+  const status = subscription?.status ?? null;
+  const isProTier = subscription?.tier === "pro";
+  const isPro = isProTier && (status === "active" || status === "trialing");
+  const isPaymentIssue = isProTier && (status === "past_due" || status === "unpaid");
+  const isIncomplete = isProTier && status === "incomplete";
+  const isCancelScheduled = isPro && subscription?.cancel_at_period_end === true;
   const isMonthlyPro = isPro && subscription?.billing_period === "monthly";
   const isAnnualPro = isPro && subscription?.billing_period === "annual";
 
@@ -136,7 +167,8 @@ export default function ProviderSubscription() {
     ? Math.floor((new Date(subscription.current_period_end).getTime() - Date.now()) / (24 * 60 * 60 * 1000))
     : null;
   const showRenewalSwitchBanner =
-    isAnnualPro && daysUntilRenewal !== null && daysUntilRenewal >= 0 && daysUntilRenewal <= 60;
+    isAnnualPro && !isCancelScheduled &&
+    daysUntilRenewal !== null && daysUntilRenewal >= 0 && daysUntilRenewal <= 60;
 
   const checkoutPolling = pollingActive && (!subscription || subscription.status !== "active");
 
@@ -146,6 +178,35 @@ export default function ProviderSubscription() {
         <Skeleton className="h-12 w-2/3 mb-6" />
         <Skeleton className="h-48 w-full mb-6" />
         <Skeleton className="h-80 w-full" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <Helmet>
+          <title>Subscription | RehabLookup Provider</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+        <Card>
+          <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+            <div className="h-12 w-12 rounded-xl bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="h-6 w-6 text-destructive" aria-hidden />
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">Couldn't load your subscription</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                We weren't able to reach the billing system. Your plan and any active
+                add-ons aren't affected — this is just a display issue.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetchSubscription()} className="gap-2">
+              <RefreshCw className="h-4 w-4" aria-hidden />
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -202,7 +263,53 @@ export default function ProviderSubscription() {
           </Card>
         )}
 
-        {isMonthlyPro && subscription && (
+        {/* Payment-issue banner. We don't downgrade UI to Free for
+            past_due / unpaid — the user still owns a Pro subscription;
+            Stripe just needs them to fix their card. Surface it
+            prominently so they take action before Stripe cancels. */}
+        {isPaymentIssue && subscription && (
+          <Card className="border-destructive/40 bg-destructive/5">
+            <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-destructive">Payment failed on your last invoice</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Update your card in the Stripe portal to keep your Pro benefits
+                  active. Stripe will retry automatically.
+                </p>
+              </div>
+              <Button
+                onClick={handleManageBilling}
+                disabled={portalLoading || !subscription.stripe_customer_id}
+                size="sm"
+                variant="destructive"
+                className="gap-2 shrink-0"
+              >
+                <Settings2 className="h-4 w-4" aria-hidden />
+                {portalLoading ? "Opening…" : "Update payment"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {isIncomplete && (
+          <Card>
+            <CardContent className="p-5 flex items-center gap-3">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden />
+              <div className="flex-1">
+                <p className="font-medium text-foreground">Finalizing your first invoice…</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Stripe is settling your first charge. Pro benefits unlock as soon
+                  as it clears.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isMonthlyPro && subscription && !isCancelScheduled && (
           <SwitchToAnnualBanner
             subscription={subscription}
             onSwitched={() => invalidateSub(facilityId)}
@@ -216,12 +323,13 @@ export default function ProviderSubscription() {
           />
         )}
 
-        {isPro && subscription ? (
+        {(isPro || isPaymentIssue) && subscription ? (
           <ProSubscriptionCard
             subscription={subscription}
             onManageBilling={handleManageBilling}
             managingPortal={portalLoading}
             onCancel={() => navigate("/provider/billing/cancel")}
+            isCancelScheduled={isCancelScheduled}
           />
         ) : (
           <>
@@ -275,26 +383,30 @@ function ProSubscriptionCard({
   onManageBilling,
   managingPortal,
   onCancel,
+  isCancelScheduled,
 }: {
   subscription: NonNullable<ReturnType<typeof useFacilitySubscription>["data"]>;
   onManageBilling: () => void;
   managingPortal: boolean;
   onCancel: () => void;
+  isCancelScheduled: boolean;
 }) {
   const interval = subscription.billing_period;
   const intervalLabel = interval === "annual" ? "Annual — saving 15%" : "Monthly";
-  const nextChargeDateStr = subscription.current_period_end
+  const periodEndStr = subscription.current_period_end
     ? new Date(subscription.current_period_end).toLocaleDateString("en-US", {
         month: "long", day: "numeric", year: "numeric",
       })
     : "—";
   const nextChargeAmount = fmtMoney(subscription.paid_amount_cents);
-  const nextChargeLine = interval === "annual"
-    ? `Renews ${nextChargeDateStr} — ${nextChargeAmount}`
-    : `Next charge: ${nextChargeDateStr} — ${nextChargeAmount}`;
+  const nextChargeLine = isCancelScheduled
+    ? `Access ends ${periodEndStr}`
+    : interval === "annual"
+      ? `Renews ${periodEndStr} — ${nextChargeAmount}`
+      : `Next charge: ${periodEndStr} — ${nextChargeAmount}`;
 
   let savingsLine: string | null = null;
-  if (interval === "annual") {
+  if (interval === "annual" && !isCancelScheduled) {
     const savedCents =
       subscription.discount_applied_cents ??
       (TIER_PRICING.pro.fullAnnualCents - TIER_PRICING.pro.annualCents);
@@ -302,7 +414,7 @@ function ProSubscriptionCard({
   }
 
   return (
-    <Card>
+    <Card className={isCancelScheduled ? "border-amber-300/60" : undefined}>
       <CardContent className="p-5 md:p-6 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
@@ -312,11 +424,23 @@ function ProSubscriptionCard({
           <Badge className="bg-[#1B365D] hover:bg-[#1B365D] text-base px-3 py-1">Pro</Badge>
         </div>
 
+        {isCancelScheduled && (
+          <div className="rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-950/20 p-3 flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-700 dark:text-amber-400 shrink-0" aria-hidden />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                Your subscription is scheduled to cancel
+              </p>
+              <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                You'll keep Pro access until <strong>{periodEndStr}</strong>. To stay
+                on Pro, open the billing portal and turn cancellation off.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center gap-2.5">
           <Badge variant="secondary" className="font-medium">{intervalLabel}</Badge>
-          {subscription.cancel_at_period_end && (
-            <Badge variant="destructive">Cancels at period end</Badge>
-          )}
         </div>
 
         <div className="space-y-1 text-sm">
@@ -328,15 +452,17 @@ function ProSubscriptionCard({
           <Button
             onClick={onManageBilling}
             disabled={managingPortal || !subscription.stripe_customer_id}
-            variant="outline"
+            variant={isCancelScheduled ? "default" : "outline"}
             className="gap-2"
           >
-            <Settings2 className="h-4 w-4" />
-            {managingPortal ? "Opening…" : "Payment method & invoices"}
+            <Settings2 className="h-4 w-4" aria-hidden />
+            {managingPortal ? "Opening…" : isCancelScheduled ? "Manage in Stripe portal" : "Payment method & invoices"}
           </Button>
-          <Button onClick={onCancel} variant="ghost" className="gap-2 text-slate-600">
-            Cancel subscription
-          </Button>
+          {!isCancelScheduled && (
+            <Button onClick={onCancel} variant="ghost" className="gap-2 text-slate-600">
+              Cancel subscription
+            </Button>
+          )}
         </div>
 
         <p className="text-xs text-slate-500 leading-relaxed pt-2 border-t border-slate-100">

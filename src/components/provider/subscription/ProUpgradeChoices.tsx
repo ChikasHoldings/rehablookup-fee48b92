@@ -82,7 +82,10 @@ export function ProUpgradeChoices({ onChoose }: ProUpgradeChoicesProps) {
               <p className="font-semibold text-slate-900 text-base">
                 Pro — Annual
               </p>
-              <p className="text-xs text-slate-500">Commit to the year, save $178.20.</p>
+              <p className="text-xs text-slate-500">
+                Commit to the year, save{" "}
+                {fmtMoney(TIER_PRICING.pro.fullAnnualCents - TIER_PRICING.pro.annualCents)}.
+              </p>
             </div>
             <div>
               <p className="text-2xl font-bold text-[#1B365D]">

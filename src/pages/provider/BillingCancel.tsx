@@ -44,9 +44,13 @@ export default function BillingCancel() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
-  // Pull the preview when entering step 2.
+  // Pull the preview when entering step 2 OR when scope changes during
+  // step 2. Guard against a stale response landing after the user has
+  // switched scopes again — without the cancellation flag we'd display
+  // the refund math for the previous scope.
   useEffect(() => {
     if (step !== 2 || !subscription?.id) return;
+    let cancelled = false;
     setPreviewLoading(true);
     setPreview(null);
     supabase.functions
@@ -54,15 +58,22 @@ export default function BillingCancel() {
         body: { subscription_id: subscription.id, scope },
       })
       .then(({ data, error }) => {
+        if (cancelled) return;
         if (error) throw error;
         setPreview(data as CancellationPreviewData);
       })
       .catch((err) => {
+        if (cancelled) return;
         console.error("[BillingCancel] preview failed", err);
         toast.error(err instanceof Error ? err.message : "Failed to compute refund");
         setStep(1);
       })
-      .finally(() => setPreviewLoading(false));
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [step, scope, subscription?.id]);
 
   if (isLoading) {
@@ -120,17 +131,29 @@ export default function BillingCancel() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // Interval-specific success message.
+      // Interval-specific success message. Annual cancels prorate a
+      // refund; monthly cancels keep access through the current period
+      // and don't refund. Read totalRefundCents defensively — edge
+      // function returns it on annual paths but may omit it on add-on-
+      // only cancels where the math is zero.
       if (isMonthly) {
         const endDateStr = subscription.current_period_end
           ? new Date(subscription.current_period_end).toLocaleDateString()
           : "your period end";
         toast.success(`Subscription ends on ${endDateStr}. You keep access until then.`);
       } else {
-        const refundCents = (data as { totalRefundCents?: number })?.totalRefundCents ?? 0;
-        toast.success(
-          `Subscription canceled. ${fmtMoney(refundCents)} will refund to your payment method in 5-10 business days.`,
+        const refundCents = Number(
+          (data as { totalRefundCents?: number; total_refund_cents?: number })?.totalRefundCents
+            ?? (data as { total_refund_cents?: number })?.total_refund_cents
+            ?? 0,
         );
+        if (refundCents > 0) {
+          toast.success(
+            `Subscription canceled. ${fmtMoney(refundCents)} will refund to your payment method in 5-10 business days.`,
+          );
+        } else {
+          toast.success("Subscription canceled.");
+        }
       }
       invalidateSub(facilityId);
       navigate("/provider/billing");
@@ -167,7 +190,7 @@ export default function BillingCancel() {
             <CardTitle>What do you want to cancel?</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
+            <div className="space-y-3" role="radiogroup" aria-label="What to cancel">
               <label className="flex items-start gap-3 rounded-md border border-slate-200 p-3 cursor-pointer hover:border-[#1B365D]/40">
                 <input
                   type="radio"
@@ -175,6 +198,7 @@ export default function BillingCancel() {
                   value="all"
                   checked={scope === "all"}
                   onChange={() => setScope("all")}
+                  aria-label="Cancel everything — Pro and all add-ons"
                   className="mt-1"
                 />
                 <div>
@@ -191,6 +215,7 @@ export default function BillingCancel() {
                     value="addon-featured"
                     checked={scope === "addon-featured"}
                     onChange={() => setScope("addon-featured")}
+                    aria-label="Cancel Featured add-on only, keep Pro"
                     className="mt-1"
                   />
                   <div>
@@ -208,6 +233,7 @@ export default function BillingCancel() {
                     value="addon-concierge"
                     checked={scope === "addon-concierge"}
                     onChange={() => setScope("addon-concierge")}
+                    aria-label="Cancel Concierge Partner add-on only, keep Pro"
                     className="mt-1"
                   />
                   <div>

@@ -76,14 +76,20 @@ export function useFacilitySubscription(
         .eq("facility_id", facilityId)
         .maybeSingle();
       if (error) {
+        // Throw so React Query surfaces isError to consumers — the page
+        // can then render a real "fetch failed, retry" affordance
+        // instead of silently falling back to the Free-plan card while
+        // the user has a Pro subscription that just failed to load.
+        // `null` is reserved for "no row yet" (legitimate Free tier).
         console.error("[useFacilitySubscription] fetch failed", error);
-        return null;
+        throw new Error(error.message || "Failed to load subscription");
       }
       return (data as unknown as FacilitySubscriptionRow | null) ?? null;
     },
     enabled: !!facilityId,
     staleTime: 1000 * 30,
     refetchInterval: options.pollWhilePending ? 2000 : false,
+    retry: 1,
   });
 }
 
