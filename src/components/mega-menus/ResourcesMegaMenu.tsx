@@ -11,13 +11,25 @@ interface MegaMenuProps {
   onNavigate?: () => void;
 }
 
+// Phase AA fix: every href below must resolve to a row in
+// public.blog_articles with status='published'. The previous list
+// hard-coded 6 slugs but only one (detox-timeline) actually had a
+// matching article — the other 5 hit ArticleDetail's not-found
+// branch and silently redirected to /resources, which is why every
+// mega-menu item appeared to "fall back to the main page".
+//
+// If you add a new entry here:
+//   1. Confirm the slug exists in blog_articles
+//      (SELECT slug FROM blog_articles WHERE slug = ? AND status='published')
+//   2. The smoke test below scans this file for /resources/<slug> hrefs
+//      and asserts they all resolve.
 const guides = [
-  { href: "/resources/signs-of-addiction", label: "Signs of Addiction", desc: "Recognize warning signs early", icon: Heart },
-  { href: "/resources/what-to-expect-in-rehab", label: "What to Expect in Rehab", desc: "Your treatment journey", icon: FileText },
-  { href: "/resources/insurance-coverage-guide", label: "Insurance Coverage", desc: "Understanding your benefits", icon: Shield },
-  { href: "/resources/paying-for-rehab", label: "Paying for Rehab", desc: "Financing & payment options", icon: DollarSign },
+  { href: "/resources/youth-addiction-warning-signs", label: "Signs of Addiction", desc: "Recognize warning signs early", icon: Heart },
+  { href: "/resources/drug-withdrawal-symptoms-timeline", label: "Withdrawal Timeline", desc: "What to expect during detox", icon: FileText },
+  { href: "/resources/insurance-appeal-rehab-denial", label: "Insurance Appeals", desc: "Fight a denied claim", icon: Shield },
+  { href: "/resources/how-much-does-rehab-cost-per-day", label: "Paying for Rehab", desc: "Cost breakdown by program", icon: DollarSign },
   { href: "/resources/detox-timeline", label: "Detox Timeline", desc: "What happens during detox", icon: Sparkles },
-  { href: "/resources/choosing-right-program", label: "Choosing a Program", desc: "Match needs to the right care", icon: BookOpen },
+  { href: "/resources/how-to-find-good-rehab", label: "Choosing a Program", desc: "15 questions to ask first", icon: BookOpen },
 ];
 
 const tools = [

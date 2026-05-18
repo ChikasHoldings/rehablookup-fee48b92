@@ -182,6 +182,49 @@ const extractLinkedArticleIds = (content: ContentBlock[]): string[] => {
 };
 
 // Loading skeleton for article
+/**
+ * Phase AA: in-place 404 for missing article slugs. Replaces the
+ * previous silent <Navigate to="/resources" /> which was the cause of
+ * the "Resources mega-menu items fall back to the main page" bug.
+ *
+ * Renders with the standard Layout so the user keeps header/footer
+ * navigation, sees a clear error message, and gets a CTA back to the
+ * Resources hub. SEO: noindex + 404-equivalent meta so search engines
+ * don't treat the URL as duplicate content of /resources.
+ */
+function ArticleNotFound({ slug }: { slug: string }) {
+  return (
+    <Layout>
+      <SEO
+        title="Article not found — RehabLookup"
+        description="The article you were looking for couldn't be found. Browse our resources hub for related guides."
+        noindex
+      />
+      <main className="container mx-auto px-4 py-16 md:py-24 max-w-2xl text-center">
+        <div className="mx-auto h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-6">
+          <span className="text-2xl font-bold text-muted-foreground" aria-hidden>?</span>
+        </div>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+          We couldn't find that article
+        </h1>
+        <p className="text-muted-foreground mb-8 leading-relaxed">
+          The article at <code className="font-mono text-sm bg-muted px-1.5 py-0.5 rounded">{`/resources/${slug}`}</code>{" "}
+          isn't available right now — it may have been moved or unpublished.
+          Browse our full Resources hub or try one of the suggestions below.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button asChild>
+            <Link to="/resources">Browse all resources</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/">Back to home</Link>
+          </Button>
+        </div>
+      </main>
+    </Layout>
+  );
+}
+
 function ArticleSkeleton() {
   return (
     <Layout>
@@ -371,7 +414,13 @@ const ArticleDetail = () => {
   }
 
   if (error || !article) {
-    return <Navigate to="/resources" replace />;
+    // Phase AA fix: render an in-place 404 instead of silently
+    // redirecting to /resources. The previous Navigate-on-miss was
+    // the reason the Resources mega-menu items appeared to "fall back
+    // to the main page" — any header link to a slug that no longer
+    // exists in blog_articles silently jumped to /resources with no
+    // signal to the user. Now: real 404 with a clear CTA back.
+    return <ArticleNotFound slug={normalizedSlug ?? ""} />;
   }
 
   const defaultImage = "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&h=600&fit=crop";
