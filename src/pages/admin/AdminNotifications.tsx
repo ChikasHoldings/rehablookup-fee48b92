@@ -179,6 +179,8 @@ const DELIVERY_FAILURE_TYPES = [
   "featured_addon_activation_failed",
   "concierge_addon_activation_failed",
   "payment_failed_orphan_customer",
+  "addon_flag_cleared_without_audit_row",
+  "duplicate_active_pro_subscription",
   // Lead pipeline silent-failure escalations
   "lead_distribution_insert_failure",
   "lead_notification_failure",

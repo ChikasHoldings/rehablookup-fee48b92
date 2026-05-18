@@ -67,6 +67,15 @@ export async function activateConciergePartner(
     facilityId: string;
     stripeSubscriptionId: string;
     currentPeriodEnd: string | null;
+    // Round-31 audit fix: previously the activation hardcoded
+    // DEFAULT_LEVELS_OF_CARE (all of them). The UI's BillingConcierge
+    // add-geo form lets the provider pick which LoC they accept, but
+    // those choices weren't reaching this helper. Now: the create-
+    // checkout-session edge fn passes the chosen levels through
+    // subscription metadata, the webhook extracts them, and they
+    // arrive here. Empty/missing array falls back to DEFAULT for
+    // backward compatibility with pre-fix subscriptions.
+    levelsOfCare?: string[];
   },
 ): Promise<ActivateConciergeResult> {
   const result: ActivateConciergeResult = {
@@ -140,10 +149,12 @@ export async function activateConciergePartner(
     if (!fac.concierge_opted_in_at) {
       optInUpdate.concierge_opted_in_at = new Date().toISOString();
     }
-    // Seed broad default accepted-care-types if the field is null/empty
-    // so the facility scores in the careType dimension of matching.
+    // Seed accepted-care-types: prefer the user-selected levels passed
+    // in via args.levelsOfCare (round-31 fix), fall back to the broad
+    // default for backward compat / missing metadata.
     if (!fac.concierge_accepted_care_types || (Array.isArray(fac.concierge_accepted_care_types) && fac.concierge_accepted_care_types.length === 0)) {
-      optInUpdate.concierge_accepted_care_types = [...DEFAULT_LEVELS_OF_CARE];
+      const chosen = (args.levelsOfCare && args.levelsOfCare.length > 0) ? args.levelsOfCare : [...DEFAULT_LEVELS_OF_CARE];
+      optInUpdate.concierge_accepted_care_types = chosen;
     }
     const { error: optInErr } = await supabase
       .from("facilities")
@@ -170,6 +181,10 @@ export async function activateConciergePartner(
       .eq("geo_city", geoCity as never)
       .maybeSingle();
 
+    // Round-31 fix: use user-selected LoC if provided, else default.
+    const partnerLOC = (args.levelsOfCare && args.levelsOfCare.length > 0)
+      ? args.levelsOfCare
+      : [...DEFAULT_LEVELS_OF_CARE];
     if (existing) {
       const wasInactive = (existing as { active: boolean }).active === false;
       if (wasInactive) {
@@ -177,7 +192,7 @@ export async function activateConciergePartner(
           .from("concierge_partner_facilities")
           .update({
             subscription_id: facSubId,
-            level_of_care: [...DEFAULT_LEVELS_OF_CARE],
+            level_of_care: partnerLOC,
             active: true,
             activated_at: new Date().toISOString(),
             deactivated_at: null,
@@ -195,7 +210,7 @@ export async function activateConciergePartner(
         subscription_id: facSubId,
         geo_state: geoState,
         geo_city: geoCity,
-        level_of_care: [...DEFAULT_LEVELS_OF_CARE],
+        level_of_care: partnerLOC,
         active: true,
         activated_at: new Date().toISOString(),
       });

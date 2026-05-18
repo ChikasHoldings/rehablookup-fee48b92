@@ -2848,12 +2848,52 @@ Deno.serve(async (req) => {
           });
           logStep("Payment event recorded");
 
-          // On renewal (subscription_cycle), clear the renewal_reminder_*_sent_at
-          // milestones so the daily cron can fire the 60/30/14/7-day reminders
-          // for the new period. First payment of a subscription is
-          // `subscription_create`; we skip resets in that case since the
-          // columns are already NULL on a fresh row.
-          if (invoice.billing_reason === "subscription_cycle" && invoice.subscription) {
+          // Round-31 audit fix: previously gated only on
+          // billing_reason='subscription_cycle'. Stripe also sends
+          // payment_succeeded for subscription_update_cycle, manual
+          // invoices, etc., and the billing_reason enum is mutable.
+          // The authoritative renewal signal is: the subscription's
+          // current_period_end advanced past what we have stored.
+          //
+          // Detection logic:
+          //   1. Read current_period_end from the subscription (which
+          //      Stripe just renewed).
+          //   2. Compare to the DB-stored current_period_end.
+          //   3. If the new end is later than the stored end, it's a
+          //      true period boundary crossing → reset reminders.
+          //
+          // Falls back to billing_reason='subscription_cycle' if the
+          // subscription read fails (network blip), so we don't lose
+          // the reset on the most common path.
+          let shouldResetReminders = false;
+          if (invoice.subscription) {
+            const stripeSubId = invoice.subscription as string;
+            try {
+              const sub = await stripe.subscriptions.retrieve(stripeSubId);
+              const newPeriodEnd = new Date(sub.current_period_end * 1000).toISOString();
+              const { data: facSubRow } = await supabaseAdmin
+                .from("facility_subscriptions")
+                .select("current_period_end")
+                .eq("stripe_subscription_id", stripeSubId)
+                .maybeSingle();
+              const storedEnd = (facSubRow as { current_period_end: string | null } | null)?.current_period_end ?? null;
+              // True renewal = new period_end strictly LATER than stored.
+              // (Equal = same period, no boundary crossing. Earlier = clock
+              // skew or a Stripe-side downgrade we should not act on here.)
+              if (storedEnd && newPeriodEnd > storedEnd) {
+                shouldResetReminders = true;
+              } else if (!storedEnd && invoice.billing_reason === "subscription_cycle") {
+                // First time seeing this sub in our DB, and Stripe says
+                // it's a renewal → trust them.
+                shouldResetReminders = true;
+              }
+            } catch (e) {
+              logStep("Could not retrieve subscription for renewal detection; falling back to billing_reason check", { error: String(e) });
+              if (invoice.billing_reason === "subscription_cycle") shouldResetReminders = true;
+            }
+          }
+
+          if (shouldResetReminders && invoice.subscription) {
             const { error: resetErr } = await supabaseAdmin
               .from("facility_subscriptions")
               .update({
@@ -2973,6 +3013,68 @@ Deno.serve(async (req) => {
       const subMetadataType = subscription.metadata?.type as string | undefined;
       const addonFacilityId = subscription.metadata?.facility_id as string | undefined;
 
+      // Round-31 audit fix: Pro downgrade-then-upgrade race detection.
+      // If the user already has an active Pro facility_subscriptions
+      // row tied to a DIFFERENT stripe_subscription_id, this new
+      // sub.created event is suspicious — possibly a user who hit
+      // "cancel at period end" then tried to upgrade before the
+      // period ended (Stripe creates a NEW subscription for the new
+      // billing cycle). Surface to admin so the duplicate-billing
+      // window can be reconciled. Add-on subs (featured/concierge)
+      // are scoped per-facility so they can legitimately coexist with
+      // an existing Pro — only check for the Pro-path collision.
+      if (!subMetadataType || subMetadataType === "pro_subscription") {
+        // Need to resolve the user via the customer email lookup first.
+        try {
+          const cust = await stripe.customers.retrieve(customerId);
+          if (!cust.deleted) {
+            const custEmail = (cust as Stripe.Customer).email;
+            if (custEmail) {
+              const { data: existingProRow } = await supabaseAdmin
+                .from("facility_subscriptions")
+                .select("id, stripe_subscription_id, status, tier, current_period_end")
+                .eq("status", "active")
+                .eq("tier", "pro")
+                .neq("stripe_subscription_id", subscription.id)
+                .limit(1)
+                .maybeSingle();
+              if (existingProRow) {
+                logStep("Pro downgrade-then-upgrade race detected — existing active Pro row found", {
+                  newStripeSubId: subscription.id,
+                  existingStripeSubId: (existingProRow as { stripe_subscription_id: string }).stripe_subscription_id,
+                });
+                try {
+                  await supabaseAdmin.from("admin_notifications").insert({
+                    type: "duplicate_active_pro_subscription",
+                    title: "Duplicate active Pro subscription detected",
+                    message:
+                      `New Stripe subscription ${subscription.id} created for ${custEmail}, ` +
+                      `but a different active Pro facility_subscriptions row already exists ` +
+                      `(stripe_sub=${(existingProRow as { stripe_subscription_id: string }).stripe_subscription_id}). ` +
+                      `Likely a cancel-then-upgrade race during the cancel-at-period-end window. ` +
+                      `Reconcile: either keep the new sub + cancel the old, or refund the new + keep the old.`,
+                    metadata: {
+                      new_stripe_subscription_id: subscription.id,
+                      existing_stripe_subscription_id: (existingProRow as { stripe_subscription_id: string }).stripe_subscription_id,
+                      customer_email: custEmail,
+                      stripe_event_id: event.id,
+                    } as Record<string, unknown>,
+                  });
+                } catch (adminErr) {
+                  console.error("[stripe-webhook] duplicate-Pro admin notify failed", adminErr);
+                }
+                // Continue processing — the new sub's
+                // activateProBenefits is idempotent on featured=true,
+                // so a second Pro activation won't double-apply
+                // benefits. The admin alert ensures a human reconciles.
+              }
+            }
+          }
+        } catch (lookupErr) {
+          logStep("Pro-duplicate detection lookup failed (non-blocking)", { error: String(lookupErr) });
+        }
+      }
+
       if (subMetadataType === "featured_addon" && addonFacilityId) {
         const periodEnd = subscription.current_period_end
           ? new Date(subscription.current_period_end * 1000).toISOString()
@@ -3076,10 +3178,20 @@ Deno.serve(async (req) => {
         const periodEnd = subscription.current_period_end
           ? new Date(subscription.current_period_end * 1000).toISOString()
           : null;
+        // Round-31 audit fix: pass user-selected levels of care
+        // (collected at checkout time by create-checkout-session and
+        // stored in subscription.metadata.levels_of_care as a
+        // comma-separated string). Empty / missing falls back to
+        // default in activateConciergePartner.
+        const rawLOC = subscription.metadata?.levels_of_care;
+        const levelsOfCare = typeof rawLOC === "string" && rawLOC.length > 0
+          ? rawLOC.split(",").map((s) => s.trim()).filter(Boolean)
+          : undefined;
         const concierge = await activateConciergePartner(supabaseAdmin, {
           facilityId: addonFacilityId,
           stripeSubscriptionId: subscription.id,
           currentPeriodEnd: periodEnd,
+          levelsOfCare,
         });
         logStep("Concierge add-on activated via subscription.created", {
           facilityId: addonFacilityId,

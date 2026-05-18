@@ -91,6 +91,11 @@ Deno.serve(async (req) => {
       intent?: string;
       billing_period?: string;
       items?: { product?: string }[];
+      // Round-31 audit fix: optional Concierge levels-of-care
+      // selected by the provider at the add-geo form. Stored in
+      // subscription metadata so activateConciergePartner uses the
+      // chosen levels instead of seeding all DEFAULT_LEVELS_OF_CARE.
+      levels_of_care?: string[];
     };
     try { body = await req.json(); } catch { return json(400, { error: "Invalid JSON", code: "BAD_JSON" }); }
 
@@ -99,6 +104,18 @@ Deno.serve(async (req) => {
     const billingPeriod = String(body.billing_period ?? "").trim() as Billing;
     const item0 = (body.items ?? [])[0];
     const product = String(item0?.product ?? "").trim() as Product;
+    // Sanitize levels_of_care: array of alphanumeric+underscore-ish
+    // tokens, ≤ 12 entries, ≤ 40 chars each. Stored as comma-joined
+    // string in Stripe metadata (Stripe metadata values are strings,
+    // 500-char max).
+    const levelsOfCareArr = Array.isArray(body.levels_of_care)
+      ? body.levels_of_care
+          .filter((s) => typeof s === "string")
+          .map((s) => s.trim().toLowerCase())
+          .filter((s) => /^[a-z0-9_\-]{1,40}$/.test(s))
+          .slice(0, 12)
+      : [];
+    const levelsOfCareCsv = levelsOfCareArr.length > 0 ? levelsOfCareArr.join(",") : null;
 
     if (!UUID_REGEX.test(facilityId)) return json(400, { error: "facility_id must be a valid UUID", code: "INVALID_FACILITY_ID" });
     if (intent !== "initial_subscription" && intent !== "add_addon") {
@@ -253,6 +270,10 @@ Deno.serve(async (req) => {
       // The webhook keys off plan_tier to know whether to call
       // activateProBenefits. Pro initial_subscription always tags this.
       ...(intent === "initial_subscription" ? { plan_tier: "pro" } : {}),
+      // Round-31 fix: forward Concierge levels-of-care so the webhook
+      // can seed concierge_partner_facilities with the user's chosen
+      // levels rather than the broad DEFAULT.
+      ...(product === "concierge" && levelsOfCareCsv ? { levels_of_care: levelsOfCareCsv } : {}),
     };
 
     const session = await stripe.checkout.sessions.create(
