@@ -233,6 +233,37 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   useEffect(() => {
     localStorage.setItem('provider-listing-active-tab', activeTab);
   }, [activeTab]);
+
+  // Keyboard navigation between editor tabs — Left/Right (and
+  // Home/End) wrap around the EDITOR_TABS list when focus is on a
+  // tab button. Matches the WAI-ARIA "Tabs with Automatic Activation"
+  // authoring pattern.
+  const handleTabKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>, currentId: EditorTab) => {
+    const idx = EDITOR_TABS.findIndex(t => t.id === currentId);
+    if (idx === -1) return;
+    let nextIdx = idx;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      nextIdx = (idx + 1) % EDITOR_TABS.length;
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      nextIdx = (idx - 1 + EDITOR_TABS.length) % EDITOR_TABS.length;
+    } else if (e.key === "Home") {
+      nextIdx = 0;
+    } else if (e.key === "End") {
+      nextIdx = EDITOR_TABS.length - 1;
+    } else {
+      return;
+    }
+    e.preventDefault();
+    const nextTab = EDITOR_TABS[nextIdx];
+    setActiveTab(nextTab.id);
+    // Move focus to the new tab button so the user can continue
+    // arrow-navigation without re-tabbing back into the list.
+    requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLButtonElement>(`[data-editor-tab="${nextTab.id}"]`)
+        ?.focus();
+    });
+  }, []);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const prevFacilityIdRef = useRef<string | null>(null);
   const { toast } = useToast();
@@ -1174,13 +1205,22 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     return (
       <div className="max-w-md mx-auto text-center py-20 px-4">
         <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-          <Building2 className="h-8 w-8 text-primary" />
+          <Building2 className="h-8 w-8 text-primary" aria-hidden />
         </div>
         <h2 className="text-xl font-semibold text-foreground">No Listing Found</h2>
-        <p className="mt-2 text-muted-foreground">Create your facility listing to start receiving leads from families.</p>
-        <Button asChild className="mt-6" size="lg">
-          <Link to="/provider-signup">Create Your Listing</Link>
-        </Button>
+        <p className="mt-2 text-muted-foreground">
+          Create your facility listing to start receiving leads from families.
+        </p>
+        <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
+          {/* Send signed-in providers to the in-app add flow rather than
+              back to the public marketing signup. */}
+          <Button asChild size="lg">
+            <Link to="/provider/add-location">Add facility</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link to="/provider/listings">Back to listings</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -1297,7 +1337,12 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       )}
 
       {/* ── Mobile Tab Scroll ── */}
-      <div className="md:hidden mb-4 -mx-3 px-3 overflow-x-auto scrollbar-none">
+      <div
+        role="tablist"
+        aria-label="Listing editor sections"
+        aria-orientation="horizontal"
+        className="md:hidden mb-4 -mx-3 px-3 overflow-x-auto scrollbar-none"
+      >
         <div className="flex gap-1 min-w-max pb-2">
           {EDITOR_TABS.map(tab => {
             const Icon = tab.icon;
@@ -1306,18 +1351,25 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
             return (
               <button
                 key={tab.id}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`editor-tab-panel-${tab.id}`}
+                id={`editor-tab-${tab.id}`}
+                tabIndex={isActive ? 0 : -1}
+                data-editor-tab={tab.id}
                 onClick={() => setActiveTab(tab.id)}
+                onKeyDown={(e) => handleTabKeyDown(e, tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
+                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-3.5 w-3.5" aria-hidden />
                 {tab.label}
                 {isComplete && !isActive && (
-                  <CircleCheck className="h-3 w-3 text-green-600" />
+                  <CircleCheck className="h-3 w-3 text-green-600" aria-label="section complete" />
                 )}
               </button>
             );
@@ -1328,7 +1380,12 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       {/* ── Desktop Layout: Sidebar Tabs + Content ── */}
       <div className="flex gap-6">
         {/* Desktop sidebar nav */}
-        <nav className="hidden md:flex flex-col w-44 shrink-0 space-y-0.5 sticky top-6 self-start">
+        <nav
+          role="tablist"
+          aria-label="Listing editor sections"
+          aria-orientation="vertical"
+          className="hidden md:flex flex-col w-44 shrink-0 space-y-0.5 sticky top-6 self-start"
+        >
           {EDITOR_TABS.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1336,18 +1393,28 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
             return (
               <button
                 key={tab.id}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`editor-tab-panel-${tab.id}`}
+                id={`editor-tab-${tab.id}`}
+                tabIndex={isActive ? 0 : -1}
+                data-editor-tab={tab.id}
                 onClick={() => setActiveTab(tab.id)}
+                onKeyDown={(e) => handleTabKeyDown(e, tab.id)}
                 className={cn(
-                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left",
+                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                   isActive
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <Icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary")} />
+                <Icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary")} aria-hidden />
                 <span className="truncate flex-1">{tab.label}</span>
                 {isComplete && (
-                  <CircleCheck className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "text-green-600")} />
+                  <CircleCheck
+                    className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "text-green-600")}
+                    aria-label="section complete"
+                  />
                 )}
               </button>
             );
@@ -1360,7 +1427,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
             <CardContent className="p-4 sm:p-6">
               {/* ═══ PHOTOS TAB ═══ */}
               {activeTab === "photos" && (
-                <div className="space-y-6">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-photos"
+                  aria-labelledby="editor-tab-photos"
+                  tabIndex={0}
+                  className="space-y-6 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Logo & Photos</h2>
                     <p className="text-sm text-muted-foreground">Showcase your facility with professional images</p>
@@ -1387,7 +1460,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ BASIC INFO TAB ═══ */}
               {activeTab === "basic" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-basic"
+                  aria-labelledby="editor-tab-basic"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Basic Information</h2>
                     <p className="text-sm text-muted-foreground">Essential details about your facility</p>
@@ -1412,7 +1491,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ LOCATION TAB ═══ */}
               {activeTab === "location" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-location"
+                  aria-labelledby="editor-tab-location"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Location</h2>
                     <p className="text-sm text-muted-foreground">Where families can find you</p>
@@ -1439,7 +1524,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ CONTACT TAB ═══ */}
               {activeTab === "contact" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-contact"
+                  aria-labelledby="editor-tab-contact"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Contact Information</h2>
                     <p className="text-sm text-muted-foreground">How families can reach you</p>
@@ -1556,7 +1647,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ PROGRAM TAB ═══ */}
               {activeTab === "program" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-program"
+                  aria-labelledby="editor-tab-program"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Program Details</h2>
                     <p className="text-sm text-muted-foreground">Treatment capacity and demographics</p>
@@ -1613,7 +1710,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ SERVICES TAB ═══ */}
               {activeTab === "services" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-services"
+                  aria-labelledby="editor-tab-services"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-base font-semibold text-foreground mb-1">Services Offered</h2>
@@ -1630,7 +1733,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ INSURANCE TAB ═══ */}
               {activeTab === "insurance" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-insurance"
+                  aria-labelledby="editor-tab-insurance"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-base font-semibold text-foreground mb-1">Insurance Accepted</h2>
@@ -1647,7 +1756,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ AGE GROUPS TAB ═══ */}
               {activeTab === "ageGroups" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-ageGroups"
+                  aria-labelledby="editor-tab-ageGroups"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-base font-semibold text-foreground mb-1">Age Groups Served</h2>
@@ -1664,7 +1779,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ TRUST TAB ═══ */}
               {activeTab === "trust" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-trust"
+                  aria-labelledby="editor-tab-trust"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Trust & Credentials</h2>
                     <p className="text-sm text-muted-foreground">Accreditations and certifications</p>
@@ -1675,7 +1796,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ STAFF TAB ═══ */}
               {activeTab === "staff" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-staff"
+                  aria-labelledby="editor-tab-staff"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Our Team</h2>
                     <p className="text-sm text-muted-foreground">Add staff and team members to your profile</p>
