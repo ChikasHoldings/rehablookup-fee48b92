@@ -46,10 +46,6 @@ interface LeadStats {
   verified: number;
   verificationRate: number;
   newLeads: number;
-  unlockedMonth: number;
-  unlockedAll: number;
-  unlockRevenueMonth: number;
-  unlockRate: number;
   assigned?: number;
 }
 
@@ -79,11 +75,11 @@ export const DashboardChartsSection = forwardRef<HTMLDivElement, DashboardCharts
     { name: "Placement", value: providerStats?.placement || 0, fill: CHART_COLORS.info },
   ];
 
-  // Lead funnel data - updated for unlock-based monetization
+  // Lead funnel — flat-fee Pro model: all Pro leads are delivered with full
+  // PII immediately, so the funnel reduces to total → verified.
   const leadFunnelData = [
     { name: "Leads", value: leadStats?.totalMonth || 0, fill: CHART_COLORS.muted },
     { name: "Verified", value: leadStats?.verified || 0, fill: CHART_COLORS.info },
-    { name: "Unlocked", value: leadStats?.unlockedMonth || 0, fill: CHART_COLORS.success },
   ];
 
   return (
@@ -163,13 +159,7 @@ export const DashboardChartsSection = forwardRef<HTMLDivElement, DashboardCharts
           )}
           <div className="mt-2 pt-2 border-t flex justify-between text-xs text-muted-foreground">
             <span>Verification: {leadStats?.verificationRate || 0}%</span>
-            <span>Unlock Rate: {leadStats?.unlockRate || 0}%</span>
           </div>
-          {leadStats?.unlockRevenueMonth ? (
-            <div className="mt-1 text-xs text-success font-medium">
-              ${(leadStats.unlockRevenueMonth / 100).toLocaleString()} unlock revenue this month
-            </div>
-          ) : null}
         </CardContent>
       </Card>
 

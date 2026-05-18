@@ -127,7 +127,7 @@ const faqSections = [
     items: [
       {
         question: "What analytics are available?",
-        answer: "The Analytics page shows profile views, lead volume, unlock rates, response times, and placement activity. You can filter by date range including weekly, monthly, quarterly, or custom periods."
+        answer: "The Analytics page shows profile views, lead volume, response times, and placement activity. You can filter by date range including weekly, monthly, quarterly, or custom periods."
       },
       {
         question: "How do I change my notification preferences?",

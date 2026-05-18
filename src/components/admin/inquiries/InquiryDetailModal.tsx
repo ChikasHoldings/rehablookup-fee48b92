@@ -15,7 +15,7 @@ import {
 import {
   User, Mail, Phone, MapPin, Calendar, Building2,
   MessageSquare, Shield, FileText, CheckCircle,
-  Lock, Unlock, Share2, Clock, Zap, Star, Loader2,
+  Share2, Clock, Zap, Star, Loader2,
   Save, StickyNote, Handshake, Activity,
   CreditCard, Eye, ArrowRightLeft, AlertTriangle,
   Send, Flag,
@@ -40,8 +40,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
   const [savingNote, setSavingNote] = useState(false);
   const queryClient = useQueryClient();
 
-  // Legacy lead_unlocks table dropped — surface an empty array so the
-  // existing "unlock history" UI section degrades to its empty state.
   // Fetch distribution details
   const { data: distributions } = useQuery({
     queryKey: ["inquiry-distributions", lead?.id],
@@ -402,36 +400,9 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
             {/* ===== LEAD DETAILS TAB ===== */}
             <TabsContent value="lead" className="m-0 data-[state=inactive]:hidden">
               <div className="p-5 space-y-5">
-                {/* Unlock History */}
-                <div className="p-4 rounded-xl border bg-card">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
-                    <Unlock className="h-4 w-4 text-success" />Unlock History
-                    <Badge variant="secondary" className="h-4 text-[10px] px-1">{unlockData?.length || 0}</Badge>
-                  </h4>
-                  {(unlockData?.length || 0) > 0 ? (
-                    <div className="space-y-2">
-                      {unlockData!.map((u: any) => {
-                        const uFac = facilityMap.get(u.facility_id);
-                        return (
-                          <div key={u.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="h-8 w-8 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
-                                <Unlock className="h-4 w-4 text-success" />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium truncate">{uFac?.name || "Unknown Facility"}</p>
-                                <p className="text-xs text-muted-foreground">${(u.unlock_price_cents / 100).toFixed(2)} via {u.payment_method}</p>
-                              </div>
-                            </div>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(u.unlocked_at), "MMM d, h:mm a")}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-6">No unlocks yet</p>
-                  )}
-                </div>
+                {/* (Unlock History retired — the lead_unlocks table was dropped
+                    in the EKRA-compliant flat-fee refactor. Pro providers
+                    receive every lead with full PII on the spot.) */}
 
                 {/* Distribution History */}
                 <div className="p-4 rounded-xl border bg-card">
@@ -453,7 +424,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                                 <p className="text-sm font-medium truncate">{dFac?.name || "Unknown"}</p>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <span>{d.is_original ? "Original" : "Redistributed"}</span>
-                                  {d.unlocked_at && <Badge variant="outline" className="text-[10px] h-4 bg-success/10 text-success border-success/30">Unlocked</Badge>}
                                   {d.notification_sent && <Badge variant="outline" className="text-[10px] h-4">Notified</Badge>}
                                 </div>
                               </div>

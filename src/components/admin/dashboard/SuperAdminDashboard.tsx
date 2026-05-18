@@ -204,10 +204,6 @@ export function SuperAdminDashboard() {
         verified: verified.count || 0,
         verificationRate: totalMonth.count ? Math.round(((verified.count || 0) / totalMonth.count) * 100) : 0,
         newLeads: newLeads.count || 0,
-        unlockedMonth: 0,
-        unlockedAll: 0,
-        unlockRevenueMonth: 0,
-        unlockRate: 0,
         assigned: 0,
       };
     },

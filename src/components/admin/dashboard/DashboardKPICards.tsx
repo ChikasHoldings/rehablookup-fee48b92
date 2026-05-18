@@ -82,10 +82,6 @@ interface LeadStats {
   verified: number;
   verificationRate: number;
   newLeads: number;
-  unlockedMonth: number;
-  unlockedAll: number;
-  unlockRevenueMonth: number;
-  unlockRate: number;
   assigned?: number;
 }
 
@@ -127,12 +123,13 @@ export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsPro
   // Action items: pending providers + new (unprocessed) leads
   const actionItemsCount = (providerStats?.pending || 0) + (leadStats?.newLeads || 0);
   
-  // Calculate total revenue: Stripe revenue + lead unlock revenue this month
-  const totalMonthlyRevenue = (revenueStats?.monthlyRevenue || 0) + ((leadStats?.unlockRevenueMonth || 0) / 100);
+  // Monthly revenue is now sourced entirely from Stripe (flat-fee Pro + add-ons).
+  // The legacy unlock-revenue stream was retired in the EKRA refactor.
+  const totalMonthlyRevenue = revenueStats?.monthlyRevenue || 0;
 
   return (
     <div ref={ref} className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-      {/* Revenue - Combined from Stripe + Lead Unlocks */}
+      {/* Monthly subscription + add-on revenue */}
       <Card className="border-0 bg-primary text-primary-foreground shadow-md overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
           <CardTitle className="text-[10px] sm:text-sm font-medium opacity-90 truncate pr-1">Monthly Revenue</CardTitle>
@@ -156,11 +153,6 @@ export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsPro
                   {revenueStats?.percentChange ? `${revenueStats.percentChange >= 0 ? "+" : ""}${revenueStats.percentChange}%` : "—"} vs last
                 </span>
               </p>
-              {leadStats?.unlockRevenueMonth ? (
-                <p className="text-[8px] sm:text-[10px] opacity-60 mt-0.5 hidden sm:block">
-                  Incl. ${(leadStats.unlockRevenueMonth / 100).toLocaleString()} unlocks
-                </p>
-              ) : null}
             </>
           )}
         </CardContent>
@@ -208,7 +200,7 @@ export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsPro
               <div className="flex gap-1 sm:gap-2 text-[8px] sm:text-[10px] text-muted-foreground mt-0.5">
                 <span>{leadStats?.totalMonth?.toLocaleString()} this mo</span>
                 <span className="hidden sm:inline">•</span>
-                <span className="text-success hidden sm:inline">{leadStats?.unlockedMonth || 0} unlocked</span>
+                <span className="text-success hidden sm:inline">{leadStats?.verified || 0} verified</span>
               </div>
             </>
           )}

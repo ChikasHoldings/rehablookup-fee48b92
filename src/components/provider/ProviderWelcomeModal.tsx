@@ -256,7 +256,7 @@ function WelcomeStep({
               <Gift className="h-4.5 w-4.5 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-bold text-foreground leading-tight">Unlock the full toolkit with Pro</p>
+              <p className="text-[13px] font-bold text-foreground leading-tight">Get the full toolkit with Pro</p>
               <p className="text-[11px] text-amber-800 dark:text-amber-300/80 leading-snug mt-1">
                 $99/mo — verified badge, priority placement, 10 photos + video, unlimited facilities, and the Marketing Hub.
               </p>

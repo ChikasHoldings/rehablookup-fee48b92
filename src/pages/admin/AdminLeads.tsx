@@ -3,7 +3,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users, Search, Mail, Phone, Zap, Download, X, Trash2,
-  CheckSquare, Square, Loader2, Lock, Unlock, Share2,
+  CheckSquare, Square, Loader2, Share2,
   MessageSquare, Building2, CalendarIcon, Clock, Timer,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
@@ -89,7 +89,6 @@ function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
     new: { label: "New", className: "bg-info/10 text-info border-info/30" },
     contacted: { label: "Contacted", className: "bg-chart-3/10 text-chart-3 border-chart-3/30" },
-    unlocked: { label: "Unlocked", className: "bg-success/10 text-success border-success/30" },
     responding: { label: "Responding", className: "bg-chart-5/10 text-chart-5 border-chart-5/30" },
     converted: { label: "Converted", className: "bg-success/10 text-success border-success/30" },
     closed: { label: "Closed", className: "bg-muted text-muted-foreground border-border" },
@@ -99,19 +98,12 @@ function StatusBadge({ status }: { status: string }) {
   return <Badge variant="outline" className={cn(className, "text-xs")}>{label}</Badge>;
 }
 
-function LeadStatusBadge({ lead, unlocked }: { lead: Lead; unlocked: boolean }) {
+function LeadStatusBadge({ lead }: { lead: Lead }) {
   if (lead.redistribution_status === "extended" || lead.redistribution_status === "redistributed") {
     const badgeLabel = lead.redistribution_status === "redistributed" ? "Reassigned" : "Shared";
     return (
       <Badge variant="outline" className="bg-info/10 text-info border-info/30 gap-1 text-xs">
         <Share2 className="h-3 w-3" />{badgeLabel}
-      </Badge>
-    );
-  }
-  if (unlocked) {
-    return (
-      <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 text-xs">
-        <Unlock className="h-3 w-3" />Unlocked
       </Badge>
     );
   }
@@ -122,11 +114,7 @@ function LeadStatusBadge({ lead, unlocked }: { lead: Lead; unlocked: boolean }) 
       </Badge>
     );
   }
-  return (
-    <Badge variant="outline" className="text-xs text-muted-foreground gap-1">
-      <Lock className="h-3 w-3" />Locked
-    </Badge>
-  );
+  return null;
 }
 
 function useDebounce(value: string, delay: number) {
@@ -205,7 +193,6 @@ export default function AdminLeads() {
       return {
         total: totalRes.count || 0, newCount: newRes.count || 0,
         contacted: contactedRes.count || 0, converted: convertedRes.count || 0,
-        unlocked: 0,  // lead_unlocks retired with EKRA refactor
         redistributed: redistRes.count || 0,
         requestInfo: requestInfoRes.count || 0, requestCallback: requestCallbackRes.count || 0,
       };
@@ -279,10 +266,6 @@ export default function AdminLeads() {
     if (!facilities) return new Map<string, Facility>();
     return new Map(facilities.map(f => [f.id, f]));
   }, [facilities]);
-
-  // Batch unlock status retired with the EKRA refactor — lead_unlocks
-  // table dropped. The "Unlocked" badge in the table renders as empty.
-  const unlockMap: Record<string, { unlocked_at: string; facility_id: string }> = {};
 
   const filteredLeads = useMemo(() => leads || [], [leads]);
   
@@ -388,7 +371,6 @@ export default function AdminLeads() {
               { label: "New", value: kpiStats?.newCount, icon: Mail, color: "text-info", filter: () => handleFilterChange(setStatusFilter)("new") },
               { label: "Contacted", value: kpiStats?.contacted, icon: Phone, color: "text-chart-3", filter: () => handleFilterChange(setStatusFilter)("contacted") },
               { label: "Converted", value: kpiStats?.converted, icon: Zap, color: "text-success", filter: () => handleFilterChange(setStatusFilter)("converted") },
-              { label: "Unlocked", value: kpiStats?.unlocked, icon: Unlock, color: "text-success", filter: () => {} },
               { label: "Redistributed", value: kpiStats?.redistributed, icon: Share2, color: "text-info", filter: () => handleFilterChange(setRedistributionFilter)("redistributed") },
               { label: "Request Info", value: kpiStats?.requestInfo, icon: MessageSquare, color: "text-primary", filter: () => handleFilterChange(setInquiryTypeFilter)("request_info") },
               { label: "Callbacks", value: kpiStats?.requestCallback, icon: Phone, color: "text-warning", filter: () => handleFilterChange(setInquiryTypeFilter)("request_callback") },
@@ -419,7 +401,6 @@ export default function AdminLeads() {
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="new">New</SelectItem>
                     <SelectItem value="contacted">Contacted</SelectItem>
-                    <SelectItem value="unlocked">Unlocked</SelectItem>
                     <SelectItem value="responding">Responding</SelectItem>
                     <SelectItem value="converted">Converted</SelectItem>
                     <SelectItem value="closed">Closed</SelectItem>
@@ -508,7 +489,6 @@ export default function AdminLeads() {
                 <TableBody>
                   {filteredLeads.map((lead) => {
                     const facility = lead.facility_id ? facilitiesMap.get(lead.facility_id) : null;
-                    const isUnlocked = !!unlockMap?.[lead.id];
                     return (
                       <TableRow
                         key={lead.id}
@@ -543,7 +523,7 @@ export default function AdminLeads() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <LeadStatusBadge lead={lead} unlocked={isUnlocked} />
+                          <LeadStatusBadge lead={lead} />
                         </TableCell>
                         <TableCell>
                           <StatusBadge status={lead.status} />
