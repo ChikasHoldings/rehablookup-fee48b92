@@ -1,8 +1,10 @@
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Rotate3D, UserCheck, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { fmtMoney, fmtMoneyWhole, TIER_PRICING } from "@/lib/billingPricing";
 import type { FacilitySubscriptionRow } from "@/hooks/useFacilitySubscription";
 
@@ -13,23 +15,59 @@ interface MarketingHubCardsProps {
 /**
  * The two add-on product cards shown on /provider/marketing for Pro
  * users. Each card surfaces:
- *   • ACTIVE state: usage metrics + Manage CTA
- *   • NOT ACTIVE state: pricing + live availability + Get/Become CTA
+ *   • ACTIVE state: live count of active placements/geos + Manage CTA
+ *   • NOT ACTIVE state: pricing + Get/Become CTA
  *
  * Featured and Concierge are intentionally INDEPENDENT — buying or
  * managing one never affects the other. Each card routes to its own
- * detail page where the purchase flow / management UI lives.
+ * detail page where the analytics + management UI live.
  */
 export function MarketingHubCards({ subscription }: MarketingHubCardsProps) {
   return (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-      <FeaturedCard active={!!subscription.has_featured} />
-      <ConciergeCard active={!!subscription.has_concierge_partner} />
+      <FeaturedCard active={!!subscription.has_featured} subscriptionId={subscription.id} />
+      <ConciergeCard active={!!subscription.has_concierge_partner} subscriptionId={subscription.id} />
     </div>
   );
 }
 
-function FeaturedCard({ active }: { active: boolean }) {
+function useActivePlacementCount(subscriptionId: string, active: boolean) {
+  return useQuery({
+    queryKey: ["marketing-hub-featured-count", subscriptionId],
+    queryFn: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from("featured_placements")
+        .select("id", { count: "exact", head: true })
+        .eq("subscription_id", subscriptionId)
+        .eq("active", true);
+      if (error) return 0;
+      return count ?? 0;
+    },
+    enabled: active,
+    staleTime: 1000 * 30,
+  });
+}
+
+function useActiveGeoCount(subscriptionId: string, active: boolean) {
+  return useQuery({
+    queryKey: ["marketing-hub-concierge-count", subscriptionId],
+    queryFn: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from("concierge_partner_facilities")
+        .select("id", { count: "exact", head: true })
+        .eq("subscription_id", subscriptionId)
+        .eq("active", true);
+      if (error) return 0;
+      return count ?? 0;
+    },
+    enabled: active,
+    staleTime: 1000 * 30,
+  });
+}
+
+function FeaturedCard({ active, subscriptionId }: { active: boolean; subscriptionId: string }) {
+  const { data: count } = useActivePlacementCount(subscriptionId, active);
+
   return (
     <Card className="border-amber-200/60 bg-gradient-to-br from-white to-amber-50/30">
       <CardContent className="p-5 space-y-4">
@@ -55,13 +93,17 @@ function FeaturedCard({ active }: { active: boolean }) {
 
         {active ? (
           <>
-            <p className="text-xs text-slate-600">
-              Performance metrics, slot count, and remove-slot actions in the
-              manager.
-            </p>
+            <div className="rounded-md bg-white border border-amber-200/60 p-3 text-xs space-y-0.5">
+              <p className="font-medium text-slate-900 tabular-nums">
+                {count ?? 0} active placement{(count ?? 0) === 1 ? "" : "s"}
+              </p>
+              <p className="text-slate-500">
+                Analytics, slot picker, and tagline editor inside.
+              </p>
+            </div>
             <Button asChild variant="outline" className="w-full gap-2">
               <Link to="/provider/marketing/featured">
-                Manage placements
+                Manage Featured
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -89,7 +131,9 @@ function FeaturedCard({ active }: { active: boolean }) {
   );
 }
 
-function ConciergeCard({ active }: { active: boolean }) {
+function ConciergeCard({ active, subscriptionId }: { active: boolean; subscriptionId: string }) {
+  const { data: count } = useActiveGeoCount(subscriptionId, active);
+
   return (
     <Card className="border-violet-200/60 bg-gradient-to-br from-white to-violet-50/30">
       <CardContent className="p-5 space-y-4">
@@ -116,13 +160,17 @@ function ConciergeCard({ active }: { active: boolean }) {
 
         {active ? (
           <>
-            <p className="text-xs text-slate-600">
-              Performance metrics, active geos, and management actions in the
-              partner manager.
-            </p>
+            <div className="rounded-md bg-white border border-violet-200/60 p-3 text-xs space-y-0.5">
+              <p className="font-medium text-slate-900 tabular-nums">
+                {count ?? 0} active geograph{(count ?? 0) === 1 ? "y" : "ies"}
+              </p>
+              <p className="text-slate-500">
+                Performance metrics, levels of care, and management inside.
+              </p>
+            </div>
             <Button asChild variant="outline" className="w-full gap-2">
               <Link to="/provider/marketing/concierge">
-                Manage geos
+                Manage Concierge
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
