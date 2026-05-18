@@ -951,19 +951,35 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
       try { sessionStorage.removeItem("provider-onboarding-handoff"); } catch { /* ignore */ }
 
+      // Advance onboarding state to 'plan' BEFORE redirecting. If the
+      // upsert fails and we navigate anyway, the Onboarding page's
+      // canReach() gate sees serverCurrent='build' < target='plan' and
+      // bounces the user back to build — they get trapped in a loop
+      // with a "Let's finish the current step first" toast and no way
+      // out. Phase X fix: hard-fail with a retry CTA instead of
+      // silently logging a warning.
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const uid = sessionData.session?.user.id;
-        if (uid) {
-          await supabase
-            .from("provider_onboarding_state")
-            .upsert(
-              { user_id: uid, current_step: "plan" } as never,
-              { onConflict: "user_id" },
-            );
+        if (!uid) {
+          throw new Error("Session expired before publish completed");
         }
+        const { error: stateErr } = await supabase
+          .from("provider_onboarding_state")
+          .upsert(
+            { user_id: uid, current_step: "plan" } as never,
+            { onConflict: "user_id" },
+          );
+        if (stateErr) throw stateErr;
       } catch (e) {
-        console.warn("[ProviderSignup] onboarding state advance failed", e);
+        console.error("[ProviderSignup] onboarding state advance failed", e);
+        toast({
+          title: "Listing saved — couldn't open the plan step",
+          description:
+            "Your facility was published, but we couldn't advance the wizard. Reload and try again — your draft is preserved.",
+          variant: "destructive",
+        });
+        return;
       }
 
       toast({

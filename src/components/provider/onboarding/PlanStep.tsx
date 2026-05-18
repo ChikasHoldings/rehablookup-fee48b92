@@ -57,6 +57,31 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
       void confirmProSubscription();
       return;
     }
+    // Phase X self-heal: if PlanStep mounts but onboarding_state still
+    // reports current_step='build' (ProviderSignup's state advance
+    // failed mid-publish), advance it here so the Onboarding canReach
+    // gate doesn't bounce the user back to build. The publish itself
+    // completed (the new ProviderSignup error path bails before
+    // navigating), so this only kicks in for in-flight rows from
+    // before the Phase X fix landed.
+    void (async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData.session?.user.id;
+        if (!userId) return;
+        const { data: stateRow } = await supabase
+          .from("provider_onboarding_state")
+          .select("current_step")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if ((stateRow as { current_step?: string } | null)?.current_step === "build") {
+          await advance({ current_step: "plan" });
+        }
+      } catch (e) {
+        console.warn("[PlanStep] state self-heal failed", e);
+      }
+    })();
+
     // Round-30 merge: if the user is already Pro (e.g. they paid under
     // the old pre-build plan ordering, then completed building under
     // the new ordering), fast-track them out of this step.
