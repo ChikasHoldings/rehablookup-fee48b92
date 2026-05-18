@@ -38,6 +38,11 @@ interface Facility {
   zip_code: string;
   website: string | null;
   profile_completion_celebrated: boolean | null;
+  /** Reply-to address for lead notification emails. Falls back to
+   *  the account email when null. Read by EmailLeadDialog to decide
+   *  whether to show the unverified-email warning. */
+  reply_email: string | null;
+  reply_email_verified: boolean | null;
 }
 
 interface ProviderData {
@@ -122,13 +127,13 @@ export function useProviderData(facilityId?: string) {
         facilityId
           ? supabase
               .from("facilities")
-              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated")
+              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated, reply_email, reply_email_verified")
               .eq("id", facilityId)
               .eq("user_id", session.user.id)
               .maybeSingle()
           : supabase
               .from("facilities")
-              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated")
+              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated, reply_email, reply_email_verified")
               .eq("user_id", session.user.id)
               .limit(1)
               .maybeSingle(),

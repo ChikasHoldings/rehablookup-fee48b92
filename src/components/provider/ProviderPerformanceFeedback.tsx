@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Zap, TrendingUp, Clock, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { cn } from "@/lib/utils";
 
 interface ProviderPerformanceFeedbackProps {
@@ -21,8 +22,7 @@ export function ProviderPerformanceFeedback({ facilityId }: ProviderPerformanceF
       // provider_response_status is set to a non-pending value (the leads
       // table is what InquiryDetailPanel writes to).
       const weekIso = weekAgo.toISOString();
-      const { data: weekLeads } = await (supabase as any)
-        .from("leads_provider_view")
+      const { data: weekLeads } = await fromLeadsProviderView()
         .select("id, created_at, provider_response_status, provider_responded_at")
         .eq("facility_id", facilityId)
         .gte("created_at", weekIso)

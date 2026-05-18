@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 
 interface ListingCardProps {
   facility: {
@@ -118,8 +119,7 @@ export function ListingCard({ facility, onSelect, onPreview }: ListingCardProps)
   const { data: leadsData } = useQuery({
     queryKey: ['facility-leads-count', facility.id],
     queryFn: async () => {
-      const { count, error } = await (supabase as any)
-        .from('leads_provider_view')
+      const { count, error } = await fromLeadsProviderView()
         .select('id', { count: 'exact', head: true })
         .eq('facility_id', facility.id);
 

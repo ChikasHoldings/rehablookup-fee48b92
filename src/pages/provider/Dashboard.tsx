@@ -24,6 +24,7 @@ import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
@@ -202,8 +203,7 @@ export default function ProviderDashboardPage() {
     queryKey: ["recent-leads", facilityId],
     queryFn: async (): Promise<Lead[]> => {
       if (!facilityId) return [];
-      const { data, error } = await (supabase as any)
-        .from("leads_provider_view")
+      const { data, error } = await fromLeadsProviderView()
         .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, insurance_provider, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, provider_response_notes, preferred_contact, snooze_until, employment_status, veteran_status, legal_involvement, age_range, gender, co_occurring_conditions, readiness_level, dual_diagnosis, budget_preference, special_needs, redistribution_status, exclusive_until, extended_until, original_facility_id, assignment_status, assignment_reason, assigned_at, quality_flag, shared_with")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
@@ -243,8 +243,7 @@ export default function ProviderDashboardPage() {
       if (!facilityId) return 0;
       const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const nowIso = new Date().toISOString();
-      const { count, error } = await (supabase as any)
-        .from("leads_provider_view")
+      const { count, error } = await fromLeadsProviderView()
         .select("id", { count: "exact", head: true })
         .eq("facility_id", facilityId)
         .eq("status", "new")

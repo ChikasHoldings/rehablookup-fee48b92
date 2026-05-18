@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { useProviderFacilities, type ProviderFacility } from "@/hooks/useProviderFacilities";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -44,8 +45,7 @@ function useFacilityPerformanceMetrics(facilityId: string | undefined) {
       // EKRA flat-fee: every lead is "unlocked" to the facility owner; the
       // pay-per-unlock model is retired so "unlocked" now means "responded
       // to" (the meaningful conversion signal for analytics).
-      const { data: leads } = await (supabase as any)
-        .from("leads_provider_view")
+      const { data: leads } = await fromLeadsProviderView()
         .select("id, status, created_at, provider_response_status")
         .eq("facility_id", facilityId)
         .limit(2000);
@@ -116,7 +116,7 @@ function useAllFacilitiesComparison(facilityIds: string[]) {
         sortedIds.map(async fid => {
           const [{ data: facility }, { data: leads }] = await Promise.all([
             supabase.from("facilities").select("name").eq("id", fid).single(),
-            (supabase as any).from("leads_provider_view")
+            fromLeadsProviderView()
               .select("id, provider_response_status")
               .eq("facility_id", fid)
               .limit(2000),

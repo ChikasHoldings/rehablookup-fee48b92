@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { startOfWeek } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AVG_REVENUE_PER_LEAD_CENTS } from "@/lib/leadValuation";
@@ -45,8 +46,7 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
     queryKey: ["dashboard-kpi-strip", facilityId, weekStart],
     queryFn: async (): Promise<WeeklyKPIs> => {
       const base = () =>
-        (supabase as any)
-          .from("leads_provider_view")
+        fromLeadsProviderView()
           .select("id", { count: "exact", head: true })
           .eq("facility_id", facilityId)
           .gte("created_at", weekStart);

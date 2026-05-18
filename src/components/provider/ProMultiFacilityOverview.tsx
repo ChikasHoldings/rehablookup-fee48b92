@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { cn } from "@/lib/utils";
 
 interface FacilitySummary {
@@ -58,8 +59,7 @@ export function ProMultiFacilityOverview({ facilities }: ProMultiFacilityOvervie
         ),
         Promise.all(
           facilityIds.map(fid =>
-            (supabase as any)
-              .from("leads_provider_view")
+            fromLeadsProviderView()
               .select("id", { count: "exact", head: true })
               .eq("facility_id", fid)
               .eq("status", "new")

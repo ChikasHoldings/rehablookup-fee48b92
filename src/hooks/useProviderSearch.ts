@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { getCachedSession } from "@/lib/sessionCache";
 
 export interface SearchResult {
@@ -40,8 +41,7 @@ export function useProviderSearch(query: string, facilityId?: string) {
     queryKey: ["provider-search-leads", facilityId],
     queryFn: async () => {
       if (!facilityId) return [];
-      const { data, error } = await (supabase as any)
-        .from("leads_provider_view")
+      const { data, error } = await fromLeadsProviderView()
         .select("id, name, email, phone, status, created_at, message, location_city_state")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })

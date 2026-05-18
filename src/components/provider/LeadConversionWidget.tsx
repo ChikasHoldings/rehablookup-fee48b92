@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { differenceInHours, startOfMonth, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -44,8 +45,7 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
       // narrows to facilities the caller owns, but explicit `.in(facility_id)`
       // prevents accidentally aggregating across unrelated facilities when
       // a future view change broadens the row set.
-      const { data, error } = await (supabase as any)
-        .from("leads_provider_view")
+      const { data, error } = await fromLeadsProviderView()
         .select("id, status, created_at, provider_responded_at, facility_id")
         .in("facility_id", sortedIds)
         .gte("created_at", startOfLastMonth.toISOString())

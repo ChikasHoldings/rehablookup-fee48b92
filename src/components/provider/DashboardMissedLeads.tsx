@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -32,8 +33,7 @@ export function DashboardMissedLeads({ facilityId, isPro }: DashboardMissedLeads
       if (!facilityId) return [];
 
       // Leads the provider never engaged with before they expired or were closed.
-      const { data, error } = await (supabase as any)
-        .from("leads_provider_view")
+      const { data, error } = await fromLeadsProviderView()
         .select("id, created_at, urgency, level_of_care, location_city_state, insurance_type, status")
         .eq("facility_id", facilityId)
         .is("provider_responded_at", null)
