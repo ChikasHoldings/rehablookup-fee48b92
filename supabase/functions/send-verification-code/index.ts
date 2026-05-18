@@ -1,5 +1,5 @@
 // ============================================================================
-// send-verification-code v2.0.0
+// send-verification-code v2.1.0
 // ----------------------------------------------------------------------------
 // Sends a 6-digit OTP for email verification. Scoped by `purpose` so signup
 // codes and password-reset codes never collide — invalidating previous codes
@@ -8,11 +8,20 @@
 // Body: { email, purpose? = 'signup' }
 // Allowed purpose values are enforced by the email_verification_codes_purpose_check
 // constraint (see migration 20260612000000_expand_email_verification_codes_purpose).
+//
+// Hardening (v2.1.0):
+//   • On send failure the code row is now soft-expired (expires_at set to
+//     now()) rather than DELETEd. Preserves the audit trail in
+//     email_verification_codes and stops the race where a delete fired
+//     while the user was already typing the code from a successful send.
+//   • Suppression-list check before send so users on the bounce list
+//     don't burn rate-limit quota on guaranteed-failed sends.
+//   • Sanitized error responses — Resend internals never leak to clients.
 // ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 
-const VERSION = "2.0.0";
+const VERSION = "2.1.0";
 const OTP_TTL_MIN = 10;
 const MAX_PER_10MIN = 3;
 
@@ -69,6 +78,26 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Suppression-list check. If this email has hard-bounced or been
+    // unsubscribed, sending a verification code is guaranteed to fail —
+    // bail early so we don't burn the rate-limit quota and so the user
+    // gets a clear "use a different email" message instead of a
+    // mystery silent failure.
+    const { data: suppressed } = await supabase
+      .from("suppressed_emails")
+      .select("email")
+      .eq("email", email)
+      .maybeSingle();
+    if (suppressed) {
+      return new Response(
+        JSON.stringify({
+          error: "This email address can't receive messages. Please use a different email.",
+          errorCode: "EMAIL_SUPPRESSED",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // Rate-limit per (email, purpose) so signup vs reset have independent budgets.
     const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     const { count } = await supabase
@@ -113,6 +142,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Soft-expire helper for the code row we just inserted. Used in
+    // every failure path below so we never DELETE the row (we want the
+    // audit trail) and we never leave a code valid that didn't reach
+    // the user. Caller stays unaware of internal Resend mechanics.
+    const expireCurrentCode = async () => {
+      await supabase
+        .from("email_verification_codes")
+        .update({ expires_at: new Date().toISOString() })
+        .eq("email", email)
+        .eq("code", code)
+        .eq("purpose", purpose);
+    };
+
     try {
       const resend = new Resend(resendApiKey);
       // deno-lint-ignore no-explicit-any
@@ -121,14 +163,11 @@ Deno.serve(async (req) => {
         to: [email],
         subject: `${code} is your verification code`,
         html: emailHtml(code),
+        headers: { "Idempotency-Key": `verify-${purpose}-${email}-${code}` },
       });
       if (sendErr) {
         console.error("[SEND-VERIFICATION-CODE] resend error", sendErr);
-        await supabase
-          .from("email_verification_codes")
-          .delete()
-          .eq("email", email)
-          .eq("code", code);
+        await expireCurrentCode();
         const msg = String(sendErr?.message ?? sendErr).toLowerCase();
         let userMessage = "Unable to send verification email. Please check your email address and try again.";
         let errorCode = "SEND_FAILED";
@@ -148,6 +187,7 @@ Deno.serve(async (req) => {
       }
     } catch (sendThrow) {
       console.error("[SEND-VERIFICATION-CODE] resend threw", String(sendThrow));
+      await expireCurrentCode();
       return new Response(JSON.stringify({ error: "Unable to send verification email", errorCode: "SEND_FAILED" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

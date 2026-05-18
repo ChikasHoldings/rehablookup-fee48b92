@@ -1,17 +1,20 @@
-// send-provider-welcome-email v3.0.0
+// send-provider-welcome-email v3.1.0
 // EKRA-aligned: flat $99 Pro, Featured + Concierge as add-ons.
 // Schema relaxed: facility fields + selectedPlan optional so the
 // wizard's AccountStep/VerifyEmailStep can fire it pre-facility.
 //
-// This file mirrors what is currently DEPLOYED (version 7, deployed
-// 2026-05-17 via MCP during round-18 notification audit). Keep it in
-// sync — the previous v2.x in repo had wrong $399/mo Pro pricing and
-// sold the deprecated credit-unlock model, and its strict zod schema
-// (facilityId/facilityName/selectedPlan all required) caused every
-// AuthSignup-path invocation to silently 400.
+// Hardening (v3.1.0):
+//   • If facilityId is provided, the plan is RECONCILED against
+//     facility_subscriptions before sending — the caller can no
+//     longer accidentally ship the "Welcome to Free" email to a
+//     user who already has an active Pro subscription (Stripe
+//     webhook reordering bug).
+//   • Resend errors are sanitized in the client response (no raw
+//     service internals leak via `details`).
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 
-const VERSION = "3.0.0";
+const VERSION = "3.1.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-request-id",
@@ -98,10 +101,49 @@ Deno.serve(async (req) => {
     // Accept either providerFirstName or firstName for backward compat.
     const firstName = String(body.providerFirstName ?? body.firstName ?? "").trim() || "there";
     const facilityName = body.facilityName ? String(body.facilityName).trim() || null : null;
-    const selectedPlan = String(body.selectedPlan ?? "free").trim().toLowerCase();
-    const plan: "free" | "pro" = selectedPlan === "pro" || selectedPlan === "professional" ? "pro" : "free";
-    const hasFeatured = !!body.hasFeatured || selectedPlan === "featured";
-    const hasConcierge = !!body.hasConcierge || selectedPlan === "concierge";
+    const facilityId = body.facilityId ? String(body.facilityId).trim() : null;
+    let selectedPlan = String(body.selectedPlan ?? "free").trim().toLowerCase();
+    let plan: "free" | "pro" = selectedPlan === "pro" || selectedPlan === "professional" ? "pro" : "free";
+    let hasFeatured = !!body.hasFeatured || selectedPlan === "featured";
+    let hasConcierge = !!body.hasConcierge || selectedPlan === "concierge";
+
+    // When a facility_id is provided, reconcile the caller-claimed plan
+    // against the database source-of-truth (facility_subscriptions).
+    // Stops a stale caller (Stripe webhook latency, double-fire from
+    // the wizard) shipping a "Welcome to Free" email after the
+    // upgrade webhook has already promoted the row to Pro.
+    if (facilityId) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && supabaseServiceKey) {
+        try {
+          const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+            auth: { persistSession: false },
+          });
+          const { data: sub } = await supabase
+            .from("facility_subscriptions")
+            .select("tier, status, has_featured, has_concierge_partner")
+            .eq("facility_id", facilityId)
+            .maybeSingle();
+          if (sub && (sub as { status?: string }).status === "active") {
+            const dbTier = (sub as { tier?: string }).tier;
+            if (dbTier === "pro" && plan !== "pro") {
+              console.log("[send-provider-welcome-email] DB shows Pro, caller said Free — using Pro");
+              plan = "pro";
+              selectedPlan = "pro";
+            }
+            hasFeatured = hasFeatured || !!(sub as { has_featured?: boolean }).has_featured;
+            hasConcierge = hasConcierge || !!(sub as { has_concierge_partner?: boolean }).has_concierge_partner;
+          }
+        } catch (lookupErr) {
+          // Reconciliation is best-effort. If the DB read fails we
+          // fall back to caller-provided values rather than blocking
+          // the welcome email.
+          console.warn("[send-provider-welcome-email] plan reconciliation failed", String(lookupErr));
+        }
+      }
+    }
+
     const idempotencyKey = body.idempotencyKey ? String(body.idempotencyKey) : `welcome-${providerEmail}-${plan}`;
 
     const { subject, html } = generateWelcomeEmail({ firstName, facilityName, plan, hasFeatured, hasConcierge });
@@ -115,8 +157,15 @@ Deno.serve(async (req) => {
       headers: { "Idempotency-Key": idempotencyKey },
     });
     if (sendErr) {
+      // Log full Resend error server-side, return a sanitized message
+      // to the client. We never want Resend internals (auth keys, raw
+      // error payloads, domain-config hints) to surface in a public
+      // API response.
       console.error("[send-provider-welcome-email] resend error", sendErr);
-      return new Response(JSON.stringify({ error: "Failed to send welcome email", details: String(sendErr), _version: VERSION }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(
+        JSON.stringify({ error: "Failed to send welcome email", _version: VERSION }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
     return new Response(JSON.stringify({ success: true, plan, hasFeatured, hasConcierge, _version: VERSION }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {

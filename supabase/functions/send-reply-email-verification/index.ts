@@ -210,14 +210,20 @@ Deno.serve(async (req) => {
 
     if (emailError) {
       console.error("Failed to send verification email:", emailError);
-      
+
+      // Soft-expire instead of delete so we keep an audit row showing
+      // the user requested a code that we couldn't deliver. The
+      // existing rate-limit query at line 57 counts on `created_at`,
+      // not status, so a soft-expired row still counts against the
+      // user's quota — preventing a tight loop where every failed
+      // send resets the abuse budget.
       await supabase
         .from("reply_email_verification_codes")
-        .delete()
+        .update({ status: "expired" })
         .eq("facility_id", facilityId)
         .eq("email", normalizedEmail)
         .eq("code", code);
-      
+
       const errorMessage = emailError || JSON.stringify(emailError);
       
       let userMessage: string;
