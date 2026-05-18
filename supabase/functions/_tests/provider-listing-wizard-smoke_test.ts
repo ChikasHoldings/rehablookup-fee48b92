@@ -1,23 +1,16 @@
 // Provider listing wizard smoke-test suite.
 //
-// Covers the three edge functions that power the provider listing wizard
-// flows (creating, planning, and requesting facility info):
-//   - purchase-listing-slot           (Pro-gated Stripe checkout for an extra slot)
+// Covers the two edge functions that power the provider listing wizard
+// flows (planning, and requesting facility info):
 //   - get-facility-plan               (read-only plan resolver: pro | free)
 //   - request-facility-from-marketing (marketing-lead -> real lead bridge)
 //
+// (purchase-listing-slot was retired with the pay-per-extra-slot model — Pro
+// now includes unlimited facilities. Its smoke tests were removed alongside
+// the deprecation stub.)
+//
 // Each function has its own contract, so assertions are per-function rather
 // than shared across a uniform table:
-//
-//   purchase-listing-slot
-//     - 405 on non-POST with corsHeaders
-//     - OPTIONS preflight short-circuits with corsHeaders
-//     - rejects missing/invalid Authorization with 401 (NOT 500)
-//     - requires an active Pro subscription -> 403 when missing
-//     - dedupes recent pending checkouts by user_id within a 30-min window
-//     - success returns Stripe `url` + `sessionId`
-//     - catch-all is 500 and never leaks raw Stripe error fields
-//     - every Response includes corsHeaders + Content-Type JSON
 //
 //   get-facility-plan
 //     - OPTIONS preflight short-circuits with corsHeaders
@@ -53,115 +46,10 @@ async function loadSource(relative: string): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
-// purchase-listing-slot
+// purchase-listing-slot (RETIRED — tests removed alongside the deprecation
+// stub). The pay-per-extra-slot purchase flow no longer exists; Pro now
+// grants unlimited facilities directly.
 // ---------------------------------------------------------------------------
-
-const PURCHASE_PATH = "../purchase-listing-slot/index.ts";
-
-Deno.test("[purchase-listing-slot] OPTIONS preflight returns corsHeaders", async () => {
-  const src = await loadSource(PURCHASE_PATH);
-  const re = /req\.method === "OPTIONS"[\s\S]{0,200}?new Response\(\s*null\s*,\s*\{\s*headers:\s*corsHeaders\s*\}\s*\)/;
-  assert(re.test(src), "OPTIONS must short-circuit with corsHeaders");
-});
-
-Deno.test("[purchase-listing-slot] non-POST returns 405 with corsHeaders", async () => {
-  const src = await loadSource(PURCHASE_PATH);
-  assertStringIncludes(src, 'req.method !== "POST"');
-  // 405 body must be JSON and include corsHeaders.
-  const re = /req\.method !== "POST"[\s\S]{0,400}?status:\s*405/;
-  assert(re.test(src), "non-POST must return 405");
-  // The 405 branch must use corsHeaders (no leaks).
-  const guardIdx = src.indexOf('req.method !== "POST"');
-  const window = src.slice(guardIdx, guardIdx + 600);
-  assertStringIncludes(window, "corsHeaders");
-});
-
-Deno.test("[purchase-listing-slot] missing/invalid bearer token returns 401 (not 500)", async () => {
-  const src = await loadSource(PURCHASE_PATH);
-  // Two distinct 401 sites: missing header AND failed claims validation.
-  assertStringIncludes(src, 'authHeader?.startsWith("Bearer ")');
-  const missing401 = /Missing authorization header[\s\S]{0,400}?status:\s*401/;
-  const invalid401 = /JWT validation[\s\S]{0,400}?status:\s*401/;
-  assert(missing401.test(src), "missing Authorization must -> 401");
-  assert(invalid401.test(src), "invalid JWT must -> 401");
-  // Auth must be enforced via getClaims (server-side verification), not by
-  // trusting the JWT payload directly.
-  assertStringIncludes(src, "supabaseClient.auth.getClaims(token)");
-});
-
-Deno.test("[purchase-listing-slot] requires active Pro subscription -> 403 when missing", async () => {
-  const src = await loadSource(PURCHASE_PATH);
-  // The Pro check queries pro_subscriptions with status=active.
-  assertStringIncludes(src, 'from("facility_subscriptions")');
-  assertStringIncludes(src, '.eq("status", "active")');
-  // Missing Pro must respond 403 — NOT 401 (that's auth) and NOT 500.
-  const re = /No active Pro subscription[\s\S]{0,400}?status:\s*403/;
-  assert(re.test(src), "missing Pro subscription must return 403");
-  assertStringIncludes(src, "Pro subscription required");
-});
-
-Deno.test("[purchase-listing-slot] dedupes recent pending checkouts within 30-min window", async () => {
-  const src = await loadSource(PURCHASE_PATH);
-  // The function checks for pending purchased_listing_slots in the last
-  // 30 minutes — the soft-idempotency guard for double-clicks.
-  assertStringIncludes(src, 'from("purchased_listing_slots")');
-  assertStringIncludes(src, '.eq("status", "pending")');
-  assertStringIncludes(src, "30 * 60 * 1000");
-});
-
-Deno.test("[purchase-listing-slot] inserts a pending slot row before returning checkout URL", async () => {
-  const src = await loadSource(PURCHASE_PATH);
-  // The pending row is what the Stripe webhook later flips to `paid`. Without
-  // it, a successful payment cannot be reconciled.
-  const insertIdx = src.indexOf('from("purchased_listing_slots").insert');
-  const sessionIdx = src.indexOf("stripe.checkout.sessions.create");
-  assert(insertIdx > 0, "must insert into purchased_listing_slots");
-  assert(
-    insertIdx > sessionIdx,
-    "pending slot insert must happen AFTER Stripe session creation (so we have session.id)",
-  );
-  assertStringIncludes(src, 'status: "pending"');
-  assertStringIncludes(src, "stripe_checkout_session_id: session.id");
-});
-
-Deno.test("[purchase-listing-slot] success response shape is { url, sessionId }", async () => {
-  const src = await loadSource(PURCHASE_PATH);
-  // The frontend redirects on data.url; sessionId is the reconciliation key.
-  const re = /url:\s*session\.url[\s\S]{0,200}?sessionId:\s*session\.id/;
-  assert(re.test(src), "success response must contain url + sessionId");
-});
-
-Deno.test("[purchase-listing-slot] checkout URLs target the provider listing page", async () => {
-  const src = await loadSource(PURCHASE_PATH);
-  // The frontend reads ?slot_purchased=true / ?slot_cancelled=true on the
-  // provider listing page — these param names are part of the public contract.
-  assertStringIncludes(src, "/provider/listing?slot_purchased=true");
-  assertStringIncludes(src, "/provider/listing?slot_cancelled=true");
-});
-
-Deno.test("[purchase-listing-slot] catch-all is 500 and masks raw Stripe error details", async () => {
-  const src = await loadSource(PURCHASE_PATH);
-  const tail = src.slice(src.lastIndexOf("} catch"));
-  assertStringIncludes(tail, "status: 500");
-  // Stripe errors must be surfaced as a generic "Payment processing error",
-  // not as raw Stripe internals.
-  assertStringIncludes(tail, "Stripe.errors.StripeError");
-  assertStringIncludes(tail, "Payment processing error");
-});
-
-Deno.test("[purchase-listing-slot] every Response includes corsHeaders", async () => {
-  const src = await loadSource(PURCHASE_PATH);
-  const responses = [...src.matchAll(/new Response\(/g)];
-  assert(responses.length >= 6, `expected >= 6 Response sites, got ${responses.length}`);
-  for (const m of responses) {
-    const start = m.index ?? 0;
-    const window = src.slice(start, start + 500);
-    assert(
-      window.includes("corsHeaders"),
-      `Response at offset ${start} missing corsHeaders:\n${window.slice(0, 200)}…`,
-    );
-  }
-});
 
 // ---------------------------------------------------------------------------
 // get-facility-plan
@@ -338,8 +226,8 @@ Deno.test("[request-facility-from-marketing] every Response includes corsHeaders
 // Cross-cutting: each function registers exactly one Deno.serve handler
 // ---------------------------------------------------------------------------
 
-Deno.test("all three listing-wizard functions register a single Deno.serve handler", async () => {
-  for (const path of [PURCHASE_PATH, PLAN_PATH, REQUEST_PATH]) {
+Deno.test("each listing-wizard function registers a single Deno.serve handler", async () => {
+  for (const path of [PLAN_PATH, REQUEST_PATH]) {
     const src = await loadSource(path);
     assertEquals(
       (src.match(/Deno\.serve\(/g) ?? []).length,

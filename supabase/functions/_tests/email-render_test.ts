@@ -30,7 +30,6 @@ import {
   tipBox,
   emailFooter,
   proInsightsBox,
-  usageBox,
 } from "../_shared/email-templates.ts";
 
 import {
@@ -127,7 +126,6 @@ Deno.test("email-templates: full assembled email renders cleanly", () => {
     proInsightsBox("Pro members average 3× faster lead response.") +
     alertBox("Action required: confirm your email.", "pro") +
     tipBox("Tip: respond within 10 minutes for best results.", "pro") +
-    usageBox(5, 0, "pro") +
     ctaButton("Open Dashboard", "https://rehablookup.com/provider", "pro") +
     emailBodyEnd() +
     emailFooter({ includeUnsubscribe: true, unsubscribeUrl: "https://rehablookup.com/unsubscribe" }) +

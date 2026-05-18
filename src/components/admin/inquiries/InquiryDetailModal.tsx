@@ -308,7 +308,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                 {/* KPI Strip */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: "Lead Score", value: lead.lead_score ?? "—", icon: Star, color: "text-warning" },
+                    { label: "Urgency", value: lead.urgency ?? "—", icon: Star, color: "text-warning" },
                     { label: "Distributions", value: distributions?.length || 0, icon: Share2, color: "text-info" },
                   ].map((kpi) => (
                     <div key={kpi.label} className="p-3 rounded-xl border bg-card text-center">
@@ -345,7 +345,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                     ["Urgency", lead.urgency], ["Level of Care", lead.level_of_care],
                     ["Insurance", lead.insurance_type],
                     ["Substances", lead.primary_substance?.join(", ")],
-                    ["Lead Score", lead.lead_score ? `${lead.lead_score} (${lead.lead_score_label || ""})` : null],
                     ["Submitted", format(new Date(lead.created_at), "MMM d, yyyy h:mm a")],
                   ]} />
                   {/* Lead Lifecycle */}

@@ -491,15 +491,6 @@ function sanitizeGenericField(value: string | undefined, maxLen = 100): string |
 }
 
 // ============ LEAD MASKING (PRIVACY) ============
-function maskLeadName(fullName: string): string {
-  if (!fullName || fullName.trim().length === 0) return "New Lead";
-  const parts = fullName.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0];
-  const firstName = parts[0];
-  const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
-  return `${firstName} ${lastInitial}.`;
-}
-
 // ============ DUPLICATE & RATE LIMIT CHECKS ============
 // deno-lint-ignore no-explicit-any
 async function checkForDuplicate(
@@ -775,6 +766,8 @@ function getFacilityNotificationEmail(
   leadName: string,
   facilityName: string,
   details: {
+    email?: string;
+    phone?: string;
     urgency?: string;
     levelOfCare?: string;
     insuranceType?: string;
@@ -783,9 +776,13 @@ function getFacilityNotificationEmail(
     submittedAt?: Date;
   }
 ): string {
-  const maskedName = maskLeadName(leadName);
-  const maskedEmail = "●●●@●●●.com";
-  const maskedPhone = "(●●●) ●●●-●●●●";
+  // Pro-tier providers receive every lead with FULL PII directly in this
+  // email. (Free-tier facilities never reach this code path — their leads
+  // are routed to concierge upstream.) No masking, no unlock CTA, no
+  // pay-per-lead step under the flat-fee monetization model.
+  const safeName = escapeHtml(leadName);
+  const safeEmail = details.email ? escapeHtml(details.email) : "(not provided)";
+  const safePhone = details.phone ? escapeHtml(details.phone) : "(not provided)";
   const firstName = leadName.split(" ")[0];
   const submittedAt = details.submittedAt ?? new Date();
   const safeFacility = escapeHtml(facilityName);
@@ -834,46 +831,38 @@ function getFacilityNotificationEmail(
                           </div>
                         </td>
                         <td style="vertical-align: top; padding-left: 16px;">
-                          <p style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #1e293b;">${escapeHtml(maskedName)}</p>
+                          <p style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #1e293b;">${safeName}</p>
                           <p style="margin: 0; font-size: 13px; color: #64748b;">New inquiry • ${urgencyDisplay}</p>
                         </td>
                       </tr>
                     </table>
                     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; color: #334155; line-height: 1.6;">
-                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b; width: 170px;">Email</td><td style="padding: 6px 0;">${maskedEmail}</td></tr>
-                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Phone</td><td style="padding: 6px 0;">${maskedPhone}</td></tr>
+                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b; width: 170px;">Email</td><td style="padding: 6px 0;"><a href="mailto:${safeEmail}" style="color: #1B365D; text-decoration: none;">${safeEmail}</a></td></tr>
+                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Phone</td><td style="padding: 6px 0;"><a href="tel:${safePhone}" style="color: #1B365D; text-decoration: none;">${safePhone}</a></td></tr>
                       <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Level of care</td><td style="padding: 6px 0;">${levelOfCareDisplay}</td></tr>
                       ${details.insuranceType ? `<tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Insurance</td><td style="padding: 6px 0;">${escapeHtml(details.insuranceType)}</td></tr>` : ""}
                       <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Timeline</td><td style="padding: 6px 0;">${urgencyDisplay}</td></tr>
                       <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Preferred contact</td><td style="padding: 6px 0;">${preferredDisplay}</td></tr>
                     </table>
                     ${messageExcerpt ? `
-                    <div style="margin-top: 16px; padding: 14px 16px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
-                      <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">📝 Personal message included</p>
-                      <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.5;">This lead included a personal message. Unlock the lead in your dashboard to read it.</p>
+                    <div style="margin-top: 16px; padding: 14px 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
+                      <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">📝 Personal message</p>
+                      <p style="margin: 0; font-size: 13px; color: #334155; line-height: 1.6; white-space: pre-wrap;">${messageExcerpt}</p>
                     </div>
                     ` : ""}
                   </td>
                 </tr>
               </table>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #92400e;">🔒 Full contact info is locked</p>
-                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #78350f; line-height: 1.5;">
-                      Unlock this lead in your dashboard to see ${escapeHtml(firstName)}'s full name, phone, and email so you can reach out directly.
+                    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #065f46;">📞 Reach out to ${escapeHtml(firstName)} now</p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #047857; line-height: 1.6;">
+                      Providers who respond within the first hour convert up to 7× more leads than those who wait a day. Their preferred contact method is <strong>${preferredDisplay}</strong>.
                     </p>
-                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #78350f; line-height: 1.6;">
-                      <strong>Your next steps:</strong>
-                    </p>
-                    <ol style="margin: 0 0 16px 20px; padding: 0; font-size: 13px; color: #78350f; line-height: 1.7;">
-                      <li>Open the lead in your provider dashboard.</li>
-                      <li>Unlock to reveal contact details.</li>
-                      <li>Reach out via ${preferredDisplay} within 24 hours for the best conversion rate.</li>
-                    </ol>
                     <a href="https://rehablookup.com/provider/inquiries" style="display: inline-block; background: #1B365D; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px;">
-                      🔓 Unlock lead in dashboard
+                      View lead in dashboard
                     </a>
                   </td>
                 </tr>
@@ -1353,7 +1342,7 @@ Deno.serve(async (req) => {
         budget_preference: data.budgetPreference || null,
         special_needs: Array.isArray(data.specialNeeds) ? data.specialNeeds : [],
       })
-      .select("id, credit_cost, lead_score_label")
+      .select("id")
       .single();
 
     if (insertError) {
@@ -1472,6 +1461,8 @@ Deno.serve(async (req) => {
           to: [notificationEmail],
           subject: `New Inquiry from ${firstName} - ${facility.name}`,
           html: getFacilityNotificationEmail(data.name, facility.name, {
+            email: data.email,
+            phone: data.phone,
             urgency: data.urgency,
             levelOfCare: data.levelOfCare,
             insuranceType: data.insuranceType,
@@ -1525,7 +1516,7 @@ Deno.serve(async (req) => {
                     userId: facility.user_id,
                     notificationType: "new_lead",
                     data: {
-                      leadName: maskLeadName(data.name),
+                      leadName: data.name,
                       leadCity: data.locationCityState?.split(",")[0]?.trim() || null,
                       levelOfCare: data.levelOfCare,
                       urgency: data.urgency,
@@ -1588,11 +1579,10 @@ Deno.serve(async (req) => {
       log(requestId, "WARN", "Failed to send SMS notification", { error: String(smsError) });
     }
 
-    // In-app notification — enriched with high-intent + credit cost + direct link
-    const intentLabel = isHighIntent ? "🔥 High-Intent" : "";
+    // In-app notification — Pro providers see the full lead name directly.
     const urgencyLabel = data.urgency && ["Urgent", "Immediately", "immediate"].includes(data.urgency) ? " — Needs help now" : "";
     const notificationTitle = isHighIntent ? "🔥 High-Intent Inquiry Received" : "New Inquiry Received";
-    const notificationMessage = `${maskLeadName(data.name)} submitted an inquiry${data.levelOfCare ? ` for ${data.levelOfCare.replace(/_/g, ' ')}` : ''}${urgencyLabel}`;
+    const notificationMessage = `${data.name} submitted an inquiry${data.levelOfCare ? ` for ${data.levelOfCare.replace(/_/g, ' ')}` : ''}${urgencyLabel}`;
 
     if (inAppEnabled) {
       try {
@@ -1609,8 +1599,6 @@ Deno.serve(async (req) => {
             location_city_state: data.locationCityState,
             source: validatedSource,
             high_intent: isHighIntent,
-            credit_cost: lead.credit_cost,
-            lead_score_label: lead.lead_score_label,
             inquiry_type: inquiryType,
             link: `/provider/inquiries?lead=${lead.id}`,
           },
@@ -1658,7 +1646,7 @@ Deno.serve(async (req) => {
         channel: "email",
         event_type: "sent",
         notification_type: isHighIntent ? "high_intent" : "new_lead",
-        metadata: { credit_cost: lead.credit_cost, urgency: data.urgency },
+        metadata: { urgency: data.urgency },
       });
       if (trackErr) throw trackErr;
     } catch (trackError) {

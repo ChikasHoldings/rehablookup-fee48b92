@@ -63,8 +63,6 @@ export type Lead = {
   age_range: string | null;
   gender: string | null;
   preferred_contact: string;
-  lead_score: number | null;
-  lead_score_label: string | null;
   exclusive_until: string | null;
   extended_until: string | null;
   assigned_at: string | null;

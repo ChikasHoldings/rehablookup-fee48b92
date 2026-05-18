@@ -6542,10 +6542,7 @@ export type Database = {
           inquiry_type: string | null
           insurance_provider: string | null
           insurance_type: string | null
-          is_unlocked: boolean | null
           lead_expired_at: string | null
-          lead_score: number | null
-          lead_score_label: string | null
           legal_involvement: string | null
           level_of_care: string | null
           location_city_state: string | null
@@ -6595,10 +6592,7 @@ export type Database = {
           inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
-          is_unlocked?: never
           lead_expired_at?: string | null
-          lead_score?: never
-          lead_score_label?: never
           legal_involvement?: string | null
           level_of_care?: string | null
           location_city_state?: string | null
@@ -6648,10 +6642,7 @@ export type Database = {
           inquiry_type?: string | null
           insurance_provider?: string | null
           insurance_type?: string | null
-          is_unlocked?: never
           lead_expired_at?: string | null
-          lead_score?: never
-          lead_score_label?: never
           legal_involvement?: string | null
           level_of_care?: string | null
           location_city_state?: string | null

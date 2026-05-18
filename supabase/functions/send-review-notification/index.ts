@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     const providerEmail = facility.reply_email || facility.email || providerProfile?.email;
     
     // Get provider plan for styling
-    const planInfo = providerEmail ? await getProviderPlan(providerEmail, stripe) : { plan: 'free' as PlanType, planName: 'Free', locationLimit: 1, unlockDiscount: 0 };
+    const planInfo = providerEmail ? await getProviderPlan(providerEmail, stripe) : { plan: 'free' as PlanType, planName: 'Free', locationLimit: 1 };
 
     // Fetch admin emails for notifications
     // Exclude advisors as they only handle placements, not general admin tasks like review moderation

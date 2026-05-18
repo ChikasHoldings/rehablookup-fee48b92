@@ -120,7 +120,6 @@ export interface Lead {
   provider_responded_at: string | null;
   provider_response_notes: string | null;
   inquiry_type: string | null;
-  is_unlocked?: boolean;
 }
 
 interface LeadNote {

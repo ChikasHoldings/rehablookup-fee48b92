@@ -40,9 +40,9 @@ const BENEFITS: Benefit[] = [
   },
   {
     icon: CheckCircle,
-    title: "No Hidden Fees for Clients",
+    title: "No Hidden Fees for Anyone",
     description:
-      "RehabLookup is 100% free for clients, which means they trust our recommendations. You only pay for the leads you choose to unlock.",
+      "RehabLookup is 100% free for clients, and Pro providers receive every lead with full seeker contact details — no per-lead fees, no unlock step, just a flat $99/mo subscription.",
   },
 ];
 

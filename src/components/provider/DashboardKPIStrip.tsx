@@ -28,7 +28,7 @@ interface DashboardKPIStripProps {
 
 interface WeeklyKPIs {
   received: number;
-  unlocked: number;
+  responded: number;
   missed: number;
   estimatedRevenueLostCents: number;
 }
@@ -42,10 +42,9 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
   const { data: kpis, isLoading } = useQuery({
     queryKey: ["dashboard-kpi-strip", facilityId, weekStart],
     queryFn: async (): Promise<WeeklyKPIs> => {
-      // Fetch this week's leads for the facility
       const { data, error } = await (supabase as any)
         .from("leads_provider_view")
-        .select("id, status, is_unlocked, created_at")
+        .select("id, status, created_at")
         .eq("facility_id", facilityId)
         .gte("created_at", weekStart)
         .order("created_at", { ascending: false })
@@ -55,14 +54,11 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
 
       const leads = data || [];
       const received = leads.length;
-      // "Responded" = provider acted on the lead (contacted/qualified/converted).
-      // Reuses the `unlocked` field name in the WeeklyKPIs interface for
-      // backward-compat with callers that still read `kpis.unlocked`.
-      const unlocked = leads.filter(l => l.status && l.status !== "new" && l.status !== "expired").length;
+      const responded = leads.filter(l => l.status && l.status !== "new" && l.status !== "expired").length;
       const missed = leads.filter(l => l.status === "expired").length;
       const estimatedRevenueLostCents = missed * AVG_REVENUE_PER_LEAD_CENTS;
 
-      return { received, unlocked, missed, estimatedRevenueLostCents };
+      return { received, responded, missed, estimatedRevenueLostCents };
     },
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 3,
@@ -70,7 +66,7 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
     retry: 2,
   });
 
-  const respondedThisWeek = kpis?.unlocked ?? 0;
+  const respondedThisWeek = kpis?.responded ?? 0;
   const receivedThisWeek = kpis?.received ?? 0;
 
   const metrics = [
@@ -195,7 +191,7 @@ export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, revi
           )}
 
           {/* PRO USER: Speed encouragement */}
-          {isPro && (kpis?.unlocked ?? 0) > 0 && (
+          {isPro && (kpis?.responded ?? 0) > 0 && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10 text-xs text-muted-foreground">
               <Zap className="h-3.5 w-3.5 text-primary shrink-0" />
               <span>

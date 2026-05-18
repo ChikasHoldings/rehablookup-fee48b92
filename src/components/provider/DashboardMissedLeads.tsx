@@ -30,12 +30,12 @@ export function DashboardMissedLeads({ facilityId, isPro }: DashboardMissedLeads
     queryFn: async (): Promise<MissedLead[]> => {
       if (!facilityId) return [];
 
-      // Get leads that expired or were redistributed without being unlocked
+      // Leads the provider never engaged with before they expired or were closed.
       const { data, error } = await (supabase as any)
         .from("leads_provider_view")
-        .select("id, created_at, urgency, level_of_care, location_city_state, insurance_type, is_unlocked, status")
+        .select("id, created_at, urgency, level_of_care, location_city_state, insurance_type, status")
         .eq("facility_id", facilityId)
-        .eq("is_unlocked", false)
+        .is("provider_responded_at", null)
         .in("status", ["expired", "closed"])
         .order("created_at", { ascending: false })
         .limit(5);
