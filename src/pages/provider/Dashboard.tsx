@@ -130,6 +130,11 @@ export default function ProviderDashboardPage() {
   const profile = providerData?.profile;
   const userName = profile?.first_name || "";
   const facilityIds = facilities?.map(f => f.id) ?? [];
+  // True only when we've finished loading AND confirmed no facility exists.
+  // Without this guard the "Getting Started — create your first listing"
+  // card flashes for ~1s on every initial mount before useProviderData
+  // resolves, even for established providers.
+  const hasNoFacility = !isLoading && !isPlaceholderData && !facility;
 
   // Welcome modal - show for first-time providers (check for falsy value since null = not yet celebrated).
   // Guard against isPlaceholderData: when useProviderData returns placeholder (localStorage cache),
@@ -188,7 +193,11 @@ export default function ProviderDashboardPage() {
     // re-run on every render.
   }, [profile?.onboarding_completed_at]);
 
-  // Fetch recent leads using PII-safe view (masks locked lead contact info at DB level)
+  // Fetch recent leads from the PII-safe view. Pro providers see full
+  // contact details; Free providers never see leads here (those inquiries
+  // route to concierge upstream — see submit-qualified-lead). Polled
+  // every 30s while the tab is visible (React Query pauses
+  // refetchInterval automatically when the tab is hidden).
   const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({
     queryKey: ["recent-leads", facilityId],
     queryFn: async (): Promise<Lead[]> => {
@@ -206,6 +215,7 @@ export default function ProviderDashboardPage() {
     staleTime: 1000 * 60 * 2,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
     retry: 2,
   });
 
@@ -362,14 +372,19 @@ export default function ProviderDashboardPage() {
     }
   };
 
-  // Poll for new leads every 30 seconds (leads table removed from Realtime for PII security)
+  // Recent leads polls itself every 30s via refetchInterval (above);
+  // when a refetch lands we also invalidate the dependent counts so the
+  // dashboard header + KPI strip stay in sync. We can't simply put
+  // `refetchInterval` on every count query because each one has its own
+  // staleTime / window-focus behavior — coupling them here keeps the
+  // wall-clock consistent.
   useEffect(() => {
     if (!facilityId) return;
     const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
+      if (typeof document !== "undefined" && document.hidden) return;
       queryClient.invalidateQueries({ queryKey: ["total-leads-count", facilityId] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-kpi-strip", facilityId] });
-    }, 30000);
+    }, 60_000);
     return () => clearInterval(interval);
   }, [facilityId, queryClient]);
 
@@ -641,7 +656,8 @@ export default function ProviderDashboardPage() {
                         </Button>
                         <button
                           onClick={(e) => handleDismissProfilePrompt(e, missingFields)}
-                          className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground"
+                          className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground touch-manipulation"
+                          aria-label="Dismiss profile completion prompt"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -717,7 +733,7 @@ export default function ProviderDashboardPage() {
           </div>
 
           {/* Getting Started - No facility (spans both columns) */}
-          {!facility && (
+          {hasNoFacility && (
             <div className="lg:col-span-12">
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="p-5">

@@ -170,7 +170,7 @@ function LeadRow({
 
           {/* Contact Actions */}
           <div className="flex items-center gap-2 mt-2.5">
-            {lead.phone && !lead.phone.includes("•") && (
+            {lead.phone && (
               <Button
                 size="sm"
                 variant="outline"
@@ -180,12 +180,13 @@ function LeadRow({
                   trackContact(lead.id, lead.facility_id, "call");
                   window.open(`tel:${lead.phone}`, "_self");
                 }}
+                aria-label={`Call ${lead.name}`}
               >
                 <Phone className="h-3 w-3" />
                 Call Now
               </Button>
             )}
-            {lead.email && !lead.email.includes("•") && (
+            {lead.email && (
               <Button
                 size="sm"
                 variant="outline"
@@ -195,6 +196,7 @@ function LeadRow({
                   trackContact(lead.id, lead.facility_id, "email");
                   window.open(`mailto:${lead.email}`, "_blank");
                 }}
+                aria-label={`Email ${lead.name}`}
               >
                 <Mail className="h-3 w-3" />
                 Send Email

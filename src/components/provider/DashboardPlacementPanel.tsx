@@ -36,16 +36,21 @@ export function DashboardPlacementPanel({ facilityIds, isPro: _isPro }: Dashboar
   // fees in the EKRA flat-fee model.
   void _isPro;
   const queryClient = useQueryClient();
+  // Stabilize the query key so parent re-renders that produce a new
+  // facilityIds array (same contents, different reference) don't
+  // invalidate the cached placements list.
+  const sortedFacilityIds = facilityIds.slice().sort();
+  const facilityIdsKey = sortedFacilityIds.join(",");
 
   const { data: placements = [], isLoading } = useQuery({
-    queryKey: ["dashboard-placements", facilityIds],
+    queryKey: ["dashboard-placements", facilityIdsKey],
     queryFn: async (): Promise<PlacementItem[]> => {
-      if (!facilityIds.length) return [];
+      if (!sortedFacilityIds.length) return [];
 
       const { data, error } = await supabase
         .from("concierge_introductions")
         .select("id, created_at, facility_id, provider_response, inquiry_id")
-        .in("facility_id", facilityIds)
+        .in("facility_id", sortedFacilityIds)
         .order("created_at", { ascending: false })
         .limit(6);
 
@@ -58,26 +63,29 @@ export function DashboardPlacementPanel({ facilityIds, isPro: _isPro }: Dashboar
         provider_response: d.provider_response,
       }));
     },
-    enabled: facilityIds.length > 0,
+    enabled: sortedFacilityIds.length > 0,
     staleTime: 1000 * 60 * 5,
   });
 
-  // Realtime: auto-refresh when introductions change for any owned facility
+  // Realtime: auto-refresh when introductions change for any owned facility.
+  // Depend on the stringified key so identical-content facilityIds arrays
+  // don't tear down + recreate the channels on every parent render.
   useEffect(() => {
-    if (!facilityIds.length) return;
-    const channels = facilityIds.map(fid =>
+    if (!sortedFacilityIds.length) return;
+    const channels = sortedFacilityIds.map(fid =>
       supabase
         .channel(`dash-placements-${fid}`)
         .on("postgres_changes", {
           event: "*", schema: "public", table: "concierge_introductions",
           filter: `facility_id=eq.${fid}`,
         }, () => {
-          queryClient.invalidateQueries({ queryKey: ["dashboard-placements", facilityIds] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-placements", facilityIdsKey] });
         })
         .subscribe()
     );
     return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
-  }, [facilityIds, queryClient]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facilityIdsKey, queryClient]);
 
   // Placement network is open to all providers (concierge advisors surface
   // every approved facility). The Concierge add-on adds a verified-partner

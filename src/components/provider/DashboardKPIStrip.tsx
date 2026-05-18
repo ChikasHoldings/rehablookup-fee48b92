@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfWeek } from "date-fns";
 import { cn } from "@/lib/utils";
+import { AVG_REVENUE_PER_LEAD_CENTS } from "@/lib/leadValuation";
 
 interface DashboardKPIStripProps {
   facilityId: string;
@@ -33,29 +34,38 @@ interface WeeklyKPIs {
   estimatedRevenueLostCents: number;
 }
 
-// Average revenue per admission (industry avg $2,000–$10,000; using $5,000 midpoint)
-const AVG_REVENUE_PER_LEAD_CENTS = 500000; // $5,000 average admission value
-
 export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, reviewCount = 0, totalLeadsCount = 0 }: DashboardKPIStripProps) {
   const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(), []);
 
+  // Three parallel head:true counts so the "received / responded /
+  // missed this week" KPIs stay accurate for any volume of leads —
+  // a prior version pulled the last 500 rows client-side and
+  // under-reported for high-volume providers (70+ leads/day).
   const { data: kpis, isLoading } = useQuery({
     queryKey: ["dashboard-kpi-strip", facilityId, weekStart],
     queryFn: async (): Promise<WeeklyKPIs> => {
-      const { data, error } = await (supabase as any)
-        .from("leads_provider_view")
-        .select("id, status, created_at")
-        .eq("facility_id", facilityId)
-        .gte("created_at", weekStart)
-        .order("created_at", { ascending: false })
-        .limit(500);
+      const base = () =>
+        (supabase as any)
+          .from("leads_provider_view")
+          .select("id", { count: "exact", head: true })
+          .eq("facility_id", facilityId)
+          .gte("created_at", weekStart);
 
-      if (error) throw error;
+      const [receivedRes, expiredRes, openRes] = await Promise.all([
+        base(),
+        base().eq("status", "expired"),
+        base().in("status", ["new"]),
+      ]);
 
-      const leads = data || [];
-      const received = leads.length;
-      const responded = leads.filter(l => l.status && l.status !== "new" && l.status !== "expired").length;
-      const missed = leads.filter(l => l.status === "expired").length;
+      if (receivedRes.error) throw receivedRes.error;
+      if (expiredRes.error) throw expiredRes.error;
+      if (openRes.error) throw openRes.error;
+
+      const received = receivedRes.count ?? 0;
+      const missed = expiredRes.count ?? 0;
+      const openCount = openRes.count ?? 0;
+      // "Responded" = anything not still-new and not expired.
+      const responded = Math.max(0, received - missed - openCount);
       const estimatedRevenueLostCents = missed * AVG_REVENUE_PER_LEAD_CENTS;
 
       return { received, responded, missed, estimatedRevenueLostCents };

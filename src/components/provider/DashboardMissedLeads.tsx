@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { AVG_REVENUE_PER_LEAD_DOLLARS } from "@/lib/leadValuation";
 
 interface DashboardMissedLeadsProps {
   facilityId: string;
@@ -49,12 +50,29 @@ export function DashboardMissedLeads({ facilityId, isPro }: DashboardMissedLeads
   });
 
   if (isLoading) {
-    return <Skeleton className="h-32 rounded-lg" />;
+    return (
+      <Card className="border-destructive/20 bg-destructive/[0.02]">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+            <Skeleton className="h-5 w-14 rounded-md" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-12 rounded-md" />
+            <Skeleton className="h-12 rounded-md" />
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!missedLeads.length) return null;
 
-  const estimatedRevenueLost = missedLeads.length * 5000;
+  const estimatedRevenueLost = missedLeads.length * AVG_REVENUE_PER_LEAD_DOLLARS;
 
   return (
     <Card className="border-destructive/30 bg-destructive/[0.03]">

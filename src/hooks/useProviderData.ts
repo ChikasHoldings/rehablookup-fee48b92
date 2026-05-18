@@ -13,6 +13,13 @@ interface Profile {
   timezone: string | null;
   phone_verified: boolean | null;
   phone_verified_at: string | null;
+  /** Set by complete_provider_onboarding RPC once the wizard finishes
+   *  (or by a post-checkout Pro recovery in Dashboard.tsx). Null until
+   *  the user has finished onboarding. */
+  onboarding_completed_at: string | null;
+  /** profiles.plan mirror — 'free' | 'pro'. Lets components avoid an
+   *  extra useProStatus call when they only need the tier. */
+  plan: "free" | "pro" | null;
 }
 
 interface Facility {
@@ -108,7 +115,7 @@ export function useProviderData(facilityId?: string) {
         // Fetch profile
         supabase
           .from("profiles")
-          .select("first_name, last_name, email, phone, job_title, primary_contact_name, timezone, phone_verified, phone_verified_at")
+          .select("first_name, last_name, email, phone, job_title, primary_contact_name, timezone, phone_verified, phone_verified_at, onboarding_completed_at, plan")
           .eq("user_id", session.user.id)
           .maybeSingle(),
         // Fetch facility
@@ -151,7 +158,9 @@ export function useProviderData(facilityId?: string) {
             .eq("facility_id", facilityData.id)
             .eq("event_type", "profile_view")
             .gte("created_at", thirtyDaysAgo.toISOString()),
-          // Accurate leads count via security definer function (bypasses RLS unlock restriction)
+          // Accurate leads count via SECURITY DEFINER RPC so the count
+          // reflects all rows owned by the facility regardless of view-
+          // level row filtering or query-level limits.
           supabase.rpc("get_facility_leads_count", { p_facility_id: facilityData.id }),
         ]);
 

@@ -105,13 +105,15 @@ function useFacilityPerformanceMetrics(facilityId: string | undefined) {
 }
 
 function useAllFacilitiesComparison(facilityIds: string[]) {
+  const sortedIds = facilityIds.slice().sort();
+  const idsKey = sortedIds.join(",");
   return useQuery({
-    queryKey: ["facilities-comparison", facilityIds],
+    queryKey: ["facilities-comparison", idsKey],
     queryFn: async () => {
-      if (!facilityIds.length) return [];
+      if (!sortedIds.length) return [];
 
       const results = await Promise.all(
-        facilityIds.map(async fid => {
+        sortedIds.map(async fid => {
           const [{ data: facility }, { data: leads }] = await Promise.all([
             supabase.from("facilities").select("name").eq("id", fid).single(),
             (supabase as any).from("leads_provider_view")
@@ -135,7 +137,7 @@ function useAllFacilitiesComparison(facilityIds: string[]) {
       );
       return results.sort((a, b) => b.leads - a.leads);
     },
-    enabled: facilityIds.length > 1,
+    enabled: sortedIds.length > 1,
     staleTime: 1000 * 60 * 5,
     retry: 2,
   });

@@ -30,11 +30,14 @@ interface LeadStats {
 }
 
 export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps) {
+  // Stabilize key against array-reference churn from parent re-renders.
+  const sortedIds = facilityIds.slice().sort();
+  const facilityIdsKey = sortedIds.join(",");
   const { data: leads = [], isLoading, isError } = useQuery({
-    queryKey: ["lead-conversion-stats", facilityIds],
+    queryKey: ["lead-conversion-stats", facilityIdsKey],
     queryFn: async () => {
-      if (facilityIds.length === 0) return [];
-      
+      if (sortedIds.length === 0) return [];
+
       const startOfLastMonth = startOfMonth(subMonths(new Date(), 1));
       
       // Scope to the caller's selected facilities. The view's RLS already
@@ -44,7 +47,7 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
       const { data, error } = await (supabase as any)
         .from("leads_provider_view")
         .select("id, status, created_at, provider_responded_at, facility_id")
-        .in("facility_id", facilityIds)
+        .in("facility_id", sortedIds)
         .gte("created_at", startOfLastMonth.toISOString())
         .order("created_at", { ascending: false })
         .limit(500);
@@ -55,7 +58,7 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
       }
       return data || [];
     },
-    enabled: facilityIds.length > 0,
+    enabled: sortedIds.length > 0,
     staleTime: 1000 * 60 * 5,
     retry: 2,
   });

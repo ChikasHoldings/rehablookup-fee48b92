@@ -22,45 +22,64 @@ interface ProMultiFacilityOverviewProps {
 }
 
 export function ProMultiFacilityOverview({ facilities }: ProMultiFacilityOverviewProps) {
+  // Sort facility ids so the query key is stable across renders that
+  // arrive with the same set in a different order (e.g. when the parent
+  // re-sorts its facilities list). Without this, every parent re-render
+  // would invalidate the cached summaries.
+  const facilityIds = facilities.map(f => f.id).slice().sort();
   const { data: summaries = [], isLoading } = useQuery({
-    queryKey: ["pro-facility-summaries", facilities.map(f => f.id)],
+    queryKey: ["pro-facility-summaries", facilityIds],
     queryFn: async (): Promise<FacilitySummary[]> => {
+      if (facilityIds.length === 0) return [];
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
 
-      const results = await Promise.all(
-        facilities.map(async (facility) => {
-          const [viewsResult, leadsResult] = await Promise.all([
+      // Three concurrent batches of head:true counts (one round-trip per
+      // count, but all 3N requests fire in a single Promise.all so the
+      // wall-clock is bounded by the network depth rather than 3N).
+      const [viewCounts, leadTotals, newLeadCounts] = await Promise.all([
+        Promise.all(
+          facilityIds.map(fid =>
             supabase
               .from("provider_events")
               .select("id", { count: "exact", head: true })
-              .eq("facility_id", facility.id)
+              .eq("facility_id", fid)
               .eq("event_type", "profile_view")
-              .gte("created_at", thirtyDaysAgo.toISOString()),
-            supabase.rpc("get_facility_leads_count", { p_facility_id: facility.id }),
-          ]);
+              .gte("created_at", thirtyDaysAgoISO)
+              .then(r => ({ fid, count: r.count ?? 0 })),
+          ),
+        ),
+        Promise.all(
+          facilityIds.map(fid =>
+            supabase.rpc("get_facility_leads_count", { p_facility_id: fid })
+              .then(r => ({ fid, count: Number(r.data?.[0]?.total_count) || 0 })),
+          ),
+        ),
+        Promise.all(
+          facilityIds.map(fid =>
+            (supabase as any)
+              .from("leads_provider_view")
+              .select("id", { count: "exact", head: true })
+              .eq("facility_id", fid)
+              .eq("status", "new")
+              .then((r: { count: number | null }) => ({ fid, count: r.count ?? 0 })),
+          ),
+        ),
+      ]);
 
-          const totalLeads = Number(leadsResult.data?.[0]?.total_count) || 0;
+      const viewsByFacility = new Map(viewCounts.map(r => [r.fid, r.count]));
+      const leadsByFacility = new Map(leadTotals.map(r => [r.fid, r.count]));
+      const newLeadsByFacility = new Map(newLeadCounts.map(r => [r.fid, r.count]));
 
-          // Get new leads count
-          const { count: newCount } = await (supabase as any)
-            .from("leads_provider_view")
-            .select("id", { count: "exact", head: true })
-            .eq("facility_id", facility.id)
-            .eq("status", "new");
-
-          return {
-            id: facility.id,
-            name: facility.name,
-            status: facility.status,
-            views: viewsResult.count ?? 0,
-            leads: totalLeads,
-            newLeads: newCount ?? 0,
-          };
-        })
-      );
-
-      return results;
+      return facilities.map(facility => ({
+        id: facility.id,
+        name: facility.name,
+        status: facility.status,
+        views: viewsByFacility.get(facility.id) ?? 0,
+        leads: leadsByFacility.get(facility.id) ?? 0,
+        newLeads: newLeadsByFacility.get(facility.id) ?? 0,
+      }));
     },
     enabled: facilities.length > 1,
     staleTime: 1000 * 60 * 3,
