@@ -285,9 +285,116 @@ Deno.test("pipeline: Onboarding.tsx inferredServerStep waits for both queries to
   );
 });
 
+// ─── Invariant 10: auto-sign-in continuity into the provider panel ────
+
+Deno.test("pipeline: register-provider-account stamps user_metadata.account_type", async () => {
+  const src = await read("supabase/functions/register-provider-account/index.ts");
+  // Without this, useUserRole on the dashboard can't tell the new user
+  // is a provider until the profiles trigger runs + the role hook re-
+  // resolves; the auth-gate then redirects to /login.
+  assert(
+    /user_metadata:\s*\{[\s\S]*?account_type:\s*accountType/m.test(src),
+    "register-provider-account must stamp user_metadata.account_type so useUserRole resolves immediately",
+  );
+});
+
+Deno.test("pipeline: AccountStep signs the user in immediately after register", async () => {
+  const src = await read("src/components/provider/onboarding/AccountStep.tsx");
+  assertStringIncludes(src, "signInWithPassword");
+  // The sign-in must run BEFORE the advance(...) call so the
+  // user_id is available to upsert against.
+  const signInIdx = src.indexOf("signInWithPassword");
+  const advanceIdx = src.indexOf("advance(");
+  assert(
+    signInIdx > 0 && advanceIdx > signInIdx,
+    "signInWithPassword must precede the advance() call in AccountStep",
+  );
+});
+
+Deno.test("pipeline: ProviderShell auth gate retries profile-row lookup 3 times", async () => {
+  const src = await read("src/components/provider/ProviderShell.tsx");
+  // The 1.5s retry window covers the gap between auth.user existing
+  // and the post-signup profiles trigger landing.
+  assertStringIncludes(src, "checkProvider");
+  assert(
+    /delays\s*=\s*\[0,\s*500,\s*1000\]/.test(src),
+    "ProviderShell must poll for the profile row at 0/500/1000ms before bouncing to login",
+  );
+});
+
+Deno.test("pipeline: verify-code is idempotent on double-submit (alreadyVerified)", async () => {
+  const src = await read("supabase/functions/verify-code/index.ts");
+  // A user double-clicking the Verify button must not see "Invalid
+  // code" on the second click — the function returns alreadyVerified.
+  assertStringIncludes(src, "alreadyVerified: true");
+  assertStringIncludes(src, '.eq("verified", true)');
+});
+
+Deno.test("pipeline: PlanStep Free handler navigates to /provider/dashboard via replace", async () => {
+  const src = await read("src/components/provider/onboarding/PlanStep.tsx");
+  // replace:true so the back button doesn't bounce them into the
+  // onboarding step they just completed.
+  assert(
+    /navigate\(["']\/provider\/dashboard["'],\s*\{\s*replace:\s*true\s*\}\)/.test(src),
+    "PlanStep Free handler must navigate with replace:true",
+  );
+});
+
+Deno.test("pipeline: PlanStep fast-tracks Pro users whose webhook landed early", async () => {
+  const src = await read("src/components/provider/onboarding/PlanStep.tsx");
+  // The Round-30 merge added an effect that checks for an active Pro
+  // subscription on mount and routes the user to the dashboard without
+  // making them pick again. Tests for the comment-bound code shape.
+  assert(
+    /facility_subscriptions[\s\S]{0,200}status[\s\S]{0,200}active[\s\S]{0,200}tier[\s\S]{0,200}pro/m.test(src),
+    "PlanStep must check facility_subscriptions for an active Pro row on mount",
+  );
+});
+
+Deno.test("pipeline: Onboarding page redirects already-completed users to the dashboard", async () => {
+  const src = await read("src/pages/provider/Onboarding.tsx");
+  // Without this, a returning Pro user who clicks a stale onboarding
+  // link sees the wizard prompting them for plan again.
+  assertStringIncludes(src, "onboarding_completed_at");
+  assertStringIncludes(src, '"/provider/dashboard"');
+  assert(
+    /profile\?\.onboarding_completed_at[\s\S]*Navigate to="\/provider\/dashboard"/m.test(src),
+    "Onboarding.tsx must redirect already-completed users to the dashboard",
+  );
+});
+
+Deno.test("pipeline: Dashboard welcome modal gated by profile_completion_celebrated + isPlaceholderData", async () => {
+  const src = await read("src/pages/provider/Dashboard.tsx");
+  // Without the isPlaceholderData check the modal flashes open on
+  // every reload for established providers while the localStorage
+  // placeholder is in play (round-30 audit fix).
+  assertStringIncludes(src, "profile_completion_celebrated");
+  assert(
+    /!isLoading\s*&&\s*!isPlaceholderData\s*&&[\s\S]{0,80}profile_completion_celebrated/.test(src),
+    "Welcome modal must gate on isPlaceholderData to avoid the reload-flash bug",
+  );
+});
+
+Deno.test("pipeline: SelectedFacilityContext clears state on SIGNED_OUT", async () => {
+  const src = await read("src/contexts/SelectedFacilityContext.tsx");
+  // Stops cross-account state contamination if a user signs out and
+  // another user signs in on the same browser.
+  assertStringIncludes(src, "SIGNED_OUT");
+  assertStringIncludes(src, "setSelectedFacilityState(null)");
+});
+
+Deno.test("pipeline: NewListingForm bounces signed-out users into the wizard with returnTo", async () => {
+  const src = await read("src/pages/provider/NewListingForm.tsx");
+  // Anon visitor to /provider/onboarding/new-listing must land on the
+  // unified wizard (with returnTo) instead of seeing a half-rendered
+  // facility form that crashes on the first DB call.
+  assertStringIncludes(src, "/provider/onboarding?");
+  assertStringIncludes(src, "returnTo");
+});
+
 // ─── Summary ──────────────────────────────────────────────────────────
 
-Deno.test("pipeline: all 9 invariants covered", () => {
+Deno.test("pipeline: all invariants covered", () => {
   // Sentinel — if this file shrinks, the previous tests are still
   // run individually. This just makes the suite header explicit in
   // the test runner output.
