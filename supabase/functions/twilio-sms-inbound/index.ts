@@ -1,4 +1,4 @@
-// twilio-sms-inbound v1.0.0
+// twilio-sms-inbound v1.1.0
 //
 // TCPA-compliant inbound SMS webhook. Receives Twilio "Incoming Message"
 // POSTs (application/x-www-form-urlencoded), classifies the keyword,
@@ -8,6 +8,11 @@
 // Deploy with verify_jwt: false because Twilio cannot send a Supabase JWT.
 // Authentication is via Twilio's X-Twilio-Signature HMAC over the request
 // URL + sorted form params, validated with the account auth token.
+//
+// v1.1.0 hardening: fail HARD when TWILIO_AUTH_TOKEN is missing.
+// Previously the verification block was skipped on missing token, which
+// meant a misconfigured deployment let anyone POST a forged opt-out for
+// any phone in the system — bypassing TCPA consent entirely.
 //
 // Configure in Twilio console: Phone Numbers → your number →
 //   "A message comes in" → Webhook → POST to
@@ -34,7 +39,7 @@
 // sms_inbound_log for TCPA audit trail.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -111,20 +116,25 @@ Deno.serve(async (req) => {
   const formParams: Record<string, string> = {};
   for (const [k, v] of new URLSearchParams(formBody)) formParams[k] = v;
 
-  // Signature verification (skip in dev when token absent so local testing works).
-  if (twilioAuthToken) {
-    const signatureHeader = req.headers.get("x-twilio-signature");
-    // Reconstruct the URL Twilio signed. We must use the public-facing URL,
-    // which equals our edge function endpoint.
-    const requestUrl = req.url.replace(/^http:\/\//, "https://");
-    const ok = await verifyTwilioSignature(twilioAuthToken, signatureHeader, requestUrl, formParams);
-    if (!ok) {
-      console.warn("[twilio-sms-inbound] signature mismatch", {
-        hasSig: !!signatureHeader,
-        url: requestUrl,
-      });
-      return new Response("Forbidden", { status: 403, headers: corsHeaders });
-    }
+  // Signature verification. This endpoint mutates profiles.sms_opted_out_at
+  // for any phone in the system, so it MUST require a valid Twilio HMAC.
+  // Without the token, anyone on the public internet could forge an
+  // "opt-out" for a competitor and silence their lead-alert pipeline.
+  if (!twilioAuthToken) {
+    console.error("[twilio-sms-inbound] TWILIO_AUTH_TOKEN not configured — refusing all inbound traffic");
+    return new Response("Forbidden", { status: 403, headers: corsHeaders });
+  }
+  const signatureHeader = req.headers.get("x-twilio-signature");
+  // Reconstruct the URL Twilio signed. We must use the public-facing URL,
+  // which equals our edge function endpoint.
+  const requestUrl = req.url.replace(/^http:\/\//, "https://");
+  const ok = await verifyTwilioSignature(twilioAuthToken, signatureHeader, requestUrl, formParams);
+  if (!ok) {
+    console.warn("[twilio-sms-inbound] signature mismatch", {
+      hasSig: !!signatureHeader,
+      url: requestUrl,
+    });
+    return new Response("Forbidden", { status: 403, headers: corsHeaders });
   }
 
   const fromPhoneRaw = formParams.From ?? "";

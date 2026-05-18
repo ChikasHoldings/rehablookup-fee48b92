@@ -16,10 +16,16 @@
 //   configured to POST inbound SMS to this URL, STOP/HELP/START
 //   keywords are honored TCPA-style and audited in sms_inbound_log.
 
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 
-const DEFAULT_URL =
-  "https://mldbxpntzcjalgjmwnqa.supabase.co/functions/v1/twilio-sms-inbound";
+// Default to the URL of the currently-running edge function deployment
+// rather than hardcoding a project ref. The previous hardcoded URL
+// (mldbxpntzcjalgjmwnqa.supabase.co) silently broke staging / second-
+// project deployments — Twilio would POST inbound SMS to the prod
+// function, leaving the staging deployment unaware of opt-outs. The
+// `req.url` lookup happens inside the handler below; `null` here marks
+// it for "computed at request time".
+const DEFAULT_URL: string | null = null;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -61,7 +67,13 @@ Deno.serve(async (req) => {
 
   let body: { url?: string } = {};
   try { body = await req.json(); } catch { /* default body */ }
-  const targetUrl = (body.url && body.url.trim()) || DEFAULT_URL;
+  // Build the default target from the current request origin so this
+  // function works in any project / staging deployment without re-
+  // editing a hardcoded URL. Callers can still override by passing
+  // `url` in the body.
+  const requestOrigin = new URL(req.url).origin;
+  const computedDefault = `${requestOrigin}/functions/v1/twilio-sms-inbound`;
+  const targetUrl = (body.url && body.url.trim()) || DEFAULT_URL || computedDefault;
 
   const basicAuth = btoa(`${sid}:${authToken}`);
   const apiHeaders = {

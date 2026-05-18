@@ -146,11 +146,20 @@ Deno.serve(async (req) => {
     if (!twilioResponse.ok) {
       const twilioError = await twilioResponse.text();
       logStep("Twilio API error", { requestId, status: twilioResponse.status, error: twilioError.slice(0, 200) });
-      
-      // Clean up the verification code since SMS failed
+
+      // Soft-expire the code row instead of DELETE. Two reasons:
+      //   1. If Twilio actually delivered the SMS but then returned a
+      //      5xx, the user could type the code from the message but
+      //      we'd have nothing to verify against → "code expired"
+      //      surprise. Soft-expire keeps the row available for any
+      //      late-arriving verify-sms-code call.
+      //   2. The rate-limit query at line 84-101 counts on
+      //      created_at, not the deleted flag. Hard-deleting reset
+      //      the abuse budget on every failed send, letting a
+      //      malicious caller hit Twilio indefinitely.
       await supabase
         .from("phone_verification_codes")
-        .delete()
+        .update({ expires_at: new Date().toISOString() })
         .eq("phone", phone)
         .eq("code", code);
 
