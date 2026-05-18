@@ -7,7 +7,7 @@
 // re-run `python3 scripts/inline-shared.py provider-self-cancel-subscription`.
 
 // ── URL imports (dedup'd) ──────────────────────────────────
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { SupabaseClient, createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { z } from "https://esm.sh/zod@3.23.8?target=denonext";
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 
@@ -691,8 +691,36 @@ export async function cancelSubscriptionAndRefund(
       })
       .eq("id", subscription.id);
   } else if (options.scope === "addon-featured") {
+    // Round-31 audit fix: previously this early-exited on
+    // `!subscription.has_featured`, which made the refund + audit
+    // path unreachable if a prior webhook delivery had already
+    // flipped the flag (e.g. customer.subscription.updated detected
+    // item removal and flipped the flag, then this scope='addon-
+    // featured' call retries). refundOnePiece has its own
+    // idempotency guard (findExistingCancellation by scope tag), so
+    // it's safe to always invoke — duplicate refunds are blocked at
+    // that layer. We still surface to admin if we hit the unusual
+    // case where the flag is cleared but no audit row exists.
     if (!subscription.has_featured) {
-      return result; // nothing to do
+      const { data: existingCancel } = await supabase
+        .from("subscription_cancellations")
+        .select("id")
+        .eq("subscription_id", subscription.id)
+        .eq("reason", SCOPE_TAGS.featured)
+        .maybeSingle();
+      if (!existingCancel) {
+        await notifyAdmin(supabase, {
+          type: "addon_flag_cleared_without_audit_row",
+          title: "Featured flag cleared but no cancellation audit",
+          message: `facility_subscriptions.id=${subscription.id} has has_featured=false but no subscription_cancellations row for scope:featured. Proceeding with refund path which is idempotent — investigate the out-of-band flag clear.`,
+          metadata: {
+            facility_subscription_id: subscription.id,
+            scope: "addon-featured",
+          },
+        });
+      }
+      // Fall through to refundOnePiece; it'll no-op if cancellation
+      // row exists, or process if it doesn't.
     }
     const f = await refundOnePiece({
       supabase, stripe, subscription,
@@ -712,8 +740,27 @@ export async function cancelSubscriptionAndRefund(
       .update({ has_featured: false, updated_at: new Date().toISOString() })
       .eq("id", subscription.id);
   } else if (options.scope === "addon-concierge") {
+    // Same logic as addon-featured above — drop the early-exit,
+    // surface the flag-cleared-without-audit-row anomaly, and let
+    // refundOnePiece handle dedup.
     if (!subscription.has_concierge_partner) {
-      return result;
+      const { data: existingCancel } = await supabase
+        .from("subscription_cancellations")
+        .select("id")
+        .eq("subscription_id", subscription.id)
+        .eq("reason", SCOPE_TAGS.concierge)
+        .maybeSingle();
+      if (!existingCancel) {
+        await notifyAdmin(supabase, {
+          type: "addon_flag_cleared_without_audit_row",
+          title: "Concierge flag cleared but no cancellation audit",
+          message: `facility_subscriptions.id=${subscription.id} has has_concierge_partner=false but no subscription_cancellations row for scope:concierge. Proceeding with refund path which is idempotent — investigate the out-of-band flag clear.`,
+          metadata: {
+            facility_subscription_id: subscription.id,
+            scope: "addon-concierge",
+          },
+        });
+      }
     }
     const c = await refundOnePiece({
       supabase, stripe, subscription,

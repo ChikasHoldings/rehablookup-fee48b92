@@ -123,14 +123,64 @@ for name in order:
     clean_shared[name] = src
     all_urls.extend(urls)
 
-# Dedup URL imports while preserving order.
-seen = set()
+# Dedup URL imports by MODULE URL (not line). When two imports come
+# from the same URL with different symbol lists (e.g. one says
+# `import { createClient }` and another says
+# `import { createClient, SupabaseClient }`), MERGE their symbol
+# lists into one import. Otherwise Deno gets a duplicate-identifier
+# compile error.
+per_url_symbols: dict[str, set[str]] = {}
+per_url_default: dict[str, str | None] = {}
+per_url_order: list[str] = []
+url_pat = re.compile(
+    r'^import\s+(?P<spec>.+?)\s+from\s+"(?P<url>https?://[^"]+)";\s*$'
+)
+named_pat = re.compile(r'\{([^}]*)\}')
+for raw in all_urls:
+    line = raw.rstrip("\n")
+    m = url_pat.match(line.strip())
+    if not m:
+        # Not a parseable URL import — keep as-is using line key.
+        if line not in per_url_symbols:
+            per_url_symbols[line] = set()
+            per_url_default[line] = None
+            per_url_order.append(line)
+        continue
+    spec = m.group("spec").strip()
+    url = m.group("url").strip()
+    if url not in per_url_symbols:
+        per_url_symbols[url] = set()
+        per_url_default[url] = None
+        per_url_order.append(url)
+    # Named imports inside { ... }
+    nm = named_pat.search(spec)
+    if nm:
+        for sym in nm.group(1).split(","):
+            sym = sym.strip()
+            if sym:
+                per_url_symbols[url].add(sym)
+        # Default import lives BEFORE the { ... }
+        before = spec[: spec.index("{")].rstrip(", ").strip()
+        if before:
+            per_url_default[url] = before
+    else:
+        # Plain default import: `import X from "..."`
+        per_url_default[url] = spec
 dedup_urls = []
-for line in all_urls:
-    key = line.strip()
-    if key not in seen:
-        seen.add(key)
-        dedup_urls.append(line)
+for key in per_url_order:
+    if not key.startswith("http"):
+        # Pass-through non-URL line
+        dedup_urls.append(key + "\n")
+        continue
+    url = key
+    parts = []
+    if per_url_default[url]:
+        parts.append(per_url_default[url])
+    syms = sorted(per_url_symbols[url])
+    if syms:
+        parts.append("{ " + ", ".join(syms) + " }")
+    spec = ", ".join(parts) if parts else ""
+    dedup_urls.append(f'import {spec} from "{url}";\n')
 
 # Assemble final single-file output.
 sections = []
