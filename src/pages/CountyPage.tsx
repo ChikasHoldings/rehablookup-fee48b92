@@ -17,10 +17,11 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import {
   MapPin, Building2, ChevronRight, Search, Phone, ArrowRight,
   CheckCircle, Shield, Clock, Star, Heart, ChevronDown, HelpCircle,
-  Pill, Brain, Activity, Home, Stethoscope, Sparkles, Users, Map
+  Pill, Brain, Activity, Home, Stethoscope, Sparkles, Users, Map, Landmark
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -166,46 +167,104 @@ export default function CountyPage() {
         ]}
       />
 
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/85 text-primary-foreground overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2dyaWQpIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIi8+PC9zdmc+')] opacity-30" />
-        <div className="container mx-auto px-4 py-12 md:py-16 relative z-10">
+      {/* Hero — COUNTY JURISDICTION treatment. Distinct from
+          state/city heroes in four ways:
+            1. NO photo background. Counties aren't tourist
+               destinations — solid primary gradient + subtle grid
+               pattern reads "civic / administrative" instead of
+               travel-aesthetic.
+            2. Landmark icon + "JURISDICTION" eyebrow signals the
+               page is about an administrative region.
+            3. Hero is more compact (py-9 md:py-12) than state/city.
+               The verbose buildCountyOverview prose moves to the
+               About card below.
+            4. Stat strip is a 4-tile horizontal band BELOW the hero
+               (separate light section) — county-specific signals
+               (Population, Centers, County Seat, Major Cities).
+       */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/95 to-primary/80 text-primary-foreground border-b border-white/5">
+        {/* Subtle grid pattern — civic / map-grid texture */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA2KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2dyaWQpIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIi8+PC9zdmc+')] opacity-100" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.08),_transparent_60%)]" />
+
+        <div className="container mx-auto px-4 py-9 md:py-12 relative z-10">
           <BreadcrumbNav
+            className="mb-5 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
               { label: stateData.name, href: `/rehab-centers/${stateSlug}` },
               { label: `${countyData.name} County` },
             ]}
           />
 
-          <div className="max-w-3xl mt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Shield className="h-5 w-5" />
-              <span className="text-sm font-medium opacity-90">Verified & Accredited Programs</span>
+          <div className="max-w-3xl">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+              <Landmark className="h-3.5 w-3.5" />
+              {stateData.abbreviation} · Jurisdiction Directory
             </div>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-              {pageTitle}
+            <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
+              Rehab Centers in {countyData.name} County
             </h1>
-            <p className="text-lg md:text-xl opacity-90 mb-6 leading-relaxed">
-              {/* De-templated description from real per-state stats +
-                  verified-facility count, so each of the ~500 indexed
-                  county pages renders distinct hero copy instead of the
-                  shared factory string from countySeoData.ts. */}
-              {buildCountyOverview(stateData.slug, stateData.name, countyData.name, countyFacilities.length)}
+            <p className="mt-3 text-base md:text-lg text-white/85 max-w-2xl">
+              Verified addiction treatment programs serving {countyData.name} County, {stateData.abbreviation} — {countyData.majorCities.length} cities, county seat {countyData.seat}.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg">
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg gap-2">
                 <Link to="/concierge">
-                  <Phone className="mr-2 h-5 w-5" />
+                  <Phone className="h-4 w-4" />
                   Get Free Placement Help
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm gap-2"
+              >
                 <Link to={`/rehab-centers/${stateSlug}`}>
-                  <Search className="mr-2 h-5 w-5" />
-                  Browse {stateData.name} Centers
+                  <Search className="h-4 w-4" />
+                  Browse {stateData.abbreviation}
                 </Link>
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* County-specific stat band — 4 civic signals. Light section
+          right below the hero, mirrors the StatePage right-column
+          stat grid but rendered as a dedicated horizontal strip so
+          the visual rhythm differs from state/city pages. */}
+      <section className="border-b bg-secondary/40">
+        <div className="container mx-auto px-4 py-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+            <LocationStatTile
+              label="Population"
+              value={countyData.population >= 1_000_000
+                ? `${(countyData.population / 1_000_000).toFixed(1)}M`
+                : countyData.population >= 1_000
+                  ? `${Math.round(countyData.population / 1_000)}K`
+                  : countyData.population.toLocaleString()}
+              icon={Users}
+              compact
+            />
+            <LocationStatTile
+              label={countyFacilities.length === 1 ? "Center" : "Centers"}
+              value={isLoading ? "—" : `${countyFacilities.length}+`}
+              icon={Building2}
+              compact
+            />
+            <LocationStatTile
+              label="County Seat"
+              value={countyData.seat}
+              icon={Landmark}
+              compact
+            />
+            <LocationStatTile
+              label="Major Cities"
+              value={countyData.majorCities.length.toLocaleString()}
+              icon={Map}
+              compact
+            />
           </div>
         </div>
       </section>
@@ -223,114 +282,35 @@ export default function CountyPage() {
         view_all_href={`/search-results?location=${encodeURIComponent(`${countyData.name} County, ${stateData.name}`)}`}
       />
 
-      {/* County Stats Bar */}
-      <section className="bg-muted/30 border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-wrap gap-6 md:gap-10 justify-center text-center">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-lg font-bold tabular-nums">{countyData.population.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Population</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-lg font-bold tabular-nums">{countyFacilities.length}+</p>
-                <p className="text-xs text-muted-foreground">Treatment Centers</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-lg font-bold">{countyData.seat}</p>
-                <p className="text-xs text-muted-foreground">County Seat</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Map className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-lg font-bold">{countyData.majorCities.length}</p>
-                <p className="text-xs text-muted-foreground">Major Cities</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Main Content */}
       <div className="container mx-auto px-4 py-10 md:py-14">
-        {/* Treatment Overview */}
-        <section className="max-w-4xl mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            Addiction Treatment in {countyData.name} County, {stateData.abbreviation}
-          </h2>
-          <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-            {countyData.treatmentOverview}
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-card rounded-xl border p-6">
-              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Demographics & Community
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">{countyData.demographics}</p>
-            </div>
-            <div className="bg-card rounded-xl border p-6">
-              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                Access & Transportation
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">{countyData.accessNotes}</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Major Cities */}
+        {/* Directory results — county-level centerpiece */}
         <section className="mb-12">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Map className="h-5 w-5 text-primary" />
-            Cities in {countyData.name} County
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {countyData.majorCities.map(city => {
-              const citySlug = city.toLowerCase().replace(/\s+/g, "-");
-              const cityExists = stateData.cities.some(c => c.slug === citySlug);
-              return cityExists ? (
-                <Link
-                  key={city}
-                  to={`/rehab-centers/${stateSlug}/${citySlug}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 hover:bg-primary/10 border border-primary/10 text-sm font-medium transition-colors"
-                >
-                  <MapPin className="h-3.5 w-3.5 text-primary" />
-                  {city}
-                </Link>
-              ) : (
-                <span
-                  key={city}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-sm text-muted-foreground"
-                >
-                  <MapPin className="h-3.5 w-3.5" />
-                  {city}
-                </span>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Facilities */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              Treatment Centers in {countyData.name} County
-            </h2>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+                  Centers in {countyData.name} County
+                </h2>
+                {!isLoading && countyFacilities.length > 0 && (
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/20">
+                    {countyFacilities.length}
+                  </span>
+                )}
+              </div>
+              {!isLoading && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {countyFacilities.length > 0
+                    ? `${countyFacilities.length} verified ${countyFacilities.length === 1 ? "facility" : "facilities"} serving the county`
+                    : `Expanding directory in ${countyData.name} County.`}
+                </p>
+              )}
+            </div>
             <Link
               to={`/rehab-centers/${stateSlug}`}
-              className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1"
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
             >
-              View all in {stateData.name} <ArrowRight className="h-4 w-4" />
+              View all in {stateData.name} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
@@ -339,8 +319,8 @@ export default function CountyPage() {
           ) : countyFacilities.length > 0 ? (
             <ResponsiveListingGrid facilities={countyFacilities} />
           ) : (
-            <div className="text-center py-12 bg-card rounded-xl border">
-              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <div className="text-center py-12 bg-card rounded-2xl border">
+              <Building2 className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Limited Listings Available</h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 We're expanding our directory in {countyData.name} County. Browse facilities across {stateData.name} or get personalized placement help.
@@ -357,20 +337,138 @@ export default function CountyPage() {
           )}
         </section>
 
-        {/* Treatment Types */}
+        {/* Cities in the County — chip layout, county-specific. */}
         <section className="mb-12">
-          <h2 className="text-xl font-bold mb-4">Types of Treatment Available</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {treatmentTypesData.map(type => (
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                Cities in {countyData.name} County
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {countyData.majorCities.length} cities · seat: {countyData.seat}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {countyData.majorCities.map(city => {
+              const citySlug = city.toLowerCase().replace(/\s+/g, "-");
+              const cityExists = stateData.cities.some(c => c.slug === citySlug);
+              return cityExists ? (
+                <Link
+                  key={city}
+                  to={`/rehab-centers/${stateSlug}/${citySlug}`}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-card border border-border/60 text-sm font-medium transition-all hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                >
+                  <MapPin className="h-3.5 w-3.5 text-primary" />
+                  {city}
+                </Link>
+              ) : (
+                <span
+                  key={city}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-muted/40 border border-border/30 text-sm text-muted-foreground"
+                >
+                  <MapPin className="h-3.5 w-3.5" />
+                  {city}
+                </span>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Browse by Care Level — state-scoped chips. Same set as
+            State/City pages but presented in a county context so seekers
+            jump to the right state-scoped care page from here too. */}
+        <section className="mb-12">
+          <div className="mb-5">
+            <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+              Browse by Care Level
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Filter {stateData.abbreviation} treatment programs by the level of care you need
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+            {[
+              { icon: Sparkles, title: "Detox", desc: "Medical detox, 24/7 supervision", href: `/treatment-types/detox-programs/${stateData.slug}` },
+              { icon: Home, title: "Inpatient", desc: "30–90 day residential", href: `/treatment-types/residential-inpatient/${stateData.slug}` },
+              { icon: Stethoscope, title: "Outpatient", desc: "PHP, IOP, standard outpatient", href: `/treatment-types/outpatient-programs/${stateData.slug}` },
+              { icon: Brain, title: "Dual Diagnosis", desc: "Integrated mental health + addiction", href: `/treatment-types/dual-diagnosis-treatment/${stateData.slug}` },
+              { icon: Activity, title: "Alcohol Rehab", desc: "AUD programs across the state", href: `/treatment-types/alcohol-rehabilitation/${stateData.slug}` },
+              { icon: Pill, title: "Drug Rehab", desc: "Opioid, stimulant, polysubstance", href: `/treatment-types/drug-addiction/${stateData.slug}` },
+            ].map((c) => (
               <Link
-                key={type.title}
-                to={`${type.link}${type.param}`}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-accent/50 transition-colors text-center group"
+                key={c.title}
+                to={c.href}
+                className="group rounded-xl border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5"
               >
-                <type.icon className="h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium">{type.title}</span>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/15">
+                    <c.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
+                      {c.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{c.desc}</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground/40 transition-all group-hover:translate-x-1 group-hover:text-primary" />
+                </div>
               </Link>
             ))}
+          </div>
+        </section>
+
+        {/* About + Demographics + Access — consolidated split-pane.
+            Replaces the previous prose-heavy "Treatment Overview" +
+            "Demographics & Community" + "Access & Transportation"
+            stack. Same county-data feeds everything; just framed as
+            a polished card. */}
+        <section className="mb-12 rounded-2xl border bg-card p-6 md:p-8 shadow-sm">
+          <div className="grid gap-8 md:grid-cols-[1.5fr_1fr]">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                  <Landmark className="h-4 w-4 text-primary" />
+                </div>
+                <h2 className="font-display text-lg md:text-xl font-bold text-foreground">
+                  About {countyData.name} County
+                </h2>
+              </div>
+              <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                {/* De-templated body kept for SEO depth — combines
+                    per-state stats + verified-facility count so each
+                    of the ~500 indexed county pages renders distinct
+                    copy rather than the factory string. */}
+                {buildCountyOverview(stateData.slug, stateData.name, countyData.name, countyFacilities.length)}
+              </p>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                {countyData.treatmentOverview}
+              </p>
+            </div>
+            <div className="space-y-4 md:border-l md:border-border/60 md:pl-8">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground">
+                    Demographics
+                  </h3>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {countyData.demographics}
+                </p>
+              </div>
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Map className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground">
+                    Access
+                  </h3>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {countyData.accessNotes}
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 

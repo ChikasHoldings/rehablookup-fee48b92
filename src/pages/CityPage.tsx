@@ -315,12 +315,16 @@ const CityPage = () => {
         ]}
       />
 
-      {/* Hero — directory-style, image-driven, low text.
-          Mirrors StatePage hero: bold H1, one-line subtitle,
-          breadcrumb, primary CTA, and a care-level chip rail. The
-          per-city de-templated prose moves into the "About" card
-          below the directory results so SEO depth survives without
-          turning the hero into a blog opener. */}
+      {/* Hero — CITY DIRECTORY treatment. Distinct from the state-
+          page hero in three ways so the network of location pages
+          doesn't feel templated:
+            1. Warmer accent overlay (primary/accent blend) instead
+               of the state page's cool slate/primary mix.
+            2. Stats render as a 3-tile horizontal strip BELOW the
+               title block, not a 2x2 grid to its right — magazine-
+               feel rather than dashboard-feel.
+            3. Eyebrow reads "LOCAL DIRECTORY" with a Home icon to
+               signal hyperlocal coverage. */}
       <section className="relative overflow-hidden border-b border-white/5">
         {cityImage && (
           <img
@@ -335,8 +339,8 @@ const CityPage = () => {
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/80 to-primary/70" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(255,255,255,0.06),_transparent_60%)]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/85 via-primary/75 to-accent/55" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.08),_transparent_55%)]" />
 
         <div className="container relative z-10 py-8 md:py-12">
           <BreadcrumbNav
@@ -347,72 +351,75 @@ const CityPage = () => {
               { label: cityData.name },
             ]}
           />
-          <div className="grid items-end gap-6 md:grid-cols-[1.4fr_1fr]">
-            <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
-                <MapPin className="h-3.5 w-3.5" />
-                {fullLocation} · City Directory
-              </div>
-              <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
-                Rehab Centers in {cityData.name}
-              </h1>
-              <p className="mt-3 text-base text-white/80 md:text-lg max-w-xl">
-                Compare verified addiction treatment programs in {cityData.name}, {stateData.abbreviation}. Filter by care level, insurance, and admit speed.
-              </p>
-              <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Link to="/concierge">
-                  <Button size="lg" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
-                    <Heart className="h-4 w-4" />
-                    Get Personalized Help
-                  </Button>
-                </Link>
-                <Link to={`/search-results?location=${encodeURIComponent(fullLocation)}`}>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="gap-2 w-full sm:w-auto border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
-                  >
-                    <Search className="h-4 w-4" />
-                    Browse {cityData.name}
-                  </Button>
-                </Link>
-              </div>
+          <div className="max-w-3xl">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+              <Home className="h-3.5 w-3.5" />
+              {stateData.abbreviation} · Local Directory
             </div>
+            <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+              Rehab Centers in {cityData.name}
+            </h1>
+            <p className="mt-3 text-base text-white/80 md:text-lg max-w-xl">
+              Verified treatment programs in {cityData.name}, {stateData.abbreviation}. Filter by care level, insurance, and admit speed.
+            </p>
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <Link to="/concierge">
+                <Button size="lg" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
+                  <Heart className="h-4 w-4" />
+                  Get Personalized Help
+                </Button>
+              </Link>
+              <Link to={`/search-results?location=${encodeURIComponent(fullLocation)}`}>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="gap-2 w-full sm:w-auto border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
+                >
+                  <Search className="h-4 w-4" />
+                  Browse {cityData.name}
+                </Button>
+              </Link>
+            </div>
+          </div>
 
-            <div className="hidden md:grid grid-cols-2 gap-3">
+          {/* Stats strip — magazine-style 3-tile horizontal row below
+              the title. Differentiates from StatePage's right-column
+              2x2 grid. Hidden on small screens (the dedicated mobile
+              stat band below the hero covers them). */}
+          <div className="mt-8 hidden md:grid grid-cols-3 gap-3 max-w-3xl">
+            <LocationStatTile
+              label={cityCenters.length === 1 ? "Verified Facility" : "Verified Facilities"}
+              value={isLoading ? "—" : cityCenters.length.toLocaleString()}
+              icon={Building2}
+            />
+            {cityData.population > 0 ? (
               <LocationStatTile
-                label={cityCenters.length === 1 ? "Verified Facility" : "Verified Facilities"}
-                value={isLoading ? "—" : cityCenters.length.toLocaleString()}
-                icon={Building2}
+                label="Population"
+                value={cityData.population >= 1_000_000
+                  ? `${(cityData.population / 1_000_000).toFixed(1)}M`
+                  : cityData.population >= 1_000
+                    ? `${Math.round(cityData.population / 1_000)}K`
+                    : cityData.population.toLocaleString()}
+                icon={Home}
               />
-              {cityData.population > 0 && (
-                <LocationStatTile
-                  label="Population"
-                  value={cityData.population >= 1_000_000
-                    ? `${(cityData.population / 1_000_000).toFixed(1)}M`
-                    : cityData.population >= 1_000
-                      ? `${Math.round(cityData.population / 1_000)}K`
-                      : cityData.population.toLocaleString()}
-                  icon={Home}
-                />
-              )}
+            ) : (
               <LocationStatTile
-                label="State"
+                label="Coverage"
                 value={stateData.abbreviation}
                 icon={MapPin}
               />
-              <LocationStatTile
-                label="Insurance"
-                value="Most plans"
-                icon={Shield}
-              />
-            </div>
+            )}
+            <LocationStatTile
+              label="Insurance"
+              value="Most plans"
+              icon={Shield}
+            />
           </div>
         </div>
 
-        {/* Care-level chip rail — directory hallmark. Links into the
-            state-scoped /treatment-types/.../<state> pages so seekers
-            jump straight to the right level of care for this region. */}
+        {/* Care-level chip rail. Links into state-scoped treatment-type
+            pages so seekers jump to the right level of care for this
+            region (not the unscoped national hub). */}
         <div className="relative z-10 border-t border-white/10 bg-black/30 backdrop-blur-sm">
           <div className="container py-3">
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
