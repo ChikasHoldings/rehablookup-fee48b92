@@ -50,6 +50,13 @@ interface SEOLandingTemplateProps {
   heroSubtitle: string;
   heroLocation?: string;
   heroBadge?: string;
+  /**
+   * Optional photographic hero image. Combo pages that have a clear
+   * geo context (city or state) pass a relevant city/state photo
+   * from src/data/locationImages.ts so the landing hero feels more
+   * premium / less generic than the dark-slate-only fallback.
+   */
+  heroImage?: string;
 
   // Content
   introContent?: string;
@@ -111,6 +118,7 @@ export function SEOLandingTemplate({
   heroSubtitle,
   heroLocation,
   heroBadge,
+  heroImage,
   introContent,
   sections,
   whatToExpect,
@@ -175,6 +183,21 @@ export function SEOLandingTemplate({
                visual consistency with the rest of the directory
                network. */}
       <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/70">
+        {/* Optional photographic background — wired by combo pages
+            that have a clear geo context. When absent the hero falls
+            back to the dark-slate editorial base. */}
+        {heroImage && (
+          <img
+            src={heroImage}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover opacity-50"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/90 via-slate-900/85 to-primary/65" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.08),_transparent_55%)]" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImRvdHMiIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZG90cykiLz48L3N2Zz4=')] opacity-100" />
 

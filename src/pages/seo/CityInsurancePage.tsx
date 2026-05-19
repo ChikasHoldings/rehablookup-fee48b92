@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -135,6 +136,7 @@ export default function CityInsurancePage() {
       heroSubtitle={`Verify your ${insurer.name} benefits and find accredited rehab facilities in ${cityName} that accept your plan.`}
       heroLocation={`${cityName}, ${stateConfig.state}`}
       heroBadge="Insurance Verified"
+      heroImage={getCityImage(stateSlug, citySlug)}
       introContent={`Looking for rehab centers that accept ${insurer.name} in ${cityName}, ${stateConfig.state}? Under federal law, ${insurer.name} must cover substance abuse treatment at the same level as other medical conditions. RehabLookup helps you find verified facilities in ${cityName} that accept ${insurer.name}, compare programs, and start treatment with confidence.${stateConfig.medicaidExpanded ? ` ${stateConfig.state} has expanded Medicaid, providing additional coverage options for qualifying residents.` : ""}`}
       sections={[
         {

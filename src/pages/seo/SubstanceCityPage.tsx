@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -144,6 +145,7 @@ export default function SubstanceCityPage() {
       heroSubtitle={`Find verified ${substance.conditionName.toLowerCase()} treatment programs in ${cityName}, ${stateName}. Every facility is checked for licensing, accreditation, and clinical quality.`}
       heroLocation={`${cityName}, ${abbreviation}`}
       heroBadge="Verified Programs"
+      heroImage={getCityImage(stateSlug, citySlug)}
       introContent={`Searching for ${substance.conditionName.toLowerCase()} treatment in ${cityName}, ${stateName}? RehabLookup connects you with accredited facilities offering evidence-based care. Whether you need medical detox, residential treatment, or outpatient support, our verified directory helps you compare programs and find the right fit in ${cityName}.`}
       sections={[
         {

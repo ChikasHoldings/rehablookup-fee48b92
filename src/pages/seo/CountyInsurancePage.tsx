@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getStateImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { cityInList } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -122,6 +123,7 @@ export default function CountyInsurancePage() {
       heroTitle={pageTitle}
       heroSubtitle={`Find verified treatment centers in ${countyData.name} County that accept ${insurer.name} insurance.`}
       heroLocation={`${countyData.name} County, ${stateData.name}`}
+      heroImage={getStateImage(stateSlug)}
       heroBadge={`${insurer.name} Coverage`}
       introContent={`Looking for rehab centers in ${countyData.name} County, ${stateData.name} that accept ${insurer.name}? RehabLookup connects you with verified treatment facilities serving ${cityList} and surrounding areas. ${density === "high" ? `${countyData.name} County has strong access to ${insurer.name}-accepting programs.` : density === "moderate" ? `${countyData.name} County offers several ${insurer.name}-accepting options.` : `While local options may be limited, nearby ${stateData.name} facilities provide accessible ${insurer.name}-covered treatment.`}`}
       sections={[

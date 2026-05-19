@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -129,6 +130,7 @@ export default function CoOccurringCityPage() {
       heroSubtitle={`Find specialized ${config.conditionName.toLowerCase()} and addiction treatment programs in ${cityName}, ${stateName}.`}
       heroBadge="Dual Diagnosis"
       heroLocation={`${cityName}, ${abbreviation}`}
+      heroImage={getCityImage(stateSlug, citySlug)}
       introContent={`Looking for integrated ${config.conditionName.toLowerCase()} and addiction treatment in ${cityName}? RehabLookup connects you with verified dual diagnosis programs that address both conditions simultaneously for the best chance at lasting recovery.`}
       sections={config.sections.map((s) => ({
         heading: `${s.heading} in ${cityName}`,

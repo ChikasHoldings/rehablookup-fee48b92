@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getStateImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { bestInStateConfigs, type BestInStateConfig } from "@/data/seoBestInStateConfig";
@@ -133,6 +134,7 @@ export default function BestInStatePage() {
       heroTitle={pageTitle}
       heroSubtitle={stateConfig.heroSubtitle}
       heroLocation={stateConfig.state}
+      heroImage={getStateImage(stateConfig.slug)}
       heroBadge="Top-Rated & Verified"
       introContent={stateConfig.introContent}
       sections={stateConfig.sections}

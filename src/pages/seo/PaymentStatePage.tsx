@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getStateImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { statesData } from "@/data/locationSeoData";
@@ -171,6 +172,7 @@ export default function PaymentStatePage({ paymentType }: PaymentStatePageProps)
       heroTitle={pageTitle}
       heroSubtitle={`Find verified ${paymentType === "medicaid" ? "Medicaid" : "Medicare"}-accepting rehab facilities across ${stateName}.`}
       heroLocation={stateName}
+      heroImage={getStateImage(stateSlug)}
       heroBadge={`${paymentType === "medicaid" ? "Medicaid" : "Medicare"} Accepted`}
       introContent={config.introTemplate(stateName, isMedicaidExpanded)}
       sections={sections}

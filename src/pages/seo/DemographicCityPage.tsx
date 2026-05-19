@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -142,6 +143,7 @@ export default function DemographicCityPage() {
       heroSubtitle={`Specialized treatment programs in ${cityName} designed for the unique needs of this population.`}
       heroLocation={`${cityName}, ${abbreviation}`}
       heroBadge="Specialized Programs"
+      heroImage={getCityImage(stateSlug, citySlug)}
       introContent={`Looking for ${demographic.title.toLowerCase()} in ${cityName}, ${stateName}? RehabLookup connects you with verified treatment facilities offering specialized, evidence-based programs tailored to specific needs, challenges, and circumstances.`}
       sections={[
         {

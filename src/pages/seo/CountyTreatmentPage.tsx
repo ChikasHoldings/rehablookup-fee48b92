@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import NotFound from "@/pages/NotFound";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getStateImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { cityInList } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -162,6 +163,7 @@ export default function CountyTreatmentPage() {
       heroTitle={pageTitle}
       heroSubtitle={treatment.description}
       heroLocation={`${countyData.name} County, ${stateData.name}`}
+      heroImage={getStateImage(stateSlug)}
       heroBadge="County Treatment Guide"
       introContent={`Looking for ${treatment.label.toLowerCase()} in ${countyData.name} County, ${stateData.name}? RehabLookup connects you with verified treatment facilities serving the ${countyData.majorCities.slice(0, 4).join(", ")} area. ${density === "high" ? `${countyData.name} County has strong access to ${treatment.label.toLowerCase()} with multiple accredited programs.` : density === "moderate" ? `${countyData.name} County offers several ${treatment.label.toLowerCase()} options for residents.` : `While ${countyData.name} County has limited local options, nearby facilities across ${stateData.name} provide accessible ${treatment.label.toLowerCase()}.`}`}
       sections={[

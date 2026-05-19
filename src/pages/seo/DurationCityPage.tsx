@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -151,6 +152,7 @@ export default function DurationCityPage() {
       heroSubtitle={`Compare verified ${config.title.toLowerCase()} in ${cityName}, ${stateName}. Find the right duration and level of care for lasting recovery.`}
       heroLocation={`${cityName}, ${abbreviation}`}
       heroBadge="Treatment Programs"
+      heroImage={getCityImage(stateSlug, citySlug)}
       introContent={`Looking for ${config.title.toLowerCase()} in ${cityName}? RehabLookup connects you with verified treatment facilities offering structured programs designed for effective recovery. Compare options, check insurance coverage, and get matched with the right program.`}
       sections={[
         {
