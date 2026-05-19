@@ -428,17 +428,37 @@ export default function GenericNearMePage({ configSlug }: GenericNearMePageProps
         title={stateData ? `Featured ${config.treatmentType} Centers in ${stateData.state}` : `Featured ${config.treatmentType} Centers Near You`}
       />
 
-      <section className="py-12 bg-background">
+      {/* Directory results — denser header to match the smaller hero. */}
+      <section className="py-8 md:py-10 bg-background">
         <div className="container">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground">
-              {config.treatmentType} Centers {stateData ? `in ${stateData.state}` : "Near You"}
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              {facilities.length > 0
-                ? `Browse ${facilities.length}+ verified facilities specializing in ${config.treatmentType.toLowerCase()}.`
-                : `We're growing our ${config.treatmentType.toLowerCase()} network. Browse all centers or get personalized help.`}
-            </p>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">
+                  {config.treatmentType} Centers {stateData ? `in ${stateData.state}` : "Near You"}
+                </h2>
+                {!isLoading && facilities.length > 0 && (
+                  <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-500/20">
+                    {facilities.length}
+                  </span>
+                )}
+              </div>
+              {!isLoading && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {facilities.length > 0
+                    ? `${facilities.length} verified ${config.treatmentType.toLowerCase()} ${facilities.length === 1 ? "facility" : "facilities"} ${stateData ? `in ${stateData.state}` : "nearby"} · sorted by ranking`
+                    : `We're growing our ${config.treatmentType.toLowerCase()} network. Browse all centers or get personalized help.`}
+                </p>
+              )}
+            </div>
+            {!isLoading && facilities.length > 12 && (
+              <Link
+                to={`/search-results${stateData ? `?state=${stateData.state}` : ""}`}
+                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+              >
+                Full search filters <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            )}
           </div>
 
           {isLoading ? (
@@ -464,31 +484,40 @@ export default function GenericNearMePage({ configSlug }: GenericNearMePageProps
       <ConversionSection location={stateData?.state} />
 
       {!stateSlug && (
-        <section className="py-12 bg-muted/30 border-t">
+        <section className="py-8 md:py-10 bg-muted/30 border-t">
           <div className="container">
-            <h2 className="text-2xl font-bold text-foreground mb-6">
-              {config.label} by State
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                  Browse by State
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Filter {config.label.toLowerCase()} programs to your state
+                </p>
+              </div>
+              <Link
+                to="/rehab-centers"
+                className="hidden md:inline-flex text-sm font-medium text-primary hover:underline gap-1 items-center"
+              >
+                All states <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {statesData.slice(0, 20).map((state) => (
                 <Link
                   key={state.slug}
                   to={`/${config.slug}/${state.slug}`}
-                  className="flex items-center gap-2 p-3 rounded-lg bg-background border hover:border-primary hover:bg-primary/5 transition-all group"
+                  className="group flex items-center gap-2.5 rounded-xl border bg-background p-3 transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-md"
                 >
-                  <MapPin className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                  <span className="font-medium text-foreground group-hover:text-primary">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-xs font-bold text-emerald-700 transition-colors group-hover:bg-emerald-500/15">
+                    {state.abbreviation}
+                  </div>
+                  <span className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
                     {state.name}
                   </span>
+                  <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
                 </Link>
               ))}
-            </div>
-            <div className="mt-6 text-center">
-              <Link to="/rehab-centers">
-                <Button variant="outline" className="gap-2">
-                  View All 50 States <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
             </div>
           </div>
         </section>
