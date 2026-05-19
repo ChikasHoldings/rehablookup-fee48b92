@@ -161,6 +161,38 @@ export default function DurationCityPage() {
           heading: `Choosing the Right Duration`,
           content: `Research consistently shows that longer treatment durations improve recovery outcomes. When choosing a program in ${cityName}, consider your addiction severity, co-occurring conditions, and support system. All programs on RehabLookup are verified for proper licensing and evidence-based approaches.`,
         },
+        {
+          heading: `Insurance & Cost in ${cityName}`,
+          content: `Most ${cityName} programs accept private insurance, Medicaid, and Medicare. Coverage depends on plan, level of care, and medical necessity. Facilities verify benefits before admission so there are no billing surprises, and many offer sliding-scale or financing for uncovered portions.`,
+        },
+        {
+          heading: `Levels of Care Across Program Length`,
+          content: `Across program durations, ${cityName} centers offer medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), standard outpatient, and recovery housing. Many programs step you down through levels of care over the duration so the intensity matches your progress.`,
+        },
+        {
+          heading: `Continuing Care After Discharge`,
+          content: `${cityName} treatment providers build aftercare into the discharge plan: weekly outpatient therapy, peer-support groups (12-step, SMART Recovery), alumni programming, and sober-living referrals. The transition home is structured, not abrupt — and long-term outcomes track strongly with continuing engagement.`,
+        },
+        {
+          heading: `How Facilities Are Verified`,
+          content: `Every ${cityName} program in our directory is checked for state licensing, current accreditation (Joint Commission or CARF), and active clinical credentials. We do not sell admission slots; providers can't pay for placement. Pages are editorially curated, not lead-broker auctions.`,
+        },
+      ]}
+      whatToExpect={[
+        `Free, confidential phone or web assessment with a licensed clinician`,
+        `Insurance benefits verified before any commitment`,
+        `Custom treatment plan within 24-48 hours of intake`,
+        `Medical detox first if clinically indicated, with 24/7 nursing`,
+        `Daily therapy, group, and educational programming`,
+        `Aftercare plan and continuing-care referrals built into discharge`,
+      ]}
+      benefits={[
+        `Licensed, accredited ${cityName} facilities only`,
+        `${config.title} matched to severity and clinical need`,
+        `Insurance accepted: most private plans, Medicaid, Medicare, TRICARE`,
+        `Dual-diagnosis support for co-occurring mental health conditions`,
+        `Evidence-based therapies (CBT, DBT, EMDR, MAT where indicated)`,
+        `Long-term continuing care and alumni community`,
       ]}
       facilities={facilities}
       isLoading={isLoading}

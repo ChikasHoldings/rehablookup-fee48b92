@@ -152,6 +152,38 @@ export default function DemographicCityPage() {
           heading: `What to Look for in ${cityName}`,
           content: `When choosing a program, prioritize facilities with specialized staff training, peer groups with shared experiences, individualized treatment plans, accreditation from JCAHO or CARF, and comprehensive aftercare planning.`,
         },
+        {
+          heading: `Insurance & Cost in ${cityName}`,
+          content: `Most ${cityName} programs accept private insurance, Medicaid, and Medicare. Under federal parity laws, substance-use treatment is covered at the same level as other medical care. Facilities verify benefits before admission and many offer sliding-scale fees or financing for uncovered costs.`,
+        },
+        {
+          heading: `Levels of Care Offered`,
+          content: `${cityName} providers offer the full continuum: medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), standard outpatient, and recovery housing. Clinicians match level of care to severity, support system, and clinical need rather than what you can pay.`,
+        },
+        {
+          heading: `Aftercare & Long-Term Recovery in ${cityName}`,
+          content: `${cityName} supports recovery beyond discharge with peer-support meetings (12-step, SMART Recovery), alumni programming, sober living homes, and outpatient continuing care. Most treatment centers build the aftercare plan into discharge — recovery is treated as ongoing, not a one-time event.`,
+        },
+        {
+          heading: `How Facilities Are Verified`,
+          content: `Every ${cityName} facility in our directory is checked for state licensing, current accreditation (Joint Commission or CARF), and active clinical credentials. We do not sell admission slots; providers can't pay for placement. Pages are editorially curated, not lead-broker auctions.`,
+        },
+      ]}
+      whatToExpect={[
+        `Free, confidential phone or web assessment with a licensed clinician`,
+        `Insurance benefits verified before any commitment`,
+        `Custom treatment plan within 24-48 hours of intake`,
+        `Population-specific therapy groups and peer support`,
+        `Medication management when clinically indicated`,
+        `Aftercare plan + community resource referrals built into discharge`,
+      ]}
+      benefits={[
+        `Licensed, accredited ${cityName} facilities only`,
+        `Specialized programs tailored to this population's needs`,
+        `Insurance accepted: most private plans, Medicaid, Medicare, TRICARE`,
+        `Dual-diagnosis support for co-occurring mental health conditions`,
+        `Evidence-based therapies (CBT, DBT, EMDR, MAT where indicated)`,
+        `Long-term continuing care and alumni community`,
       ]}
       facilities={facilities}
       isLoading={isLoading}

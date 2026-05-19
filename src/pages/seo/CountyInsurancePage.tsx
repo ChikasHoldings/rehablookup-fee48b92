@@ -135,6 +135,38 @@ export default function CountyInsurancePage() {
           heading: `Verifying ${insurer.name} Benefits`,
           content: `Before starting treatment in ${countyData.name} County, verify your ${insurer.name} benefits by calling the number on the back of your insurance card, using ${insurer.name}'s online member portal, or contacting facility admissions teams directly. Key questions: Is the facility in-network? What is my deductible? Are there prior authorization requirements? What copay or coinsurance applies?`,
         },
+        {
+          heading: `Parity Protections in ${stateData.name}`,
+          content: `Federal parity law requires ${insurer.name} to cover substance-use treatment at the same level as other medical care — equal visit limits, equal deductibles, equal out-of-pocket caps. ${stateData.name} layers on its own consumer protections through the state insurance commissioner, who handles parity-violation complaints when plans deny treatment that comparable medical care would cover.`,
+        },
+        {
+          heading: `Out-of-Pocket Cost in ${countyData.name} County`,
+          content: `Your share after ${insurer.name} pays depends on plan tier, deductible status, network status, and level of care. Facilities in ${countyData.name} County provide a written cost estimate before admission so there are no surprise bills. Many offer payment plans, sliding-scale fees, or scholarship beds for portions insurance doesn't cover.`,
+        },
+        {
+          heading: `Levels of Care ${insurer.name} Covers`,
+          content: `${insurer.name} plans cover the full continuum across ${countyData.name} County: medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), standard outpatient, medication-assisted treatment (MAT), and aftercare. Specific day limits depend on medical-necessity reviews; facilities document clinical justification to support continued authorization.`,
+        },
+        {
+          heading: `If Coverage Is Denied`,
+          content: `Most coverage denials come down to documentation, not policy exclusion. ${countyData.name} County facilities have utilization-review teams that handle ${insurer.name} appeals as part of standard service. State insurance commissioners and federal parity-compliance offices provide additional escalation paths if internal appeals are unsuccessful.`,
+        },
+      ]}
+      whatToExpect={[
+        `Free, confidential ${insurer.name} benefits verification`,
+        `Pre-authorization handled by the facility's admissions team`,
+        `Written cost estimate within 24-48 hours of intake`,
+        `Medical detox first if clinically indicated, fully coordinated with ${insurer.name}`,
+        `Daily therapy, group, and family programming through the stay`,
+        `Continued-care authorization tracked through discharge planning`,
+      ]}
+      benefits={[
+        `Verified ${insurer.name}-accepting facilities in ${countyData.name} County`,
+        `Parity-protected coverage equal to other medical care`,
+        `Pre-authorization and utilization review handled by intake teams`,
+        `Dual-diagnosis programs covered for co-occurring conditions`,
+        `Full continuum: detox, residential, PHP, IOP, outpatient, MAT`,
+        `Appeal support if coverage is initially denied`,
       ]}
       facilities={facilities}
       isLoading={isLoading}

@@ -147,6 +147,38 @@ export default function CityInsurancePage() {
           heading: `Finding In-Network Providers in ${cityName}`,
           content: `To maximize your ${insurer.name} benefits in ${cityName}: 1) Confirm which facilities are in-network for your specific plan, 2) Ask about pre-authorization requirements before admission, 3) Verify the number of covered treatment days, 4) Understand your copay and deductible obligations. Many ${cityName} facilities listed on RehabLookup offer complimentary benefits verification.`,
         },
+        {
+          heading: `Parity, Pre-Auth, and What's Required`,
+          content: `Under the Mental Health Parity & Addiction Equity Act, ${insurer.name} must cover substance-use treatment at the same level as other medical care — same visit limits, same deductibles, same out-of-pocket caps. Most levels of care require pre-authorization; facilities handle the paperwork as part of intake and will tell you exactly what days and services are approved before admission.`,
+        },
+        {
+          heading: `Out-of-Pocket Cost in ${cityName}`,
+          content: `What you pay depends on plan tier, deductible status, in-network vs out-of-network, and the level of care. After ${insurer.name} pays its share, ${cityName} facilities help estimate your share — typically a copay per outpatient visit or a percentage coinsurance for inpatient. Many facilities offer payment plans, sliding-scale fees, or scholarship beds for residual costs not covered by insurance.`,
+        },
+        {
+          heading: `Levels of Care ${insurer.name} Typically Covers`,
+          content: `${insurer.name} plans generally cover the full continuum: medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), standard outpatient counseling, medication-assisted treatment (MAT), and aftercare/continuing care. The specific number of days and visit limits depend on medical necessity reviews; facilities document clinical justification to support continued authorization.`,
+        },
+        {
+          heading: `When Coverage Is Denied — Your Options`,
+          content: `If ${insurer.name} denies authorization or coverage for treatment, you have a right to appeal. Most denials come down to medical-necessity documentation; ${cityName} facilities have utilization-review teams that handle appeals as part of their service. State insurance commissioners and federal parity-compliance offices provide additional escalation paths if internal appeals fail.`,
+        },
+      ]}
+      whatToExpect={[
+        `Free, confidential benefits verification before any commitment`,
+        `${insurer.name} pre-authorization handled by the facility's admissions team`,
+        `Custom treatment plan and cost estimate within 24-48 hours`,
+        `Medical detox first if clinically indicated, fully coordinated with ${insurer.name}`,
+        `Daily therapy, group, and family programming through the stay`,
+        `Continued-care authorization tracked through discharge planning`,
+      ]}
+      benefits={[
+        `Verified ${insurer.name}-accepting facilities in ${cityName}`,
+        `Parity-protected coverage equal to other medical care`,
+        `Pre-authorization and utilization review handled by intake teams`,
+        `Dual-diagnosis programs covered for co-occurring mental health conditions`,
+        `MAT, detox, residential, PHP, IOP, and outpatient all in-network options`,
+        `Appeal support if coverage is initially denied`,
       ]}
       facilities={facilities}
       isLoading={isLoading}

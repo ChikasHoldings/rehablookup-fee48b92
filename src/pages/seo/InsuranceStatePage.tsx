@@ -139,6 +139,34 @@ export default function InsuranceStatePage() {
           heading: `Treatment Options in ${stateConfig.state}`,
           content: `${stateConfig.state} offers a range of treatment settings for ${insurer.name} members, including medical detox facilities, residential inpatient programs, partial hospitalization programs (PHP), intensive outpatient programs (IOP), and outpatient counseling. ${stateConfig.notableInfo} The state has ${facilities.length > 0 ? `multiple accredited facilities accepting ${insurer.name}` : "treatment programs available"} across major metro areas.`,
         },
+        {
+          heading: `Federal Parity Protections`,
+          content: `Under the Mental Health Parity & Addiction Equity Act, ${insurer.name} must cover substance-use treatment at the same level as other medical care — equal visit limits, equal deductibles, equal out-of-pocket maximums. ${stateConfig.state} regulators add state-level enforcement: parity-violation complaints can be filed with the ${stateConfig.state} insurance commissioner when plans deny treatment that comparable medical care would cover.`,
+        },
+        {
+          heading: `Out-of-Pocket Cost in ${stateConfig.state}`,
+          content: `Your share after ${insurer.name} pays depends on plan tier, deductible status, in-network vs out-of-network, and level of care. ${stateConfig.state} facilities provide a written cost estimate before admission so there are no surprise bills. Many offer payment plans, sliding-scale fees, or scholarship beds for portions insurance doesn't cover.`,
+        },
+        {
+          heading: `If Coverage Is Denied`,
+          content: `If ${insurer.name} denies authorization or coverage for treatment, you have a right to appeal. Most denials come down to medical-necessity documentation; ${stateConfig.state} facilities have utilization-review teams that handle appeals as part of their service. The state insurance commissioner and federal parity-compliance offices provide additional escalation paths if internal appeals are unsuccessful.`,
+        },
+      ]}
+      whatToExpect={[
+        `Free, confidential ${insurer.name} benefits verification`,
+        `Pre-authorization handled by the facility's admissions team`,
+        `Written cost estimate within 24-48 hours of intake`,
+        `Medical detox first if clinically indicated, fully coordinated with ${insurer.name}`,
+        `Daily therapy, group, and family programming through the stay`,
+        `Continued-care authorization tracked through discharge planning`,
+      ]}
+      benefits={[
+        `Verified ${insurer.name}-accepting facilities across ${stateConfig.state}`,
+        `Parity-protected coverage equal to other medical care`,
+        `Pre-authorization and utilization review handled by intake teams`,
+        `Dual-diagnosis programs covered for co-occurring conditions`,
+        `Full continuum: detox, residential, PHP, IOP, outpatient, MAT`,
+        `Appeal support if coverage is initially denied`,
       ]}
       facilities={facilities}
       isLoading={isLoading}
