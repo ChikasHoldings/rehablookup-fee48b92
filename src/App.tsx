@@ -425,6 +425,14 @@ function BlogRedirect() {
   return <Navigate to={`/resources/${id}`} replace />;
 }
 
+// Legacy /treatment-types/holistic/<state> → canonical holistic-therapy.
+// The old sitemap edge fn emitted this short slug; redirect any cached
+// backlinks so Googlebot lands on a real page.
+function NavigateHolisticState() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/treatment-types/holistic-therapy/${stateSlug}`} replace />;
+}
+
 // ============================================================
 // Legacy slug redirects — backlink rescue
 // ============================================================
@@ -614,6 +622,13 @@ const AppInner = () => {
             <Route path="/treatment-types/holistic-therapy" element={<PublicRouteGuard><HolisticTherapy /></PublicRouteGuard>} />
             <Route path="/treatment-types/holistic-therapy/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="holistic" /></PublicRouteGuard>} />
             <Route path="/treatment-types/holistic-treatment" element={<Navigate to="/treatment-types/holistic-therapy" replace />} />
+            {/* Legacy /treatment-types/holistic/<state> — the sitemap edge
+                fn used to emit this short slug, which doesn't match the
+                holistic-therapy route. Redirect any cached backlinks to
+                the canonical URL so Googlebot and visitors land on a
+                real page instead of the SPA 404. */}
+            <Route path="/treatment-types/holistic" element={<Navigate to="/treatment-types/holistic-therapy" replace />} />
+            <Route path="/treatment-types/holistic/:stateSlug" element={<NavigateHolisticState />} />
             <Route path="/treatment-types/luxury-rehab" element={<PublicRouteGuard><LuxuryRehab /></PublicRouteGuard>} />
             <Route path="/treatment-types/luxury-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="luxury-rehab" /></PublicRouteGuard>} />
             <Route path="/treatment-types/sober-living/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="sober-living" /></PublicRouteGuard>} />

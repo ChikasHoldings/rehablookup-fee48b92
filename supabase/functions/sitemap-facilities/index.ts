@@ -989,7 +989,13 @@ const TREATMENT_TYPES_WITH_GEO = [
   "detox-programs",
 ];
 
-// Expanded treatment types (StateTreatmentExpandedPage routes)
+// Expanded treatment types (StateTreatmentExpandedPage routes).
+// IMPORTANT: slugs MUST match App.tsx route definitions exactly —
+// listing /treatment-types/<slug>/<state> in the sitemap where <slug>
+// is not a registered SPA route route makes generate-sitemaps drop
+// the entry as "no prerender, no SPA route". holistic-therapy (the
+// route slug per App.tsx:615) was previously listed as "holistic"
+// which dropped all 51 state-level URLs from every build.
 const EXPANDED_TREATMENT_TYPES = [
   "luxury-rehab",
   "sober-living",
@@ -999,7 +1005,7 @@ const EXPANDED_TREATMENT_TYPES = [
   "veterans-rehab",
   "womens-rehab",
   "mens-rehab",
-  "holistic",
+  "holistic-therapy",
 ];
 
 // County treatment types for Tier 2
@@ -1212,7 +1218,7 @@ function generateExpandedTreatmentStateRoutes(): RouteEntry[] {
   for (const type of EXPANDED_TREATMENT_TYPES) {
     // National hub page
     routes.push({
-      path: `/treatment-types/${type === "holistic" ? "holistic-therapy" : type}`,
+      path: `/treatment-types/${type}`,
       priority: 0.80,
       changefreq: "weekly"
     });
@@ -1230,7 +1236,8 @@ function generateExpandedTreatmentStateRoutes(): RouteEntry[] {
 
 function generateExpandedTreatmentCityRoutes(): RouteEntry[] {
   const routes: RouteEntry[] = [];
-  const cityTypes = EXPANDED_TREATMENT_TYPES.filter(t => t !== "holistic");
+  // holistic-therapy has no city-level route in App.tsx — exclude.
+  const cityTypes = EXPANDED_TREATMENT_TYPES.filter(t => t !== "holistic-therapy");
   for (const type of cityTypes) {
     for (const city of MAJOR_CITIES) {
       routes.push({
