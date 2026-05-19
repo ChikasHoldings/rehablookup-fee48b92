@@ -11,10 +11,7 @@ import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
 import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
 import { StaticFileRedirect } from "@/components/seo/StaticFileRedirect";
 // CookieConsentBanner removed — US site, no opt-in required. GA4 tracks unconditionally.
-import { ExitIntentPopup } from "@/components/conversion/ExitIntentPopup";
-import { StickyMobileActionBar } from "@/components/conversion/StickyMobileActionBar";
 import { useTelClickTracking } from "@/hooks/useTelClickTracking";
-import { useNewCtaSystem } from "@/hooks/useNewCtaSystem";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
@@ -403,26 +400,19 @@ const AdvisorProviderDirectory = lazy(() => import("./pages/admin/AdvisorProvide
 const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
 
 /**
- * Global side-effects + chrome that runs once per app mount. Lives
- * inside the React tree so it can use hooks. Two responsibilities:
- *   1. useTelClickTracking — delegated click listener that records a
- *      single `phone_click` event for every `<a href="tel:...">` on
- *      the page, so we can finally measure the real conversion in
- *      this YMYL category.
- *   2. Render `<ExitIntentPopup/>` (legacy, kept by default) OR the
- *      new `<StickyMobileActionBar/>` — gated by the NEW_CTA_SYSTEM
- *      flag so we can ship the new system alongside the old and
- *      flip per-environment.
+ * Global side-effects that run once per app mount. Lives inside the
+ * React tree so it can use hooks. Sole responsibility:
+ *   useTelClickTracking — delegated click listener that records a
+ *   single `phone_click` event for every `<a href="tel:...">` on the
+ *   page, so we can measure the real conversion in this YMYL category.
+ *
+ * Exit-intent + sticky/scroll CTAs were removed (too intrusive, drew
+ * attention away from Featured facilities). The remaining inline
+ * intake widget on individual pages handles voluntary lead capture.
  */
 function AppGlobals() {
   useTelClickTracking();
-  const newCta = useNewCtaSystem();
-  return (
-    <>
-      {!newCta && <ExitIntentPopup />}
-      {newCta && <StickyMobileActionBar />}
-    </>
-  );
+  return null;
 }
 
 function LegacyCenterRedirect() {

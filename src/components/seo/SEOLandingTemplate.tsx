@@ -7,7 +7,6 @@ import { useFacilityChildData } from "@/hooks/useFacilityChildData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { TrustBar } from "@/components/seo/TrustBar";
-import { StickyConversionBar } from "@/components/seo/StickyConversionBar";
 import { ConversionSection } from "@/components/seo/ConversionSection";
 import { ComparisonSection } from "@/components/seo/ComparisonSection";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
@@ -148,8 +147,6 @@ export function SEOLandingTemplate({
 
   return (
     <Layout>
-      {/* Sticky bottom bar — appears after 150px scroll, hidden on concierge/provider/admin */}
-      <StickyConversionBar />
       <SEO
         title={metaTitle}
         description={metaDescription}

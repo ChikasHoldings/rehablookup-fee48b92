@@ -20,12 +20,6 @@ vi.mock("@/components/layout/Footer", () => ({
 vi.mock("@/components/InternationalBanner", () => ({
   InternationalBanner: () => null,
 }));
-vi.mock("@/components/seo/StickyConversionBar", () => ({
-  StickyConversionBar: () => null,
-}));
-vi.mock("@/components/ui/floating-help-button", () => ({
-  FloatingHelpButton: () => null,
-}));
 vi.mock("@/components/ui/back-to-top", () => ({
   BackToTop: () => null,
 }));

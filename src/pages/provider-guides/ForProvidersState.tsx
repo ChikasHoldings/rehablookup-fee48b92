@@ -6,7 +6,6 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Shield, Users, Building2, TrendingUp, ChevronRight, Scale, FileText, ExternalLink, Clock } from "lucide-react";
 import { stateLicensingData } from "@/data/stateLicensingData";
-import { ProviderStickyCTA } from "@/components/provider-guides/ProviderStickyCTA";
 
 const STATE_DATA: Record<string, { name: string; abbr: string; facilities: number; searches: string }> = {
   "alabama": { name: "Alabama", abbr: "AL", facilities: 45, searches: "2,400" },
@@ -397,7 +396,6 @@ export default function ForProvidersState() {
         </section>
       </main>
 
-      <ProviderStickyCTA />
       <Footer />
     </div>
   );

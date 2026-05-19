@@ -2,8 +2,6 @@ import { ReactNode, useEffect, memo } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { BackToTop } from "@/components/ui/back-to-top";
-import { FloatingHelpButton } from "@/components/ui/floating-help-button";
-import { StickyConversionBar } from "@/components/seo/StickyConversionBar";
 import { InternationalBanner } from "@/components/InternationalBanner";
 import { CompareTray } from "@/components/comparison/CompareTray";
 import { preloadPublicPages } from "@/lib/routePrefetch";
@@ -55,8 +53,6 @@ export function Layout({ children }: LayoutProps) {
       <main id="main" tabIndex={-1} className="flex-1 w-full min-w-0 focus:outline-none">{children}</main>
       <MemoizedFooter />
       <BackToTop />
-      <FloatingHelpButton />
-      <StickyConversionBar />
       <CompareTray />
     </div>
   );
