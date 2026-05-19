@@ -168,11 +168,40 @@ function matchesPattern(dest, patterns) {
   return patterns.some((p) => p.re.test(dest));
 }
 
+// SmartCatchAll-handled prefixes — paths NOT registered as <Route> but matched
+// dynamically by src/components/SmartCatchAll.tsx (e.g. /alcohol-rehab-in-<city>).
+// Mirrors the discovery approach in scripts/validate-internal-links.mjs.
+async function collectSmartCatchAllPrefixes() {
+  try {
+    const src = await readFile(path.join(repoRoot, "src/components/SmartCatchAll.tsx"), "utf8");
+    const lists = ["CITY_TREATMENT_PREFIXES", "CITY_TREATMENT_PROVIDER_PREFIXES", "CITY_INSURANCE_PROVIDER_PREFIXES"];
+    const prefixes = [];
+    for (const name of lists) {
+      const block = src.match(new RegExp(`const ${name}[^=]*=\\s*\\[([\\s\\S]*?)\\];`));
+      if (!block) continue;
+      for (const m of block[1].matchAll(/"([^"]+)"/g)) prefixes.push(m[1]);
+    }
+    return prefixes.concat([
+      "/best-rehab-centers-in-",
+      "/list-your-facility-in-",
+      "/for-providers-in-",
+      "/get-more-patients-in-",
+    ]);
+  } catch {
+    return [];
+  }
+}
+
+function matchesSmartCatchAllPrefix(dest, prefixes) {
+  return prefixes.some((p) => dest.startsWith(p) && dest.length > p.length);
+}
+
 // ───────────────────────────────────────────────────────────────────────────
 // Step 3: validate
 // ───────────────────────────────────────────────────────────────────────────
 async function main() {
   const { literals, patterns } = await collectRoutes();
+  const smartCatchAllPrefixes = await collectSmartCatchAllPrefixes();
 
   const rootRedirects = await readRedirects(path.join(repoRoot, "vercel.json"));
   const pubRedirects = await readRedirects(path.join(repoRoot, "public/vercel.json"));
@@ -215,6 +244,11 @@ async function main() {
     }
     // Prerendered static file?
     if (await publicFileExists(dest)) {
+      okCount++;
+      continue;
+    }
+    // SmartCatchAll-handled dynamic prefix? (e.g. /alcohol-rehab-in-<city>)
+    if (matchesSmartCatchAllPrefix(dest, smartCatchAllPrefixes)) {
       okCount++;
       continue;
     }

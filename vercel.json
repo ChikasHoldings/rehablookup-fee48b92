@@ -450,6 +450,136 @@
       "source": "/signup/subscription",
       "destination": "/provider/billing?signup=retry",
       "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/holistic/:state",
+      "destination": "/treatment-types/holistic-therapy/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/dual-diagnosis/:state",
+      "destination": "/treatment-types/dual-diagnosis-treatment/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/dual-diagnosis/:state/:city",
+      "destination": "/treatment-types/dual-diagnosis-treatment/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/drug-addiction-treatment/:state",
+      "destination": "/treatment-types/drug-addiction/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/drug-addiction-treatment/:state/:city",
+      "destination": "/treatment-types/drug-addiction/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/alcohol-rehab/:state",
+      "destination": "/treatment-types/alcohol-rehabilitation/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/alcohol-rehab/:state/:city",
+      "destination": "/treatment-types/alcohol-rehabilitation/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/drug-rehab/:state",
+      "destination": "/treatment-types/drug-addiction/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/drug-rehab/:state/:city",
+      "destination": "/treatment-types/drug-addiction/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/inpatient-rehab/:state",
+      "destination": "/treatment-types/residential-inpatient/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/inpatient-rehab/:state/:city",
+      "destination": "/treatment-types/residential-inpatient/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/detox-centers/:state",
+      "destination": "/treatment-types/detox-programs/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/detox-centers/:state/:city",
+      "destination": "/treatment-types/detox-programs/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/iop",
+      "destination": "/iop-programs",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/iop/:state",
+      "destination": "/iop-programs",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/php",
+      "destination": "/php-programs",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/php/:state",
+      "destination": "/php-programs",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/holistic-rehab/:state",
+      "destination": "/treatment-types/holistic-therapy/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/drug-rehab/:state",
+      "destination": "/treatment-types/drug-addiction/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/christian-rehab/:state",
+      "destination": "/treatment-types/faith-based-rehab/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/detox-centers-in-st.-louis",
+      "destination": "/detox-centers-in-st-louis",
+      "statusCode": 301
+    },
+    {
+      "source": "/alcohol-rehab-in-st.-paul",
+      "destination": "/alcohol-rehab-in-st-paul",
+      "statusCode": 301
+    },
+    {
+      "source": "/alcohol-rehab-in-st.-louis",
+      "destination": "/alcohol-rehab-in-st-louis",
+      "statusCode": 301
+    },
+    {
+      "source": "/alcohol-rehab-in-st.-charles",
+      "destination": "/alcohol-rehab-in-st-charles",
+      "statusCode": 301
+    },
+    {
+      "source": "/insurance/:carrier/missouri/st.-louis",
+      "destination": "/insurance/:carrier/missouri/st-louis",
+      "statusCode": 301
+    },
+    {
+      "source": "/insurance/:carrier/minnesota/st.-paul",
+      "destination": "/insurance/:carrier/minnesota/st-paul",
+      "statusCode": 301
     }
   ],
   "buildCommand": "npm run build:vercel",
