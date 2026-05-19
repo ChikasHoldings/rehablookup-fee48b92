@@ -16,18 +16,18 @@ const TermsOfService = () => {
           { name: "Terms of Service", url: "/terms-of-service" },
         ]}
       />
-      {/* Header */}
-      <section className="border-b border-border bg-secondary/30 py-12">
-        <div className="container">
+      {/* Hero — TERMS OF SERVICE. Slate-amber library palette. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-4"
-            variant="light"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[{ label: "Terms of Service" }]}
           />
-          <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-white">
             Terms of Service
           </h1>
-          <p className="mt-2 text-muted-foreground">
+          <p className="mt-1 text-xs text-white/70">
             Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
           </p>
         </div>

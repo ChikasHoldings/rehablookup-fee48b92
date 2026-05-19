@@ -18,23 +18,23 @@ const PrivacyPolicy = () => {
           { name: "Privacy Policy", url: "/privacy-policy" },
         ]}
       />
-      {/* Header */}
-      <section className="border-b border-border bg-secondary/30 py-12">
-        <div className="container">
+      {/* Hero — PRIVACY POLICY. Slate-amber library palette. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-4"
-            variant="light"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[{ label: "Privacy Policy" }]}
           />
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Shield className="h-6 w-6 text-primary" aria-hidden="true" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/20 ring-1 ring-amber-400/25">
+              <Shield className="h-5 w-5 text-amber-200" aria-hidden="true" />
             </div>
             <div>
-              <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+              <h1 className="font-display text-2xl md:text-3xl font-bold text-white">
                 Privacy Policy
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-xs text-white/70">
                 Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </p>
             </div>

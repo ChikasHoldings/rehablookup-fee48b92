@@ -303,10 +303,13 @@ export default function Comparison() {
         noindex
       />
 
-      <section className="bg-muted/30 border-b border-border">
-        <div className="container py-6 sm:py-8">
+      {/* Hero — COMPARE. Smaller than State per the brief. Distinct
+          slate-primary palette with GitCompare eyebrow. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/60">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 sm:py-8">
           <BreadcrumbNav
-            className="mb-3"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
               { label: "Home", href: "/" },
               { label: "Compare" },
@@ -314,17 +317,19 @@ export default function Comparison() {
           />
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground flex items-center gap-2">
-                <GitCompare className="h-6 w-6 text-primary" />
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+                <GitCompare className="h-3 w-3" />
+                Side-by-Side · Up to {MAX_COMPARE}
+              </div>
+              <h1 className="text-2xl md:text-3xl font-display font-bold text-white">
                 Compare Treatment Centers
               </h1>
-              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+              <p className="text-sm text-white/80 mt-1 max-w-2xl">
                 Side-by-side view of levels of care, accepted insurance, accreditations, and contact details.
-                Compare up to {MAX_COMPARE} at a time.
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button asChild size="sm" variant="outline">
+              <Button asChild size="sm" variant="outline" className="border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm">
                 <Link to="/rehab-centers" className="gap-1.5">
                   <ArrowLeft className="h-3.5 w-3.5" />
                   Browse facilities
@@ -332,10 +337,10 @@ export default function Comparison() {
               </Button>
               {count > 0 && (
                 <>
-                  <Button size="sm" variant="outline" onClick={handleShare}>
+                  <Button size="sm" variant="outline" onClick={handleShare} className="border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm">
                     Share
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => clearCompare()} className="gap-1.5">
+                  <Button size="sm" variant="outline" onClick={() => clearCompare()} className="gap-1.5 border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm">
                     <Trash2 className="h-3.5 w-3.5" />
                     Clear
                   </Button>
