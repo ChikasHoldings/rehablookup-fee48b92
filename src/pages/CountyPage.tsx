@@ -187,9 +187,9 @@ export default function CountyPage() {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA2KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2dyaWQpIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIi8+PC9zdmc+')] opacity-100" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.08),_transparent_60%)]" />
 
-        <div className="container mx-auto px-4 py-9 md:py-12 relative z-10">
+        <div className="container mx-auto px-4 py-6 md:py-8 relative z-10">
           <BreadcrumbNav
-            className="mb-5 [&_*]:!text-white/70 [&_a:hover]:!text-white"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
               { label: stateData.name, href: `/rehab-centers/${stateSlug}` },
               { label: `${countyData.name} County` },
@@ -197,18 +197,18 @@ export default function CountyPage() {
           />
 
           <div className="max-w-3xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
-              <Landmark className="h-3.5 w-3.5" />
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+              <Landmark className="h-3 w-3" />
               {stateData.abbreviation} · Jurisdiction Directory
             </div>
-            <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
+            <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">
               Rehab Centers in {countyData.name} County
             </h1>
-            <p className="mt-3 text-base md:text-lg text-white/85 max-w-2xl">
-              Verified addiction treatment programs serving {countyData.name} County, {stateData.abbreviation} — {countyData.majorCities.length} cities, county seat {countyData.seat}.
+            <p className="mt-2 text-sm md:text-base text-white/85 max-w-2xl">
+              {countyData.majorCities.length} cities · county seat {countyData.seat}
             </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg gap-2">
+            <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
+              <Button asChild size="default" className="bg-white text-primary hover:bg-white/90 shadow-lg gap-2">
                 <Link to="/concierge">
                   <Phone className="h-4 w-4" />
                   Get Free Placement Help
@@ -216,7 +216,7 @@ export default function CountyPage() {
               </Button>
               <Button
                 asChild
-                size="lg"
+                size="default"
                 variant="outline"
                 className="border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm gap-2"
               >
@@ -230,13 +230,11 @@ export default function CountyPage() {
         </div>
       </section>
 
-      {/* County-specific stat band — 4 civic signals. Light section
-          right below the hero, mirrors the StatePage right-column
-          stat grid but rendered as a dedicated horizontal strip so
-          the visual rhythm differs from state/city pages. */}
+      {/* County stat band — 4 civic signals in a tight light strip
+          right below the hero. */}
       <section className="border-b bg-secondary/40">
-        <div className="container mx-auto px-4 py-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+        <div className="container mx-auto px-4 py-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <LocationStatTile
               label="Population"
               value={countyData.population >= 1_000_000
@@ -283,9 +281,9 @@ export default function CountyPage() {
       />
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-10 md:py-14">
+      <div className="container mx-auto px-4 py-8 md:py-10">
         {/* Directory results — county-level centerpiece */}
-        <section className="mb-12">
+        <section className="mb-10">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="flex items-center gap-2">
@@ -338,7 +336,7 @@ export default function CountyPage() {
         </section>
 
         {/* Cities in the County — chip layout, county-specific. */}
-        <section className="mb-12">
+        <section className="mb-10">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
               <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
@@ -378,7 +376,7 @@ export default function CountyPage() {
         {/* Browse by Care Level — state-scoped chips. Same set as
             State/City pages but presented in a county context so seekers
             jump to the right state-scoped care page from here too. */}
-        <section className="mb-12">
+        <section className="mb-10">
           <div className="mb-5">
             <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
               Browse by Care Level
@@ -423,7 +421,7 @@ export default function CountyPage() {
             "Demographics & Community" + "Access & Transportation"
             stack. Same county-data feeds everything; just framed as
             a polished card. */}
-        <section className="mb-12 rounded-2xl border bg-card p-6 md:p-8 shadow-sm">
+        <section className="mb-10 rounded-2xl border bg-card p-6 md:p-8 shadow-sm">
           <div className="grid gap-8 md:grid-cols-[1.5fr_1fr]">
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -473,7 +471,7 @@ export default function CountyPage() {
         </section>
 
         {/* FAQ Section */}
-        <section className="mb-12 max-w-3xl">
+        <section className="mb-10 max-w-3xl">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
             <HelpCircle className="h-6 w-6 text-primary" />
             Frequently Asked Questions — {countyData.name} County, {stateData.abbreviation}
@@ -503,7 +501,7 @@ export default function CountyPage() {
         </section>
 
         {/* Internal Links */}
-        <section className="mb-12">
+        <section className="mb-10">
           <div className="grid md:grid-cols-2 gap-6">
             {/* Other Counties */}
             {countyLinks.length > 0 && (

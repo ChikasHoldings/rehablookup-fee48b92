@@ -2,24 +2,29 @@ import type { ComponentType } from "react";
 
 /**
  * LocationStatTile — premium metric card used in directory-style
- * location hero sections (StatePage, CityPage, CountyPage…). Two
+ * location hero sections (StatePage, CityPage, CountyPage…). Three
  * variants:
- *   - default: dark glass-effect for use over the hero image
- *   - compact: light card for the mobile stat band below the hero
+ *   - default: dark glass-effect, full-size — used by StatePage hero
+ *   - sm:      dark glass-effect, denser — used by City / County /
+ *              Treatment-State / SEO Landing heroes where the hero
+ *              footprint is smaller than the State hero
+ *   - compact: light solid card for the mobile stat band below a hero
  *
- * Kept here so the visual is identical across every directory hero
- * and tweaks happen in one place.
+ * Kept here so the visual stays consistent across the directory
+ * network and tweaks happen in one place.
  */
 export function LocationStatTile({
   label,
   value,
   icon: Icon,
   compact = false,
+  size = "default",
 }: {
   label: string;
   value: string;
   icon: ComponentType<{ className?: string }>;
   compact?: boolean;
+  size?: "default" | "sm";
 }) {
   if (compact) {
     return (
@@ -33,6 +38,17 @@ export function LocationStatTile({
             {label}
           </div>
         </div>
+      </div>
+    );
+  }
+  if (size === "sm") {
+    return (
+      <div className="rounded-lg bg-white/10 px-3 py-2 ring-1 ring-white/15 backdrop-blur-sm">
+        <div className="flex items-center gap-1.5 text-white/70">
+          <Icon className="h-3 w-3" />
+          <span className="text-[10px] font-semibold uppercase tracking-wider">{label}</span>
+        </div>
+        <div className="mt-0.5 text-lg font-bold text-white leading-tight">{value}</div>
       </div>
     );
   }

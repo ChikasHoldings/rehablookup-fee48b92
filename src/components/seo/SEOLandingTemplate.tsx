@@ -178,9 +178,9 @@ export function SEOLandingTemplate({
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.08),_transparent_55%)]" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImRvdHMiIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZG90cykiLz48L3N2Zz4=')] opacity-100" />
 
-        <div className="container relative z-10 py-10 md:py-14 lg:py-16">
+        <div className="container relative z-10 py-7 md:py-9">
           {breadcrumbs && breadcrumbs.length > 0 && (
-            <nav className="mb-5" aria-label="Breadcrumb">
+            <nav className="mb-3" aria-label="Breadcrumb">
               <ol className="flex flex-wrap items-center gap-1.5 text-sm">
                 {breadcrumbs.map((crumb, idx) => (
                   <li key={crumb.url} className="flex items-center gap-1.5">
@@ -199,45 +199,44 @@ export function SEOLandingTemplate({
           )}
 
           <div className="max-w-3xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-amber-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-100 backdrop-blur-sm ring-1 ring-amber-400/30">
-              <Star className="h-3.5 w-3.5 fill-amber-300 text-amber-300" />
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 backdrop-blur-sm ring-1 ring-amber-400/30">
+              <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
               {heroBadge ?? "Curated & Verified"}
             </div>
 
-            <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.1] speakable-headline">
+            <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-white leading-[1.1] speakable-headline">
               {heroTitle}
             </h1>
 
-            <p className="mt-4 text-base md:text-lg text-white/80 max-w-2xl leading-relaxed">
+            <p className="mt-2 text-sm md:text-base text-white/80 max-w-2xl leading-relaxed">
               {heroSubtitle}
             </p>
 
             {heroLocation && (
-              <div className="mt-3 inline-flex items-center gap-2 text-white/65">
-                <MapPin className="h-3.5 w-3.5" />
-                <span className="text-sm">{heroLocation}</span>
+              <div className="mt-2 inline-flex items-center gap-1.5 text-white/65">
+                <MapPin className="h-3 w-3" />
+                <span className="text-xs">{heroLocation}</span>
               </div>
             )}
 
             {/* Compact trust row — amber accent matches the editorial
-                eyebrow. Tighter visual rhythm than the previous
-                6-icon wall. */}
-            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-white/75">
+                eyebrow. */}
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-white/75">
               {[
                 { icon: CheckCircle, text: "Verified" },
                 { icon: Shield, text: "Insurance" },
                 { icon: Phone, text: "24/7" },
                 { icon: Star, text: "Accredited" },
               ].map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-1.5">
-                  <Icon className="h-3.5 w-3.5 text-amber-400" />
-                  <span className="text-xs font-medium uppercase tracking-wider">{text}</span>
+                <div key={text} className="flex items-center gap-1">
+                  <Icon className="h-3 w-3 text-amber-400" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider">{text}</span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-7 flex flex-col sm:flex-row gap-3">
-              <Button asChild variant="hero" size="lg" className="gap-2 shadow-lg shadow-black/30">
+            <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
+              <Button asChild variant="hero" size="default" className="gap-2 shadow-lg shadow-black/30">
                 <Link to={ctaButtonLink || "/concierge"}>
                   {ctaButtonText}
                   <ArrowRight className="h-4 w-4" />
@@ -246,7 +245,7 @@ export function SEOLandingTemplate({
               <Button
                 asChild
                 variant="hero-secondary"
-                size="lg"
+                size="default"
                 className="gap-2 border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
               >
                 <Link to="/rehab-centers">
@@ -257,40 +256,29 @@ export function SEOLandingTemplate({
             </div>
           </div>
 
-          {/* Stat strip — LocationStatTile glass-effect, matches the
-              State / City / County / Treatment heroes' visual
-              vocabulary. Only renders when the page passes counts
-              worth showing. */}
+          {/* Stat strip — denser `size="sm"` tiles so the SEO-landing
+              hero stays smaller than the State hero per the
+              directory-network polish brief. */}
           {(facilityCount !== undefined || facilities.length > 0) && (
-            <div className="mt-9 grid grid-cols-2 md:grid-cols-3 gap-3 max-w-3xl">
+            <div className="mt-5 grid grid-cols-2 md:grid-cols-3 gap-2 max-w-3xl">
               <LocationStatTile
+                size="sm"
                 label="Verified Centers"
                 value={isLoading ? "—" : (facilityCount ?? facilities.length).toLocaleString()}
                 icon={Building2}
               />
-              <LocationStatTile
-                label="24/7 Concierge"
-                value="Live"
-                icon={Phone}
-              />
+              <LocationStatTile size="sm" label="24/7 Concierge" value="Live" icon={Phone} />
               <div className="hidden md:block">
-                <LocationStatTile
-                  label="Insurance"
-                  value="Most plans"
-                  icon={Shield}
-                />
+                <LocationStatTile size="sm" label="Insurance" value="Most plans" icon={Shield} />
               </div>
             </div>
           )}
-
-          {/* Inline mini-intake — moved DOWN out of the hero proper so
-              the hero stays tight + editorial. Lives in its own band
-              with a thin top border to delineate the conversion
-              surface. Same component, same conversion source. */}
         </div>
 
+        {/* Inline mini-intake — separate band below the hero so the
+            hero stays compact. */}
         <div className="relative z-10 border-t border-white/10 bg-black/30 backdrop-blur-sm">
-          <div className="container py-5">
+          <div className="container py-3">
             <div className="max-w-2xl">
               <InlineMiniIntake source="seo_landing_hero" />
             </div>
@@ -306,7 +294,7 @@ export function SEOLandingTemplate({
           which made the page read like an article with listings buried. Moving
           them up here makes the page read like a directory — Yelp/HealthGrades
           pattern, not Medium. */}
-      <section className="py-10 md:py-12 bg-muted/30">
+      <section className="py-8 md:py-10 bg-muted/30">
         <div className="container">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-6 max-w-6xl mx-auto">
             <div>
@@ -423,7 +411,7 @@ export function SEOLandingTemplate({
           out as a compact fact-panel beside action cards so it reads like a
           directory's "About this location" pane, not an editorial lede. */}
       {introContent && (
-        <section className="py-10 bg-background">
+        <section className="py-8 bg-background">
           <div className="container max-w-6xl">
             <div className="grid lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 rounded-2xl border bg-card p-6 md:p-7">
@@ -472,7 +460,7 @@ export function SEOLandingTemplate({
           grid of compact info cards so each section reads as a sidebar fact,
           not a chapter. */}
       {sections && sections.length > 0 && (
-        <section className="py-10 bg-muted/30">
+        <section className="py-8 bg-muted/30">
           <div className="container max-w-6xl">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {sections.map((section, idx) => (
@@ -490,7 +478,7 @@ export function SEOLandingTemplate({
           listings, framed as supporting fact panels rather than competing for
           above-the-fold attention. */}
       {(whatToExpect || benefits) && (
-        <section className="py-10 bg-background">
+        <section className="py-8 bg-background">
           <div className="container">
             <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
               {whatToExpect && (
@@ -535,7 +523,7 @@ export function SEOLandingTemplate({
       )}
 
       {/* Mid-page inline intake — catches visitors who scrolled past the hero */}
-      <section className="py-10 bg-muted/30">
+      <section className="py-8 bg-muted/30">
         <div className="container max-w-2xl">
           <p className="text-center text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wide">Get Personalized Help — Free &amp; Confidential</p>
           <InlineMiniIntake source="seo_landing_mid" defaultTreatment="" />
@@ -546,7 +534,7 @@ export function SEOLandingTemplate({
       <ConversionSection location={heroLocation} />
 
       {/* CTA Section */}
-      <section className="py-12 bg-background">
+      <section className="py-9 bg-background">
         <div className="container max-w-4xl">
           <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/90 p-8 md:p-12 text-center">
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">{ctaTitle}</h2>
@@ -577,7 +565,7 @@ export function SEOLandingTemplate({
 
       {/* Related City Links */}
       {relatedCityLinks && relatedCityLinks.length > 0 && (
-        <section className="py-10 bg-muted/30">
+        <section className="py-8 bg-muted/30">
           <div className="container max-w-5xl">
             <h2 className="text-xl font-bold text-foreground mb-6">
               Explore Nearby Cities
@@ -600,7 +588,7 @@ export function SEOLandingTemplate({
 
       {/* Related State Links */}
       {relatedStateLinks && relatedStateLinks.length > 0 && (
-        <section className="py-10 bg-background">
+        <section className="py-8 bg-background">
           <div className="container max-w-5xl">
             <h2 className="text-xl font-bold text-foreground mb-6">
               Explore by State

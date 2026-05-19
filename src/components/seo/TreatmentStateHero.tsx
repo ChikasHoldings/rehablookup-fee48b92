@@ -119,9 +119,9 @@ export function TreatmentStateHero({
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA0KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-100" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.08),_transparent_55%)]" />
 
-        <div className="container relative z-10 py-9 md:py-12">
+        <div className="container relative z-10 py-6 md:py-9">
           <BreadcrumbNav
-            className="mb-5 [&_*]:!text-white/70 [&_a:hover]:!text-white"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
               { label: "Treatment Types", href: "/treatment-types" },
               { label: treatmentHubLabel, href: treatmentHubHref },
@@ -131,27 +131,27 @@ export function TreatmentStateHero({
 
           <div className="max-w-3xl">
             <div
-              className={`mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-sm ring-1 ${theme.iconBg}`}
+              className={`mb-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm ring-1 ${theme.iconBg}`}
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-3 w-3" />
               {treatmentName} · {abbreviation}
             </div>
-            <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white">
+            <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-white">
               {treatmentName} in {stateName}
             </h1>
-            <p className="mt-3 text-base md:text-lg text-white/85 max-w-2xl">
-              Verified {treatmentName.toLowerCase()} programs across {stateName}. Compare {cities.length}+ cities, levels of care, and insurance options in one place.
+            <p className="mt-2 text-sm md:text-base text-white/85 max-w-2xl">
+              Verified {treatmentName.toLowerCase()} programs across {stateName} · {cities.length}+ cities
             </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
               <Link to="/concierge">
-                <Button size="lg" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
+                <Button size="default" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
                   <Heart className="h-4 w-4" />
                   Get Personalized Help
                 </Button>
               </Link>
               <Link to={`/rehab-centers/${stateSlug}`}>
                 <Button
-                  size="lg"
+                  size="default"
                   variant="outline"
                   className="gap-2 w-full sm:w-auto border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
                 >
@@ -162,22 +162,24 @@ export function TreatmentStateHero({
             </div>
           </div>
 
-          {/* Stat strip — topic-focused metrics rather than the
-              location-focused ones on state/city pages. Hidden on
-              mobile (a compact band sits below the hero on small
-              screens). */}
-          <div className="mt-8 hidden md:grid grid-cols-3 gap-3 max-w-3xl">
+          {/* Stat strip — topic-focused metrics. Smaller `size="sm"`
+              variant so the strip stays within the tight hero
+              footprint that's distinct from the State page hero. */}
+          <div className="mt-5 hidden md:grid grid-cols-3 gap-2 max-w-3xl">
             <LocationStatTile
+              size="sm"
               label={facilityCount === 1 ? "Verified Program" : "Verified Programs"}
               value={facilityCount === undefined ? "—" : facilityCount.toLocaleString()}
               icon={Building2}
             />
             <LocationStatTile
+              size="sm"
               label="Cities Covered"
               value={cities.length.toLocaleString()}
               icon={MapPin}
             />
             <LocationStatTile
+              size="sm"
               label="Care Levels"
               value="Detox → Aftercare"
               icon={Activity}

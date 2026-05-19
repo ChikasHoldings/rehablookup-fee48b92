@@ -342,9 +342,9 @@ const CityPage = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900/85 via-primary/75 to-accent/55" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.08),_transparent_55%)]" />
 
-        <div className="container relative z-10 py-8 md:py-12">
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-5 [&_*]:!text-white/70 [&_a:hover]:!text-white"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
               { label: "Find Rehab", href: "/rehab-centers" },
               { label: stateData.name, href: `/rehab-centers/${stateData.slug}` },
@@ -352,26 +352,26 @@ const CityPage = () => {
             ]}
           />
           <div className="max-w-3xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
-              <Home className="h-3.5 w-3.5" />
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+              <Home className="h-3 w-3" />
               {stateData.abbreviation} · Local Directory
             </div>
-            <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
               Rehab Centers in {cityData.name}
             </h1>
-            <p className="mt-3 text-base text-white/80 md:text-lg max-w-xl">
-              Verified treatment programs in {cityData.name}, {stateData.abbreviation}. Filter by care level, insurance, and admit speed.
+            <p className="mt-2 text-sm text-white/80 md:text-base max-w-xl">
+              Verified treatment programs in {cityData.name}, {stateData.abbreviation}.
             </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
               <Link to="/concierge">
-                <Button size="lg" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
+                <Button size="default" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
                   <Heart className="h-4 w-4" />
                   Get Personalized Help
                 </Button>
               </Link>
               <Link to={`/search-results?location=${encodeURIComponent(fullLocation)}`}>
                 <Button
-                  size="lg"
+                  size="default"
                   variant="outline"
                   className="gap-2 w-full sm:w-auto border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
                 >
@@ -384,16 +384,17 @@ const CityPage = () => {
 
           {/* Stats strip — magazine-style 3-tile horizontal row below
               the title. Differentiates from StatePage's right-column
-              2x2 grid. Hidden on small screens (the dedicated mobile
-              stat band below the hero covers them). */}
-          <div className="mt-8 hidden md:grid grid-cols-3 gap-3 max-w-3xl">
+              2x2 grid. Hidden on small screens. */}
+          <div className="mt-5 hidden md:grid grid-cols-3 gap-2 max-w-3xl">
             <LocationStatTile
+              size="sm"
               label={cityCenters.length === 1 ? "Verified Facility" : "Verified Facilities"}
               value={isLoading ? "—" : cityCenters.length.toLocaleString()}
               icon={Building2}
             />
             {cityData.population > 0 ? (
               <LocationStatTile
+                size="sm"
                 label="Population"
                 value={cityData.population >= 1_000_000
                   ? `${(cityData.population / 1_000_000).toFixed(1)}M`
@@ -403,17 +404,9 @@ const CityPage = () => {
                 icon={Home}
               />
             ) : (
-              <LocationStatTile
-                label="Coverage"
-                value={stateData.abbreviation}
-                icon={MapPin}
-              />
+              <LocationStatTile size="sm" label="Coverage" value={stateData.abbreviation} icon={MapPin} />
             )}
-            <LocationStatTile
-              label="Insurance"
-              value="Most plans"
-              icon={Shield}
-            />
+            <LocationStatTile size="sm" label="Insurance" value="Most plans" icon={Shield} />
           </div>
         </div>
 
@@ -482,7 +475,7 @@ const CityPage = () => {
       {/* Directory results — the page's centerpiece. Directory-style
           header with H2 + result-count chip on the left, "Full search
           filters" affordance on the right (desktop). */}
-      <section className="bg-background py-10 md:py-14">
+      <section className="bg-background py-8 md:py-10">
         <div className="container">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -590,7 +583,7 @@ const CityPage = () => {
           each tile lands the seeker on the right /treatment-types/<x>/
           <state> page (not the national hub). Replaces the previous
           generic 6-icon "Types of Treatment" section. */}
-      <section className="border-t bg-secondary/30 py-10 md:py-14">
+      <section className="border-t bg-secondary/30 py-8 md:py-10">
         <div className="container">
           <div className="mb-6 flex items-end justify-between gap-4">
             <div>
@@ -671,7 +664,7 @@ const CityPage = () => {
       </section>
 
       {/* FAQ Section */}
-      <section className="border-t bg-secondary/30 py-12">
+      <section className="border-t bg-secondary/30 py-9 md:py-10">
         <div className="container">
           <div className="mx-auto max-w-3xl">
             <div className="mb-8 text-center">
@@ -749,7 +742,7 @@ const CityPage = () => {
           ?? buildCityOverview(stateData.slug, stateData.name, cityData.name, cityCenters.length, cityData.population);
 
         return (
-          <section className="border-t bg-secondary/30 py-12 md:py-16">
+          <section className="border-t bg-secondary/30 py-9 md:py-12">
             <div className="container">
               <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
                 <div className="rounded-2xl border bg-card p-6 md:p-8 shadow-sm">
@@ -820,7 +813,7 @@ const CityPage = () => {
 
       {/* Other Cities */}
       {otherCities.length > 0 && (
-        <section className="border-t bg-secondary/30 py-10">
+        <section className="border-t bg-secondary/30 py-8">
           <div className="container">
             <div className="mb-6 flex items-center justify-between">
               <div>
@@ -900,7 +893,7 @@ const CityPage = () => {
       )}
 
       {/* Parent State Link */}
-      <section className="border-t bg-card py-8">
+      <section className="border-t bg-card py-6">
         <div className="container">
           <Link
             to={`/rehab-centers/${stateData.slug}`}
@@ -929,7 +922,7 @@ const CityPage = () => {
         const articles = getStateArticles(stateData.slug);
         if (articles.length === 0) return null;
         return (
-          <section className="py-10 border-t border-border/40">
+          <section className="py-8 border-t border-border/40">
             <div className="container">
               <h2 className="mb-4 text-lg font-bold text-foreground">{stateData.name} Treatment Guides</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -952,7 +945,7 @@ const CityPage = () => {
       })()}
 
       {/* CTA Section */}
-      <section className="py-16 md:py-20">
+      <section className="py-10 md:py-14">
         <div className="container">
           <div className="mx-auto max-w-3xl rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 p-8 md:p-12 text-center">
             <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl">
