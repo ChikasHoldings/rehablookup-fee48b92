@@ -145,28 +145,31 @@ export default function Authors() {
         ]}
       />
 
-      <section className="border-b border-border bg-muted/30">
-        <div className="container py-10">
-          <BreadcrumbNav className="mb-4" items={[{ label: "Authors" }]} />
+      {/* Hero — AUTHORS index. Editorial library palette (matches
+          Resources + CategoryHub). */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
+          <BreadcrumbNav className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white" items={[{ label: "Authors" }]} />
           <div className="max-w-3xl">
-            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 backdrop-blur-sm ring-1 ring-amber-400/25">
+              <ShieldCheck className="h-3 w-3" />
+              Editorial Standards
+            </div>
+            <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-white">
               Our editorial team
             </h1>
-            <p className="mt-3 text-base text-muted-foreground leading-relaxed">
-              RehabLookup guides are written and reviewed by an editorial team with backgrounds in
-              behavioral-health publishing, clinical care, and long-term recovery. Every article we
-              publish on treatment, detox, dual diagnosis, and recovery is checked against current
-              SAMHSA, NIDA, and ASAM placement criteria before it goes live — and re-reviewed at
-              least annually.
+            <p className="mt-2 text-sm md:text-base text-white/80 max-w-2xl leading-relaxed">
+              Guides written and reviewed by editors with backgrounds in behavioral-health publishing, clinical care, and long-term recovery — checked against SAMHSA, NIDA, and ASAM criteria.
             </p>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Button asChild variant="outline" size="sm">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Button asChild variant="secondary" size="sm">
                 <Link to="/editorial-policy" className="gap-1.5">
                   <ShieldCheck className="h-3.5 w-3.5" />
                   Editorial policy
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm">
                 <Link to="/medical-disclaimer" className="gap-1.5">
                   Medical disclaimer
                   <ArrowRight className="h-3.5 w-3.5" />

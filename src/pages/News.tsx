@@ -197,24 +197,22 @@ export default function News() {
         ]}
       />
 
-      {/* Hero */}
-      <section className="bg-primary py-10 px-4 md:py-12 md:px-6 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
-        </div>
-        <div className="container relative">
-          <BreadcrumbNav items={[{ label: "News" }]} className="mb-4" />
+      {/* Hero — NEWS. Editorial library palette (matches Resources +
+          CategoryHub + Authors). */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
+          <BreadcrumbNav items={[{ label: "News" }]} className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white" />
           <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
-              <Newspaper className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Platform News</span>
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 backdrop-blur-sm ring-1 ring-amber-400/25">
+              <Newspaper className="h-3 w-3" />
+              Platform News
             </div>
-            <h1 className="speakable-headline mb-2 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
+            <h1 className="speakable-headline mb-2 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white">
               News & Announcements
             </h1>
-            <p className="speakable-summary text-base text-primary-foreground/80 leading-relaxed max-w-xl mx-auto">
-              Milestones from RehabLookup and updates from the world of addiction treatment.
+            <p className="speakable-summary text-sm md:text-base text-white/80 max-w-xl mx-auto">
+              Milestones from RehabLookup and the world of addiction treatment.
             </p>
           </div>
         </div>
