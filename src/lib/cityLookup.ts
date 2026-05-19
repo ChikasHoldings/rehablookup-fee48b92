@@ -1,4 +1,9 @@
-import { statesData, type CityData, type StateData } from "@/data/locationSeoData";
+import {
+  getCityBySlug,
+  getStateBySlug,
+  type CityData,
+  type StateData,
+} from "@/data/locationSeoData";
 import { providerCities } from "@/data/providerCityData";
 
 /**
@@ -26,11 +31,12 @@ export function resolveCity(
 ): { state: StateData; city: CityData } | null {
   if (!stateSlug || !citySlug) return null;
 
-  const state = statesData.find((s) => s.slug === stateSlug);
+  const state = getStateBySlug(stateSlug);
   if (!state) return null;
 
-  // Tier 1 — full SEO copy.
-  const seoCity = state.cities.find((c) => c.slug === citySlug);
+  // Tier 1 — full SEO copy. Uses `getCityBySlug` so natural-name slugs
+  // (e.g. /colorado/lakewood resolving to data slug `lakewood-co`) match too.
+  const seoCity = getCityBySlug(stateSlug, citySlug);
   if (seoCity) return { state, city: seoCity };
 
   // Tier 2 — provider/market metadata (real population, no SEO copy).
