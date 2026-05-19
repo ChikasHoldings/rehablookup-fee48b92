@@ -26,11 +26,22 @@ export function RouteChangeTracker() {
     if (typeof window.gtag !== "function") return;
 
     const path = location.pathname + location.search;
-    const href = window.location.href;
     const raf = requestAnimationFrame(() => {
+      // Read page_location from <link rel="canonical"> so GA4 page_location
+      // matches the URL Google indexes — utm/fbclid/gclid query params and
+      // mixed-case path variants collapse into a single canonical URL in
+      // the report, rather than fragmenting traffic for the same logical
+      // page across N "different" pages. Falls back to window.location.href
+      // if the canonical hasn't been set yet (only happens on initial mount
+      // before SEO/helmet writes the tag). Enforced by
+      // scripts/check-canonical-ga-parity.mjs.
+      const canonicalEl = document.querySelector<HTMLLinkElement>(
+        'link[rel="canonical"]',
+      );
+      const pageLocation = canonicalEl?.href || window.location.href;
       window.gtag("event", "page_view", {
         page_path: path,
-        page_location: href,
+        page_location: pageLocation,
         page_title: document.title,
       });
     });
