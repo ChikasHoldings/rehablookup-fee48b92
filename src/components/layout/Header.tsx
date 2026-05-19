@@ -416,7 +416,14 @@ export function Header({
             </button>
 
             <div className="hidden md:flex items-center gap-2 flex-shrink-0 min-w-[140px] lg:min-w-[200px] justify-end">
-              {isSeekerLoggedIn ? (
+              {/* Render nothing while role is still resolving — the
+                  min-w on the parent already reserves space. Prevents
+                  the Sign-In/Account flash where the un-resolved
+                  isAuthenticated=false briefly paints "Sign In" then
+                  snaps to the account pill once the session lands.
+                  Mobile-menu footer (line ~593) already uses the same
+                  guard pattern. */}
+              {roleLoading ? null : isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
                   <Button size="sm" variant="ghost" className="h-9 text-sm gap-0 relative px-1">
                     <div className="flex items-center gap-2 bg-primary/10 rounded-lg px-2 py-1">

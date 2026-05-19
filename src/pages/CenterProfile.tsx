@@ -887,11 +887,13 @@ const CenterProfile = () => {
                 <div className="flex items-end gap-3.5">
                   <div className="h-16 w-16 md:h-20 md:w-20 shrink-0 overflow-hidden rounded-xl border-[3px] border-card bg-card shadow-xl">
                     {hasValidLogo ? (
-                      <img 
-                        src={facility.logo_url!} 
-                        alt={facility.name} 
+                      <img
+                        src={facility.logo_url!}
+                        alt={facility.name}
                         className="h-full w-full object-cover"
-                        loading="lazy"
+                        loading="eager"
+                        decoding="async"
+                        fetchPriority="high"
                         onError={() => setLogoError(true)}
                       />
                     ) : (
