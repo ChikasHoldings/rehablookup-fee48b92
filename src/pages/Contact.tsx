@@ -164,29 +164,26 @@ const Contact = () => {
         ]}
       />
       
-      {/* Hero - Navy background with decorative elements */}
-      <section className="bg-primary py-10 px-4 md:py-12 lg:py-14 md:px-6 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
-        </div>
-        
-        <div className="container relative">
+      {/* Hero — CONTACT. Smaller than State per the brief. Distinct
+          accent: slate→accent gradient signals "talk to a human" warm
+          touch. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-accent/45">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
+
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "Contact" },
-            ]}
-          /><div className="text-center">
-            <div className="mb-4 md:mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 md:px-5 py-2 md:py-2.5 backdrop-blur-sm border border-white/10">
-              <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-accent" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground">Get In Touch</span>
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
+            items={[{ label: "Contact" }]}
+          />
+          <div className="text-center">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm ring-1 ring-accent/25">
+              <MessageSquare className="h-3 w-3" />
+              Get in Touch
             </div>
-            <h1 className="mb-3 md:mb-4 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-primary-foreground">
-              Contact Us for Addiction Treatment Help
+            <h1 className="mb-2 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white">
+              Contact Us
             </h1>
-            <p className="text-base md:text-lg text-primary-foreground/80 max-w-xl md:max-w-2xl mx-auto leading-relaxed">
+            <p className="text-sm md:text-base text-white/80 max-w-xl mx-auto">
               Have questions about finding treatment? We're here to help.
             </p>
           </div>

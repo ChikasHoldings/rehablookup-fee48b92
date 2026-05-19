@@ -333,26 +333,26 @@ const FAQ = () => {
         ]}
       />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-primary py-10 md:py-12">
-        <div className="container relative z-10">
+      {/* Hero — FAQ. Smaller than State per the brief. Distinct
+          slate-primary with HelpCircle accent. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/60">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-4"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             variant="dark"
-            items={[
-              { label: "FAQ" },
-            ]}
+            items={[{ label: "FAQ" }]}
           />
           <div className="max-w-2xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-4 text-sm font-medium text-white/90 backdrop-blur-sm">
-              <HelpCircle className="h-4 w-4" />
-              <span>Frequently Asked Questions</span>
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+              <HelpCircle className="h-3 w-3" />
+              Frequently Asked Questions
             </div>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-white mb-3 leading-tight tracking-tight">
+            <h1 className="mb-2 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white">
               Your Questions, Answered
             </h1>
-            <p className="text-base text-white/80 leading-relaxed max-w-lg mx-auto">
-              Comprehensive answers about treatment, insurance, privacy, recovery, and how RehabLookup helps you find the right care.
+            <p className="text-sm md:text-base text-white/80 max-w-lg mx-auto">
+              Comprehensive answers about treatment, insurance, privacy, and recovery.
             </p>
 
             {/* Search */}

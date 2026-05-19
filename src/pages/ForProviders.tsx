@@ -102,39 +102,38 @@ const fmtMoneyWhole = (n: number) =>
 function HeroSection({ scrollToForm }: { scrollToForm: () => void }) {
   return (
     <section
-      className="relative overflow-hidden py-14 md:py-20 lg:py-24 text-white"
+      className="relative overflow-hidden border-b border-white/5 text-white"
       style={{ background: "linear-gradient(135deg, #1B365D 0%, #0E1F3A 100%)" }}
     >
-      <div className="container relative px-4 md:px-6 lg:px-8">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(205,162,35,0.10),_transparent_55%)]" />
+
+      <div className="container relative z-10 px-4 md:px-6 lg:px-8 py-6 md:py-9">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 ring-1 ring-white/15 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#CDA223]">
-            For treatment providers
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#CDA223]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#CDA223] ring-1 ring-[#CDA223]/30">
+            For Treatment Providers
           </span>
 
-          <h1 className="mt-5 font-display text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.1]">
-            List your facility on the independent rehab directory.
+          <h1 className="mt-3 font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight leading-[1.1]">
+            List your facility on the independent rehab directory
           </h1>
 
-          <p className="mx-auto mt-4 md:mt-5 max-w-2xl text-base md:text-lg text-white/85 leading-relaxed">
-            Pro from <strong className="font-semibold text-white">$99/month</strong>.
-            Cancel anytime. No referral fees, no per-call charges, no lead
-            routing through our number — just transparent ad inventory facilities
-            have wanted for 20 years.
+          <p className="mx-auto mt-2 max-w-2xl text-sm md:text-base text-white/85">
+            Pro from <strong className="font-semibold text-white">$99/month</strong>. Cancel anytime. No referral fees, no per-call charges — just transparent ad inventory.
           </p>
 
-          <div className="mt-7">
+          <div className="mt-4">
             <Button
-              size="lg"
+              size="default"
               onClick={scrollToForm}
               className="bg-[#CDA223] text-[#1B365D] hover:bg-[#B38C1C] font-semibold shadow-lg hover:shadow-xl transition-all gap-2"
             >
-              Get started — list or claim your facility
+              Get started — list or claim
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
 
-          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-white/80">
-            <li className="font-medium">3,800+ facilities listed</li>
+          <ul className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs md:text-sm text-white/80">
+            <li className="font-medium">3,800+ facilities</li>
             <li aria-hidden className="text-white/30">•</li>
             <li className="font-medium">50 states</li>
             <li aria-hidden className="text-white/30">•</li>
