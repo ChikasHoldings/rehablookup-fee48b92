@@ -8,6 +8,7 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { TreatmentStateHero } from "@/components/seo/TreatmentStateHero";
 import {
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
@@ -15,7 +16,7 @@ import {
 } from "@/utils/stateContentGenerator";
 import {
   Sparkles, ArrowRight, CheckCircle, Shield, Clock, Heart,
-  Calendar, Users, Brain, Briefcase, MapPin, Building2, GraduationCap, Search,
+  Calendar, Users, Brain, Briefcase, MapPin, Building2, GraduationCap, Search, Stethoscope,
 } from "lucide-react";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
@@ -91,34 +92,17 @@ const StateOutpatientPrograms = () => {
         ]}
       />
 
-      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
-        <div className="container">
-          <BreadcrumbNav className="mb-4" items={[
-            { label: "Treatment Types", href: "/treatment-types" },
-            { label: "Outpatient Programs", href: "/treatment-types/outpatient-programs" },
-            { label: stateName },
-          ]} />
-          <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Outpatient Treatment in {abbreviation}</span>
-            </div>
-            <h1 className="mb-4 text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Outpatient Rehab Programs in {stateName}
-            </h1>
-            <p className="text-base md:text-lg text-primary-foreground/85 leading-relaxed">
-              Find flexible outpatient addiction treatment programs in {stateName}. IOP, PHP, and standard outpatient programs 
-              that let you recover while maintaining work, school, and family commitments.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Button asChild size="lg" variant="secondary"><Link to="/rehab-centers"><Search className="mr-2 h-4 w-4" />Find Treatment</Link></Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                <Link to={`/rehab-centers/${stateSlug}`}>Browse {stateName} Centers<ArrowRight className="ml-2 h-4 w-4" /></Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <TreatmentStateHero
+        treatmentKey="outpatient"
+        treatmentName="Outpatient Rehab"
+        treatmentIcon={Stethoscope}
+        stateName={stateName}
+        abbreviation={abbreviation}
+        stateSlug={stateSlug!}
+        treatmentHubHref="/treatment-types/outpatient-programs"
+        treatmentHubLabel="Outpatient Programs"
+        cities={cities}
+      />
 
       {/* Featured rotation — paid Featured pool for this
           state, mounted directly under the hero. Visual matches

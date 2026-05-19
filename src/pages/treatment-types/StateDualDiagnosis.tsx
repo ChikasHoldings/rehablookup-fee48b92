@@ -8,6 +8,7 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { TreatmentStateHero } from "@/components/seo/TreatmentStateHero";
 import {
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
@@ -92,34 +93,17 @@ const StateDualDiagnosis = () => {
         ]}
       />
 
-      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
-        <div className="container">
-          <BreadcrumbNav className="mb-4" items={[
-            { label: "Treatment Types", href: "/treatment-types" },
-            { label: "Dual Diagnosis", href: "/treatment-types/dual-diagnosis-treatment" },
-            { label: stateName },
-          ]} />
-          <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <Brain className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Co-Occurring Disorder Treatment</span>
-            </div>
-            <h1 className="mb-4 text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Dual Diagnosis Treatment in {stateName}
-            </h1>
-            <p className="text-base md:text-lg text-primary-foreground/85 leading-relaxed">
-              Find integrated treatment programs in {stateName} for co-occurring mental health and substance use disorders. 
-              Address depression, anxiety, PTSD, bipolar disorder, and addiction together for lasting recovery.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Button asChild size="lg" variant="secondary"><Link to="/rehab-centers"><Search className="mr-2 h-4 w-4" />Find Treatment</Link></Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                <Link to={`/rehab-centers/${stateSlug}`}>Browse {abbreviation} Centers<ArrowRight className="ml-2 h-4 w-4" /></Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <TreatmentStateHero
+        treatmentKey="dual"
+        treatmentName="Dual Diagnosis Treatment"
+        treatmentIcon={Brain}
+        stateName={stateName}
+        abbreviation={abbreviation}
+        stateSlug={stateSlug!}
+        treatmentHubHref="/treatment-types/dual-diagnosis-treatment"
+        treatmentHubLabel="Dual Diagnosis"
+        cities={cities}
+      />
 
       {/* Featured rotation — paid Featured pool for this
           state, mounted directly under the hero. Visual matches
