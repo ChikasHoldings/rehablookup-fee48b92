@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
 
     const { data: rec, error: fetchErr } = await svc
       .from("email_verification_codes")
-      .select("*")
+      .select("id, code, attempts")
       .eq("email", email)
       .eq("purpose", "password_reset")
       .eq("verified", false)

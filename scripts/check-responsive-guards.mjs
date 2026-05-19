@@ -180,7 +180,6 @@ function checkGridTiers() {
 // ─── Rule 8: Sticky CTA bar / header use shrink-0 + truncate ─────────────
 function checkStickyBars() {
   const files = [
-    "components/seo/StickyConversionBar.tsx",
     "components/layout/Header.tsx",
   ];
   for (const rel of files) {

@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
     let rec: { id: string; code: string; attempts: number } | null = null;
     const { data: scoped, error: fetchErr } = await svc
       .from("email_verification_codes")
-      .select("*")
+      .select("id, code, attempts")
       .eq("email", email)
       .eq("purpose", purpose)
       .eq("verified", false)
@@ -137,7 +137,7 @@ Deno.serve(async (req: Request) => {
       // clean it up once all callers send purpose.
       const { data: legacy } = await svc
         .from("email_verification_codes")
-        .select("*")
+        .select("id, code, attempts")
         .eq("email", email)
         .eq("verified", false)
         .gt("expires_at", now)
