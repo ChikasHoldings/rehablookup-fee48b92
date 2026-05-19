@@ -192,8 +192,8 @@ function renderPage(city, allCitiesInState) {
 </head>
 <body>
   ${SHARED_HEADER_HTML}
-  <nav class="breadcrumbs" aria-label="Breadcrumb"><ul>${breadcrumbHtml}</ul></nav>
-  <main>
+  <main class="rl-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><ul>${breadcrumbHtml}</ul></nav>
     <h1>${escHtml(title)}</h1>
     <p>Browse the ${escHtml(city.stateName)} addiction-treatment directory for ${escHtml(popText)}. ${escHtml(cityDescription)} This page lists the treatment levels, insurance coverage, and state oversight relevant to ${escHtml(city.cityName)} residents.</p>
 

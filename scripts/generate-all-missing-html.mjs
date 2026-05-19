@@ -811,7 +811,9 @@ async function main() {
   const allUrls = await loadSitemapUrls();
   console.log(`  Total sitemap URLs: ${allUrls.size.toLocaleString()}`);
 
-  const missing = [...allUrls].filter((u) => !hasHtmlFile(u));
+  // With --force, regenerate every URL we know about so legacy stubs that
+  // predated the branded `_seo-page-shell.mjs` upgrade get overwritten.
+  const missing = FORCE ? [...allUrls] : [...allUrls].filter((u) => !hasHtmlFile(u));
   console.log(`  Already have HTML: ${(allUrls.size - missing.length).toLocaleString()}`);
   console.log(`  Need to generate: ${missing.length.toLocaleString()}`);
   console.log();

@@ -21,6 +21,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { seoHeader, seoFooter, seoStyles } from "./_seo-page-shell.mjs";
+
+// Branded shell CSS without the surrounding <style> tags, so it can be
+// concatenated into SHARED_DIRECTORY_CSS (which consumers wrap in their
+// own <style> block). Gives every directory page the .rl-header / .rl-footer /
+// .rl-cta-strip rules required by the branded header + footer markup
+// exported below.
+const BRANDED_SHELL_CSS = seoStyles().replace(/<\/?style[^>]*>/g, "").trim();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
@@ -227,7 +235,18 @@ export function renderMetrosLine(stateName, stateSlug) {
  * tabular fact box, dense bullet lists, low-prose density.
  */
 export const SHARED_DIRECTORY_CSS = `
-    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:960px;margin:0 auto;padding:32px 20px;color:#1a2b4a;line-height:1.65}
+    /* Branded shell rules — applied first, then overridden below. The
+       branded .rl-header / .rl-footer / .rl-cta-strip markup ships via
+       SHARED_HEADER_HTML + SHARED_FOOTER_HTML and needs these rules to
+       render correctly. */
+    ${BRANDED_SHELL_CSS}
+    /* Directory-page-specific layout. .rl-main holds the dense fact-
+       boxes / pill-lists / tables at the existing narrower 960px content
+       width (vs the branded shells 1120px). .rl-header and .rl-footer
+       keep their full-bleed dark backgrounds via the branded shells own
+       internal rules. */
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a2b4a;line-height:1.65;margin:0;padding:0;background:#fff}
+    .rl-main{max-width:960px;margin:0 auto;padding:32px 20px}
     h1{font-size:1.85rem;color:#1B365D;margin-bottom:8px}
     h2{font-size:1.25rem;color:#1B365D;margin-top:28px;border-bottom:1px solid #e5e7eb;padding-bottom:6px}
     h3{font-size:1.05rem;color:#1B365D;margin-top:18px}
@@ -258,11 +277,16 @@ export const SHARED_DIRECTORY_CSS = `
     header{padding:10px 0 16px;border-bottom:1px solid #e5e7eb;margin-bottom:16px}
     header a{font-weight:700;font-size:1.15rem;color:#1B365D}`;
 
-/** Shared header markup used by all directory pages. */
-export const SHARED_HEADER_HTML = `<header><a href="/" aria-label="RehabLookup Home">RehabLookup</a></header>`;
+/** Shared header markup used by all directory pages. Routes through the
+ *  branded `_seo-page-shell.mjs` helper so directory generators ship the
+ *  navy header + primary nav + helpline CTA that the rest of the
+ *  prerendered set uses — not the legacy 1-line "RehabLookup" stripped
+ *  header that read as a 404/broken page to direct-link visitors. */
+export const SHARED_HEADER_HTML = seoHeader();
 
-/** Shared footer markup used by all directory pages. */
-export const SHARED_FOOTER_HTML = `<footer><p>&copy; 2026 RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy Policy</a> &middot; <a href="/terms-of-service">Terms of Service</a></p></footer>`;
+/** Shared footer markup used by all directory pages. Branded 4-column
+ *  footer with SAMHSA/988 disclaimer + legal nav. */
+export const SHARED_FOOTER_HTML = seoFooter();
 
 /** Standard CTA card. */
 export function renderCta(headline, copy) {

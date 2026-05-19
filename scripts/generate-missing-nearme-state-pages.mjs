@@ -206,8 +206,8 @@ function renderPage({ nm, state }) {
 </head>
 <body>
   ${SHARED_HEADER_HTML}
-  <nav class="breadcrumbs" aria-label="Breadcrumb"><ul><li><a href="/">Home</a> &rsaquo; </li><li><a href="/${nm.slug}">${escHtml(nm.label)} Near Me</a> &rsaquo; </li><li>${escHtml(state.name)}</li></ul></nav>
-  <main>
+  <main class="rl-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><ul><li><a href="/">Home</a> &rsaquo; </li><li><a href="/${nm.slug}">${escHtml(nm.label)} Near Me</a> &rsaquo; </li><li>${escHtml(state.name)}</li></ul></nav>
     <h1>${escHtml(title)}</h1>
     <p>Directory of ${escHtml(nm.label.toLowerCase())} options in ${escHtml(state.name)} (${state.abbr}). Compare programs by level of care, insurance accepted, and state licensure.</p>
 

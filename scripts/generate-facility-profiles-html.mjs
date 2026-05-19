@@ -27,6 +27,11 @@ import { writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
+import { seoHeader, seoFooter, seoStyles } from "./_seo-page-shell.mjs";
+
+// Branded shell CSS without the surrounding <style> tags so it can be
+// concatenated into the facility-profile <style> block below.
+const BRANDED_SHELL_CSS = seoStyles().replace(/<\/?style[^>]*>/g, "").trim();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -699,7 +704,9 @@ ${faqs
 <script type="application/ld+json">${jsonLd(medicalClinicLd)}</script>
 <script type="application/ld+json">${jsonLd(faqLd)}</script>
 <style>
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:32px 20px;color:#1a2b4a;line-height:1.7}
+${BRANDED_SHELL_CSS}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a2b4a;line-height:1.7;margin:0;padding:0;background:#fff}
+.rl-main{max-width:900px;margin:0 auto;padding:32px 20px}
 h1{font-size:2rem;color:#1B365D;margin-bottom:8px}
 h2{font-size:1.4rem;color:#1B365D;margin-top:28px}
 h3{font-size:1.05rem;color:#1B365D;margin-top:14px;margin-bottom:6px}
@@ -737,7 +744,8 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');</script>
 </head>
 <body>
-<header><a href="/" aria-label="RehabLookup Home">RehabLookup</a></header>
+${seoHeader()}
+<main class="rl-main">
 <nav class="breadcrumbs" aria-label="Breadcrumb"><ul>
 <li><a href="/">Home</a> &rsaquo; </li>
 <li><a href="/rehab-centers">Find Rehab</a> &rsaquo; </li>
@@ -745,7 +753,6 @@ footer{margin-top:40px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:.
 <li><a href="/rehab-centers/${stateSlug}/${cityHrefSlug}">${escapeHtml(f.city)}</a> &rsaquo; </li>
 <li>${escapeHtml(f.name)}</li>
 </ul></nav>
-<main>
 <h1>${escapeHtml(f.name)}</h1>
 <p><em>Addiction treatment in ${escapeHtml(f.city)}, ${escapeHtml(f.state)}</em></p>
 <div class="meta">
@@ -776,7 +783,7 @@ ${f.phone ? `<a class="btn btn-secondary" href="tel:${escapeAttr(f.phone)}">Call
 </section>
 ${faqHtml}
 </main>
-<footer><p>&copy; ${new Date().getFullYear()} RehabLookup. All rights reserved. <a href="/privacy-policy">Privacy</a> &middot; <a href="/terms-of-service">Terms</a> &middot; <a href="/editorial-policy">Editorial Policy</a></p></footer>
+${seoFooter()}
 </body>
 </html>
 `;

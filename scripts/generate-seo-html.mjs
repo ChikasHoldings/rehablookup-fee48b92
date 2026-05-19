@@ -218,6 +218,13 @@ const insurers = [
   { slug: "medicare-rehab", name: "Medicare" },
   { slug: "medicaid-rehab", name: "Medicaid" },
   { slug: "anthem-rehab", name: "Anthem" },
+  { slug: "ambetter-rehab", name: "Ambetter" },
+  { slug: "highmark-rehab", name: "Highmark" },
+  { slug: "molina-rehab", name: "Molina Healthcare" },
+  { slug: "oscar-rehab", name: "Oscar Health" },
+  { slug: "magellan-rehab", name: "Magellan Health" },
+  { slug: "wellcare-rehab", name: "WellCare" },
+  { slug: "tricare-rehab", name: "TRICARE" },
 ];
 
 const usStates = [
