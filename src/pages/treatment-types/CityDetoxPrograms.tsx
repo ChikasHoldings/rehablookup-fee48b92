@@ -23,6 +23,7 @@ import {
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { TreatmentCityHero } from "@/components/seo/TreatmentCityHero";
 import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
@@ -116,49 +117,18 @@ const CityDetoxPrograms = () => {
           { name: `${stateName}`, url: `/treatment-types/detox-programs/${stateSlug}` },
           { name: `${cityName}`, url: `/treatment-types/detox-programs/${stateSlug}/${citySlug}` },
         ]}
+      />      <TreatmentCityHero
+        treatmentKey="detox"
+        treatmentName="Medical Detox"
+        treatmentIcon={Sparkles}
+        cityName={cityName}
+        stateName={stateName}
+        abbreviation={abbreviation}
+        stateSlug={stateSlug!}
+        citySlug={citySlug!}
+        treatmentHubHref="/treatment-types/detox-programs"
+        treatmentHubLabel="Detox Programs"
       />
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
-        <div className="container">
-          <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "Detox", href: "/treatment-types/detox-programs" },
-              { label: stateName, href: `/treatment-types/detox-programs/${stateSlug}` },
-              { label: cityName },
-            ]}
-          /><div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Medical Detox in {cityName}</span>
-            </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Detox Centers in {cityName}, {abbreviation}
-            </h1>
-            <p className="text-base md:text-lg text-primary-foreground/85 leading-relaxed">
-              Find medical detox programs in {cityName}, {stateName} offering safe, supervised withdrawal from 
-              alcohol, opioids, and other substances. {cityName} detox centers provide 24/7 medical monitoring 
-              and medication-assisted treatment for a safe start to recovery.
-            </p>
-
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/rehab-centers">
-                <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
-                  <Phone className="h-4 w-4" />
-                  Find Treatment in {cityName}
-                </Button>
-              </Link>
-              <Link to={`/rehab-centers/${stateSlug}/${citySlug}`}>
-                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
-                  Browse {cityName} Rehabs
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Featured rotation — paid Featured pool for this
           city, mounted directly under the hero. Visual matches
