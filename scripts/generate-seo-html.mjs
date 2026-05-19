@@ -743,26 +743,30 @@ async function generateStateTreatmentPages() {
 // --- Insurance State Cross-Pages ---
 async function generateInsuranceStatePages() {
   for (const ins of insurers) {
-    // Main insurer page (only those without existing static HTML)
-    const existingInsurancePages = ["aetna-rehab", "bcbs-treatment", "cigna-rehab", "united-healthcare-rehab", "medicare-rehab"];
-    if (!existingInsurancePages.includes(ins.slug)) {
-      const html = generatePage({
-        urlPath: `/insurance/${ins.slug}`,
-        title: `${ins.name} Rehab Coverage`,
-        metaTitle: `${ins.name} Rehab Coverage — Addiction Treatment Insurance | RehabLookup`,
-        metaDescription: `Learn how ${ins.name} covers addiction treatment. Find rehab centers accepting ${ins.name} insurance near you.`,
-        h1: `${ins.name} Rehab Coverage`,
-        content: `<p>Find rehab centers that accept ${ins.name} insurance. Learn about coverage for detox, inpatient, outpatient, and medication-assisted treatment.</p>
-          <h2>What ${ins.name} Covers</h2>
-          <p>${ins.name} covers substance use disorder treatment under the Mental Health Parity Act, including medical detox, inpatient rehabilitation, outpatient programs, and medication-assisted treatment (MAT).</p>`,
-        breadcrumbs: [
-          { name: "Home", url: "/" },
-          { name: "Insurance", url: "/insurance" },
-          { name: ins.name, url: `/insurance/${ins.slug}` },
-        ],
-      });
-      await writePage(path.join(publicDir, "insurance", `${ins.slug}.html`), html);
-    }
+    // Regenerate every insurer hub. (Earlier passes had a skip-list for
+    // aetna-rehab / bcbs-treatment / cigna-rehab / united-healthcare-rehab /
+    // medicare-rehab to preserve hand-curated content, but those legacy
+    // stubs predated the branded `_seo-page-shell.mjs` upgrade — they shipped
+    // a 50-line stripped layout with no site header, nav, or footer, which
+    // visitors hitting direct URLs read as a broken / 404 page. Overwriting
+    // them with the branded shell brings the carrier hubs in line with the
+    // rest of the directory.)
+    const html = generatePage({
+      urlPath: `/insurance/${ins.slug}`,
+      title: `${ins.name} Rehab Coverage`,
+      metaTitle: `${ins.name} Rehab Coverage — Addiction Treatment Insurance | RehabLookup`,
+      metaDescription: `Learn how ${ins.name} covers addiction treatment. Find rehab centers accepting ${ins.name} insurance near you.`,
+      h1: `${ins.name} Rehab Coverage`,
+      content: `<p>Find rehab centers that accept ${ins.name} insurance. Learn about coverage for detox, inpatient, outpatient, and medication-assisted treatment.</p>
+        <h2>What ${ins.name} Covers</h2>
+        <p>${ins.name} covers substance use disorder treatment under the Mental Health Parity Act, including medical detox, inpatient rehabilitation, outpatient programs, and medication-assisted treatment (MAT).</p>`,
+      breadcrumbs: [
+        { name: "Home", url: "/" },
+        { name: "Insurance", url: "/insurance" },
+        { name: ins.name, url: `/insurance/${ins.slug}` },
+      ],
+    });
+    await writePage(path.join(publicDir, "insurance", `${ins.slug}.html`), html);
 
     // State cross-pages (top 10 states only for manageable size)
     const topStates = ["california", "florida", "texas", "new-york", "illinois", "pennsylvania", "ohio", "georgia", "north-carolina", "michigan"];
