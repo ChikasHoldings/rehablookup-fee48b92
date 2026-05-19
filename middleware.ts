@@ -47,7 +47,11 @@
  */
 
 import { rewrite, next } from "@vercel/edge";
-import { PRERENDERED_PATHS } from "./prerender-manifest";
+// .js extension is required for Vercel's edge middleware build —
+// it uses moduleResolution: node16/nodenext which enforces explicit
+// extensions in ESM imports. TypeScript resolves the .js back to
+// prerender-manifest.ts at build time.
+import { PRERENDERED_PATHS } from "./prerender-manifest.js";
 
 export const config = {
   matcher: [
