@@ -10,6 +10,7 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { cityInList } from "@/lib/cityNameMatch";
 import { getStateBySlug } from "@/data/locationSeoData";
 import { getCountyBySlug, getCountiesForState, getStateCountyData } from "@/data/countySeoData";
+import { resolveCounty } from "@/lib/countyLookup";
 import { getStateArticles } from "@/data/stateArticlesData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
@@ -39,9 +40,10 @@ export default function CountyPage() {
   const { stateSlug, countySlug } = useParams<{ stateSlug: string; countySlug: string }>();
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
 
-  const stateData = stateSlug ? getStateBySlug(stateSlug) : undefined;
+  const resolved = resolveCounty(stateSlug, countySlug);
+  const stateData = resolved?.state ?? (stateSlug ? getStateBySlug(stateSlug) : undefined);
   const stateCounty = stateSlug ? getStateCountyData(stateSlug) : undefined;
-  const countyData = stateSlug && countySlug ? getCountyBySlug(stateSlug, countySlug) : undefined;
+  const countyData = resolved?.county;
   const otherCounties = stateSlug ? getCountiesForState(stateSlug).filter(c => c.slug !== countySlug) : [];
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();

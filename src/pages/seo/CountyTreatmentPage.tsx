@@ -6,8 +6,7 @@ import { getStateImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { cityInList } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { getStateBySlug } from "@/data/locationSeoData";
-import { getCountyBySlug } from "@/data/countySeoData";
+import { resolveCounty } from "@/lib/countyLookup";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage, getFacilityDensity } from "@/utils/seoPageValidator";
 
@@ -59,8 +58,9 @@ export default function CountyTreatmentPage() {
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
-  const stateData = stateSlug ? getStateBySlug(stateSlug) : undefined;
-  const countyData = stateSlug && countySlug ? getCountyBySlug(stateSlug, countySlug) : undefined;
+  const resolved = resolveCounty(stateSlug, countySlug);
+  const stateData = resolved?.state;
+  const countyData = resolved?.county;
   const treatment = treatmentSlug ? COUNTY_TREATMENT_TYPES[treatmentSlug] : undefined;
 
   const facilities = useMemo(() => {

@@ -580,6 +580,26 @@
       "source": "/insurance/:carrier/minnesota/st.-paul",
       "destination": "/insurance/:carrier/minnesota/st-paul",
       "statusCode": 301
+    },
+    {
+      "source": "/outpatient-near-me/:state",
+      "destination": "/outpatient-rehab-near-me/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/outpatient-near-me/:state/:loc",
+      "destination": "/outpatient-rehab-near-me/:state/:loc",
+      "statusCode": 301
+    },
+    {
+      "source": "/dual-diagnosis-rehab-near-me/:state",
+      "destination": "/dual-diagnosis-near-me/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/dual-diagnosis-rehab-near-me/:state/:loc",
+      "destination": "/dual-diagnosis-near-me/:state/:loc",
+      "statusCode": 301
     }
   ],
   "buildCommand": "npm run build:vercel",

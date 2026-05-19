@@ -48,14 +48,16 @@ export default function StateArticlePage() {
     return getStateArticles(stateSlug).filter(a => a.slug !== articleSlug);
   }, [stateSlug, articleSlug]);
 
-  return (
-    <NotFoundInPlace
-      title="State article not found"
-      message="We don't have that state article available. Browse rehab centers by state instead."
-      backTo="/rehab-centers"
-      backLabel="Browse by state"
-    />
-  );
+  if (!result) {
+    return (
+      <NotFoundInPlace
+        title="State article not found"
+        message="We don't have that state article available. Browse rehab centers by state instead."
+        backTo="/rehab-centers"
+        backLabel="Browse by state"
+      />
+    );
+  }
 
   const { article, stateName, stateAbbr } = result;
   const Icon = articleTypeIcons[article.type] || BookOpen;
