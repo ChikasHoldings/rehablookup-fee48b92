@@ -65,7 +65,7 @@ export default function BestInStatePage() {
     return (
       <NotFoundInPlace
         title="State not found"
-        message="We don't have a "best in state" page for that location. Browse all states from the locations hub."
+        message={`We don't have a "best in state" page for that location. Browse all states from the locations hub.`}
         backTo="/locations"
         backLabel="Browse locations"
       />

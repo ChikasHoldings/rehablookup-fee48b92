@@ -9,7 +9,6 @@ import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection"
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import {
-import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
   generateStateTreatmentChecklist,
@@ -18,6 +17,7 @@ import {
   Sparkles, ArrowRight, CheckCircle, Shield, Clock, Heart,
   Calendar, Users, Brain, Briefcase, MapPin, Building2, GraduationCap, Search,
 } from "lucide-react";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const programTypes = [
   { name: "Intensive Outpatient (IOP)", hours: "9-20 hrs/week", description: "Structured treatment while maintaining work and family responsibilities.", features: ["Group therapy", "Individual counseling", "Flexible scheduling"] },

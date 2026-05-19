@@ -81,10 +81,14 @@ const internationalLinks: FooterLink[] = [
 
 const resourceLinks: FooterLink[] = [
   { name: "Guides & Articles", path: "/resources" },
-  { name: "Signs of Addiction", path: "/resources/signs-of-addiction" },
-  { name: "What to Expect in Rehab", path: "/resources/what-to-expect-in-rehab" },
-  { name: "Insurance Coverage Guide", path: "/resources/insurance-coverage-guide" },
-  { name: "Paying for Rehab", path: "/resources/paying-for-rehab" },
+  // Phase AD: link directly at the canonical published articles (the
+  // legacy hand-picked slugs above didn't exist in blog_articles and
+  // were silently redirecting to /resources, which masked them as
+  // 404s once we removed the silent redirect in phase AA).
+  { name: "Signs of Addiction", path: "/resources/youth-addiction-warning-signs" },
+  { name: "Withdrawal Timeline", path: "/resources/drug-withdrawal-symptoms-timeline" },
+  { name: "Insurance Appeals", path: "/resources/insurance-appeal-rehab-denial" },
+  { name: "Paying for Rehab", path: "/resources/how-much-does-rehab-cost-per-day" },
   { name: "Detox Timeline", path: "/resources/detox-timeline" },
   { name: "Cost Estimator", path: "/cost-estimator" },
   { name: "Compare Facilities", path: "/compare", badge: "New" },

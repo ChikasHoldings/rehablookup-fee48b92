@@ -9,7 +9,6 @@ import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection"
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import {
-import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
   generateStateTreatmentChecklist,
@@ -18,6 +17,7 @@ import {
   Sparkles, ArrowRight, CheckCircle, Shield, Clock, Heart,
   Home, Users, Brain, Activity, Calendar, MapPin, Building2, Search,
 } from "lucide-react";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const programFeatures = [
   { name: "30-Day Program", description: "Ideal for mild to moderate addiction requiring structured initial care and foundation building.", features: ["Medical stabilization", "Therapy introduction", "Recovery planning"] },

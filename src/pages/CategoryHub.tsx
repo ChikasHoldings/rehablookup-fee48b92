@@ -10,11 +10,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { supabase } from "@/integrations/supabase/client";
 import {
-import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   ALL_BLOG_CATEGORIES,
   getCategoryBySlug,
   type BlogCategory,
 } from "@/data/blogCategories";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const SITE_URL = "https://rehablookup.com";
 

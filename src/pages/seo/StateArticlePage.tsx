@@ -8,7 +8,6 @@ import { getStateBySlug } from "@/data/locationSeoData";
 import { getCountiesForState } from "@/data/countySeoData";
 import { Button } from "@/components/ui/button";
 import {
-import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   Calendar,
   Clock,
   ArrowRight,
@@ -21,6 +20,7 @@ import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const articleTypeIcons: Record<string, typeof BookOpen> = {
   "how-to-find": Building2,

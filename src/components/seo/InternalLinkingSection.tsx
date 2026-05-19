@@ -71,7 +71,9 @@ export const topStateLinks: LinkItem[] = [
 export const resourceLinks: LinkItem[] = [
   { title: "Types of Treatment", href: "/resources/types-of-addiction-treatment", icon: BookOpen },
   { title: "Choosing a Rehab", href: "/resources/choosing-rehab-center", icon: BookOpen },
-  { title: "Insurance Guide", href: "/resources/insurance-coverage-guide", icon: BookOpen },
+  // Phase AD: canonical published article (insurance-coverage-guide
+  // didn't exist; legacy redirect handles other in-flight references).
+  { title: "Insurance Guide", href: "/resources/insurance-appeal-rehab-denial", icon: BookOpen },
   { title: "Dual Diagnosis Guide", href: "/resources/understanding-dual-diagnosis", icon: Brain },
   { title: "What to Expect", href: "/resources/first-week-treatment", icon: BookOpen },
   { title: "Supporting a Loved One", href: "/resources/supporting-loved-one", icon: Heart },

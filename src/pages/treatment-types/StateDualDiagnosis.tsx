@@ -9,7 +9,6 @@ import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection"
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import {
-import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
   generateStateTreatmentChecklist,
@@ -18,6 +17,7 @@ import {
   Brain, ArrowRight, CheckCircle, Shield, Clock, Heart,
   Pill, Stethoscope, Users, MapPin, Building2, Search, Sparkles,
 } from "lucide-react";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const mentalHealthConditions = [
   { name: "Depression & Addiction", description: "Integrated treatment for major depressive disorder co-occurring with substance use disorders.", features: ["Antidepressant management", "CBT therapy", "Mood monitoring"] },

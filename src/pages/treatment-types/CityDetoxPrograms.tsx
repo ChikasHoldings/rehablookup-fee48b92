@@ -4,7 +4,6 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData } from "@/data/locationSeoData";
 import {
-import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   Sparkles,
   ArrowRight,
   Phone,
@@ -25,6 +24,7 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { useTreatmentCityValidation } from "@/hooks/useTreatmentCityValidation";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const detoxTypes = [
   {

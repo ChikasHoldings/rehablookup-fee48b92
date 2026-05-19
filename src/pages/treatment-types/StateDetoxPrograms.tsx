@@ -9,7 +9,6 @@ import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection"
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import {
-import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
   generateStateTreatmentChecklist,
@@ -18,6 +17,7 @@ import {
   Sparkles, ArrowRight, Phone, CheckCircle, Shield, Clock, Heart,
   Pill, Timer, HeartPulse, Stethoscope, Thermometer, MapPin, Building2, Search,
 } from "lucide-react";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const detoxTypes = [
   { name: "Alcohol Detox", duration: "3-7 days", description: "Medically supervised alcohol withdrawal with medication support to prevent seizures and delirium tremens.", features: ["Benzodiazepine protocols", "24/7 monitoring", "Nutritional support"] },

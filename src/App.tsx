@@ -1169,6 +1169,17 @@ const AppInner = () => {
             <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
             {/* Category hub MUST come before /resources/:id so it doesn't match the article slug catch-all */}
             <Route path="/resources/category/:slug" element={<PublicRouteGuard><CategoryHub /></PublicRouteGuard>} />
+            {/* Phase AD: legacy Resources mega-menu URLs Google indexed
+                when they were silently redirecting to /resources (200 OK
+                with /resources content). Those URLs now 404 after the
+                phase AA / AB fixes. Redirect to the canonical existing
+                articles. These MUST come before /resources/:id so the
+                Navigate fires first. */}
+            <Route path="/resources/signs-of-addiction" element={<Navigate to="/resources/youth-addiction-warning-signs" replace />} />
+            <Route path="/resources/what-to-expect-in-rehab" element={<Navigate to="/resources/drug-withdrawal-symptoms-timeline" replace />} />
+            <Route path="/resources/insurance-coverage-guide" element={<Navigate to="/resources/insurance-appeal-rehab-denial" replace />} />
+            <Route path="/resources/paying-for-rehab" element={<Navigate to="/resources/how-much-does-rehab-cost-per-day" replace />} />
+            <Route path="/resources/choosing-right-program" element={<Navigate to="/resources/how-to-find-good-rehab" replace />} />
             <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
             <Route path="/authors" element={<PublicRouteGuard><Authors /></PublicRouteGuard>} />
             <Route path="/authors/:slug" element={<PublicRouteGuard><AuthorProfile /></PublicRouteGuard>} />

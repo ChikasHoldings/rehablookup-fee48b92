@@ -9,7 +9,6 @@ import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection"
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import {
-import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
   generateStateTreatmentChecklist,
@@ -17,6 +16,7 @@ import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 import {
   Clock, Shield, CheckCircle, MapPin, ArrowRight, Search, Heart,
 } from "lucide-react";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const StateDrugAddiction = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
