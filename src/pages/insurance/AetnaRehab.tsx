@@ -27,6 +27,7 @@ import {
   resourceLinks 
 } from "@/components/seo/InternalLinkingSection";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
+import { InsuranceCarrierHero } from "@/components/seo/InsuranceCarrierHero";
 import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 
 const coverageDetails = [
