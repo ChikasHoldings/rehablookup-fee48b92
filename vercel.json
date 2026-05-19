@@ -143,7 +143,7 @@
     },
     {
       "source": "/provider-signup",
-      "destination": "/auth/signup",
+      "destination": "/provider/onboarding",
       "statusCode": 301
     },
     {
@@ -173,7 +173,7 @@
     },
     {
       "source": "/provider/signup",
-      "destination": "/provider-signup",
+      "destination": "/provider/onboarding",
       "statusCode": 301
     },
     {
@@ -334,6 +334,121 @@
     {
       "source": "/drug-rehab",
       "destination": "/drug-rehab-centers",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/holistic",
+      "destination": "/treatment-types/holistic-therapy",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/signs-of-addiction",
+      "destination": "/resources/youth-addiction-warning-signs",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/what-to-expect-in-rehab",
+      "destination": "/resources/drug-withdrawal-symptoms-timeline",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/insurance-coverage-guide",
+      "destination": "/resources/insurance-appeal-rehab-denial",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/paying-for-rehab",
+      "destination": "/resources/how-much-does-rehab-cost-per-day",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/choosing-right-program",
+      "destination": "/resources/how-to-find-good-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/choosing-rehab-center",
+      "destination": "/resources/how-to-find-good-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/first-week-treatment",
+      "destination": "/resources/what-happens-after-detox",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/free-rehab-options",
+      "destination": "/free-rehab-options",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/inpatient-vs-outpatient",
+      "destination": "/resources/outpatient-vs-inpatient",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/intervention-guide",
+      "destination": "/resources/how-to-stage-an-intervention",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/php-vs-iop",
+      "destination": "/resources/php-vs-iop-vs-outpatient",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/questions-to-ask-rehab",
+      "destination": "/resources/questions-to-ask-before-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/rehab-success-rates",
+      "destination": "/resources/relapse-prevention",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/supporting-loved-one",
+      "destination": "/resources/how-to-help-loved-one",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/types-of-addiction-treatment",
+      "destination": "/resources/category/treatment",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/understanding-dual-diagnosis",
+      "destination": "/resources/dual-diagnosis-explained",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/what-to-expect-in-detox",
+      "destination": "/resources/detox-timeline",
+      "statusCode": 301
+    },
+    {
+      "source": "/ekra",
+      "destination": "/how-we-make-money",
+      "statusCode": 301
+    },
+    {
+      "source": "/how-we-work",
+      "destination": "/how-we-make-money",
+      "statusCode": 301
+    },
+    {
+      "source": "/transparency",
+      "destination": "/how-we-make-money",
+      "statusCode": 301
+    },
+    {
+      "source": "/our-business-model",
+      "destination": "/how-we-make-money",
+      "statusCode": 301
+    },
+    {
+      "source": "/signup/subscription",
+      "destination": "/provider/billing?signup=retry",
       "statusCode": 301
     }
   ],

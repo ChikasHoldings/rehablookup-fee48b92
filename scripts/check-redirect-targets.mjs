@@ -39,27 +39,68 @@ const repoRoot = path.resolve(__dirname, "..");
 // Step 1: collect literal + dynamic routes from App.tsx
 // ───────────────────────────────────────────────────────────────────────────
 async function collectRoutes() {
-  const appTsx = await readFile(path.join(repoRoot, "src/App.tsx"), "utf8");
+  const src = await readFile(path.join(repoRoot, "src/App.tsx"), "utf8");
   const literals = new Set();
   const patterns = []; // { re: RegExp, src: string }
 
-  // Match `<Route path="..." element={...}/>` — also catches `<Route path="..." />` for Navigate.
-  const re = /<Route\s+[^>]*?path=["']([^"']+)["']/g;
-  let m;
-  while ((m = re.exec(appTsx)) !== null) {
-    const p = m[1];
-    if (p.includes("*")) {
-      // Catch-all (e.g., "*" for NotFound). Skip — they swallow everything.
+  // Walk the source character-by-character, tracking a stack of parent
+  // <Route path="..."> prefixes so nested children resolve to absolute paths.
+  // React Router children use relative paths (e.g. <Route path="billing"/>)
+  // that compose with their parent (/provider/) into /provider/billing.
+  const stack = [];
+  let i = 0;
+  while (i < src.length) {
+    if (src.startsWith("</Route>", i)) {
+      stack.pop();
+      i += 8;
       continue;
     }
-    if (p.includes(":")) {
-      // Dynamic — convert `/rehab-centers/:state/:city` to a regex that
-      // accepts any single non-slash segment for each `:param`.
-      const rePart = p.replace(/:[A-Za-z][A-Za-z0-9_]*/g, "[^/]+");
-      patterns.push({ re: new RegExp("^" + rePart + "$"), src: p });
-    } else {
-      literals.add(p);
+    // `<Route` must be followed by whitespace or `>` so we don't match `<Routes>`.
+    if (src.startsWith("<Route", i) && /[\s>]/.test(src[i + 6] || "")) {
+      // Find the matching close `>` for this opening tag, respecting balanced
+      // `{...}` braces in attributes like `element={<Foo />}`.
+      let j = i + 6;
+      let braceDepth = 0;
+      let selfClose = false;
+      while (j < src.length) {
+        const ch = src[j];
+        if (ch === "{") { braceDepth++; j++; continue; }
+        if (ch === "}") { braceDepth--; j++; continue; }
+        if (braceDepth === 0 && ch === ">") {
+          selfClose = src[j - 1] === "/";
+          break;
+        }
+        j++;
+      }
+      const tagBody = src.slice(i, j + 1);
+      const pathMatch = /\bpath=["']([^"']+)["']/.exec(tagBody);
+      const parent = stack.length ? stack[stack.length - 1] : "";
+      let absolute = null;
+      if (pathMatch) {
+        const p = pathMatch[1];
+        if (p === "*") {
+          // catch-all — swallows everything; skip
+        } else if (p.startsWith("/")) {
+          absolute = p;
+        } else {
+          absolute = (parent.replace(/\/$/, "") + "/" + p).replace(/\/+/g, "/");
+        }
+      }
+      if (absolute) {
+        if (absolute.includes(":")) {
+          const rePart = absolute.replace(/:[A-Za-z][A-Za-z0-9_]*/g, "[^/]+");
+          patterns.push({ re: new RegExp("^" + rePart + "$"), src: absolute });
+        } else {
+          literals.add(absolute);
+        }
+      }
+      if (!selfClose) {
+        stack.push(absolute || parent);
+      }
+      i = j + 1;
+      continue;
     }
+    i++;
   }
 
   return { literals, patterns };
