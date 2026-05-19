@@ -47,6 +47,10 @@ export const statesData: StateData[] = [
       { name: "Enterprise", slug: "enterprise", population: 28711, description: "Enterprise offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Enterprise, AL. Compare verified treatment facilities near you." },
       { name: "Anniston", slug: "anniston", population: 21518, description: "Anniston offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Anniston, AL. Compare verified treatment facilities near you." },
       { name: "Homewood", slug: "homewood", population: 26026, description: "Homewood offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Homewood, AL. Compare verified treatment facilities near you." },
+      { name: "Hartselle", slug: "hartselle", population: 14922, description: "Hartselle offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Hartselle, AL. Compare verified treatment facilities near you." },
+      { name: "Smiths Station", slug: "smiths-station", population: 4926, description: "Smiths Station offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Smiths Station, AL. Compare verified treatment facilities near you." },
+      { name: "Valley", slug: "valley", population: 9558, description: "Valley offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Valley, AL. Compare verified treatment facilities near you." },
+      { name: "Priceville", slug: "priceville", population: 3489, description: "Priceville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Priceville, AL. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -136,6 +140,7 @@ export const statesData: StateData[] = [
       { name: "Russellville", slug: "russellville", population: 29945, description: "Russellville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Russellville, AR. Compare verified treatment facilities near you." },
       { name: "Paragould", slug: "paragould", population: 28693, description: "Paragould offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Paragould, AR. Compare verified treatment facilities near you." },
       { name: "Van Buren", slug: "van-buren", population: 24010, description: "Van Buren offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Van Buren, AR. Compare verified treatment facilities near you." },
+      { name: "Bella Vista", slug: "bella-vista", population: 30303, description: "Bella Vista offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Bella Vista, AR. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -172,6 +177,9 @@ export const statesData: StateData[] = [
       { name: "Malibu", slug: "malibu", population: 10654, description: "Malibu is a premier destination for luxury, oceanfront, and executive addiction treatment, with discreet residential programs along the Pacific coast.", metaDescription: "Find luxury and oceanfront rehab centers in Malibu, CA. Compare verified treatment facilities near you." },
       { name: "Corona", slug: "corona", population: 157136, description: "Corona offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Corona, CA. Compare verified treatment facilities near you." },
       { name: "Murrieta", slug: "murrieta", population: 116958, description: "Murrieta offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Murrieta, CA. Compare verified treatment facilities near you." },
+      { name: "Daly City", slug: "daly-city", population: 104901, description: "Daly City offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Daly City, CA. Compare verified treatment facilities near you." },
+      { name: "Pacifica", slug: "pacifica", population: 38640, description: "Pacifica offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Pacifica, CA. Compare verified treatment facilities near you." },
+      { name: "San Bruno", slug: "san-bruno", population: 43908, description: "San Bruno offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in San Bruno, CA. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -201,6 +209,8 @@ export const statesData: StateData[] = [
       { name: "Loveland", slug: "loveland", population: 76378, description: "Loveland offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Loveland, CO. Compare verified treatment facilities near you." },
       { name: "Littleton", slug: "littleton", population: 46208, description: "Littleton offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Littleton, CO. Compare verified treatment facilities near you." },
       { name: "Brighton", slug: "brighton", population: 41175, description: "Brighton offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Brighton, CO. Compare verified treatment facilities near you." },
+      { name: "Estes Park", slug: "estes-park", population: 6105, description: "Estes Park offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Estes Park, CO. Compare verified treatment facilities near you." },
+      { name: "Palmer Lake", slug: "palmer-lake", population: 2702, description: "Palmer Lake offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Palmer Lake, CO. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -323,6 +333,15 @@ export const statesData: StateData[] = [
       { name: "Dalton", slug: "dalton", population: 34024, description: "Dalton offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Dalton, GA. Compare verified treatment facilities near you." },
       { name: "Gainesville", slug: "gainesville-ga", population: 43435, description: "Gainesville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Gainesville, GA. Compare verified treatment facilities near you." },
       { name: "Statesboro", slug: "statesboro", population: 34098, description: "Statesboro offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Statesboro, GA. Compare verified treatment facilities near you." },
+      { name: "Suwanee", slug: "suwanee", population: 21617, description: "Suwanee offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Suwanee, GA. Compare verified treatment facilities near you." },
+      { name: "Snellville", slug: "snellville", population: 20256, description: "Snellville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Snellville, GA. Compare verified treatment facilities near you." },
+      { name: "Duluth", slug: "duluth-ga", population: 31201, description: "Duluth offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Duluth, GA. Compare verified treatment facilities near you." },
+      { name: "Lawrenceville", slug: "lawrenceville", population: 30834, description: "Lawrenceville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Lawrenceville, GA. Compare verified treatment facilities near you." },
+      { name: "Buford", slug: "buford", population: 16770, description: "Buford offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Buford, GA. Compare verified treatment facilities near you." },
+      { name: "Pooler", slug: "pooler", population: 24521, description: "Pooler offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Pooler, GA. Compare verified treatment facilities near you." },
+      { name: "Garden City", slug: "garden-city-ga", population: 9101, description: "Garden City offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Garden City, GA. Compare verified treatment facilities near you." },
+      { name: "Bloomingdale", slug: "bloomingdale-ga", population: 3018, description: "Bloomingdale offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Bloomingdale, GA. Compare verified treatment facilities near you." },
+      { name: "Athens", slug: "athens", population: 129105, description: "Athens offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Athens, GA. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -352,6 +371,7 @@ export const statesData: StateData[] = [
       { name: "Wahiawa", slug: "wahiawa", population: 17821, description: "Wahiawa offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Wahiawa, HI. Compare verified treatment facilities near you." },
       { name: "Waimea", slug: "waimea", population: 10008, description: "Waimea offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Waimea, HI. Compare verified treatment facilities near you." },
       { name: "Makakilo", slug: "makakilo", population: 19372, description: "Makakilo offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Makakilo, HI. Compare verified treatment facilities near you." },
+      { name: "Pahoa", slug: "pahoa", population: 945, description: "Pahoa offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Pahoa, HI. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -442,6 +462,9 @@ export const statesData: StateData[] = [
       { name: "Westfield", slug: "westfield", population: 46410, description: "Westfield offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Westfield, IN. Compare verified treatment facilities near you." },
       { name: "New Albany", slug: "new-albany", population: 38239, description: "New Albany offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in New Albany, IN. Compare verified treatment facilities near you." },
       { name: "Columbus", slug: "columbus-in", population: 46850, description: "Columbus offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Columbus, IN. Compare verified treatment facilities near you." },
+      { name: "Beech Grove", slug: "beech-grove", population: 13881, description: "Beech Grove offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Beech Grove, IN. Compare verified treatment facilities near you." },
+      { name: "Speedway", slug: "speedway", population: 12081, description: "Speedway offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Speedway, IN. Compare verified treatment facilities near you." },
+      { name: "Lawrence", slug: "lawrence", population: 49370, description: "Lawrence offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Lawrence, IN. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -529,6 +552,8 @@ export const statesData: StateData[] = [
       { name: "Murray", slug: "murray", population: 19401, description: "Murray offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Murray, KY. Compare verified treatment facilities near you." },
       { name: "Danville", slug: "danville-ky", population: 17220, description: "Danville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Danville, KY. Compare verified treatment facilities near you." },
       { name: "Erlanger", slug: "erlanger", population: 19573, description: "Erlanger offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Erlanger, KY. Compare verified treatment facilities near you." },
+      { name: "Fort Thomas", slug: "fort-thomas", population: 16325, description: "Fort Thomas offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Fort Thomas, KY. Compare verified treatment facilities near you." },
+      { name: "Highland Heights", slug: "highland-heights", population: 7493, description: "Highland Heights offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Highland Heights, KY. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -558,6 +583,7 @@ export const statesData: StateData[] = [
       { name: "Zachary", slug: "zachary", population: 17703, description: "Zachary offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Zachary, LA. Compare verified treatment facilities near you." },
       { name: "Thibodaux", slug: "thibodaux", population: 14502, description: "Thibodaux offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Thibodaux, LA. Compare verified treatment facilities near you." },
       { name: "Mandeville", slug: "mandeville", population: 13233, description: "Mandeville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Mandeville, LA. Compare verified treatment facilities near you." },
+      { name: "Abita Springs", slug: "abita-springs", population: 2965, description: "Abita Springs offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Abita Springs, LA. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -645,6 +671,9 @@ export const statesData: StateData[] = [
       { name: "Brookline", slug: "brookline", population: 59121, description: "Brookline offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Brookline, MA. Compare verified treatment facilities near you." },
       { name: "Plymouth", slug: "plymouth-ma", population: 61217, description: "Plymouth offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Plymouth, MA. Compare verified treatment facilities near you." },
       { name: "Medford", slug: "medford", population: 59450, description: "Medford offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Medford, MA. Compare verified treatment facilities near you." },
+      { name: "Andover", slug: "andover", population: 36569, description: "Andover offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Andover, MA. Compare verified treatment facilities near you." },
+      { name: "Chicopee", slug: "chicopee", population: 55126, description: "Chicopee offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Chicopee, MA. Compare verified treatment facilities near you." },
+      { name: "Holyoke", slug: "holyoke", population: 38247, description: "Holyoke offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Holyoke, MA. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -676,6 +705,8 @@ export const statesData: StateData[] = [
       { name: "Midland", slug: "midland-mi", population: 42021, description: "Midland offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Midland, MI. Compare verified treatment facilities near you." },
       { name: "Muskegon", slug: "muskegon", population: 38318, description: "Muskegon offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Muskegon, MI. Compare verified treatment facilities near you." },
       { name: "Battle Creek", slug: "battle-creek", population: 52347, description: "Battle Creek offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Battle Creek, MI. Compare verified treatment facilities near you." },
+      { name: "Mason", slug: "mason-mi", population: 8484, description: "Mason offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Mason, MI. Compare verified treatment facilities near you." },
+      { name: "Westland", slug: "westland", population: 84037, description: "Westland offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Westland, MI. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -705,6 +736,9 @@ export const statesData: StateData[] = [
       { name: "Minnetonka", slug: "minnetonka", population: 53781, description: "Minnetonka offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Minnetonka, MN. Compare verified treatment facilities near you." },
       { name: "Edina", slug: "edina", population: 53494, description: "Edina offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Edina, MN. Compare verified treatment facilities near you." },
       { name: "Mankato", slug: "mankato", population: 44488, description: "Mankato offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Mankato, MN. Compare verified treatment facilities near you." },
+      { name: "Maplewood", slug: "maplewood-mn", population: 40926, description: "Maplewood offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Maplewood, MN. Compare verified treatment facilities near you." },
+      { name: "White Bear Lake", slug: "white-bear-lake", population: 26014, description: "White Bear Lake offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in White Bear Lake, MN. Compare verified treatment facilities near you." },
+      { name: "Roseville", slug: "roseville-mn", population: 36254, description: "Roseville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Roseville, MN. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -763,6 +797,7 @@ export const statesData: StateData[] = [
       { name: "Wentzville", slug: "wentzville", population: 42253, description: "Wentzville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Wentzville, MO. Compare verified treatment facilities near you." },
       { name: "Ballwin", slug: "ballwin", population: 31078, description: "Ballwin offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Ballwin, MO. Compare verified treatment facilities near you." },
       { name: "Raytown", slug: "raytown", population: 29176, description: "Raytown offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Raytown, MO. Compare verified treatment facilities near you." },
+      { name: "Strafford", slug: "strafford", population: 2820, description: "Strafford offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Strafford, MO. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -937,6 +972,7 @@ export const statesData: StateData[] = [
       { name: "Long Beach", slug: "long-beach-ny", population: 33454, description: "Long Beach offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Long Beach, NY. Compare verified treatment facilities near you." },
       { name: "Ithaca", slug: "ithaca", population: 32027, description: "Ithaca offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Ithaca, NY. Compare verified treatment facilities near you." },
       { name: "Saratoga Springs", slug: "saratoga-springs", population: 28491, description: "Saratoga Springs offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Saratoga Springs, NY. Compare verified treatment facilities near you." },
+      { name: "Oyster Bay", slug: "oyster-bay", population: 286400, description: "Oyster Bay offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Oyster Bay, NY. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -968,6 +1004,10 @@ export const statesData: StateData[] = [
       { name: "Rocky Mount", slug: "rocky-mount", population: 54511, description: "Rocky Mount offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Rocky Mount, NC. Compare verified treatment facilities near you." },
       { name: "Hickory", slug: "hickory", population: 43490, description: "Hickory offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Hickory, NC. Compare verified treatment facilities near you." },
       { name: "Indian Trail", slug: "indian-trail", population: 42458, description: "Indian Trail offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Indian Trail, NC. Compare verified treatment facilities near you." },
+      { name: "Cornelius", slug: "cornelius", population: 32546, description: "Cornelius offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Cornelius, NC. Compare verified treatment facilities near you." },
+      { name: "Carolina Beach", slug: "carolina-beach", population: 6228, description: "Carolina Beach offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Carolina Beach, NC. Compare verified treatment facilities near you." },
+      { name: "High Point", slug: "high-point", population: 114059, description: "High Point offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in High Point, NC. Compare verified treatment facilities near you." },
+      { name: "Winston-Salem", slug: "winston-salem", population: 247945, description: "Winston-Salem offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Winston-Salem, NC. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -997,6 +1037,7 @@ export const statesData: StateData[] = [
       { name: "Cavalier", slug: "cavalier", population: 1302, description: "Cavalier offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Cavalier, ND. Compare verified treatment facilities near you." },
       { name: "Hazen", slug: "hazen", population: 2404, description: "Hazen offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Hazen, ND. Compare verified treatment facilities near you." },
       { name: "Horace", slug: "horace", population: 3870, description: "Horace offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Horace, ND. Compare verified treatment facilities near you." },
+      { name: "Mapleton", slug: "mapleton-nd", population: 1180, description: "Mapleton offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Mapleton, ND. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -1028,6 +1069,7 @@ export const statesData: StateData[] = [
       { name: "Mentor", slug: "mentor", population: 46798, description: "Mentor offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Mentor, OH. Compare verified treatment facilities near you." },
       { name: "Beavercreek", slug: "beavercreek", population: 47741, description: "Beavercreek offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Beavercreek, OH. Compare verified treatment facilities near you." },
       { name: "Findlay", slug: "findlay", population: 42069, description: "Findlay offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Findlay, OH. Compare verified treatment facilities near you." },
+      { name: "Mansfield", slug: "mansfield", population: 46454, description: "Mansfield offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Mansfield, OH. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -1057,6 +1099,7 @@ export const statesData: StateData[] = [
       { name: "Del City", slug: "del-city", population: 22159, description: "Del City offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Del City, OK. Compare verified treatment facilities near you." },
       { name: "Bixby", slug: "bixby", population: 28485, description: "Bixby offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Bixby, OK. Compare verified treatment facilities near you." },
       { name: "Yukon", slug: "yukon", population: 26716, description: "Yukon offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Yukon, OK. Compare verified treatment facilities near you." },
+      { name: "Cushing", slug: "cushing", population: 7826, description: "Cushing offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Cushing, OK. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -1086,6 +1129,10 @@ export const statesData: StateData[] = [
       { name: "West Linn", slug: "west-linn", population: 26289, description: "West Linn offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in West Linn, OR. Compare verified treatment facilities near you." },
       { name: "Woodburn", slug: "woodburn", population: 27285, description: "Woodburn offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Woodburn, OR. Compare verified treatment facilities near you." },
       { name: "Ashland", slug: "ashland-or", population: 21573, description: "Ashland offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Ashland, OR. Compare verified treatment facilities near you." },
+      { name: "Wood Village", slug: "wood-village", population: 4257, description: "Wood Village offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Wood Village, OR. Compare verified treatment facilities near you." },
+      { name: "Fairview", slug: "fairview-or", population: 10067, description: "Fairview offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Fairview, OR. Compare verified treatment facilities near you." },
+      { name: "Troutdale", slug: "troutdale", population: 16100, description: "Troutdale offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Troutdale, OR. Compare verified treatment facilities near you." },
+      { name: "Cornelius", slug: "cornelius-or", population: 13050, description: "Cornelius offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Cornelius, OR. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -1117,6 +1164,10 @@ export const statesData: StateData[] = [
       { name: "Johnstown", slug: "johnstown", population: 18411, description: "Johnstown offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Johnstown, PA. Compare verified treatment facilities near you." },
       { name: "Hazleton", slug: "hazleton", population: 25340, description: "Hazleton offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Hazleton, PA. Compare verified treatment facilities near you." },
       { name: "West Chester", slug: "west-chester", population: 20609, description: "West Chester offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in West Chester, PA. Compare verified treatment facilities near you." },
+      { name: "Phoenixville", slug: "phoenixville", population: 17939, description: "Phoenixville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Phoenixville, PA. Compare verified treatment facilities near you." },
+      { name: "Coatesville", slug: "coatesville", population: 13573, description: "Coatesville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Coatesville, PA. Compare verified treatment facilities near you." },
+      { name: "Kennett Square", slug: "kennett-square", population: 6097, description: "Kennett Square offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Kennett Square, PA. Compare verified treatment facilities near you." },
+      { name: "Macungie", slug: "macungie", population: 3219, description: "Macungie offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Macungie, PA. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -1175,6 +1226,9 @@ export const statesData: StateData[] = [
       { name: "Bluffton", slug: "bluffton", population: 26584, description: "Bluffton offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Bluffton, SC. Compare verified treatment facilities near you." },
       { name: "Simpsonville", slug: "simpsonville", population: 24093, description: "Simpsonville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Simpsonville, SC. Compare verified treatment facilities near you." },
       { name: "Lexington", slug: "lexington-sc", population: 22157, description: "Lexington offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Lexington, SC. Compare verified treatment facilities near you." },
+      { name: "Boiling Springs", slug: "boiling-springs", population: 9851, description: "Boiling Springs offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Boiling Springs, SC. Compare verified treatment facilities near you." },
+      { name: "Lyman", slug: "lyman", population: 3242, description: "Lyman offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Lyman, SC. Compare verified treatment facilities near you." },
+      { name: "Woodruff", slug: "woodruff", population: 4189, description: "Woodruff offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Woodruff, SC. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -1233,6 +1287,9 @@ export const statesData: StateData[] = [
       { name: "Cookeville", slug: "cookeville", population: 36650, description: "Cookeville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Cookeville, TN. Compare verified treatment facilities near you." },
       { name: "Mount Juliet", slug: "mount-juliet", population: 39192, description: "Mount Juliet offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Mount Juliet, TN. Compare verified treatment facilities near you." },
       { name: "Cleveland", slug: "cleveland-tn", population: 47424, description: "Cleveland offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Cleveland, TN. Compare verified treatment facilities near you." },
+      { name: "Bluff City", slug: "bluff-city", population: 1733, description: "Bluff City offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Bluff City, TN. Compare verified treatment facilities near you." },
+      { name: "Berry Hill", slug: "berry-hill", population: 530, description: "Berry Hill offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Berry Hill, TN. Compare verified treatment facilities near you." },
+      { name: "Franklin", slug: "franklin-tn", population: 83454, description: "Franklin offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Franklin, TN. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -1266,6 +1323,9 @@ export const statesData: StateData[] = [
       { name: "Waco", slug: "waco", population: 138486, description: "Waco offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Waco, TX. Compare verified treatment facilities near you." },
       { name: "Beaumont", slug: "beaumont", population: 115282, description: "Beaumont offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Beaumont, TX. Compare verified treatment facilities near you." },
       { name: "Denton", slug: "denton", population: 139869, description: "Denton offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Denton, TX. Compare verified treatment facilities near you." },
+      { name: "Allen", slug: "allen", population: 105623, description: "Allen offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Allen, TX. Compare verified treatment facilities near you." },
+      { name: "Wylie", slug: "wylie", population: 57526, description: "Wylie offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Wylie, TX. Compare verified treatment facilities near you." },
+      { name: "Sherman", slug: "sherman", population: 43645, description: "Sherman offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Sherman, TX. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -1295,6 +1355,7 @@ export const statesData: StateData[] = [
       { name: "Riverton", slug: "riverton", population: 44310, description: "Riverton offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Riverton, UT. Compare verified treatment facilities near you." },
       { name: "Spanish Fork", slug: "spanish-fork", population: 42602, description: "Spanish Fork offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Spanish Fork, UT. Compare verified treatment facilities near you." },
       { name: "Roy", slug: "roy", population: 39820, description: "Roy offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Roy, UT. Compare verified treatment facilities near you." },
+      { name: "Springville", slug: "springville", population: 36417, description: "Springville offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Springville, UT. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -1413,6 +1474,8 @@ export const statesData: StateData[] = [
       { name: "Elkins", slug: "elkins", population: 7094, description: "Elkins offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Elkins, WV. Compare verified treatment facilities near you." },
       { name: "Princeton", slug: "princeton-wv", population: 5882, description: "Princeton offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Princeton, WV. Compare verified treatment facilities near you." },
       { name: "Nitro", slug: "nitro", population: 6837, description: "Nitro offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Nitro, WV. Compare verified treatment facilities near you." },
+      { name: "Dunbar", slug: "dunbar", population: 7159, description: "Dunbar offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Dunbar, WV. Compare verified treatment facilities near you." },
+      { name: "Martinsburg", slug: "martinsburg", population: 18773, description: "Martinsburg offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Martinsburg, WV. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -1442,6 +1505,8 @@ export const statesData: StateData[] = [
       { name: "Wausau", slug: "wausau", population: 39106, description: "Wausau offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Wausau, WI. Compare verified treatment facilities near you." },
       { name: "Beloit", slug: "beloit", population: 36966, description: "Beloit offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Beloit, WI. Compare verified treatment facilities near you." },
       { name: "Manitowoc", slug: "manitowoc", population: 33588, description: "Manitowoc offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Manitowoc, WI. Compare verified treatment facilities near you." },
+      { name: "Sun Prairie", slug: "sun-prairie", population: 35967, description: "Sun Prairie offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Sun Prairie, WI. Compare verified treatment facilities near you." },
+      { name: "Edgerton", slug: "edgerton-wi", population: 5944, description: "Edgerton offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Edgerton, WI. Compare verified treatment facilities near you." },
     ],
   },
   {
@@ -1502,6 +1567,8 @@ export const statesData: StateData[] = [
       { name: "Plainfield", slug: "plainfield", population: 54586, description: "Plainfield offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Plainfield, NJ. Compare verified treatment facilities near you." },
       { name: "Hackensack", slug: "hackensack", population: 46030, description: "Hackensack offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Hackensack, NJ. Compare verified treatment facilities near you." },
       { name: "Atlantic City", slug: "atlantic-city", population: 38497, description: "Atlantic City offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Atlantic City, NJ. Compare verified treatment facilities near you." },
+      { name: "Maplewood", slug: "maplewood-nj", population: 25684, description: "Maplewood offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Maplewood, NJ. Compare verified treatment facilities near you." },
+      { name: "Atlantic City", slug: "atlantic-city", population: 37896, description: "Atlantic City offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Atlantic City, NJ. Compare verified treatment facilities near you." },
     ],
   },
 ];
