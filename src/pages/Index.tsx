@@ -227,14 +227,14 @@ const Index = () => {
         {/* Content */}
         <div className="container relative py-10 md:py-12 lg:py-14 px-4 md:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
-            {/* Headline */}
+            {/* Headline — outcome-led, conversion-tuned */}
             <h1 className="speakable-headline mb-3 font-display text-[1.875rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
-              Find the Right<br className="sm:hidden" /> Treatment & Rehab
+              Find verified rehab<br className="sm:hidden" /> centers near you
             </h1>
 
             {/* Subheadline */}
-            <p className="speakable-summary mb-6 md:mb-8 text-[15px] md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
-              Compare verified treatment centers and check your insurance coverage.
+            <p className="speakable-summary mb-4 md:mb-5 text-[15px] md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
+              Compare accredited treatment programs and verify insurance — free, confidential, no obligation.
             </p>
 
             {/* Search Form - Directory Style */}
@@ -242,18 +242,32 @@ const Index = () => {
               <SearchForm variant="directory" />
             </div>
 
+            {/* Risk-reversal chip row — surfaces the strongest selling
+                points right under the search. */}
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 animate-fade-in" style={{ animationDelay: "120ms" }}>
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 ring-1 ring-emerald-400/25 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-100">
+                100% free
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/10 ring-1 ring-white/15 px-2.5 py-0.5 text-[11px] font-semibold text-white/85">
+                Confidential
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/10 ring-1 ring-white/15 px-2.5 py-0.5 text-[11px] font-semibold text-white/85">
+                24/7 help
+              </span>
+            </div>
+
             {/* Quick Links */}
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in relative z-0" style={{ animationDelay: "150ms" }}>
-              <Link 
-                to="/concierge" 
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in relative z-0" style={{ animationDelay: "150ms" }}>
+              <Link
+                to="/concierge"
                 onClick={() => analytics.ctaClick("Get Free Help", "homepage_hero_quicklink")}
                 className="inline-flex items-center gap-1 text-sm font-semibold text-white hover:text-white underline underline-offset-4 transition-colors"
               >
-                Get Free Help
+                Talk to a placement specialist
               </Link>
               <span className="text-white/40">•</span>
-              <Link 
-                to="/for-providers" 
+              <Link
+                to="/for-providers"
                 className="inline-flex items-center gap-1 text-sm text-white/75 hover:text-white underline underline-offset-4 transition-colors"
               >
                 List Your Treatment Center

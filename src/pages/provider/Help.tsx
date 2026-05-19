@@ -91,7 +91,7 @@ const faqSections = [
     items: [
       {
         question: "What is the Concierge Add-On?",
-        answer: "The Concierge Add-On ($1,000/month) makes you a verified Concierge Partner. Our human advisors prioritize your facility when matching seekers whose geography and level of care fit your program. EKRA-compliant by design — never per-call, per-lead, or per-admission."
+        answer: "The Concierge Add-On ($1,000/month) makes you a verified Concierge Partner. Our human advisors prioritize your facility when matching families whose geography and level of care fit your program. EKRA-compliant by design — never per-call, per-lead, or per-admission."
       },
       {
         question: "How do I enable the Concierge Add-On?",
@@ -109,7 +109,7 @@ const faqSections = [
     items: [
       {
         question: "What does Pro membership include?",
-        answer: "Pro ($99/month, or $1,009.80/yr — save 15%) includes: verified badge, direct contact info visible to seekers, inquiries delivered directly to your inbox with full contact details, review responses, 10 photos plus 1 video, unlimited facility listings, priority support, analytics dashboard, and an embeddable trust badge. Featured rotation placements and Concierge Partner surfacing are optional add-ons priced separately — see /for-providers for the full lineup."
+        answer: "Pro ($99/month, or $1,009.80/yr — save 15%) includes: verified badge, direct contact info visible to clients, inquiries delivered directly to your inbox with full contact details, review responses, 10 photos plus 1 video, unlimited facility listings, priority support, analytics dashboard, and an embeddable trust badge. Featured rotation placements and Concierge Partner surfacing are optional add-ons priced separately — see /for-providers for the full lineup."
       },
       {
         question: "How does billing work?",

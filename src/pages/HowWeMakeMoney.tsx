@@ -160,7 +160,7 @@ export default function HowWeMakeMoney() {
             A facility's verified listing on our directory. Includes the
             verified badge, direct contact display, photo gallery, lead
             inbox, and review responses. This is the foundation that lets
-            facilities present professionally to seekers who land on our
+            facilities present professionally to clients who land on our
             site.
           </p>
 
@@ -181,12 +181,12 @@ export default function HowWeMakeMoney() {
           </h3>
           <p>
             An optional add-on for facilities that want prominent surfacing
-            when our concierge team matches seekers to options. Concierge
+            when our concierge team matches families to options. Concierge
             Partners get a "Placement Partner" label in our advisors' match
             tool. Our advisors are required to present at least two
             non-partner alternatives alongside any Placement Partner. The
-            seeker always picks. Calls go directly to whichever facility
-            the seeker chooses. We never charge per match, per call, or per
+            family always picks. Calls go directly to whichever facility
+            the family chooses. We never charge per match, per call, or per
             admission.
           </p>
 
@@ -243,9 +243,9 @@ export default function HowWeMakeMoney() {
               "We don't charge per admission or per placement.",
               "We don't take commissions on treatment fees.",
               "We don't route calls through our own number.",
-              "We don't sell or share seeker contact information.",
-              "We don't pay our advisors based on which facility a seeker chooses.",
-              "We don't weight our directory rankings by who pays us. Rankings on directory pages reflect data completeness, response rate, and seeker reviews — not subscription tier (Pro facilities sort above Free, but Pro tier is a flat-fee subscription, not pay-for-ranking).",
+              "We don't sell or share your contact information.",
+              "We don't pay our advisors based on which facility a family chooses.",
+              "We don't weight our directory rankings by who pays us. Rankings on directory pages reflect data completeness, response rate, and client reviews — not subscription tier (Pro facilities sort above Free, but Pro tier is a flat-fee subscription, not pay-for-ranking).",
               "We don't display ads from outside our directory. Every sponsored placement on our site is a Featured-subscriber facility.",
             ].map((item) => (
               <li key={item} className="flex items-start gap-2.5">
@@ -256,9 +256,9 @@ export default function HowWeMakeMoney() {
           </ul>
 
           {/* Section 5 */}
-          <SectionHeader id="verify">How seekers can verify</SectionHeader>
+          <SectionHeader id="verify">How families can verify</SectionHeader>
           <p>
-            If you're a seeker reading this and you want to verify any of
+            If you're a client or family reading this and you want to verify any of
             the above:
           </p>
           <ol className="mt-4 space-y-2.5 list-decimal list-inside">
@@ -293,7 +293,7 @@ export default function HowWeMakeMoney() {
           <p>
             Our revenue comes entirely from facility subscriptions and
             add-ons. No advertising networks. No data sales. No third-party
-            tracking that monetizes seeker behavior. No affiliate revenue
+            tracking that monetizes visitor behavior. No affiliate revenue
             tied to treatment placement.
           </p>
           <p className="mt-4">
@@ -369,7 +369,7 @@ export default function HowWeMakeMoney() {
             <p className="text-[13px] leading-[1.55] text-slate-500">
               RehabLookup is a substance use disorder treatment directory
               operated by Chikas Holdings, Inc. This page is informational
-              and not legal advice. Treatment facilities and seekers with
+              and not legal advice. Treatment facilities and families with
               specific compliance questions should consult qualified counsel.
             </p>
             <p className="text-[13px] text-slate-500">

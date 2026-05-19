@@ -455,7 +455,7 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       if (!seekerResult.error && seekerResult.data) {
         toast({
           title: "Account Exists",
-          description: "This email is registered as a personal account. Please use the seeker login or use a different email for your facility.",
+          description: "This email is registered as a personal account. Please sign in with your personal account or use a different email for your facility.",
           variant: "destructive",
         });
         submittingRef.current = false;

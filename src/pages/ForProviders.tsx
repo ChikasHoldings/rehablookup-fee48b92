@@ -121,15 +121,16 @@ function HeroSection({ scrollToForm }: { scrollToForm: () => void }) {
             For Treatment Providers
           </span>
 
-          {/* H1 — outcome-led, not feature-led. Stronger
-              directory-platform framing replaces "independent" copy. */}
+          {/* H1 — measured outcome-led directory language. Healthgrades/
+              Yelp Biz register: "Acquire more patients" / "Reach more
+              customers" — restrained, not ad-LP. */}
           <h1 className="mt-4 font-display text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.05]">
-            Fill more beds.{" "}
-            <span className="text-[#CDA223]">Stop paying for clicks.</span>
+            Reach more families.{" "}
+            <span className="text-[#CDA223]">Grow admissions.</span>
           </h1>
 
           <p className="mx-auto mt-3 max-w-2xl text-base md:text-lg text-white/85 leading-relaxed">
-            List your accredited treatment center on the largest verified rehab directory in the U.S. — and reach families who are actively searching for care.
+            List your accredited treatment center on the largest verified rehab directory in the U.S. Get in front of families who are actively searching for care.
           </p>
 
           {/* Trust-strip — outcome metrics under the subhead */}
@@ -210,7 +211,7 @@ function WhyDifferentSection() {
       Icon: TrendingUp,
       title: "Built for admissions teams",
       body:
-        "Real-time inquiry routing, lead-source attribution, response-time metrics, and a roster of high-intent seekers — not curiosity clicks from generic ad networks.",
+        "Real-time inquiry routing, lead-source attribution, response-time metrics, and a roster of high-intent families — not curiosity clicks from generic ad networks.",
       pill: "Pro dashboard included",
     },
   ];
@@ -223,10 +224,10 @@ function WhyDifferentSection() {
             Why RehabLookup
           </span>
           <h2 className="mt-3 font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-[#1B365D]">
-            The directory built for treatment centers, not lead brokers.
+            Built for treatment centers, not lead brokers
           </h2>
           <p className="mt-3 text-base text-slate-600 max-w-2xl mx-auto">
-            Most rehab-marketing platforms profit from your patient relationships. We don't. Here's what changes when you list with us.
+            A clean directory model — transparent pricing, direct contact, operator-neutral rankings. Here's what makes RehabLookup different.
           </p>
         </div>
         <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -695,17 +696,17 @@ function ConciergePartnerSection() {
 
           <div className="mt-6 space-y-4 text-[15px] md:text-base leading-relaxed text-slate-700">
             <p>
-              When a seeker calls our concierge, our advisors match them based on their
+              When a family calls our concierge, our advisors match them based on their
               insurance, level of care, geography, and clinical needs — never based on
               who's paid us.
             </p>
             <p>
-              Among facilities that match a seeker's criteria, Concierge Partners get a visual
+              Among facilities that match a family's criteria, Concierge Partners get a visual
               badge in our advisors' tools so the advisor naturally mentions you:{" "}
               <em className="text-slate-900">"X is one of our Placement Partners, meaning
               they've been verified and have committed to 24-hour response times."</em> The
               advisor always presents <strong>at least two non-partner options alongside any
-              partner facilities</strong>. The seeker always picks. The call goes directly to
+              partner facilities</strong>. The family always picks. The call goes directly to
               your admissions line — never through ours.
             </p>
             <p>
@@ -744,8 +745,8 @@ function MidPageCtaStrip({ scrollToForm }: { scrollToForm: () => void }) {
       <div className="container relative z-10 px-4 md:px-6 lg:px-8 py-10 md:py-14">
         <div className="mx-auto max-w-3xl text-center">
           <h3 className="font-display text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
-            Stop renting Google Ads.{" "}
-            <span className="text-[#CDA223]">Own your directory presence.</span>
+            Ready to grow your admissions?{" "}
+            <span className="text-[#CDA223]">List your facility today.</span>
           </h3>
           <p className="mt-2 text-sm md:text-base text-white/80 max-w-2xl mx-auto">
             Flat monthly fee. Direct calls. No referral cuts. Cancel any time.
@@ -879,7 +880,7 @@ const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: "What happens to inquiries on a Free listing?",
-    a: "They route to our concierge, who presents your facility plus 2 matching alternatives to the seeker. You get a notification: \"A seeker submitted on your listing — upgrade to Pro to receive these directly.\" If you're already busy without paid placements, Free is genuinely viable.",
+    a: "They route to our concierge, who presents your facility plus 2 matching alternatives to the family. You get a notification: \"A family submitted on your listing — upgrade to Pro to receive these directly.\" If you're already busy without paid placements, Free is genuinely viable.",
   },
   {
     q: "How do I see ROI?",
@@ -1385,7 +1386,7 @@ export default function ForProviders() {
     <Layout>
       <SEO
         title="List Your Facility | For Treatment Providers — RehabLookup"
-        description="Fill more beds. Stop paying for clicks. List your accredited treatment center on the largest verified rehab directory in the U.S. Pro from $99/mo. Cancel anytime. EKRA-compliant by design."
+        description="Reach more families. Grow admissions. List your accredited treatment center on the largest verified rehab directory in the U.S. Pro from $99/mo. Cancel anytime. EKRA-compliant by design."
         canonical="/for-providers"
       />
       <HeroSection scrollToForm={scrollToForm} />
