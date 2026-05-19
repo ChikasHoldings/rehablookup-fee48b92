@@ -11,6 +11,7 @@ import { ConversionSection } from "@/components/seo/ConversionSection";
 import { ComparisonSection } from "@/components/seo/ComparisonSection";
 import { AreaWaitlistCapture } from "@/components/seo/AreaWaitlistCapture";
 import { InlineMiniIntake } from "@/components/seo/InlineMiniIntake";
+import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import {
   InternalLinkingSection,
   treatmentTypeLinks,
@@ -156,13 +157,30 @@ export function SEOLandingTemplate({
         breadcrumbs={breadcrumbs}
       />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/95 to-primary/85">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
-        <div className="container relative z-10 py-12 md:py-16 lg:py-20">
-          {/* Breadcrumbs */}
+      {/* Hero — EDITORIAL treatment, distinct from State / City /
+          County / Treatment-State directory heroes. SEO landing pages
+          (BestInStatePage, TreatmentHubPage, InsuranceStatePage,
+          CategoryHub, …) act as curated "best of" indexes rather than
+          raw browse pages, so the hero leans premium / magazine:
+
+            1. Darker slate base + AMBER eyebrow accent (instead of
+               white-on-primary). Reads as editorial / ranked rather
+               than utility directory.
+            2. Display-font H1 with generous leading; larger than the
+               other directory heroes (text-4xl → 5xl on lg).
+            3. Trust signals collapse into a compact AMBER-accented
+               row pinned right under the title (was a horizontal
+               6-icon wall taking 80px).
+            4. Bottom strip carries LocationStatTile metrics for
+               visual consistency with the rest of the directory
+               network. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/70">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.08),_transparent_55%)]" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImRvdHMiIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZG90cykiLz48L3N2Zz4=')] opacity-100" />
+
+        <div className="container relative z-10 py-10 md:py-14 lg:py-16">
           {breadcrumbs && breadcrumbs.length > 0 && (
-            <nav className="mb-6" aria-label="Breadcrumb">
+            <nav className="mb-5" aria-label="Breadcrumb">
               <ol className="flex flex-wrap items-center gap-1.5 text-sm">
                 {breadcrumbs.map((crumb, idx) => (
                   <li key={crumb.url} className="flex items-center gap-1.5">
@@ -180,62 +198,102 @@ export function SEOLandingTemplate({
             </nav>
           )}
 
-          {heroBadge && (
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 mb-4">
-              <Shield className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-white">{heroBadge}</span>
+          <div className="max-w-3xl">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-amber-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-100 backdrop-blur-sm ring-1 ring-amber-400/30">
+              <Star className="h-3.5 w-3.5 fill-amber-300 text-amber-300" />
+              {heroBadge ?? "Curated & Verified"}
             </div>
-          )}
 
-          <h1 className="text-3xl md:text-4xl font-bold text-white max-w-3xl leading-tight speakable-headline">
-            {heroTitle}
-          </h1>
+            <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.1] speakable-headline">
+              {heroTitle}
+            </h1>
 
-          <p className="mt-4 text-lg text-white/80 max-w-2xl">
-            {heroSubtitle}
-          </p>
+            <p className="mt-4 text-base md:text-lg text-white/80 max-w-2xl leading-relaxed">
+              {heroSubtitle}
+            </p>
 
-          {heroLocation && (
-            <div className="mt-4 inline-flex items-center gap-2 text-white/70">
-              <MapPin className="h-4 w-4" />
-              <span className="text-sm">{heroLocation}</span>
-            </div>
-          )}
-
-          {/* Trust signals */}
-          <div className="mt-8 flex flex-wrap gap-6">
-            {[
-              { icon: CheckCircle, text: "Verified Facilities" },
-              { icon: Shield, text: "Insurance Accepted" },
-              { icon: Phone, text: "24/7 Support" },
-              { icon: Star, text: "Accredited Programs" },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-2 text-white/80">
-                <Icon className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium">{text}</span>
+            {heroLocation && (
+              <div className="mt-3 inline-flex items-center gap-2 text-white/65">
+                <MapPin className="h-3.5 w-3.5" />
+                <span className="text-sm">{heroLocation}</span>
               </div>
-            ))}
+            )}
+
+            {/* Compact trust row — amber accent matches the editorial
+                eyebrow. Tighter visual rhythm than the previous
+                6-icon wall. */}
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-white/75">
+              {[
+                { icon: CheckCircle, text: "Verified" },
+                { icon: Shield, text: "Insurance" },
+                { icon: Phone, text: "24/7" },
+                { icon: Star, text: "Accredited" },
+              ].map(({ icon: Icon, text }) => (
+                <div key={text} className="flex items-center gap-1.5">
+                  <Icon className="h-3.5 w-3.5 text-amber-400" />
+                  <span className="text-xs font-medium uppercase tracking-wider">{text}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-7 flex flex-col sm:flex-row gap-3">
+              <Button asChild variant="hero" size="lg" className="gap-2 shadow-lg shadow-black/30">
+                <Link to={ctaButtonLink || "/concierge"}>
+                  {ctaButtonText}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="hero-secondary"
+                size="lg"
+                className="gap-2 border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
+              >
+                <Link to="/rehab-centers">
+                  <Search className="h-4 w-4" />
+                  Browse All Centers
+                </Link>
+              </Button>
+            </div>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild variant="hero" size="lg">
-              <Link to={ctaButtonLink || "/concierge"}>
-                {ctaButtonText}
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
-            </Button>
-            <Button asChild variant="hero-secondary" size="lg" className="border-white/30 text-white hover:bg-white/10">
-              <Link to="/rehab-centers">
-                <Search className="h-4 w-4 mr-1" />
-                Browse All Centers
-              </Link>
-            </Button>
-          </div>
+          {/* Stat strip — LocationStatTile glass-effect, matches the
+              State / City / County / Treatment heroes' visual
+              vocabulary. Only renders when the page passes counts
+              worth showing. */}
+          {(facilityCount !== undefined || facilities.length > 0) && (
+            <div className="mt-9 grid grid-cols-2 md:grid-cols-3 gap-3 max-w-3xl">
+              <LocationStatTile
+                label="Verified Centers"
+                value={isLoading ? "—" : (facilityCount ?? facilities.length).toLocaleString()}
+                icon={Building2}
+              />
+              <LocationStatTile
+                label="24/7 Concierge"
+                value="Live"
+                icon={Phone}
+              />
+              <div className="hidden md:block">
+                <LocationStatTile
+                  label="Insurance"
+                  value="Most plans"
+                  icon={Shield}
+                />
+              </div>
+            </div>
+          )}
 
-          {/* Inline mini-intake (above-the-fold conversion surface) */}
-          <div className="mt-6 max-w-2xl">
-            <InlineMiniIntake source="seo_landing_hero" />
+          {/* Inline mini-intake — moved DOWN out of the hero proper so
+              the hero stays tight + editorial. Lives in its own band
+              with a thin top border to delineate the conversion
+              surface. Same component, same conversion source. */}
+        </div>
+
+        <div className="relative z-10 border-t border-white/10 bg-black/30 backdrop-blur-sm">
+          <div className="container py-5">
+            <div className="max-w-2xl">
+              <InlineMiniIntake source="seo_landing_hero" />
+            </div>
           </div>
         </div>
       </section>
