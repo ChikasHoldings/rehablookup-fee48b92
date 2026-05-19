@@ -30,11 +30,22 @@ export function NearMeHero({
 
   return (
     <section className="relative overflow-hidden">
-      {/* Background */}
+      {/* Background: render as an <img> with high fetch priority so it
+          loads in the initial network burst rather than being deferred
+          until after CSS parse. The previous backgroundImage approach
+          fired the request only after the stylesheet resolved the
+          property, so users saw the gradient-only state for 0–200 ms
+          before the photo filled in. The heavy gradient overlays below
+          mask any subsequent paint difference. */}
       {heroImage && (
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroImage})` }}
+        <img
+          src={heroImage}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
