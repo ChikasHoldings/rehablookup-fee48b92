@@ -1063,8 +1063,11 @@ const SearchResults = () => {
         }) : undefined}
       />
 
-      {/* Compact Top Bar */}
-      <div className="sticky top-[68px] z-30 border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-sm">
+      {/* Directory results header — Healthgrades-style sticky bar with
+          result-count chip, location context, and quick actions. Card-
+          surface background + accent dividers give it a premium feel
+          while staying performant during scroll. */}
+      <div className="sticky top-[68px] z-30 border-b border-border bg-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-card/85 shadow-sm">
         <div className="container">
           <div className="flex items-center justify-between gap-2 sm:gap-4 py-2.5">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
@@ -1074,42 +1077,43 @@ const SearchResults = () => {
                 aria-label="Back to all centers"
               >
                 <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
-                <span className="hidden sm:inline">Back</span>
+                <span className="hidden sm:inline font-medium">Back</span>
               </Link>
               <div className="h-5 w-px bg-border shrink-0 hidden xs:block" />
               <div className="flex items-center gap-2 min-w-0">
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 shrink-0">
-                  <Search className="h-3.5 w-3.5 text-primary" />
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/20">
+                  <Search className="h-3 w-3" />
+                  <span className="tabular-nums">{filteredCenters.length}</span>
+                  <span className="hidden xs:inline">{filteredCenters.length === 1 ? "Center" : "Centers"}</span>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-sm font-semibold whitespace-nowrap">
-                    <span className="text-primary">{filteredCenters.length}</span>
-                    <span className="text-foreground"> Centers</span>
-                  </span>
-                  {(location || queryParam) && (
-                    <p className="text-xs text-muted-foreground hidden sm:block truncate">
-                      {queryParam ? `"${queryParam}"` : `Near ${location}`}
-                    </p>
-                  )}
-                </div>
+                {(location || queryParam) && (
+                  <p className="text-xs text-muted-foreground hidden sm:block truncate">
+                    {queryParam ? `for "${queryParam}"` : (
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {location}
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Active filter pills — compact */}
+            {/* Active filter pills — compact, directory-style */}
             {hasFilters && (
               <div className="hidden md:flex items-center gap-1.5 flex-1 justify-center overflow-hidden max-w-md mx-4">
                 {queryParam && (
-                  <button onClick={() => clearFilter("q")} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors shrink-0">
+                  <button onClick={() => clearFilter("q")} className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/8 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/15 transition-colors shrink-0">
                     "{queryParam}" <X className="h-2.5 w-2.5" />
                   </button>
                 )}
                 {location && (
-                  <button onClick={() => clearFilter("location")} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors shrink-0">
+                  <button onClick={() => clearFilter("location")} className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/8 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/15 transition-colors shrink-0">
                     <MapPin className="h-2.5 w-2.5" />{location} <X className="h-2.5 w-2.5" />
                   </button>
                 )}
                 {activeFiltersCount > 0 && (
-                  <span className="text-xs text-muted-foreground shrink-0">+{activeFiltersCount} filters</span>
+                  <span className="text-xs text-muted-foreground shrink-0">+{activeFiltersCount} active</span>
                 )}
               </div>
             )}
@@ -1358,18 +1362,23 @@ const SearchResults = () => {
                     </div>
                   )}
 
-                  {/* Results Summary */}
+                  {/* Results Summary — directory-style header with
+                      result-range chip + sorted-by line. */}
                   <div className="flex items-center justify-between mb-5">
-                    <div className="flex flex-col gap-0.5">
-                      <p className="text-sm text-muted-foreground tabular-nums">
-                        Showing <span className="font-medium text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredCenters.length)}</span> of{" "}
-                        <span className="font-medium text-foreground">{filteredCenters.length}</span>
-                      </p>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="font-display text-lg font-bold text-foreground">
+                          Search Results
+                        </h2>
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/20 tabular-nums">
+                          {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredCenters.length)} of {filteredCenters.length}
+                        </span>
+                      </div>
                       {(location || effectiveLocation) && (
                         <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                           <Compass className="h-3 w-3 text-primary" />
                           {location ? (
-                            <>Near <span className="font-medium text-foreground">{resolvedZipData ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr}` : location}</span></>
+                            <>Near <span className="font-medium text-foreground">{resolvedZipData ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr}` : location}</span> · sorted by relevance</>
                           ) : (
                             <>Near <span className="font-medium text-foreground">{effectiveLocation}</span> <span className="text-muted-foreground/60">(auto)</span></>
                           )}
@@ -1429,10 +1438,10 @@ const SearchResults = () => {
                     />
                   </div>
 
-                  <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mt-10 mb-6">
-                    <Search className="h-10 w-10 text-muted-foreground" />
+                  <div className="w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mt-10 mb-5 ring-1 ring-border">
+                    <Search className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h2 className="text-2xl font-bold text-foreground mb-3">No Results Found</h2>
+                  <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">No matching centers</h2>
                   <p className="text-muted-foreground text-center max-w-md mb-6">
                     {queryParam
                       ? `No treatment centers match "${queryParam}". Try a different search term or adjust the filters below.`

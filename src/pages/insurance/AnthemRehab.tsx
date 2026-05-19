@@ -117,53 +117,11 @@ export default function AnthemRehab() {
           { name: "Anthem Rehab Coverage", url: "/insurance/anthem-rehab" },
         ]}
         structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
+      />      <InsuranceCarrierHero
+        carrierName={"Anthem"}
+        logoSrc="/insurance-logos/anthem.svg"
+        description={"Anthem covers addiction treatment under most plans. Verify benefits and compare facilities."}
       />
-
-
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary py-10 md:py-14">
-        <div className="container">
-          <BreadcrumbNav className="mb-4"
-            items={[
-              { label: "Insurance", href: "/insurance" },
-              { label: "Anthem Rehab Coverage" },
-            ]}
-          />
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-4 flex items-center justify-center gap-3">
-              <img 
-                src="/insurance-logos/anthem.svg" 
-                alt="Anthem Logo" 
-                className="h-12 w-12 object-contain bg-white rounded-lg p-2"
-              />
-              <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                BCBS Affiliate
-              </Badge>
-            </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Anthem Rehab Coverage
-            </h1>
-            <p className="text-primary-foreground/80 text-sm md:text-base max-w-2xl mx-auto">
-              Anthem Blue Cross Blue Shield provides comprehensive addiction treatment coverage with access to the nationwide BCBS network.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild size="lg" variant="secondary">
-                <Link to="/rehab-centers">
-                  <MapPin className="mr-2 h-4 w-4" />
-                  Find Anthem-Accepting Centers
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                <Link to="/insurance">
-                  <Shield className="mr-2 h-4 w-4" />
-                  All Insurance Options
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Featured rotation — paid Featured pool for this
           page's bucket, mounted directly under the hero. Visual

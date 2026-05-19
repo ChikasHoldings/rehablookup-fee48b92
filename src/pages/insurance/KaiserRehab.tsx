@@ -124,53 +124,11 @@ export default function KaiserRehab() {
           { name: "Kaiser Rehab Coverage", url: "/insurance/kaiser-rehab" },
         ]}
         structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
+      />      <InsuranceCarrierHero
+        carrierName={"Kaiser Permanente"}
+        logoSrc="/insurance-logos/kaiser.svg"
+        description={"Kaiser Permanente includes substance-use treatment in most plans."}
       />
-
-
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary py-10 md:py-14">
-        <div className="container">
-          <BreadcrumbNav className="mb-4"
-            items={[
-              { label: "Insurance", href: "/insurance" },
-              { label: "Kaiser Rehab Coverage" },
-            ]}
-          />
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-4 flex items-center justify-center gap-3">
-              <img 
-                src="/insurance-logos/kaiser.svg" 
-                alt="Kaiser Permanente Logo" 
-                className="h-12 w-12 object-contain bg-white rounded-lg p-2"
-              />
-              <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                Integrated Care System
-              </Badge>
-            </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Kaiser Permanente Rehab Coverage
-            </h1>
-            <p className="text-primary-foreground/80 text-sm md:text-base max-w-2xl mx-auto">
-              Kaiser Permanente offers integrated addiction treatment through their network of facilities. Learn about coverage and find care in your region.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild size="lg" variant="secondary">
-                <Link to="/rehab-centers">
-                  <MapPin className="mr-2 h-4 w-4" />
-                  Find Treatment Centers
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                <Link to="/insurance">
-                  <Shield className="mr-2 h-4 w-4" />
-                  All Insurance Options
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Featured rotation — paid Featured pool for this
           page's bucket, mounted directly under the hero. Visual

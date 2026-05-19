@@ -130,53 +130,11 @@ export default function AetnaRehab() {
           { name: "Aetna Rehab Coverage", url: "/insurance/aetna-rehab" },
         ]}
         structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
+      />      <InsuranceCarrierHero
+        carrierName={"Aetna"}
+        logoSrc="/insurance-logos/aetna.svg"
+        description={"Aetna provides comprehensive coverage for addiction treatment. Find treatment centers that accept your Aetna insurance and understand your benefits."}
       />
-
-
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary py-10 md:py-14">
-        <div className="container">
-          <BreadcrumbNav className="mb-4"
-            items={[
-              { label: "Insurance", href: "/insurance" },
-              { label: "Aetna Rehab Coverage" },
-            ]}
-          />
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-4 flex items-center justify-center gap-3">
-              <img 
-                src="/insurance-logos/aetna.svg" 
-                alt="Aetna Logo" 
-                className="h-12 w-12 object-contain bg-white rounded-lg p-2"
-              />
-              <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                Major Insurance Provider
-              </Badge>
-            </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Aetna Rehab Coverage
-            </h1>
-            <p className="text-primary-foreground/80 text-sm md:text-base max-w-2xl mx-auto">
-              Aetna provides comprehensive coverage for addiction treatment. Find treatment centers that accept your Aetna insurance and understand your benefits.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild size="lg" variant="secondary">
-                <Link to="/rehab-centers">
-                  <MapPin className="mr-2 h-4 w-4" />
-                  Find Aetna-Accepting Centers
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                <Link to="/insurance">
-                  <Shield className="mr-2 h-4 w-4" />
-                  All Insurance Options
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Featured rotation — paid Featured pool for this carrier,
           mounted directly under the hero. Visual matches the homepage

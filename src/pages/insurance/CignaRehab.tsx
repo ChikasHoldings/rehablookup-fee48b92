@@ -112,53 +112,11 @@ export default function CignaRehab() {
           { name: "Cigna Rehab Coverage", url: "/insurance/cigna-rehab" },
         ]}
         structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
+      />      <InsuranceCarrierHero
+        carrierName={"Cigna"}
+        logoSrc="/insurance-logos/cigna.svg"
+        description={"Cigna covers most addiction treatment services. Find Cigna-accepting facilities and verify your benefits."}
       />
-
-
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary py-10 md:py-14">
-        <div className="container">
-          <BreadcrumbNav className="mb-4"
-            items={[
-              { label: "Insurance", href: "/insurance" },
-              { label: "Cigna Rehab Coverage" },
-            ]}
-          />
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-4 flex items-center justify-center gap-3">
-              <img 
-                src="/insurance-logos/cigna.svg" 
-                alt="Cigna Logo" 
-                className="h-12 w-12 object-contain bg-white rounded-lg p-2"
-              />
-              <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                Global Health Services
-              </Badge>
-            </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Cigna Rehab Coverage
-            </h1>
-            <p className="text-primary-foreground/80 text-sm md:text-base max-w-2xl mx-auto">
-              Cigna offers behavioral health coverage for addiction treatment through their Evernorth network. Find treatment centers that accept Cigna.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild size="lg" variant="secondary">
-                <Link to="/rehab-centers">
-                  <MapPin className="mr-2 h-4 w-4" />
-                  Find Cigna-Accepting Centers
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                <Link to="/insurance">
-                  <Shield className="mr-2 h-4 w-4" />
-                  All Insurance Options
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Featured rotation — paid Featured pool for this
           page's bucket, mounted directly under the hero. Visual

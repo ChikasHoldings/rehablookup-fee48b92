@@ -8,6 +8,7 @@ import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilities
 import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import { InternalLinkingSection, treatmentTypeLinks, nearMeLinks, resourceLinks } from "@/components/seo/InternalLinkingSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { InsuranceCarrierHero } from "@/components/seo/InsuranceCarrierHero";
 import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import { Shield, CheckCircle, ArrowRight, Phone, MapPin, FileText, Clock, DollarSign, Building2, Users, Stethoscope, Heart, AlertCircle } from "lucide-react";
 
@@ -37,22 +38,11 @@ export default function HighmarkRehab() {
   const faqSchema = generateFAQSchema(faqs);
   return (
     <Layout>
-      <SEO title="Highmark BCBS Rehab Coverage | Addiction Treatment Insurance" description="Find addiction treatment centers that accept Highmark Blue Cross Blue Shield. Learn about Highmark's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/highmark-rehab" keywords={["Highmark BCBS rehab coverage", "Highmark addiction treatment", "Highmark Blue Cross Blue Shield rehab", "Highmark behavioral health", "rehab that takes Highmark"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Highmark Rehab Coverage", url: "/insurance/highmark-rehab" }]} structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]} />
-
-      <section className="relative overflow-hidden bg-primary py-10 md:py-14">
-        <div className="container">
-          <BreadcrumbNav className="mb-4" items={[{ label: "Insurance", href: "/insurance" }, { label: "Highmark Rehab Coverage" }]} />
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="secondary" className="bg-white/20 text-white border-0 mb-4">Blue Cross Blue Shield Affiliate</Badge>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">Highmark BCBS Rehab Coverage</h1>
-            <p className="text-primary-foreground/80 text-sm md:text-base max-w-2xl mx-auto">Highmark Blue Cross Blue Shield provides comprehensive behavioral health coverage for addiction treatment across Pennsylvania, Delaware, West Virginia, and western New York.</p>
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild size="lg" variant="secondary"><Link to="/rehab-centers"><MapPin className="mr-2 h-4 w-4" />Find Highmark-Accepting Centers</Link></Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10"><Link to="/insurance"><Shield className="mr-2 h-4 w-4" />All Insurance Options</Link></Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <SEO title="Highmark BCBS Rehab Coverage | Addiction Treatment Insurance" description="Find addiction treatment centers that accept Highmark Blue Cross Blue Shield. Learn about Highmark's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/highmark-rehab" keywords={["Highmark BCBS rehab coverage", "Highmark addiction treatment", "Highmark Blue Cross Blue Shield rehab", "Highmark behavioral health", "rehab that takes Highmark"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Highmark Rehab Coverage", url: "/insurance/highmark-rehab" }]} structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]} />      <InsuranceCarrierHero
+        carrierName={"Highmark"}
+        logoSrc="/insurance-logos/highmark.svg"
+        description={"Highmark provides addiction-treatment coverage across most plans."}
+      />
 
       {/* Featured rotation — paid Featured pool for this
           page's bucket, mounted directly under the hero. Visual
