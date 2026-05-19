@@ -4,6 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData } from "@/data/locationSeoData";
 import {
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   Sparkles,
   ArrowRight,
   Phone,
@@ -64,7 +65,14 @@ const CityInpatientRehab = () => {
   });
 
   if (!stateData) {
-    return <Navigate to="/treatment-types/residential-inpatient" replace />;
+    return (
+      <NotFoundInPlace
+        title="Inpatient rehab programs not found"
+        message="We don't have inpatient program data for that location yet. Browse all states."
+        backTo="/treatment-types/residential-inpatient"
+        backLabel="Browse states"
+      />
+    );
   }
   if (!cityData) {
     return <Navigate to={`/treatment-types/residential-inpatient/${stateSlug}`} replace />;

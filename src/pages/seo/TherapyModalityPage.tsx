@@ -1,10 +1,11 @@
 import { useMemo } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 interface ModalityConfig {
   slug: string;
@@ -569,7 +570,14 @@ export default function TherapyModalityPage() {
   }, [approvedFacilities, modality]);
 
   if (!modality) {
-    return <Navigate to="/treatment-types" replace />;
+    return (
+      <NotFoundInPlace
+        title="Therapy modality not found"
+        message="We don't have a page for that therapy modality yet. Browse all treatment types."
+        backTo="/treatment-types"
+        backLabel="Browse treatment types"
+      />
+    );
   }
 
   const structuredData: any[] = [

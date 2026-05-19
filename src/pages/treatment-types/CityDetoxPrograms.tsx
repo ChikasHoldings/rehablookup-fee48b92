@@ -4,6 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData } from "@/data/locationSeoData";
 import {
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   Sparkles,
   ArrowRight,
   Phone,
@@ -69,7 +70,14 @@ const CityDetoxPrograms = () => {
   });
 
   if (!stateData) {
-    return <Navigate to="/treatment-types/detox-programs" replace />;
+    return (
+      <NotFoundInPlace
+        title="Detox programs not found"
+        message="We don't have detox program data for that location yet. Browse all states."
+        backTo="/treatment-types/detox-programs"
+        backLabel="Browse states"
+      />
+    );
   }
   if (!cityData) {
     return <Navigate to={`/treatment-types/detox-programs/${stateSlug}`} replace />;

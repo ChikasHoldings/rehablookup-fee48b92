@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { Navigate, useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 export interface CoOccurringConfig {
   slug: string;
@@ -408,7 +409,14 @@ export default function CoOccurringPage() {
   }, [approvedFacilities, config, isStatePage, stateData]);
 
   if (!config) {
-    return <Navigate to="/treatment-types" replace />;
+    return (
+      <NotFoundInPlace
+        title="Treatment type not found"
+        message="We don't have a page for that co-occurring treatment yet. Browse all treatment types."
+        backTo="/treatment-types"
+        backLabel="Browse treatment types"
+      />
+    );
   }
 
   const pageTitle = isStatePage ? `${config.title} in ${stateData!.name}` : config.title;

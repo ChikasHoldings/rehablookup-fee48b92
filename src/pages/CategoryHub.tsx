@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link, useParams, Navigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, BookOpen, Clock, Sparkles } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { supabase } from "@/integrations/supabase/client";
 import {
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   ALL_BLOG_CATEGORIES,
   getCategoryBySlug,
   type BlogCategory,
@@ -124,7 +125,14 @@ export default function CategoryHub() {
   // Unknown category → redirect to the resources hub. Avoids serving a thin
   // 404 for a URL we never want indexed.
   if (!category) {
-    return <Navigate to="/resources" replace />;
+    return (
+      <NotFoundInPlace
+        title="Topic hub not found"
+        message="We don't have a topic hub for that category yet. Browse all guides in our resources hub."
+        backTo="/resources"
+        backLabel="Browse all resources"
+      />
+    );
   }
 
   const Icon = category.icon;

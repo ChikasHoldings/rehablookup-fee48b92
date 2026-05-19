@@ -1,4 +1,5 @@
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -31,7 +32,14 @@ export default function ProviderResourceArticle() {
   const content = slug ? resourceArticleContent[slug] : undefined;
 
   if (!article || !category || !content) {
-    return <Navigate to="/providers/resources" replace />;
+    return (
+      <NotFoundInPlace
+        title="Provider resource not found"
+        message="We don't have a provider resource at that URL. Browse the full library to find related guides."
+        backTo="/providers/resources"
+        backLabel="Browse provider resources"
+      />
+    );
   }
 
   // Get related articles (same category, excluding current)

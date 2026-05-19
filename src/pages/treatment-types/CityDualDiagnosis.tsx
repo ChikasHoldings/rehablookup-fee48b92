@@ -4,6 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData } from "@/data/locationSeoData";
 import {
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   Brain,
   ArrowRight,
   Phone,
@@ -71,7 +72,14 @@ const CityDualDiagnosis = () => {
   });
 
   if (!stateData) {
-    return <Navigate to="/treatment-types/dual-diagnosis-treatment" replace />;
+    return (
+      <NotFoundInPlace
+        title="Dual diagnosis programs not found"
+        message="We don't have dual diagnosis program data for that location yet. Browse all states."
+        backTo="/treatment-types/dual-diagnosis-treatment"
+        backLabel="Browse states"
+      />
+    );
   }
 
   if (!cityData) {

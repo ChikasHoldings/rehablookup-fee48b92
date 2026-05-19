@@ -4,6 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData } from "@/data/locationSeoData";
 import {
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   Sparkles,
   ArrowRight,
   Phone,
@@ -68,7 +69,14 @@ const CityOutpatientPrograms = () => {
   });
 
   if (!stateData) {
-    return <Navigate to="/treatment-types/outpatient-programs" replace />;
+    return (
+      <NotFoundInPlace
+        title="Outpatient programs not found"
+        message="We don't have outpatient program data for that location yet. Browse all states."
+        backTo="/treatment-types/outpatient-programs"
+        backLabel="Browse states"
+      />
+    );
   }
   if (!cityData) {
     return <Navigate to={`/treatment-types/outpatient-programs/${stateSlug}`} replace />;

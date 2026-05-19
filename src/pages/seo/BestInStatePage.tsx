@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
@@ -7,6 +7,7 @@ import { bestInStateConfigs, type BestInStateConfig } from "@/data/seoBestInStat
 import { topCities, seoTreatmentTypes, getCityTreatmentSlug } from "@/data/seoPageConfig";
 import { insurerConfigs, stateInsuranceConfigs } from "@/data/seoInsuranceStateConfig";
 import { validatePage } from "@/utils/seoPageValidator";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 export default function BestInStatePage() {
   const location = useLocation();
@@ -61,7 +62,14 @@ export default function BestInStatePage() {
   }, [stateConfig]);
 
   if (!stateConfig) {
-    return <Navigate to="/locations" replace />;
+    return (
+      <NotFoundInPlace
+        title="State not found"
+        message="We don't have a "best in state" page for that location. Browse all states from the locations hub."
+        backTo="/locations"
+        backLabel="Browse locations"
+      />
+    );
   }
 
   const pageTitle = `Best Rehab Centers in ${stateConfig.state} (${stateConfig.stateAbbr})`;

@@ -1,4 +1,4 @@
-import { Navigate, useLocation, Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { statesData } from "@/data/locationSeoData";
 import { Search, ArrowRight, Shield, MapPin, Phone } from "lucide-react";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 interface HubConfig {
   slug: string;
@@ -143,7 +144,14 @@ const ExpandedTreatmentNationalHub = ({ treatmentKey }: ExpandedTreatmentNationa
   const config = HUB_CONFIGS[treatmentKey];
 
   if (!config) {
-    return <Navigate to="/treatment-types" replace />;
+    return (
+      <NotFoundInPlace
+        title="National hub not found"
+        message="We don't have a national hub for that treatment type yet. Browse all treatment types."
+        backTo="/treatment-types"
+        backLabel="Browse treatment types"
+      />
+    );
   }
 
   const breadcrumbs = [

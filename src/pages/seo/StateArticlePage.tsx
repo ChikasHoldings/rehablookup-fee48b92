@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
@@ -8,6 +8,7 @@ import { getStateBySlug } from "@/data/locationSeoData";
 import { getCountiesForState } from "@/data/countySeoData";
 import { Button } from "@/components/ui/button";
 import {
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   Calendar,
   Clock,
   ArrowRight,
@@ -47,7 +48,14 @@ export default function StateArticlePage() {
     return getStateArticles(stateSlug).filter(a => a.slug !== articleSlug);
   }, [stateSlug, articleSlug]);
 
-  if (!result) return <Navigate to="/rehab-centers" replace />;
+  return (
+    <NotFoundInPlace
+      title="State article not found"
+      message="We don't have that state article available. Browse rehab centers by state instead."
+      backTo="/rehab-centers"
+      backLabel="Browse by state"
+    />
+  );
 
   const { article, stateName, stateAbbr } = result;
   const Icon = articleTypeIcons[article.type] || BookOpen;

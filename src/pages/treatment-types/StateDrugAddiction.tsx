@@ -1,4 +1,4 @@
-import { useParams, Navigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection"
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import {
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
   generateStateTreatmentChecklist,
@@ -22,7 +23,14 @@ const StateDrugAddiction = () => {
   const stateData = statesData.find((s) => s.slug === stateSlug);
 
   if (!stateData) {
-    return <Navigate to="/treatment-types/drug-addiction-treatment" replace />;
+    return (
+      <NotFoundInPlace
+        title="Drug addiction treatment not found"
+        message="We don't have drug addiction treatment data for that state yet. Browse all states."
+        backTo="/treatment-types/drug-addiction-treatment"
+        backLabel="Browse states"
+      />
+    );
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
