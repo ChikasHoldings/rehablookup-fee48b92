@@ -21,6 +21,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { contactFaqs } from "@/data/pageFaqs";
 
@@ -168,6 +169,16 @@ const Contact = () => {
           accent: slate→accent gradient signals "talk to a human" warm
           touch. */}
       <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-accent/45">
+        <img
+          src={TOPIC_HERO_IMAGES.support}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
 
         <div className="container relative z-10 py-6 md:py-8">

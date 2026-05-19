@@ -237,6 +237,16 @@ export default function InsuranceVerification() {
       {/* Hero — INSURANCE VERIFICATION. Smaller than State per the
           brief. Teal-cyan accent matches the Insurance hub. */}
       <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-teal-900/80 to-cyan-700/55">
+        <img
+          src={TOPIC_HERO_IMAGES.finance}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(20,184,166,0.12),_transparent_55%)]" />
         <div className="container relative z-10 mx-auto px-4 py-6 md:py-8">
           <div className="max-w-2xl mx-auto text-center">

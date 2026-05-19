@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompareList, MAX_COMPARE } from "@/hooks/useCompareList";
 
@@ -306,6 +307,16 @@ export default function Comparison() {
       {/* Hero — COMPARE. Smaller than State per the brief. Distinct
           slate-primary palette with GitCompare eyebrow. */}
       <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/60">
+        <img
+          src={TOPIC_HERO_IMAGES.compare}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
         <div className="container relative z-10 py-6 sm:py-8">
           <BreadcrumbNav

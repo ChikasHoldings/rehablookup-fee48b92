@@ -200,6 +200,16 @@ export const TOPIC_HERO_IMAGES = {
   wellness: "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=1920&q=80",
   // Community / family / support
   community: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=1920&q=80",
+  // Mission / brand / leadership
+  mission: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1920&q=80",
+  // Customer service / phone support / contact
+  support: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1920&q=80",
+  // Step-by-step / process / journey
+  process: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=1920&q=80",
+  // Questions / FAQ / advisory
+  inquiry: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1920&q=80",
+  // Compare / analytics / data
+  compare: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1920&q=80",
 } as const;
 
 export type TopicImageKey = keyof typeof TOPIC_HERO_IMAGES;

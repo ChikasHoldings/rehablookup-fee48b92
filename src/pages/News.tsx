@@ -7,6 +7,7 @@ import { SEO } from "@/components/SEO";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Newspaper, Clock, ChevronRight, Sparkles, Calendar } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 interface NewsArticle {
   id: string;
@@ -200,6 +201,16 @@ export default function News() {
       {/* Hero — NEWS. Editorial library palette (matches Resources +
           CategoryHub + Authors). */}
       <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <img
+          src={TOPIC_HERO_IMAGES.editorial}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
         <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav items={[{ label: "News" }]} className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white" />

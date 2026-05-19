@@ -5,6 +5,7 @@ import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Search, HelpCircle, ArrowRight, Heart, Phone, Lock,
@@ -336,6 +337,16 @@ const FAQ = () => {
       {/* Hero — FAQ. Smaller than State per the brief. Distinct
           slate-primary with HelpCircle accent. */}
       <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/60">
+        <img
+          src={TOPIC_HERO_IMAGES.inquiry}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
         <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav

@@ -24,6 +24,7 @@ import founderPortrait from "@/assets/team/founder-chiedu-kabakwu.webp";
 import medicalDirectorPortrait from "@/assets/team/medical-director-portrait.webp";
 import ctoPortrait from "@/assets/team/cto-portrait.webp";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 const values = [
   {
@@ -133,6 +134,16 @@ const About = () => {
           Distinct from the directory archetypes: warm slate→accent
           gradient + Heart eyebrow signals brand/mission, not utility. */}
       <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-accent/40">
+        <img
+          src={TOPIC_HERO_IMAGES.mission}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
 
         <div className="container relative z-10 py-6 md:py-8">
