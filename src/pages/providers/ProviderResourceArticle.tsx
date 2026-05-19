@@ -83,33 +83,35 @@ export default function ProviderResourceArticle() {
       />
 
       <main className="flex-1">
-        {/* Hero */}
-        <section className="relative bg-primary py-12 md:py-16 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
-          <div className="container relative z-10 max-w-3xl mx-auto px-4">
+        {/* Hero — PROVIDER RESOURCE ARTICLE. Provider navy + gold
+            palette with article-editorial meta row. Smaller than State. */}
+        <section className="relative overflow-hidden border-b border-white/5"
+          style={{ background: "linear-gradient(135deg, #1B365D 0%, #0E1F3A 100%)" }}>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(205,162,35,0.10),_transparent_55%)]" />
+          <div className="container relative z-10 max-w-3xl mx-auto px-4 py-6 md:py-8">
             <Link
               to="/providers/resources"
-              className="inline-flex items-center gap-1.5 text-sm text-primary-foreground/60 hover:text-primary-foreground/90 transition-colors mb-6"
+              className="inline-flex items-center gap-1.5 text-xs text-white/70 hover:text-white transition-colors mb-3"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               Back to Resource Hub
             </Link>
-            <div className="flex items-center gap-3 mb-4">
-              <div className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground/80")}>
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <div className={cn("inline-flex items-center gap-1.5 rounded-full bg-[#CDA223]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[#CDA223] ring-1 ring-[#CDA223]/30")}>
                 <category.icon className="h-3 w-3" />
                 {category.label}
               </div>
-              <span className="flex items-center gap-1 text-xs text-primary-foreground/50">
+              <span className="flex items-center gap-1 text-[11px] text-white/60">
                 <Clock className="h-3 w-3" />
                 {article.readTime} read
               </span>
               {article.publishedDate && (
-                <span className="text-xs text-primary-foreground/50">
+                <span className="text-[11px] text-white/60">
                   {new Date(article.publishedDate + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                 </span>
               )}
             </div>
-            <h1 className="text-2xl md:text-4xl font-display font-bold text-primary-foreground leading-tight">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-white leading-tight">
               {article.title}
             </h1>
           </div>
