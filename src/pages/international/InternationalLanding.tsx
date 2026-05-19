@@ -163,9 +163,11 @@ export default function InternationalLanding() {
         <PublicHeader />
         
         <main className="flex-1">
-          {/* Hero Section - Image Background, Centered */}
-          <section className="relative z-10 bg-primary">
-            <img 
+          {/* Hero — INTERNATIONAL placement landing. Smaller than
+              State per the brief. Premium directory feel with photo
+              background + slate editorial overlay. */}
+          <section className="relative overflow-hidden border-b border-white/5">
+            <img
               src={internationalHeroImg}
               alt=""
               role="presentation"
@@ -176,59 +178,51 @@ export default function InternationalLanding() {
               loading="eager"
               decoding="sync"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/80 to-primary/65" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
 
-            <div className="container relative px-4 md:px-6 lg:px-8 py-10 md:py-12 lg:py-14">
+            <div className="container relative z-10 px-4 md:px-6 lg:px-8 py-6 md:py-9">
               <BreadcrumbNav
-                className="mb-4"
+                className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
                 variant="dark"
                 items={[{ label: "International Patients" }]}
               />
               <motion.div
-                initial={{ opacity: 0, y: 24 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
                 className="max-w-3xl mx-auto text-center"
               >
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6">
-                  <Globe className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-medium text-white/90">International Placement Services</span>
+                <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+                  <Globe className="h-3 w-3" />
+                  International Placement
                 </div>
-                
-                <h1 className="text-[1.625rem] sm:text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-white mb-3 tracking-tight leading-tight">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 tracking-tight leading-tight font-display">
                   Your Gateway to American Rehab
                 </h1>
-                
-                <p className="text-base md:text-lg text-white/85 mb-4 leading-relaxed max-w-2xl mx-auto px-2">
-                  Expert placement into America's finest treatment centers. We handle everything—from placement to admission—so you can focus on recovery.
+                <p className="text-sm md:text-base text-white/85 mb-3 max-w-2xl mx-auto">
+                  Expert placement into America's finest treatment centers. Placement to admission, end-to-end.
                 </p>
-
-                {/* Price disclosure surfaced above the fold. Previously the
-                    $99 fee was buried in FAQ #1, so seekers completed the
-                    11-step intake before discovering the cost — high drop-off
-                    + trust risk. */}
-                <div className="flex flex-wrap items-center justify-center gap-2 mb-6 text-sm text-white/80">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1">
-                    <span className="font-semibold text-white">$99</span>
-                    <span>placement deposit</span>
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-3 text-xs text-white/85">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 ring-1 ring-white/15 px-2.5 py-0.5">
+                    <span className="font-semibold text-white">$99</span> placement deposit
                   </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 border border-emerald-400/30 px-3 py-1 text-emerald-100">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 ring-1 ring-emerald-400/30 px-2.5 py-0.5 text-emerald-100">
                     Fully refunded on admission
                   </span>
                 </div>
-
                 <Button
-                  size="lg"
-                  className="h-12 md:h-14 px-6 md:px-10 text-base font-semibold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/25 w-full sm:w-auto"
+                  size="default"
+                  className="font-semibold bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/25"
                   asChild
                 >
                   <Link to="/international/apply">
                     Start application
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    <ArrowRight className="ml-1.5 h-4 w-4" />
                   </Link>
                 </Button>
-                <p className="mt-3 text-xs text-white/60">
-                  Pay $99 to reserve placement. We refund the full amount the day you check in.
+                <p className="mt-2 text-[11px] text-white/60">
+                  $99 reserves placement · refunded on check-in.
                 </p>
               </motion.div>
             </div>

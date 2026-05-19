@@ -87,25 +87,25 @@ export default function StateArticlePage() {
         structuredData={structuredData}
       />
 
-      {/* Hero */}
-      <section className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/85 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-60" />
-        <div className="relative z-10 max-w-5xl mx-auto px-4 py-12 md:py-16 lg:py-20">
-          <BreadcrumbNav items={breadcrumbs} />
-          <div className="mt-6 flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm">
-              <Icon className="w-3.5 h-3.5" />
-              {articleTypeLabels[article.type] || "Guide"}
-            </span>
+      {/* Hero — STATE ARTICLE. Editorial library palette (slate→amber)
+          matches Resources / ArticleDetail / Authors. Smaller than
+          State per the brief. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="relative z-10 max-w-5xl mx-auto px-4 py-6 md:py-8">
+          <BreadcrumbNav items={breadcrumbs} className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white" />
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 ring-1 ring-amber-400/25">
+            <Icon className="w-3 h-3" />
+            {articleTypeLabels[article.type] || "Guide"}
           </div>
-          <h1 className="mt-4 text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-white leading-tight max-w-3xl">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight max-w-3xl font-display">
             {article.title}
           </h1>
-          <p className="mt-3 text-lg text-white/80 max-w-2xl leading-relaxed">{article.heroSubtitle}</p>
-          <div className="mt-5 flex flex-wrap items-center gap-4 text-sm text-white/60">
-            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> Updated {article.updatedDate}</span>
-            <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {article.readTime}</span>
-            <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /> {stateName}</span>
+          <p className="mt-2 text-sm md:text-base text-white/80 max-w-2xl">{article.heroSubtitle}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-white/70">
+            <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> Updated {article.updatedDate}</span>
+            <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> {article.readTime}</span>
+            <span className="flex items-center gap-1.5"><MapPin className="w-3 h-3" /> {stateName}</span>
           </div>
         </div>
       </section>

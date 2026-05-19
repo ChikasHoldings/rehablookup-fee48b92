@@ -206,22 +206,26 @@ const ExpandedTreatmentNationalHub = ({ treatmentKey }: ExpandedTreatmentNationa
           <BreadcrumbNav items={breadcrumbs} />
         </div>
 
-        {/* Hero */}
-        <section className="relative bg-gradient-to-br from-primary/10 via-background to-blue-50/30 py-16 sm:py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Hero — EXPANDED TREATMENT NATIONAL HUB. Editorial dark hero
+            matching the SEO Landing pattern (amber accent + dark slate)
+            since these are "expanded modality" pages without per-state
+            scope. Smaller than State per the brief. */}
+        <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/65">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-9 relative z-10">
             <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-                <Shield className="h-4 w-4" />
-                All 50 States
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 ring-1 ring-amber-400/25">
+                <Shield className="h-3 w-3" />
+                Nationwide · All 50 States
               </div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 font-display">
                 {config.title} by State
               </h1>
-              <p className="text-lg text-muted-foreground mb-8">
+              <p className="text-sm md:text-base text-white/85 max-w-2xl mb-4">
                 {config.heroSubtitle}
               </p>
               <Link to="/concierge">
-                <Button size="lg" className="gap-2">
+                <Button size="default" className="gap-2 shadow-lg shadow-black/20">
                   <Phone className="h-4 w-4" />
                   Get Matched Free
                 </Button>

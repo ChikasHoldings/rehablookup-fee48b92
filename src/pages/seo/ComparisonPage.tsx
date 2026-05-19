@@ -68,11 +68,12 @@ export default function ComparisonPage() {
         ]}
       />
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/95 to-primary/85">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
-        <div className="container relative z-10 py-12 md:py-16">
-          <nav className="mb-6" aria-label="Breadcrumb">
-            <ol className="flex flex-wrap items-center gap-1.5 text-sm">
+      {/* Hero — COMPARISON GUIDE. Editorial library palette. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
+          <nav className="mb-3" aria-label="Breadcrumb">
+            <ol className="flex flex-wrap items-center gap-1.5 text-xs">
               <li className="flex items-center gap-1.5">
                 <Link to="/" className="text-white/70 hover:text-white transition-colors">Home</Link>
               </li>
@@ -87,27 +88,27 @@ export default function ComparisonPage() {
             </ol>
           </nav>
 
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 mb-4">
-            <Shield className="h-4 w-4 text-accent" />
-            <span className="text-sm font-medium text-white">Expert Guide</span>
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 ring-1 ring-amber-400/25">
+            <Shield className="h-3 w-3" />
+            Expert Guide
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-white max-w-3xl leading-tight">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white max-w-3xl leading-tight font-display">
             {config.heroTitle}
           </h1>
-          <p className="mt-4 text-lg text-white/80 max-w-2xl">{config.heroSubtitle}</p>
+          <p className="mt-2 text-sm md:text-base text-white/80 max-w-2xl">{config.heroSubtitle}</p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild variant="hero" size="lg">
+          <div className="mt-4 flex flex-wrap gap-2.5">
+            <Button asChild size="default" className="gap-2 shadow-lg shadow-black/20">
               <Link to="/concierge">
-                <Phone className="h-4 w-4 mr-1" />
+                <Phone className="h-4 w-4" />
                 Get Personalized Help
-                <ArrowRight className="h-4 w-4 ml-1" />
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="hero-secondary" size="lg" className="border-white/30 text-white hover:bg-white/10">
+            <Button asChild size="default" variant="outline" className="gap-2 border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm">
               <Link to="/rehab-centers">
-                <Search className="h-4 w-4 mr-1" />
+                <Search className="h-4 w-4" />
                 Browse Centers
               </Link>
             </Button>

@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData } from "@/data/locationSeoData";
+import { getCityImage } from "@/data/locationImages";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
@@ -238,31 +239,49 @@ const CityTreatmentExpandedPage = ({ treatmentKey }: CityTreatmentExpandedPagePr
           <BreadcrumbNav items={breadcrumbs} />
         </div>
 
-        {/* Hero */}
-        <section className="relative bg-gradient-to-br from-primary/10 via-background to-blue-50/30 py-16 sm:py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Hero — EXPANDED CITY TREATMENT. City-scoped photo overlay
+            with editorial slate base. Smaller than State per the
+            brief. */}
+        <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/65">
+          {(() => {
+            const heroImage = getCityImage(stateSlug, citySlug);
+            return heroImage ? (
+              <img
+                src={heroImage}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-cover opacity-25"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+              />
+            ) : null;
+          })()}
+          <div className="absolute inset-0 bg-slate-950/40" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-9 relative z-10">
             <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-                <Shield className="h-4 w-4" />
-                Verified & Accredited
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 ring-1 ring-amber-400/25">
+                <Shield className="h-3 w-3" />
+                Verified · {cityName}, {abbreviation}
               </div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 font-display">
                 {pageTitle}
               </h1>
-              <p className="text-lg text-muted-foreground mb-8">
-                {config.heroDescription} Compare verified programs in {cityName} and find the right fit for your recovery.
+              <p className="text-sm md:text-base text-white/85 mb-4">
+                {config.heroDescription} Compare verified programs in {cityName}.
               </p>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-2.5">
                 <Link to="/concierge">
-                  <Button size="lg" className="gap-2">
+                  <Button size="default" className="gap-2 shadow-lg shadow-black/20">
                     <Phone className="h-4 w-4" />
                     Get Matched Free
                   </Button>
                 </Link>
                 <Link to={`/rehab-centers/${stateSlug}/${citySlug}`}>
-                  <Button variant="outline" size="lg" className="gap-2">
+                  <Button variant="outline" size="default" className="gap-2 border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm">
                     <Search className="h-4 w-4" />
-                    Browse All {cityName} Centers
+                    Browse {cityName}
                   </Button>
                 </Link>
               </div>

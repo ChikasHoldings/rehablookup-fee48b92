@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { statesData, getNearbyStates } from "@/data/locationSeoData";
+import { getStateImage } from "@/data/locationImages";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
@@ -169,41 +170,60 @@ const StateTreatmentExpandedPage = ({ treatmentKey }: StateTreatmentExpandedPage
         ]}
       />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/95 to-primary/90 py-12 md:py-16">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
-        <div className="container relative z-10">
+      {/* Hero — EXPANDED STATE TREATMENT. State-scoped editorial
+          slate base with optional state photo. Smaller than State
+          per the brief. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/65">
+        {(() => {
+          const heroImage = getStateImage(stateSlug);
+          return heroImage ? (
+            <img
+              src={heroImage}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-cover opacity-30"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+            />
+          ) : null;
+        })()}
+        <div className="absolute inset-0 bg-slate-950/40" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-9">
           <BreadcrumbNav
-            className="mb-4"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
               { label: "Treatment Types", href: "/treatment-types" },
               { label: config.label, href: config.parentPath },
               { label: stateName },
             ]}
           />
-          <div className="flex items-center gap-2 text-white/80 mb-3">
-            <MapPin className="h-4 w-4" />
-            <span className="text-sm">{stateName}</span>
-          </div>
-          <h1 className="text-2xl md:text-4xl font-bold text-white mb-4">
-            {config.label} Centers in {stateName}
-          </h1>
-          <p className="text-white/85 text-lg max-w-2xl mb-6">
-            {config.heroDescription} Compare verified facilities across {stateName} and verify insurance coverage.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild size="lg" variant="secondary">
-              <Link to="/rehab-centers">
-                <Search className="mr-2 h-4 w-4" />
-                Find Treatment
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-              <Link to={`/rehab-centers/${stateSlug}`}>
-                Browse {stateName} Centers
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+          <div className="max-w-3xl">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 ring-1 ring-amber-400/25">
+              <MapPin className="h-3 w-3" />
+              {config.label} · {stateName}
+            </div>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 font-display">
+              {config.label} Centers in {stateName}
+            </h1>
+            <p className="text-sm md:text-base text-white/85 max-w-2xl mb-4">
+              {config.heroDescription}
+            </p>
+            <div className="flex flex-wrap gap-2.5">
+              <Button asChild size="default" className="gap-2 shadow-lg shadow-black/20">
+                <Link to="/rehab-centers">
+                  <Search className="h-4 w-4" />
+                  Find Treatment
+                </Link>
+              </Button>
+              <Button asChild size="default" variant="outline" className="gap-2 border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm">
+                <Link to={`/rehab-centers/${stateSlug}`}>
+                  Browse {stateName} Centers
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
