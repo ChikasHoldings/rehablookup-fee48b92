@@ -19,6 +19,7 @@ import { citiesMatch } from "@/lib/cityNameMatch";
 import { getStateBySlug, getCityBySlug } from "@/data/locationSeoData";
 import { getStateArticles } from "@/data/stateArticlesData";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
+import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import { Button } from "@/components/ui/button";
 import { 
   MapPin, 
@@ -314,8 +315,13 @@ const CityPage = () => {
         ]}
       />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-10 md:py-14">
+      {/* Hero — directory-style, image-driven, low text.
+          Mirrors StatePage hero: bold H1, one-line subtitle,
+          breadcrumb, primary CTA, and a care-level chip rail. The
+          per-city de-templated prose moves into the "About" card
+          below the directory results so SEO depth survives without
+          turning the hero into a blog opener. */}
+      <section className="relative overflow-hidden border-b border-white/5">
         {cityImage && (
           <img
             src={cityImage}
@@ -329,66 +335,128 @@ const CityPage = () => {
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-transparent to-primary/40" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        
-        <div className="container relative z-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/80 to-primary/70" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(255,255,255,0.06),_transparent_60%)]" />
+
+        <div className="container relative z-10 py-8 md:py-12">
           <BreadcrumbNav
-            className="mb-4"
+            className="mb-5 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
               { label: "Find Rehab", href: "/rehab-centers" },
               { label: stateData.name, href: `/rehab-centers/${stateData.slug}` },
               { label: cityData.name },
             ]}
-          /><div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm border border-white/10">
-              <MapPin className="h-4 w-4" />
-              {fullLocation}
-            </div>
-            
-            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
-              Drug & Alcohol Rehab Centers in {cityData.name}, {stateData.abbreviation}
-            </h1>
-            
-            <p className="mt-4 text-base md:text-lg text-white/85 leading-relaxed max-w-2xl">
-              {/* De-templated hero copy. The previous `cityData.description`
-                  was a one-line factory string repeated across every city
-                  with only the name swapped. buildCityOverview combines
-                  per-state CDC/SAMHSA stats + the city's population +
-                  verified-facility count into one of 4 prose variants
-                  picked deterministically from a slug hash, so two cities
-                  in the same state still ship distinct HTML. */}
-              {buildCityOverview(stateData.slug, stateData.name, cityData.name, cityCenters.length, cityData.population)}
-            </p>
-
-            <div className="mt-5 flex flex-wrap items-center gap-4 md:gap-6">
-              <div className="flex items-center gap-2 text-white text-sm md:text-base">
-                <Building2 className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
-                <span className="font-semibold">{cityCenters.length}</span>
-                <span className="text-white/80">Verified Facilities</span>
+          />
+          <div className="grid items-end gap-6 md:grid-cols-[1.4fr_1fr]">
+            <div>
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+                <MapPin className="h-3.5 w-3.5" />
+                {fullLocation} · City Directory
               </div>
-              <div className="flex items-center gap-2 text-white text-sm md:text-base">
-                <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
-                <span className="text-white/80">Insurance Verified</span>
+              <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+                Rehab Centers in {cityData.name}
+              </h1>
+              <p className="mt-3 text-base text-white/80 md:text-lg max-w-xl">
+                Compare verified addiction treatment programs in {cityData.name}, {stateData.abbreviation}. Filter by care level, insurance, and admit speed.
+              </p>
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <Link to="/concierge">
+                  <Button size="lg" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
+                    <Heart className="h-4 w-4" />
+                    Get Personalized Help
+                  </Button>
+                </Link>
+                <Link to={`/search-results?location=${encodeURIComponent(fullLocation)}`}>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="gap-2 w-full sm:w-auto border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
+                  >
+                    <Search className="h-4 w-4" />
+                    Browse {cityData.name}
+                  </Button>
+                </Link>
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/concierge">
-                <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
-                  <Heart className="h-4 w-4" />
-                  Find Treatment
-                </Button>
-              </Link>
-              <Link to={`/search-results?location=${encodeURIComponent(fullLocation)}`}>
-                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
-                  <Search className="h-4 w-4" />
-                  Search {cityData.name}
-                </Button>
-              </Link>
+            <div className="hidden md:grid grid-cols-2 gap-3">
+              <LocationStatTile
+                label={cityCenters.length === 1 ? "Verified Facility" : "Verified Facilities"}
+                value={isLoading ? "—" : cityCenters.length.toLocaleString()}
+                icon={Building2}
+              />
+              {cityData.population > 0 && (
+                <LocationStatTile
+                  label="Population"
+                  value={cityData.population >= 1_000_000
+                    ? `${(cityData.population / 1_000_000).toFixed(1)}M`
+                    : cityData.population >= 1_000
+                      ? `${Math.round(cityData.population / 1_000)}K`
+                      : cityData.population.toLocaleString()}
+                  icon={Home}
+                />
+              )}
+              <LocationStatTile
+                label="State"
+                value={stateData.abbreviation}
+                icon={MapPin}
+              />
+              <LocationStatTile
+                label="Insurance"
+                value="Most plans"
+                icon={Shield}
+              />
             </div>
+          </div>
+        </div>
+
+        {/* Care-level chip rail — directory hallmark. Links into the
+            state-scoped /treatment-types/.../<state> pages so seekers
+            jump straight to the right level of care for this region. */}
+        <div className="relative z-10 border-t border-white/10 bg-black/30 backdrop-blur-sm">
+          <div className="container py-3">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <span className="shrink-0 text-xs font-medium uppercase tracking-wider text-white/60 mr-1">
+                Care:
+              </span>
+              {[
+                { label: "Detox", href: `/treatment-types/detox-programs/${stateData.slug}` },
+                { label: "Inpatient", href: `/treatment-types/residential-inpatient/${stateData.slug}` },
+                { label: "Outpatient", href: `/treatment-types/outpatient-programs/${stateData.slug}` },
+                { label: "Dual Diagnosis", href: `/treatment-types/dual-diagnosis-treatment/${stateData.slug}` },
+                { label: "Alcohol Rehab", href: `/treatment-types/alcohol-rehabilitation/${stateData.slug}` },
+                { label: "Drug Rehab", href: `/treatment-types/drug-addiction/${stateData.slug}` },
+              ].map((chip) => (
+                <Link
+                  key={chip.label}
+                  to={chip.href}
+                  className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
+                >
+                  {chip.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mobile-only stat band — keeps key metrics visible on small
+          screens where the hero's stat column is hidden. */}
+      <section className="md:hidden border-b bg-secondary/40">
+        <div className="container py-4">
+          <div className="grid grid-cols-2 gap-2">
+            <LocationStatTile
+              label="Verified"
+              value={isLoading ? "—" : cityCenters.length.toLocaleString()}
+              icon={Building2}
+              compact
+            />
+            <LocationStatTile
+              label="State"
+              value={stateData.abbreviation}
+              icon={MapPin}
+              compact
+            />
           </div>
         </div>
       </section>
@@ -404,16 +472,39 @@ const CityPage = () => {
         view_all_href={`/search-results?location=${encodeURIComponent(fullLocation)}`}
       />
 
-      {/* Results - Always at the top under hero */}
+      {/* Directory results — the page's centerpiece. Directory-style
+          header with H2 + result-count chip on the left, "Full search
+          filters" affordance on the right (desktop). */}
       <section className="bg-background py-10 md:py-14">
         <div className="container">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground">
-              Treatment Centers in {cityData.name}
-            </h2>
-            <p className="mt-1 text-muted-foreground">
-              {cityCenters.length} verified facilities in {fullLocation}
-            </p>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">
+                  All Centers in {cityData.name}
+                </h2>
+                {!isLoading && cityCenters.length > 0 && (
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/20">
+                    {cityCenters.length}
+                  </span>
+                )}
+              </div>
+              {!isLoading && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {cityCenters.length > 0
+                    ? `Showing top ${Math.min(cityCenters.length, 12)} of ${cityCenters.length} verified ${cityCenters.length === 1 ? "facility" : "facilities"} in ${fullLocation} · sorted by ranking`
+                    : `No facilities listed yet in ${cityData.name}.`}
+                </p>
+              )}
+            </div>
+            {!isLoading && cityCenters.length > 0 && (
+              <Link
+                to={`/search-results?location=${encodeURIComponent(fullLocation)}`}
+                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+              >
+                Full search filters <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            )}
           </div>
 
           {isLoading ? (
@@ -421,46 +512,39 @@ const CityPage = () => {
           ) : cityCenters.length > 0 ? (
             <>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {cityCenters.slice(0, 12).map((center) => {
-                  // Unified card visual matches /rehab-centers — render
-                  // TreatmentCenterCard against the existing center row.
-                  // The card reads its own fields; we just need to pass
-                  // through the loose shape it tolerates.
-                  return (
-                    <TreatmentCenterCard
-                      key={center.id}
-                      center={center as unknown as Parameters<typeof TreatmentCenterCard>[0]["center"]}
-                      featured={Boolean(
-                        (center as unknown as Record<string, unknown>).hasFeaturedSubscription ??
-                          (center as unknown as Record<string, unknown>).featured,
-                      )}
-                    />
-                  );
-                })}
+                {cityCenters.slice(0, 12).map((center) => (
+                  <TreatmentCenterCard
+                    key={center.id}
+                    center={center as unknown as Parameters<typeof TreatmentCenterCard>[0]["center"]}
+                    featured={Boolean(
+                      (center as unknown as Record<string, unknown>).hasFeaturedSubscription ??
+                        (center as unknown as Record<string, unknown>).featured,
+                    )}
+                  />
+                ))}
               </div>
               <div className="mt-8 text-center">
-                <Link to={`/search-results?location=${encodeURIComponent(cityData.name + ', ' + stateData.name)}`}>
+                <Link to={`/search-results?location=${encodeURIComponent(fullLocation)}`}>
                   <Button variant="outline" size="lg" className="gap-2">
-                    View All Facilities
+                    View All {cityData.name} Facilities
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
             </>
           ) : (
-            <div className="rounded-xl border bg-card p-12 text-center">
-              <Building2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
+            <div className="rounded-2xl border bg-card p-12 text-center">
+              <Building2 className="mx-auto h-12 w-12 text-muted-foreground/40" />
               <h3 className="mt-4 text-lg font-semibold">No Facilities Listed Yet in {cityData.name}</h3>
               <p className="mt-2 text-muted-foreground max-w-md mx-auto">
-                We're actively adding verified treatment centers. In the meantime, 
-                explore treatment options across {stateData.name} or get personalized help.
+                We're actively adding verified treatment centers. In the meantime, explore treatment options across {stateData.name} or get personalized help.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link to={`/rehab-centers/${stateData.slug}`}>
                   <Button variant="outline">View All {stateData.name} Centers</Button>
                 </Link>
                 <Link to="/concierge">
-                  <Button>Find Treatment</Button>
+                  <Button>Get Personalized Help</Button>
                 </Link>
               </div>
             </div>
@@ -468,83 +552,113 @@ const CityPage = () => {
         </div>
       </section>
 
-      {/* Trust Signals */}
-      <section className="border-b bg-card py-8">
+      {/* Trust signals — compact dense row (matches StatePage) */}
+      <section className="border-b bg-secondary/30 py-6">
         <div className="container">
-          <div className="grid gap-6 md:grid-cols-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Shield className="h-5 w-5 text-primary" />
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+            {[
+              { icon: Shield, title: "Verified Facilities", sub: "Credentials checked" },
+              { icon: Clock, title: "Same-Day Admit", sub: "Many programs" },
+              { icon: Heart, title: "Compassionate Care", sub: "Recovery-focused" },
+              { icon: CheckCircle, title: "Insurance Accepted", sub: "Most major plans" },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="flex items-center gap-3 rounded-lg border bg-card/60 px-3 py-2.5"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                  <item.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground leading-tight">{item.title}</p>
+                  <p className="text-xs text-muted-foreground">{item.sub}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-foreground">Verified Facilities</p>
-                <p className="text-sm text-muted-foreground">Credentials checked</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Clock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Same-Day Admissions</p>
-                <p className="text-sm text-muted-foreground">Many facilities available</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Heart className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Compassionate Care</p>
-                <p className="text-sm text-muted-foreground">Recovery-focused</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Star className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Insurance Accepted</p>
-                <p className="text-sm text-muted-foreground">Most plans covered</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Treatment Types Section */}
-      <section className="border-t bg-card py-10">
+      {/* Browse by Care Level — visual tiles, state-scoped links so
+          each tile lands the seeker on the right /treatment-types/<x>/
+          <state> page (not the national hub). Replaces the previous
+          generic 6-icon "Types of Treatment" section. */}
+      <section className="border-t bg-secondary/30 py-10 md:py-14">
         <div className="container">
-          <div className="mb-6 text-center">
-            <h2 className="text-xl font-bold text-foreground md:text-2xl">
-              Types of Treatment in {cityData.name}
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Explore different addiction treatment approaches available in {cityData.name}, {stateData.abbreviation}
-            </p>
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                Browse by Care Level
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Filter {stateData.abbreviation} programs by the level of care you need
+              </p>
+            </div>
+            <Link
+              to="/treatment-types"
+              className="hidden md:inline-flex text-sm font-medium text-primary hover:underline gap-1 items-center"
+            >
+              View all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-            {treatmentTypesData.map((type) => (
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+            {[
+              {
+                icon: Sparkles,
+                title: "Detox",
+                desc: "Medical detox under 24/7 supervision",
+                href: `/treatment-types/detox-programs/${stateData.slug}`,
+              },
+              {
+                icon: Home,
+                title: "Inpatient",
+                desc: "30–90 day residential programs",
+                href: `/treatment-types/residential-inpatient/${stateData.slug}`,
+              },
+              {
+                icon: Stethoscope,
+                title: "Outpatient",
+                desc: "PHP, IOP, and standard outpatient",
+                href: `/treatment-types/outpatient-programs/${stateData.slug}`,
+              },
+              {
+                icon: Brain,
+                title: "Dual Diagnosis",
+                desc: "Mental health + addiction integrated",
+                href: `/treatment-types/dual-diagnosis-treatment/${stateData.slug}`,
+              },
+              {
+                icon: Activity,
+                title: "Alcohol Rehab",
+                desc: "Alcohol-use-disorder programs",
+                href: `/treatment-types/alcohol-rehabilitation/${stateData.slug}`,
+              },
+              {
+                icon: Pill,
+                title: "Drug Rehab",
+                desc: "Opioid, stimulant, polysubstance",
+                href: `/treatment-types/drug-addiction/${stateData.slug}`,
+              },
+            ].map((c) => (
               <Link
-                key={type.title}
-                to={type.link}
-                className="group flex flex-col items-center rounded-xl border bg-background p-4 text-center transition-all hover:border-primary/30 hover:shadow-md"
+                key={c.title}
+                to={c.href}
+                className="group relative overflow-hidden rounded-xl border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5"
               >
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
-                  <type.icon className="h-6 w-6 text-primary" />
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/15">
+                    <c.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
+                      {c.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{c.desc}</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground/40 transition-all group-hover:translate-x-1 group-hover:text-primary" />
                 </div>
-                <span className="text-sm font-medium text-foreground">{type.title}</span>
-                <ArrowRight className="mt-2 h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
               </Link>
             ))}
-          </div>
-          <div className="mt-6 text-center">
-            <Link to="/treatment-types">
-              <Button variant="outline" className="gap-2">
-                View All Treatment Types
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
@@ -603,7 +717,13 @@ const CityPage = () => {
         </div>
       </section>
 
-      {/* Unique City Content Sections */}
+      {/* About + Insurance — consolidated premium section.
+          Replaces the previous prose-heavy "Unique City Content
+          Sections" (a stack of multi-paragraph article blocks) plus
+          the "What to Expect" / "Key Benefits" pair. The same content
+          generators still feed the page (so per-city body copy stays
+          substantively distinct for SEO), but the layout is now a
+          single polished split-pane card instead of long-form prose. */}
       {(() => {
         const contentSections = generateCityContentSections({
           cityName: cityData.name,
@@ -613,61 +733,81 @@ const CityPage = () => {
         });
         const whatToExpect = generateCityWhatToExpect(cityData.name, stateData.abbreviation);
         const benefits = generateCityBenefits(cityData.name, stateData.name, stateData.abbreviation);
+        // Use the first generated section as the "About" body. The
+        // remaining sections roll up into a compact bulleted summary
+        // so we don't lose the de-templated keywords / state stats but
+        // also don't dump three paragraphs of prose on the page.
+        const aboutHeading = contentSections[0]?.heading ?? `Addiction Treatment in ${cityData.name}`;
+        const aboutBody = contentSections[0]?.content
+          ?? buildCityOverview(stateData.slug, stateData.name, cityData.name, cityCenters.length, cityData.population);
 
         return (
-          <>
-            <section className="border-t bg-card py-12">
-              <div className="container">
-                <div className="mx-auto max-w-4xl space-y-10">
-                  {contentSections.map((section, idx) => (
-                    <article key={idx}>
-                      <h2 className="text-2xl font-bold text-foreground mb-4">{section.heading}</h2>
-                      <p className="text-muted-foreground leading-relaxed text-base">{section.content}</p>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            </section>
+          <section className="border-t bg-secondary/30 py-12 md:py-16">
+            <div className="container">
+              <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+                <div className="rounded-2xl border bg-card p-6 md:p-8 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                      <Building2 className="h-4 w-4 text-primary" />
+                    </div>
+                    <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+                      {aboutHeading}
+                    </h2>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed md:text-base">
+                    {aboutBody}
+                  </p>
 
-            <section className="border-t bg-muted/30 py-12">
-              <div className="container">
-                <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                  <div className="rounded-2xl border bg-card p-6 md:p-8">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Clock className="h-5 w-5 text-primary" />
+                  {/* What to expect — compact bulleted summary,
+                      replaces the previous full-card section. */}
+                  {whatToExpect.length > 0 && (
+                    <div className="mt-6 border-t pt-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Clock className="h-4 w-4 text-primary" />
+                        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                          What to Expect
+                        </h3>
                       </div>
-                      <h3 className="text-xl font-bold text-foreground">What to Expect</h3>
+                      <ul className="grid gap-2 sm:grid-cols-2">
+                        {whatToExpect.slice(0, 6).map((item, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <CheckCircle className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                            <span className="text-sm text-muted-foreground leading-snug">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <ul className="space-y-3">
-                      {whatToExpect.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-3">
-                          <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                          <span className="text-sm text-muted-foreground">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="rounded-2xl border bg-card p-6 md:p-8">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                        <Heart className="h-5 w-5 text-accent" />
-                      </div>
-                      <h3 className="text-xl font-bold text-foreground">Key Benefits</h3>
+                  )}
+                </div>
+
+                {/* Key benefits — sidebar card */}
+                <div className="rounded-2xl border bg-card p-6 md:p-8 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent/10">
+                      <Heart className="h-4 w-4 text-accent" />
                     </div>
-                    <ul className="space-y-3">
-                      {benefits.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-3">
-                          <Star className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                          <span className="text-sm text-muted-foreground">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+                      Why {cityData.name}
+                    </h2>
                   </div>
+                  <ul className="space-y-2.5">
+                    {benefits.slice(0, 5).map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <Star className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                        <span className="text-sm text-muted-foreground leading-snug">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    to="/insurance"
+                    className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                  >
+                    Verify insurance coverage <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
               </div>
-            </section>
-          </>
+            </div>
+          </section>
         );
       })()}
 
@@ -693,27 +833,37 @@ const CityPage = () => {
               </Link>
             </div>
             
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {displayedCities.map(city => (
-                <Link
-                  key={city.slug}
-                  to={`/rehab-centers/${stateData.slug}/${city.slug}`}
-                  className="group flex items-center justify-between rounded-xl border bg-card p-4 transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+            <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {displayedCities.map((city) => {
+                // Live facility-count chip per city — mirrors the
+                // StatePage Cities section. Uses the same approved
+                // facilities query already loaded for cityCenters.
+                const cityFacilityCount = approvedFacilities.filter((f) =>
+                  citiesMatch(f.city, city.name),
+                ).length;
+                return (
+                  <Link
+                    key={city.slug}
+                    to={`/rehab-centers/${stateData.slug}/${city.slug}`}
+                    className="group flex items-center gap-3 rounded-xl border bg-background p-3.5 transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-md"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/15">
                       <MapPin className="h-4 w-4 text-primary" />
                     </div>
-                    <div>
-                      <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-foreground group-hover:text-primary transition-colors truncate">
                         {city.name}
-                      </span>
-                      <p className="text-xs text-muted-foreground">View Centers</p>
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        {cityFacilityCount > 0
+                          ? `${cityFacilityCount} ${cityFacilityCount === 1 ? "center" : "centers"}`
+                          : "View centers"}
+                      </div>
                     </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-1 group-hover:text-primary" />
-                </Link>
-              ))}
+                    <ArrowRight className="h-4 w-4 text-muted-foreground/40 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
+                  </Link>
+                );
+              })}
             </div>
 
             {otherCities.length > 8 && (

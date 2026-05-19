@@ -30,6 +30,7 @@ import { NearbyStatesLinks } from "@/components/seo/CityLinkGrid";
 import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { InlineIntakeForm } from "@/components/conversion/InlineIntakeForm";
+import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import { 
   MapPin, 
   Building2, 
@@ -151,45 +152,11 @@ const getStateFAQs = (stateName: string, abbreviation: string, cityCount: number
 
 /**
  * StatTile — directory-style metric card used in the hero stat grid
- * and in the mobile stat band. Premium glass-effect on dark hero,
- * solid card on light backgrounds.
+ * and in the mobile stat band. Kept as a thin alias of the shared
+ * `LocationStatTile` so other directory pages (City, County, …) share
+ * the exact same visual treatment.
  */
-function StatTile({
-  label,
-  value,
-  icon: Icon,
-  compact = false,
-}: {
-  label: string;
-  value: string;
-  icon: React.ComponentType<{ className?: string }>;
-  compact?: boolean;
-}) {
-  if (compact) {
-    return (
-      <div className="flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10">
-          <Icon className="h-4 w-4 text-primary" />
-        </div>
-        <div className="min-w-0">
-          <div className="text-base font-bold leading-none text-foreground">{value}</div>
-          <div className="mt-0.5 text-[11px] uppercase tracking-wider text-muted-foreground truncate">
-            {label}
-          </div>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="rounded-xl bg-white/10 px-4 py-3 ring-1 ring-white/15 backdrop-blur-sm">
-      <div className="flex items-center gap-2 text-white/70">
-        <Icon className="h-3.5 w-3.5" />
-        <span className="text-[10px] font-semibold uppercase tracking-wider">{label}</span>
-      </div>
-      <div className="mt-1 text-2xl font-bold text-white">{value}</div>
-    </div>
-  );
-}
+const StatTile = LocationStatTile;
 
 const StatePage = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
