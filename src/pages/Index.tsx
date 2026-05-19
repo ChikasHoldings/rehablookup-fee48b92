@@ -229,12 +229,12 @@ const Index = () => {
           <div className="mx-auto max-w-4xl text-center">
             {/* Headline — outcome-led, conversion-tuned */}
             <h1 className="speakable-headline mb-3 font-display text-[1.875rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
-              Find verified rehab<br className="sm:hidden" /> centers near you
+              Find the Right Treatment & Rehab
             </h1>
 
             {/* Subheadline */}
             <p className="speakable-summary mb-4 md:mb-5 text-[15px] md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
-              Compare accredited treatment programs and verify insurance — free, confidential, no obligation.
+              Compare verified treatment centers and check your insurance coverage.
             </p>
 
             {/* Search Form - Directory Style */}
