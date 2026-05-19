@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import { useSearchParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateSearchResultsSchema } from "@/components/SEO";
@@ -810,6 +811,34 @@ const SearchResults = () => {
   // Accordion state — only one section open at a time, all collapsed by default
   const [openFilterSection, setOpenFilterSection] = useState<string | null>(null);
 
+  // Hide-on-scroll-down for the sticky results header — frees vertical
+  // space for the listing cards once the user has committed to
+  // browsing (mirrors the Yelp / Healthgrades sticky-bar pattern).
+  // Header reappears the instant the user scrolls back up so save /
+  // share / filter actions stay one swipe away.
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollY = useRef(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastScrollY.current;
+      // Always show within 120px of the top so the bar doesn't blink
+      // away during small jitter.
+      if (y < 120) {
+        setHeaderHidden(false);
+      } else if (delta > 6) {
+        // Scrolling down — hide.
+        setHeaderHidden(true);
+      } else if (delta < -6) {
+        // Scrolling up — show.
+        setHeaderHidden(false);
+      }
+      lastScrollY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const toggleFilterSection = useCallback((section: string) => {
     setOpenFilterSection(prev => prev === section ? null : section);
   }, []);
@@ -1066,8 +1095,16 @@ const SearchResults = () => {
       {/* Directory results header — Healthgrades-style sticky bar with
           result-count chip, location context, and quick actions. Card-
           surface background + accent dividers give it a premium feel
-          while staying performant during scroll. */}
-      <div className="sticky top-[68px] z-30 border-b border-border bg-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-card/85 shadow-sm">
+          while staying performant during scroll.
+          Hide-on-scroll-down: when the user scrolls down to browse,
+          the bar slides up and out so the listing cards get the full
+          viewport. Scroll up at any time to bring it back. */}
+      <div
+        className={cn(
+          "sticky top-[68px] z-30 border-b border-border bg-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-card/85 shadow-sm transition-transform duration-200 will-change-transform",
+          headerHidden && "-translate-y-full",
+        )}
+      >
         <div className="container">
           <div className="flex items-center justify-between gap-2 sm:gap-4 py-2.5">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
