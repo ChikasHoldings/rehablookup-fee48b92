@@ -43,7 +43,7 @@ export function ProviderMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Guides */}
         <div className="flex-1 p-5">
-          <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-1 mb-3 flex items-center gap-1.5">
+          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-3 flex items-center gap-1.5">
             <Sparkles className="h-3 w-3" />
             Growth Guides
           </p>
@@ -122,7 +122,7 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
     <div className="space-y-1">
       {/* Quick Links */}
       <div>
-        <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
+        <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-3 mb-1.5 flex items-center gap-1.5">
           <Building2 className="h-3.5 w-3.5" />
           For Providers
         </p>

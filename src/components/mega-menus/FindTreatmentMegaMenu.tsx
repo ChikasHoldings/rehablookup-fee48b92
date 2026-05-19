@@ -76,9 +76,10 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Treatment Types — 2-col with icon + desc */}
         <div className="flex-1 px-5 pb-4 pt-1 border-r border-border/30">
-          <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
+          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-2 flex items-center gap-1.5">
             <Shield className="h-3 w-3" />
             Treatment Types
+            <span className="ml-auto text-[10px] font-semibold text-foreground/40">8 programs</span>
           </p>
           <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
             {treatmentTypes.map((item) => (
@@ -99,7 +100,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             ))}
           </div>
           <PrefetchLink to="/treatment-types" onClick={onNavigate}
-            className="inline-flex items-center gap-1 px-2 pt-2 text-xs font-semibold text-primary hover:text-primary/80">
+            className="inline-flex items-center gap-1 px-2 pt-2 text-xs font-semibold text-accent hover:text-accent/80">
             All treatment types <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
 
@@ -126,9 +127,10 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
 
         {/* Right: Locations + Near Me */}
         <div className="w-[235px] px-4 pb-4 pt-1">
-          <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
+          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-2 flex items-center gap-1.5">
             <MapPin className="h-3 w-3 text-accent" />
             Popular Locations
+            <span className="ml-auto text-[10px] font-semibold text-foreground/40">50 states</span>
           </p>
           <div className="grid grid-cols-2 gap-0">
             {popularLocations.map((loc) => (
@@ -144,12 +146,12 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             ))}
           </div>
           <PrefetchLink to="/locations" onClick={onNavigate}
-            className="inline-flex items-center gap-1 px-2 pt-1.5 text-xs font-semibold text-primary hover:text-primary/80">
+            className="inline-flex items-center gap-1 px-2 pt-1.5 text-xs font-semibold text-accent hover:text-accent/80">
             All states <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
 
           <div className="border-t border-border/30 pt-2.5 mt-2">
-            <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-1.5">
+            <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-1.5">
               Near Me
             </p>
             {nearMePages.map((page) => (
@@ -201,7 +203,7 @@ export function FindTreatmentMegaMenuMobile({ onNavigate }: MegaMenuProps) {
 
       {/* Treatment Types */}
       <div>
-        <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
+        <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-3 mb-1.5 flex items-center gap-1.5">
           <Shield className="h-3.5 w-3.5" />
           Treatment Types
         </p>
