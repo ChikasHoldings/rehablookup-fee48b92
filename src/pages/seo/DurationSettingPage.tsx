@@ -242,6 +242,7 @@ export default function DurationSettingPage() {
         ? `Find ${config.title.toLowerCase()} in ${stateData!.name} with verified, accredited programs.`
         : config.heroSubtitle}
       heroBadge="Verified Programs"
+      heroImage={TOPIC_HERO_IMAGES.treatment}
       heroLocation={isStatePage ? stateData!.name : undefined}
       introContent={isStatePage
         ? `Looking for ${config.title.toLowerCase()} in ${stateData!.name}? RehabLookup connects you with verified treatment facilities across ${stateData!.name}. ${stateData!.cities.length > 5 ? `Programs are available in ${stateData!.cities.slice(0, 3).map(c => c.name).join(", ")}, and more.` : ""}`

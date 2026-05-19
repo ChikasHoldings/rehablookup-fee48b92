@@ -87,6 +87,7 @@ export default function SubstanceTreatmentPage() {
       heroTitle={substance.title}
       heroSubtitle={substance.heroSubtitle}
       heroBadge="Evidence-Based Treatment"
+      heroImage={TOPIC_HERO_IMAGES.treatment}
       introContent={substance.introContent}
       sections={substance.sections}
       whatToExpect={substance.whatToExpect}

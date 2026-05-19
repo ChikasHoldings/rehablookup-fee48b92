@@ -180,3 +180,26 @@ export function getCityImage(stateSlug: string | null | undefined, citySlug: str
   if (!stateSlug || !citySlug) return undefined;
   return cityImages[stateSlug]?.[citySlug];
 }
+
+/**
+ * Topic-themed fallback hero images for SEO-landing pages that have
+ * no clear single-geo context (TreatmentHubPage, SubstanceTreatment-
+ * Page, ExpandedTreatmentHubPage, DurationSettingPage, TherapyModality-
+ * Page, DemographicTreatmentPage, …). Same vetted Unsplash imagery
+ * used by the directory hero archetypes — picked for "premium
+ * wellness / recovery" tone rather than specific locations.
+ */
+export const TOPIC_HERO_IMAGES = {
+  // Treatment / wellness focus — calm bedroom / therapy / nature
+  treatment: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=1920&q=80",
+  // Education / library / writing
+  editorial: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1920&q=80",
+  // Cost / planning / paperwork
+  finance: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1920&q=80",
+  // Wellness / nature / recovery
+  wellness: "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=1920&q=80",
+  // Community / family / support
+  community: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=1920&q=80",
+} as const;
+
+export type TopicImageKey = keyof typeof TOPIC_HERO_IMAGES;

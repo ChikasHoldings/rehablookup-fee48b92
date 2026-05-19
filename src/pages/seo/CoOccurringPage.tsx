@@ -497,6 +497,7 @@ export default function CoOccurringPage() {
         ? `Find specialized ${config.conditionName.toLowerCase()} and addiction treatment programs across ${stateData!.name}.`
         : config.heroSubtitle}
       heroBadge="Dual Diagnosis"
+      heroImage={TOPIC_HERO_IMAGES.wellness}
       heroLocation={isStatePage ? stateData!.name : undefined}
       introContent={isStatePage
         ? `Looking for integrated ${config.conditionName.toLowerCase()} and addiction treatment in ${stateData!.name}? RehabLookup connects you with verified dual diagnosis programs that address both conditions simultaneously. ${stateData!.cities.length > 5 ? `Treatment centers are available in ${stateData!.cities.slice(0, 4).map((c) => c.name).join(", ")}, and throughout ${stateData!.name}.` : `Programs are available throughout ${stateData!.name}.`}`

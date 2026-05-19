@@ -619,6 +619,7 @@ export default function TherapyModalityPage() {
       heroTitle={modality.title}
       heroSubtitle={modality.heroSubtitle}
       heroBadge="Evidence-Based"
+      heroImage={TOPIC_HERO_IMAGES.wellness}
       introContent={modality.introContent}
       sections={modality.sections}
       whatToExpect={modality.whatToExpect}

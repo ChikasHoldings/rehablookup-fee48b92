@@ -109,6 +109,7 @@ export default function EducationalPage() {
       heroTitle={config.title}
       heroSubtitle={config.heroSubtitle}
       heroBadge="Evidence-Based Guide"
+      heroImage={TOPIC_HERO_IMAGES.editorial}
       introContent={config.introContent}
       sections={config.sections}
       whatToExpect={config.whatToExpect}

@@ -616,31 +616,43 @@ const ArticleDetail = () => {
         publishedTime={article.published_at || undefined}
       />
 
-      {/* Hero */}
-      <div className="bg-gradient-to-b from-muted/60 via-muted/30 to-background py-12 md:py-16">
-        <div className="container">
+      {/* Hero — ARTICLE DETAIL. Editorial library palette (matches
+          Resources / CategoryHub / Authors / News). Smaller than
+          State per the brief. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
             items={[
               { label: "Resources", href: "/resources" },
               { label: article.category_label, href: `/resources?category=${article.category}` },
               { label: article.title },
             ]}
-            className="mb-4"
-            variant="light"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
           />
           <div className="max-w-4xl mx-auto">
 
-            <div className="mb-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                <BookOpen className="h-3.5 w-3.5" />
+            <div className="mb-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 ring-1 ring-amber-400/25">
+                <BookOpen className="h-3 w-3" />
                 {article.category_label}
               </span>
             </div>
 
-            <h1 className="speakable-headline font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl md:text-4xl mb-6 leading-tight">
+            <h1 className="speakable-headline font-display text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl leading-tight">
               {article.title}
             </h1>
+          </div>
+        </div>
+      </section>
 
+      {/* Byline strip — light band right below the hero. ArticleByline
+          is styled for light backgrounds (uses text-muted-foreground /
+          text-foreground) so it stays here rather than inside the
+          dark editorial hero. */}
+      <section className="border-b border-border bg-card py-4">
+        <div className="container">
+          <div className="max-w-4xl mx-auto">
             <ArticleByline
               author={authorPerson ? {
                 slug: authorPerson.slug,
@@ -664,7 +676,7 @@ const ArticleDetail = () => {
             />
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Featured rotation — paid Featured pool for this article's
           bucket, mounted directly under the hero. Same visual as the
