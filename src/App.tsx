@@ -1180,6 +1180,24 @@ const AppInner = () => {
             <Route path="/resources/insurance-coverage-guide" element={<Navigate to="/resources/insurance-appeal-rehab-denial" replace />} />
             <Route path="/resources/paying-for-rehab" element={<Navigate to="/resources/how-much-does-rehab-cost-per-day" replace />} />
             <Route path="/resources/choosing-right-program" element={<Navigate to="/resources/how-to-find-good-rehab" replace />} />
+            {/* Phase AE: 12 more legacy /resources/<slug> URLs that
+                internal components still reference (Footer,
+                ArticleCategoryLinks, ArticleInterlinks) and that
+                Google likely has indexed. Each redirects to the
+                closest canonical published article in blog_articles.
+                Mapping verified by direct SQL against the live table. */}
+            <Route path="/resources/choosing-rehab-center" element={<Navigate to="/resources/how-to-find-good-rehab" replace />} />
+            <Route path="/resources/first-week-treatment" element={<Navigate to="/resources/what-happens-after-detox" replace />} />
+            <Route path="/resources/free-rehab-options" element={<Navigate to="/free-rehab-options" replace />} />
+            <Route path="/resources/inpatient-vs-outpatient" element={<Navigate to="/resources/outpatient-vs-inpatient" replace />} />
+            <Route path="/resources/intervention-guide" element={<Navigate to="/resources/how-to-stage-an-intervention" replace />} />
+            <Route path="/resources/php-vs-iop" element={<Navigate to="/resources/php-vs-iop-vs-outpatient" replace />} />
+            <Route path="/resources/questions-to-ask-rehab" element={<Navigate to="/resources/questions-to-ask-before-rehab" replace />} />
+            <Route path="/resources/rehab-success-rates" element={<Navigate to="/resources/relapse-prevention" replace />} />
+            <Route path="/resources/supporting-loved-one" element={<Navigate to="/resources/how-to-help-loved-one" replace />} />
+            <Route path="/resources/types-of-addiction-treatment" element={<Navigate to="/resources/category/treatment" replace />} />
+            <Route path="/resources/understanding-dual-diagnosis" element={<Navigate to="/resources/dual-diagnosis-explained" replace />} />
+            <Route path="/resources/what-to-expect-in-detox" element={<Navigate to="/resources/detox-timeline" replace />} />
             <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
             <Route path="/authors" element={<PublicRouteGuard><Authors /></PublicRouteGuard>} />
             <Route path="/authors/:slug" element={<PublicRouteGuard><AuthorProfile /></PublicRouteGuard>} />

@@ -69,6 +69,45 @@ Deno.test("resources-mega-menu: ArticleDetail renders 404 in place (no silent Na
   );
 });
 
+Deno.test("resources-mega-menu: phase AD/AE legacy /resources/<slug> redirects exist for every known-stale URL", async () => {
+  // Phase AD added 5 + Phase AE added 12 = 17 explicit Navigate
+  // redirects for legacy resource slugs that internal components
+  // and Google may still hit. Asserting they're all wired prevents
+  // someone from deleting them inadvertently — that would re-open
+  // the 404 spike.
+  const app = await read("src/App.tsx");
+  const expected = [
+    // Phase AD
+    "/resources/signs-of-addiction",
+    "/resources/what-to-expect-in-rehab",
+    "/resources/insurance-coverage-guide",
+    "/resources/paying-for-rehab",
+    "/resources/choosing-right-program",
+    // Phase AE
+    "/resources/choosing-rehab-center",
+    "/resources/first-week-treatment",
+    "/resources/free-rehab-options",
+    "/resources/inpatient-vs-outpatient",
+    "/resources/intervention-guide",
+    "/resources/php-vs-iop",
+    "/resources/questions-to-ask-rehab",
+    "/resources/rehab-success-rates",
+    "/resources/supporting-loved-one",
+    "/resources/types-of-addiction-treatment",
+    "/resources/understanding-dual-diagnosis",
+    "/resources/what-to-expect-in-detox",
+  ];
+  for (const url of expected) {
+    const pattern = new RegExp(
+      `<Route\\s+path="${url.replace(/\//g, "\\/")}"\\s+element=\\{<Navigate\\s+to="`,
+    );
+    assert(
+      pattern.test(app),
+      `Missing legacy-URL redirect in App.tsx for ${url} (phase AD/AE protection)`,
+    );
+  }
+});
+
 Deno.test("resources-mega-menu: mobile + desktop variants share the same guides array", async () => {
   const src = await read("src/components/mega-menus/ResourcesMegaMenu.tsx");
   // Confirm both export functions exist and both reference `guides`.
