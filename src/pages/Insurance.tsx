@@ -592,24 +592,33 @@ export default function Insurance() {
         ]}
       />
 
-      {/* Hero Section - Matches TreatmentTypes */}
-      <section className="relative overflow-hidden bg-primary py-10 md:py-12">
-        <div className="container">
+      {/* Hero — INSURANCE COVERAGE hub. Distinct from the rest of
+          the directory network with a calm teal/cyan accent (financial-
+          trust palette). No photo — insurance is utility/business,
+          not a destination. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-teal-900/80 to-cyan-700/55">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA0KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-100" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(20,184,166,0.12),_transparent_55%)]" />
+
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "Insurance Coverage" },
-            ]}
-          /><div className="mx-auto max-w-2xl text-center">
-            <h1 className="mb-3 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
+            items={[{ label: "Insurance Coverage" }]}
+          />
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-teal-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-teal-100 backdrop-blur-sm ring-1 ring-teal-400/25">
+              <Shield className="h-3 w-3" />
+              Coverage Verification
+            </div>
+            <h1 className="mb-2 font-display text-2xl font-bold text-white md:text-3xl lg:text-4xl">
               Insurance Coverage for Addiction Treatment
             </h1>
-            <p className="text-primary-foreground/80 text-sm md:text-base mb-4">
-              Most health insurance plans cover addiction treatment. Learn what's typically covered and how to verify your benefits.
+            <p className="text-white/80 text-sm md:text-base mb-4 max-w-xl mx-auto">
+              Most health insurance plans cover addiction treatment. Verify your benefits in minutes.
             </p>
-            <Button asChild size="lg" variant="secondary" className="font-semibold">
+            <Button asChild size="default" variant="secondary" className="font-semibold gap-2 shadow-lg shadow-black/20">
               <Link to="/insurance-verification">
-                <Shield className="h-4 w-4 mr-2" />
+                <Shield className="h-4 w-4" />
                 Verify my insurance — free
               </Link>
             </Button>
