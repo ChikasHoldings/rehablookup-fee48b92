@@ -30,6 +30,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { TreatmentHubHero } from "@/components/seo/TreatmentHubHero";
 const holisticTherapies = [
   {
     icon: Wind,
@@ -161,44 +162,13 @@ const HolisticTherapy = () => {
         structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
       />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
-        <div className="container">
-          {/* Breadcrumbs */}
-          <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "Treatment Types", href: "/treatment-types" },
-              { label: "Holistic Therapy" },
-            ]}
-          /><div className="text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Complementary Treatment</span>
-            </div>
-            <h1 className="mb-4 font-display text-3xl font-bold text-primary-foreground md:text-4xl lg:text-5xl">
-              Holistic Therapy for Addiction
-            </h1>
-            <p className="mx-auto max-w-2xl text-lg text-primary-foreground/80">
-              Heal the whole person—mind, body, and spirit—with complementary therapies that enhance traditional addiction treatment.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link to="/rehab-centers">
-                <Button size="lg" variant="secondary" className="gap-2">
-                  <Heart className="h-5 w-5" />
-                  Find Treatment
-                </Button>
-              </Link>
-              <Link to="/search-results?type=holistic">
-                <Button size="lg" variant="outline" className="gap-2 border-white/30 text-primary-foreground hover:bg-white/10">
-                  <Phone className="h-5 w-5" />
-                  Find Holistic Centers
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <TreatmentHubHero
+        treatmentKey="holistic"
+        treatmentName="Holistic Therapy"
+        treatmentIcon={Sparkles}
+        breadcrumbLabel="Holistic Therapy"
+        subtitle="Heal the whole person — mind, body, and spirit — with complementary therapies that enhance traditional addiction treatment."
+      />
 
       {/* Featured rotation — paid Featured pool for this
           page's bucket, mounted directly under the hero. Visual

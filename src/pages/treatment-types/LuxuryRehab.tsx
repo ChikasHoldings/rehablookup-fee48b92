@@ -28,6 +28,7 @@ import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { TreatmentHubHero } from "@/components/seo/TreatmentHubHero";
 const faqs = [
   {
     question: "What makes luxury rehab different from standard treatment?",
@@ -83,43 +84,13 @@ export default function LuxuryRehab() {
         ]}
       />
 
-      {/* Hero */}
-      <section className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/85 py-16 md:py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/10 via-transparent to-transparent" />
-        <div className="container relative z-10 max-w-4xl">
-          <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "Treatment Types", href: "/treatment-types" },
-              { label: "Luxury Rehab" },
-            ]}
-          />
-
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 mb-4">
-            <Star className="h-4 w-4 text-accent" />
-            <span className="text-sm font-medium text-white">Premium Treatment</span>
-          </div>
-
-          <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-4">
-            Luxury Rehab Centers
-          </h1>
-          <p className="text-lg text-white/80 max-w-2xl mb-8">
-            World-class addiction treatment in resort-like settings. Private suites, gourmet nutrition, holistic therapies, and clinical excellence — because recovery should never mean sacrificing dignity.
-          </p>
-
-          <div className="flex flex-wrap gap-3">
-            <Button asChild variant="hero" size="lg">
-              <Link to="/concierge">
-                Find Luxury Treatment
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
-            </Button>
-            <Button asChild variant="hero-secondary" size="lg" className="border-white/30 text-white hover:bg-white/10">
-              <Link to="/rehab-centers">Browse All Centers</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <TreatmentHubHero
+        treatmentKey="luxury"
+        treatmentName="Luxury Rehab"
+        treatmentIcon={Star}
+        breadcrumbLabel="Luxury Rehab"
+        subtitle="World-class addiction treatment in resort-like settings — private suites, gourmet nutrition, holistic therapies, clinical excellence."
+      />
 
       {/* Featured rotation — paid Featured pool for this treatment
           bucket, mounted directly under the hero. Visual matches the

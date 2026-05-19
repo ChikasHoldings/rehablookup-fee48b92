@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { TreatmentHubHero } from "@/components/seo/TreatmentHubHero";
 const programTypes = [
   {
     title: "Medical Detox",
@@ -173,45 +174,13 @@ const AlcoholRehabilitation = () => {
         ]}
       />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
-        <div className="container">
-          <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "Treatment Types", href: "/treatment-types" },
-              { label: "Alcohol Rehabilitation" },
-            ]}
-          /><div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <Activity className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Alcohol Treatment Programs</span>
-            </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Alcohol Rehabilitation Programs
-            </h1>
-            <p className="text-base md:text-lg text-primary-foreground/85 leading-relaxed">
-              Evidence-based alcohol addiction treatment from medical detox through long-term recovery. 
-              Find the right level of care including inpatient, outpatient, and medication-assisted treatment options.
-            </p>
-
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/rehab-centers">
-                <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
-                  <Phone className="h-4 w-4" />
-                  Find Treatment
-                </Button>
-              </Link>
-              <Link to="/rehab-centers">
-                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
-                  Find Treatment Centers
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <TreatmentHubHero
+        treatmentKey="alcohol"
+        treatmentName="Alcohol Rehabilitation"
+        treatmentIcon={Activity}
+        breadcrumbLabel="Alcohol Rehabilitation"
+        subtitle="Evidence-based alcohol addiction treatment — medical detox, inpatient, outpatient, and medication-assisted recovery options."
+      />
 
       {/* Featured rotation — paid Featured pool for this
           page's bucket, mounted directly under the hero. Visual

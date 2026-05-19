@@ -7,6 +7,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { ResponsiveListingGrid } from "@/components/listings/ResponsiveListingGrid";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { TreatmentHubHero } from "@/components/seo/TreatmentHubHero";
 import {
   Pill,
   ArrowRight,
@@ -148,45 +149,13 @@ const DrugAddictionTreatment = () => {
         ]}
       />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
-        <div className="container">
-          <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "Treatment Types", href: "/treatment-types" },
-              { label: "Drug Addiction" },
-            ]}
-          /><div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <Pill className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Drug Treatment Programs</span>
-            </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Drug Addiction Treatment Programs
-            </h1>
-            <p className="text-base md:text-lg text-primary-foreground/85 leading-relaxed">
-              Comprehensive treatment programs for substance use disorders including opioids, stimulants, 
-              benzodiazepines, and other drugs. Find evidence-based care from medical detox to long-term recovery support.
-            </p>
-
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/rehab-centers">
-                <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
-                  <Phone className="h-4 w-4" />
-                  Find Treatment
-                </Button>
-              </Link>
-              <Link to="/rehab-centers">
-                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
-                  Find Treatment Centers
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <TreatmentHubHero
+        treatmentKey="drug"
+        treatmentName="Drug Addiction Treatment"
+        treatmentIcon={Pill}
+        breadcrumbLabel="Drug Addiction"
+        subtitle="Evidence-based care for opioids, stimulants, benzodiazepines, and polysubstance use — from medical detox to long-term recovery."
+      />
 
       {/* Featured rotation — paid Featured pool, mounted directly
           under the hero. Visual matches the homepage Featured

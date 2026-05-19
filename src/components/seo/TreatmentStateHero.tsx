@@ -3,60 +3,10 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { LocationStatTile } from "@/components/seo/LocationStatTile";
+import { TREATMENT_THEMES, type TreatmentThemeKey } from "@/components/seo/treatmentThemes";
 import { ArrowRight, Heart, MapPin, Search, Activity, Building2 } from "lucide-react";
 
-/**
- * Topic colour palette → hero gradient tokens. Each treatment
- * modality gets its own colour so the network of treatment-state
- * pages doesn't feel templated. The directory shell stays consistent
- * (eyebrow + stat strip + city chip rail at the bottom); only the
- * gradient tail and accent ring shift per modality.
- *
- * Keep these palettes Tailwind-arbitrary so we don't need to extend
- * the theme — the colour values are stable across versions.
- */
-const TREATMENT_THEMES: Record<
-  string,
-  { gradient: string; accent: string; iconBg: string }
-> = {
-  alcohol: {
-    gradient: "from-teal-950 via-teal-900/85 to-cyan-700/60",
-    accent: "from-teal-500 to-cyan-500",
-    iconBg: "bg-teal-500/20 ring-teal-300/25",
-  },
-  drug: {
-    gradient: "from-slate-950 via-primary/85 to-primary/60",
-    accent: "from-primary to-primary",
-    iconBg: "bg-primary/20 ring-primary/25",
-  },
-  dual: {
-    gradient: "from-slate-950 via-violet-900/80 to-fuchsia-700/55",
-    accent: "from-violet-500 to-fuchsia-500",
-    iconBg: "bg-violet-500/20 ring-violet-300/25",
-  },
-  inpatient: {
-    gradient: "from-slate-950 via-indigo-900/80 to-indigo-600/55",
-    accent: "from-indigo-500 to-indigo-400",
-    iconBg: "bg-indigo-500/20 ring-indigo-300/25",
-  },
-  outpatient: {
-    gradient: "from-slate-950 via-emerald-900/80 to-emerald-600/55",
-    accent: "from-emerald-500 to-teal-500",
-    iconBg: "bg-emerald-500/20 ring-emerald-300/25",
-  },
-  detox: {
-    gradient: "from-slate-950 via-sky-900/85 to-sky-600/55",
-    accent: "from-sky-500 to-cyan-500",
-    iconBg: "bg-sky-500/20 ring-sky-300/25",
-  },
-  holistic: {
-    gradient: "from-slate-950 via-emerald-900/75 to-lime-700/50",
-    accent: "from-emerald-500 to-lime-500",
-    iconBg: "bg-emerald-500/20 ring-emerald-300/25",
-  },
-};
-
-export type TreatmentThemeKey = keyof typeof TREATMENT_THEMES;
+export type { TreatmentThemeKey };
 
 interface TreatmentStateHeroProps {
   /** Topic key — drives the colour theme. */
