@@ -10,6 +10,7 @@ import { RouteChangeTracker } from "@/components/RouteChangeTracker";
 import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
 import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
 import { StaticFileRedirect } from "@/components/seo/StaticFileRedirect";
+import { NearMeCityRedirect } from "@/components/seo/NearMeCityRedirect";
 // CookieConsentBanner removed — US site, no opt-in required. GA4 tracks unconditionally.
 import { ExitIntentPopup } from "@/components/conversion/ExitIntentPopup";
 import { StickyMobileActionBar } from "@/components/conversion/StickyMobileActionBar";
@@ -1008,6 +1009,136 @@ const AppInner = () => {
              <Route path="/first-responder-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="first-responder-rehab-near-me" /></PublicRouteGuard>} />
              <Route path="/marijuana-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="marijuana-rehab-near-me" /></PublicRouteGuard>} />
              <Route path="/marijuana-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="marijuana-rehab-near-me" /></PublicRouteGuard>} />
+
+             {/* Phase AF: city-level near-me redirects.
+                 The sitemap generator emitted 3-segment URLs
+                 (/<prefix>/:stateSlug/:citySlug) for every
+                 near-me pattern, but only 2-segment routes
+                 (state-only) exist. 21k+ sitemap URLs were
+                 404-ing. NearMeCityRedirect drops the city
+                 segment and Navigate-replaces to the state-
+                 level page so each 3-segment URL becomes a
+                 301 to the working state-level page. */}
+             <Route path="/aetna-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/affordable-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/alcohol-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/benzo-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/blue-cross-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/christian-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/cigna-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/cocaine-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/couples-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/court-ordered-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/detox-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/drug-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/dual-diagnosis-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/dual-diagnosis-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/emergency-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/executive-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/faith-based-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/fentanyl-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/first-responder-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/free-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/heroin-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/holistic-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/humana-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/immediate-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/inpatient-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/iop-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/kratom-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/lgbtq-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/long-term-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/low-cost-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/luxury-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/marijuana-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/mat-clinic-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/medicaid-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/medicare-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/mens-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/meth-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/methadone-clinic-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/opioid-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/outpatient-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/outpatient-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/php-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/prescription-drug-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/same-day-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/seniors-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/short-term-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/sober-living-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/suboxone-clinic-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/teen-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/tricare-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/united-healthcare-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/veterans-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/womens-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/xanax-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+             <Route path="/young-adult-rehab-near-me/:stateSlug/:citySlug" element={<NearMeCityRedirect />} />
+
+             {/* Phase AG: county-level near-me redirects.
+                 The sitemap also emitted /<prefix>/<state>/county/<county>
+                 4-segment URLs (e.g. /drug-rehab-near-me/alabama/county/jefferson).
+                 Same fix as phase AF — redirect to the working state-level page.
+                 NearMeCityRedirect drops everything past the state segment. */}
+             <Route path="/aetna-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/affordable-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/alcohol-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/benzo-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/blue-cross-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/christian-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/cigna-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/cocaine-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/couples-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/court-ordered-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/detox-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/drug-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/dual-diagnosis-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/dual-diagnosis-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/emergency-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/executive-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/faith-based-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/fentanyl-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/first-responder-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/free-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/heroin-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/holistic-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/humana-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/immediate-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/inpatient-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/iop-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/kratom-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/lgbtq-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/long-term-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/low-cost-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/luxury-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/marijuana-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/mat-clinic-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/medicaid-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/medicare-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/mens-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/meth-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/methadone-clinic-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/opioid-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/outpatient-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/outpatient-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/php-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/prescription-drug-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/same-day-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/seniors-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/short-term-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/sober-living-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/suboxone-clinic-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/teen-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/tricare-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/united-healthcare-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/veterans-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/womens-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/xanax-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+             <Route path="/young-adult-rehab-near-me/:stateSlug/county/:countySlug" element={<NearMeCityRedirect />} />
+
+
 
              {/* Educational "What Is" Pages (Batch 2) */}
              <Route path="/what-is-detox" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
