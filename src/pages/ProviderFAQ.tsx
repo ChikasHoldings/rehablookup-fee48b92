@@ -144,63 +144,61 @@ export default function ProviderFAQ() {
       />
 
       <main className="flex-1">
-        {/* Hero — Split Screen */}
-        <section className="relative bg-primary overflow-hidden">
-          <div className="container">
-            <div className="grid lg:grid-cols-2 gap-0 items-stretch min-h-[340px]">
-              {/* Left */}
-              <div className="flex flex-col justify-center py-12 lg:py-16 lg:pr-12 relative z-10">
-                <BreadcrumbNav
-                  className="mb-4"
-                  variant="dark"
-                  items={[
-                    { label: "For Providers", href: "/for-providers" },
-                    { label: "FAQ" },
-                  ]}
-                />
-                <div className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 rounded-full px-4 py-1.5 mb-5 w-fit">
-                  <Building2 className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-medium text-primary-foreground">For Treatment Centers</span>
-                </div>
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-primary-foreground mb-4 leading-tight">
-                  Provider FAQ
-                </h1>
-                <p className="text-base text-primary-foreground/80 leading-relaxed max-w-lg mb-6">
-                  Everything you need to know about listing your facility, managing inquiries, billing, and growing your admissions on RehabLookup.
-                </p>
+        {/* Hero — PROVIDER FAQ. Provider-side dark palette (navy + gold
+            accent matches ForProviders), smaller than State per the
+            brief. Image-led with backdrop image on right (lg+ only). */}
+        <section className="relative overflow-hidden border-b border-white/5"
+          style={{ background: "linear-gradient(135deg, #1B365D 0%, #0E1F3A 100%)" }}>
+          <img
+            src={heroImg}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover opacity-25"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/80 to-[#1B365D]/70" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(205,162,35,0.10),_transparent_55%)]" />
 
-                {/* Search */}
-                <div className="relative max-w-md">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                  <Input
-                    type="text"
-                    placeholder="Search provider questions…"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-12 rounded-xl border-0 bg-card pl-11 pr-10 text-sm shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-accent"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors z-10"
-                      aria-label="Clear search"
-                    >
-                      <X className="h-3.5 w-3.5 text-muted-foreground" />
-                    </button>
-                  )}
-                </div>
+          <div className="container relative z-10 py-6 md:py-9">
+            <BreadcrumbNav
+              className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
+              variant="dark"
+              items={[
+                { label: "For Providers", href: "/for-providers" },
+                { label: "FAQ" },
+              ]}
+            />
+            <div className="max-w-2xl">
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#CDA223]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[#CDA223] ring-1 ring-[#CDA223]/30">
+                <Building2 className="h-3 w-3" />
+                For Treatment Centers
               </div>
-
-              {/* Right: Image */}
-              <div className="hidden lg:block relative">
-                <img
-                  src={heroImg}
-                  alt="Provider dashboard analytics"
-                  className="absolute inset-0 w-full h-full object-cover"
-                  width={800}
-                  height={600}
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-white">
+                Provider FAQ
+              </h1>
+              <p className="mt-2 text-sm md:text-base text-white/80 max-w-lg mb-4">
+                Everything you need to know about listing your facility, managing inquiries, billing, and growing admissions.
+              </p>
+              <div className="relative max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                <Input
+                  type="text"
+                  placeholder="Search provider questions…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-11 rounded-xl border-0 bg-card pl-11 pr-10 text-sm shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-[#CDA223]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/50 to-transparent" />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center rounded-full bg-muted hover:bg-muted/80 transition-colors z-10"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                )}
               </div>
             </div>
           </div>

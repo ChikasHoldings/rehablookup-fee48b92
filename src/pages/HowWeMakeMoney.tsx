@@ -63,27 +63,31 @@ export default function HowWeMakeMoney() {
         ]}
       />
 
-      <main className="bg-white">
-        <article className="mx-auto max-w-[720px] px-4 py-10 md:px-6 md:py-16 text-[16px] md:text-[17px] leading-[1.6] text-slate-800">
+      {/* Hero — HOW WE MAKE MONEY. Trust/about palette (slate→amber),
+          matches editorial / policy pages. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-6 text-[13px]"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[{ label: "How we make money" }]}
           />
-
-          {/* Hero */}
-          <header className="mb-10">
-            <p className="text-[11px] md:text-xs font-semibold uppercase tracking-[0.15em] text-[#1B365D] mb-3">
-              Trust &amp; Transparency
-            </p>
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-[1.15]">
+          <div className="max-w-2xl">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 ring-1 ring-amber-400/25">
+              Trust & Transparency
+            </div>
+            <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight">
               How RehabLookup makes money
             </h1>
-            <p className="mt-4 text-[17px] md:text-[18px] text-slate-700 leading-[1.55]">
-              We're an independent rehab directory. We don't run treatment
-              centers. We don't take referral fees. We don't route your call.
-              Here's exactly how we pay our bills.
+            <p className="mt-2 text-sm md:text-base text-white/80 max-w-xl">
+              We're an independent rehab directory. We don't run treatment centers, take referral fees, or route your call. Here's exactly how we pay our bills.
             </p>
-          </header>
+          </div>
+        </div>
+      </section>
+
+      <main className="bg-white">
+        <article className="mx-auto max-w-[720px] px-4 py-8 md:px-6 md:py-12 text-[16px] md:text-[17px] leading-[1.6] text-slate-800">
 
           {/* 4-tile compact trust strip */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-8" aria-label="Trust signals">

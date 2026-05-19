@@ -150,28 +150,28 @@ const ProviderROICalculator = () => {
         keywords={["rehab lead cost", "treatment center ROI", "rehab marketing cost", "cost per admission rehab"]}
       />
 
-      {/* Hero */}
-      <section className="relative bg-[#1B365D] text-white overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1B365D] via-[#2C4A7F] to-[#1B365D] opacity-90" />
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-        </div>
-        <div className="container relative mx-auto px-4 py-16 md:py-24">
-          <BreadcrumbNav items={breadcrumbs} className="mb-8 text-white/60" />
+      {/* Hero — PROVIDER ROI CALCULATOR. Navy + gold accent matches
+          the rest of the provider-facing surface. Smaller than State. */}
+      <section className="relative overflow-hidden border-b border-white/5 text-white"
+        style={{ background: "linear-gradient(135deg, #1B365D 0%, #0E1F3A 100%)" }}>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(205,162,35,0.10),_transparent_55%)]" />
+        <div className="container relative mx-auto px-4 py-6 md:py-9">
+          <BreadcrumbNav items={breadcrumbs} className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="max-w-3xl"
+            className="max-w-2xl"
           >
-            <Badge className="mb-4 bg-white/10 text-white border-white/20 hover:bg-white/20">
-              <Calculator className="h-3.5 w-3.5 mr-1" /> Provider ROI Calculator
-            </Badge>
-            <h1 className="text-3xl md:text-5xl font-bold mb-4 leading-tight">
-              How Much Are You <span className="text-[#0EA5E9]">Overpaying</span> for Patient Leads?
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#CDA223]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[#CDA223] ring-1 ring-[#CDA223]/30">
+              <Calculator className="h-3 w-3" />
+              Provider ROI Calculator
+            </div>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight font-display">
+              How Much Are You <span className="text-[#CDA223]">Overpaying</span> for Patient Leads?
             </h1>
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl">
-              Compare your cost-per-admission across platforms. See why exclusive leads at $39 convert 3x better than shared leads at $75+.
+            <p className="mt-2 text-sm md:text-base text-white/80 max-w-xl">
+              Compare your cost-per-admission across platforms. Exclusive leads at $39 convert 3x better than shared leads at $75+.
             </p>
           </motion.div>
         </div>
