@@ -9,6 +9,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { RouteChangeTracker } from "@/components/RouteChangeTracker";
 import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
 import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
+import { StaticFileRedirect } from "@/components/seo/StaticFileRedirect";
 // CookieConsentBanner removed — US site, no opt-in required. GA4 tracks unconditionally.
 import { ExitIntentPopup } from "@/components/conversion/ExitIntentPopup";
 import { StickyMobileActionBar } from "@/components/conversion/StickyMobileActionBar";
@@ -1283,7 +1284,10 @@ const AppInner = () => {
             <Route path="/provider/reset-password" element={<ProviderResetPassword />} />
             <Route path="/provider/support" element={<Navigate to="/provider-support" replace />} />
             <Route path="/provider/faq" element={<Navigate to="/provider-faq" replace />} />
-            <Route path="/provider/signup" element={<Navigate to="/provider-signup" replace />} />
+            {/* Phase AC: collapsed 2-hop redirect. Previously
+                /provider/signup → /provider-signup → /provider/onboarding.
+                Direct to the canonical onboarding wizard. */}
+            <Route path="/provider/signup" element={<Navigate to="/provider/onboarding" replace />} />
             
             {/* Provider SEO Pages */}
             <Route path="/provider-guides/get-more-rehab-patients" element={<PublicRouteGuard><GetMoreRehabPatients /></PublicRouteGuard>} />
@@ -1726,7 +1730,12 @@ const AppInner = () => {
             <Route path="/us-rehab/california" element={<Navigate to="/rehab-centers/california" replace />} />
             
             {/* Legacy misc redirects */}
-            <Route path="/sitemap" element={<Navigate to="/sitemap-index.xml" replace />} />
+            {/* Phase AC: /sitemap-index.xml is a static file in /public.
+                React Router's <Navigate> doesn't fetch static assets —
+                it just changes the SPA route, and the catch-all renders
+                NotFound. Use StaticFileRedirect (window.location.replace)
+                so the browser issues a real HTTP request. */}
+            <Route path="/sitemap" element={<StaticFileRedirect to="/sitemap-index.xml" />} />
             <Route path="/search" element={<Navigate to="/search-results" replace />} />
             
             {/* 404 - explicit route so SEO/near-me pages can <Navigate to="/404"> without falling through SmartCatchAll's prefix matchers */}
