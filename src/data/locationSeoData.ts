@@ -169,6 +169,9 @@ export const statesData: StateData[] = [
       { name: "Oceanside", slug: "oceanside", population: 175691, description: "Oceanside offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Oceanside, CA. Compare verified treatment facilities near you." },
       { name: "Pomona", slug: "pomona", population: 151713, description: "Pomona offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Pomona, CA. Compare verified treatment facilities near you." },
       { name: "Escondido", slug: "escondido", population: 151038, description: "Escondido offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Escondido, CA. Compare verified treatment facilities near you." },
+      { name: "Malibu", slug: "malibu", population: 10654, description: "Malibu is a premier destination for luxury, oceanfront, and executive addiction treatment, with discreet residential programs along the Pacific coast.", metaDescription: "Find luxury and oceanfront rehab centers in Malibu, CA. Compare verified treatment facilities near you." },
+      { name: "Corona", slug: "corona", population: 157136, description: "Corona offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Corona, CA. Compare verified treatment facilities near you." },
+      { name: "Murrieta", slug: "murrieta", population: 116958, description: "Murrieta offers addiction treatment programs including detox, inpatient, and outpatient services.", metaDescription: "Find drug and alcohol rehab centers in Murrieta, CA. Compare verified treatment facilities near you." },
     ],
   },
   {

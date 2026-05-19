@@ -4,8 +4,8 @@ import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
+import { resolveCity } from "@/lib/cityLookup";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
@@ -30,11 +30,9 @@ export default function DurationCityPage() {
   }, [location.pathname]);
 
   const config = useMemo(() => durationConfigs.find((d) => d.slug === durationSlug) || null, [durationSlug]);
-  const stateData = useMemo(() => statesData.find((s) => s.slug === stateSlug) || null, [stateSlug]);
-  const cityData = useMemo(() => {
-    if (!stateData) return null;
-    return stateData.cities.find((c) => c.slug === citySlug) || null;
-  }, [stateData, citySlug]);
+  const resolved = useMemo(() => resolveCity(stateSlug, citySlug), [stateSlug, citySlug]);
+  const stateData = resolved?.state ?? null;
+  const cityData = resolved?.city ?? null;
 
   const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
     if (!config || !stateData || !cityData) {

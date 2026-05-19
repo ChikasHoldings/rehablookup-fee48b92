@@ -4,9 +4,9 @@ import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
+import { resolveCity } from "@/lib/cityLookup";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { substancePages } from "@/data/seoSubstanceConfig";
-import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
@@ -21,11 +21,9 @@ export default function SubstanceCityPage() {
   }, [location.pathname]);
 
   const substance = useMemo(() => substancePages.find((s) => s.slug === substanceSlug) || null, [substanceSlug]);
-  const stateData = useMemo(() => statesData.find((s) => s.slug === stateSlug) || null, [stateSlug]);
-  const cityData = useMemo(() => {
-    if (!stateData) return null;
-    return stateData.cities.find((c) => c.slug === citySlug) || null;
-  }, [stateData, citySlug]);
+  const resolved = useMemo(() => resolveCity(stateSlug, citySlug), [stateSlug, citySlug]);
+  const stateData = resolved?.state ?? null;
+  const cityData = resolved?.city ?? null;
 
   const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
     if (!substance || !stateData || !cityData) {

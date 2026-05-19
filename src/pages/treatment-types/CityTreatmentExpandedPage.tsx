@@ -2,7 +2,7 @@ import { useParams, Navigate, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { statesData } from "@/data/locationSeoData";
+import { resolveCity } from "@/lib/cityLookup";
 import { getCityImage } from "@/data/locationImages";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
@@ -162,8 +162,9 @@ interface CityTreatmentExpandedPageProps {
 const CityTreatmentExpandedPage = ({ treatmentKey }: CityTreatmentExpandedPageProps) => {
   const { stateSlug, citySlug } = useParams<{ stateSlug: string; citySlug: string }>();
   const config = CITY_TREATMENT_CONFIGS.find((c) => c.slug === treatmentKey);
-  const stateData = statesData.find((s) => s.slug === stateSlug);
-  const cityData = stateData?.cities.find((c) => c.slug === citySlug);
+  const resolved = resolveCity(stateSlug, citySlug);
+  const stateData = resolved?.state;
+  const cityData = resolved?.city;
 
   if (!config || !stateData || !cityData) {
     return <Navigate to="/treatment-types" replace />;
