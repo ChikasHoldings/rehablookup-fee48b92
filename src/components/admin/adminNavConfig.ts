@@ -186,7 +186,12 @@ const advisorNav: NavSection[] = [
       { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements", countKey: "placements" },
       { to: "/admin/inbox", icon: Inbox, label: "Messages", permission: "placements" },
       { to: "/admin/provider-directory", icon: Building2, label: "Provider Directory", permission: "placements" },
-      { to: "/admin/placement-revenue", icon: CreditCard, label: "Earnings", permission: "placements" },
+      // /admin/placement-revenue was retired with the paid international
+      // placement product (2026-05-20); the route now Navigates to
+      // /admin so an "Earnings" entry here would just lead to a
+      // confusing redirect. Aggregate revenue + commission stats now
+      // live on /admin/analytics.
+      { to: "/admin/analytics", icon: CreditCard, label: "Analytics", permission: "placements" },
     ],
   },
   {
