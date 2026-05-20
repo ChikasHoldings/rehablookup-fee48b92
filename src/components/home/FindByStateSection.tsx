@@ -48,9 +48,18 @@ export function FindByStateSection() {
   const { data: facilities = [] } = useStaticFacilities();
 
   // Live per-state counts from the CDN-cached snapshot.
-  // TODO: replace with a dedicated edge function
-  // (`select state, count(*) from facilities where status='approved' group by state`)
-  // when traffic justifies it.
+  //
+  // Note (2026-05-20 audit, deferred): a dedicated edge function with
+  // `SELECT state, COUNT(*) FROM facilities WHERE status='approved' GROUP BY state`
+  // would avoid client-side iteration of the full snapshot. We're
+  // skipping it because (a) `useStaticFacilities` already loads on
+  // every homepage paint for the Map + Featured strip, so the
+  // marginal cost of the for-loop is negligible, and (b) introducing
+  // a separate HTTP round-trip + cache layer + cron-warming for what
+  // amounts to a < 1ms calculation would be net-negative until the
+  // snapshot grows large enough to dominate the first-paint budget.
+  // Revisit if the snapshot exceeds ~500 KB gzipped or first-paint
+  // exceeds the 1s LCP budget.
   const countByState = useMemo(() => {
     const counts = new Map<string, number>();
     for (const f of facilities) {

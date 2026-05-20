@@ -7,11 +7,16 @@
  * src/pages/ForProviders.tsx is the broader marketing source — when
  * marketing updates copy or pricing there, mirror it here.
  *
- * TODO: replace the static priceMonthly with a live Stripe lookup
- * (small edge fn that reads STRIPE_PRO_PRICE_ID + Stripe.prices.retrieve)
- * so price changes propagate without a deploy. Not blocking for the
- * Step 4 wizard PR — the spec accepts hardcoded defaults when no
- * live source is available, as long as they're flagged like this.
+ * Note (2026-05-20 audit, deferred): a live Stripe lookup (small edge
+ * fn calling `Stripe.prices.retrieve(STRIPE_PRO_PRICE_ID)`) would
+ * propagate price changes without a deploy. We're skipping it because
+ * (a) price changes for Pro are rare events that always require
+ * coordinated copy updates in ForProviders.tsx + marketing emails
+ * anyway, (b) the lookup-key resolution at create-checkout-session
+ * runtime is the authoritative price for actual Checkout — the
+ * `priceMonthly` here is purely UI copy that gets cross-checked
+ * against Stripe at purchase time. Revisit if Pro pricing changes
+ * become frequent enough to make the deploy-cycle overhead matter.
  */
 
 export interface Plan {
