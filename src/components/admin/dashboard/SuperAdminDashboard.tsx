@@ -13,6 +13,8 @@ import {
   QuickActionsCard,
   TopCitiesCard,
   RecentLeadsCard,
+  CriticalAlertsBanner,
+  AddonAdoptionCard,
 } from "@/components/admin/dashboard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -293,6 +295,13 @@ export function SuperAdminDashboard() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Priority admin-notification alerts — crisis intakes, no-match
+          concierge cases, retired-product webhooks, Free-tier notify
+          failures. Renders only when there are unread alerts to show. */}
+      <AdminWidgetBoundary name="Critical Alerts">
+        <CriticalAlertsBanner />
+      </AdminWidgetBoundary>
+
       {/* Critical Escalation Alert */}
       {criticalEscalations && criticalEscalations.criticalCount > 0 && (
         <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4">
@@ -424,13 +433,15 @@ export function SuperAdminDashboard() {
         </AdminWidgetBoundary>
       </div>
 
-      {/* Subscription & Credit Widgets */}
+      {/* Subscription activity + add-on adoption (Pro / Featured / Concierge).
+          Replaces the retired credit-monitor slot from the legacy unlock model. */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
         <AdminWidgetBoundary name="Subscriptions">
           <SubscriptionActivityWidget />
         </AdminWidgetBoundary>
-        {/* Credit monitor widget retired — pay-per-lead-unlock credits model
-            removed in monetization rebuild. */}
+        <AdminWidgetBoundary name="Addon Adoption">
+          <AddonAdoptionCard />
+        </AdminWidgetBoundary>
       </div>
     </div>
   );
