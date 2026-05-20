@@ -12,6 +12,97 @@ const logStep = (step: string, details?: unknown) => {
 };
 
 /**
+ * Verify the Resend webhook signature using the svix scheme.
+ *
+ * Resend signs every webhook delivery using svix. The signature is:
+ *   svix-signature: v1,<base64(HMAC-SHA256(secret, `${svix-id}.${svix-timestamp}.${body}`))>
+ *
+ * Multiple v1, signatures can appear (during secret rotation) — accept
+ * if ANY one matches. svix-timestamp is also validated to be within a
+ * 5-minute tolerance window to prevent replay attacks.
+ *
+ * RESEND_WEBHOOK_SECRET must be set in Supabase project secrets as
+ * `whsec_<base64>` (the format Resend gives in the dashboard). The
+ * function strips the `whsec_` prefix before HMAC.
+ *
+ * Returns { ok: true } on success or { ok: false, error: "..." }
+ * with a structured error code so callers can decide how to respond.
+ */
+async function verifySvixSignature(
+  body: string,
+  headers: Headers,
+  secret: string,
+): Promise<{ ok: true } | { ok: false, error: string }> {
+  const svixId = headers.get("svix-id");
+  const svixTimestamp = headers.get("svix-timestamp");
+  const svixSignature = headers.get("svix-signature");
+
+  if (!svixId || !svixTimestamp || !svixSignature) {
+    return { ok: false, error: "missing_svix_headers" };
+  }
+
+  // Replay protection — reject signatures older than 5 minutes.
+  const tsSec = parseInt(svixTimestamp, 10);
+  if (!Number.isFinite(tsSec)) {
+    return { ok: false, error: "invalid_svix_timestamp" };
+  }
+  const nowSec = Math.floor(Date.now() / 1000);
+  const driftSec = Math.abs(nowSec - tsSec);
+  if (driftSec > 5 * 60) {
+    return { ok: false, error: "svix_timestamp_out_of_window" };
+  }
+
+  // Strip the whsec_ prefix and base64-decode the secret.
+  const rawSecret = secret.startsWith("whsec_") ? secret.slice(6) : secret;
+  let keyBytes: Uint8Array;
+  try {
+    keyBytes = Uint8Array.from(atob(rawSecret), (c) => c.charCodeAt(0));
+  } catch {
+    return { ok: false, error: "invalid_secret_format" };
+  }
+
+  // HMAC-SHA256 the signed payload.
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyBytes,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signedPayload = `${svixId}.${svixTimestamp}.${body}`;
+  const sigBuffer = await crypto.subtle.sign(
+    "HMAC",
+    cryptoKey,
+    new TextEncoder().encode(signedPayload),
+  );
+  const expected = btoa(String.fromCharCode(...new Uint8Array(sigBuffer)));
+
+  // svix-signature can be multiple space-delimited `v1,<sig>` entries
+  // (e.g. during secret rotation). Accept if ANY match.
+  const provided = svixSignature
+    .split(" ")
+    .map((s) => s.trim())
+    .filter((s) => s.startsWith("v1,"))
+    .map((s) => s.slice(3));
+
+  if (provided.length === 0) {
+    return { ok: false, error: "no_v1_signature" };
+  }
+
+  // Constant-time comparison.
+  for (const candidate of provided) {
+    if (candidate.length === expected.length) {
+      let diff = 0;
+      for (let i = 0; i < candidate.length; i++) {
+        diff |= candidate.charCodeAt(i) ^ expected.charCodeAt(i);
+      }
+      if (diff === 0) return { ok: true };
+    }
+  }
+  return { ok: false, error: "signature_mismatch" };
+}
+
+/**
  * Normalise a Resend webhook event name to the short form we store
  * in `email_tracking_events.event_type`.
  *
@@ -76,7 +167,47 @@ Deno.serve(async (req) => {
   try {
     logStep("Webhook received");
 
-    const payload = await req.json();
+    // Signature verification — Resend signs every delivery via svix.
+    // Without this check, any unauthenticated caller could POST forged
+    // bounce/complaint/unsubscribe events and force-suppress arbitrary
+    // recipient addresses, denial-of-email-service-ing legitimate
+    // platform mail. RESEND_WEBHOOK_SECRET is configured in Supabase
+    // project secrets and matches the value Resend shows in its
+    // webhook settings.
+    //
+    // We read the body as text BEFORE parsing JSON because the
+    // signature is computed over the raw bytes — JSON.parse +
+    // JSON.stringify would change whitespace and break verification.
+    const rawBody = await req.text();
+
+    const webhookSecret = Deno.env.get("RESEND_WEBHOOK_SECRET");
+    if (!webhookSecret) {
+      logStep("ERROR — RESEND_WEBHOOK_SECRET not configured; refusing to accept webhook");
+      return new Response(
+        JSON.stringify({ error: "webhook_misconfigured" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const sigCheck = await verifySvixSignature(rawBody, req.headers, webhookSecret);
+    if (!sigCheck.ok) {
+      logStep("Rejected — invalid svix signature", { error: sigCheck.error });
+      return new Response(
+        JSON.stringify({ error: "invalid_signature", code: sigCheck.error }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    let payload: { type?: string; data?: { email_id?: string; to?: string[]; email?: string } };
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      logStep("Rejected — malformed JSON");
+      return new Response(
+        JSON.stringify({ error: "invalid_json" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const rawEventType: string = payload.type || "";
     const emailId: string | undefined = payload.data?.email_id;
     const recipientEmail: string =
