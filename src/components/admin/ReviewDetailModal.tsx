@@ -98,19 +98,23 @@ export function ReviewDetailModal({ review, open, onOpenChange, onRefresh }: Rev
     const sanitizedNotes = adminNotes.replace(/<[^>]*>/g, "").replace(/javascript:/gi, "").trim().slice(0, 2000);
     const newStatus = action === "approve" ? "approved" : "rejected";
 
+    // Stamp reviewed_by so the bulk path's audit and this single-row
+    // path produce identical fields.
+    const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase
       .from("facility_reviews")
       .update({
         status: newStatus,
         admin_notes: sanitizedNotes || null,
         reviewed_at: new Date().toISOString(),
+        reviewed_by: user?.id ?? null,
       })
       .eq("id", review.id);
 
     setProcessing(false);
 
     if (error) {
-      toast.error(`Failed to ${action} review`);
+      toast.error(`Failed to ${action} review: ${error.message}`);
       return;
     }
 
@@ -126,7 +130,29 @@ export function ReviewDetailModal({ review, open, onOpenChange, onRefresh }: Rev
       },
     });
 
-    toast.success(`Review ${action}d`);
+    // Fire the seeker notification email to match the page-level
+    // handler. Failure is soft — moderation is already persisted.
+    try {
+      const { data, error: notifyErr } = await supabase.functions.invoke("send-review-notification", {
+        body: {
+          type: action === "approve" ? "review_approved" : "review_rejected",
+          reviewId: review.id,
+          facilityId: review.facility_id,
+          seekerId: review.user_id,
+          ...(action === "reject" ? { rejectionReason: sanitizedNotes } : {}),
+        },
+      });
+      if (notifyErr || data?.error) {
+        const msg = (notifyErr as Error | null)?.message || data?.error || "Unknown error";
+        toast.warning(`Review ${action}d, but seeker email failed: ${msg}`);
+      } else {
+        toast.success(`Review ${action}d`);
+      }
+    } catch (notifyErr) {
+      const msg = notifyErr instanceof Error ? notifyErr.message : "Unknown error";
+      toast.warning(`Review ${action}d, but seeker email failed: ${msg}`);
+    }
+
     queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
     onRefresh();
     onOpenChange(false);
@@ -134,12 +160,25 @@ export function ReviewDetailModal({ review, open, onOpenChange, onRefresh }: Rev
 
   const handleDelete = async () => {
     setProcessing(true);
+    // Cascade dispute rows first — FK constraint blocks the review
+    // delete otherwise. Matches the page-level confirmDelete handler.
+    const { error: disputeErr } = await supabase
+      .from("review_disputes")
+      .delete()
+      .eq("review_id", review.id);
+    if (disputeErr) {
+      setProcessing(false);
+      setDeleteConfirm(false);
+      toast.error(`Failed to clean up disputes: ${disputeErr.message}`);
+      return;
+    }
+
     const { error } = await supabase.from("facility_reviews").delete().eq("id", review.id);
     setProcessing(false);
     setDeleteConfirm(false);
 
     if (error) {
-      toast.error("Failed to delete review");
+      toast.error(`Failed to delete review: ${error.message}`);
       return;
     }
 
