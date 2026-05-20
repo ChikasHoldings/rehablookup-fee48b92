@@ -1,73 +1,63 @@
-# Welcome to your Lovable project
+# RehabLookup
 
-## Project info
+A directory and intake platform that helps individuals and families find
+verified drug and alcohol treatment centers across the United States.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**Production:** https://rehablookup.com
 
-## How can I edit this code?
+## Tech stack
 
-There are several ways of editing your application.
+- **Frontend:** Vite + React + TypeScript + Tailwind CSS + shadcn-ui
+- **Backend:** Supabase (Postgres, Auth, Storage, Edge Functions, Realtime)
+- **Hosting:** Vercel (static frontend + edge rewrites)
+- **Payments:** Stripe
+- **Email:** Resend
 
-**Use Lovable**
+## Local development
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+The only requirements are Node.js & npm
+([install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone <repo url>
+cd rehablookup-fee48b92
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+# Install dependencies
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the dev server (auto-reload + preview at http://localhost:8080)
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Useful scripts
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+npm run dev           # Vite dev server
+npm run build         # Production build
+npm run preview       # Serve the production build locally
+npx tsc --noEmit      # Typecheck without emitting
+npx vitest run        # Run the test suite once
+npx vitest            # Watch mode
+```
 
-**Use GitHub Codespaces**
+## Deployment
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+The app is deployed via Vercel. The `vercel.json` at the repo root pins
+the build command, redirects (legacy slug → canonical), rewrites
+(SPA fallback `/(.*) → /index.html`), and HTTP headers (CSP, HSTS,
+Content-Type rules for `apple-app-site-association`, etc.).
 
-## What technologies are used for this project?
+Edge functions live under `supabase/functions/` and are deployed via
+`supabase functions deploy <name>` (CI runs this on push to the
+deployment branch).
 
-This project is built with:
+Database migrations live under `supabase/migrations/` with timestamped
+file names. They apply through `supabase db push` or via the
+`apply_migration` MCP tool used during admin workflows.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Custom domains
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+The production domain (`rehablookup.com`) is configured in Vercel. To
+add additional domains, use the Vercel dashboard → Project Settings →
+Domains.

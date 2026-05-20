@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, forwardRef, useMemo } from "react";
+import { useState, useEffect, useCallback, forwardRef, useMemo, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -30,6 +31,7 @@ import {
   Download,
   Loader2,
   Ban,
+  AlertCircle,
 } from "lucide-react";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,6 +96,25 @@ interface PlatformSetting {
   updated_by: string | null;
 }
 
+const VALID_TABS = new Set<SettingsTab>(["general", "security", "notifications", "data"]);
+
+// CSV cell escape with formula-injection guard. Cells starting with
+// =/+/-/@/\t/\r get a leading single-quote so Excel / Sheets treat the
+// value as text rather than executing it. Used by every export path.
+function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const raw = String(value);
+  const needsQuote =
+    /^[=+\-@\t\r]/.test(raw) ||
+    raw.includes(",") ||
+    raw.includes('"') ||
+    raw.includes("\n") ||
+    raw.includes("\r");
+  const prefixed = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+  if (!needsQuote) return prefixed;
+  return `"${prefixed.replace(/"/g, '""')}"`;
+}
+
 const SettingRow = forwardRef<HTMLDivElement, SettingRowProps>(
   ({ icon, title, description, children }, ref) => (
     <div 
@@ -139,14 +160,41 @@ const StatusBadge = ({ status, label }: { status: "active" | "inactive" | "warni
 export default function AdminSettings() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminSettings");
-  const { adminRole, isSuperAdmin } = useAdminAuth();
-  const [activeTab, setActiveTab] = useState("general");
+  const { adminRole, isSuperAdmin, user: currentUser } = useAdminAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hydratedRef = useRef(false);
+
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
   const { theme, setTheme } = useTheme();
 
   // Get allowed tabs for current role
   const allowedTabs = useMemo(() => {
     return ROLE_TAB_ACCESS[adminRole] || ROLE_TAB_ACCESS.customer_rep;
   }, [adminRole]);
+
+  // URL state hydration (once) — restores the active tab if the URL
+  // carries ?tab=... AND the role can access that tab; otherwise stays
+  // on "general".
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    const t = searchParams.get("tab");
+    if (t && VALID_TABS.has(t as SettingsTab) && allowedTabs.includes(t as SettingsTab)) {
+      setActiveTab(t as SettingsTab);
+    }
+  }, [searchParams, allowedTabs]);
+
+  // Loop-guarded URL sync. Default ("general") is not written so the
+  // bare /admin/settings URL stays clean.
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const next = new URLSearchParams(searchParams);
+    if (activeTab !== "general") next.set("tab", activeTab);
+    else next.delete("tab");
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [activeTab, searchParams, setSearchParams]);
 
   // Invalidate settings queries helper
   const invalidateSettingsQueries = useCallback(() => {
@@ -184,7 +232,11 @@ export default function AdminSettings() {
       )
       .subscribe();
 
-    // Real-time for platform settings changes
+    // Real-time for platform settings changes. Only toast when another
+    // admin made the change — otherwise the same admin gets a duplicate
+    // toast on top of the "Setting updated" success from updateSetting.
+    // platform_settings was added to supabase_realtime in migration
+    // 20260629000000.
     const settingsChannel = supabase
       .channel("admin-platform-settings")
       .on(
@@ -192,9 +244,12 @@ export default function AdminSettings() {
         { event: "*", schema: "public", table: "platform_settings" },
         (payload) => {
           invalidateSettingsQueries();
-          toast.info("Settings updated", {
-            description: "Platform settings have been changed",
-          });
+          const updatedBy = (payload?.new as { updated_by?: string } | undefined)?.updated_by;
+          if (updatedBy && currentUser && updatedBy !== currentUser.id) {
+            toast.info("Settings updated by another admin", {
+              description: "Platform settings have been changed",
+            });
+          }
         }
       )
       .subscribe();
@@ -205,7 +260,7 @@ export default function AdminSettings() {
       supabase.removeChannel(settingsChannel);
       clearInterval(leadsInterval);
     };
-  }, [invalidateSettingsQueries]);
+  }, [invalidateSettingsQueries, currentUser]);
 
   // Fetch platform settings
   const { data: platformSettings, isLoading: loadingSettings, error: settingsError } = useQuery({
@@ -290,26 +345,43 @@ export default function AdminSettings() {
     },
   });
 
-  // Fetch platform stats
-  const { data: stats, isLoading: loadingStats, refetch: refetchStats, error: statsError } = useQuery({
+  // Fetch platform stats. Every count is .error-guarded — a permission /
+  // outage failure on any single count surfaces as the query error so
+  // the UI can render a banner instead of silently showing zeros.
+  const { data: stats, isLoading: loadingStats, isFetching: fetchingStats, refetch: refetchStats, error: statsError } = useQuery({
     queryKey: ["admin-settings-stats"],
     queryFn: async () => {
-      const [facilitiesResult, leadsResult, adminUsersResult, flaggedResult, auditLogsResult] = await Promise.all([
+      const [facilitiesResult, leadsResult, adminProfilesResult, flaggedResult, auditLogsResult] = await Promise.all([
         supabase.from("facilities").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }),
-        supabase.from("user_roles").select("id", { count: "exact", head: true }),
+        // Use admin_user_profiles (one row per admin staff) instead of
+        // user_roles which can have multiple rows per user (admin +
+        // provider/seeker). Previous code over-counted.
+        supabase.from("admin_user_profiles").select("id", { count: "exact", head: true }),
         supabase.from("flagged_images").select("id", { count: "exact", head: true }).eq("resolved", false),
         supabase.from("admin_audit_log").select("id", { count: "exact", head: true }),
       ]);
 
+      const errors = [
+        facilitiesResult.error,
+        leadsResult.error,
+        adminProfilesResult.error,
+        flaggedResult.error,
+        auditLogsResult.error,
+      ].filter(Boolean);
+      if (errors.length > 0) {
+        throw new Error(`Platform stats partial failure: ${errors[0]!.message}`);
+      }
+
       return {
-        totalFacilities: facilitiesResult.count || 0,
-        totalLeads: leadsResult.count || 0,
-        totalAdminUsers: adminUsersResult.count || 0,
-        pendingFlags: flaggedResult.count || 0,
-        totalAuditLogs: auditLogsResult.count || 0,
+        totalFacilities: facilitiesResult.count ?? 0,
+        totalLeads: leadsResult.count ?? 0,
+        totalAdminUsers: adminProfilesResult.count ?? 0,
+        pendingFlags: flaggedResult.count ?? 0,
+        totalAuditLogs: auditLogsResult.count ?? 0,
       };
     },
+    staleTime: 15_000,
   });
 
   // Log stats query errors
@@ -392,32 +464,25 @@ export default function AdminSettings() {
     },
   });
 
-  // Fetch last backup info
+  // Last platform activity time. The page no longer fabricates a
+  // backup time — Supabase manages PITR / daily backups outside our
+  // app and the previous "3 AM today" was a hard-coded simulation.
+  // Real backup status is surfaced via a link to the Supabase dashboard.
   const { data: backupInfo } = useQuery({
     queryKey: ["admin-backup-info"],
     queryFn: async () => {
-      // Get the most recent audit log entry as a proxy for activity/backup time
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("admin_audit_log")
         .select("created_at")
         .order("created_at", { ascending: false })
         .limit(1);
-
-      const lastActivity = data?.[0]?.created_at;
-      
-      // Calculate a simulated last backup time (3 AM of current day)
-      const now = new Date();
-      const lastBackup = new Date(now);
-      lastBackup.setHours(3, 0, 0, 0);
-      if (lastBackup > now) {
-        lastBackup.setDate(lastBackup.getDate() - 1);
-      }
+      if (error) throw new Error(`Last-activity fetch failed: ${error.message}`);
 
       return {
-        lastBackupTime: lastBackup.toISOString(),
-        lastActivityTime: lastActivity,
+        lastActivityTime: data?.[0]?.created_at ?? null,
       };
     },
+    staleTime: 60_000,
   });
 
   // Export data mutation
@@ -447,13 +512,22 @@ export default function AdminSettings() {
           break;
         }
         case "analytics": {
+          // Both views and interactions are exported. CSV format
+          // combines them into one table with an extra `category` column
+          // so the interactions data is no longer silently dropped.
           const [viewsResult, interactionsResult] = await Promise.all([
             supabase.from("provider_events").select("facility_id, event_type, created_at").in("event_type", ["profile_view", "listing_impression"]).order("created_at", { ascending: false }).limit(1000),
-            supabase.from("provider_events").select("id, facility_id, event_type, created_at").in("event_type", ["click_to_call", "website_click"]).order("created_at", { ascending: false }).limit(1000),
+            supabase.from("provider_events").select("facility_id, event_type, created_at").in("event_type", ["click_to_call", "website_click"]).order("created_at", { ascending: false }).limit(1000),
           ]);
+          if (viewsResult.error) throw new Error(`Analytics views fetch failed: ${viewsResult.error.message}`);
+          if (interactionsResult.error) throw new Error(`Analytics interactions fetch failed: ${interactionsResult.error.message}`);
           if (format === "csv") {
-            data = viewsResult.data || [];
-            csvHeaders = ["facility_id", "event_type", "created_at"];
+            const combined = [
+              ...(viewsResult.data || []).map((r) => ({ ...r, category: "view" })),
+              ...(interactionsResult.data || []).map((r) => ({ ...r, category: "interaction" })),
+            ];
+            data = combined;
+            csvHeaders = ["facility_id", "event_type", "category", "created_at"];
           } else {
             data = {
               views: viewsResult.data || [],
@@ -465,34 +539,45 @@ export default function AdminSettings() {
           break;
         }
         case "audit": {
-          const { data: auditLogs } = await supabase
+          const { data: auditLogs, error } = await supabase
             .from("admin_audit_log")
             .select("id, admin_user_id, action_type, target_type, target_id, details, created_at")
             .order("created_at", { ascending: false })
             .limit(1000);
+          if (error) throw new Error(`Audit log fetch failed: ${error.message}`);
           data = auditLogs || [];
           filename = `audit-log-export-${new Date().toISOString().split('T')[0]}`;
-          csvHeaders = ["id", "admin_user_id", "action_type", "target_type", "target_id", "created_at"];
+          csvHeaders = ["id", "admin_user_id", "action_type", "target_type", "target_id", "details", "created_at"];
           break;
         }
         case "subscriptions": {
-          const { data: profiles } = await supabase
-            .from("profiles")
-            .select("first_name, last_name, email, created_at");
-          data = profiles || [];
+          // Bug fix: previously this exported `profiles` (user profiles
+          // table) which is unrelated to subscriptions. Now exports the
+          // real facility_subscriptions table.
+          const { data: subs, error } = await supabase
+            .from("facility_subscriptions")
+            .select("id, facility_id, stripe_subscription_id, tier, status, current_period_start, current_period_end, has_featured, has_concierge_partner, created_at, updated_at")
+            .order("created_at", { ascending: false })
+            .limit(2000);
+          if (error) throw new Error(`Subscriptions fetch failed: ${error.message}`);
+          data = subs || [];
           filename = `subscriptions-export-${new Date().toISOString().split('T')[0]}`;
-          csvHeaders = ["first_name", "last_name", "email", "created_at"];
+          csvHeaders = ["id", "facility_id", "stripe_subscription_id", "tier", "status", "current_period_start", "current_period_end", "has_featured", "has_concierge_partner", "created_at", "updated_at"];
           break;
         }
         case "notifications": {
-          const { data: notifications } = await supabase
-            .from("admin_notifications")
-            .select("id, type, title, message, read, created_at")
+          // Per-recipient admin notifications. admin_notifications is
+          // the broadcast table (deprecated for personal-routing); the
+          // current per-user table is admin_user_notifications.
+          const { data: notifications, error } = await supabase
+            .from("admin_user_notifications")
+            .select("id, user_id, type, title, message, read, link, metadata, created_at")
             .order("created_at", { ascending: false })
-            .limit(1000);
+            .limit(2000);
+          if (error) throw new Error(`Notifications fetch failed: ${error.message}`);
           data = notifications || [];
           filename = `notifications-export-${new Date().toISOString().split('T')[0]}`;
-          csvHeaders = ["id", "type", "title", "message", "read", "created_at"];
+          csvHeaders = ["id", "user_id", "type", "title", "message", "read", "link", "created_at"];
           break;
         }
         default:
@@ -503,16 +588,16 @@ export default function AdminSettings() {
       let finalFilename: string;
 
       if (format === "csv" && Array.isArray(data)) {
-        // Convert to CSV
-        const csvRows = [csvHeaders.join(",")];
+        // CSV with formula-injection safe escape on every cell.
+        const csvRows = [csvHeaders.map(csvCell).join(",")];
         data.forEach((row: any) => {
-          const values = csvHeaders.map(header => {
+          const values = csvHeaders.map((header) => {
             const val = row[header];
-            if (val === null || val === undefined) return "";
-            if (typeof val === "string" && (val.includes(",") || val.includes('"') || val.includes("\n"))) {
-              return `"${val.replace(/"/g, '""')}"`;
+            // Stringify nested objects (e.g. audit.details, notification.metadata)
+            if (val !== null && val !== undefined && typeof val === "object") {
+              return csvCell(JSON.stringify(val));
             }
-            return String(val);
+            return csvCell(val);
           });
           csvRows.push(values.join(","));
         });
@@ -670,27 +755,74 @@ export default function AdminSettings() {
   const storageTotal = storageData?.totalLimit ?? 10;
   const storagePercent = storageTotal > 0 ? (storageUsed / storageTotal) * 100 : 0;
 
-  // Format backup time
-  const formatBackupTime = (isoString?: string) => {
+  // Format the last platform-activity timestamp (used in the backup card
+  // as a "platform alive" proxy — Supabase backup status itself lives in
+  // the Supabase dashboard).
+  const formatActivityTime = (isoString?: string | null) => {
     if (!isoString) return "Never";
     const date = new Date(isoString);
     const today = new Date();
     const isToday = date.toDateString() === today.toDateString();
     const time = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
-    return isToday ? `Today at ${time}` : date.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + ` at ${time}`;
+    return isToday
+      ? `Today at ${time}`
+      : date.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + ` at ${time}`;
   };
+
+  const anyError = settingsError || statsError;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-        <p className="text-muted-foreground">
-          {isSuperAdmin 
-            ? "Manage platform configuration and preferences" 
-            : "Manage your personal preferences"}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+          <p className="text-muted-foreground">
+            {isSuperAdmin
+              ? "Manage platform configuration and preferences"
+              : "Manage your personal preferences"}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            invalidateSettingsQueries();
+            toast.success("Settings refreshing");
+          }}
+          aria-label="Refresh settings data"
+          disabled={fetchingStats || loadingSettings}
+          className="gap-2"
+        >
+          <RefreshCw className={cn("h-4 w-4", (fetchingStats || loadingSettings) && "animate-spin")} />
+          Refresh
+        </Button>
       </div>
+
+      {/* Error banner */}
+      {anyError && (
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-destructive/5 p-3 flex items-start gap-3"
+        >
+          <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-destructive">
+              Failed to load settings data
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5 break-words">
+              {(anyError instanceof Error ? anyError.message : String(anyError)) || "Unknown error"}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => invalidateSettingsQueries()}
+          >
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+          </Button>
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -2330,16 +2462,19 @@ export default function AdminSettings() {
                       });
                     }
                   } catch (error) {
-                    toast.error("Integrity check failed");
+                    toast.error("Integrity check failed", {
+                      description: error instanceof Error ? error.message : String(error),
+                    });
                   }
                 }}
+                aria-label="Run data integrity check"
               >
                 <Shield className="h-4 w-4" />
                 Run Integrity Check
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="gap-2"
                 onClick={() => {
                   refetchStats();
@@ -2347,6 +2482,7 @@ export default function AdminSettings() {
                   toast.success("Data refreshed");
                 }}
                 disabled={loadingStats || loadingStorage}
+                aria-label="Refresh data tab"
               >
                 <RefreshCw className={cn("h-4 w-4", (loadingStats || loadingStorage) && "animate-spin")} />
                 Refresh All
@@ -2533,18 +2669,29 @@ export default function AdminSettings() {
                 <SettingRow
                   icon={<Server className="h-4 w-4 text-muted-foreground" />}
                   title="Backup Location"
-                  description="Where backups are stored"
+                  description="Managed snapshots via Supabase Pro"
                 >
-                  <Badge variant="secondary">Lovable Cloud</Badge>
+                  <Badge variant="secondary">Supabase</Badge>
                 </SettingRow>
                 <Separator />
-                <div className="pt-4">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/20">
+                <div className="pt-4 space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
                     <div>
-                      <p className="text-sm font-medium text-success">Last backup</p>
-                      <p className="text-xs text-success/80">{formatBackupTime(backupInfo?.lastBackupTime)}</p>
+                      <p className="text-sm font-medium">Last platform activity</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatActivityTime(backupInfo?.lastActivityTime)}
+                      </p>
                     </div>
-                    <StatusBadge status="active" label="Healthy" />
+                    <StatusBadge status="active" label="Live" />
+                  </div>
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/40 border text-xs text-muted-foreground">
+                    <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    <p>
+                      Database backups are managed by Supabase Pro (daily
+                      automated + PITR). Visit the Supabase dashboard for
+                      backup history, downloads, and point-in-time
+                      restores.
+                    </p>
                   </div>
                 </div>
               </CardContent>
