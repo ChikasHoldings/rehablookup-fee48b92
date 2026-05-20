@@ -34,14 +34,32 @@
 import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { gtagSnippet } from "./_ga.mjs";
+import { gtagSnippet, gtagSnippetForSpaShell } from "./_ga.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const PUBLIC_DIR = join(ROOT, "public");
 
-const SNIPPET = gtagSnippet();
-const SNIPPET_BLOCK = `  <!-- Google Analytics 4 — backfilled by scripts/backfill-ga-snippet.mjs -->\n${SNIPPET}\n`;
+// Two snippet variants. `STATIC_SNIPPET` keeps gtag's default
+// send_page_view:true — correct for pure-static HTML files where no JS
+// fires after load. `SPA_SHELL_SNIPPET` sets send_page_view:false —
+// required for HTML files that bootstrap React via `<script src="/src/
+// main.tsx">` so the SPA's RouteChangeTracker is the single source of
+// page_view events (avoids the double-count where the static gtag auto-
+// fires AND RouteChangeTracker fires again post-hydration).
+const STATIC_SNIPPET = `  <!-- Google Analytics 4 — backfilled by scripts/backfill-ga-snippet.mjs -->\n${gtagSnippet()}\n`;
+const SPA_SHELL_SNIPPET = `  <!-- Google Analytics 4 — backfilled (SPA shell variant; send_page_view:false to avoid double-count with RouteChangeTracker) -->\n${gtagSnippetForSpaShell()}\n`;
+
+function pickSnippet(html) {
+  // Detect the SPA bootstrap script. The matcher covers both the dev
+  // path (/src/main.tsx) and any future hashed-bundle equivalent that
+  // ships under /assets/. Either is sufficient evidence that React is
+  // about to mount.
+  if (/<script[^>]*\bsrc=["'](?:\/src\/main\.tsx|\/assets\/index-[A-Za-z0-9_-]+\.js)["']/.test(html)) {
+    return SPA_SHELL_SNIPPET;
+  }
+  return STATIC_SNIPPET;
+}
 
 function listHtml(dir) {
   const out = [];
@@ -61,26 +79,53 @@ let alreadyOk = 0;
 let skipped = 0;
 const skippedFiles = [];
 
+let fixedSpaDoubleFire = 0;
 for (const file of files) {
   const html = readFileSync(file, "utf8");
-  // Already has gtag? Skip — generators emit it for newly built files.
+  const bootstrapsSpa = /<script[^>]*\bsrc=["'](?:\/src\/main\.tsx|\/assets\/index-[A-Za-z0-9_-]+\.js)["']/.test(html);
+
+  // Path 1: File already has gtag.
   if (html.includes("googletagmanager.com/gtag/js")) {
+    // If the page bootstraps the SPA but its gtag config is missing
+    // send_page_view:false, RouteChangeTracker will fire a second
+    // page_view post-hydration → double-count. Patch the config in
+    // place. We only rewrite the EXACT default config form so we don't
+    // accidentally clobber a hand-customized one.
+    if (bootstrapsSpa) {
+      // Already has send_page_view:false — nothing to do.
+      if (/send_page_view\s*:\s*false/.test(html)) {
+        alreadyOk++;
+        continue;
+      }
+      const patched = html.replace(
+        /(gtag\('config',\s*'[^']+'\s*)\)/,
+        "$1,{send_page_view:false})",
+      );
+      if (patched !== html) {
+        writeFileSync(file, patched);
+        fixedSpaDoubleFire++;
+        continue;
+      }
+    }
     alreadyOk++;
     continue;
   }
-  // No closing </head>? Malformed file — skip and report.
+
+  // Path 2: File has no gtag — insert the correct variant.
   if (!html.includes("</head>")) {
     skipped++;
     skippedFiles.push(file);
     continue;
   }
-  const patchedHtml = html.replace("</head>", `${SNIPPET_BLOCK}</head>`);
+  const snippetBlock = pickSnippet(html);
+  const patchedHtml = html.replace("</head>", `${snippetBlock}</head>`);
   writeFileSync(file, patchedHtml);
   patched++;
 }
 
-console.log(`✅ Patched:        ${patched}`);
-console.log(`⏭  Already had GA: ${alreadyOk}`);
+console.log(`✅ Patched (added):     ${patched}`);
+console.log(`✅ Fixed SPA double-fire: ${fixedSpaDoubleFire}`);
+console.log(`⏭  Already had GA:      ${alreadyOk}`);
 if (skipped > 0) {
   console.log(`⚠  Skipped (no </head>): ${skipped}`);
   for (const f of skippedFiles.slice(0, 5)) console.log(`     ${f}`);
