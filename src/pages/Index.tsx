@@ -4,9 +4,10 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Button } from "@/components/ui/button";
-import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
+// HomepageFeaturedSection retired 2026-05-20 — replaced by
+// HomepageGeoFeaturedRail (paid-only, geo-targeted, no organic backfill).
+import { HomepageGeoFeaturedRail } from "@/components/featured/HomepageGeoFeaturedRail";
 import { FindByStateSection } from "@/components/home/FindByStateSection";
-import { FeaturedRail } from "@/components/featured/FeaturedRail";
 import { TrustRibbon } from "@/components/conversion/TrustRibbon";
 import { useNewCtaSystem } from "@/hooks/useNewCtaSystem";
 // TrustStrip moved to /concierge
@@ -328,21 +329,23 @@ const Index = () => {
           before the directory content. */}
       {newCtaEnabled && <TrustRibbon />}
 
-      {/* Featured rail — bucket (homepage, 'national'). 6 slots. Silent
-          absence when no Featured subscribers nationwide. Distinct from
-          HomepageFeaturedSection (legacy editorial Featured strip). */}
-      <section className="pt-1 pb-10 md:pt-2 md:pb-12 bg-background">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <FeaturedRail
-            placement_type="homepage"
-            placement_value="national"
-          />
-        </div>
-      </section>
+      {/* Featured rail — geo-targeted to the visitor's state when known
+          (via useGeoLocation IP lookup, cached in sessionStorage). NY
+          visitors see NY-paid Featured only, CA visitors see CA, etc.
+          When the visitor's state has no paid Featured subscribers, OR
+          when geo-IP hasn't resolved, the rail falls back to the
+          homepage:national bucket. When THAT pool is also empty the
+          entire section silently hides — per the 2026-05-20 "no
+          backfill with non-Featured" policy. */}
+      <HomepageGeoFeaturedRail />
 
-      {/* Featured Centers — primary directory focal point (2-col desktop,
-          1-col mobile, 10–12 verified facilities, single CTA). */}
-      <HomepageFeaturedSection />
+      {/* HomepageFeaturedSection (legacy editorial Featured strip that
+          backfilled with non-Featured organic content) was removed
+          2026-05-20 — it violated the "Featured must always mean paid"
+          policy. Geo-filtered paid Featured rail above replaces it.
+          Top-rated organic content lives in the directory listing
+          components further down the page (TreatmentCategoriesSection
+          + NearestFacilitiesSection). */}
 
       {/* Browse by Category — directly under Featured per the directory
           re-focus. The taxonomy entry point lives here so the homepage

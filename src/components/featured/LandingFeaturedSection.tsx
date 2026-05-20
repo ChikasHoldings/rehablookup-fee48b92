@@ -68,18 +68,27 @@ export function LandingFeaturedSection({
     placement_value,
     slot_count: resolvedSlotCount,
     log_impressions: false,
-    // Always fall back to top-rated approved facilities when no paid
-    // Featured subscriber covers the bucket — keeps the section
-    // visible across the site instead of silent-absencing on 90%+
-    // of pages (current paid pool: 0).
-    fallback_to_top_rated: true,
+    // 2026-05-20 policy: NEVER backfill the Featured section with
+    // non-Featured organic facilities. The Featured rail is paid
+    // inventory; if no paying subscriber covers the visitor's bucket
+    // we hide the entire section rather than dilute the paid surface
+    // with organic content. This was previously `true` to keep the
+    // section visible while the paid pool grew; that behavior is
+    // explicitly retired per the EKRA-aligned monetization rebuild
+    // — "Featured" must always mean paid placement, never editorial.
+    fallback_to_top_rated: false,
   });
 
   const facilities = data?.facilities ?? [];
+  // `is_fallback` is now always false (fallback_to_top_rated disabled
+  // above) but we keep the destructure so future re-enablement
+  // doesn't silently regress the relabeling logic.
   const isFallback = data?.is_fallback ?? false;
 
   if (!placement_value) return null;
   if (isLoading) return <LandingFeaturedSkeleton title={title} className={className} />;
+  // Empty paid pool → auto-hide the entire section. No editorial
+  // backfill, no "Top-Rated" relabel, no skeleton placeholder.
   if (facilities.length === 0) return null;
 
   // When falling back to organic top-rated, relabel so we don't imply
