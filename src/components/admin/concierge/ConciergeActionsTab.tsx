@@ -155,17 +155,26 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         : `[Closed] ${closeReason}`,
     });
 
-    // Notify seeker that their case was closed by admin
+    // Notify seeker that their case was closed by admin. The close
+    // itself already succeeded — a notification failure is a soft
+    // warning, not a hard error, so the user keeps the closed state
+    // but sees that the seeker didn't get the email and may need a
+    // manual heads-up.
     try {
-      await supabase.functions.invoke("send-concierge-notifications", {
+      const { data, error } = await supabase.functions.invoke("send-concierge-notifications", {
         body: {
           type: "case_closed_by_admin",
           inquiryId: caseData.id,
           metadata: { reason: closeReason },
         },
       });
+      if (error || data?.error) {
+        const msg = (error as Error | null)?.message || data?.error || "Unknown error";
+        toast.warning(`Case closed, but seeker notification failed: ${msg}`);
+      }
     } catch (e) {
-      console.error("Close notification error:", e);
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      toast.warning(`Case closed, but seeker notification failed: ${msg}`);
     }
   };
 
@@ -194,16 +203,25 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         actor_type: "advisor",
       });
 
-      // Notify other admins/advisors
+      // Notify other admins/advisors. Claim itself succeeded — a
+      // notification failure is surfaced as a toast warning so the
+      // claiming advisor knows their teammates may not be aware yet.
       try {
-        await supabase.functions.invoke("send-concierge-notifications", {
+        const { data, error: notifyError } = await supabase.functions.invoke("send-concierge-notifications", {
           body: {
             type: "advisor_claimed",
             inquiryId: caseData.id,
             metadata: { advisor_id: user.id, advisor_name: user.email, self_assigned: true },
           },
         });
-      } catch (e) { console.error("Notification error:", e); }
+        if (notifyError || data?.error) {
+          const msg = (notifyError as Error | null)?.message || data?.error || "Unknown error";
+          toast.warning(`Case claimed, but team notification failed: ${msg}`);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        toast.warning(`Case claimed, but team notification failed: ${msg}`);
+      }
     },
     onSuccess: () => {
       toast.success("Case assigned to you — starting placement workflow");

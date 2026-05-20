@@ -173,12 +173,22 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
       .update({ introductions_sent_count: priorCount + sentCount })
       .eq("id", caseData.id);
 
+    // Send the "introductions sent" notification to the seeker. The
+    // intros themselves were already issued by the batch action +
+    // per-facility email send (above), so a failure here is a soft
+    // warning: the facilities were emailed, but the seeker didn't get
+    // their "we sent intros on your behalf" confirmation.
     try {
-      await supabase.functions.invoke("send-concierge-notifications", {
+      const { data: notifData, error: notifErr } = await supabase.functions.invoke("send-concierge-notifications", {
         body: { type: "introductions_sent", inquiryId: caseData.id },
       });
+      if (notifErr || notifData?.error) {
+        const msg = (notifErr as Error | null)?.message || notifData?.error || "Unknown error";
+        toast.warning(`Introductions sent, but seeker notification failed: ${msg}`);
+      }
     } catch (notifErr) {
-      console.error("Failed to send seeker notification:", notifErr);
+      const msg = notifErr instanceof Error ? notifErr.message : "Unknown error";
+      toast.warning(`Introductions sent, but seeker notification failed: ${msg}`);
     }
 
     setSelectedFacilityIds(new Set());
@@ -419,14 +429,16 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
                         <span className="text-sm text-muted-foreground">Provider Response:</span>
                         <Select
                           value={intro.provider_response || "pending"}
-                          onValueChange={(value) =>
+                          disabled={updateResponseMutation.isPending}
+                          onValueChange={(value) => {
+                            if (value === (intro.provider_response || "pending")) return;
                             updateResponseMutation.mutate({
                               introId: intro.id,
                               response: value,
-                            })
-                          }
+                            });
+                          }}
                         >
-                          <SelectTrigger className="w-32 h-8">
+                          <SelectTrigger className="w-32 h-8" aria-label="Provider response">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -436,6 +448,9 @@ export function ConciergeIntroductionsTab({ caseData, onRefresh }: ConciergeIntr
                             <SelectItem value="no_response">No Response</SelectItem>
                           </SelectContent>
                         </Select>
+                        {updateResponseMutation.isPending && (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-hidden />
+                        )}
                       </div>
 
                       {/* PII Disclosure Control - Only show when provider accepted */}

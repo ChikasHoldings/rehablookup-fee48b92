@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -75,16 +76,20 @@ function ratioTone(ratio: number | null): {
 export default function AdminConciergeMetrics() {
   const [windowDays, setWindowDays] = useState<number>(90);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["advisor-partner-distribution", windowDays],
-    queryFn: async (): Promise<DistributionResponse | null> => {
+    queryFn: async (): Promise<DistributionResponse> => {
       const { data, error } = await supabase.functions.invoke(
         "get-advisor-partner-distribution",
         { body: { window_days: windowDays } },
       );
-      if (error) {
-        console.error("[AdminConciergeMetrics] fetch failed", error);
-        return null;
+      // Throw so React Query surfaces the failure via isError —
+      // returning null on error previously short-circuited the error
+      // state and rendered "0 decisions" as if nothing existed.
+      if (error) throw error;
+      if (!data) throw new Error("Empty response from get-advisor-partner-distribution");
+      if ((data as { error?: string }).error) {
+        throw new Error((data as { error: string }).error);
       }
       return data as DistributionResponse;
     },
@@ -203,9 +208,12 @@ export default function AdminConciergeMetrics() {
               <Skeleton className="h-10 w-full" />
             </div>
           ) : isError ? (
-            <p className="text-sm text-red-700">
-              Failed to load advisor metrics. Try again, or check the edge function logs.
-            </p>
+            <div className="flex items-center justify-between gap-3 p-3 rounded-md border border-red-200 bg-red-50" role="alert">
+              <p className="text-sm text-red-700">
+                Failed to load advisor metrics. Retry, or check the edge function logs.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+            </div>
           ) : advisors.length === 0 ? (
             <p className="text-sm text-slate-500">
               No introduction decisions recorded in the selected window.

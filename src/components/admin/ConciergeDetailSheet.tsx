@@ -1,11 +1,13 @@
 import { forwardRef, useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCaseTransition } from "@/hooks/useCaseTransition";
+import { useQuery } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LayoutDashboard, User, Users, Send, UserCheck, CalendarCheck, Home, DollarSign, Clock, Settings } from "lucide-react";
+import {
+  LayoutDashboard, User, Users, Send, UserCheck, CalendarCheck, Home,
+  Clock, Settings, MessageSquare,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { getCaseEventActorType } from "@/lib/caseEventActor";
@@ -21,6 +23,7 @@ import { ConciergeDecisionTab } from "./concierge/ConciergeDecisionTab";
 import { ConciergeActionsTab } from "./concierge/ConciergeActionsTab";
 import { ToursTab } from "./concierge/ToursTab";
 import { ConciergeTimelineTab } from "./concierge/ConciergeTimelineTab";
+import { MessagesTab } from "./concierge/MessagesTab";
 import { AdmissionCoordinationCard } from "./concierge/AdmissionCoordinationCard";
 import { StageActionBar } from "./concierge/StageActionBar";
 import { STATUS_CONFIG as PIPELINE_STATUS_CONFIG } from "./concierge/placementPipelineConfig";
@@ -37,12 +40,9 @@ interface ConciergeDetailSheetProps {
 }
 
 export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSheetProps>(
-  function ConciergeDetailSheet({ caseData, open, onClose, onRefresh, initialTab }, ref) {
-  const { adminRole, isSuperAdmin, user } = useAdminAuth();
-  const queryClient = useQueryClient();
+  function ConciergeDetailSheet({ caseData, open, onClose, onRefresh, initialTab }) {
+  const { adminRole } = useAdminAuth();
   const isAdvisor = adminRole === "advisor";
-  const canManageBilling = !isAdvisor;
-  const canManageActions = true;
 
   const [activeTab, setActiveTab] = useState(initialTab || "overview");
 
@@ -82,52 +82,53 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
 
   // Auto-transition: new → reviewing when admin opens case. Pass the granular
   // adminRole so the auto-logged case event records the actual admin role.
+  // Errors are surfaced via toast so the admin doesn't silently work against
+  // a stale UI — the stepper / status badge will still reflect DB truth.
   useEffect(() => {
-    if (open && (caseData?.status === "intake_submitted" || caseData?.status === "new")) {
-      supabase.functions.invoke("auto-status-transition", {
+    if (!open || !caseData) return;
+    if (caseData.status !== "intake_submitted" && caseData.status !== "new") return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("auto-status-transition", {
         body: {
           inquiryId: caseData.id,
           trigger: "admin_viewed",
           actorType: getCaseEventActorType(adminRole),
         },
-      }).then(() => {
-        onRefresh();
-      }).catch((err) => {
-        console.error("[ConciergeDetailSheet] Auto-transition failed:", err);
       });
-    }
+      if (cancelled) return;
+      if (error || data?.error) {
+        const msg = (error as Error | null)?.message || data?.error || "Auto-transition failed";
+        toast.error(`Could not advance case status: ${msg}`);
+        return;
+      }
+      onRefresh();
+    })();
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- onRefresh is a parent callback; including it would cause infinite re-runs if parent doesn't memoize it
   }, [open, caseData?.id, caseData?.status, adminRole]);
 
-  // Advance status via stepper (uses centralized transition hook)
-  const advanceStatus = useCaseTransition();
-
-  const handleAdvanceStatus = (nextStatus: string) => {
-    if (!caseData) return;
-    advanceStatus.mutate({
-      caseId: caseData.id,
-      fromStatus: caseData.status,
-      toStatus: nextStatus,
-      via: "stepper",
-      onSuccess: onRefresh,
-    });
-  };
-
   if (!caseData) return null;
 
-  // Build tabs dynamically based on role
+  // Build tabs dynamically based on role. The "billing" tab was retired
+  // along with the paid international placement product (2026-05-20) —
+  // placement_invoices was dropped, so showing the trigger with no
+  // content would be a dead button. The "messages" tab opens
+  // case-scoped facility threads via the same MessagesTab component
+  // the Advisor Inbox uses, so admins can correspond without bouncing
+  // to /admin/inbox.
   const tabs = [
-    { value: "overview", icon: LayoutDashboard, label: "Overview", always: true },
-    { value: "seeker", icon: User, label: "Client", always: true },
-    { value: "matching", icon: Users, label: "Match", always: true },
-    { value: "intros", icon: Send, label: "Intros", always: true },
-    { value: "decision", icon: UserCheck, label: "Decision", always: true },
-    { value: "tours", icon: CalendarCheck, label: "Tours", always: true },
-    { value: "admission", icon: Home, label: "Admit", always: true },
-    { value: "billing", icon: DollarSign, label: "Bill", always: !isAdvisor },
-    { value: "timeline", icon: Clock, label: "Notes", always: true },
-    { value: "actions", icon: Settings, label: "Act", always: true },
-  ].filter(t => t.always);
+    { value: "overview", icon: LayoutDashboard, label: "Overview" },
+    { value: "seeker", icon: User, label: "Client" },
+    { value: "matching", icon: Users, label: "Match" },
+    { value: "intros", icon: Send, label: "Intros" },
+    { value: "messages", icon: MessageSquare, label: "Msgs" },
+    { value: "decision", icon: UserCheck, label: "Decision" },
+    { value: "tours", icon: CalendarCheck, label: "Tours" },
+    { value: "admission", icon: Home, label: "Admit" },
+    { value: "timeline", icon: Clock, label: "Notes" },
+    { value: "actions", icon: Settings, label: "Act" },
+  ];
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -220,6 +221,9 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
             <TabsContent value="intros" className="m-0">
               <ConciergeIntroductionsTab caseData={caseData} onRefresh={onRefresh} />
             </TabsContent>
+            <TabsContent value="messages" className="m-0">
+              <MessagesTab caseData={caseData} />
+            </TabsContent>
             <TabsContent value="decision" className="m-0">
               <ConciergeDecisionTab caseData={caseData} />
             </TabsContent>
@@ -227,10 +231,8 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
               <ToursTab caseData={caseData} />
             </TabsContent>
             <TabsContent value="admission" className="m-0 space-y-4">
-              {/* AdminConfirmPlacement retired — placement_cases dropped. */}
               <AdmissionCoordinationCard caseData={caseData} onRefresh={onRefresh} />
             </TabsContent>
-            {/* Billing tab retired — pay-per-admission placement_invoices dropped. */}
             <TabsContent value="timeline" className="m-0">
               <ConciergeTimelineTab caseData={caseData} onRefresh={onRefresh} />
             </TabsContent>

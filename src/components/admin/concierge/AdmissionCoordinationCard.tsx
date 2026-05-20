@@ -132,8 +132,12 @@ export function AdmissionCoordinationCard({ caseData, onRefresh }: AdmissionCoor
         }
 
         if (notificationType) {
+          // Coordination update already persisted — a notification
+          // failure here is a soft warning, not a hard error. The
+          // toast lets the admin know the seeker/facility didn't get
+          // their email and may need a manual follow-up.
           try {
-            await supabase.functions.invoke("send-concierge-notifications", {
+            const { data: notifData, error: notifErr } = await supabase.functions.invoke("send-concierge-notifications", {
               body: {
                 type: notificationType,
                 inquiryId: caseData.id,
@@ -145,8 +149,13 @@ export function AdmissionCoordinationCard({ caseData, onRefresh }: AdmissionCoor
                 },
               },
             });
+            if (notifErr || notifData?.error) {
+              const msg = (notifErr as Error | null)?.message || notifData?.error || "Unknown error";
+              toast.warning(`Update saved, but ${notificationType.replace(/_/g, " ")} notification failed: ${msg}`);
+            }
           } catch (e) {
-            console.error("Notification send failed:", e);
+            const msg = e instanceof Error ? e.message : "Unknown error";
+            toast.warning(`Update saved, but ${notificationType.replace(/_/g, " ")} notification failed: ${msg}`);
           }
         }
       }

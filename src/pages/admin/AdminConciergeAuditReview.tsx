@@ -57,7 +57,7 @@ export default function AdminConciergeAuditReview() {
   const [note, setNote] = useState("");
   const [resolving, setResolving] = useState(false);
 
-  const { data: rows, isLoading } = useQuery({
+  const { data: rows, isLoading, isError, refetch: refetchRows } = useQuery({
     queryKey: ["concierge-audit-flagged"],
     queryFn: async (): Promise<AuditRow[]> => {
       const { data, error } = await supabase
@@ -67,10 +67,10 @@ export default function AdminConciergeAuditReview() {
         .is("reviewed_at", null)
         .order("sent_at", { ascending: false })
         .limit(100);
-      if (error) {
-        console.error("[AdminConciergeAuditReview] fetch failed", error);
-        return [];
-      }
+      // Throw so React Query exposes the failure via isError — the
+      // previous behaviour returned [] which masked outages as an empty
+      // queue and risked EKRA audit rows going unreviewed.
+      if (error) throw error;
       return (data ?? []) as unknown as AuditRow[];
     },
     staleTime: 1000 * 30,
@@ -136,6 +136,19 @@ export default function AdminConciergeAuditReview() {
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-48 w-full" />
+            ) : isError ? (
+              <div className="text-center py-10" role="alert">
+                <AlertTriangle className="mx-auto h-10 w-10 text-red-600" aria-hidden />
+                <p className="mt-3 font-medium text-slate-900">Failed to load the audit queue.</p>
+                <p className="text-sm text-slate-500 max-w-md mx-auto">
+                  The flagged-rows query errored — likely a network blip or
+                  RLS change. Retry, and if it keeps failing, check the
+                  edge function logs.
+                </p>
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => refetchRows()}>
+                  Retry
+                </Button>
+              </div>
             ) : !rows || rows.length === 0 ? (
               <div className="text-center py-10">
                 <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" aria-hidden />
