@@ -164,11 +164,26 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
   // Mark as contacted
   const markContactedMutation = useMutation({
     mutationFn: async () => {
+      const previousStatus = lead.provider_response_status ?? null;
       const { error } = await supabase.from("leads").update({
         provider_response_status: "contacted",
         provider_responded_at: new Date().toISOString(),
       }).eq("id", lead.id);
       if (error) throw error;
+      // Audit-log the admin action so the timeline reflects who/when
+      // an admin nudged a provider's response status.
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: user?.id ?? null,
+          action_type: "lead_marked_contacted",
+          target_type: "lead",
+          target_id: lead.id,
+          details: { previous_status: previousStatus, new_status: "contacted" },
+        });
+      } catch (e) {
+        console.warn("[admin-audit] mark-contacted log failed (non-blocking)", e);
+      }
     },
     onSuccess: () => { onLeadUpdated(); toast.success("Marked as contacted"); },
     onError: () => toast.error("Failed to update status"),
@@ -177,8 +192,24 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
   // Flag issue
   const flagIssueMutation = useMutation({
     mutationFn: async (flag: string) => {
+      const previousFlag = lead.quality_flag ?? null;
       const { error } = await supabase.from("leads").update({ quality_flag: flag }).eq("id", lead.id);
       if (error) throw error;
+      // Audit-log the quality-flag change. Flags are signals admins
+      // use to triage spam / duplicate / test inquiries; the log lets
+      // ops see who flagged what.
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: user?.id ?? null,
+          action_type: "lead_quality_flag_changed",
+          target_type: "lead",
+          target_id: lead.id,
+          details: { previous_flag: previousFlag, new_flag: flag },
+        });
+      } catch (e) {
+        console.warn("[admin-audit] flag log failed (non-blocking)", e);
+      }
     },
     onSuccess: () => { onLeadUpdated(); toast.success("Flag updated"); },
     onError: () => toast.error("Failed to flag"),
@@ -454,7 +485,12 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                       <Select onValueChange={(val) => reassignMutation.mutate(val)} disabled={reassignMutation.isPending}>
                         <SelectTrigger><SelectValue placeholder="Select facility..." /></SelectTrigger>
                         <SelectContent className="max-h-60">
-                          {facilities.slice(0, 100).map((f) => (
+                          {/* All facilities — no silent cap. The list is
+                              already filtered to status='approved' upstream
+                              and held in memory for the table; rendering
+                              them all here gives admins access to every
+                              live facility for reassignment. */}
+                          {facilities.map((f) => (
                             <SelectItem key={f.id} value={f.id} disabled={f.id === lead.facility_id}>
                               {f.name}{f.id === lead.facility_id ? " (Current)" : ""} — {f.city}, {f.state}
                             </SelectItem>

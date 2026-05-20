@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users, Search, Mail, Phone, Zap, Download, X, Trash2,
-  CheckSquare, Square, Loader2, Share2,
+  CheckSquare, Square, Loader2, Share2, UserCheck,
   MessageSquare, Building2, CalendarIcon, Clock, Timer,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
@@ -197,6 +198,36 @@ export default function AdminLeads() {
         requestInfo: requestInfoRes.count || 0, requestCallback: requestCallbackRes.count || 0,
       };
     },
+  });
+
+  // Free-tier inquiries land in concierge_inquiries (not leads).
+  // Surfacing the count here lets the admin see the *full* inquiry
+  // universe at a glance — the leads table here is Pro-only, while
+  // concierge_inquiries holds Free/Unclaimed redirects + paid
+  // seeker-initiated concierge intakes. Distinct surfaces by
+  // routing decision; one navigation prompt prevents the admin
+  // from forgetting the other side exists.
+  const { data: conciergeBacklog } = useQuery({
+    queryKey: ["admin-leads-concierge-banner"],
+    queryFn: async () => {
+      const [redirectRes, allOpenRes] = await Promise.all([
+        supabase
+          .from("concierge_inquiries")
+          .select("id", { count: "exact", head: true })
+          .eq("routing_mode", "free_tier_redirect")
+          .not("status", "in", "(closed,completed)"),
+        supabase
+          .from("concierge_inquiries")
+          .select("id", { count: "exact", head: true })
+          .not("status", "in", "(closed,completed)"),
+      ]);
+      return {
+        freeTierRedirects: redirectRes.count || 0,
+        allOpen: allOpenRes.count || 0,
+      };
+    },
+    staleTime: 60_000,
+    refetchInterval: 60_000,
     staleTime: 1000 * 60 * 2,
   });
 
@@ -362,6 +393,34 @@ export default function AdminLeads() {
         }
       />
 
+      {/* Concierge-queue awareness banner — Pro-tier inquiries live in
+          the `leads` table (this page); Free / Unclaimed-tier inquiries
+          land in `concierge_inquiries` via the routing_mode='free_tier_redirect'
+          branch in submit-qualified-lead. Surface a thin reminder + count
+          so the admin doesn't lose sight of the parallel queue. */}
+      {conciergeBacklog && conciergeBacklog.allOpen > 0 && (
+        <div className="flex items-start gap-3 rounded-lg border border-violet-200 bg-violet-50/60 px-4 py-3 text-sm">
+          <UserCheck className="h-4 w-4 text-violet-700 mt-0.5 shrink-0" aria-hidden />
+          <div className="flex-1 min-w-0">
+            <p className="text-slate-900">
+              <span className="font-semibold">{conciergeBacklog.allOpen}</span>{" "}
+              open concierge {conciergeBacklog.allOpen === 1 ? "inquiry" : "inquiries"} also need attention
+              {conciergeBacklog.freeTierRedirects > 0 && (
+                <>
+                  {" "}—{" "}
+                  <span className="font-semibold">{conciergeBacklog.freeTierRedirects}</span>{" "}
+                  from Free / Unclaimed facility inquiries
+                </>
+              )}
+              . They live on the concierge surface, not in this Pro-only table.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="outline" className="border-violet-300 text-violet-900 hover:bg-violet-100 shrink-0">
+            <Link to="/admin/concierge">Open concierge queue</Link>
+          </Button>
+        </div>
+      )}
+
       {/* KPI Summary */}
       <Card className="overflow-hidden">
         <CardContent className="p-0">
@@ -489,6 +548,19 @@ export default function AdminLeads() {
                 <TableBody>
                   {filteredLeads.map((lead) => {
                     const facility = lead.facility_id ? facilitiesMap.get(lead.facility_id) : null;
+                    // SLA indicator: a lead is "stale" when it's been
+                    // sitting unresponded for >24h on a still-open status.
+                    // Surfaces in the Status column as a small Timer
+                    // badge so an admin can scan for at-risk rows.
+                    const staleHours = (() => {
+                      if (lead.provider_response_status === "contacted") return 0;
+                      if (lead.status === "closed" || lead.status === "expired" || lead.status === "converted") return 0;
+                      const anchor = lead.assigned_at ?? lead.created_at;
+                      if (!anchor) return 0;
+                      const diffMs = Date.now() - new Date(anchor).getTime();
+                      const hours = Math.floor(diffMs / (60 * 60 * 1000));
+                      return hours >= 24 ? hours : 0;
+                    })();
                     return (
                       <TableRow
                         key={lead.id}
@@ -526,7 +598,19 @@ export default function AdminLeads() {
                           <LeadStatusBadge lead={lead} />
                         </TableCell>
                         <TableCell>
-                          <StatusBadge status={lead.status} />
+                          <div className="flex items-center gap-1.5">
+                            <StatusBadge status={lead.status} />
+                            {staleHours > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] gap-1 border-amber-300 bg-amber-50 text-amber-800 px-1.5 py-0"
+                                title={`No provider response in ${staleHours}h`}
+                              >
+                                <Timer className="h-3 w-3" />
+                                {staleHours >= 72 ? `${Math.floor(staleHours / 24)}d` : `${staleHours}h`}
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
