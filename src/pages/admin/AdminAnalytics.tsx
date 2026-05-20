@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect, useCallback, forwardRef } from "react";
 import { pluckNonNull } from "@/lib/nullableRows";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { format, subDays, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subMonths, subQuarters, subYears, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, endOfWeek } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +24,33 @@ import { cn } from "@/lib/utils";
 type DatePreset = "today" | "last7" | "last30" | "thisMonth" | "lastMonth" | "thisQuarter" | "lastQuarter" | "thisYear" | "lastYear" | "custom";
 type Grouping = "daily" | "weekly" | "monthly";
 
+// Hard cap per analytics query. At current scale (~330 events/day,
+// 9,769 rows total) this won't truncate even on a 5-month window;
+// it bounds memory for pathological year+ queries while remaining
+// well above realistic ranges. We surface a truncation warning if
+// any query returns exactly this many rows.
+const ANALYTICS_ROW_CAP = 50000;
+
+// Facility join shape on provider_events / leads queries — replaces
+// the `(l.facilities as any)?.state` casts that proliferated through
+// the file before the hardening pass.
+type FacilityJoin = { city: string | null; state: string | null } | null;
+type AnalyticsEventRow = {
+  id: string;
+  facility_id: string | null;
+  event_type: string;
+  created_at: string;
+  facilities: FacilityJoin;
+};
+type AnalyticsLeadRow = {
+  id: string;
+  facility_id: string | null;
+  status: string | null;
+  source: string | null;
+  created_at: string;
+  facilities: FacilityJoin;
+};
+
 const US_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
   "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
@@ -29,8 +58,6 @@ const US_STATES = [
   "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
   "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
 ];
-
-const PLAN_OPTIONS = ["All", "Free", "Pro"];
 
 const CHART_COLORS = {
   primary: "#1B365D",
@@ -61,17 +88,71 @@ const CustomTooltip = forwardRef<HTMLDivElement, any>(({ active, payload, label 
 });
 CustomTooltip.displayName = "CustomTooltip";
 
+const VALID_DATE_PRESETS: DatePreset[] = [
+  "today", "last7", "last30", "thisMonth", "lastMonth",
+  "thisQuarter", "lastQuarter", "thisYear", "lastYear", "custom",
+];
+const VALID_GROUPINGS: Grouping[] = ["daily", "weekly", "monthly"];
+const VALID_TABS = ["traffic", "leads", "performance", "subscriptions"] as const;
+type AnalyticsTab = typeof VALID_TABS[number];
+
 export default function AdminAnalytics() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminAnalytics");
-  const [datePreset, setDatePreset] = useState<DatePreset>("last30");
-  const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
-  const [grouping, setGrouping] = useState<Grouping>("daily");
-  const [selectedState, setSelectedState] = useState<string>("all");
-  const [selectedCity, setSelectedCity] = useState<string>("all");
-  const [selectedPlan, setSelectedPlan] = useState<string>("All");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // URL-state hydration — every filter + active tab round-trips
+  // through the URL so admins can bookmark / share a specific view.
+  // Mirrors the pattern used across the 12 prior hardened admin
+  // surfaces. The `selectedPlan` filter from the legacy UI was
+  // removed in this pass — it was state-only, never applied to any
+  // query, and confused admins who thought they were filtering by
+  // plan. If/when plan-segmented analytics are needed they should
+  // come back as a server-side filter on get-revenue-stats.
+  const [datePreset, setDatePreset] = useState<DatePreset>(() => {
+    const v = searchParams.get("preset") as DatePreset | null;
+    return v && VALID_DATE_PRESETS.includes(v) ? v : "last30";
+  });
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>(() => {
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+    const parse = (s: string | null) => {
+      if (!s) return undefined;
+      const d = new Date(s);
+      return Number.isNaN(d.getTime()) ? undefined : d;
+    };
+    return { from: parse(from), to: parse(to) };
+  });
+  const [grouping, setGrouping] = useState<Grouping>(() => {
+    const v = searchParams.get("grouping") as Grouping | null;
+    return v && VALID_GROUPINGS.includes(v) ? v : "daily";
+  });
+  const [selectedState, setSelectedState] = useState<string>(() => searchParams.get("state") ?? "all");
+  const [selectedCity, setSelectedCity] = useState<string>(() => searchParams.get("city") ?? "all");
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({ key: "leads", direction: "desc" });
-  const [compareMode, setCompareMode] = useState<boolean>(false);
+  const [compareMode, setCompareMode] = useState<boolean>(() => searchParams.get("compare") === "1");
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>(() => {
+    const v = searchParams.get("tab") as AnalyticsTab | null;
+    return v && (VALID_TABS as readonly string[]).includes(v) ? v : "traffic";
+  });
+
+  // Sync state → URL. Loop-guarded: only writes when the canonical
+  // serialization differs, otherwise setSearchParams would re-render
+  // on every tick.
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (datePreset !== "last30") next.set("preset", datePreset);
+    if (datePreset === "custom" && customDateRange.from) next.set("from", format(customDateRange.from, "yyyy-MM-dd"));
+    if (datePreset === "custom" && customDateRange.to) next.set("to", format(customDateRange.to, "yyyy-MM-dd"));
+    if (grouping !== "daily") next.set("grouping", grouping);
+    if (selectedState !== "all") next.set("state", selectedState);
+    if (selectedCity !== "all") next.set("city", selectedCity);
+    if (compareMode) next.set("compare", "1");
+    if (activeTab !== "traffic") next.set("tab", activeTab);
+    const a = next.toString();
+    const b = searchParams.toString();
+    if (a !== b) setSearchParams(next, { replace: true });
+  }, [datePreset, customDateRange, grouping, selectedState, selectedCity, compareMode, activeTab, searchParams, setSearchParams]);
 
   // Realtime subscription for live updates - always active
   const invalidateAnalyticsQueries = useCallback(() => {
@@ -174,7 +255,7 @@ export default function AdminAnalytics() {
       const { data, error } = await supabase
         .from("facilities")
         .select("id, name, city, state, status")
-        .limit(5000);
+        .limit(ANALYTICS_ROW_CAP);
       if (error) throw error;
       return data || [];
     },
@@ -197,7 +278,7 @@ export default function AdminAnalytics() {
         .in("event_type", ["profile_view", "listing_impression"])
         .gte("created_at", format(dateRange.from, "yyyy-MM-dd") + "T00:00:00")
         .lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59")
-        .limit(5000);
+        .limit(ANALYTICS_ROW_CAP);
       
       if (selectedState !== "all") {
         query = query.eq("facilities.state", selectedState);
@@ -222,7 +303,7 @@ export default function AdminAnalytics() {
         .in("event_type", ["click_to_call", "website_click"])
         .gte("created_at", format(dateRange.from, "yyyy-MM-dd") + "T00:00:00")
         .lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59")
-        .limit(5000);
+        .limit(ANALYTICS_ROW_CAP);
       
       if (selectedState !== "all") {
         query = query.eq("facilities.state", selectedState);
@@ -246,24 +327,27 @@ export default function AdminAnalytics() {
         .select("id, facility_id, status, source, created_at, facilities!facility_id(city, state)")
         .gte("created_at", dateRange.from.toISOString())
         .lte("created_at", dateRange.to.toISOString())
-        .limit(5000);
+        .limit(ANALYTICS_ROW_CAP);
 
       const { data, error } = await query;
       if (error) throw error;
       
-      let filtered = data || [];
+      let filtered = (data || []) as unknown as AnalyticsLeadRow[];
       if (selectedState !== "all") {
-        filtered = filtered.filter(l => (l.facilities as any)?.state === selectedState);
+        filtered = filtered.filter((l) => l.facilities?.state === selectedState);
       }
       if (selectedCity !== "all") {
-        filtered = filtered.filter(l => (l.facilities as any)?.city === selectedCity);
+        filtered = filtered.filter((l) => l.facilities?.city === selectedCity);
       }
       
       return filtered;
     },
   });
 
-  // Fetch subscription data via edge function
+  // Fetch subscription data via edge function. Some Supabase edge fns
+  // return HTTP 200 with `{ error: "..." }` body when an upstream
+  // (Stripe API) errors — check both paths so isError surfaces real
+  // failures instead of consuming the error payload as success data.
   const { data: subscriptionData, isLoading: isLoadingSubscriptions, refetch: refetchSubscriptions, error: subscriptionsError } = useQuery({
     queryKey: ["admin-analytics-subscriptions", dateRange],
     queryFn: async () => {
@@ -274,12 +358,15 @@ export default function AdminAnalytics() {
         },
       });
       if (error) throw error;
-      return data || { 
-        activeSubscriptions: 0, 
-        newSubscriptions: 0, 
-        revenue: 0, 
-        mrr: 0, 
-        churnCount: 0, 
+      if (data && typeof data === "object" && "error" in data && (data as { error: unknown }).error) {
+        throw new Error(String((data as { error: unknown }).error));
+      }
+      return data || {
+        activeSubscriptions: 0,
+        newSubscriptions: 0,
+        revenue: 0,
+        mrr: 0,
+        churnCount: 0,
         churnRate: 0,
         upgrades: 0,
         downgrades: 0,
@@ -298,7 +385,7 @@ export default function AdminAnalytics() {
         .in("event_type", ["profile_view", "listing_impression"])
         .gte("created_at", format(previousDateRange.from, "yyyy-MM-dd") + "T00:00:00")
         .lte("created_at", format(previousDateRange.to, "yyyy-MM-dd") + "T23:59:59")
-        .limit(5000);
+        .limit(ANALYTICS_ROW_CAP);
       
       if (selectedState !== "all") {
         query = query.eq("facilities.state", selectedState);
@@ -323,7 +410,7 @@ export default function AdminAnalytics() {
         .in("event_type", ["click_to_call", "website_click"])
         .gte("created_at", format(previousDateRange.from, "yyyy-MM-dd") + "T00:00:00")
         .lte("created_at", format(previousDateRange.to, "yyyy-MM-dd") + "T23:59:59")
-        .limit(5000);
+        .limit(ANALYTICS_ROW_CAP);
       
       if (selectedState !== "all") {
         query = query.eq("facilities.state", selectedState);
@@ -347,17 +434,17 @@ export default function AdminAnalytics() {
         .select("id, facility_id, status, source, created_at, facilities!facility_id(city, state)")
         .gte("created_at", previousDateRange.from.toISOString())
         .lte("created_at", previousDateRange.to.toISOString())
-        .limit(5000);
+        .limit(ANALYTICS_ROW_CAP);
 
       const { data, error } = await query;
       if (error) throw error;
       
-      let filtered = data || [];
+      let filtered = (data || []) as unknown as AnalyticsLeadRow[];
       if (selectedState !== "all") {
-        filtered = filtered.filter(l => (l.facilities as any)?.state === selectedState);
+        filtered = filtered.filter((l) => l.facilities?.state === selectedState);
       }
       if (selectedCity !== "all") {
-        filtered = filtered.filter(l => (l.facilities as any)?.city === selectedCity);
+        filtered = filtered.filter((l) => l.facilities?.city === selectedCity);
       }
       
       return filtered;
@@ -589,32 +676,28 @@ export default function AdminAnalytics() {
       }
     });
 
-    viewsData.forEach(v => {
-      const f = v.facilities as any;
+    (viewsData as unknown as AnalyticsEventRow[]).forEach((v) => {
+      const f = v.facilities;
+      if (!f?.state || !f?.city) return;
       const key = `${f.state}-${f.city}`;
       const loc = locationMap.get(key);
-      if (loc) {
-        loc.visitors += 1;
-      }
+      if (loc) loc.visitors += 1;
     });
 
-    interactionsData?.forEach(i => {
-      const f = i.facilities as any;
+    (interactionsData as unknown as AnalyticsEventRow[] | undefined)?.forEach((i) => {
+      const f = i.facilities;
+      if (!f?.state || !f?.city) return;
       const key = `${f.state}-${f.city}`;
       const loc = locationMap.get(key);
-      if (loc) {
-        loc.clicks += 1;
-      }
+      if (loc) loc.clicks += 1;
     });
 
-    leadsData.forEach(l => {
-      const f = l.facilities as any;
-      if (!f) return; // Skip leads without facilities
+    (leadsData as unknown as AnalyticsLeadRow[]).forEach((l) => {
+      const f = l.facilities;
+      if (!f?.state || !f?.city) return;
       const key = `${f.state}-${f.city}`;
       const loc = locationMap.get(key);
-      if (loc) {
-        loc.leads += 1;
-      }
+      if (loc) loc.leads += 1;
     });
 
     return Array.from(locationMap.values())
@@ -703,16 +786,73 @@ export default function AdminAnalytics() {
     setGrouping("daily");
     setSelectedState("all");
     setSelectedCity("all");
-    setSelectedPlan("All");
     setCustomDateRange({ from: undefined, to: undefined });
     setCompareMode(false);
   };
 
+  const copyFilterLink = useCallback(async () => {
+    try {
+      const url = window.location.href;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        toast.success("Filter link copied to clipboard");
+      } else {
+        const tmp = document.createElement("input");
+        tmp.value = url;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        document.body.removeChild(tmp);
+        toast.success("Filter link copied to clipboard");
+      }
+    } catch {
+      toast.error("Could not copy link");
+    }
+  }, []);
+
+  const hasActiveFilters =
+    datePreset !== "last30" ||
+    grouping !== "daily" ||
+    selectedState !== "all" ||
+    selectedCity !== "all" ||
+    compareMode;
+
   const isLoading = isLoadingViews || isLoadingInteractions || isLoadingLeads || isLoadingSubscriptions;
   const hasError = viewsError || interactionsError || leadsError || subscriptionsError;
 
+  // Detect truncation — any query that returned exactly ANALYTICS_ROW_CAP
+  // rows is suspect; widen the date range or narrow the geo filter to
+  // get an accurate count. Surfacing this prevents silent KPI drift.
+  const truncatedSources = useMemo(() => {
+    const sources: string[] = [];
+    if (viewsData && viewsData.length >= ANALYTICS_ROW_CAP) sources.push("views");
+    if (interactionsData && interactionsData.length >= ANALYTICS_ROW_CAP) sources.push("clicks");
+    if (leadsData && leadsData.length >= ANALYTICS_ROW_CAP) sources.push("leads");
+    return sources;
+  }, [viewsData, interactionsData, leadsData]);
+
   return (
     <div className="space-y-6">
+      {/* Truncation Banner — one of the analytics queries hit the
+          ANALYTICS_ROW_CAP row limit, so KPIs may understate reality.
+          Surfaces explicitly so admins narrow the range or geo
+          filter instead of trusting a silently-clipped count. */}
+      {truncatedSources.length > 0 && (
+        <div
+          className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-center gap-3"
+          role="alert"
+          aria-live="polite"
+        >
+          <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
+          <div className="flex-1">
+            <p className="font-medium text-warning">Some metrics may be truncated</p>
+            <p className="text-sm text-warning/80">
+              The {truncatedSources.join(", ")} {truncatedSources.length === 1 ? "query" : "queries"} hit the {ANALYTICS_ROW_CAP.toLocaleString()}-row limit. Narrow the date range or geo filter for accurate counts.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Error Banner */}
       {hasError && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-center gap-3">
@@ -864,21 +1004,6 @@ export default function AdminAnalytics() {
               </Select>
             </div>
 
-            {/* Plan */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Plan</label>
-              <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-                <SelectTrigger className="w-[120px] h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PLAN_OPTIONS.map(plan => (
-                    <SelectItem key={plan} value={plan}>{plan}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="h-9 w-px bg-border mx-1" />
 
             {/* Compare Mode Toggle */}
@@ -889,19 +1014,48 @@ export default function AdminAnalytics() {
                 size="sm"
                 onClick={() => setCompareMode(!compareMode)}
                 className={cn("h-9 gap-1.5", compareMode && "bg-primary")}
+                aria-label={compareMode ? "Disable period comparison" : "Enable period comparison"}
+                aria-pressed={compareMode}
               >
                 <GitCompare className="h-4 w-4" />
                 {compareMode ? "On" : "Off"}
               </Button>
             </div>
 
-            <div className="flex gap-2 ml-auto">
-              <Button variant="ghost" size="sm" onClick={handleReset} className="h-9">
+            <div className="flex flex-wrap gap-2 ml-auto">
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={copyFilterLink}
+                  className="h-9"
+                  aria-label="Copy a shareable link to this filtered view"
+                  title="Copy a shareable link to this filtered view"
+                >
+                  <Filter className="h-4 w-4 mr-1.5" />
+                  Copy link
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                className="h-9"
+                aria-label="Reset all filters to defaults"
+              >
                 <RotateCcw className="h-4 w-4 mr-1.5" />
                 Reset
               </Button>
-              <Button size="sm" onClick={() => refetchSubscriptions()} className="h-9">
-                <RefreshCw className="h-4 w-4 mr-1.5" />
+              <Button
+                size="sm"
+                onClick={() => {
+                  invalidateAnalyticsQueries();
+                  refetchSubscriptions();
+                }}
+                className="h-9"
+                aria-label="Refresh all analytics data"
+              >
+                <RefreshCw className={cn("h-4 w-4 mr-1.5", isLoading && "animate-spin")} />
                 Refresh
               </Button>
             </div>
@@ -1145,7 +1299,7 @@ export default function AdminAnalytics() {
       </div>
 
       {/* Charts */}
-      <Tabs defaultValue="traffic" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AnalyticsTab)} className="space-y-4">
         <TabsList className="bg-muted/50 p-1 flex-wrap">
           <TabsTrigger value="traffic" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Activity className="h-4 w-4 mr-2" />
