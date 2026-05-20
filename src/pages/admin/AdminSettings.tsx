@@ -566,18 +566,20 @@ export default function AdminSettings() {
           break;
         }
         case "notifications": {
-          // Per-recipient admin notifications. admin_notifications is
-          // the broadcast table (deprecated for personal-routing); the
-          // current per-user table is admin_user_notifications.
+          // Broadcast / system-wide notifications. Matches the table
+          // surfaced by the /admin/notifications page (useAdminNotifications
+          // hook) for export-shape consistency. Per-recipient personal
+          // notifications live in admin_user_notifications and are
+          // exported via the per-user bell, not from here.
           const { data: notifications, error } = await supabase
-            .from("admin_user_notifications")
-            .select("id, user_id, type, title, message, read, link, metadata, created_at")
+            .from("admin_notifications")
+            .select("id, type, title, message, read, created_at")
             .order("created_at", { ascending: false })
             .limit(2000);
           if (error) throw new Error(`Notifications fetch failed: ${error.message}`);
           data = notifications || [];
           filename = `notifications-export-${new Date().toISOString().split('T')[0]}`;
-          csvHeaders = ["id", "user_id", "type", "title", "message", "read", "link", "created_at"];
+          csvHeaders = ["id", "type", "title", "message", "read", "created_at"];
           break;
         }
         default:
