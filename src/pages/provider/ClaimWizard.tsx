@@ -71,6 +71,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { WizardStepper } from "@/components/provider/WizardStepper";
 import { useFacilityBySlug, type FacilityBaseData } from "@/hooks/useFacilityBySlug";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertCircle,
@@ -292,11 +293,30 @@ function dataSourceLabel(source: string | null | undefined): string {
   }
 }
 
-export default function ClaimWizard() {
-  const { slug } = useParams<{ slug: string }>();
+interface ClaimWizardProps {
+  /**
+   * 2026-05-20 unification: when `embedded=true`, render inside the
+   * unified onboarding wizard's BuildStep slot — no Header/Footer/
+   * Helmet, skip the anonymous-visitor redirect (the host has already
+   * authenticated the user), and route success → `?step=plan` instead
+   * of the standalone `/provider/claim/:slug/submitted` page.
+   */
+  embedded?: boolean;
+  /** Overrides useParams when embedded (the unified flow has no `:slug`
+   *  in the URL — the host passes the slug looked up via
+   *  selected_facility_id). */
+  slugProp?: string;
+  /** Optional callback for embedded mode's "this isn't right" path —
+   *  hands control back to the host to re-route to FindOrListStep. */
+  onCancel?: () => void;
+}
+
+export default function ClaimWizard({ embedded = false, slugProp, onCancel }: ClaimWizardProps = {}) {
+  const { slug: paramSlug } = useParams<{ slug: string }>();
+  const slug = slugProp ?? paramSlug;
   const navigate = useNavigate();
 
-  const [authChecking, setAuthChecking] = useState(true);
+  const [authChecking, setAuthChecking] = useState(!embedded);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [state, setState] = useState<WizardState>(() =>
@@ -309,30 +329,35 @@ export default function ClaimWizard() {
     if (slug) persistState(slug, state);
   }, [slug, state]);
 
-  // Auth gate + plan-selection gate. Signed-out → /auth/signup with
-  // returnTo. Signed-in but never went through the wizard (no plan on
-  // either profiles.plan or provider_onboarding_state.plan) → bounce
-  // back to /provider/onboarding so they select Free vs Pro before
-  // claiming.
+  // Auth gate. Signed-out → unified onboarding wizard with returnTo.
+  // Embedded mode skips this entirely — the unified host already
+  // authenticated the user; doing it again here would never trigger.
   useEffect(() => {
+    if (embedded) {
+      // Just resolve the userId synchronously and bail.
+      let cancelled = false;
+      (async () => {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (cancelled) return;
+        setCurrentUserId(sessionData.session?.user.id ?? null);
+        setCurrentUserEmail(sessionData.session?.user.email ?? null);
+      })();
+      return () => { cancelled = true; };
+    }
     let cancelled = false;
     (async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const session = sessionData.session;
       if (cancelled) return;
       if (!session?.user) {
-        // Round-30 merge: anon visitors land in the unified onboarding
-        // wizard. Once they finish AccountStep + VerifyEmailStep, the
-        // returnTo brings them back here automatically.
-        const returnTo = `/provider/claim/${slug ?? ""}`;
-        const search = new URLSearchParams({ returnTo, intent: "claim" }).toString();
+        // Anon visitors land in the unified onboarding wizard.
+        const search = new URLSearchParams({
+          intent: "claim",
+          ...(slug ? { facility_slug: slug } : {}),
+        }).toString();
         navigate(`/provider/onboarding?${search}`, { replace: true });
         return;
       }
-      // Round-30 merge: the no-plan gate that previously redirected
-      // signed-in claimers without a plan back to the wizard was
-      // removed. Plan is now the LAST step (PlanStep), running AFTER
-      // the claim submits.
       setCurrentUserId(session.user.id);
       setCurrentUserEmail(session.user.email ?? null);
       setAuthChecking(false);
@@ -340,7 +365,7 @@ export default function ClaimWizard() {
     return () => {
       cancelled = true;
     };
-  }, [navigate, slug]);
+  }, [navigate, slug, embedded]);
 
   // Pre-fill the claimant email once we know the session, but only if the
   // user hasn't typed something else already (rehydration from sessionStorage
@@ -388,27 +413,21 @@ export default function ClaimWizard() {
 
   if (authChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={cn(embedded ? "py-6 flex items-center justify-center" : "min-h-screen flex items-center justify-center")}>
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
       </div>
     );
   }
 
-  return (
+  const wizardBody = (
     <>
-      <Helmet>
-        <title>Claim your listing — RehabLookup</title>
-        <meta name="robots" content="noindex" />
-      </Helmet>
-      <Header />
-      <main className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 max-w-2xl">
-        <WizardStepper
-          currentStep={state.currentStep}
-          totalSteps={TOTAL_STEPS}
-          labels={WIZARD_STEP_LABELS}
-          onStepClick={setStep}
-          className="mb-8"
-        />
+      <WizardStepper
+        currentStep={state.currentStep}
+        totalSteps={TOTAL_STEPS}
+        labels={WIZARD_STEP_LABELS}
+        onStepClick={setStep}
+        className="mb-8"
+      />
 
         {loading && (
           <Card className="p-8 flex flex-col items-center gap-2">
@@ -437,6 +456,8 @@ export default function ClaimWizard() {
               <Step1ConfirmFacility
                 facility={facility}
                 onNext={() => setStep(2)}
+                embedded={embedded}
+                onCancel={onCancel}
               />
             )}
 
@@ -515,14 +536,34 @@ export default function ClaimWizard() {
                   } catch (e) {
                     console.warn("[ClaimWizard] onboarding state advance failed", e);
                   }
-                  navigate(`/provider/claim/${facility.slug}/submitted`, {
-                    replace: true,
-                  });
+                  // 2026-05-20 unification: route success to the wizard's
+                  // PlanStep regardless of mount mode. The legacy
+                  // `/provider/claim/<slug>/submitted` page is retired —
+                  // the dashboard already shows verification status, and
+                  // PlanStep needs to run before onboarding can be marked
+                  // complete.
+                  navigate("/provider/onboarding?step=plan", { replace: true });
                 }}
               />
             )}
           </>
         )}
+      </>
+  );
+
+  if (embedded) {
+    return wizardBody;
+  }
+
+  return (
+    <>
+      <Helmet>
+        <title>Claim your listing — RehabLookup</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
+      <Header />
+      <main className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 max-w-2xl">
+        {wizardBody}
       </main>
       <Footer />
     </>
@@ -534,9 +575,13 @@ export default function ClaimWizard() {
 function Step1ConfirmFacility({
   facility,
   onNext,
+  embedded,
+  onCancel,
 }: {
   facility: ReturnType<typeof useFacilityBySlug>["facility"];
   onNext: () => void;
+  embedded?: boolean;
+  onCancel?: () => void;
 }) {
   const navigate = useNavigate();
   if (!facility) return null;
@@ -588,7 +633,13 @@ function Step1ConfirmFacility({
       <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-between pt-2 border-t">
         <Button
           variant="outline"
-          onClick={() => navigate("/provider/onboarding")}
+          onClick={() => {
+            if (embedded && onCancel) {
+              onCancel();
+              return;
+            }
+            navigate("/provider/onboarding");
+          }}
           className="sm:w-auto"
         >
           <ArrowLeft className="h-4 w-4 mr-1.5" aria-hidden />

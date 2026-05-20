@@ -43,6 +43,7 @@ import {
   ONBOARDING_STEPS,
   canReach,
   type OnboardingStep,
+  type ProviderOnboardingStateRow,
 } from "@/hooks/useProviderOnboardingState";
 import { OnboardingStepper } from "@/components/provider/onboarding/OnboardingStepper";
 import { AccountStep } from "@/components/provider/onboarding/AccountStep";
@@ -94,9 +95,51 @@ export default function ProviderOnboarding() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data: stateRow, isLoading: stateLoading, refetch: refetchState } =
+  const { data: stateRow, isLoading: stateLoading, refetch: refetchState, advance } =
     useProviderOnboardingState();
   const { data: profile, isLoading: profileLoading } = useProviderProfile();
+
+  // 2026-05-20 unification: when an already-signed-in user arrives with
+  // ?intent=claim + ?facility_slug=<slug> (or ?facility_id=<uuid>),
+  // pre-seed their state row's mode + selected_facility_id so they
+  // resume directly on FindOrListStep's "Continue with this facility"
+  // affordance instead of having to re-search. AccountStep handles the
+  // same for new signups; this effect is the signed-in mirror.
+  useEffect(() => {
+    if (!stateRow) return;
+    if (stateRow.selected_facility_id) return; // already seeded
+    if (searchParams.get("intent") !== "claim") return;
+    const slug = searchParams.get("facility_slug");
+    const id = searchParams.get("facility_id");
+    if (!slug && !id) return;
+
+    let cancelled = false;
+    (async () => {
+      let resolvedId = id;
+      if (!resolvedId && slug) {
+        try {
+          const { data: lookup } = await supabase
+            .from("public_facilities")
+            .select("id")
+            .eq("slug", slug)
+            .maybeSingle();
+          resolvedId = (lookup as { id?: string } | null)?.id ?? null;
+        } catch (e) {
+          console.warn("[Onboarding] facility_slug→id lookup failed", e);
+        }
+      }
+      if (cancelled || !resolvedId) return;
+      try {
+        await advance({
+          mode: "claim",
+          selected_facility_id: resolvedId,
+        } as Partial<ProviderOnboardingStateRow>);
+      } catch (e) {
+        console.warn("[Onboarding] claim pre-seed failed", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [stateRow, searchParams, advance]);
 
   const queryStep = searchParams.get("step") as OnboardingStep | null;
   // Round-30 merge: when a signed-in user with a profile lands here

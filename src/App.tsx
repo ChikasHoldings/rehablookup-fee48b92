@@ -69,8 +69,14 @@ const ProviderSupport = lazy(() => import("./pages/ProviderSupport"));
 const ProviderFAQ = lazy(() => import("./pages/ProviderFAQ"));
 const AuthSignup = lazy(() => import("./pages/AuthSignup"));
 const ProviderOnboarding = lazy(() => import("./pages/provider/Onboarding"));
+// 2026-05-20 unification: ClaimWizard no longer hosts a separate page
+// during onboarding — every claim attempt flows through the unified
+// wizard at /provider/onboarding (which renders ClaimWizard inline via
+// BuildStep). NewListingForm is retained ONLY for the "add another
+// facility" path for already-onboarded providers; first-time signups
+// hit /provider/onboarding instead.
 const NewListingForm = lazy(() => import("./pages/provider/NewListingForm"));
-const ClaimWizard = lazy(() => import("./pages/provider/ClaimWizard"));
+const LegacyClaimRedirect = lazy(() => import("./pages/provider/LegacyClaimRedirect"));
 const ClaimSubmitted = lazy(() => import("./pages/provider/ClaimSubmitted"));
 const ProviderClaims = lazy(() => import("./pages/provider/Claims"));
 const ProviderROICalculator = lazy(() => import("./pages/ProviderROICalculator"));
@@ -1339,8 +1345,13 @@ const AppInner = () => {
             <Route path="/provider-signup" element={<Navigate to="/provider/onboarding" replace />} />
             <Route path="/auth/signup" element={<AuthSignup />} />
             <Route path="/provider/onboarding" element={<ProviderOnboarding />} />
+            {/* 2026-05-20 unification: NewListingForm now acts as the
+                "add another facility" path for already-onboarded
+                providers. First-time signups never reach this route —
+                they're redirected into /provider/onboarding by the
+                NewListingForm gate. */}
             <Route path="/provider/onboarding/new-listing" element={<NewListingForm />} />
-            <Route path="/provider/claim/:slug" element={<ClaimWizard />} />
+            <Route path="/provider/claim/:slug" element={<LegacyClaimRedirect />} />
             <Route path="/provider/claim/:slug/submitted" element={<ClaimSubmitted />} />
             <Route path="/provider/claims" element={<ProviderClaims />} />
             <Route path="/provider-roi-calculator" element={<PublicRouteGuard><ProviderROICalculator /></PublicRouteGuard>} />

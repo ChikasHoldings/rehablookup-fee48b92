@@ -166,12 +166,20 @@ function FacilityPhoneInputWithVerification({
   );
 }
 
-export default function ProviderSignup({ initialStep }: { initialStep?: number } = {}) {
+export default function ProviderSignup({
+  initialStep,
+  embedded = false,
+}: { initialStep?: number; embedded?: boolean } = {}) {
   // Phase W consolidation: ProviderSignup is now ONLY the post-auth
   // facility-build wizard (steps 3-7). Account + email verification
   // run upstream in /provider/onboarding (AccountStep + VerifyEmailStep
   // in src/components/provider/onboarding/). The legacy steps 1-2
   // remain in this file for historical reference but are unreachable
+  //
+  // 2026-05-20 unification: `embedded=true` makes this component render
+  // *inside* the unified wizard's BuildStep slot — no Header/Footer/
+  // Helmet/page-title chrome, since the host page already provides
+  // them. Toggled by BuildStep when the wizard's state.mode='list'.
   // because (a) the only caller — NewListingForm — always passes
   // initialStep={3}, (b) entry floor below blocks prevStep / stepper
   // clicks from descending below initialStep.
@@ -190,6 +198,9 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
 
   // Check if user is already logged in
   useEffect(() => {
+    // Embedded inside the unified wizard → the host has already gated
+    // the session; never redirect away.
+    if (embedded) return;
     // When mounted in "add another facility" mode (initialStep >= 3 via the
     // /provider/onboarding/new-listing route), an existing session is the
     // EXPECTED state — skip the redirect to dashboard and let the form
@@ -200,7 +211,7 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         navigate("/provider/dashboard");
       }
     });
-  }, [navigate, initialStep]);
+  }, [navigate, initialStep, embedded]);
 
   // Round-30 merge: when mounted in resume mode (the unified wizard
   // already collected first/last name + email in Step 1), pre-fill
@@ -947,17 +958,29 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       //   into the unified PlanStep at /provider/onboarding?step=plan.
       //   The PlanStep handles Free (mark complete + dashboard) and Pro
       //   (Stripe Checkout). No more page-level subscription picker.
+      //
+      // 2026-05-20 unification: when this form runs OUTSIDE the unified
+      // wizard (NewListingForm's "add another facility" path), the user
+      // is already onboarded and already chose a plan. Skip the
+      // state-advance + PlanStep round trip and route straight to the
+      // dashboard with a success toast.
       analytics.signupComplete('provider', 'email');
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
       try { sessionStorage.removeItem("provider-onboarding-handoff"); } catch { /* ignore */ }
 
-      // Advance onboarding state to 'plan' BEFORE redirecting. If the
-      // upsert fails and we navigate anyway, the Onboarding page's
-      // canReach() gate sees serverCurrent='build' < target='plan' and
-      // bounces the user back to build — they get trapped in a loop
-      // with a "Let's finish the current step first" toast and no way
-      // out. Phase X fix: hard-fail with a retry CTA instead of
-      // silently logging a warning.
+      if (!embedded) {
+        toast({
+          title: "Listing published",
+          description: "Your new facility is live.",
+        });
+        navigate("/provider/dashboard");
+        return;
+      }
+
+      // Embedded (first-time onboarding) — advance state then route.
+      // Phase X fix: hard-fail with a retry CTA instead of silently
+      // logging a warning if the upsert errors, so the user isn't
+      // trapped in a canReach() bounce loop on the wizard host.
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const uid = sessionData.session?.user.id;
@@ -1134,26 +1157,30 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
     }));
   };
 
-  return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Helmet><title>List Your Facility | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
+  // 2026-05-20 unification: when `embedded=true`, render the form
+  // body without the page-level chrome (Header, Footer, Helmet,
+  // hero / value-prop, page title) — the unified wizard's host owns
+  // those, and rendering them again would double-stack. The inner
+  // step-substepper, progress bar, and form sections all stay.
+  const formBody = (
+    <>
       <UpgradeDialog
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
         feature="photos"
-        returnTo="/provider/onboarding/new-listing"
+        returnTo={embedded ? "/provider/onboarding?step=build" : "/provider/onboarding/new-listing"}
       />
-      <Header />
-
-      <main className="flex-1 py-8 md:py-16">
-        <div className="container px-4 md:px-6">
-          {/* Value proposition — shown only on step 1 to motivate sign-up */}
-          {currentStep === 1 && (
-            <ProviderValueProp className="mb-8 mx-auto max-w-4xl" />
-          )}
-          <div className="mx-auto max-w-xl">
-            {/* Header & Progress */}
-            <div className="mb-8">
+      <div className={cn(embedded ? "" : "container px-4 md:px-6")}>
+        {/* Value proposition — shown only on step 1 to motivate sign-up.
+            Suppressed when embedded — the wizard's outer header handles
+            that role. */}
+        {!embedded && currentStep === 1 && (
+          <ProviderValueProp className="mb-8 mx-auto max-w-4xl" />
+        )}
+        <div className={cn(embedded ? "w-full" : "mx-auto max-w-xl")}>
+          {/* Header & Progress */}
+          <div className="mb-8">
+            {!embedded && (
               <div className="text-center mb-6">
                 <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">
                   List Your Facility
@@ -1162,6 +1189,12 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
                   Step {currentStep} of {steps.length} — {steps[currentStep - 1].name}
                 </p>
               </div>
+            )}
+            {embedded && (
+              <p className="text-xs text-muted-foreground mb-3 text-center">
+                Build sub-step {currentStep} of {steps.length} — {steps[currentStep - 1].name}
+              </p>
+            )}
 
               {/* Progress bar */}
               <div className="h-1 rounded-full bg-muted overflow-hidden">
@@ -1963,17 +1996,34 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
               )}
             </div>
 
-            {/* Already have account */}
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link to="/login" className="text-primary hover:underline font-medium">
-                Sign in
-              </Link>
-            </p>
+            {/* Already have account — only meaningful for the
+                legacy public entry; suppressed when embedded since
+                the wizard host's AccountStep already provides the
+                Sign-in link AND the user is signed in by this point. */}
+            {!embedded && (
+              <p className="mt-6 text-center text-sm text-muted-foreground">
+                Already have an account?{" "}
+                <Link to="/login" className="text-primary hover:underline font-medium">
+                  Sign in
+                </Link>
+              </p>
+            )}
           </div>
         </div>
-      </main>
+      </>
+    );
 
+  if (embedded) {
+    return formBody;
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <Helmet><title>List Your Facility | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
+      <Header />
+      <main className="flex-1 py-8 md:py-16">
+        {formBody}
+      </main>
       <Footer />
       <BackToTop />
     </div>

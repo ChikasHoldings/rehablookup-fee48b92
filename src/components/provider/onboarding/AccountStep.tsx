@@ -29,6 +29,7 @@ import { useProviderOnboardingState } from "@/hooks/useProviderOnboardingState";
 export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
   const [searchParams] = useSearchParams();
   const claimFacilityId = searchParams.get("facility_id") || null;
+  const claimFacilitySlug = searchParams.get("facility_slug") || null;
   const intent = searchParams.get("intent"); // "claim" | null
 
   const [firstName, setFirstName] = useState("");
@@ -151,18 +152,34 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
         console.warn("[AccountStep] profile upsert warning", profileErr);
       }
 
-      // Seed onboarding state. If the user entered the wizard with
-      // ?intent=claim&facility_id=…, prefill selected_facility_id so the
-      // Find or List step jumps straight to "Continue with this facility".
+      // Seed onboarding state. If the user entered with ?intent=claim
+      // and EITHER ?facility_id=<uuid> or ?facility_slug=<slug>, resolve
+      // the slug to an id (if needed) and prefill selected_facility_id
+      // so FindOrListStep jumps straight to "Continue with this facility".
+      // Legacy /provider/claim/:slug redirects pass facility_slug; the
+      // facility-page "Claim listing" modal still passes facility_id.
+      let resolvedClaimFacilityId = claimFacilityId;
+      if (intent === "claim" && !resolvedClaimFacilityId && claimFacilitySlug) {
+        try {
+          const { data: lookup } = await supabase
+            .from("public_facilities")
+            .select("id")
+            .eq("slug", claimFacilitySlug)
+            .maybeSingle();
+          resolvedClaimFacilityId = (lookup as { id?: string } | null)?.id ?? null;
+        } catch (e) {
+          console.warn("[AccountStep] facility_slug→id lookup failed", e);
+        }
+      }
       await advance({
         current_step: "verify_email",
-        ...(intent === "claim" && claimFacilityId
-          ? { selected_facility_id: claimFacilityId, mode: "claim" }
+        ...(intent === "claim" && resolvedClaimFacilityId
+          ? { selected_facility_id: resolvedClaimFacilityId, mode: "claim" }
           : {}),
       });
       trackEvent("provider_onboarding_step_submit", {
         step_name: "account",
-        mode: intent === "claim" && claimFacilityId ? "claim" : null,
+        mode: intent === "claim" && resolvedClaimFacilityId ? "claim" : null,
         plan: null,
       });
 
