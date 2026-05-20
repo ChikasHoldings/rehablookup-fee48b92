@@ -12,6 +12,8 @@
 
 const FLUSH_INTERVAL_MS = 5_000;
 const BATCH_MAX_EVENTS = 25;
+import { supabase } from "@/integrations/supabase/client";
+
 const QUEUE_HARD_CAP = 200;
 const SESSION_KEY = "rl_session_id";
 
@@ -223,27 +225,23 @@ export const analytics = {
     const assetExtension = extMatch ? `.${extMatch[1].toLowerCase()}` : null;
     const requestKind =
       assetExtension && assetExtension !== ".html" ? "static_asset" : "spa_route";
-    import("@/integrations/supabase/client")
-      .then(({ supabase }) => {
-        supabase.functions
-          .invoke("log-not-found", {
-            body: {
-              path,
-              search: search || null,
-              referrer: referrer || null,
-              viewport: viewport || null,
-              userId: userId || null,
-              sessionId: sessionId || null,
-              httpMethod: httpMethod || "GET",
-              hash: hash || null,
-              fullUrl: fullUrl || null,
-              requestKind,
-              assetExtension,
-            },
-          })
-          .catch(() => { /* fire-and-forget */ });
+    supabase.functions
+      .invoke("log-not-found", {
+        body: {
+          path,
+          search: search || null,
+          referrer: referrer || null,
+          viewport: viewport || null,
+          userId: userId || null,
+          sessionId: sessionId || null,
+          httpMethod: httpMethod || "GET",
+          hash: hash || null,
+          fullUrl: fullUrl || null,
+          requestKind,
+          assetExtension,
+        },
       })
-      .catch(() => { /* ignore */ });
+      .catch(() => { /* fire-and-forget */ });
   },
   notFoundSearchSubmit: (p: {
     location?: string;
@@ -256,25 +254,21 @@ export const analytics = {
     userId?: string | null;
   }) => {
     if (typeof window === "undefined") return;
-    import("@/integrations/supabase/client")
-      .then(({ supabase }) => {
-        supabase.functions
-          .invoke("log-not-found-search", {
-            body: {
-              eventKind: "submit",
-              location: p.location || null,
-              treatment: p.treatment || null,
-              insurance: p.insurance || null,
-              sourcePath: p.sourcePath || null,
-              referrer: p.referrer || null,
-              viewport: p.viewport || null,
-              sessionId: p.sessionId || null,
-              userId: p.userId || null,
-            },
-          })
-          .catch(() => { /* fire-and-forget */ });
+    supabase.functions
+      .invoke("log-not-found-search", {
+        body: {
+          eventKind: "submit",
+          location: p.location || null,
+          treatment: p.treatment || null,
+          insurance: p.insurance || null,
+          sourcePath: p.sourcePath || null,
+          referrer: p.referrer || null,
+          viewport: p.viewport || null,
+          sessionId: p.sessionId || null,
+          userId: p.userId || null,
+        },
       })
-      .catch(() => { /* ignore */ });
+      .catch(() => { /* fire-and-forget */ });
   },
   notFoundSearchZeroResults: (p: {
     location?: string;
@@ -288,26 +282,22 @@ export const analytics = {
     userId?: string | null;
   }) => {
     if (typeof window === "undefined") return;
-    import("@/integrations/supabase/client")
-      .then(({ supabase }) => {
-        supabase.functions
-          .invoke("log-not-found-search", {
-            body: {
-              eventKind: "zero_results",
-              location: p.location || null,
-              treatment: p.treatment || null,
-              insurance: p.insurance || null,
-              resultsCount: p.resultsCount,
-              sourcePath: p.sourcePath || null,
-              referrer: p.referrer || null,
-              viewport: p.viewport || null,
-              sessionId: p.sessionId || null,
-              userId: p.userId || null,
-            },
-          })
-          .catch(() => { /* fire-and-forget */ });
+    supabase.functions
+      .invoke("log-not-found-search", {
+        body: {
+          eventKind: "zero_results",
+          location: p.location || null,
+          treatment: p.treatment || null,
+          insurance: p.insurance || null,
+          resultsCount: p.resultsCount,
+          sourcePath: p.sourcePath || null,
+          referrer: p.referrer || null,
+          viewport: p.viewport || null,
+          sessionId: p.sessionId || null,
+          userId: p.userId || null,
+        },
       })
-      .catch(() => { /* ignore */ });
+      .catch(() => { /* fire-and-forget */ });
   },
 
   viewSubscriptionPlan: (planId: string, planName: string, price: number) =>

@@ -17,9 +17,16 @@ const prefetchedRoutes = new Set<string>();
    return visitedRoutes.has(path);
  }
 
-// Lazy import maps for each section
+// Lazy import maps for each section.
+//
+// Note: "/" (Index) is intentionally absent — Index.tsx is statically
+// imported in App.tsx so it's already in the main bundle (the
+// homepage is the most-visited route and the LCP hit of lazy-loading
+// it would outweigh any bundle savings). Adding it here would emit a
+// Vite "dynamic import will not move module into another chunk"
+// warning. Other pages remain lazy so hover-prefetch + adjacent-route
+// prefetch can pre-load them off the critical path.
 const publicPageMap: Record<string, () => Promise<unknown>> = {
-  "/": () => import("@/pages/Index"),
   "/rehab-centers": () => import("@/pages/RehabCenters"),
   "/locations": () => import("@/pages/Locations"),
   "/treatment-types": () => import("@/pages/TreatmentTypes"),
