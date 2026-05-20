@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Download, Trash2, Loader2, Info, ExternalLink, ShieldCheck, FileCheck } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Search, Download, Trash2, Loader2, Info, ExternalLink, ShieldCheck, FileCheck, RefreshCw, ToggleRight, Link2 } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,8 @@ import {
 } from "@/components/admin/providers";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
+import { BulkProviderStatusDialog } from "@/components/admin/providers/BulkProviderStatusDialog";
+import { BulkProviderFlagDialog } from "@/components/admin/providers/BulkProviderFlagDialog";
 import {
   FACILITY_LIST_COLUMNS,
   TAB_FILTERS,
@@ -55,11 +57,28 @@ export default function AdminProviders() {
   const { logError } = useAdminErrorHandler("AdminProviders");
   const { adminRole, isSuperAdmin } = useAdminAuth();
   const canModerate = isSuperAdmin || adminRole === "super_admin" || adminRole === "manager";
-  const [searchInput, setSearchInput] = useState("");
+
+  // URL-state — tab + search round-trip through the URL so any
+  // filtered view is bookmarkable / shareable / reload-stable.
+  // Matches /admin/leads and /admin/insurance-verifications patterns.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchInput, setSearchInput] = useState(() => searchParams.get("q") ?? "");
   const searchQuery = useDebounce(searchInput, 350);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") ?? "all");
   const [selectedProvider, setSelectedProvider] = useState<Facility | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+
+  // Sync state → URL on every change. `replace: true` keeps the
+  // browser history short. Skip the default "all" tab to keep the
+  // URL tidy. Loop-guard compares before writing.
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (searchQuery) next.set("q", searchQuery);
+    if (activeTab && activeTab !== "all") next.set("tab", activeTab);
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchQuery, activeTab, searchParams, setSearchParams]);
   
   
   // Image flagging state
@@ -81,6 +100,8 @@ export default function AdminProviders() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+  const [bulkFlagOpen, setBulkFlagOpen] = useState(false);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -89,6 +110,28 @@ export default function AdminProviders() {
       return next;
     });
   };
+
+  // Copy-link helper for shareable filtered URLs.
+  const copyFilterLink = useCallback(async () => {
+    try {
+      const url = window.location.href;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const tmp = document.createElement("input");
+        tmp.value = url;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        document.body.removeChild(tmp);
+      }
+      toast.success("Filter link copied to clipboard");
+    } catch {
+      toast.error("Could not copy link");
+    }
+  }, []);
+
+  const hasActiveFilters = activeTab !== "all" || searchInput !== "";
 
   // Bulk delete walks the selected facility IDs sequentially through the
   // edge function. We track failures explicitly (not just silently dropping
@@ -169,6 +212,11 @@ export default function AdminProviders() {
       Email: p.email || "",
       Phone: p.phone,
       Verified: p.verified ? "Yes" : "No",
+      // Pro plan column — derived from the proSubscriptions map
+      // populated by the active-subscription query. Closes the
+      // monetization-visibility gap the audit flagged (the column
+      // existed in the map but never made it into the export).
+      "Pro Plan": proSubscriptions?.[p.id] ? "Yes" : "No",
       Featured: p.featured ? "Yes" : "No",
       "Placement Network": p.concierge_network_opted_in ? "Yes" : "No",
       Leads: String(leadCounts?.[p.id] || 0),
@@ -742,15 +790,55 @@ export default function AdminProviders() {
             autoComplete="off"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {selectedIds.size > 0 && canModerate && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBulkStatusOpen(true)}
+                className="gap-1.5 h-9"
+                aria-label={`Bulk update status for ${selectedIds.size} selected provider${selectedIds.size === 1 ? "" : "s"}`}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Status</span>
+                <span>({selectedIds.size})</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBulkFlagOpen(true)}
+                className="gap-1.5 h-9"
+                aria-label={`Bulk toggle flag for ${selectedIds.size} selected provider${selectedIds.size === 1 ? "" : "s"}`}
+              >
+                <ToggleRight className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Flags</span>
+                <span>({selectedIds.size})</span>
+              </Button>
+            </>
+          )}
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={copyFilterLink}
+              className="gap-1.5 h-9 text-muted-foreground hover:text-foreground"
+              aria-label="Copy a shareable link to this filtered view"
+              title="Copy a shareable link to this filtered view"
+            >
+              <Link2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Copy link</span>
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 h-9">
             <Download className="h-4 w-4" />
-            Export
+            <span className="hidden sm:inline">Export</span>
           </Button>
           {selectedIds.size > 0 && (
             <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)} className="gap-1.5 h-9">
               <Trash2 className="h-4 w-4" />
-              Delete ({selectedIds.size})
+              <span className="hidden sm:inline">Delete</span>
+              <span>({selectedIds.size})</span>
             </Button>
           )}
         </div>
@@ -892,6 +980,28 @@ export default function AdminProviders() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Status Change */}
+      <BulkProviderStatusDialog
+        open={bulkStatusOpen}
+        onOpenChange={setBulkStatusOpen}
+        selectedIds={selectedIds}
+        onSuccess={() => {
+          invalidateProviderQueries();
+          setSelectedIds(new Set());
+        }}
+      />
+
+      {/* Bulk Flag Toggle (suspend / verify / feature / concierge network) */}
+      <BulkProviderFlagDialog
+        open={bulkFlagOpen}
+        onOpenChange={setBulkFlagOpen}
+        selectedIds={selectedIds}
+        onSuccess={() => {
+          invalidateProviderQueries();
+          setSelectedIds(new Set());
+        }}
+      />
     </div>
   );
 }
