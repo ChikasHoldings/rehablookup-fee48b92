@@ -112,6 +112,25 @@ export default {
         glow: "var(--shadow-glow)",
         "accent-glow": "var(--shadow-accent-glow)",
       },
+      // Documented z-index scale used for stacking primitives. Existing
+      // numeric z-50 / z-[100] etc. usages still work — these are
+      // additional named tokens that callers can use via `z-app-header`,
+      // `z-modal`, etc. for clarity. The numeric values are spread
+      // far enough apart that ad-hoc offsets (e.g. close X inside a
+      // modal at z-modal-close = modal+10) don't collide.
+      zIndex: {
+        base: "0",
+        "in-page": "10",
+        "sticky-section": "30",
+        "app-sidebar": "40",
+        "app-header": "50",
+        dropdown: "200",
+        popover: "200",
+        tooltip: "300",
+        modal: "1000",
+        "modal-close": "1010",
+        toast: "1100",
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
