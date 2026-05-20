@@ -5,10 +5,12 @@ import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 // v3.0.0 — 2026-05-20: dropped the legacy paid-seeker concierge flow.
 // Domestic concierge is FREE for seekers; the Stripe Checkout pre-step
 // was retired with create-concierge-checkout (→ 410 Gone) and
-// verify-concierge-payment (→ 410 Gone). This function now only
-// accepts the skipPayment:true path; sessionId / Stripe lookups have
-// been removed. Phone verification (`phoneVerifiedAt` recent within
-// 60 minutes) is the sole proof-of-control gate.
+// verify-concierge-payment (→ 410 Gone). This function now has a
+// single submission path — no sessionId / no Stripe lookups. For
+// anonymous public intakes phone verification (`phoneVerifiedAt`
+// recent within 60 minutes) is the proof-of-control gate; for
+// authenticated seekers the JWT itself is the proof and the OTP
+// requirement is waived.
 const VERSION = "3.0.0";
 
 const corsHeaders = {

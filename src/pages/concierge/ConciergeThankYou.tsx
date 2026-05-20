@@ -54,10 +54,10 @@ export default function ConciergeThankYou() {
   const submissionInFlight = useRef(false);
 
   // Concierge is FREE for seekers — intake submits directly from the
-  // intake page via skipPayment:true and lands here with ?id=<inquiryId>
-  // (and optionally ?channel=free|sms for analytics). No Stripe verify,
-  // no idempotency replay — that's all handled server-side by
-  // submit-concierge-intake's idempotency_key.
+  // intake page (submit-concierge-intake) and lands here with
+  // ?id=<inquiryId> (and optionally ?channel=free|sms for analytics).
+  // No Stripe verify, no idempotency replay — that's all handled
+  // server-side by submit-concierge-intake's idempotency_key.
   useEffect(() => {
     if (submissionInFlight.current) return;
     submissionInFlight.current = true;
