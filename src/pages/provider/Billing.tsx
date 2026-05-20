@@ -101,6 +101,41 @@ export default function ProviderSubscription() {
     }
   }, [isCheckoutReturn, subscription?.status, searchParams, setSearchParams, invalidateSub, facilityId]);
 
+  // 2026-05-20 hardening: handle the two upsell-deep-link query params
+  // that callers across the panel use (WelcomeModal, ProviderSidebar,
+  // KPI strip, missed-leads, performance panel, RedirectedInquiries,
+  // CentralizedEngagementAnalytics, useProviderSearch, etc.). Without
+  // these handlers, the user lands on the page with no signal that
+  // they came in via an upgrade CTA — they have to find the upgrade
+  // buttons themselves. The toast surfaces the action; the URL strip
+  // keeps the param from re-firing on every re-render.
+  //
+  //   ?upgrade=pro  — generic "they clicked an upgrade CTA" intent
+  //   ?signup=retry — they bailed out of /signup/subscription and
+  //                   are being routed here to try again
+  const upgradeIntent = searchParams.get("upgrade");
+  const signupRetry = searchParams.get("signup");
+  useEffect(() => {
+    if (isLoading) return;
+    const isPaidOrIssue = subscription?.tier === "pro";
+    if (upgradeIntent === "pro") {
+      if (!isPaidOrIssue) {
+        toast.message("Pick monthly or annual below to upgrade to Pro.");
+      } else {
+        toast.info("You're already on Pro.");
+      }
+      const next = new URLSearchParams(searchParams);
+      next.delete("upgrade");
+      setSearchParams(next, { replace: true });
+    }
+    if (signupRetry === "retry") {
+      toast.message("Pick a billing period below to retry your Pro upgrade.");
+      const next = new URLSearchParams(searchParams);
+      next.delete("signup");
+      setSearchParams(next, { replace: true });
+    }
+  }, [upgradeIntent, signupRetry, isLoading, subscription?.tier, searchParams, setSearchParams]);
+
   const handleManageBilling = async () => {
     if (portalDebounceRef.current) return;
     portalDebounceRef.current = true;

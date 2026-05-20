@@ -36,7 +36,6 @@ import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget
 import { ProBenefitsWidget } from "@/components/provider/ProBenefitsWidget";
 import { ProMultiFacilityOverview } from "@/components/provider/ProMultiFacilityOverview";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
-import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
 import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
 
 import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
@@ -137,11 +136,12 @@ export default function ProviderDashboardPage() {
   // resolves, even for established providers.
   const hasNoFacility = !isLoading && !isPlaceholderData && !facility;
 
-  // Welcome modal - show for first-time providers (check for falsy value since null = not yet celebrated).
-  // Guard against isPlaceholderData: when useProviderData returns placeholder (localStorage cache),
-  // isLoading is false but the real DB response hasn't arrived yet. Using isPlaceholderData prevents
-  // the modal from flashing open on refresh when the cached data has profile_completion_celebrated=false.
-  const showWelcomeModal = !isLoading && !isPlaceholderData && providerData?.facility && !providerData.facility.profile_completion_celebrated;
+  // Post-onboarding welcome modal moved to ProviderShell (single
+  // global mount via <WelcomeModal/>). The Dashboard-local
+  // ProviderWelcomeModal was retired 2026-05-20 because it gated on
+  // `profile_completion_celebrated` (a per-facility flag) while
+  // WelcomeModal gates on `profiles.welcomed_at` (a per-user flag) —
+  // both fired on first dashboard load and stacked.
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -439,17 +439,12 @@ export default function ProviderDashboardPage() {
 
   return (
     <div className="min-h-full bg-background">
-      {/* Welcome Modal for New Providers */}
-      {showWelcomeModal && providerData?.facility && (
-        <ProviderWelcomeModal
-          facilityId={providerData.facility.id}
-          facilityName={providerData.facility.name}
-          isFirstLogin={true}
-          onDismiss={() => {
-            queryClient.invalidateQueries({ queryKey: ["provider-data"] });
-          }}
-        />
-      )}
+      {/* Post-onboarding welcome modal is mounted globally in
+          ProviderShell (<WelcomeModal/>) — it self-gates on
+          profiles.welcomed_at + onboarding_completed_at and is
+          plan-aware (Free → "Upgrade to Pro" CTA, Pro → "Add Featured"
+          CTA). The older ProviderWelcomeModal that used to render here
+          was a duplicate-with-different-gate and is retired. */}
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
 
