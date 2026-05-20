@@ -9,12 +9,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useAdminSidebarCounts, type AdminSidebarCounts } from "@/hooks/useAdminSidebarCounts";
+import { useAdminSidebarCounts } from "@/hooks/useAdminSidebarCounts";
+import type { AdminRouteKey } from "@/lib/notificationRouteMap";
 import {
   type NavItem,
   type NavGroup,
   type NavEntry,
-  type NavSection,
   isNavGroup,
   getNavSectionsForRole,
 } from "./adminNavConfig";
@@ -82,9 +82,14 @@ function AdminSidebarComponent({ isSuperAdmin, hasPermission, adminRole = "custo
     return hasPermission(item.permission);
   };
 
+  // Sidebar badges show ONLY unread notification counts for the
+  // destination route. The notificationRouteMap drives which
+  // notification types land where; the count comes from both the
+  // global broadcast stream and the per-user personal stream.
   const getItemCount = (item: NavItem): number => {
-    if (!item.countKey || !counts) return 0;
-    return counts[item.countKey] || 0;
+    if (!counts) return 0;
+    const route = item.to as AdminRouteKey;
+    return counts.unreadByRoute?.[route] ?? 0;
   };
 
   const renderNavItem = (entry: NavItem) => {
