@@ -1,5 +1,11 @@
 # Provider entry workflow — full unification (2026-05-20)
 
+> **Update — pages fully deleted.** This document was extended after the
+> initial commit to record the deletion of `AuthSignup.tsx`,
+> `NewListingForm.tsx`, `LegacyClaimRedirect.tsx`, and `ClaimSubmitted.tsx`
+> in favor of inline Navigate redirects in `App.tsx`. See the "Page
+> deletion" section near the bottom.
+
 Pair with `docs/monetization-plan-gate-{audit,fixes}-2026-05-20.md`.
 This document covers the second deliverable on the same branch: the
 provider sign-up → claim/list → onboarding flow is now a single page
@@ -197,3 +203,88 @@ $ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:5173/provider/onboar
    route into the unified flow with the right query params.
 ✅ TypeScript, vite build, JSX-undef, redirect-target checks all
    pass.
+
+## Page deletion (follow-up)
+
+The first commit kept four wrapper page files alive (each one a thin
+redirect or gate). A follow-up commit deleted them so
+`/provider/onboarding` is the **only** non-trivial page file in the
+provider-entry surface:
+
+| Deleted file | Replaced by |
+| --- | --- |
+| `src/pages/AuthSignup.tsx` | Inline `NavigateAuthSignup` component in `App.tsx` (preserves query params + `safeReturnTo` filter) |
+| `src/pages/provider/NewListingForm.tsx` | Inline `<Navigate to="/provider/onboarding?action=add-listing" replace />` |
+| `src/pages/provider/LegacyClaimRedirect.tsx` | Inline `NavigateProviderClaim` component in `App.tsx` (reads `useParams().slug` and promotes it to `?facility_slug=`) |
+| `src/pages/provider/ClaimSubmitted.tsx` | Inline `<Navigate to="/provider/claims" replace />`; verification timeline was already shown inline in `Claims.tsx` |
+
+### Add-another-facility flow
+
+The `/provider/onboarding/new-listing` redirect carries
+`?action=add-listing`. The wizard's `Onboarding.tsx` host:
+1. Detects `?action=add-listing` AND `profiles.onboarding_completed_at IS NOT NULL`.
+2. Skips the dashboard bounce that normally fires for onboarded users.
+3. Resets the user's `provider_onboarding_state` row to
+   `current_step='find_or_list', mode=null, selected_facility_id=null,
+   initial_facility_name=null, draft_facility_data={}` so the wizard
+   resumes at FindOrListStep with no pre-seed from the prior onboarding
+   run.
+4. Both forms' publish handlers read `profiles.onboarding_completed_at`
+   at submit time and route to `/provider/dashboard` instead of
+   PlanStep — already-onboarded users never go through the plan picker
+   again.
+
+### Claim status
+
+The retired `/provider/claim/:slug/submitted` page hosted a
+verification-method + status timeline. That info was already rendered
+inline in `Claims.tsx` (every row shows method, status chip, submitted
+date, reviewed date, rejection reason). The dedicated status page
+added no information the list page lacks — only Stripe-Pro marketing
+copy, which is now served by the existing `/provider/billing` page.
+
+### Claim resume
+
+For pending claims with unverified verification (a user bailed
+mid-claim), `Claims.tsx` now renders a "Resume" button that links to
+`/provider/onboarding?intent=claim&facility_slug=<slug>` — exactly the
+same path the public `/provider/claim/:slug` deep-link redirects to.
+The unified wizard's seeding effect pre-fills
+`selected_facility_id` and the embedded ClaimWizard's sessionStorage
+hydrates the user's prior progress.
+
+### Route inventory after deletion
+
+| Route | Element | Notes |
+| --- | --- | --- |
+| `/provider/onboarding` | `<ProviderOnboarding />` | The only non-trivial page for the workflow |
+| `/provider-signup` | `<Navigate to="/provider/onboarding" />` | Legacy, top-level Navigate |
+| `/provider/signup` | `<Navigate to="/provider/onboarding" />` | Legacy, top-level Navigate |
+| `/auth/signup` | `<NavigateAuthSignup />` | Inline redirect with query-param preservation |
+| `/provider/onboarding/new-listing` | `<Navigate to="/provider/onboarding?action=add-listing" />` | Add-another-facility |
+| `/provider/claim/:slug` | `<NavigateProviderClaim />` | Inline redirect, slug → facility_slug |
+| `/provider/claim/:slug/submitted` | `<Navigate to="/provider/claims" />` | Status info absorbed into Claims.tsx |
+
+### Smoke-test invariants
+
+`supabase/functions/_tests/provider-signup-pipeline-smoke_test.ts`
+was updated to assert:
+- All four deleted files actually no longer exist.
+- Each of the six legacy routes resolves to the right Navigate /
+  inline-redirect component.
+- `NavigateAuthSignup` uses `safeReturnTo` to filter the returnTo param.
+- `NavigateProviderClaim` promotes the `:slug` to `?facility_slug=`.
+- `Onboarding.tsx` only bounces onboarded users to the dashboard when
+  `?action=add-listing` is **absent**.
+- `BuildStep.tsx` is the single mount point for ProviderSignup
+  (`<ProviderSignup embedded initialStep={3} />`).
+
+### Final build sanity
+
+```
+$ npx tsc --noEmit           # exit 0
+$ npx vite build             # exit 0, 46.49s, all chunks emitted
+$ npm run check:no-undef-jsx # 778 .tsx files (down from 782), clean
+$ npm run check:redirect-targets
+  ✓ All redirect destinations resolve. (140 checked)
+```

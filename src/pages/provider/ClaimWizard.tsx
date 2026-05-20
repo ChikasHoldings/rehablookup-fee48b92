@@ -518,30 +518,40 @@ export default function ClaimWizard({ embedded = false, slugProp, onCancel }: Cl
                 onJump={setStep}
                 onBack={() => setStep(4)}
                 onSubmitted={async () => {
-                  // Round-30 merge: advance to wizard PlanStep instead
-                  // of marking onboarding complete. Plan selection now
-                  // happens AFTER the claim is submitted, in the unified
-                  // wizard.
+                  // 2026-05-20 unification: decide where to land based on
+                  // `profiles.onboarding_completed_at`. First-time
+                  // claimers advance state → 'plan' and route to
+                  // PlanStep. Already-onboarded users (add-another-claim
+                  // via /provider/claims) skip PlanStep and land on
+                  // /provider/claims with their new pending claim in
+                  // the list.
+                  let alreadyOnboarded = false;
                   try {
                     const { data: sessionData } = await supabase.auth.getSession();
                     const uid = sessionData.session?.user.id;
                     if (uid) {
-                      await supabase
-                        .from("provider_onboarding_state")
-                        .upsert(
-                          { user_id: uid, current_step: "plan" } as never,
-                          { onConflict: "user_id" },
-                        );
+                      const { data: profileRow } = await supabase
+                        .from("profiles")
+                        .select("onboarding_completed_at")
+                        .eq("user_id", uid)
+                        .maybeSingle();
+                      alreadyOnboarded = !!(profileRow as { onboarding_completed_at?: string | null } | null)?.onboarding_completed_at;
+                      if (!alreadyOnboarded) {
+                        await supabase
+                          .from("provider_onboarding_state")
+                          .upsert(
+                            { user_id: uid, current_step: "plan" } as never,
+                            { onConflict: "user_id" },
+                          );
+                      }
                     }
                   } catch (e) {
-                    console.warn("[ClaimWizard] onboarding state advance failed", e);
+                    console.warn("[ClaimWizard] post-submit advance failed", e);
                   }
-                  // 2026-05-20 unification: route success to the wizard's
-                  // PlanStep regardless of mount mode. The legacy
-                  // `/provider/claim/<slug>/submitted` page is retired —
-                  // the dashboard already shows verification status, and
-                  // PlanStep needs to run before onboarding can be marked
-                  // complete.
+                  if (alreadyOnboarded) {
+                    navigate("/provider/claims", { replace: true });
+                    return;
+                  }
                   navigate("/provider/onboarding?step=plan", { replace: true });
                 }}
               />

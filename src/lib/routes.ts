@@ -41,16 +41,16 @@ export const ROUTES_PUBLIC = {
 
 // ─── Auth + signup ────────────────────────────────────────────────────
 //
-// The provider entry pipeline lives at /provider/onboarding (unified
-// wizard, phases V-W). Legacy paths are Navigate-only redirects:
-//   /provider-signup → /provider/onboarding
-//   /provider/signup → /provider-signup
-//   /auth/signup     → /provider/onboarding (via AuthSignup.tsx)
+// 2026-05-20 unification: /provider/onboarding is the SINGLE page for
+// the provider sign-up / claim / list workflow. Every legacy entry
+// (/provider-signup, /provider/signup, /auth/signup,
+// /provider/onboarding/new-listing, /provider/claim/:slug,
+// /provider/claim/:slug/submitted) is now an inline Navigate redirect
+// in App.tsx — no dedicated page files anymore.
 export const ROUTES_AUTH = {
   login: "/login",
   signup: "/seeker/signup",
   providerOnboarding: "/provider/onboarding",
-  providerOnboardingNewListing: "/provider/onboarding/new-listing",
   forgotPassword: "/forgot-password",
   providerResetPassword: "/provider/reset-password",
   signupComplete: "/signup/complete",
@@ -78,8 +78,6 @@ export const ROUTES_PROVIDER = {
   imageGuidelines: "/provider/image-guidelines",
   embedBadge: "/provider/embed-badge",
   claims: "/provider/claims",
-  claimWizard: (slug: string) => `/provider/claim/${slug}`,
-  claimSubmitted: (slug: string) => `/provider/claim/${slug}/submitted`,
 } as const;
 
 // ─── Seeker panel ─────────────────────────────────────────────────────

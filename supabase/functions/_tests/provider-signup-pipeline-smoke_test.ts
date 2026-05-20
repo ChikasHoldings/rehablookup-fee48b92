@@ -33,32 +33,92 @@ async function read(relativePath: string): Promise<string> {
 }
 
 // ─── Invariant 1: single signup entry point ────────────────────────────
+//
+// 2026-05-20 unification: /provider/onboarding is the ONLY page for
+// the provider sign-up/claim/list workflow. Every legacy entry has been
+// reduced to an inline Navigate redirect in App.tsx — the previously
+// separate page files (AuthSignup.tsx, NewListingForm.tsx,
+// LegacyClaimRedirect.tsx, ClaimSubmitted.tsx) are deleted.
 
-Deno.test("pipeline: legacy /provider-signup + /auth/signup redirect to the unified wizard", async () => {
+Deno.test("pipeline: legacy provider-entry pages are deleted", async () => {
+  for (const path of [
+    "src/pages/AuthSignup.tsx",
+    "src/pages/provider/NewListingForm.tsx",
+    "src/pages/provider/LegacyClaimRedirect.tsx",
+    "src/pages/provider/ClaimSubmitted.tsx",
+  ]) {
+    let exists = true;
+    try {
+      await Deno.stat(new URL(path, REPO_ROOT));
+    } catch {
+      exists = false;
+    }
+    assert(!exists, `Legacy provider-entry page must be deleted: ${path}`);
+  }
+});
+
+Deno.test("pipeline: every legacy provider-entry route redirects into /provider/onboarding", async () => {
   const app = await read("src/App.tsx");
-  // /provider-signup is a Navigate-only route.
+
+  // /provider-signup → /provider/onboarding (top-level Navigate).
   assert(
     /path="\/provider-signup"\s+element=\{<Navigate to="\/provider\/onboarding"/.test(app),
     "/provider-signup must redirect to /provider/onboarding",
   );
-  // /provider/signup is a Navigate-only route.
+
+  // /provider/signup → /provider/onboarding (collapsed 2-hop redirect).
   assert(
-    /path="\/provider\/signup"\s+element=\{<Navigate to="\/provider-signup"/.test(app),
-    "/provider/signup must chain-redirect to /provider-signup",
+    /path="\/provider\/signup"\s+element=\{<Navigate to="\/provider\/onboarding"/.test(app),
+    "/provider/signup must redirect to /provider/onboarding",
+  );
+
+  // /auth/signup → NavigateAuthSignup component (preserves query params).
+  assert(
+    /path="\/auth\/signup"\s+element=\{<NavigateAuthSignup\s*\/>\}/.test(app),
+    "/auth/signup must mount the NavigateAuthSignup inline redirect",
+  );
+
+  // /provider/onboarding/new-listing → /provider/onboarding?action=add-listing.
+  assert(
+    /path="\/provider\/onboarding\/new-listing"[\s\S]{0,200}<Navigate to="\/provider\/onboarding\?action=add-listing"/.test(app),
+    "/provider/onboarding/new-listing must redirect to /provider/onboarding?action=add-listing",
+  );
+
+  // /provider/claim/:slug → NavigateProviderClaim component (slug → query param).
+  assert(
+    /path="\/provider\/claim\/:slug"\s+element=\{<NavigateProviderClaim\s*\/>\}/.test(app),
+    "/provider/claim/:slug must mount the NavigateProviderClaim inline redirect",
+  );
+
+  // /provider/claim/:slug/submitted → /provider/claims.
+  assert(
+    /path="\/provider\/claim\/:slug\/submitted"[\s\S]{0,200}<Navigate to="\/provider\/claims"/.test(app),
+    "/provider/claim/:slug/submitted must redirect to /provider/claims",
   );
 });
 
-Deno.test("pipeline: AuthSignup is a pure redirect, not a separate auth form", async () => {
-  const src = await read("src/pages/AuthSignup.tsx");
-  // The file must NOT import any sign-up UI components (no Inputs, no
-  // password fields, no Resend invocation).
+Deno.test("pipeline: NavigateAuthSignup preserves query params + sanitizes returnTo", async () => {
+  const app = await read("src/App.tsx");
+  // The inline component must read useSearchParams, run returnTo
+  // through safeReturnTo (rejecting //x and /\\x), and re-emit the qs.
+  assertStringIncludes(app, "function NavigateAuthSignup()");
+  assertStringIncludes(app, "function safeReturnTo(");
   assert(
-    !src.includes("signInWithPassword") && !src.includes("admin.createUser"),
-    "AuthSignup must not contain auth-creation logic (it should only redirect)",
+    /safeReturnTo\(params\.get\("returnTo"\)\)/.test(app),
+    "NavigateAuthSignup must filter returnTo through safeReturnTo",
+  );
+});
+
+Deno.test("pipeline: NavigateProviderClaim carries the slug as facility_slug", async () => {
+  const app = await read("src/App.tsx");
+  assertStringIncludes(app, "function NavigateProviderClaim()");
+  assert(
+    /params\.set\("facility_slug",\s*slug\)/.test(app),
+    "NavigateProviderClaim must promote :slug to ?facility_slug=",
   );
   assert(
-    src.includes("Navigate") && src.includes("/provider/onboarding"),
-    "AuthSignup must redirect to /provider/onboarding",
+    /intent.*:.*"claim"/.test(app),
+    "NavigateProviderClaim must stamp ?intent=claim",
   );
 });
 
@@ -77,21 +137,18 @@ Deno.test("pipeline: no remaining import of the legacy verify component", async 
   const grepFile = async (path: string): Promise<boolean> => {
     try {
       const txt = await Deno.readTextFile(new URL(path, REPO_ROOT));
-      // The unified path is .../onboarding/VerifyEmailStep, so we must
-      // reject only the legacy bare path.
       return /from\s+["']@\/components\/provider\/EmailVerificationStep["']/.test(txt);
     } catch {
+      // File doesn't exist — vacuously satisfied.
       return false;
     }
   };
-  // Spot-check the files that historically imported it.
-  for (const p of [
-    "src/pages/ProviderSignup.tsx",
-    "src/pages/AuthSignup.tsx",
-    "src/pages/provider/NewListingForm.tsx",
-  ]) {
-    assert(!(await grepFile(p)), `${p} must not import the legacy EmailVerificationStep`);
-  }
+  // ProviderSignup is the only remaining file that historically imported it.
+  // AuthSignup.tsx and NewListingForm.tsx no longer exist post-unification.
+  assert(
+    !(await grepFile("src/pages/ProviderSignup.tsx")),
+    "src/pages/ProviderSignup.tsx must not import the legacy EmailVerificationStep",
+  );
 });
 
 // ─── Invariant 2: state machine is the single source of truth ─────────
@@ -167,9 +224,11 @@ Deno.test("pipeline: ProviderSignup has an entryStep floor that blocks descent",
   );
 });
 
-Deno.test("pipeline: NewListingForm always mounts ProviderSignup at step 3", async () => {
-  const src = await read("src/pages/provider/NewListingForm.tsx");
-  assertStringIncludes(src, "<ProviderSignup initialStep={3} />");
+Deno.test("pipeline: BuildStep embeds ProviderSignup with initialStep=3", async () => {
+  // Post-unification: NewListingForm.tsx is deleted. The unified
+  // wizard's BuildStep is the only place that mounts ProviderSignup.
+  const src = await read("src/components/provider/onboarding/BuildStep.tsx");
+  assertStringIncludes(src, "<ProviderSignup embedded initialStep={3} />");
 });
 
 Deno.test("pipeline: ProviderSignup publish hard-fails on state advance error (no silent loop)", async () => {
@@ -351,15 +410,16 @@ Deno.test("pipeline: PlanStep fast-tracks Pro users whose webhook landed early",
   );
 });
 
-Deno.test("pipeline: Onboarding page redirects already-completed users to the dashboard", async () => {
+Deno.test("pipeline: Onboarding page redirects already-completed users to the dashboard (except add-listing)", async () => {
   const src = await read("src/pages/provider/Onboarding.tsx");
   // Without this, a returning Pro user who clicks a stale onboarding
-  // link sees the wizard prompting them for plan again.
+  // link sees the wizard prompting them for plan again. The add-listing
+  // exception lets them re-enter for adding another facility.
   assertStringIncludes(src, "onboarding_completed_at");
   assertStringIncludes(src, '"/provider/dashboard"');
   assert(
-    /profile\?\.onboarding_completed_at[\s\S]*Navigate to="\/provider\/dashboard"/m.test(src),
-    "Onboarding.tsx must redirect already-completed users to the dashboard",
+    /profile\?\.onboarding_completed_at\s*&&\s*!addListingIntent/.test(src),
+    "Onboarding.tsx must redirect already-completed users to the dashboard UNLESS ?action=add-listing is present",
   );
 });
 
@@ -383,13 +443,22 @@ Deno.test("pipeline: SelectedFacilityContext clears state on SIGNED_OUT", async 
   assertStringIncludes(src, "setSelectedFacilityState(null)");
 });
 
-Deno.test("pipeline: NewListingForm bounces signed-out users into the wizard with returnTo", async () => {
-  const src = await read("src/pages/provider/NewListingForm.tsx");
-  // Anon visitor to /provider/onboarding/new-listing must land on the
-  // unified wizard (with returnTo) instead of seeing a half-rendered
-  // facility form that crashes on the first DB call.
-  assertStringIncludes(src, "/provider/onboarding?");
-  assertStringIncludes(src, "returnTo");
+Deno.test("pipeline: /provider/onboarding/new-listing is a Navigate-only redirect", async () => {
+  // Post-unification: the dedicated NewListingForm page is gone. The
+  // route is now a plain inline Navigate to ?action=add-listing in
+  // App.tsx; no file at /pages/provider/NewListingForm.tsx exists.
+  const app = await read("src/App.tsx");
+  assert(
+    /path="\/provider\/onboarding\/new-listing"\s+element=\{<Navigate to="\/provider\/onboarding\?action=add-listing"/.test(app),
+    "/provider/onboarding/new-listing must be a simple Navigate to ?action=add-listing",
+  );
+  let exists = true;
+  try {
+    await Deno.stat(new URL("src/pages/provider/NewListingForm.tsx", REPO_ROOT));
+  } catch {
+    exists = false;
+  }
+  assert(!exists, "src/pages/provider/NewListingForm.tsx must be deleted");
 });
 
 // ─── Summary ──────────────────────────────────────────────────────────

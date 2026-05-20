@@ -8,10 +8,15 @@
  * RLS already scopes facility_claim_requests SELECT to the caller's own
  * rows, so we don't need an explicit user_id filter.
  *
- * Routes:
+ * Routes (2026-05-20 unification):
  *   - Approved claim → /provider/dashboard (the user now owns the facility)
- *   - Pending / under-review → /provider/claim/:slug/submitted (status page)
- *   - Anything else (rejected, withdrawn, expired) → status page too
+ *   - Pending claim w/ unverified verification → /provider/onboarding?intent=claim&facility_slug=…
+ *     (re-enter the unified wizard to finish the verification substep)
+ *   - All other states: rendered inline here (no separate status page)
+ *
+ * The retired /provider/claim/:slug/submitted page used to show a
+ * verification-method label + timeline; that information now lives in
+ * the inline row metadata + the VerificationStatusChip on this page.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -225,20 +230,22 @@ function ClaimListItem({ claim }: { claim: ClaimRow }) {
     ? METHOD_ICON[claim.verification_method]
     : null;
 
+  // 2026-05-20 unification: the only follow-up surface beyond this row
+  // is the dashboard (for approved claims). Pending/unverified claims
+  // get a "Resume" button that re-enters the unified onboarding wizard
+  // with the slug carried via query param so the user lands back at the
+  // verification substep with their sessionStorage hydrated. The retired
+  // /provider/claim/:slug/submitted page used to host a separate status
+  // view — all that info is now rendered inline below.
   const primaryHref =
-    claim.status === "approved"
-      ? "/provider/dashboard"
-      : slug
-      ? `/provider/claim/${slug}/submitted`
-      : null;
-  const primaryLabel =
-    claim.status === "approved" ? "Open dashboard" : "View status";
+    claim.status === "approved" ? "/provider/dashboard" : null;
+  const primaryLabel = "Open dashboard";
 
   const resumeHref =
     claim.status === "pending" &&
     claim.verification_status !== "verified" &&
     slug
-      ? `/provider/claim/${slug}`
+      ? `/provider/onboarding?intent=claim&facility_slug=${encodeURIComponent(slug)}`
       : null;
 
   return (

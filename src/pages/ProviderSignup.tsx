@@ -959,16 +959,34 @@ export default function ProviderSignup({
       //   The PlanStep handles Free (mark complete + dashboard) and Pro
       //   (Stripe Checkout). No more page-level subscription picker.
       //
-      // 2026-05-20 unification: when this form runs OUTSIDE the unified
-      // wizard (NewListingForm's "add another facility" path), the user
-      // is already onboarded and already chose a plan. Skip the
-      // state-advance + PlanStep round trip and route straight to the
-      // dashboard with a success toast.
+      // 2026-05-20 unification: the form always runs embedded inside
+      // the unified wizard now. The decision between "first-time
+      // onboarding → PlanStep" and "add another facility → dashboard"
+      // is driven by `profiles.onboarding_completed_at`, not by the
+      // call site. This makes the form robust regardless of how it
+      // was mounted.
       analytics.signupComplete('provider', 'email');
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
       try { sessionStorage.removeItem("provider-onboarding-handoff"); } catch { /* ignore */ }
 
-      if (!embedded) {
+      // Read onboarding completion to decide where to land after publish.
+      let alreadyOnboarded = false;
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const uid = sessionData.session?.user.id;
+        if (uid) {
+          const { data: profileRow } = await supabase
+            .from("profiles")
+            .select("onboarding_completed_at")
+            .eq("user_id", uid)
+            .maybeSingle();
+          alreadyOnboarded = !!(profileRow as { onboarding_completed_at?: string | null } | null)?.onboarding_completed_at;
+        }
+      } catch (e) {
+        console.warn("[ProviderSignup] onboarded-check failed; defaulting to first-time path", e);
+      }
+
+      if (alreadyOnboarded) {
         toast({
           title: "Listing published",
           description: "Your new facility is live.",
@@ -977,7 +995,7 @@ export default function ProviderSignup({
         return;
       }
 
-      // Embedded (first-time onboarding) — advance state then route.
+      // First-time onboarding — advance state then route to PlanStep.
       // Phase X fix: hard-fail with a retry CTA instead of silently
       // logging a warning if the upsert errors, so the user isn't
       // trapped in a canReach() bounce loop on the wizard host.

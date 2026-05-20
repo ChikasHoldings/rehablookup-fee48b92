@@ -99,6 +99,8 @@ export default function ProviderOnboarding() {
     useProviderOnboardingState();
   const { data: profile, isLoading: profileLoading } = useProviderProfile();
 
+  const addListingIntent = searchParams.get("action") === "add-listing";
+
   // 2026-05-20 unification: when an already-signed-in user arrives with
   // ?intent=claim + ?facility_slug=<slug> (or ?facility_id=<uuid>),
   // pre-seed their state row's mode + selected_facility_id so they
@@ -140,6 +142,37 @@ export default function ProviderOnboarding() {
     })();
     return () => { cancelled = true; };
   }, [stateRow, searchParams, advance]);
+
+  // 2026-05-20 unification: ?action=add-listing is the entry point for
+  // already-onboarded providers adding another facility (replaces the
+  // retired /provider/onboarding/new-listing page). Reset the state
+  // row so the wizard resumes at FindOrListStep, with no pre-seed from
+  // the user's last onboarding run. The reset happens ONCE per visit;
+  // subsequent advances are normal.
+  useEffect(() => {
+    if (!addListingIntent) return;
+    if (!profile?.onboarding_completed_at) return; // only for onboarded users
+    if (!stateRow) return;
+    // Already reset (cursor sitting at find_or_list/build with the
+    // new flow data) → do nothing.
+    if (stateRow.current_step !== "completed") return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        await advance({
+          mode: null,
+          selected_facility_id: null,
+          initial_facility_name: null,
+          draft_facility_data: {},
+          current_step: "find_or_list",
+        } as Partial<ProviderOnboardingStateRow>);
+      } catch (e) {
+        console.error("[Onboarding] add-listing state reset failed", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [addListingIntent, profile?.onboarding_completed_at, stateRow, advance]);
 
   const queryStep = searchParams.get("step") as OnboardingStep | null;
   // Round-30 merge: when a signed-in user with a profile lands here
@@ -211,8 +244,14 @@ export default function ProviderOnboarding() {
     return <Navigate to={returnTo} replace />;
   }
 
-  // Already-onboarded → bounce to dashboard.
-  if (profile?.onboarding_completed_at) {
+  // Already-onboarded → bounce to dashboard, UNLESS the user is here
+  // explicitly to add another facility (?action=add-listing). In that
+  // case fall through to the wizard — the reset effect above moved
+  // their cursor back to find_or_list so the existing rendering logic
+  // handles the rest. Forms read profile.onboarding_completed_at at
+  // publish time to decide whether to advance to PlanStep (first-time)
+  // or jump straight to the dashboard (add-listing).
+  if (profile?.onboarding_completed_at && !addListingIntent) {
     toast.success("You're already onboarded.");
     return <Navigate to="/provider/dashboard" replace />;
   }

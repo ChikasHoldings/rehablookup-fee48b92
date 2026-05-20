@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { RouteChangeTracker } from "@/components/RouteChangeTracker";
@@ -67,17 +67,13 @@ const ProviderForgotPassword = lazy(() => import("./pages/ProviderForgotPassword
 const ProviderResetPassword = lazy(() => import("./pages/ProviderResetPassword"));
 const ProviderSupport = lazy(() => import("./pages/ProviderSupport"));
 const ProviderFAQ = lazy(() => import("./pages/ProviderFAQ"));
-const AuthSignup = lazy(() => import("./pages/AuthSignup"));
 const ProviderOnboarding = lazy(() => import("./pages/provider/Onboarding"));
-// 2026-05-20 unification: ClaimWizard no longer hosts a separate page
-// during onboarding — every claim attempt flows through the unified
-// wizard at /provider/onboarding (which renders ClaimWizard inline via
-// BuildStep). NewListingForm is retained ONLY for the "add another
-// facility" path for already-onboarded providers; first-time signups
-// hit /provider/onboarding instead.
-const NewListingForm = lazy(() => import("./pages/provider/NewListingForm"));
-const LegacyClaimRedirect = lazy(() => import("./pages/provider/LegacyClaimRedirect"));
-const ClaimSubmitted = lazy(() => import("./pages/provider/ClaimSubmitted"));
+// 2026-05-20 unification: `/provider/onboarding` is the ONLY page for
+// the provider sign-up / claim / list workflow. All legacy entry routes
+// (/auth/signup, /provider-signup, /provider/signup,
+// /provider/onboarding/new-listing, /provider/claim/:slug,
+// /provider/claim/:slug/submitted) are now inline Navigate redirects
+// defined below — no separate page files, no duplicate code paths.
 const ProviderClaims = lazy(() => import("./pages/provider/Claims"));
 const ProviderROICalculator = lazy(() => import("./pages/ProviderROICalculator"));
 
@@ -447,6 +443,43 @@ function NavigateHolisticState() {
 function NavigateOutpatientNearMe() {
   const { stateSlug } = useParams();
   return <Navigate to={`/outpatient-rehab-near-me/${stateSlug}`} replace />;
+}
+
+// 2026-05-20 unification: legacy provider-entry routes collapse into
+// /provider/onboarding. These tiny inline redirects replace the
+// previously-separate page files (AuthSignup.tsx, NewListingForm.tsx,
+// LegacyClaimRedirect.tsx, ClaimSubmitted.tsx) so the unified wizard is
+// the single page for the entire sign-up/claim/list workflow.
+
+function safeReturnTo(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//")) return null;
+  if (raw.startsWith("/\\")) return null;
+  return raw;
+}
+
+/** /auth/signup → /provider/onboarding, preserving query params so deep
+ *  links (intent=claim, facility_id=…, facility_slug=…) still trickle
+ *  through to the wizard's AccountStep. */
+function NavigateAuthSignup() {
+  const [searchParams] = useSearchParams();
+  const params = new URLSearchParams(searchParams);
+  const rt = safeReturnTo(params.get("returnTo"));
+  if (rt) params.set("returnTo", rt); else params.delete("returnTo");
+  const qs = params.toString();
+  return <Navigate to={`/provider/onboarding${qs ? `?${qs}` : ""}`} replace />;
+}
+
+/** /provider/claim/:slug → /provider/onboarding?intent=claim&facility_slug=…
+ *  The unified wizard's AccountStep + post-mount seeding effect on
+ *  Onboarding resolve the slug → facility id and pre-fill
+ *  selected_facility_id once auth completes. */
+function NavigateProviderClaim() {
+  const { slug } = useParams<{ slug: string }>();
+  const params = new URLSearchParams({ intent: "claim" });
+  if (slug) params.set("facility_slug", slug);
+  return <Navigate to={`/provider/onboarding?${params.toString()}`} replace />;
 }
 
 // Legacy /dual-diagnosis-rehab-near-me/<state> → canonical /dual-diagnosis-near-me/<state>.
@@ -1343,16 +1376,23 @@ const AppInner = () => {
                 same place. The wizard owns Account → Verify → Find or
                 List → Plan → Build/Edit. */}
             <Route path="/provider-signup" element={<Navigate to="/provider/onboarding" replace />} />
-            <Route path="/auth/signup" element={<AuthSignup />} />
+            <Route path="/auth/signup" element={<NavigateAuthSignup />} />
             <Route path="/provider/onboarding" element={<ProviderOnboarding />} />
-            {/* 2026-05-20 unification: NewListingForm now acts as the
-                "add another facility" path for already-onboarded
-                providers. First-time signups never reach this route —
-                they're redirected into /provider/onboarding by the
-                NewListingForm gate. */}
-            <Route path="/provider/onboarding/new-listing" element={<NewListingForm />} />
-            <Route path="/provider/claim/:slug" element={<LegacyClaimRedirect />} />
-            <Route path="/provider/claim/:slug/submitted" element={<ClaimSubmitted />} />
+            {/* 2026-05-20 unification: every legacy entry redirects into
+                the unified wizard. "Add another facility" arrives with
+                ?action=add-listing so the wizard skips PlanStep on
+                publish. Claim deep-links carry the slug as a query param
+                so AccountStep can pre-seed selected_facility_id. The
+                post-claim status page is folded into /provider/claims. */}
+            <Route
+              path="/provider/onboarding/new-listing"
+              element={<Navigate to="/provider/onboarding?action=add-listing" replace />}
+            />
+            <Route path="/provider/claim/:slug" element={<NavigateProviderClaim />} />
+            <Route
+              path="/provider/claim/:slug/submitted"
+              element={<Navigate to="/provider/claims" replace />}
+            />
             <Route path="/provider/claims" element={<ProviderClaims />} />
             <Route path="/provider-roi-calculator" element={<PublicRouteGuard><ProviderROICalculator /></PublicRouteGuard>} />
             <Route path="/provider-login" element={<Navigate to="/login" replace />} />
