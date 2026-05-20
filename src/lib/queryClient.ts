@@ -20,8 +20,22 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       // Don't refetch on mount if data is fresh
       refetchOnMount: false,
-      // Retry failed requests twice with exponential backoff
-      retry: 2,
+      // Retry failed requests twice with exponential backoff — but
+      // DON'T retry 404s. Retrying a 404 just delays the not-found
+      // UI by 6+ seconds (2 attempts × exponential backoff) for
+      // every dead slug a user lands on. 4xx errors are by-definition
+      // not transient; retrying them wastes the user's time and the
+      // server's. 5xx errors and network errors DO benefit from
+      // retry, so we keep retry for those.
+      retry: (failureCount, error) => {
+        const status = (error as { status?: number; statusCode?: number } | undefined)?.status
+          ?? (error as { status?: number; statusCode?: number } | undefined)?.statusCode;
+        // 4xx → don't retry. Includes 404 (not found), 401 (auth),
+        // 403 (forbidden), 422 (validation), etc.
+        if (typeof status === "number" && status >= 400 && status < 500) return false;
+        // Otherwise retry up to 2 times.
+        return failureCount < 2;
+      },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
       // Use previous data as placeholder while refetching
       placeholderData: (previousData: unknown) => previousData,

@@ -264,5 +264,27 @@ export default function middleware(request: Request) {
   // Rewrite to the SPA shell so GA/Pixel always fire on every route.
   const target = new URL("/", url);
   target.search = url.search;
-  return rewrite(target);
+  const response = rewrite(target);
+
+  // 2026-05-20 cache-aggression fix: when the path is NOT prerendered,
+  // the SPA shell we just rewrote to will render NotFound (or whatever
+  // catch-all logic decides). We do NOT want that 404-feeling response
+  // cached for an hour. The vercel.json headers block applies a
+  // `max-age=60, s-maxage=3600` to known SEO prefixes (rehab-centers,
+  // resources, treatment-types, etc.) — we add a tighter override here
+  // so non-prerendered paths only cache for 60s on both browser AND
+  // CDN. After 60s the next request revalidates → if a prerendered
+  // HTML was published in the interim, the user sees it within 60s
+  // instead of waiting up to an hour. Prerendered paths still get
+  // their long cache from vercel.json (this block isn't hit for them
+  // because the crawler path serves them directly; for humans, the
+  // rewrite-to-/ is intentional and the SPA hydrates with the
+  // correct content client-side).
+  if (!PRERENDERED.has(pathname)) {
+    response.headers.set(
+      "Cache-Control",
+      "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+    );
+  }
+  return response;
 }
