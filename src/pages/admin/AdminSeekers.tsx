@@ -1,9 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useUserManagement } from "@/hooks/admin/useUserManagement";
 import { UserProfileModal } from "@/components/admin/users/UserProfileModal";
+import { BulkBanSeekersDialog } from "@/components/admin/users/BulkBanSeekersDialog";
 import { Button } from "@/components/ui/button";
 import {
   Search,
@@ -23,6 +25,7 @@ import {
   Trash2,
   Ban,
   Loader2,
+  Link2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -97,18 +100,97 @@ function useDebounce(value: string, delay: number) {
 export default function AdminSeekers() {
   const { logError } = useAdminErrorHandler("AdminUsers");
   const queryClient = useQueryClient();
-  const [searchInput, setSearchInput] = useState("");
-  const [verificationFilter, setVerificationFilter] = useState<"all" | "verified" | "unverified">("all");
+  // URL-state — search + verification filter round-trip through the
+  // URL so any filtered view is bookmarkable / shareable / reload-
+  // stable. Same pattern as /admin/leads, /admin/insurance-verifications,
+  // and /admin/providers.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchInput, setSearchInput] = useState(() => searchParams.get("q") ?? "");
+  const [verificationFilter, setVerificationFilter] = useState<"all" | "verified" | "unverified">(
+    () => (searchParams.get("verified") as "all" | "verified" | "unverified") || "all",
+  );
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  
+
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkBanOpen, setBulkBanOpen] = useState(false);
 
   const searchQuery = useDebounce(searchInput, 350);
 
+  // Sync state → URL on every change. `replace: true` keeps history
+  // short; defaults skipped to keep URLs tidy; loop-guarded compare
+  // before write to avoid the useSearchParams render loop.
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (searchQuery) next.set("q", searchQuery);
+    if (verificationFilter !== "all") next.set("verified", verificationFilter);
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchQuery, verificationFilter, searchParams, setSearchParams]);
+
+  // Realtime invalidation — Supabase channel keeps the list in sync
+  // with INSERT/UPDATE/DELETE on seeker_profiles without waiting for
+  // the next refetch. RLS gates which events the admin's JWT sees.
+  // Same pattern as /admin/leads + /admin/insurance-verifications.
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-seekers-live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "seeker_profiles" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+          queryClient.invalidateQueries({ queryKey: ["admin-users-count"] });
+          queryClient.invalidateQueries({ queryKey: ["admin-users-global-stats"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "seeker_profiles" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "seeker_profiles" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+          queryClient.invalidateQueries({ queryKey: ["admin-users-count"] });
+          queryClient.invalidateQueries({ queryKey: ["admin-users-global-stats"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const hasActiveFilters = verificationFilter !== "all" || searchInput !== "";
+
+  // Copy-link helper for shareable filtered URLs — same fallback
+  // pattern as the prior admin surfaces (Clipboard API → execCommand).
+  const copyFilterLink = useCallback(async () => {
+    try {
+      const url = window.location.href;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const tmp = document.createElement("input");
+        tmp.value = url;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        document.body.removeChild(tmp);
+      }
+      toast.success("Filter link copied to clipboard");
+    } catch {
+      toast.error("Could not copy link");
+    }
+  }, []);
 
   const toggleSelect = (userId: string) => {
     setSelectedIds((prev) => {
@@ -172,16 +254,27 @@ export default function AdminSeekers() {
   };
 
   const handleExportCSV = () => {
-    const rows = safeUsers.map((u) => ({
-      Name: getDisplayName(u),
-      Email: u.email || "",
-      Phone: u.aggregated_phone || u.phone || "",
-      City: u.aggregated_city || u.city || "",
-      State: u.aggregated_state || u.state || "",
-      Zip: u.aggregated_zipcode || u.zipcode || "",
-      "Phone Verified": u.phone_verified ? "Yes" : "No",
-      Joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : "",
-    }));
+    const rows = safeUsers.map((u) => {
+      const counts = userActivityCounts?.[u.user_id] ?? { favorites: 0, inquiries: 0, reviews: 0 };
+      return {
+        Name: getDisplayName(u),
+        Email: u.email || "",
+        Phone: u.aggregated_phone || u.phone || "",
+        City: u.aggregated_city || u.city || "",
+        State: u.aggregated_state || u.state || "",
+        Zip: u.aggregated_zipcode || u.zipcode || "",
+        "Phone Verified": u.phone_verified ? "Yes" : "No",
+        // Cross-reference linked-record counts — closes the audit's
+        // "no linked-records summary" gap. Lets ops do cohort analysis
+        // ("seekers with ≥1 inquiry but 0 reviews", etc.) in a
+        // spreadsheet without bouncing back to the dashboard.
+        Inquiries: String(counts.inquiries),
+        "Saved Facilities": String(counts.favorites),
+        Reviews: String(counts.reviews),
+        "Has Concierge": u.has_concierge ? "Yes" : "No",
+        Joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : "",
+      };
+    });
     if (!rows.length) { toast.info("No data to export"); return; }
     const headers = Object.keys(rows[0]);
     const csv = [
@@ -232,7 +325,7 @@ export default function AdminSeekers() {
     totalItems: totalCount ?? 0,
   });
 
-  const { data: users, isLoading } = useQuery({
+  const { data: users, isLoading, isFetching } = useQuery({
     queryKey: ["admin-users", currentPage, verificationFilter, searchQuery],
     queryFn: async () => {
       const from = (currentPage - 1) * pageSize;
@@ -509,12 +602,45 @@ export default function AdminSeekers() {
               </Select>
               <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 h-10">
                 <Download className="h-4 w-4" />
-                Export
+                <span className="hidden sm:inline">Export</span>
               </Button>
               {selectedIds.size > 0 && (
-                <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)} className="gap-1.5 h-10">
-                  <Trash2 className="h-4 w-4" />
-                  Delete ({selectedIds.size})
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBulkBanOpen(true)}
+                    className="gap-1.5 h-10"
+                    aria-label={`Bulk ban or unban ${selectedIds.size} selected seeker${selectedIds.size === 1 ? "" : "s"}`}
+                  >
+                    <Ban className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Ban</span>
+                    <span>({selectedIds.size})</span>
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setBulkDeleteOpen(true)}
+                    className="gap-1.5 h-10"
+                    aria-label={`Delete ${selectedIds.size} selected seeker${selectedIds.size === 1 ? "" : "s"}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Delete</span>
+                    <span>({selectedIds.size})</span>
+                  </Button>
+                </>
+              )}
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={copyFilterLink}
+                  className="gap-1.5 text-muted-foreground hover:text-foreground h-10"
+                  aria-label="Copy a shareable link to this filtered view"
+                  title="Copy a shareable link to this filtered view"
+                >
+                  <Link2 className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Copy link</span>
                 </Button>
               )}
               {hasActiveFilters && (
@@ -540,6 +666,15 @@ export default function AdminSeekers() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          {isFetching && !isLoading && (
+            <div
+              className="px-4 pt-3 -mb-1 flex items-center gap-1.5 text-[11px] text-muted-foreground"
+              aria-live="polite"
+            >
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Refreshing…
+            </div>
+          )}
           {isLoading ? (
             <div className="p-6 space-y-3">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -747,6 +882,20 @@ export default function AdminSeekers() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Ban / Unban — capped at 50, gated to moderator role
+          inside the edge fn, per-seeker audit log. */}
+      <BulkBanSeekersDialog
+        open={bulkBanOpen}
+        onOpenChange={setBulkBanOpen}
+        selectedIds={selectedIds}
+        onSuccess={() => {
+          setSelectedIds(new Set());
+          queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+          queryClient.invalidateQueries({ queryKey: ["admin-users-count"] });
+          queryClient.invalidateQueries({ queryKey: ["admin-users-global-stats"] });
+        }}
+      />
     </div>
   );
 }
