@@ -926,7 +926,6 @@ export default function ConciergeIntake() {
       const { data, error } = await supabase.functions.invoke("submit-concierge-intake", {
         body: {
           intakeData: formData,
-          skipPayment: true,
           emailVerifiedAt: emailVerification.verifiedAt,
           phoneVerifiedAt: phoneVerification.verifiedAt,
         },

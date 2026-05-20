@@ -28,14 +28,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const STORAGE_KEY = "concierge_intake_draft";
-const SUBMITTED_KEY = "concierge_submitted_sessions";
 
 export default function ConciergeThankYou() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isVerifying, setIsVerifying] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentVerified, setPaymentVerified] = useState(false);
   const [inquiryId, setInquiryId] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
@@ -51,159 +48,50 @@ export default function ConciergeThankYou() {
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [accountCreated, setAccountCreated] = useState(false);
 
-  const sessionId = searchParams.get("session_id");
-  const channel = searchParams.get("channel");
   const idParam = searchParams.get("id");
-  const isFreeFlow = channel === "free" || channel === "sms";
 
   // Guard against React strict mode double-fire
   const submissionInFlight = useRef(false);
 
+  // Concierge is FREE for seekers — intake submits directly from the
+  // intake page via skipPayment:true and lands here with ?id=<inquiryId>
+  // (and optionally ?channel=free|sms for analytics). No Stripe verify,
+  // no idempotency replay — that's all handled server-side by
+  // submit-concierge-intake's idempotency_key.
   useEffect(() => {
-    const verifyAndSubmit = async () => {
-      // Free / SMS flow — intake already submitted by the intake page.
-      // Skip Stripe verification entirely.
-      if (isFreeFlow) {
-        if (submissionInFlight.current) return;
-        submissionInFlight.current = true;
+    if (submissionInFlight.current) return;
+    submissionInFlight.current = true;
 
-        if (idParam) setInquiryId(idParam);
+    if (!idParam) {
+      setError("No request found");
+      setIsVerifying(false);
+      submissionInFlight.current = false;
+      return;
+    }
 
-        // Load saved data from localStorage for personalization
-        const savedIntake = localStorage.getItem(STORAGE_KEY);
-        if (savedIntake) {
-          try {
-            const data = JSON.parse(savedIntake)?.data || JSON.parse(savedIntake);
-            setFirstName(data.firstName || null);
-            setLastName(data.lastName || null);
-            setUserEmail(data.email || null);
-          } catch (e) {
-            console.error("Failed to parse saved intake", e);
-          }
-        }
+    setInquiryId(idParam);
 
-        // Clear draft so refresh doesn't replay it
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem("concierge_email_verified");
-        localStorage.removeItem("concierge_phone_verified");
-        localStorage.removeItem("concierge_draft_id");
-
-        setPaymentVerified(true);
-        setIsVerifying(false);
-        submissionInFlight.current = false;
-        return;
-      }
-
-      if (!sessionId) {
-        setError("No request found");
-        setIsVerifying(false);
-        return;
-      }
-
-      // Prevent concurrent submissions (React strict mode double-fire)
-      if (submissionInFlight.current) return;
-      submissionInFlight.current = true;
-
-      // Check if already submitted for this session (idempotency)
-      const submittedSessions = JSON.parse(localStorage.getItem(SUBMITTED_KEY) || "[]");
-      if (submittedSessions.includes(sessionId)) {
-        // Load saved data from localStorage for display
-        const savedIntake = localStorage.getItem(STORAGE_KEY);
-        if (savedIntake) {
-          try {
-            const data = JSON.parse(savedIntake)?.data || JSON.parse(savedIntake);
-            setFirstName(data.firstName || null);
-            setLastName(data.lastName || null);
-            setUserEmail(data.email || null);
-          } catch (e) {
-            console.error("Failed to parse saved intake", e);
-          }
-        }
-        setPaymentVerified(true);
-        setIsVerifying(false);
-        submissionInFlight.current = false;
-        return;
-      }
-
+    // Personalize from any saved intake draft, then clear it.
+    const savedIntake = localStorage.getItem(STORAGE_KEY);
+    if (savedIntake) {
       try {
-        // Verify payment
-        const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
-          "verify-concierge-payment",
-          { body: { sessionId } }
-        );
-
-        if (verifyError) throw verifyError;
-
-        if (!verifyData?.paid) {
-          setError("Payment not verified. Please contact support.");
-          setIsVerifying(false);
-          submissionInFlight.current = false;
-          return;
-        }
-
-        // Server already detected duplicate - skip re-submit
-        if (verifyData.alreadySubmitted && verifyData.inquiryId) {
-          setPaymentVerified(true);
-          setInquiryId(verifyData.inquiryId);
-          setUserEmail(verifyData.email);
-          submittedSessions.push(sessionId);
-          localStorage.setItem(SUBMITTED_KEY, JSON.stringify(submittedSessions));
-          setIsVerifying(false);
-          submissionInFlight.current = false;
-          return;
-        }
-
-        setPaymentVerified(true);
-        setUserEmail(verifyData.email);
-
-        // Get intake data from localStorage
-        const savedIntake = localStorage.getItem(STORAGE_KEY);
-        if (!savedIntake) {
-          setError("Intake data not found. Please contact support if you completed payment.");
-          setIsVerifying(false);
-          submissionInFlight.current = false;
-          return;
-        }
-
-        const intakeData = JSON.parse(savedIntake)?.data || JSON.parse(savedIntake);
-        setFirstName(intakeData.firstName || null);
-        setLastName(intakeData.lastName || null);
-        setIsSubmitting(true);
-
-        // Submit intake
-        const { data: submitData, error: submitError } = await supabase.functions.invoke(
-          "submit-concierge-intake",
-          { body: { sessionId, intakeData } }
-        );
-
-        if (submitError) throw submitError;
-
-        setInquiryId(submitData.inquiryId);
-
-        // Mark as submitted for idempotency
-        submittedSessions.push(sessionId);
-        localStorage.setItem(SUBMITTED_KEY, JSON.stringify(submittedSessions));
-
-        // Clear draft data after successful submission to prevent stale data
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem("concierge_email_verified");
-        localStorage.removeItem("concierge_draft_id");
-
-        toast.success("Your placement request has been submitted!");
-
-      } catch (err) {
-        console.error("Verification/submission error:", err);
-        setError("Something went wrong. Please contact support.");
-      } finally {
-        setIsVerifying(false);
-        setIsSubmitting(false);
-        submissionInFlight.current = false;
+        const data = JSON.parse(savedIntake)?.data || JSON.parse(savedIntake);
+        setFirstName(data.firstName || null);
+        setLastName(data.lastName || null);
+        setUserEmail(data.email || null);
+      } catch (e) {
+        console.error("Failed to parse saved intake", e);
       }
-    };
+    }
 
-    verifyAndSubmit();
-     
-  }, [sessionId, isFreeFlow, idParam]);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("concierge_email_verified");
+    localStorage.removeItem("concierge_phone_verified");
+    localStorage.removeItem("concierge_draft_id");
+
+    setIsVerifying(false);
+    submissionInFlight.current = false;
+  }, [idParam]);
 
   // Check auth status and listen for changes (e.g. user logs in from another tab)
   useEffect(() => {
@@ -380,7 +268,7 @@ export default function ConciergeThankYou() {
     }
   };
 
-  if (isVerifying || isSubmitting) {
+  if (isVerifying) {
     return (
       <>
         <Helmet>
@@ -393,7 +281,7 @@ export default function ConciergeThankYou() {
             <div className="text-center">
               <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
               <p className="text-lg text-muted-foreground">
-                {isVerifying ? "Verifying your payment..." : "Submitting your placement request..."}
+                Preparing your placement summary…
               </p>
             </div>
           </main>

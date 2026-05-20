@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -46,7 +46,6 @@ import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
 // ConciergePaymentRecovery was tied to the retired $29 paid concierge flow.
 // Domestic concierge is now free; this recovery surface no longer fires.
-import { analytics } from "@/lib/analytics";
 
 interface ConciergeInquiry {
   id: string;
@@ -92,7 +91,6 @@ export default function SeekerConcierge() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [showIntakeFlow, setShowIntakeFlow] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -181,111 +179,19 @@ export default function SeekerConcierge() {
   // Store refetch for auto-link callback
   useEffect(() => { refetchRef.current = refetch; }, [refetch]);
 
-  // Payment verification
-  const verifyPaymentAndSubmit = useCallback(async (sessionId: string) => {
-    setIsVerifyingPayment(true);
-    
-    const storeFailedSubmission = (data: any, error: string) => {
-      localStorage.setItem("concierge_failed_submission", JSON.stringify({
-        sessionId, data, error, timestamp: Date.now(),
-      }));
-    };
-
-    try {
-      const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-concierge-payment", {
-        body: { sessionId }
-      });
-
-      if (verifyError) throw verifyError;
-
-      if (verifyData?.alreadySubmitted) {
-        toast.success("Your intake was already submitted!");
-        localStorage.removeItem("concierge_pending_intake");
-        localStorage.removeItem("concierge_failed_submission");
-        refetch();
-        return;
-      }
-
-      if (verifyData?.paid) {
-        analytics.conciergeIntakeSubmitted();
-        const pendingIntake = localStorage.getItem("concierge_pending_intake");
-        if (pendingIntake) {
-          const { formData, userName, userEmail, userPhone } = JSON.parse(pendingIntake);
-          
-          const intakePayload = {
-            sessionId,
-            intakeData: {
-              ...formData,
-              decisionMakerName: userName,
-              email: userEmail,
-              phone: userPhone || "",
-            },
-            userId: currentUser?.id,
-          };
-
-          const { error: submitError } = await supabase.functions.invoke("submit-concierge-intake", {
-            body: intakePayload,
-          });
-
-          if (submitError) {
-            storeFailedSubmission(intakePayload, submitError.message);
-            throw submitError;
-          }
-
-          localStorage.removeItem("concierge_pending_intake");
-          localStorage.removeItem("concierge_failed_submission");
-          
-          toast.success("Your intake has been submitted! We'll be in touch soon.");
-          refetch();
-        } else {
-          const failedSubmission = localStorage.getItem("concierge_failed_submission");
-          if (failedSubmission) {
-            const { data: failedData } = JSON.parse(failedSubmission);
-            if (failedData?.sessionId === sessionId) {
-              const { error: retryError } = await supabase.functions.invoke("submit-concierge-intake", {
-                body: failedData,
-              });
-
-              if (!retryError) {
-                localStorage.removeItem("concierge_failed_submission");
-                toast.success("Your intake has been submitted! We'll be in touch soon.");
-                refetch();
-              } else {
-                throw retryError;
-              }
-            }
-          } else {
-            toast.success("Payment verified! Please complete the intake form.");
-          }
-        }
-      }
-
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete("session_id");
-      newParams.delete("payment");
-      setSearchParams(newParams, { replace: true });
-    } catch (err) {
-      console.error("Payment verification error:", err);
-      toast.error("Failed to submit intake. Please email placement@rehablookup.com for assistance.");
-    } finally {
-      setIsVerifyingPayment(false);
-    }
-  }, [refetch, searchParams, setSearchParams, currentUser?.id]);
-
-  // Check for payment return
+  // Legacy `?session_id=…&payment=success` and `?payment=canceled` query
+  // parameters are no longer produced by the concierge flow (domestic
+  // intake is free; the $29 Stripe step was retired 2026-05-18). Strip
+  // any stale instances from old bookmarks so they don't sit in the URL.
   useEffect(() => {
-    const sessionId = searchParams.get("session_id");
-    const paymentStatus = searchParams.get("payment");
-    
-    if (sessionId && paymentStatus === "success" && !isVerifyingPayment) {
-      verifyPaymentAndSubmit(sessionId);
-    } else if (paymentStatus === "canceled") {
-      toast.error("Payment was canceled. Please try again.");
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete("payment");
-      setSearchParams(newParams, { replace: true });
-    }
-  }, [searchParams, isVerifyingPayment, verifyPaymentAndSubmit, setSearchParams]);
+    const stalePayment = searchParams.get("payment");
+    const staleSessionId = searchParams.get("session_id");
+    if (!stalePayment && !staleSessionId) return;
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("payment");
+    newParams.delete("session_id");
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // Realtime: auto-refresh when case status or matches change
   useEffect(() => {
@@ -477,15 +383,6 @@ export default function SeekerConcierge() {
 
   // ========== STATE A: No case yet ==========
   if (!cases?.length) {
-    if (isVerifyingPayment) {
-      return (
-        <div className="container max-w-4xl py-8 flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Verifying your payment...</p>
-        </div>
-      );
-    }
-
     if (currentUser) {
       return (
         <>

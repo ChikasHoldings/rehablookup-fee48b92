@@ -246,7 +246,6 @@ export function ConciergeInlineIntake({ userEmail, userName, userPhone, userId }
       analytics.conciergeIntakeSubmitted();
       const { data, error } = await supabase.functions.invoke("submit-concierge-intake", {
         body: {
-          skipPayment: true,
           intakeData: {
             ...formData,
             currentCity: sanitize(formData.currentCity, 100),
