@@ -18,8 +18,9 @@ interface AtRiskProvider {
   riskScore: number;
   riskFactors: string[];
   lastActivity: string | null;
-  leadsUsed: number;
-  leadLimit: number;
+  /** Inquiries received for the facility this month — replaces the
+   *  retired `leadsUsed` naming (which referred to the unlock model). */
+  leadsThisMonth: number;
   daysInactive: number;
 }
 
@@ -203,8 +204,8 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
                       </div>
                       <div>
                         <span className="text-muted-foreground">Leads this month:</span>{" "}
-                        <span className={provider.leadsUsed < 3 ? "text-amber-600 font-medium" : ""}>
-                          {provider.leadsUsed}
+                        <span className={provider.leadsThisMonth < 3 ? "text-amber-600 font-medium" : ""}>
+                          {provider.leadsThisMonth}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">

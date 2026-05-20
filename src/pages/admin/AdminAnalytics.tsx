@@ -32,14 +32,6 @@ const US_STATES = [
 
 const PLAN_OPTIONS = ["All", "Free", "Pro"];
 
-// Note: Legacy PLAN_LIMITS constant kept for backward compatibility
-// In pay-per-unlock model, there are no monthly lead limits
-// Providers pay per unlock instead of having a monthly cap
-const PLAN_LIMITS: Record<string, number> = {
-  free: 0,  // Free tier: pay-per-unlock, no monthly limit
-  pro: 0,   // Pro tier: pay-per-unlock with 20% discount, no monthly limit
-};
-
 const CHART_COLORS = {
   primary: "#1B365D",
   secondary: "#3B82F6",
@@ -507,43 +499,12 @@ export default function AdminAnalytics() {
     return sourceMap[source] || source.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  // Calculate provider capacity utilization
-  const providerCapacity = useMemo(() => {
-    if (!facilities || !leadsData) return [];
-
-    const currentMonth = new Date();
-    const monthStart = startOfMonth(currentMonth);
-
-    return facilities
-      .filter(f => f.status === 'approved')
-      .map(facility => {
-        // Get leads for this month for this facility
-        const monthlyLeads = leadsData.filter(l => 
-          l.facility_id === facility.id && 
-          new Date(l.created_at) >= monthStart
-        ).length;
-
-        // Legacy lead_limit_override column was dropped during the
-        // monetization rebuild (pay-per-unlock model retired).
-        // Capacity is unbounded under flat-fee Pro/Featured; surface
-        // the raw monthly inquiry count without a derived utilization %.
-        const leadLimit = 0;
-        const usagePercentage = 0;
-
-        return {
-          id: facility.id,
-          name: facility.name,
-          city: facility.city,
-          state: facility.state,
-          monthlyLeads,
-          leadLimit,
-          usagePercentage: Math.min(usagePercentage, 100),
-          available: Math.max(leadLimit - monthlyLeads, 0),
-          atCapacity: monthlyLeads >= leadLimit,
-        };
-      })
-      .sort((a, b) => b.usagePercentage - a.usagePercentage);
-  }, [facilities, leadsData]);
+  // (The legacy `providerCapacity` useMemo was retired here. Under the
+  //  flat-fee Pro/Featured model providers have no per-month lead cap —
+  //  the value was computed but never rendered, since the
+  //  `lead_limit_override` column was dropped in the monetization
+  //  rebuild. If/when an admin-side capacity heatmap is reintroduced,
+  //  derive it from `placement_caps` instead.)
 
   // Generate time series data based on grouping
   const timeSeriesData = useMemo(() => {

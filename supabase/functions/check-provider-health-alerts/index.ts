@@ -16,8 +16,9 @@ interface AtRiskProvider {
   riskScore: number;
   riskFactors: string[];
   lastActivity: string | null;
-  leadsUsed: number;
-  leadLimit: number;
+  /** Inquiries received for the facility this month. Renamed from the
+   *  retired `leadsUsed` naming (unlock-credit model). */
+  leadsThisMonth: number;
   daysInactive: number;
 }
 
@@ -253,8 +254,7 @@ Deno.serve(async (req) => {
           riskScore,
           riskFactors,
           lastActivity: lastActivity?.created_at || null,
-          leadsUsed: leadsThisMonth || 0,
-          leadLimit: planConfig.facility_limit,
+          leadsThisMonth: leadsThisMonth || 0,
           daysInactive,
         });
       }

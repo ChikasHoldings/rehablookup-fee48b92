@@ -78,7 +78,6 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeEntry> = {
   subscription_pending_cancel: { label: "Pending Cancel", icon: warnIcon, route: "/provider/billing", category: "billing" },
   payment_failed: { label: "Payment Failed", icon: errIcon, route: "/provider/billing", category: "billing" },
   payment_confirmation: { label: "Payment Received", icon: successIcon, route: "/provider/billing", category: "billing" },
-  lead_limit_warning: { label: "Lead Limit", icon: warnIcon, route: "/provider/billing", category: "billing" },
   concierge_invoice_issued: { label: "Invoice Issued", icon: billingIcon, route: "/provider/billing", category: "billing" },
   concierge_invoice_paid: { label: "Invoice Paid", icon: <CreditCard className="h-5 w-5 text-green-500" />, route: "/provider/billing", category: "billing" },
 

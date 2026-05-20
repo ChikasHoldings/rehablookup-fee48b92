@@ -1877,15 +1877,13 @@ async function sendSeekerRejectedProviderNotification(
 async function sendProviderSmsNotification(
   supabase: any,
   userId: string,
-  notificationType: "new_lead" | "lead_status" | "lead_limit_warning" | "subscription_alert" | "general",
+  notificationType: "new_lead" | "lead_status" | "subscription_alert" | "general",
   data: {
     leadName?: string;
     leadCity?: string;
     levelOfCare?: string;
     urgency?: string;
     facilityName?: string;
-    usedLeads?: number;
-    leadLimit?: number;
     customMessage?: string;
     alertType?: string;
   }

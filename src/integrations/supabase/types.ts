@@ -3828,15 +3828,12 @@ export type Database = {
           eligibility_check_result: Json | null
           exclusivity: string | null
           id: string
-          lead_deducted_at: string | null
           lead_id: string | null
-          lead_limit: number | null
           plan_tier: string | null
           provider_routing_order: number | null
           requested_facility_id: string | null
           routing_source: string
           subscription_status: string | null
-          used_leads: number | null
         }
         Insert: {
           assigned_provider_id?: string | null
@@ -3845,15 +3842,12 @@ export type Database = {
           eligibility_check_result?: Json | null
           exclusivity?: string | null
           id?: string
-          lead_deducted_at?: string | null
           lead_id?: string | null
-          lead_limit?: number | null
           plan_tier?: string | null
           provider_routing_order?: number | null
           requested_facility_id?: string | null
           routing_source?: string
           subscription_status?: string | null
-          used_leads?: number | null
         }
         Update: {
           assigned_provider_id?: string | null
@@ -3862,15 +3856,12 @@ export type Database = {
           eligibility_check_result?: Json | null
           exclusivity?: string | null
           id?: string
-          lead_deducted_at?: string | null
           lead_id?: string | null
-          lead_limit?: number | null
           plan_tier?: string | null
           provider_routing_order?: number | null
           requested_facility_id?: string | null
           routing_source?: string
           subscription_status?: string | null
-          used_leads?: number | null
         }
         Relationships: [
           {

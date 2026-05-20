@@ -185,7 +185,7 @@ export const DashboardKPICards = forwardRef<HTMLDivElement, DashboardKPICardsPro
         )}
       </Card>
 
-      {/* Leads - Show unlock metrics */}
+      {/* Leads — total inquiries received platform-wide + this month */}
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-6">
           <CardTitle className="text-[10px] sm:text-sm font-medium text-muted-foreground truncate pr-1">Leads</CardTitle>

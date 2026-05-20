@@ -7,15 +7,13 @@ const corsHeaders = {
 
 interface SMSNotificationRequest {
   userId: string;
-  notificationType: "new_lead" | "lead_status" | "lead_limit_warning" | "subscription_alert" | "general";
+  notificationType: "new_lead" | "lead_status" | "subscription_alert" | "general";
   data: {
     leadName?: string;
     leadCity?: string;
     levelOfCare?: string;
     urgency?: string;
     facilityName?: string;
-    usedLeads?: number;
-    leadLimit?: number;
     customMessage?: string;
     alertType?: string;
   };
@@ -79,7 +77,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const validTypes = ["new_lead", "lead_status", "lead_limit_warning", "subscription_alert", "general"];
+    const validTypes = ["new_lead", "lead_status", "subscription_alert", "general"];
     if (!validTypes.includes(notificationType)) {
       logStep("Invalid notification type", { requestId, type: notificationType });
       return new Response(
@@ -224,13 +222,6 @@ Deno.serve(async (req) => {
         messageBody = `RehabLookup: Lead ${data?.leadName || ""} status updated. Check your dashboard for details.`;
         break;
         
-      case "lead_limit_warning":
-        const usedLeads = data?.usedLeads || 0;
-        const leadLimit = data?.leadLimit || 100;
-        const percentage = Math.round((usedLeads / leadLimit) * 100);
-        messageBody = `RehabLookup: You've used ${usedLeads} of ${leadLimit} leads this month (${percentage}%). Consider upgrading for more leads.`;
-        break;
-
       case "subscription_alert":
         if (data?.alertType === "expiring") {
           messageBody = `RehabLookup: Your subscription is expiring soon. Renew now to keep receiving leads.`;

@@ -180,7 +180,10 @@ export function SuperAdminDashboard() {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Fetch leads stats with unlock/revenue metrics
+  // Fetch lead-volume stats (inquiries received platform-wide).
+  // Pro subscribers receive every qualified inquiry with full PII by
+  // default — there is no per-unlock metric to count under the current
+  // flat-fee model.
   const { data: leadStats, isLoading: loadingLeads } = useQuery({
     queryKey: ["admin-lead-stats"],
     queryFn: async () => {
@@ -188,9 +191,6 @@ export function SuperAdminDashboard() {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      // Legacy lead_unlocks table dropped in the monetization rebuild — unlock-
-      // related metrics retired. Pro subscribers receive every qualified lead
-      // with full PII by default; there is no per-unlock event to count.
       const [totalMonth, totalAll, verified, newLeads] = await Promise.all([
         supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", startOfMonth.toISOString()),
         supabase.from("leads").select("id", { count: "exact", head: true }),
