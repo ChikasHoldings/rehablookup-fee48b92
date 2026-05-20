@@ -582,6 +582,11 @@
       "statusCode": 301
     },
     {
+      "source": "/outpatient-near-me",
+      "destination": "/outpatient-rehab-near-me",
+      "statusCode": 301
+    },
+    {
       "source": "/outpatient-near-me/:state",
       "destination": "/outpatient-rehab-near-me/:state",
       "statusCode": 301
@@ -589,6 +594,11 @@
     {
       "source": "/outpatient-near-me/:state/:loc",
       "destination": "/outpatient-rehab-near-me/:state/:loc",
+      "statusCode": 301
+    },
+    {
+      "source": "/dual-diagnosis-rehab-near-me",
+      "destination": "/dual-diagnosis-near-me",
       "statusCode": 301
     },
     {

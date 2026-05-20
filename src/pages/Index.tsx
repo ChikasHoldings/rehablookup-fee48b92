@@ -617,7 +617,7 @@ const Index = () => {
             </Link>
 
             <Link
-              to="/outpatient-near-me"
+              to="/outpatient-rehab-near-me"
               className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
             >
               <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">

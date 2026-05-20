@@ -276,7 +276,8 @@ const AlcoholRehabNearMe = lazy(() => import("./pages/near-me/AlcoholRehabNearMe
 const DetoxNearMe = lazy(() => import("./pages/near-me/DetoxNearMe"));
 const DualDiagnosisNearMe = lazy(() => import("./pages/near-me/DualDiagnosisNearMe"));
 const InpatientRehabNearMe = lazy(() => import("./pages/near-me/InpatientRehabNearMe"));
-const OutpatientNearMe = lazy(() => import("./pages/near-me/OutpatientNearMe"));
+// OutpatientNearMe orphaned — legacy slug now Navigates to canonical
+// outpatient-rehab-near-me (see NavigateOutpatientNearMe + App.tsx route).
 const FreeRehabNearMe = lazy(() => import("./pages/near-me/FreeRehabNearMe"));
 const LuxuryRehabNearMe = lazy(() => import("./pages/near-me/LuxuryRehabNearMe"));
 const WomensRehabNearMe = lazy(() => import("./pages/near-me/WomensRehabNearMe"));
@@ -290,7 +291,8 @@ const CourtOrderedRehabNearMe = lazy(() => import("./pages/near-me/CourtOrderedR
 const SuboxoneClinicNearMe = lazy(() => import("./pages/near-me/SuboxoneClinicNearMe"));
 const MethadoneClinicNearMe = lazy(() => import("./pages/near-me/MethadoneClinicNearMe"));
 const OutpatientRehabNearMe = lazy(() => import("./pages/near-me/OutpatientRehabNearMe"));
-const DualDiagnosisRehabNearMe = lazy(() => import("./pages/near-me/DualDiagnosisRehabNearMe"));
+// DualDiagnosisRehabNearMe orphaned — legacy slug now Navigates to canonical
+// dual-diagnosis-near-me (see NavigateDualDiagnosisRehabNearMe).
 const FaithBasedRehabNearMe = lazy(() => import("./pages/near-me/FaithBasedRehabNearMe"));
 const HolisticRehabNearMe = lazy(() => import("./pages/near-me/HolisticRehabNearMe"));
 const ChristianRehabNearMe = lazy(() => import("./pages/near-me/ChristianRehabNearMe"));
@@ -431,6 +433,20 @@ function BlogRedirect() {
 function NavigateHolisticState() {
   const { stateSlug } = useParams();
   return <Navigate to={`/treatment-types/holistic-therapy/${stateSlug}`} replace />;
+}
+
+// Legacy /outpatient-near-me/<state> → canonical /outpatient-rehab-near-me/<state>.
+// The canonical slug lives in src/data/nearMeTypes.ts. Preserving the state
+// segment ensures backlink rescue keeps geo context.
+function NavigateOutpatientNearMe() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/outpatient-rehab-near-me/${stateSlug}`} replace />;
+}
+
+// Legacy /dual-diagnosis-rehab-near-me/<state> → canonical /dual-diagnosis-near-me/<state>.
+function NavigateDualDiagnosisRehabNearMe() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/dual-diagnosis-near-me/${stateSlug}`} replace />;
 }
 
 // ============================================================
@@ -899,8 +915,13 @@ const AppInner = () => {
             <Route path="/dual-diagnosis-near-me/:stateSlug" element={<PublicRouteGuard><DualDiagnosisNearMe /></PublicRouteGuard>} />
             <Route path="/inpatient-rehab-near-me" element={<PublicRouteGuard><InpatientRehabNearMe /></PublicRouteGuard>} />
             <Route path="/inpatient-rehab-near-me/:stateSlug" element={<PublicRouteGuard><InpatientRehabNearMe /></PublicRouteGuard>} />
-            <Route path="/outpatient-near-me" element={<PublicRouteGuard><OutpatientNearMe /></PublicRouteGuard>} />
-            <Route path="/outpatient-near-me/:stateSlug" element={<PublicRouteGuard><OutpatientNearMe /></PublicRouteGuard>} />
+            {/* Legacy /outpatient-near-me → canonical /outpatient-rehab-near-me.
+                The canonical slug is registered in src/data/nearMeTypes.ts;
+                this short-form survives only as a backlink-rescue alias and
+                must Navigate to canonical so internal SPA traffic + Vercel
+                edge redirects converge on the same indexable URL. */}
+            <Route path="/outpatient-near-me" element={<Navigate to="/outpatient-rehab-near-me" replace />} />
+            <Route path="/outpatient-near-me/:stateSlug" element={<NavigateOutpatientNearMe />} />
             <Route path="/free-rehab-near-me" element={<PublicRouteGuard><FreeRehabNearMe /></PublicRouteGuard>} />
             <Route path="/free-rehab-near-me/:stateSlug" element={<PublicRouteGuard><FreeRehabNearMe /></PublicRouteGuard>} />
             <Route path="/luxury-rehab-near-me" element={<PublicRouteGuard><LuxuryRehabNearMe /></PublicRouteGuard>} />
@@ -927,8 +948,12 @@ const AppInner = () => {
             <Route path="/methadone-clinic-near-me/:stateSlug" element={<PublicRouteGuard><MethadoneClinicNearMe /></PublicRouteGuard>} />
             <Route path="/outpatient-rehab-near-me" element={<PublicRouteGuard><OutpatientRehabNearMe /></PublicRouteGuard>} />
             <Route path="/outpatient-rehab-near-me/:stateSlug" element={<PublicRouteGuard><OutpatientRehabNearMe /></PublicRouteGuard>} />
-            <Route path="/dual-diagnosis-rehab-near-me" element={<PublicRouteGuard><DualDiagnosisRehabNearMe /></PublicRouteGuard>} />
-            <Route path="/dual-diagnosis-rehab-near-me/:stateSlug" element={<PublicRouteGuard><DualDiagnosisRehabNearMe /></PublicRouteGuard>} />
+            {/* Legacy /dual-diagnosis-rehab-near-me → canonical /dual-diagnosis-near-me.
+                Canonical slug per src/data/nearMeTypes.ts. Both layers (SPA
+                Navigate + Vercel edge redirect) now converge on the same
+                indexable URL. */}
+            <Route path="/dual-diagnosis-rehab-near-me" element={<Navigate to="/dual-diagnosis-near-me" replace />} />
+            <Route path="/dual-diagnosis-rehab-near-me/:stateSlug" element={<NavigateDualDiagnosisRehabNearMe />} />
             <Route path="/faith-based-rehab-near-me" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
             <Route path="/faith-based-rehab-near-me/:stateSlug" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
             <Route path="/holistic-rehab-near-me" element={<PublicRouteGuard><HolisticRehabNearMe /></PublicRouteGuard>} />
