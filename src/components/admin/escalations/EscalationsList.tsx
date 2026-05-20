@@ -4,20 +4,17 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useEscalationTransition, type EscalationStatus } from "@/hooks/useEscalationTransition";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import { formatDistanceToNow, format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { formatDistanceToNow } from "date-fns";
 import {
   CheckCircle2,
   Clock,
   AlertTriangle,
   Loader2,
   User,
-  MessageSquare,
   ChevronRight,
   ArrowUpRight,
   ShieldCheck,
@@ -40,11 +37,34 @@ const STATUS_CONFIG = {
   closed: { label: "Closed", color: "bg-muted text-muted-foreground", icon: FileText },
 };
 
+/** Age-based SLA badge for active escalations. Same visual pattern
+ *  as /admin/concierge and /admin/providers. */
+function escalationSlaBadge(e: EscalationRow): { label: string; tone: string } | null {
+  if (e.status === "resolved" || e.status === "closed") return null;
+  const ageHours = (Date.now() - new Date(e.created_at).getTime()) / 36e5;
+  // Critical escalations have a tighter SLA — 4h amber / 24h red.
+  if (e.priority === "critical") {
+    if (ageHours >= 24) return { label: `${Math.floor(ageHours / 24)}d`, tone: "bg-destructive/10 text-destructive border-destructive/30" };
+    if (ageHours >= 4) return { label: `${Math.floor(ageHours)}h`, tone: "bg-amber-500/10 text-amber-600 border-amber-500/30" };
+    return null;
+  }
+  // Default: 24h amber / 7d red.
+  if (ageHours >= 168) return { label: `${Math.floor(ageHours / 24)}d`, tone: "bg-destructive/10 text-destructive border-destructive/30" };
+  if (ageHours >= 24) return { label: `${Math.floor(ageHours / 24)}d`, tone: "bg-amber-500/10 text-amber-600 border-amber-500/30" };
+  return null;
+}
+
 interface EscalationsListProps {
   filterStatus?: string;
   filterPriority?: string;
   searchQuery?: string;
   viewMode?: "cards" | "compact";
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onSelectAllVisible: (ids: string[]) => void;
+  /** Caller may seed a specific row open from a notification deep-link. */
+  initialOpenId?: string | null;
+  onInitialOpenConsumed?: () => void;
 }
 
 export function EscalationsList({
@@ -52,14 +72,20 @@ export function EscalationsList({
   filterPriority,
   searchQuery,
   viewMode = "cards",
+  selectedIds,
+  onToggleSelect,
+  onSelectAllVisible,
+  initialOpenId = null,
+  onInitialOpenConsumed,
 }: EscalationsListProps) {
-  const { user, isSuperAdmin } = useAdminAuth();
+  const { user, isSuperAdmin, adminRole } = useAdminAuth();
+  const canModerate = isSuperAdmin || adminRole === "super_admin" || adminRole === "manager";
   const queryClient = useQueryClient();
   const [selectedEscalation, setSelectedEscalation] = useState<EscalationRow | null>(null);
   const [quickResolveId, setQuickResolveId] = useState<string | null>(null);
   const [resolutionNotes, setResolutionNotes] = useState("");
 
-  const { data: escalations, isLoading, isError, error, refetch } = useQuery({
+  const { data: escalations, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["admin-escalations", filterStatus, filterPriority, searchQuery],
     queryFn: async () => {
       let query = supabase
@@ -69,10 +95,10 @@ export function EscalationsList({
         .limit(200);
 
       if (filterStatus !== "all") {
-        query = query.eq("status", filterStatus as any);
+        query = query.eq("status", filterStatus as "open" | "in_progress" | "resolved" | "closed");
       }
       if (filterPriority) {
-        query = query.eq("priority", filterPriority as any);
+        query = query.eq("priority", filterPriority as "low" | "medium" | "high" | "critical");
       }
 
       const { data, error } = await query;
@@ -89,6 +115,7 @@ export function EscalationsList({
       }
       return results;
     },
+    staleTime: 30 * 1000,
   });
 
   // Fetch admin names for created_by / assigned_to
@@ -102,10 +129,11 @@ export function EscalationsList({
     queryKey: ["admin-names", adminIds],
     queryFn: async () => {
       if (!adminIds.length) return {};
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("admin_user_profiles")
         .select("user_id, first_name, last_name, display_name")
         .in("user_id", adminIds);
+      if (error) throw error;
       const map: Record<string, string> = {};
       data?.forEach((a) => {
         map[a.user_id] = a.display_name || [a.first_name, a.last_name].filter(Boolean).join(" ") || "Admin";
@@ -115,15 +143,40 @@ export function EscalationsList({
     enabled: adminIds.length > 0,
   });
 
+  // Realtime channel — admin_escalations is now in the publication
+  // (migration 20260622000000). Polling at 30s as a fallback.
+  useEffect(() => {
+    const invalidate = () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-escalations"] });
+      queryClient.invalidateQueries({ queryKey: ["escalation-counts"] });
+    };
+    const interval = setInterval(invalidate, 30000);
+    const channel = supabase
+      .channel("admin-escalations-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "admin_escalations" }, () => invalidate())
+      .subscribe();
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  // Deep-link: open a specific escalation when ?id=<uuid> is in the URL.
+  useEffect(() => {
+    if (!initialOpenId) return;
+    const target = escalations?.find((e) => e.id === initialOpenId);
+    if (target) {
+      setSelectedEscalation(target);
+      onInitialOpenConsumed?.();
+    }
+  }, [initialOpenId, escalations, onInitialOpenConsumed]);
+
   const updateMutation = useEscalationTransition();
 
   const handleAssignToMe = (id: string, fromStatus: EscalationStatus) => {
     if (!user?.id) {
-      toast.error("Not authenticated");
       return;
     }
-    // Claiming an "open" escalation moves it to "in_progress"; otherwise leave
-    // status untouched (no-op write) so we don't accidentally regress state.
     const nextStatus: EscalationStatus | undefined =
       fromStatus === "open" ? "in_progress" : undefined;
     updateMutation.mutate({
@@ -195,8 +248,39 @@ export function EscalationsList({
     return adminNames?.[id] || "Admin";
   };
 
+  const allVisibleSelected =
+    escalations.length > 0 && escalations.every((e) => selectedIds.has(e.id));
+
   return (
     <>
+      {/* Background-refetch indicator — matches other admin surfaces */}
+      {isFetching && (
+        <div className="flex items-center gap-1.5 -mt-3 mb-2 text-[11px] text-muted-foreground" aria-live="polite">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Refreshing…
+        </div>
+      )}
+
+      {/* Select-all on this page */}
+      {canModerate && (
+        <div className="flex items-center gap-2 mb-3">
+          <Checkbox
+            checked={allVisibleSelected}
+            onCheckedChange={() => onSelectAllVisible(escalations.map((e) => e.id))}
+            aria-label={
+              allVisibleSelected
+                ? "Deselect all visible escalations"
+                : "Select all visible escalations"
+            }
+          />
+          <span className="text-xs text-muted-foreground">
+            {selectedIds.size > 0
+              ? `${selectedIds.size} selected`
+              : "Select all on this page"}
+          </span>
+        </div>
+      )}
+
       <div className={cn("space-y-2", viewMode === "compact" && "space-y-0 divide-y rounded-xl border overflow-hidden")}>
         {escalations.map((esc) => {
           const priorityCfg = PRIORITY_CONFIG[esc.priority as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.medium;
@@ -207,31 +291,54 @@ export function EscalationsList({
           const isQuickResolving = quickResolveId === esc.id;
           const creatorName = getAdminName(esc.created_by);
           const assigneeName = getAdminName(esc.assigned_to);
+          const sla = escalationSlaBadge(esc);
+          const isChecked = selectedIds.has(esc.id);
 
           if (viewMode === "compact") {
             return (
-              <button
+              <div
                 key={esc.id}
-                onClick={() => setSelectedEscalation(esc)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors",
-                  esc.priority === "critical" && esc.status === "open" && "bg-destructive/5"
+                  "flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors",
+                  esc.priority === "critical" && esc.status === "open" && "bg-destructive/5",
+                  isChecked && "bg-primary/5"
                 )}
               >
-                <div className={cn("h-2 w-2 rounded-full flex-shrink-0", priorityCfg.dot)} />
-                <StatusIcon className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                <span className="font-medium text-sm truncate flex-1">{esc.subject}</span>
-                {assigneeName && (
-                  <span className="text-xs text-muted-foreground hidden sm:block">{assigneeName}</span>
+                {canModerate && (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={() => onToggleSelect(esc.id)}
+                      aria-label={`Select escalation ${esc.subject}`}
+                    />
+                  </div>
                 )}
-                <Badge variant="outline" className={cn("text-[10px] flex-shrink-0", statusCfg.color)}>
-                  {statusCfg.label}
-                </Badge>
-                <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
-                  {formatDistanceToNow(new Date(esc.created_at), { addSuffix: true })}
-                </span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              </button>
+                <button
+                  onClick={() => setSelectedEscalation(esc)}
+                  className="flex-1 flex items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                  aria-label={`Open detail for ${esc.subject}`}
+                >
+                  <div className={cn("h-2 w-2 rounded-full flex-shrink-0", priorityCfg.dot)} />
+                  <StatusIcon className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                  <span className="font-medium text-sm truncate flex-1">{esc.subject}</span>
+                  {sla && (
+                    <Badge variant="outline" className={cn("text-[10px] flex-shrink-0", sla.tone)} title="Time since created">
+                      <Clock className="h-2.5 w-2.5 mr-0.5" />
+                      {sla.label}
+                    </Badge>
+                  )}
+                  {assigneeName && (
+                    <span className="text-xs text-muted-foreground hidden sm:block">{assigneeName}</span>
+                  )}
+                  <Badge variant="outline" className={cn("text-[10px] flex-shrink-0", statusCfg.color)}>
+                    {statusCfg.label}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
+                    {formatDistanceToNow(new Date(esc.created_at), { addSuffix: true })}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                </button>
+              </div>
             );
           }
 
@@ -239,15 +346,28 @@ export function EscalationsList({
             <div
               key={esc.id}
               className={cn(
-                "rounded-xl border p-4 transition-all hover:shadow-sm cursor-pointer",
+                "rounded-xl border p-4 transition-all hover:shadow-sm",
                 esc.priority === "critical" && esc.status === "open" && "border-destructive/40 bg-destructive/5",
-                esc.status === "resolved" && "opacity-75"
+                esc.status === "resolved" && "opacity-75",
+                isChecked && "ring-1 ring-primary/40 bg-primary/[0.02]"
               )}
-              onClick={() => setSelectedEscalation(esc)}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0 space-y-2">
-                  {/* Title row */}
+              <div className="flex items-start gap-3">
+                {canModerate && (
+                  <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={() => onToggleSelect(esc.id)}
+                      aria-label={`Select escalation ${esc.subject}`}
+                    />
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedEscalation(esc)}
+                  className="flex-1 min-w-0 space-y-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                  aria-label={`Open detail for ${esc.subject}`}
+                >
                   <div className="flex items-center gap-2 flex-wrap">
                     <div className={cn("h-2 w-2 rounded-full flex-shrink-0", priorityCfg.dot)} />
                     <h4 className="font-semibold text-sm">{esc.subject}</h4>
@@ -258,13 +378,17 @@ export function EscalationsList({
                       <StatusIcon className="h-3 w-3 mr-1" />
                       {statusCfg.label}
                     </Badge>
+                    {sla && (
+                      <Badge variant="outline" className={cn("text-[10px]", sla.tone)} title="Time since created">
+                        <Clock className="h-3 w-3 mr-0.5" />
+                        {sla.label}
+                      </Badge>
+                    )}
                   </div>
 
-                  {/* Description */}
                   <p className="text-xs text-muted-foreground line-clamp-2">{esc.description}</p>
 
-                  {/* Meta row */}
-                  <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-4 text-[11px] text-muted-foreground flex-wrap">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {formatDistanceToNow(new Date(esc.created_at), { addSuffix: true })}
@@ -289,13 +413,12 @@ export function EscalationsList({
                     )}
                   </div>
 
-                  {/* Resolution preview */}
                   {esc.resolution_notes && (
                     <div className="mt-1 p-2 rounded-lg bg-success/5 border border-success/20 text-xs text-success">
                       <span className="font-medium">Resolution:</span> {esc.resolution_notes}
                     </div>
                   )}
-                </div>
+                </button>
 
                 {/* Quick Actions */}
                 {canAct && (
@@ -307,6 +430,7 @@ export function EscalationsList({
                         onClick={() => handleAssignToMe(esc.id, esc.status)}
                         disabled={updateMutation.isPending}
                         className="text-xs h-8"
+                        aria-label={`Claim escalation ${esc.subject}`}
                       >
                         Claim
                       </Button>
@@ -317,6 +441,7 @@ export function EscalationsList({
                         variant="default"
                         onClick={() => setQuickResolveId(isQuickResolving ? null : esc.id)}
                         className="text-xs h-8"
+                        aria-label={`Resolve escalation ${esc.subject}`}
                       >
                         Resolve
                       </Button>
@@ -325,15 +450,15 @@ export function EscalationsList({
                 )}
               </div>
 
-              {/* Quick Resolve inline */}
               {isQuickResolving && (
                 <div className="mt-3 pt-3 border-t space-y-2" onClick={(e) => e.stopPropagation()}>
                   <Textarea
                     placeholder="Resolution notes..."
                     value={resolutionNotes}
-                    onChange={(e) => setResolutionNotes(e.target.value)}
+                    onChange={(e) => setResolutionNotes(e.target.value.slice(0, 2000))}
                     rows={2}
                     className="text-sm"
+                    maxLength={2000}
                   />
                   <div className="flex gap-2 justify-end">
                     <Button variant="outline" size="sm" onClick={() => setQuickResolveId(null)}>
@@ -355,7 +480,6 @@ export function EscalationsList({
         })}
       </div>
 
-      {/* Detail Sheet */}
       <EscalationDetailSheet
         escalation={selectedEscalation}
         open={!!selectedEscalation}
