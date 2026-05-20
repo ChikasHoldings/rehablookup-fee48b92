@@ -55,6 +55,26 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
     enabled: !!lead?.id && open,
   });
 
+  // Fetch routing-decision audit trail. This populates the "Routing"
+  // section of the timeline so an admin can see why a lead landed at
+  // a specific facility (was it Pro-tier match, was it a fallback
+  // assignment, what eligibility checks ran). Empty for legacy leads
+  // created before routing-log was instrumented; the UI handles
+  // empty gracefully.
+  const { data: routingLogs } = useQuery({
+    queryKey: ["inquiry-routing-logs", lead?.id],
+    queryFn: async () => {
+      if (!lead?.id) return [];
+      const { data } = await supabase
+        .from("lead_routing_logs")
+        .select("id, assigned_provider_id, assignment_reason, plan_tier, subscription_status, routing_source, requested_facility_id, eligibility_check_result, exclusivity, provider_routing_order, created_at")
+        .eq("lead_id", lead.id)
+        .order("created_at", { ascending: true });
+      return data || [];
+    },
+    enabled: !!lead?.id && open,
+  });
+
   // Fetch facility owner (provider)
   const { data: providerInfo } = useQuery({
     queryKey: ["inquiry-provider", lead?.facility_id],
@@ -494,6 +514,102 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-6">No distributions recorded</p>
+                  )}
+                </div>
+
+                {/* Routing decision history — shows WHY the lead landed
+                    at a specific facility. Reads lead_routing_logs which
+                    captures the tier check, eligibility-check outcome,
+                    and routing source for every assignment decision.
+                    Empty for leads created before the routing-log was
+                    instrumented; the empty state explains. */}
+                <div className="p-4 rounded-xl border bg-card">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                    <ArrowRightLeft className="h-4 w-4 text-primary" />Routing Decisions
+                    <Badge variant="secondary" className="h-4 text-[10px] px-1">{routingLogs?.length || 0}</Badge>
+                  </h4>
+                  {(routingLogs?.length || 0) > 0 ? (
+                    <div className="space-y-2">
+                      {routingLogs!.map((r) => {
+                        const assignedFac = r.assigned_provider_id ? facilityMap.get(r.assigned_provider_id) : null;
+                        const requestedFac = r.requested_facility_id ? facilityMap.get(r.requested_facility_id) : null;
+                        const eligibility = (r.eligibility_check_result ?? null) as Record<string, unknown> | null;
+                        return (
+                          <div key={r.id} className="p-3 rounded-lg bg-muted/30 space-y-1.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">
+                                  {r.assignment_reason || "Assignment recorded"}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                  {r.plan_tier && (
+                                    <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                      tier: {r.plan_tier}
+                                    </Badge>
+                                  )}
+                                  {r.subscription_status && (
+                                    <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                      sub: {r.subscription_status}
+                                    </Badge>
+                                  )}
+                                  {r.routing_source && (
+                                    <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                      src: {r.routing_source}
+                                    </Badge>
+                                  )}
+                                  {r.exclusivity && (
+                                    <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                      {r.exclusivity}
+                                    </Badge>
+                                  )}
+                                  {typeof r.provider_routing_order === "number" && (
+                                    <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                      order #{r.provider_routing_order}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
+                                {format(new Date(r.created_at), "MMM d, h:mm a")}
+                              </span>
+                            </div>
+                            {(assignedFac || requestedFac) && (
+                              <div className="text-xs text-muted-foreground space-y-0.5">
+                                {requestedFac && (
+                                  <p>
+                                    <span className="opacity-75">requested →</span> {requestedFac.name}
+                                  </p>
+                                )}
+                                {assignedFac && (
+                                  <p>
+                                    <span className="opacity-75">assigned →</span> {assignedFac.name}
+                                    {requestedFac && assignedFac.id !== requestedFac.id && (
+                                      <span className="ml-1 text-amber-700">(diverged)</span>
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            {eligibility && Object.keys(eligibility).length > 0 && (
+                              <details className="text-xs">
+                                <summary className="cursor-pointer text-muted-foreground hover:text-foreground select-none">
+                                  Eligibility check
+                                </summary>
+                                <pre className="mt-1.5 p-2 rounded bg-background/60 text-[10px] leading-snug overflow-x-auto max-h-32">
+                                  {JSON.stringify(eligibility, null, 2)}
+                                </pre>
+                              </details>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-6">
+                      No routing log entries — this lead pre-dates the routing
+                      audit, or was created via a direct facility-form submission
+                      that bypasses the routing pipeline.
+                    </p>
                   )}
                 </div>
               </div>

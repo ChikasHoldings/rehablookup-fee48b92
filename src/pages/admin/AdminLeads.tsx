@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users, Search, Mail, Phone, Zap, Download, X, Trash2,
   CheckSquare, Square, Loader2, Share2, UserCheck,
   MessageSquare, Building2, CalendarIcon, Clock, Timer,
-  ArrowRightLeft, ArrowUpDown,
+  ArrowRightLeft, ArrowUpDown, RefreshCw, Link2,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +35,7 @@ import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { exportLeadsToCSV } from "@/lib/csvExport";
 import { InquiryDetailModal } from "@/components/admin/inquiries/InquiryDetailModal";
 import { BulkReassignDialog } from "@/components/admin/inquiries/BulkReassignDialog";
+import { BulkStatusUpdateDialog } from "@/components/admin/inquiries/BulkStatusUpdateDialog";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
 
@@ -132,16 +133,32 @@ function useDebounce(value: string, delay: number) {
 export default function AdminLeads() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminLeads");
-  const [searchInput, setSearchInput] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [inquiryTypeFilter, setInquiryTypeFilter] = useState("all");
-  const [redistributionFilter, setRedistributionFilter] = useState("all");
-  const [datePreset, setDatePreset] = useState("all");
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+
+  // URL-state — filter + sort + date-range state mirrors to the
+  // URL search params so any filter combination is bookmarkable
+  // and shareable. On mount we hydrate state FROM the URL; on every
+  // change we write state BACK to the URL. Round-tripping through
+  // useSearchParams (replace, not push) keeps the back button sane.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const parseDate = (s: string | null): Date | undefined => {
+    if (!s) return undefined;
+    const d = new Date(s);
+    return Number.isNaN(d.getTime()) ? undefined : d;
+  };
+
+  const [searchInput, setSearchInput] = useState(() => searchParams.get("q") ?? "");
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get("status") ?? "all");
+  const [inquiryTypeFilter, setInquiryTypeFilter] = useState(() => searchParams.get("type") ?? "all");
+  const [redistributionFilter, setRedistributionFilter] = useState(() => searchParams.get("dist") ?? "all");
+  const [datePreset, setDatePreset] = useState(() => searchParams.get("dp") ?? "all");
+  const [dateRange, setDateRange] = useState<DateRange>(() => ({
+    from: parseDate(searchParams.get("from")),
+    to: parseDate(searchParams.get("to")),
+  }));
   // Sort state — admin can sort by any of the columns. Default
   // matches the prior locked behaviour (newest first). Each value
   // is `${column}:${direction}` so a single Select can drive both.
-  const [sortKey, setSortKey] = useState<string>("created_at:desc");
+  const [sortKey, setSortKey] = useState<string>(() => searchParams.get("sort") ?? "created_at:desc");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
@@ -150,16 +167,60 @@ export default function AdminLeads() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [bulkReassignOpen, setBulkReassignOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
 
   const searchQuery = useDebounce(searchInput, 350);
   const hasActiveFilters = statusFilter !== "all" || inquiryTypeFilter !== "all" || redistributionFilter !== "all" || searchInput !== "" || dateRange.from !== undefined;
 
+  // Sync state → URL on every change. `replace: true` keeps the
+  // browser history short (one history entry per page-load, not one
+  // per keystroke), and we skip writing default ("all") values to
+  // keep the URL tidy.
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (searchQuery) next.set("q", searchQuery);
+    if (statusFilter && statusFilter !== "all") next.set("status", statusFilter);
+    if (inquiryTypeFilter && inquiryTypeFilter !== "all") next.set("type", inquiryTypeFilter);
+    if (redistributionFilter && redistributionFilter !== "all") next.set("dist", redistributionFilter);
+    if (datePreset && datePreset !== "all") next.set("dp", datePreset);
+    if (dateRange.from) next.set("from", format(dateRange.from, "yyyy-MM-dd"));
+    if (dateRange.to) next.set("to", format(dateRange.to, "yyyy-MM-dd"));
+    if (sortKey && sortKey !== "created_at:desc") next.set("sort", sortKey);
+    // Only update if the URL params actually differ — avoids a
+    // useSearchParams render loop.
+    const a = next.toString();
+    const b = searchParams.toString();
+    if (a !== b) setSearchParams(next, { replace: true });
+  }, [searchQuery, statusFilter, inquiryTypeFilter, redistributionFilter, datePreset, dateRange, sortKey, searchParams, setSearchParams]);
 
   const clearAllFilters = () => {
     setStatusFilter("all"); setInquiryTypeFilter("all"); setRedistributionFilter("all");
     setSearchInput(""); setDatePreset("all"); setDateRange({ from: undefined, to: undefined });
     setSortKey("created_at:desc"); setCurrentPage(1); setSelectedIds(new Set());
   };
+
+  const copyFilterLink = useCallback(async () => {
+    try {
+      const url = window.location.href;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        toast.success("Filter link copied to clipboard");
+      } else {
+        // Fallback for environments where the clipboard API is unavailable
+        // (older browsers, insecure contexts). Selecting an input is the
+        // most reliable cross-browser fallback.
+        const tmp = document.createElement("input");
+        tmp.value = url;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        document.body.removeChild(tmp);
+        toast.success("Filter link copied to clipboard");
+      }
+    } catch {
+      toast.error("Could not copy link");
+    }
+  }, []);
 
   const handleDatePresetChange = (value: string) => {
     setDatePreset(value);
@@ -441,6 +502,17 @@ export default function AdminLeads() {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="gap-1.5"
+                  onClick={() => setBulkStatusOpen(true)}
+                  aria-label={`Update status for ${selectedIds.size} selected lead${selectedIds.size === 1 ? "" : "s"}`}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Status</span>
+                  <span>({selectedIds.size})</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="gap-1.5 border-primary/40 text-primary hover:bg-primary/5"
                   onClick={() => setBulkReassignOpen(true)}
                   aria-label={`Reassign ${selectedIds.size} selected lead${selectedIds.size === 1 ? "" : "s"}`}
@@ -461,6 +533,19 @@ export default function AdminLeads() {
                   <span>({selectedIds.size})</span>
                 </Button>
               </>
+            )}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={copyFilterLink}
+                aria-label="Copy a shareable link to this filtered view"
+                title="Copy a shareable link to this filtered view"
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Copy link</span>
+              </Button>
             )}
             <Button variant="outline" size="sm" className="gap-2" onClick={handleExportCSV} disabled={!leads || leads.length === 0}>
               <Download className="h-4 w-4" />
@@ -879,6 +964,17 @@ export default function AdminLeads() {
         onOpenChange={setBulkReassignOpen}
         selectedIds={selectedIds}
         facilities={facilities || []}
+        onSuccess={() => {
+          invalidateAll();
+          setSelectedIds(new Set());
+        }}
+      />
+
+      {/* Bulk Status Update */}
+      <BulkStatusUpdateDialog
+        open={bulkStatusOpen}
+        onOpenChange={setBulkStatusOpen}
+        selectedIds={selectedIds}
         onSuccess={() => {
           invalidateAll();
           setSelectedIds(new Set());
