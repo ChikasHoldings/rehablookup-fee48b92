@@ -215,6 +215,34 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
     onError: () => toast.error("Failed to flag"),
   });
 
+  // Resend facility notification — admin-only nudge that re-fires the
+  // provider's lead-notification email. Calls the admin-resend-lead-
+  // notification edge function which rate-limits to 3 resends per
+  // (admin, lead) per hour, writes an audit-log entry, and adds a
+  // lead_notes line.
+  const resendNotificationMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+      const { data, error } = await supabase.functions.invoke("admin-resend-lead-notification", {
+        body: { leadId: lead.id },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as { recipient: string };
+    },
+    onSuccess: (res) => {
+      toast.success(`Notification resent to ${res.recipient}`);
+      refetchNotes();
+      onLeadUpdated();
+    },
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : "Failed to resend";
+      toast.error(msg);
+    },
+  });
+
   // Save note
   const handleSaveNote = async () => {
     if (!noteText.trim() || !lead?.id) return;
@@ -500,6 +528,32 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                     </div>
                     {reassignMutation.isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                   </div>
+                </div>
+
+                {/* Resend Facility Notification */}
+                <div className="p-4 rounded-xl border bg-card">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-primary" />Resend Facility Notification
+                  </h4>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Re-fires the facility's lead-notification email. Useful when a provider says they
+                    didn't receive the original. Rate-limited to 3 resends per hour per lead.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => resendNotificationMutation.mutate()}
+                    disabled={resendNotificationMutation.isPending || !lead.facility_id}
+                    className="gap-1.5"
+                    title={!lead.facility_id ? "Lead has no facility assigned" : undefined}
+                  >
+                    {resendNotificationMutation.isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Mail className="h-3.5 w-3.5" />
+                    )}
+                    Resend notification email
+                  </Button>
                 </div>
 
                 {/* Mark Contacted */}
