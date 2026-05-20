@@ -96,7 +96,7 @@ function. RLS enabled with zero policies → full lockdown. Edge
 function writes via `SUPABASE_SERVICE_ROLE_KEY` which bypasses RLS.
 
 **Action**: Added `COMMENT ON TABLE` documenting service-role-only
-intent (migration `20260520010000_document_service_role_only_tables.sql`).
+intent (migration `20260520042915_document_service_role_only_tables.sql`).
 The lint will continue to flag (it's a structural policy-count
 check), but a developer reading the schema now sees the intent in
 `pg_class` comments.
@@ -137,7 +137,7 @@ The lint can be silenced by either:
 - (a) Adding explicit `GRANT EXECUTE ON FUNCTION foo() TO authenticated` /
   `REVOKE ALL ... FROM PUBLIC` — already done on the canonical
   monetization RPCs (verified in migration
-  `20260520000000_plan_gate_hardening.sql`).
+  `20260520020409_plan_gate_hardening.sql`).
 - (b) Annotating the function with `SECURITY INVOKER` where possible
   — only viable when the function doesn't need the elevated context.
 
@@ -280,7 +280,7 @@ are the real enforcement.
 
 ## Action this commit
 
-Single migration: `20260520010000_document_service_role_only_tables.sql`
+Single migration: `20260520042915_document_service_role_only_tables.sql`
 — adds a `COMMENT ON TABLE` to `lead_email_resend_attempts`
 documenting the service-role-only intent. Applied to prod via
 Supabase MCP. Idempotent and reversible.

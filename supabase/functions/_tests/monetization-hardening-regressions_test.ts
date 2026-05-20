@@ -40,7 +40,7 @@ async function exists(rel: string): Promise<boolean> {
 // ─── Prompt 1 — plan-gate hardening ────────────────────────────────────
 
 Deno.test("plan-gate: profiles.plan tightened to NOT NULL via gated migration", async () => {
-  const sql = await read("supabase/migrations/20260520000000_plan_gate_hardening.sql");
+  const sql = await read("supabase/migrations/20260520020409_plan_gate_hardening.sql");
   // The ALTER must be gated on NO NULL rows remaining so it never
   // fails mid-migration. Look for the exact gate shape.
   assert(
@@ -51,7 +51,7 @@ Deno.test("plan-gate: profiles.plan tightened to NOT NULL via gated migration", 
 });
 
 Deno.test("plan-gate: complete_provider_onboarding refuses no-plan completion", async () => {
-  const sql = await read("supabase/migrations/20260520000000_plan_gate_hardening.sql");
+  const sql = await read("supabase/migrations/20260520020409_plan_gate_hardening.sql");
   // The RPC must check for both a recorded state.plan AND an active
   // Pro subscription, raising if neither.
   assertStringIncludes(sql, "Cannot mark onboarding complete without a plan choice");
@@ -63,7 +63,7 @@ Deno.test("plan-gate: complete_provider_onboarding refuses no-plan completion", 
 });
 
 Deno.test("plan-gate: state-row completion trigger blocks unsafe transitions", async () => {
-  const sql = await read("supabase/migrations/20260520000000_plan_gate_hardening.sql");
+  const sql = await read("supabase/migrations/20260520020409_plan_gate_hardening.sql");
   assertStringIncludes(sql, "enforce_onboarding_state_completion_requires_plan");
   assertStringIncludes(sql, "provider_onboarding_state_completion_plan_chk");
   assertStringIncludes(sql, "USING ERRCODE = 'check_violation'");

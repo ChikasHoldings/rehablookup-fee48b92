@@ -54,7 +54,7 @@ never returns will sit at `current_step='plan'` indefinitely. Next
 visit to `/provider/onboarding` resumes them at PlanStep — they can't
 escape the gate. This is the desired behavior.
 
-## Fix 2 — Migration `20260520000000_plan_gate_hardening.sql` (Findings 4 + 6)
+## Fix 2 — Migration `20260520020409_plan_gate_hardening.sql` (Findings 4 + 6)
 
 Applied to production via Supabase MCP `apply_migration` (verified:
 zero NULL plans remaining, NOT NULL constraint active, trigger
