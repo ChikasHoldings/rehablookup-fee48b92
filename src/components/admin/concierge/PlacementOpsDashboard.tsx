@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  AlertTriangle, Clock, Users, Send, Eye, Building2, DollarSign,
-  CheckCircle2, XCircle, ChevronRight, Flame, Timer, UserCheck, Zap, Bot,
+  AlertTriangle, Users, Eye, Building2,
+  CheckCircle2, ChevronRight, Flame, Timer, Bot,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { getStageConfig, STATUS_CONFIG } from "./placementPipelineConfig";
@@ -20,8 +20,6 @@ interface CaseRow {
   assigned_advisor_id: string | null;
   match_count: number | null;
   placement_confirmed?: boolean | null;
-  admission_status?: string;
-  admission_substatus?: string;
   tour_coordination_status?: string;
   seeker_confirmed?: boolean | null;
   created_at: string;
@@ -39,7 +37,11 @@ interface PlacementOpsDashboardProps {
   currentAdvisorId?: string;
 }
 
-// How many hours before a case is considered "stuck" per stage
+// How many hours before a case is considered "stuck" per stage.
+// Stages from the retired paid-placement workflow (admission_in_progress,
+// admitted, billed) are intentionally omitted — legacy rows fall
+// through and are surfaced via the "Close legacy case" prompt
+// instead of being tracked as stuck.
 const STUCK_THRESHOLDS: Record<string, number> = {
   intake_submitted: 4,
   intake_reviewed: 8,
@@ -50,9 +52,6 @@ const STUCK_THRESHOLDS: Record<string, number> = {
   providers_accepted: 24,
   presented_to_seeker: 72,
   seeker_selected: 48,
-  admission_in_progress: 72,
-  admitted: 48,
-  billed: 168, // 7 days
 };
 
 function hoursInCurrentStage(c: CaseRow): number {
@@ -92,8 +91,10 @@ export function PlacementOpsDashboard({
     const awaitingSeeker = activeCases.filter(c =>
       ["presented_to_seeker"].includes(c.status)
     );
-    const admissionsInProgress = activeCases.filter(c =>
-      ["admission_in_progress", "admitted"].includes(c.status)
+    const placed = activeCases.filter(c =>
+      // Includes legacy admission_* / billed rows so they don't get
+      // lost on the dashboard until they're closed out.
+      ["seeker_selected", "admission_in_progress", "admitted", "billed"].includes(c.status)
     );
     const completed = cases.filter(c => c.status === "completed");
 
@@ -126,20 +127,20 @@ export function PlacementOpsDashboard({
         emptyMessage: "No cases awaiting client decision",
       },
       {
-        key: "admission",
-        label: "Admissions In Progress",
-        icon: Building2,
-        color: "text-sky-600",
-        badgeColor: "bg-sky-500/10 text-sky-600 border-sky-500/30",
-        cases: admissionsInProgress,
-        emptyMessage: "No active admissions",
+        key: "placed",
+        label: "Placed — Ready to Close",
+        icon: CheckCircle2,
+        color: "text-emerald-600",
+        badgeColor: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
+        cases: placed,
+        emptyMessage: "No placed cases pending close",
       },
       {
         key: "completed",
         label: "Completed Placements",
         icon: CheckCircle2,
-        color: "text-emerald-600",
-        badgeColor: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
+        color: "text-success",
+        badgeColor: "bg-success/10 text-success border-success/30",
         cases: completed.slice(0, 10),
         emptyMessage: "No completed placements yet",
       },
@@ -153,7 +154,7 @@ export function PlacementOpsDashboard({
     const action = getCaseNextAction(c);
     return action.priority === "blocker" || action.priority === "high";
   }).length;
-  const billedPending = activeCases.filter(c => c.status === "billed").length;
+  const placedReady = buckets[3].cases.length;
   const autoProcessing = activeCases.filter(c =>
     ["intake_submitted", "matching_providers", "matched"].includes(c.status)
   ).length;
@@ -183,10 +184,10 @@ export function PlacementOpsDashboard({
           pulse={stuckCount > 0}
         />
         <SummaryCard
-          label="Pending Payment"
-          value={billedPending}
-          icon={DollarSign}
-          color="text-amber-600"
+          label="Placed — Ready to Close"
+          value={placedReady}
+          icon={CheckCircle2}
+          color="text-emerald-600"
         />
         <SummaryCard
           label="Auto-Processing"

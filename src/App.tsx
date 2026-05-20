@@ -397,10 +397,12 @@ const AdminConciergeMetrics = lazy(() => import("./pages/admin/AdminConciergeMet
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
 const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
-const AdvisorInbox = lazy(() => import("./pages/admin/AdvisorInbox"));
+// AdvisorInbox + AdvisorProviderDirectory are now embedded as tabs inside
+// AdminConcierge (the unified Placements workspace), so they no longer
+// need a top-level lazy boundary in App.tsx — the standalone routes
+// redirect via <Navigate>.
 const AdminEscalations = lazy(() => import("./pages/admin/AdminEscalations"));
 const AdminBackOffice = lazy(() => import("./pages/admin/AdminBackOffice"));
-const AdvisorProviderDirectory = lazy(() => import("./pages/admin/AdvisorProviderDirectory"));
 const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
 
 /**
@@ -1838,10 +1840,14 @@ const AppInner = () => {
               <Route path="support" element={<AdminSupport />} />
               <Route path="marketing" element={<AdminMarketing />} />
               <Route path="blog" element={<AdminBlog />} />
-              <Route path="inbox" element={<AdvisorInbox />} />
+              {/* Advisor inbox + Provider directory unified into the
+                  /admin/concierge Placements workspace tabs (2026-05-20).
+                  Redirects keep old bookmarks landing on the correct
+                  tab inside the unified page. */}
+              <Route path="inbox" element={<Navigate to="/admin/concierge?tab=inbox" replace />} />
               <Route path="escalations" element={<AdminEscalations />} />
               <Route path="back-office" element={<AdminBackOffice />} />
-              <Route path="provider-directory" element={<AdvisorProviderDirectory />} />
+              <Route path="provider-directory" element={<Navigate to="/admin/concierge?tab=directory" replace />} />
               <Route path="email-logs" element={<AdminEmailLogs />} />
               <Route path="not-found-events" element={<AdminNotFoundEvents />} />
             </Route>

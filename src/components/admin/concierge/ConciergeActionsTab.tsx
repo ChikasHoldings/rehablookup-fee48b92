@@ -57,7 +57,7 @@ function getStatusOptions(currentStatus: string, isAdvisor: boolean) {
   const advisorAllowed = new Set([
     "intake_reviewed", "advisor_assigned", "matching_providers",
     "provider_prequalification", "providers_accepted",
-    "presented_to_seeker", "seeker_selected", "admission_in_progress",
+    "presented_to_seeker", "seeker_selected",
   ]);
 
   return uniqueKeys
@@ -86,9 +86,13 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
 
   const updateCaseMutation = useMutation({
     mutationFn: async (updates: Partial<ConciergeInquiry>) => {
-      // For status changes, delegate to the centralized transition hook
+      // For status changes, delegate to the centralized transition hook.
+      // Legacy `admitted` rows are read-only except for the "close case"
+      // action — the paid-placement workflow was retired so we don't
+      // want to encourage editing in-progress admissions, but admins
+      // need a path to close them out.
       if (updates.status && updates.status !== caseData.status) {
-      if ((caseData.status === 'admitted' || caseData.status === 'completed') && updates.status !== 'closed') {
+        if ((caseData.status === 'admitted' || caseData.status === 'completed') && updates.status !== 'closed') {
           throw new Error("Cannot change status of a confirmed placement. Close the case instead.");
         }
         // Use transition hook via mutateAsync so we get optimistic locking
@@ -290,7 +294,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       )}
 
       {/* Seeker confirmed indicator for admin */}
-      {caseData.seeker_confirmed && !["admitted", "completed", "billed", "closed"].includes(caseData.status) && (
+      {caseData.seeker_confirmed && !["completed", "closed"].includes(caseData.status) && (
         <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">

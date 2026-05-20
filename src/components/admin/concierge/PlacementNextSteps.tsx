@@ -36,10 +36,9 @@ const TAB_LABELS: Record<string, string> = {
   seeker: "Client",
   matching: "Match",
   intros: "Intros",
+  messages: "Messages",
   decision: "Decision",
   tours: "Tours",
-  admission: "Admission",
-  billing: "Billing",
   timeline: "Notes",
   actions: "Actions",
 };
@@ -64,9 +63,6 @@ function getUrgencyInfo(caseData: ConciergeInquiry): { label: string; level: "ov
     providers_accepted: 24,
     presented_to_seeker: 48,
     seeker_selected: 72,
-    admission_in_progress: 72,
-    admitted: 168,
-    billed: 168,
   };
 
   const sla = SLA_HOURS[status];

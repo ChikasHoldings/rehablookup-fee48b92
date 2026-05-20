@@ -16,7 +16,6 @@ export interface CaseSlaData {
   assigned_advisor_id?: string | null;
   payment_status?: string;
   tour_coordination_status?: string;
-  admission_status?: string;
   placement_confirmed?: boolean | null;
   seeker_confirmed?: boolean | null;
   introductions_sent_count?: number | null;
@@ -40,10 +39,11 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
     const hoursSinceUpdate = differenceInHours(now, updatedAt);
     const hoursSinceCreation = differenceInHours(now, createdAt);
 
-    // Skip closed/completed/admitted/billed cases. Under the EKRA-compliant
-    // flat-fee model, domestic concierge has no provider fee, so once a case
-    // reaches "admitted" or "billed" there's no further SLA to monitor.
-    if (["closed", "completed", "admitted", "billed"].includes(caseData.status)) return [];
+    // Skip terminal cases. Legacy admission_in_progress / admitted /
+    // billed rows from the retired paid-placement workflow are also
+    // excluded — they collapse to "Placed" in the new UI and have no
+    // remaining SLA gate.
+    if (["closed", "completed", "admission_in_progress", "admitted", "billed"].includes(caseData.status)) return [];
 
     // 1. High urgency case flag
     if (caseData.timeline_urgency === "immediate") {
@@ -126,7 +126,7 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
 
     // 8. Tour not scheduled — client selected but no tour
     if (
-      ["seeker_selected", "admission_in_progress", "in_contact"].includes(caseData.status) &&
+      ["seeker_selected", "in_contact"].includes(caseData.status) &&
       (!caseData.tour_coordination_status || caseData.tour_coordination_status === "none" || caseData.tour_coordination_status === "not_started") &&
       hoursSinceUpdate >= 24
     ) {

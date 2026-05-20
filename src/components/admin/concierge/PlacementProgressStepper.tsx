@@ -11,7 +11,6 @@ export interface PlacementCaseData {
   introductions_sent_count: number | null;
   seeker_confirmed: boolean | null;
   tour_coordination_status: string;
-  admission_status: string;
   placement_confirmed: boolean | null;
   closed_at: string | null;
 }

@@ -20,15 +20,23 @@ interface BulkConciergeStatusDialogProps {
   onSuccess: () => void;
 }
 
+// Real DB enum values from validate_concierge_status_transition. The
+// dialog only exposes the active workflow targets — legacy
+// admission_in_progress / admitted / billed states from the retired
+// paid-placement product aren't offered (the trigger still validates
+// them for backward-compat, but no new case should land there).
 const STATUS_OPTIONS: Array<{ value: string; label: string; description: string }> = [
   { value: "intake_submitted", label: "Intake submitted", description: "Reopen — back to the unassigned pool" },
-  { value: "matched", label: "Matched", description: "Stamps matched_at; case ready for advisor outreach" },
-  { value: "provider_prequalification", label: "Provider prequal", description: "Provider review in progress" },
-  { value: "intros_sent", label: "Intros sent", description: "Facility introductions delivered to seeker" },
-  { value: "seeker_confirmed", label: "Seeker confirmed", description: "Seeker selected a facility from intros" },
-  { value: "placed", label: "Placed", description: "Stamps placement_confirmed_at; case successful" },
-  { value: "completed", label: "Completed", description: "Stamps closed_at; final state" },
-  { value: "closed", label: "Closed", description: "Stamps closed_at; case archived without placement" },
+  { value: "intake_reviewed", label: "Intake reviewed", description: "Reviewed — ready for advisor assignment" },
+  { value: "advisor_assigned", label: "Advisor assigned", description: "Advisor on case — ready to start matching" },
+  { value: "matching_providers", label: "Matching providers", description: "Match search in progress" },
+  { value: "matched", label: "Matched", description: "Stamps matched_at; ready for prequalification" },
+  { value: "provider_prequalification", label: "Provider prequal", description: "Verifying facility fit before intro" },
+  { value: "providers_accepted", label: "Providers accepted", description: "Facilities confirmed — ready to present to client" },
+  { value: "presented_to_seeker", label: "Presented to client", description: "Options sent — awaiting client decision" },
+  { value: "seeker_selected", label: "Placed (seeker selected)", description: "Client chose a facility — placement complete" },
+  { value: "completed", label: "Completed", description: "Workflow finalized" },
+  { value: "closed", label: "Closed", description: "Stamps closed_at; case archived" },
 ];
 
 /**

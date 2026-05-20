@@ -16,7 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Search, RefreshCw, HeartHandshake, Building2,
+  Search, RefreshCw, HeartHandshake, Building2, Inbox,
   Flag, LayoutGrid, List, TrendingUp,
   Clock, Users, CheckCircle, Loader2, Link2, ArrowRightLeft, Download, X,
 } from "lucide-react";
@@ -24,13 +24,14 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { PlacementOpsDashboard } from "@/components/admin/concierge/PlacementOpsDashboard";
 import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvidersTab";
-// InternationalCasesTab import retired 2026-05-20 — paid international placement product wound down.
 import { getCaseNextAction } from "@/components/admin/concierge/placementActionUtils";
 import { CaseAlertIcons } from "@/components/admin/concierge/CaseSlaAlerts";
 import { VISUAL_STAGES, getVisualStage } from "@/components/admin/concierge/placementPipelineConfig";
 import { BulkConciergeStatusDialog } from "@/components/admin/concierge/BulkConciergeStatusDialog";
 import { BulkReassignAdvisorDialog } from "@/components/admin/concierge/BulkReassignAdvisorDialog";
 import { ConciergeDetailSheet } from "@/components/admin/ConciergeDetailSheet";
+import AdvisorInbox from "@/pages/admin/AdvisorInbox";
+import AdvisorProviderDirectory from "@/pages/admin/AdvisorProviderDirectory";
 import { cn } from "@/lib/utils";
 
 function useDebounce(value: string, delay: number) {
@@ -55,7 +56,18 @@ export default function AdminConcierge() {
   // path stays clean.
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<string>(() => searchParams.get("tab") ?? "domestic");
+  // Tab values for the unified Placements workspace. Backward-compat:
+  // legacy bookmarks at ?tab=domestic and ?tab=providers map onto the
+  // new tab names.
+  const VALID_TABS = ["cases", "network", "directory", "inbox"] as const;
+  type TabValue = typeof VALID_TABS[number];
+  const normalizeTab = (raw: string | null): TabValue => {
+    if (raw === "domestic") return "cases";
+    if (raw === "providers") return "network";
+    if (raw && (VALID_TABS as readonly string[]).includes(raw)) return raw as TabValue;
+    return "cases";
+  };
+  const [activeTab, setActiveTab] = useState<string>(() => normalizeTab(searchParams.get("tab")));
   const [searchInput, setSearchInput] = useState(() => searchParams.get("q") ?? "");
   const searchQuery = useDebounce(searchInput, 350);
   const [stageFilter, setStageFilter] = useState<string>(() => searchParams.get("stage") ?? "all");
@@ -94,7 +106,7 @@ export default function AdminConcierge() {
     if (stageFilter && stageFilter !== "all") next.set("stage", stageFilter);
     if (routingFilter && routingFilter !== "all") next.set("routing", routingFilter);
     if (advisorFilter && advisorFilter !== "all") next.set("advisor", advisorFilter);
-    if (activeTab && activeTab !== "domestic") next.set("tab", activeTab);
+    if (activeTab && activeTab !== "cases") next.set("tab", activeTab);
     if (viewMode && viewMode !== "table") next.set("view", viewMode);
     if (selectedCaseId) next.set("case", selectedCaseId);
     const a = next.toString();
@@ -170,7 +182,7 @@ export default function AdminConcierge() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("concierge_inquiries")
-        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, preferred_city, match_count, assigned_advisor_id, created_at, updated_at, admission_status, admission_substatus, tour_coordination_status, placement_confirmed, placement_confirmed_at, placed_facility_id, introductions_sent_at, introductions_sent_count, timeline_urgency, primary_concern, closed_at, seeker_confirmed, matched_at, routing_mode, originating_facility_id")
+        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, preferred_city, match_count, assigned_advisor_id, created_at, updated_at, tour_coordination_status, placement_confirmed, placement_confirmed_at, placed_facility_id, introductions_sent_at, introductions_sent_count, timeline_urgency, primary_concern, closed_at, seeker_confirmed, matched_at, routing_mode, originating_facility_id")
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
@@ -355,7 +367,17 @@ export default function AdminConcierge() {
     const action = getCaseNextAction(c);
     return action.priority === "blocker" || action.priority === "high";
   }).length;
-  const completedCases = allCases.filter(c => c.status === "completed" || c.status === "admitted").length;
+  // "Placed" includes the new terminal state `seeker_selected` and any
+  // legacy admission_* / billed rows from the retired paid-placement
+  // workflow so the dashboard count stays accurate while old data is
+  // closed out. `completed` is the historical archival state.
+  const completedCases = allCases.filter(c =>
+    c.status === "completed" ||
+    c.status === "seeker_selected" ||
+    c.status === "admission_in_progress" ||
+    c.status === "admitted" ||
+    c.status === "billed"
+  ).length;
 
   // SLA-ish badge — how long the case has been parked in its current
   // status. Mirrors the wait-time badge used on /admin/providers.
@@ -374,8 +396,8 @@ export default function AdminConcierge() {
       <AdminPageHeader
         icon={HeartHandshake}
         iconGradient="bg-gradient-to-br from-primary to-primary/70"
-        title="Placement Command Center"
-        subtitle="Manage all placements from intake to completion"
+        title="Placements"
+        subtitle="Concierge advisor workspace — intake, matching, intros, and case messaging in one place"
         badges={[
           { label: "Active", value: activeCases, className: "bg-primary/10 text-primary" },
           { label: "Completed", value: completedCases, className: "bg-success/10 text-success" },
@@ -473,35 +495,37 @@ export default function AdminConcierge() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
-          <TabsList className={`inline-flex w-auto sm:grid sm:w-full ${isAdvisor ? "sm:grid-cols-1 sm:max-w-xs" : "sm:grid-cols-3 sm:max-w-md"}`}>
-            <TabsTrigger value="domestic" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
+          <TabsList className={`inline-flex w-auto sm:grid sm:w-full ${isAdvisor ? "sm:grid-cols-3 sm:max-w-lg" : "sm:grid-cols-4 sm:max-w-2xl"}`}>
+            <TabsTrigger value="cases" aria-label="Cases" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
               <Flag className="h-3.5 w-3.5" />
-              <span className="text-xs sm:text-sm">Domestic</span>
+              <span className="text-xs sm:text-sm">Cases</span>
             </TabsTrigger>
-            {/* International tab retired 2026-05-20 with the paid
-                international placement product. */}
             {!isAdvisor && (
-              <>
-                <TabsTrigger value="providers" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
-                  <Building2 className="h-3.5 w-3.5" />
-                  <span className="text-xs sm:text-sm">Network</span>
-                  {!!networkCount && <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{networkCount}</Badge>}
-                </TabsTrigger>
-                {/* Invoices + Revenue Protection tabs retired — pay-per-admission
-                    placement_invoices + admission_verifications tables dropped. */}
-              </>
+              <TabsTrigger value="network" aria-label="Network providers" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
+                <Building2 className="h-3.5 w-3.5" />
+                <span className="text-xs sm:text-sm">Network</span>
+                {!!networkCount && <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{networkCount}</Badge>}
+              </TabsTrigger>
             )}
+            <TabsTrigger value="directory" aria-label="Provider directory" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
+              <Building2 className="h-3.5 w-3.5" />
+              <span className="text-xs sm:text-sm">Directory</span>
+            </TabsTrigger>
+            <TabsTrigger value="inbox" aria-label="Advisor inbox" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
+              <Inbox className="h-3.5 w-3.5" />
+              <span className="text-xs sm:text-sm">Inbox</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="domestic" className="space-y-4">
+        <TabsContent value="cases" className="space-y-4">
           {/* KPI Strip */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <AdminStatCard label="Total" value={isLoading ? "—" : totalCases} icon={HeartHandshake}
               onClick={() => setStageFilter("all")} active={stageFilter === "all"} />
             <AdminStatCard label="Active" value={isLoading ? "—" : activeCases} icon={Clock} valueClassName="text-primary" />
             <AdminStatCard label="Needs Action" value={isLoading ? "—" : awaitingAction} icon={Users} valueClassName="text-warning" />
-            <AdminStatCard label="Admitted" value={isLoading ? "—" : completedCases} icon={CheckCircle} valueClassName="text-success" />
+            <AdminStatCard label="Placed" value={isLoading ? "—" : completedCases} icon={CheckCircle} valueClassName="text-success" />
           </div>
 
           {/* Filters */}
@@ -702,10 +726,18 @@ export default function AdminConcierge() {
           )}
         </TabsContent>
 
-        {/* International tab content retired 2026-05-20. */}
+        {!isAdvisor && (
+          <TabsContent value="network">
+            <NetworkProvidersTab />
+          </TabsContent>
+        )}
 
-        <TabsContent value="providers">
-          <NetworkProvidersTab />
+        <TabsContent value="directory">
+          <AdvisorProviderDirectory />
+        </TabsContent>
+
+        <TabsContent value="inbox">
+          <AdvisorInbox />
         </TabsContent>
 
       </Tabs>

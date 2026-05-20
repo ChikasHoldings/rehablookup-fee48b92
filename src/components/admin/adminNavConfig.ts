@@ -15,7 +15,6 @@ import {
   Megaphone,
   FileText,
   FileCheck2,
-  Inbox,
   AlertTriangle,
   Landmark,
   Bell,
@@ -68,16 +67,11 @@ const superAdminNav: NavSection[] = [
       { to: "/admin/insurance-verifications", icon: FileCheck2, label: "Insurance VOB", permission: "leads", countKey: "insuranceVerifications" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
       { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
-      {
-        icon: UserPlus,
-        label: "Placements",
-        permission: "placements",
-        items: [
-          { to: "/admin/concierge", icon: UserPlus, label: "Command Center", permission: "placements", countKey: "placements" },
-          { to: "/admin/inbox", icon: Inbox, label: "Advisor Inbox", permission: "placements" },
-          { to: "/admin/provider-directory", icon: Building2, label: "Provider Directory", permission: "placements" },
-        ],
-      },
+      // Placements is a single unified workspace at /admin/concierge with
+      // four tabs (Cases / Network / Directory / Inbox). The previous
+      // sub-group (Command Center / Advisor Inbox / Provider Directory)
+      // is collapsed to one entry so the nav reflects the page count.
+      { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements", countKey: "placements" },
       { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
     ],
   },
@@ -141,16 +135,11 @@ const managerNav: NavSection[] = [
       { to: "/admin/insurance-verifications", icon: FileCheck2, label: "Insurance VOB", permission: "leads", countKey: "insuranceVerifications" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
       { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
-      {
-        icon: UserPlus,
-        label: "Placements",
-        permission: "placements",
-        items: [
-          { to: "/admin/concierge", icon: UserPlus, label: "Command Center", permission: "placements", countKey: "placements" },
-          { to: "/admin/inbox", icon: Inbox, label: "Advisor Inbox", permission: "placements" },
-          { to: "/admin/provider-directory", icon: Building2, label: "Provider Directory", permission: "placements" },
-        ],
-      },
+      // Placements is a single unified workspace at /admin/concierge with
+      // four tabs (Cases / Network / Directory / Inbox). The previous
+      // sub-group (Command Center / Advisor Inbox / Provider Directory)
+      // is collapsed to one entry so the nav reflects the page count.
+      { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements", countKey: "placements" },
       { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
     ],
   },
@@ -183,14 +172,11 @@ const advisorNav: NavSection[] = [
   {
     sectionLabel: "My Workspace",
     entries: [
-      { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements", countKey: "placements" },
-      { to: "/admin/inbox", icon: Inbox, label: "Messages", permission: "placements" },
-      { to: "/admin/provider-directory", icon: Building2, label: "Provider Directory", permission: "placements" },
-      // /admin/placement-revenue was retired with the paid international
-      // placement product (2026-05-20); the route now Navigates to
-      // /admin so an "Earnings" entry here would just lead to a
-      // confusing redirect. Aggregate revenue + commission stats now
-      // live on /admin/analytics.
+      // The advisor's entire workspace is now the unified Placements
+      // page. The Cases / Directory / Inbox sub-functions are tabs on
+      // that page (Network tab is admin-only). Analytics lives in
+      // the global /admin/analytics surface.
+      { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements", countKey: "placements" },
       { to: "/admin/analytics", icon: CreditCard, label: "Analytics", permission: "placements" },
     ],
   },

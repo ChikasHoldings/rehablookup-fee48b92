@@ -22,15 +22,25 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target
 const VERSION = "1.0.0";
 const MAX_PER_REQUEST = 100;
 
-// Canonical placement state-machine. Matches placementPipelineConfig +
-// existing status transitions on concierge_inquiries.
+// Canonical placement state-machine. Matches CONCIERGE_STATUSES in
+// src/lib/statusTransitions.ts and the validate_concierge_status_transition
+// trigger. Legacy admission_in_progress / admitted / billed states from
+// the retired paid-placement product are accepted (existing rows can be
+// transitioned out via the trigger's allowed targets) but no new UI
+// path drives cases into them.
 const VALID_STATUSES = new Set([
   "intake_submitted",
+  "intake_reviewed",
+  "advisor_assigned",
+  "matching_providers",
   "matched",
   "provider_prequalification",
-  "intros_sent",
-  "seeker_confirmed",
-  "placed",
+  "providers_accepted",
+  "presented_to_seeker",
+  "seeker_selected",
+  "admission_in_progress",
+  "admitted",
+  "billed",
   "completed",
   "closed",
 ]);
@@ -132,11 +142,14 @@ Deno.serve(async (req) => {
       };
       // Stamp the matching timestamp when transitioning INTO that
       // milestone — mirrors what the single-row paths do so list
-      // sorts + dashboards stay accurate.
+      // sorts + dashboards stay accurate. `seeker_selected` is the
+      // new terminal "placed" state under the post-monetization-
+      // rebuild model; legacy "admitted" is still honored for
+      // historical rows that may still be transitioning out.
       if (newStatus === "matched" && !row.matched_at) {
         update.matched_at = now;
       }
-      if (newStatus === "placed" && !row.placement_confirmed_at) {
+      if ((newStatus === "seeker_selected" || newStatus === "admitted") && !row.placement_confirmed_at) {
         update.placement_confirmed = true;
         update.placement_confirmed_at = now;
       }

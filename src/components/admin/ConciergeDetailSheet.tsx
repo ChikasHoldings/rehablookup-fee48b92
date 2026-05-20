@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  LayoutDashboard, User, Users, Send, UserCheck, CalendarCheck, Home,
+  LayoutDashboard, User, Users, Send, UserCheck, CalendarCheck,
   Clock, Settings, MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +24,6 @@ import { ConciergeActionsTab } from "./concierge/ConciergeActionsTab";
 import { ToursTab } from "./concierge/ToursTab";
 import { ConciergeTimelineTab } from "./concierge/ConciergeTimelineTab";
 import { MessagesTab } from "./concierge/MessagesTab";
-import { AdmissionCoordinationCard } from "./concierge/AdmissionCoordinationCard";
 import { StageActionBar } from "./concierge/StageActionBar";
 import { STATUS_CONFIG as PIPELINE_STATUS_CONFIG } from "./concierge/placementPipelineConfig";
 import type { Database } from "@/integrations/supabase/types";
@@ -110,13 +109,12 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
 
   if (!caseData) return null;
 
-  // Build tabs dynamically based on role. The "billing" tab was retired
-  // along with the paid international placement product (2026-05-20) —
-  // placement_invoices was dropped, so showing the trigger with no
-  // content would be a dead button. The "messages" tab opens
-  // case-scoped facility threads via the same MessagesTab component
-  // the Advisor Inbox uses, so admins can correspond without bouncing
-  // to /admin/inbox.
+  // Build tabs for the case detail sheet. Two flows were removed
+  // alongside the paid-placement product retirement: the "billing"
+  // tab (placement_invoices was dropped 2026-05-20) and the
+  // "admission" tab (admission tracking added complexity that the
+  // current Pro-subscription Concierge model doesn't need — the
+  // workflow now ends at seeker_confirmed → placed → closed).
   const tabs = [
     { value: "overview", icon: LayoutDashboard, label: "Overview" },
     { value: "seeker", icon: User, label: "Client" },
@@ -125,7 +123,6 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
     { value: "messages", icon: MessageSquare, label: "Msgs" },
     { value: "decision", icon: UserCheck, label: "Decision" },
     { value: "tours", icon: CalendarCheck, label: "Tours" },
-    { value: "admission", icon: Home, label: "Admit" },
     { value: "timeline", icon: Clock, label: "Notes" },
     { value: "actions", icon: Settings, label: "Act" },
   ];
@@ -173,7 +170,6 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
               introductions_sent_count: caseData.introductions_sent_count,
               seeker_confirmed: caseData.seeker_confirmed,
               tour_coordination_status: caseData.tour_coordination_status,
-              admission_status: caseData.admission_status,
               placement_confirmed: caseData.placement_confirmed,
               closed_at: caseData.closed_at,
             }}
@@ -229,9 +225,6 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
             </TabsContent>
             <TabsContent value="tours" className="m-0">
               <ToursTab caseData={caseData} />
-            </TabsContent>
-            <TabsContent value="admission" className="m-0 space-y-4">
-              <AdmissionCoordinationCard caseData={caseData} onRefresh={onRefresh} />
             </TabsContent>
             <TabsContent value="timeline" className="m-0">
               <ConciergeTimelineTab caseData={caseData} onRefresh={onRefresh} />
