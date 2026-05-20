@@ -38,14 +38,37 @@
  * Idempotent: safe to re-run; skips existing files unless --force is passed.
  */
 
-import { writeFile, mkdir, access } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { writeFile, mkdir, access, unlink } from "node:fs/promises";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseStringPromise } from "xml2js";
 import { readFile } from "node:fs/promises";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
+
+// Block this generator from writing static HTML at any path that vercel.json
+// already 301-redirects. The competing file would otherwise win Vercel's
+// filesystem-match before the redirect fires, and Google would index the
+// redirect-source URL with a self-canonical instead of consolidating signal
+// onto the canonical target. See scripts/generate-missing-html.mjs for the
+// same guard rationale.
+const REDIRECT_SOURCES = (() => {
+  try {
+    const vc = JSON.parse(
+      readFileSync(path.resolve(fileURLToPath(import.meta.url), "../../vercel.json"), "utf8"),
+    );
+    const set = new Set();
+    for (const r of vc.redirects || []) {
+      if (r.source && !r.source.includes(":") && !r.source.includes("*")) {
+        set.add(r.source);
+      }
+    }
+    return set;
+  } catch {
+    return new Set();
+  }
+})();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
@@ -161,6 +184,16 @@ function buildHtml({ urlPath, title, metaTitle, metaDesc, h1, content, breadcrum
 async function writePage(urlPath, pageData) {
   const htmlContent = buildHtml({ urlPath, ...pageData });
   const flatPath = path.join(publicDir, urlPath.replace(/^\//, "") + ".html");
+
+  // Guard: never write a static file at a URL that has a vercel.json 301.
+  // Delete any stale copy from prior builds so the redirect can fire.
+  if (REDIRECT_SOURCES.has(urlPath)) {
+    if (existsSync(flatPath)) {
+      try { await unlink(flatPath); } catch { /* ignore */ }
+    }
+    skipped++;
+    return;
+  }
 
   // Skip if already exists and not forcing
   if (!FORCE && existsSync(flatPath)) {

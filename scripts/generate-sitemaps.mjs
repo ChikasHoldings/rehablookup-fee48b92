@@ -1,8 +1,30 @@
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { discoverPrerenderedPaths } from "./lib/prerender-discovery.mjs";
 import { extractSpaRoutes } from "./lib/extract-spa-routes.mjs";
+
+// Vercel-redirect sources must NEVER ship in the sitemap. Listing a URL
+// that 301-redirects produces a "Page with redirect" GSC error: Google
+// follows the loc, hits the 301, drops the source URL from the index,
+// and reports it as broken because the sitemap promised it. Sitemaps
+// must contain only canonical 200 targets.
+const REDIRECT_SOURCES = (() => {
+  try {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const vc = JSON.parse(readFileSync(path.resolve(here, "../vercel.json"), "utf8"));
+    const set = new Set();
+    for (const r of vc.redirects || []) {
+      if (r.source && !r.source.includes(":") && !r.source.includes("*")) {
+        set.add(r.source);
+      }
+    }
+    return set;
+  } catch {
+    return new Set();
+  }
+})();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -147,6 +169,14 @@ function filterSitemapXml(xml, prerenderedPaths, stats, spaRoutes) {
     // the URL is otherwise routable in the SPA.
     if (pathIsRobotsBlocked(norm)) {
       if (droppedSamples.length < 5) droppedSamples.push(`${loc} (robots-blocked)`);
+      return "";
+    }
+    // Drop redirect-source URLs — they produce GSC "Page with redirect"
+    // exclusions because Google follows the 301 and de-indexes the loc.
+    // The redirect target is the canonical URL; if it's a real page it'll
+    // ship via its own sitemap entry independently.
+    if (REDIRECT_SOURCES.has(norm)) {
+      if (droppedSamples.length < 5) droppedSamples.push(`${loc} (redirect-source)`);
       return "";
     }
     const hasPrerender = prerenderedPaths.has(norm);
