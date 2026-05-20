@@ -181,8 +181,14 @@ export function SupportTicketModal({
     if (!ticket) return;
     setDeleting(true);
     try {
-      // Delete notes first
-      await supabase.from("support_ticket_notes").delete().eq("ticket_id", ticket.id);
+      // Delete notes first. If this fails, surface the error and bail
+      // so we don't leave the ticket with stale notes still attached.
+      const { error: notesErr } = await supabase
+        .from("support_ticket_notes")
+        .delete()
+        .eq("ticket_id", ticket.id);
+      if (notesErr) throw new Error(`Notes delete failed: ${notesErr.message}`);
+
       const { error } = await supabase.from("support_tickets").delete().eq("id", ticket.id);
       if (error) throw error;
       // Audit destructive admin action
@@ -201,8 +207,9 @@ export function SupportTicketModal({
       onOpenChange(false);
       onDeleted?.();
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.error("Delete ticket failed:", err);
-      toast.error("Failed to delete ticket");
+      toast.error(`Failed to delete ticket: ${msg}`);
     } finally {
       setDeleting(false);
       setDeleteOpen(false);
@@ -224,6 +231,8 @@ export function SupportTicketModal({
     if (!user?.id) return;
     setEscalating(true);
     try {
+      // Step 1: create the escalation row. If this fails the ticket
+      // status stays unchanged — escalation failed cleanly.
       const { error } = await supabase.from("admin_escalations").insert({
         subject: `Support Ticket: ${ticket.subject || ticket.category}`,
         description: `Escalated from support ticket.\n\nSender: ${ticket.sender_name} (${ticket.sender_email})\nMessage: ${ticket.message?.slice(0, 500)}`,
@@ -234,13 +243,27 @@ export function SupportTicketModal({
         status: "open",
       });
       if (error) throw error;
-      // Mark ticket as in_progress
-      updateTicket.mutate({
-        ticketId: ticket.id,
-        updates: { status: "in_progress" as SupportTicket["status"] },
-        currentUserId: user.id,
-      });
-      toast.success("Escalated to management");
+
+      // Step 2: mark the ticket as in_progress. Failure here is a
+      // soft warning — the escalation exists, the ticket just didn't
+      // get its status bumped, so we surface that explicitly instead
+      // of a generic success toast.
+      try {
+        await new Promise<void>((resolve, reject) => {
+          updateTicket.mutate(
+            {
+              ticketId: ticket.id,
+              updates: { status: "in_progress" as SupportTicket["status"] },
+              currentUserId: user.id,
+            },
+            { onSuccess: () => resolve(), onError: (err) => reject(err) },
+          );
+        });
+        toast.success("Escalated to management");
+      } catch (statusErr) {
+        const msg = statusErr instanceof Error ? statusErr.message : String(statusErr);
+        toast.warning(`Escalated, but couldn't update ticket status: ${msg}`);
+      }
     } catch (err) {
       toast.error("Failed to escalate: " + (err as Error).message);
     } finally {
