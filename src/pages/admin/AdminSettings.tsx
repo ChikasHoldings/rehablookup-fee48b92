@@ -317,17 +317,23 @@ export default function AdminSettings() {
     if (statsError) logError("fetch_platform_stats", statsError, { queryKey: "admin-settings-stats" });
   }, [statsError, logError]);
 
-  // Count edge functions from supabase config
-  const { data: edgeFunctionsCount } = useQuery({
-    queryKey: ["admin-edge-functions-count"],
-    queryFn: async () => {
-      // Count edge functions from the functions directory
-      const { data, error } = await supabase.functions.invoke("list-edge-functions").catch(() => ({ data: null, error: true }));
-      // Fallback to known count if the function doesn't exist
-      return data?.count ?? 52;
-    },
-    staleTime: 1000 * 60 * 30, // Cache for 30 minutes
-  });
+  // Edge-function count widget (system-health vanity metric).
+  //
+  // 2026-05-20 audit fix: the previous implementation invoked a
+  // `list-edge-functions` endpoint that doesn't exist locally OR on
+  // the deployed project (verified via mcp__supabase__list_edge_functions).
+  // The fallback to a hardcoded `52` was stale (current deployed
+  // count is ~180+), silently misleading anyone reading this widget.
+  //
+  // The widget is purely informational ("yes, edge functions are
+  // healthy"). We render a Running status without a count rather
+  // than show a number we can't trust. The canonical count lives in
+  // `supabase/functions/` (file system) + the deployed list (Supabase
+  // dashboard) and changes on every monetization rebuild — exposing
+  // it in the UI required a function we never built. If the count
+  // becomes operationally useful, vendor a real `list-edge-functions`
+  // endpoint that wraps Supabase Management API + cache for ~24h.
+  const edgeFunctionsCount: number | null = null;
 
   // Fetch storage usage data
   const { data: storageData, isLoading: loadingStorage, refetch: refetchStorage } = useQuery({
@@ -952,7 +958,11 @@ export default function AdminSettings() {
                         <span className="text-sm font-medium">Edge Functions</span>
                       </div>
                       <p className="text-2xl font-bold text-success">Running</p>
-                      <p className="text-xs text-success/80 mt-1">{edgeFunctionsCount || 24} functions deployed</p>
+                      <p className="text-xs text-success/80 mt-1">
+                        {edgeFunctionsCount != null
+                          ? `${edgeFunctionsCount} functions deployed`
+                          : "Deployed via supabase/functions/"}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -2854,7 +2864,9 @@ export default function AdminSettings() {
                     <div className="h-2 w-2 rounded-full bg-success" />
                     <span className="text-sm font-medium">edge_functions</span>
                   </div>
-                  <Badge variant="secondary">{edgeFunctionsCount || 0} deployed</Badge>
+                  <Badge variant="secondary">
+                    {edgeFunctionsCount != null ? `${edgeFunctionsCount} deployed` : "Healthy"}
+                  </Badge>
                 </div>
               </div>
             </CardContent>
