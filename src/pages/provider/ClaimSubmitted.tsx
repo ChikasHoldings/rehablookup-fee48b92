@@ -112,15 +112,18 @@ export default function ClaimSubmitted() {
     };
   }, [facility?.id, currentUserId]);
 
-  // Idempotent recovery in case the ClaimWizard handler was interrupted
-  // before its own RPC call landed. Keyed on claim.id so a refetch of
-  // the same row doesn't re-fire.
-  useEffect(() => {
-    if (!claim?.id) return;
-    void supabase.rpc("complete_provider_onboarding").catch((e) => {
-      console.warn("[ClaimSubmitted] completion advance failed", e);
-    });
-  }, [claim?.id]);
+  // 2026-05-20 plan-gate fix: this page used to call
+  // `complete_provider_onboarding()` on mount as "idempotent recovery",
+  // but ClaimWizard step 5 (intentionally) does NOT call that RPC — it
+  // advances the state cursor to 'plan' and routes here. The premature
+  // RPC flipped `profiles.onboarding_completed_at` AND
+  // `provider_onboarding_state.current_step='completed'`, after which
+  // the Onboarding host bounced the user straight to the dashboard
+  // when they clicked "Pick your plan" — never rendering PlanStep, and
+  // leaving `profiles.plan` at its schema default with no explicit
+  // choice. PlanStep is now the single owner of the completion flip
+  // (handleFree → complete_provider_onboarding_with_plan; handlePro →
+  // Stripe webhook). See docs/monetization-plan-gate-audit-2026-05-20.md.
 
   const headline = useMemo(() => {
     if (!claim) return "Thanks — your claim is in.";
