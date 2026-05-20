@@ -87,13 +87,16 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
   const updateCaseMutation = useMutation({
     mutationFn: async (updates: Partial<ConciergeInquiry>) => {
       // For status changes, delegate to the centralized transition hook.
-      // Legacy `admitted` rows are read-only except for the "close case"
-      // action — the paid-placement workflow was retired so we don't
-      // want to encourage editing in-progress admissions, but admins
-      // need a path to close them out.
+      // Terminal states are read-only except for closing the case —
+      // `seeker_selected` is the new terminal "Placed" state; legacy
+      // admission_in_progress / admitted / billed rows behave the same
+      // way; `completed` is the historical archival state.
+      const terminalStates = new Set([
+        "seeker_selected", "admission_in_progress", "admitted", "billed", "completed",
+      ]);
       if (updates.status && updates.status !== caseData.status) {
-        if ((caseData.status === 'admitted' || caseData.status === 'completed') && updates.status !== 'closed') {
-          throw new Error("Cannot change status of a confirmed placement. Close the case instead.");
+        if (terminalStates.has(caseData.status) && updates.status !== "closed") {
+          throw new Error("This case is already placed. Close the case instead of changing status.");
         }
         // Use transition hook via mutateAsync so we get optimistic locking
         await caseTransition.mutateAsync({

@@ -58,7 +58,10 @@ export default function AdvisorProviderDirectory() {
   const [selectedProvider, setSelectedProvider] = useState<ProviderRow | null>(null);
 
   const { data: providers, isLoading } = useQuery({
-    queryKey: ["advisor-providers", tab, searchQuery],
+    // Namespaced under admin-concierge-directory so the embedded
+    // Directory tab inside the Placements workspace doesn't collide
+    // with any other `advisor-providers` cache elsewhere.
+    queryKey: ["admin-concierge-directory", tab, searchQuery],
     queryFn: async () => {
       let query = supabase
         .from("facilities")
@@ -84,7 +87,7 @@ export default function AdvisorProviderDirectory() {
   });
 
   const { data: counts } = useQuery({
-    queryKey: ["advisor-provider-counts"],
+    queryKey: ["admin-concierge-directory-counts"],
     queryFn: async () => {
       const [all, enrolled, notEnrolled] = await Promise.all([
         supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "approved"),

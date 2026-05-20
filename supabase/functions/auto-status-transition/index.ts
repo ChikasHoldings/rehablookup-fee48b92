@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "4.0.0";
+const VERSION = "5.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,20 +15,27 @@ const logStep = (requestId: string, step: string, details?: Record<string, unkno
 };
 
 /**
- * Auto Status Transition v3 — walks through intermediate statuses
- * to satisfy the validate_concierge_status_transition DB trigger.
+ * Auto Status Transition v5 — walks through intermediate statuses to
+ * satisfy the validate_concierge_status_transition DB trigger.
  *
- * The DB trigger enforces single-step-only transitions, so this function
- * chains multiple updates when a trigger implies skipping stages.
+ * The DB trigger enforces single-step-only transitions, so this
+ * function chains multiple updates when a trigger implies skipping
+ * stages.
+ *
+ * v5 (2026-05-20): paid-placement product retired. seeker_confirmed
+ * and placement_confirmed now both terminate at seeker_selected (the
+ * new "Placed" state). The legacy admission_in_progress / admitted /
+ * billed states remain in the DB enum for backward-compat but the
+ * workflow no longer pushes new cases into them.
  *
  * Triggers:
  *   admin_viewed:        intake_submitted → intake_reviewed
  *   matches_completed:   advisor_assigned → matching_providers → provider_prequalification
- *   auto_matched:        intake_submitted → ... → matched (auto-matching on intake)
+ *   auto_matched:        intake_submitted → ... → matched
  *   introduction_sent:   matched → ... → presented_to_seeker
  *   provider_interested: matched → ... → presented_to_seeker
- *   seeker_confirmed:    presented_to_seeker → seeker_selected → admission_in_progress
- *   placement_confirmed: seeker_selected → admission_in_progress → admitted
+ *   seeker_confirmed:    presented_to_seeker → seeker_selected
+ *   placement_confirmed: presented_to_seeker → seeker_selected (legacy alias)
  */
 
 interface TransitionRequest {
@@ -63,29 +70,41 @@ const FORWARD_PATH = [
   "completed",
 ];
 
-// Each trigger maps to a target status. We walk from current → target one step at a time.
+// Each trigger maps to a target status. We walk from current → target
+// one step at a time.
+//
+// Rebuilt 2026-05-20 to match the post-rebuild workflow: the workflow
+// terminates at `seeker_selected` (the new "Placed" state), not at
+// `admission_in_progress` / `admitted`. The paid-placement product
+// was retired, so `seeker_confirmed` now lands the case at the new
+// terminal state instead of pushing into the legacy admission flow.
+// The `placement_confirmed` trigger is kept for backward-compat with
+// any external callers but also targets `seeker_selected`.
 const TRIGGER_TARGET: Record<string, string> = {
   admin_viewed: "intake_reviewed",
   matches_completed: "provider_prequalification",
   auto_matched: "matched",
   introduction_sent: "presented_to_seeker",
   provider_interested: "presented_to_seeker",
-  seeker_confirmed: "admission_in_progress",
-  placement_confirmed: "admitted",
+  seeker_confirmed: "seeker_selected",
+  placement_confirmed: "seeker_selected",
 };
 
-// Only attempt the transition if current status is in one of these
+// Only attempt the transition if current status is in one of these.
 const TRIGGER_VALID_FROM: Record<string, string[]> = {
   admin_viewed: ["intake_submitted", "new"],
   matches_completed: ["advisor_assigned", "matching_providers"],
   auto_matched: ["intake_submitted", "intake_reviewed", "advisor_assigned", "matching_providers"],
   introduction_sent: ["matched", "matching_providers", "provider_prequalification", "providers_accepted"],
   provider_interested: ["matched", "provider_prequalification", "providers_accepted"],
-  seeker_confirmed: ["presented_to_seeker", "seeker_selected"],
-  placement_confirmed: ["seeker_selected", "admission_in_progress"],
+  seeker_confirmed: ["presented_to_seeker"],
+  placement_confirmed: ["presented_to_seeker", "seeker_selected"],
 };
 
-// Extra fields to set based on the final target status
+// Extra fields to set based on the final target status. seeker_selected
+// is the new terminal "Placed" state — stamp placement_confirmed +
+// placement_confirmed_at so the same dashboard widgets that previously
+// read the legacy `admitted` flag now see the new state.
 function getTimestampFields(toStatus: string): Record<string, unknown> {
   const now = new Date().toISOString();
   switch (toStatus) {
@@ -94,6 +113,8 @@ function getTimestampFields(toStatus: string): Record<string, unknown> {
       return { matched_at: now };
     case "presented_to_seeker":
       return { introductions_sent_at: now };
+    case "seeker_selected":
+      return { placement_confirmed: true, placement_confirmed_at: now };
     default:
       return {};
   }

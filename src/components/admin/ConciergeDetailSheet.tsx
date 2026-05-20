@@ -196,7 +196,12 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
           <div className="flex-shrink-0 overflow-x-auto scrollbar-hide">
             <TabsList className="h-9 bg-muted/50 p-0.5 gap-0 w-auto inline-flex">
               {tabs.map(tab => (
-                <TabsTrigger key={tab.value} value={tab.value} className="gap-1 px-2 py-1.5 text-xs">
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  aria-label={tab.label}
+                  className="gap-1 px-2 py-1.5 text-xs"
+                >
                   <tab.icon className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">{tab.label}</span>
                 </TabsTrigger>
