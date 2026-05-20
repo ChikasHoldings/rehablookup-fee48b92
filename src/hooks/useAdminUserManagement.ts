@@ -182,7 +182,7 @@ export function useAdminUserManagement() {
   }, [invalidateAdminUsers]);
 
   // Fetch all admin users with their roles and permissions
-  const { data: adminUsers, isLoading, error: queryError, refetch } = useQuery({
+  const { data: adminUsers, isLoading, isFetching, error: queryError, refetch } = useQuery({
     queryKey: ["admin-users-full"],
     queryFn: async () => {
       // Use the security-definer RPC that resolves emails from auth.users
@@ -361,7 +361,9 @@ export function useAdminUserManagement() {
   return {
     adminUsers,
     isLoading,
+    isFetching,
     refetch,
+    queryError,
     createAdminUser: createAdminUserMutation.mutateAsync,
     isCreating: createAdminUserMutation.isPending,
     manageAdminUser: manageAdminUserMutation.mutateAsync,
