@@ -1,14 +1,16 @@
-# Featured add-on policy fix — no-backfill + geo-targeted homepage (2026-05-20)
+# Featured add-on policy fix — no-backfill + fully geo-aware homepage (2026-05-20)
 
 ## TL;DR
 
 Two surgical policy changes implement the user's hard rules:
 1. **Featured rail NEVER backfills with non-Featured organic content**
    — when the paid pool is empty, the section silently hides
-2. **Homepage Featured rail is geo-targeted** — NY visitors see NY-paid
-   Featured, CA visitors see CA-paid, etc. Falls back to national pool
-   only when the visitor's state pool is empty; hides entirely if both
-   are empty.
+2. **Homepage Featured rail is fully geo-aware across all 50 states +
+   DC** — uses a 4-tier ladder (exact-state → nearby-states →
+   national → hide), powered by the canonical 50-state adjacency map
+   in `lib/proximitySearch.ts`. Never hard-coded to any specific
+   state pair — works identically for a Wyoming visitor, a Florida
+   visitor, a Maine visitor, etc.
 
 The broader Featured ecosystem audit (pages / Stripe / rotation /
 analytics / provider panel) was completed in the
@@ -95,23 +97,46 @@ curation, blurring the EKRA-aligned promise that "Featured" always
 means "paid placement". The user's hard rule is: paid only, hide
 otherwise.
 
-### Change 2 — `HomepageGeoFeaturedRail`: 2-tier geo-targeted lookup
+### Change 2 — `useGeoTargetedFeatured` hook + `HomepageGeoFeaturedRail` (4-tier fully geo-aware)
 
-`src/components/featured/HomepageGeoFeaturedRail.tsx` (new component,
-80 lines)
+Two new files implement the geo-tier ladder. **The logic is generic
+across all 50 US states + DC — never hard-coded to specific state
+pairs.** A Wyoming visitor and a Florida visitor go through the same
+resolver; the only difference is which states get queried.
 
-Behavior tiers (first non-empty wins):
+`src/hooks/useGeoTargetedFeatured.ts` (~190 lines, new) — the resolver.
+`src/components/featured/HomepageGeoFeaturedRail.tsx` (~115 lines,
+refactored) — the renderer.
 
-| Tier | Lookup | When the visitor sees |
+Behavior ladder (first non-empty tier wins):
+
+| Tier | Resolution | What the visitor sees |
 | --- | --- | --- |
-| **Tier 1** | `placement_type="state"`, `placement_value=<visitor regionCode>` | NY visitors see NY-paid Featured, CA visitors see CA-paid, etc. Requires `useGeoLocation` to have resolved + visitor is US + has regionCode |
-| **Tier 2** | `placement_type="homepage"`, `placement_value="national"` | National-bucket subscribers (rare; rarely populated, but lets a facility opt into nationwide exposure) |
-| **Tier 3** | hide entirely | No paid Featured in either state or national pool |
+| **`state`** | `placement_type="state"` + visitor's `regionCode` | Visitor's exact state has paid Featured. Section title: "Featured facilities in `<State Name>`" |
+| **`nearby`** | parallel queries for every state in `getNearbyStates(visitor.regionCode)` → union → dedupe by `facility_id` → seed-shuffle → take `slot_count` | Exact state empty, but ≥1 adjacent state has paid Featured. Section title: "Featured facilities near you (`<State>`)" if 1 state matched, otherwise "Featured facilities near you" |
+| **`national`** | `placement_type="homepage"`, `placement_value="national"` | Both exact + nearby pools empty, national bucket non-empty (rare — intentional nationwide-opt-in by a facility). Title: "Nationwide Featured facilities" |
+| **`empty`** | hide entirely | No paid Featured anywhere — section silently absent per the "no backfill with non-Featured" policy |
+| **`loading`** | render nothing | Initial render while any tier query is still resolving. Treat as 'hide' until settled to avoid the layout-shift flip-flopping between tiers |
 
-Both queries run in parallel via `useFeaturedRotation` — we don't pay
-a serial round-trip when tier 1 is empty. The tier decision is made
-AFTER both queries settle so the user never sees a "national → state"
-flip mid-paint.
+**Adjacency coverage**: the `nearbyStates` map in
+`lib/proximitySearch.ts:6` covers all 50 states + DC. Verified via
+grep: `grep -cE "^\s*[A-Z]{2}:\s*\[" → 50`. Every US state has its
+canonical adjacent-state list (e.g. `WY: [ID, MT, CO, UT, NE, SD]`,
+`ME: [NH]`, `FL: [GA, AL]`, etc.).
+
+**Performance**: all tier queries run in parallel via
+`useQueries` — the tier decision happens once after all settle.
+Server-side caching at the edge fn (5-min `staleTime`) means
+subsequent visitors from the same state hit cache. For a typical
+US state with 4-6 nearby states, this is 5-8 parallel queries on
+first visit, then near-zero subsequent.
+
+**Attribution**: click logging (`useLogFeaturedPhoneClick`) attributes
+to the tier that produced the impression — `state` clicks log
+against the visitor's state, `nearby` clicks log against the
+specific matched state (so a WY-visitor's click on an ID facility
+attributes to ID, not WY). This keeps the provider analytics
+dashboard accurate per-bucket.
 
 ### Change 3 — `HomepageFeaturedSection` deleted
 
@@ -197,20 +222,26 @@ Homepage uses HomepageGeoFeaturedRail (new component, geo-targeted).
 
 ## Deferred (out of scope, documented)
 
-1. **Multi-state surfacing for nearby visitors** — current tier 1 is
-   visitor's exact state. A NY visitor near the NJ border doesn't see
-   NJ-paid Featured. Could add tier 1.5 with `getNearbyStates(state)`
-   if revenue data shows demand. Deferred.
-2. **City-level geo-targeting on the homepage** — current tier 1 is
-   state-only. A LA visitor doesn't see "LA paid Featured" preferentially
-   over "CA paid Featured". The non-homepage city pages already do this
-   via URL-context (placement_type=city). Deferred unless city-level
-   uplift on homepage justifies the lookup latency.
-3. **Featured-rotation pool size warning for ops** — when a bucket's
+1. **City-level geo-targeting on the homepage** — current ladder is
+   state + nearby-states + national. An Austin visitor doesn't see
+   "Austin paid Featured" preferentially over "TX paid Featured". The
+   non-homepage city pages already do this via URL-context
+   (`placement_type='city'`). Adding city-tier to the homepage ladder
+   would be tier 1 (city) → tier 1.25 (state) → tier 1.5 (nearby) →
+   tier 2 (national). Out of scope for this commit; flagged for
+   follow-up if revenue justifies the extra round-trip.
+2. **Featured-rotation pool size warning for ops** — when a bucket's
    pool size drops to 0 on a high-traffic page, current behavior is
    silent absence. An admin notification on first such drop would let
    ops know which placement_value buckets are draining. Out of scope
    for this commit; flagged for future addition.
+3. **Generalize `useGeoTargetedFeatured` to other non-geo-bound pages**
+   — currently the hook is consumed only by `HomepageGeoFeaturedRail`.
+   Pages like article detail, insurance carriers (Aetna, Anthem, etc.),
+   and the treatment-type hub would also benefit from visitor-state
+   tier-1 filtering, since their URLs don't imply geo. Out of scope
+   for this commit; the hook is general-purpose by design so future
+   adoption is a 1-line component swap.
 
 ## Verdict
 
