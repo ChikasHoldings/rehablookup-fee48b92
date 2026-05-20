@@ -481,11 +481,18 @@ Deno.serve(async (req) => {
       logStep(requestId, "Inquiry created successfully", { inquiryId, userId: effectiveUserId });
     }
 
+    // Crisis flag — when the seeker self-reports active suicidal ideation
+    // or self-harm history, ops must see this in front of everything else.
+    // We surface 988 inside the form itself (StepCareNeed) and also raise
+    // a SECOND admin notification with elevated copy so an advisor picks
+    // it up faster than the 24-hour SLA on a routine intake.
+    const isCrisis = sanitizeString((intakeData as FullIntakeData).suicideHistory, 100).toLowerCase() === "yes";
+
     // Create admin notification so admins see new placements in the dashboard
     try {
       await supabase.from('admin_notifications').insert({
         type: 'concierge_intake',
-        title: 'New Placement Request',
+        title: isCrisis ? '🚨 CRISIS — New Placement Request' : 'New Placement Request',
         message: `New concierge placement from ${sanitizedName} — ${sanitizeString(intakeData.primaryConcern, 100) || 'General'} | ${sanitizeString(intakeData.desiredState, 50) || 'No state pref'} | ${sanitizeString(intakeData.timeline, 50) || 'Flexible'}`,
         metadata: {
           inquiry_id: inquiryId,
@@ -495,11 +502,36 @@ Deno.serve(async (req) => {
           timeline: sanitizeString(intakeData.timeline, 50),
           payment_type: sanitizeString(intakeData.paymentType, 50),
           desired_state: sanitizeString(intakeData.desiredState, 50),
+          crisis_flag: isCrisis,
         },
       });
-      logStep(requestId, "Admin notification created");
+      logStep(requestId, "Admin notification created", { crisis: isCrisis });
     } catch (adminNotifErr) {
       logStep(requestId, "Warning: Failed to create admin notification", { error: String(adminNotifErr) });
+    }
+
+    // SECOND notification for active crisis cases — elevates above the
+    // routine intake stream so the on-call advisor sees it immediately,
+    // and gives ops a separate row to filter on.
+    if (isCrisis) {
+      try {
+        await supabase.from('admin_notifications').insert({
+          type: 'concierge_intake_crisis',
+          title: '🚨 CRISIS intake — seeker reports active risk',
+          message: `${sanitizedName} (${sanitizedEmail}) marked "yes" on self-harm/suicidal-thoughts history. Call within 15 minutes if possible. Inquiry ${inquiryId}.`,
+          metadata: {
+            inquiry_id: inquiryId,
+            seeker_name: sanitizedName,
+            seeker_email: sanitizedEmail,
+            seeker_phone: sanitizedPhone,
+            sla_target_minutes: 15,
+            crisis_flag: true,
+          },
+        });
+        logStep(requestId, "🚨 CRISIS admin notification created", { inquiryId });
+      } catch (crisisNotifErr) {
+        logStep(requestId, "Warning: Failed to create crisis admin notification", { error: String(crisisNotifErr) });
+      }
     }
 
     // Log case creation event for timeline
@@ -682,7 +714,36 @@ Deno.serve(async (req) => {
             logStep(requestId, "Auto-introduce disabled — admin will send introductions manually");
           }
         } else {
+          // Auto-matching returned zero facilities — case sits at
+          // intake_submitted until an advisor manually intervenes.
+          // Surface this to ops via admin_notifications so they know to
+          // either broaden the search (state/care type) or close the
+          // case with a transparent "no matches available" outcome —
+          // rather than the seeker silently waiting for a coordinator
+          // who has nothing to offer.
           logStep(requestId, "Auto-matching returned no results — case will need manual matching", { result: matchResult });
+          try {
+            await supabase.from("admin_notifications").insert({
+              type: "concierge_no_matches",
+              title: "⚠️ No facilities matched seeker intake",
+              message: `No facilities matched ${sanitizedName}'s intake (${sanitizeString(intakeData.levelOfCare, 50) || "any LoC"} in ${sanitizeString(intakeData.desiredState, 50) || "any state"}). Manual matching or broadened search needed.`,
+              metadata: {
+                inquiry_id: inquiryId,
+                seeker_name: sanitizedName,
+                level_of_care: sanitizeString(intakeData.levelOfCare, 50),
+                desired_state: sanitizeString(intakeData.desiredState, 50),
+                desired_city: sanitizeString(intakeData.desiredCity, 100),
+                primary_concern: sanitizeString(intakeData.primaryConcern, 100),
+                timeline: sanitizeString(intakeData.timeline, 50),
+                payment_type: sanitizeString(intakeData.paymentType, 50),
+                crisis_flag: isCrisis,
+              },
+            });
+          } catch (noMatchNotifErr) {
+            logStep(requestId, "Warning: Failed to create no-matches admin notification", {
+              error: String(noMatchNotifErr),
+            });
+          }
         }
       }
     } catch (matchErr) {

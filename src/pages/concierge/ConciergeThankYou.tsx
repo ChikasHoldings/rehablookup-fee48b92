@@ -377,9 +377,9 @@ export default function ConciergeThankYou() {
                           <Clock className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium text-foreground">24-48 Hour Review</p>
+                          <p className="font-medium text-foreground">Coordinator Reach-Out (within 1 business hour)</p>
                           <p className="text-sm text-muted-foreground">
-                            A placement advisor will personally review your request
+                            A placement advisor reaches out to confirm details and answer questions.
                           </p>
                         </div>
                       </div>
@@ -388,9 +388,9 @@ export default function ConciergeThankYou() {
                           <User className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium text-foreground">Facility Introductions</p>
+                          <p className="font-medium text-foreground">Facility Introductions (within 24-48 hours)</p>
                           <p className="text-sm text-muted-foreground">
-                            We'll connect you with verified treatment programs that fit your needs
+                            We connect you with verified treatment programs that fit your needs.
                           </p>
                         </div>
                       </div>
@@ -567,6 +567,36 @@ export default function ConciergeThankYou() {
                 </CardContent>
               </Card>
             </motion.div>
+
+            {/* Crisis line — surfaces in front of every concierge submitter
+                regardless of whether they flagged self-harm history.
+                Substance-use placement is a high-stakes domain; 988 is
+                always immediately available even while seekers wait for
+                a coordinator. */}
+            <div
+              role="complementary"
+              aria-label="Immediate crisis support"
+              className="mt-6 rounded-lg border border-red-200 bg-red-50/70 p-4 text-sm text-red-900"
+            >
+              <p className="font-semibold">In crisis right now?</p>
+              <p className="mt-1 leading-relaxed">
+                Call or text{" "}
+                <a href="tel:988" className="font-bold underline">
+                  988
+                </a>
+                {" "}for the Suicide &amp; Crisis Lifeline, or visit{" "}
+                <a
+                  href="https://988lifeline.org"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium underline"
+                >
+                  988lifeline.org
+                </a>
+                . Trained counselors are available 24/7 — you don't have to
+                wait for our coordinator.
+              </p>
+            </div>
 
             {/* Support Footer */}
             <div className="mt-6 text-center text-sm text-muted-foreground">

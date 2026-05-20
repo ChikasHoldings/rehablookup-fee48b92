@@ -48,7 +48,7 @@ const FAQ_ITEMS = [
   },
   {
     question: "How quickly will I hear back?",
-    answer: "Most clients receive their first program recommendations within 24-48 hours of completing their intake form.",
+    answer: "A placement coordinator reaches out within 1 business hour to acknowledge your intake and gather any missing details. Full program recommendations follow within 24-48 hours.",
   },
   {
     question: "Is my information kept confidential?",
@@ -176,7 +176,7 @@ export default function ConciergeLanding() {
                   </h1>
 
                   <p className="text-base md:text-lg text-white/85 mb-3 max-w-2xl mx-auto">
-                    Our placement specialists hand-match you to verified treatment programs that accept your insurance — usually within an hour.
+                    Our placement specialists hand-match you to verified treatment programs that accept your insurance. A coordinator reaches out within 1 business hour; full recommendations within 24-48 hours.
                   </p>
 
                   {/* Risk-reversal chips — "free / confidential / no

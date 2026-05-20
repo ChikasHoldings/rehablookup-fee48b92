@@ -254,6 +254,32 @@ export function StepCareNeed({ data, errors, onChange }: Props) {
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">Helps match with appropriate support services</p>
+
+        {/* Crisis-line callout — surfaces the moment the seeker self-reports
+            history of suicidal thoughts or self-harm. The intake flow can
+            take 5+ minutes; we don't want anyone in active crisis waiting
+            to finish a form before getting connected to immediate support. */}
+        {data.suicideHistory === "yes" && (
+          <div
+            role="alert"
+            className="mt-3 rounded-md border border-red-300 bg-red-50 p-3 text-sm"
+          >
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-red-700 mt-0.5 shrink-0" aria-hidden />
+              <div className="flex-1 space-y-2 text-red-900 leading-relaxed">
+                <p className="font-semibold">
+                  If you or your loved one is in immediate crisis right now,
+                  please call or text <a href="tel:988" className="underline font-bold">988</a> — the 988 Suicide &amp; Crisis Lifeline.
+                </p>
+                <p className="text-xs">
+                  You can keep filling out this form, but our care coordinators
+                  may take up to a business hour to reach you. 988 is available
+                  24/7 and connects you to a trained counselor immediately.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
