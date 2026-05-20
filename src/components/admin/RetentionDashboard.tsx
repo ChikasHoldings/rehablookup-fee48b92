@@ -77,7 +77,7 @@ export const RetentionDashboard = forwardRef<HTMLDivElement, object>(function Re
   const [isExpanded, setIsExpanded] = useState(true);
   const [dateRange, setDateRange] = useState("30");
 
-  const { data, isLoading, refetch, isFetching } = useQuery({
+  const { data, isLoading, refetch, isFetching, isError } = useQuery({
     queryKey: ["retention-metrics"],
     queryFn: async () => {
       // Fetch retention outreach alerts
@@ -89,11 +89,15 @@ export const RetentionDashboard = forwardRef<HTMLDivElement, object>(function Re
 
       if (alertsError) throw alertsError;
 
-      // Fetch email tracking events
-      const { data: trackingEvents } = await supabase
+      // Fetch email tracking events. Throw on error so the dashboard
+      // surfaces failures via isError instead of silently rendering 0
+      // for every tracking metric.
+      const { data: trackingEvents, error: trackingErr } = await supabase
         .from("email_tracking_events")
         .select("id, email_id, email_type, event_type, recipient_email, created_at")
-        .eq("email_type", "retention_outreach");
+        .eq("email_type", "retention_outreach")
+        .limit(5000);
+      if (trackingErr) throw trackingErr;
 
       // Calculate email tracking stats
       const delivered = trackingEvents?.filter(e => e.event_type === "email.delivered").length || 0;
@@ -134,25 +138,29 @@ export const RetentionDashboard = forwardRef<HTMLDivElement, object>(function Re
         };
       }
 
-      // Fetch profiles for these users
-      const { data: profiles } = await supabase
+      // Fetch profiles for these users. Scoped to `userIds` so this
+      // is bounded by alerts count; throw on error to surface outages.
+      const { data: profiles, error: profilesErr } = await supabase
         .from("profiles")
         .select("user_id, email, first_name, last_name")
         .in("user_id", userIds);
+      if (profilesErr) throw profilesErr;
 
-      // Fetch facilities for these users
-      const { data: facilities } = await supabase
+      // Fetch facilities for these users. Same scope guard.
+      const { data: facilities, error: facilitiesErr } = await supabase
         .from("facilities")
         .select("id, name, user_id")
         .in("user_id", userIds);
+      if (facilitiesErr) throw facilitiesErr;
 
-      // Fetch login activity after outreach for each user
-      const { data: activities } = await supabase
+      // Fetch login activity after outreach for each user.
+      const { data: activities, error: activitiesErr } = await supabase
         .from("account_activity_log")
         .select("user_id, created_at, event_type")
         .in("user_id", userIds)
         .eq("event_type", "login")
         .order("created_at", { ascending: true });
+      if (activitiesErr) throw activitiesErr;
 
       // Process records
       const records: OutreachRecord[] = (alerts || []).map(alert => {
@@ -259,6 +267,27 @@ export const RetentionDashboard = forwardRef<HTMLDivElement, object>(function Re
             {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="h-24 w-full" />
             ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card ref={ref}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-destructive" />
+            <CardTitle className="text-lg">Retention Dashboard</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between gap-3 p-3 rounded-md border border-destructive/30 bg-destructive/5" role="alert">
+            <p className="text-sm text-destructive">
+              Failed to load retention metrics. Retry, or check the edge function logs.
+            </p>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
           </div>
         </CardContent>
       </Card>

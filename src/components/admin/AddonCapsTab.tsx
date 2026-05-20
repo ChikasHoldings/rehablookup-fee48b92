@@ -97,7 +97,11 @@ interface DemandRow {
 }
 
 function WaitlistDemandCard() {
-  const { data: rows, isLoading } = useQuery({
+  // Permission errors (42501 / "Admin only") legitimately resolve to
+  // an empty list — a non-admin path simply has nothing to show. All
+  // other errors (network, RLS, RPC failure) re-throw so the admin
+  // sees a real error state instead of a silent empty card.
+  const { data: rows, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-waitlist-demand"],
     queryFn: async (): Promise<DemandRow[]> => {
       const { data, error } = await supabase.rpc("get_waitlist_demand_summary", {
@@ -127,6 +131,13 @@ function WaitlistDemandCard() {
       <CardContent>
         {isLoading ? (
           <Skeleton className="h-32 w-full" />
+        ) : isError ? (
+          <div className="flex items-center justify-between gap-3 p-3 rounded-md border border-destructive/30 bg-destructive/5" role="alert">
+            <p className="text-sm text-destructive">
+              Failed to load waitlist demand. Retry, or check the database logs.
+            </p>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
+          </div>
         ) : !rows || rows.length === 0 ? (
           <p className="text-sm text-slate-500 italic">
             No active waitlist entries. Caps are sized comfortably for current demand.
