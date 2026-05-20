@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { useProStatus } from "@/hooks/useProStatus";
 import { usePendingConciergeCount } from "@/hooks/usePendingConciergeCount";
-import { usePendingInternationalCount } from "@/hooks/usePendingInternationalCount";
+// usePendingInternationalCount retired 2026-05-20 — paid international placement product wound down.
 import { usePendingInquiriesCount } from "@/hooks/usePendingInquiriesCount";
 import { prefetchRoute } from "@/lib/routePrefetch";
 
@@ -49,11 +49,11 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   const { selectedFacility } = useSelectedFacility();
   const { data: proStatus } = useProStatus();
   const { count: pendingDomesticCount } = usePendingConciergeCount(selectedFacility?.id);
-  const { count: pendingInternationalCount } = usePendingInternationalCount(selectedFacility?.id);
   const { count: pendingInquiriesCount } = usePendingInquiriesCount();
 
-  // Combined placement count for badge
-  const totalPlacementCount = pendingDomesticCount + pendingInternationalCount;
+  // International placement product retired 2026-05-20 — only domestic
+  // concierge cases contribute to the placement badge now.
+  const totalPlacementCount = pendingDomesticCount;
 
   // Prefetch route on hover for instant navigation
   const handleMouseEnter = useCallback((path: string) => {

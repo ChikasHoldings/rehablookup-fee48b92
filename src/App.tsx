@@ -209,11 +209,11 @@ const ConciergeIntake = lazy(() => import("./pages/concierge/ConciergeIntake"));
 const ConciergeThankYou = lazy(() => import("./pages/concierge/ConciergeThankYou"));
 
 
-// International Placement (Global Clients) - lazy load
-const InternationalLanding = lazy(() => import("./pages/international/InternationalLanding"));
-const InternationalApplication = lazy(() => import("./pages/international/InternationalApplication"));
-const InternationalIntake = lazy(() => import("./pages/international/InternationalIntake"));
-const InternationalThankYou = lazy(() => import("./pages/international/InternationalThankYou"));
+// International placement (paid product retired 2026-05-20). The
+// /international landing stays as an informational redirect target;
+// the apply / intake / thank-you routes now render a retirement
+// notice that points seekers to the domestic concierge intake.
+const InternationalRetired = lazy(() => import("./pages/international/InternationalRetired"));
 const AdLanding = lazy(() => import("./pages/AdLanding"));
 const SocialLanding = lazy(() => import("./pages/SocialLanding"));
 const Resources = lazy(() => import("./pages/Resources"));
@@ -268,7 +268,7 @@ const SeekerFacilityProfile = lazy(() => import("./pages/seeker/SeekerFacilityPr
 const SeekerSearch = lazy(() => import("./pages/seeker/SeekerSearch"));
 const SeekerHelp = lazy(() => import("./pages/seeker/SeekerHelp"));
 const SeekerConcierge = lazy(() => import("./pages/seeker/SeekerConcierge"));
-const SeekerInternationalCase = lazy(() => import("./pages/seeker/SeekerInternationalCase"));
+// SeekerInternationalCase retired 2026-05-20 — paid international placement product wound down.
 const SeekerInsuranceVerifications = lazy(() => import("./pages/seeker/SeekerInsuranceVerifications"));
 const SeekerSavedSearches = lazy(() => import("./pages/seeker/SeekerSavedSearches"));
 
@@ -391,7 +391,7 @@ const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const AdminConcierge = lazy(() => import("./pages/admin/AdminConcierge"));
 const AdminConciergeAuditReview = lazy(() => import("./pages/admin/AdminConciergeAuditReview"));
 const AdminConciergeMetrics = lazy(() => import("./pages/admin/AdminConciergeMetrics"));
-const InternationalAgreementTemplate = lazy(() => import("./pages/admin/InternationalAgreementTemplate"));
+// InternationalAgreementTemplate retired 2026-05-20 — paid international placement product wound down.
 // PlacementRevenueDashboard removed in monetization rebuild — admin
 // /admin/placement-revenue Navigate'd to /admin/dashboard below.
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
@@ -1158,11 +1158,15 @@ const AppInner = () => {
             <Route path="/treatment/alcohol-rehab" element={<Navigate to="/treatment-types/alcohol-rehabilitation" replace />} />
             <Route path="/treatment/alcohol-rehab/:stateSlug" element={<AlcoholStateRedirect />} />
 
-            {/* International Placement Routes */}
-            <Route path="/international" element={<PublicRouteGuard><InternationalLanding /></PublicRouteGuard>} />
-            <Route path="/international/apply" element={<PublicRouteGuard><InternationalApplication /></PublicRouteGuard>} />
-            <Route path="/international/intake" element={<Navigate to="/international/apply" replace />} />
-            <Route path="/international/thank-you" element={<PublicRouteGuard><InternationalThankYou /></PublicRouteGuard>} />
+            {/* International placement routes — paid product retired
+                2026-05-20. /international redirects to the SEO-friendly
+                informational page; legacy apply/intake/thank-you bookmarks
+                render the retirement notice so visitors aren't dropped
+                into a dead pipeline. */}
+            <Route path="/international" element={<Navigate to="/us-rehab/international-patients" replace />} />
+            <Route path="/international/apply" element={<PublicRouteGuard><InternationalRetired /></PublicRouteGuard>} />
+            <Route path="/international/intake" element={<PublicRouteGuard><InternationalRetired /></PublicRouteGuard>} />
+            <Route path="/international/thank-you" element={<PublicRouteGuard><InternationalRetired /></PublicRouteGuard>} />
             <Route path="/placement-help" element={<Navigate to="/concierge" replace />} />
             
             {/* US Rehab - International SEO Landing Pages */}
@@ -1356,7 +1360,8 @@ const AppInner = () => {
               <Route path="help" element={<SeekerHelp />} />
               <Route path="concierge" element={<SeekerConcierge />} />
               <Route path="concierge/:inquiryId" element={<SeekerConcierge />} />
-              <Route path="international" element={<SeekerInternationalCase />} />
+              {/* /seeker/international retired 2026-05-20 with the paid international placement product. */}
+              <Route path="international" element={<Navigate to="/seeker/concierge" replace />} />
               <Route path="insurance-verifications" element={<SeekerInsuranceVerifications />} />
               <Route path="saved-searches" element={<SeekerSavedSearches />} />
               <Route path="*" element={<Navigate to="/account" replace />} />
@@ -1823,10 +1828,12 @@ const AppInner = () => {
               <Route path="concierge" element={<AdminConcierge />} />
               <Route path="concierge/audit-review" element={<AdminConciergeAuditReview />} />
               <Route path="concierge/metrics" element={<AdminConciergeMetrics />} />
+              {/* International placement admin surfaces retired 2026-05-20
+                  alongside the paid product. Both routes now redirect
+                  to the concierge dashboard so any stale admin bookmarks
+                  land somewhere useful. */}
               <Route path="international" element={<Navigate to="/admin/concierge" replace />} />
-              <Route path="international/agreement" element={<InternationalAgreementTemplate />} />
-              {/* placement-revenue dashboard removed — pay-per-admission
-                  revenue stream retired. */}
+              <Route path="international/agreement" element={<Navigate to="/admin/concierge" replace />} />
               <Route path="placement-revenue" element={<Navigate to="/admin" replace />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="marketing" element={<AdminMarketing />} />

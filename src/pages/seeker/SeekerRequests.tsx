@@ -234,7 +234,7 @@ export default function SeekerRequests() {
   // /account/concierge and /account/international when the seeker has work
   // in those flows. The leads list above stays the primary feed.
   const [conciergeCount, setConciergeCount] = useState<number>(0);
-  const [internationalCount, setInternationalCount] = useState<number>(0);
+  // International placement product retired 2026-05-20.
   const [vobCount, setVobCount] = useState<number>(0);
   const [savedSearchCount, setSavedSearchCount] = useState<number>(0);
   const { toast } = useToast();
@@ -360,21 +360,17 @@ export default function SeekerRequests() {
   useEffect(() => {
     if (!isAuthenticated || !userId) {
       setConciergeCount(0);
-      setInternationalCount(0);
       setVobCount(0);
       setSavedSearchCount(0);
       return;
     }
     let cancelled = false;
     (async () => {
-      const [conc, intl, vob, saved] = await Promise.all([
+      // International placement product retired 2026-05-20 — only
+      // domestic concierge, VOB requests, and saved searches remain.
+      const [conc, vob, saved] = await Promise.all([
         supabase
           .from("concierge_inquiries")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", userId)
-          .not("status", "in", "(closed,completed)"),
-        supabase
-          .from("international_placement_cases")
           .select("id", { count: "exact", head: true })
           .eq("user_id", userId)
           .not("status", "in", "(closed,completed)"),
@@ -389,7 +385,6 @@ export default function SeekerRequests() {
       ]);
       if (cancelled) return;
       setConciergeCount(conc.count ?? 0);
-      setInternationalCount(intl.count ?? 0);
       setVobCount(vob.count ?? 0);
       setSavedSearchCount(saved.count ?? 0);
     })();
@@ -538,7 +533,7 @@ export default function SeekerRequests() {
         {/* Cross-link cards: surface the seeker's open concierge + international
             + insurance-verification + saved-search work so this page acts as a
             true inbox. */}
-        {(conciergeCount > 0 || internationalCount > 0 || vobCount > 0 || savedSearchCount > 0) && (
+        {(conciergeCount > 0 || vobCount > 0 || savedSearchCount > 0) && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
             {conciergeCount > 0 && (
               <Link to="/account/concierge" className="block">
@@ -558,24 +553,7 @@ export default function SeekerRequests() {
                 </Card>
               </Link>
             )}
-            {internationalCount > 0 && (
-              <Link to="/account/international" className="block">
-                <Card className="hover:border-primary/40 transition-colors">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                      <Building2 className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold">International placement</p>
-                      <p className="text-xs text-muted-foreground">
-                        {internationalCount} active case{internationalCount === 1 ? "" : "s"}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
+            {/* International placement card retired 2026-05-20 with the paid product. */}
             {vobCount > 0 && (
               <Link to="/account/insurance-verifications" className="block">
                 <Card className="hover:border-primary/40 transition-colors">

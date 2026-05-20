@@ -2132,106 +2132,38 @@ Deno.serve(async (req) => {
         customerId: session.customer 
       });
 
-      // INTERNATIONAL PLACEMENT PAYMENT
+      // INTERNATIONAL PLACEMENT PAYMENT — retired 2026-05-20.
+      // The paid international placement product is fully wound down.
+      // The five international edge functions return 410 Gone and the
+      // create-checkout-session never produces sessions with
+      // metadata.type='international_placement' any more. If a stale
+      // session somehow lands here (e.g. a webhook retry for a
+      // session created pre-retirement), log + emit an admin
+      // notification + return 200 so Stripe stops retrying. We do NOT
+      // attempt to write to the dropped international_* tables.
       if (session.mode === "payment" && metadataType === "international_placement") {
-        const clientEmail = session.metadata?.client_email || session.customer_email;
-        const clientName = session.metadata?.client_name;
-        const clientCountry = session.metadata?.client_country;
-        const userId = session.metadata?.user_id || null;
-        const paymentIntentId = session.payment_intent as string;
-
-        logStep("Processing international placement payment", { 
-          sessionId: session.id, 
-          email: clientEmail,
-          paymentIntentId 
+        logStep("⚠️ International placement webhook hit after product retirement", {
+          sessionId: session.id,
+          email: session.metadata?.client_email || session.customer_email,
         });
-
-        // Check if payment already processed (idempotency)
-        const { data: existingPayment } = await supabaseAdmin
-          .from("international_payments")
-          .select("id, status")
-          .eq("stripe_checkout_session_id", session.id)
-          .maybeSingle();
-
-        if (existingPayment?.status === "succeeded") {
-          logStep("Payment already processed, skipping", { paymentId: existingPayment.id });
-          return new Response(JSON.stringify({ received: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        // Upsert payment record
-        const { error: paymentError } = await supabaseAdmin
-          .from("international_payments")
-          .upsert({
-            id: existingPayment?.id,
-            user_id: userId || null,
-            email: clientEmail || "",
-            stripe_checkout_session_id: session.id,
-            stripe_payment_intent_id: paymentIntentId,
-            amount_cents: 9900,
-            currency: "USD",
-            status: "succeeded",
-            client_name: clientName,
-            client_country: clientCountry,
+        try {
+          await supabaseAdmin.from("admin_notifications").insert({
+            type: "retired_product_webhook",
+            title: "⚠️ International placement webhook fired after retirement",
+            message: `Stripe delivered an 'international_placement' session ${session.id} after the product was retired. Refund manually if needed.`,
             metadata: {
-              stripe_customer_id: session.customer,
-              idempotency_key: session.metadata?.idempotency_key,
+              session_id: session.id,
+              payment_intent_id: session.payment_intent,
+              client_email: session.metadata?.client_email || session.customer_email,
+              client_name: session.metadata?.client_name,
+              client_country: session.metadata?.client_country,
+              amount_total: session.amount_total,
             },
-            updated_at: new Date().toISOString(),
-          }, { onConflict: "stripe_checkout_session_id" });
-
-        if (paymentError) {
-          logStep("Error updating payment record", { error: paymentError.message });
-        } else {
-          logStep("International payment recorded successfully");
+          });
+        } catch (e) {
+          logStep("Failed to write retirement-warning admin notification", { error: String(e) });
         }
-
-        // CREATE PENDING CASE RECORD (safety net for abandoned intake forms)
-        const { data: existingCase } = await supabaseAdmin
-          .from("international_placement_cases")
-          .select("id")
-          .eq("stripe_checkout_session_id", session.id)
-          .maybeSingle();
-
-        if (!existingCase) {
-          const { error: caseError } = await supabaseAdmin
-            .from("international_placement_cases")
-            .insert({
-              client_name: clientName || "Pending Intake",
-              client_email: clientEmail || "",
-              client_country: clientCountry || "Unknown",
-              user_id: userId || null,
-              stripe_checkout_session_id: session.id,
-              stripe_payment_intent_id: paymentIntentId,
-              seeker_fee_amount_cents: 9900,
-              seeker_fee_status: "paid",
-              status: "pending_intake",
-              intake_data: {},
-            });
-
-          if (caseError) {
-            logStep("Error creating pending case", { error: caseError.message });
-          } else {
-            logStep("Pending international case created for follow-up");
-          }
-        }
-
-        // Create admin notification
-        await supabaseAdmin.from("admin_notifications").insert({
-          type: "international_payment",
-          title: "New International Placement Payment",
-          message: `${clientName} from ${clientCountry} paid $99 for international placement`,
-          metadata: {
-            session_id: session.id,
-            payment_intent_id: paymentIntentId,
-            client_name: clientName,
-            client_email: clientEmail,
-            client_country: clientCountry,
-          },
-        });
-
-        return new Response(JSON.stringify({ received: true }), {
+        return new Response(JSON.stringify({ received: true, retired: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -3755,46 +3687,12 @@ Deno.serve(async (req) => {
       if (paymentIntentId) {
         logStep("Processing refund", { chargeId: charge.id, paymentIntentId });
 
-        // Check if this is an international payment
-        const { data: intlPayment } = await supabaseAdmin
-          .from("international_payments")
-          .select("id, email, client_name")
-          .eq("stripe_payment_intent_id", paymentIntentId)
-          .maybeSingle();
-
-        if (intlPayment) {
-          logStep("Refunding international payment", { paymentId: intlPayment.id });
-
-          const { error: updateError } = await supabaseAdmin
-            .from("international_payments")
-            .update({
-              status: "refunded",
-              updated_at: new Date().toISOString(),
-              metadata: {
-                refund_id: charge.refunds?.data[0]?.id,
-                refunded_at: new Date().toISOString(),
-              },
-            })
-            .eq("id", intlPayment.id);
-
-          if (updateError) {
-            logStep("Error updating payment to refunded", { error: updateError.message });
-          } else {
-            logStep("International payment marked as refunded");
-
-            // Create admin notification
-            await supabaseAdmin.from("admin_notifications").insert({
-              type: "international_refund",
-              title: "International Payment Refunded",
-              message: `Refunded $99 to ${intlPayment.client_name} (${intlPayment.email})`,
-              metadata: {
-                payment_id: intlPayment.id,
-                charge_id: charge.id,
-                payment_intent_id: paymentIntentId,
-              },
-            });
-          }
-        } else {
+        // International placement payments retired 2026-05-20 — the
+        // international_payments table is dropped. The branch below
+        // handles every other refund (Pro/Featured/Concierge
+        // subscription refunds issued via Stripe dashboard) and
+        // surfaces them to admin for reconciliation.
+        {
           // Round-30: out-of-band subscription refund detection.
           // If an admin issues a refund via Stripe dashboard for a
           // Pro/Featured/Concierge subscription (not via the
@@ -3853,122 +3751,40 @@ Deno.serve(async (req) => {
     }
 
     // ==========================================
-    // Handle invoice.paid for International Facility Invoices
+    // International facility invoice webhook handlers
+    // (invoice.paid + invoice.payment_failed for international placement)
+    //
+    // RETIRED 2026-05-20 with the paid international placement product.
+    // The international_facility_invoices and international_placement_cases
+    // tables are dropped. If a stale Stripe invoice event with
+    // metadata.type='international_placement_fee' still arrives (e.g.
+    // delayed retry of a pre-retirement invoice), we acknowledge it,
+    // record an admin_notifications row for visibility, and return 200
+    // so Stripe stops retrying.
     // ==========================================
-    if (event.type === "invoice.paid") {
-      const invoice = event.data.object as Stripe.Invoice;
-      const invoiceId = invoice.metadata?.invoice_id;
-      const invoiceType = invoice.metadata?.type;
-
-      if (invoiceType === "international_placement_fee" && invoiceId) {
-        logStep("International facility invoice paid", { invoiceId, stripeInvoiceId: invoice.id });
-
-        // Idempotency: check if already marked paid
-        const { data: existingInvoice } = await supabaseAdmin
-          .from("international_facility_invoices")
-          .select("id, status")
-          .eq("id", invoiceId)
-          .maybeSingle();
-
-        if (existingInvoice?.status === "paid") {
-          logStep("International invoice already paid (duplicate webhook), skipping", { invoiceId });
-        } else {
-          const { error: updateError } = await supabaseAdmin
-            .from("international_facility_invoices")
-            .update({
-              status: "paid",
-              paid_at: new Date().toISOString(),
-              stripe_payment_intent_id: invoice.payment_intent as string,
-            })
-            .eq("id", invoiceId);
-
-          if (updateError) {
-            logStep("Error updating invoice to paid", { error: updateError.message });
-          } else {
-            // Update case status
-            const { data: dbInvoice } = await supabaseAdmin
-              .from("international_facility_invoices")
-              .select("case_id")
-              .eq("id", invoiceId)
-              .single();
-
-            if (dbInvoice?.case_id) {
-              await supabaseAdmin
-                .from("international_placement_cases")
-                .update({ facility_fee_status: "paid" })
-                .eq("id", dbInvoice.case_id);
-
-              await supabaseAdmin.from("international_case_events").insert({
-                case_id: dbInvoice.case_id,
-                event_type: "facility_fee_paid",
-                actor_type: "system",
-                event_data: { 
-                  invoice_id: invoiceId,
-                  stripe_invoice_id: invoice.id,
-                  amount_paid: invoice.amount_paid,
-                },
-              });
-            }
-
-            // Create admin notification
-            await supabaseAdmin.from("admin_notifications").insert({
-              type: "international_invoice_paid",
-              title: "International Invoice Paid",
-              message: `Facility paid $${(invoice.amount_paid / 100).toLocaleString()} for international placement`,
-              metadata: {
-                invoice_id: invoiceId,
-                stripe_invoice_id: invoice.id,
-                case_id: invoice.metadata?.case_id,
-              },
-            });
-
-            logStep("International facility invoice marked as paid");
-          }
-        }
-      }
-    }
-
-    // ==========================================
-    // Handle invoice.payment_failed for International Facility Invoices  
-    // ==========================================
-    if (event.type === "invoice.payment_failed") {
+    if ((event.type === "invoice.paid" || event.type === "invoice.payment_failed")) {
       const invoice = event.data.object as Stripe.Invoice;
       const invoiceType = invoice.metadata?.type;
-      const invoiceId = invoice.metadata?.invoice_id;
-
-      if (invoiceType === "international_placement_fee" && invoiceId) {
-        logStep("International facility invoice payment failed", { invoiceId });
-
-        await supabaseAdmin
-          .from("international_facility_invoices")
-          .update({ status: "uncollectible" })
-          .eq("id", invoiceId);
-
-        const { data: dbInvoice } = await supabaseAdmin
-          .from("international_facility_invoices")
-          .select("case_id")
-          .eq("id", invoiceId)
-          .single();
-
-        if (dbInvoice?.case_id) {
-          await supabaseAdmin.from("international_case_events").insert({
-            case_id: dbInvoice.case_id,
-            event_type: "facility_invoice_payment_failed",
-            actor_type: "system",
-            event_data: { invoice_id: invoiceId, stripe_invoice_id: invoice.id },
-          });
-        }
-
-        await supabaseAdmin.from("admin_notifications").insert({
-          type: "international_invoice_failed",
-          title: "International Invoice Payment Failed",
-          message: `Payment failed for international placement invoice`,
-          metadata: {
-            invoice_id: invoiceId,
-            stripe_invoice_id: invoice.id,
-            case_id: invoice.metadata?.case_id,
-          },
+      if (invoiceType === "international_placement_fee") {
+        logStep("⚠️ International invoice webhook fired after retirement", {
+          eventType: event.type,
+          stripeInvoiceId: invoice.id,
         });
+        try {
+          await supabaseAdmin.from("admin_notifications").insert({
+            type: "retired_product_webhook",
+            title: `⚠️ International invoice ${event.type} after retirement`,
+            message: `Stripe delivered an 'international_placement_fee' invoice event (${event.type}) for ${invoice.id} after the product was retired. Refund or reconcile manually if needed.`,
+            metadata: {
+              event_type: event.type,
+              stripe_invoice_id: invoice.id,
+              amount_paid: invoice.amount_paid,
+              metadata: invoice.metadata,
+            },
+          });
+        } catch (e) {
+          logStep("Failed to write retirement-warning admin notification", { error: String(e) });
+        }
       }
     }
 

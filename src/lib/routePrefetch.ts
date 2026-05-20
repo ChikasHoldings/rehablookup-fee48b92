@@ -33,7 +33,7 @@ const publicPageMap: Record<string, () => Promise<unknown>> = {
   "/how-it-works": () => import("@/pages/HowItWorks"),
   "/for-providers": () => import("@/pages/ForProviders"),
   "/concierge": () => import("@/pages/concierge/ConciergeLanding"),
-  "/international": () => import("@/pages/international/InternationalLanding"),
+  // /international prefetch retired 2026-05-20 — route now redirects to /us-rehab/international-patients.
   "/resources": () => import("@/pages/Resources"),
   "/insurance": () => import("@/pages/Insurance"),
   "/about": () => import("@/pages/About"),
@@ -269,7 +269,7 @@ export function preloadPublicPages(): void {
     () => import("@/pages/RehabCenters"),
     () => import("@/pages/concierge/ConciergeLanding"),
     () => import("@/pages/Insurance"),
-    () => import("@/pages/international/InternationalLanding"),
+    // InternationalLanding prefetch retired 2026-05-20.
     () => import("@/pages/ForProviders"),
     () => import("@/pages/About"),
     () => import("@/pages/Contact"),

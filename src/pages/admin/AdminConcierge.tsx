@@ -16,13 +16,13 @@ import {
 } from "@/components/ui/select";
 import {
   Search, RefreshCw, HeartHandshake, Building2, Receipt,
-  Globe, Flag, DollarSign, LayoutGrid, List, TrendingUp,
+  Flag, DollarSign, LayoutGrid, List, TrendingUp,
   Clock, Users, CheckCircle,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { PlacementOpsDashboard } from "@/components/admin/concierge/PlacementOpsDashboard";
 import { NetworkProvidersTab } from "@/components/admin/concierge/NetworkProvidersTab";
-import { InternationalCasesTab } from "@/components/admin/concierge/InternationalCasesTab";
+// InternationalCasesTab import retired 2026-05-20 — paid international placement product wound down.
 import { getCaseNextAction } from "@/components/admin/concierge/placementActionUtils";
 import { CaseAlertIcons } from "@/components/admin/concierge/CaseSlaAlerts";
 import { VISUAL_STAGES, getVisualStage, STATUS_CONFIG } from "@/components/admin/concierge/placementPipelineConfig";
@@ -103,13 +103,9 @@ export default function AdminConcierge() {
     },
   });
 
-  const { data: internationalCount } = useQuery({
-    queryKey: ["admin-international-count"],
-    queryFn: async () => {
-      const { count } = await supabase.from("international_placement_cases").select("id", { count: "exact", head: true }).not("status", "eq", "closed");
-      return count || 0;
-    },
-  });
+  // International placement product retired 2026-05-20 — the live
+  // case count query, tab, and InternationalCasesTab component are
+  // all removed. /admin/international now redirects to this dashboard.
 
   const { data: selectedCase } = useQuery({
     queryKey: ["admin-concierge-case-detail", selectedCaseId],
@@ -221,16 +217,13 @@ export default function AdminConcierge() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
-          <TabsList className={`inline-flex w-auto sm:grid sm:w-full ${isAdvisor ? "sm:grid-cols-2 sm:max-w-xs" : "sm:grid-cols-4 sm:max-w-lg"}`}>
+          <TabsList className={`inline-flex w-auto sm:grid sm:w-full ${isAdvisor ? "sm:grid-cols-1 sm:max-w-xs" : "sm:grid-cols-3 sm:max-w-md"}`}>
             <TabsTrigger value="domestic" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
               <Flag className="h-3.5 w-3.5" />
               <span className="text-xs sm:text-sm">Domestic</span>
             </TabsTrigger>
-            <TabsTrigger value="international" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
-              <Globe className="h-3.5 w-3.5" />
-              <span className="text-xs sm:text-sm">International</span>
-              {!!internationalCount && <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{internationalCount}</Badge>}
-            </TabsTrigger>
+            {/* International tab retired 2026-05-20 with the paid
+                international placement product. */}
             {!isAdvisor && (
               <>
                 <TabsTrigger value="providers" className="flex items-center gap-1.5 px-3 whitespace-nowrap">
@@ -413,9 +406,7 @@ export default function AdminConcierge() {
           )}
         </TabsContent>
 
-        <TabsContent value="international">
-          <InternationalCasesTab />
-        </TabsContent>
+        {/* International tab content retired 2026-05-20. */}
 
         <TabsContent value="providers">
           <NetworkProvidersTab />

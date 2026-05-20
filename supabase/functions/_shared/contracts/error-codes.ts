@@ -290,17 +290,17 @@ export const ERROR_CODES = {
     httpStatus: 502,
     category: "integration",
     description:
-      "International placement invoice could not be created in Stripe.",
+      "Retired 2026-05-20 — was emitted by submit-international-intake when Stripe invoice creation failed. No live emitters.",
     retryable: true,
-    emittedBy: ["submit-international-intake"],
+    emittedBy: [],
   },
   case_create_failed: {
     code: "case_create_failed",
     httpStatus: 500,
     category: "integration",
-    description: "Database insert into international_placement_cases failed.",
+    description: "Retired 2026-05-20 — was emitted by submit-international-intake on case insert failure. No live emitters.",
     retryable: true,
-    emittedBy: ["submit-international-intake"],
+    emittedBy: [],
   },
   draft_create_failed: {
     code: "draft_create_failed",

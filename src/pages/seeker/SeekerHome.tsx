@@ -118,7 +118,6 @@ export default function SeekerHome() {
     inquiriesOpen: number;
     inquiriesUnread: number;
     conciergeOpen: number;
-    intlOpen: number;
     resumeInquiry: { id: string; primary_concern: string | null; level_of_care: string | null; updated_at: string } | null;
   } | null>(null);
   useEffect(() => {
@@ -129,17 +128,14 @@ export default function SeekerHome() {
         setSeekerKpis(null);
         return;
       }
-      const [leadsRes, conciergeRes, intlRes, draftRes, notifRes] = await Promise.all([
+      // International placement product retired 2026-05-20 — only
+      // domestic concierge cases remain in the seeker KPI summary.
+      const [leadsRes, conciergeRes, draftRes, notifRes] = await Promise.all([
         supabase
           .rpc("get_seeker_submitted_leads", { p_email: user.email } as never)
           .then((r) => r, () => ({ data: [] as Array<{ id: string; status: string }> })),
         supabase
           .from("concierge_inquiries")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .not("status", "in", "(closed,completed)"),
-        supabase
-          .from("international_placement_cases")
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id)
           .not("status", "in", "(closed,completed)"),
@@ -164,7 +160,6 @@ export default function SeekerHome() {
         inquiriesOpen,
         inquiriesUnread: notifRes.count ?? 0,
         conciergeOpen: conciergeRes.count ?? 0,
-        intlOpen: intlRes.count ?? 0,
         resumeInquiry: draftRes.data ?? null,
       });
     })();
@@ -606,7 +601,7 @@ export default function SeekerHome() {
       {/* Returning-seeker KPI strip + intake-resume card.
           Only renders for signed-in users with at least one signal worth
           surfacing; pure anon discovery flow is unaffected. */}
-      {seekerKpis && (seekerKpis.inquiriesOpen > 0 || seekerKpis.conciergeOpen > 0 || seekerKpis.intlOpen > 0 || seekerKpis.resumeInquiry || seekerKpis.inquiriesUnread > 0) && (
+      {seekerKpis && (seekerKpis.inquiriesOpen > 0 || seekerKpis.conciergeOpen > 0 || seekerKpis.resumeInquiry || seekerKpis.inquiriesUnread > 0) && (
         <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-4 sm:pt-5">
           {seekerKpis.resumeInquiry && (
             <Card className="mb-3 border-amber-500/30 bg-amber-500/5">
@@ -676,7 +671,7 @@ export default function SeekerHome() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground leading-tight">Placements</p>
-                    <p className="text-base font-semibold tabular-nums">{seekerKpis.conciergeOpen + seekerKpis.intlOpen}</p>
+                    <p className="text-base font-semibold tabular-nums">{seekerKpis.conciergeOpen}</p>
                   </div>
                 </CardContent>
               </Card>
