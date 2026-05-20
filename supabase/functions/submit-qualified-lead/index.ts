@@ -638,6 +638,57 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+// ---------- free-tier seeker confirmation email ----------
+// Sent when a seeker submits an inquiry on a Free-tier facility. The
+// in-app redirect page (`/inquiry/confirmation/:id`) is the primary
+// confirmation; this email is the durable backup so the seeker has a
+// receipt even if they close the tab before the coordinator calls.
+function getFreeTierSeekerConfirmationEmail(args: {
+  seekerName: string;
+  originatingFacilityName: string | null;
+  inquiryId: string;
+  levelOfCare: string | null;
+  urgency: string | null;
+}): string {
+  const { seekerName, originatingFacilityName, inquiryId, levelOfCare, urgency } = args;
+  const facilityLine = originatingFacilityName
+    ? `<strong>${originatingFacilityName}</strong>`
+    : "the facility you contacted";
+  const detailsRows: string[] = [];
+  if (levelOfCare) detailsRows.push(`<tr><td style="padding:4px 0;color:#64748b;">Level of care</td><td style="padding:4px 0;color:#0f172a;font-weight:600;">${levelOfCare}</td></tr>`);
+  if (urgency) detailsRows.push(`<tr><td style="padding:4px 0;color:#64748b;">Timeline</td><td style="padding:4px 0;color:#0f172a;font-weight:600;">${urgency}</td></tr>`);
+  return `<!DOCTYPE html>
+<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;margin:0;padding:32px 16px;">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+    <h1 style="font-size:24px;color:#0f172a;margin:0 0 16px 0;">You're connected.</h1>
+    <p style="font-size:15px;color:#334155;line-height:1.6;margin:0 0 16px 0;">
+      Hi ${seekerName}, we received your inquiry. A RehabLookup care coordinator
+      will reach out within <strong>1 business hour</strong> to introduce you to
+      ${facilityLine} along with <strong>1&ndash;2 additional matched facilities</strong>
+      so you can compare options.
+    </p>
+    ${detailsRows.length > 0 ? `
+    <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin:24px 0;">
+      <p style="font-size:13px;color:#475569;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;">Your inquiry</p>
+      <table style="width:100%;font-size:14px;border-collapse:collapse;">${detailsRows.join("")}</table>
+    </div>` : ""}
+    <p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 12px 0;">
+      <strong>What to expect:</strong> a coordinator will call or email you (whichever
+      you indicated), share contact info for the matched facilities, and let you
+      decide who to reach first. Calls go directly to the facility &mdash; we never
+      route or intermediate.
+    </p>
+    <p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 12px 0;">
+      In the meantime, you can reach us at <a href="tel:+18005551234" style="color:#1B365D;font-weight:600;">(800) 555-1234</a>.
+    </p>
+    <p style="font-size:12px;color:#94a3b8;margin:24px 0 0 0;border-top:1px solid #e2e8f0;padding-top:16px;">
+      Reference: ${inquiryId.slice(0, 8)} &middot; This is a transactional email about your
+      RehabLookup inquiry.
+    </p>
+  </div>
+</body></html>`;
+}
+
 // ---------- seeker (client) confirmation email ----------
 function getSeekerConfirmationEmail(
   name: string,
@@ -1219,6 +1270,129 @@ Deno.serve(async (req) => {
       if (inquiryErr || !inquiryRow) {
         log(requestId, "ERROR", "Concierge inquiry insert failed", { error: inquiryErr });
         return errorResponse(500, "concierge_insert_failed", "Failed to route inquiry.");
+      }
+
+      // Surface the new pending intake to ops via admin_notifications so
+      // the case doesn't sit invisibly until a coordinator manually opens
+      // the concierge dashboard. Mirrors the pattern submit-concierge-
+      // intake uses for paid intakes — same audit/timeline guarantees
+      // for free-tier-redirected inquiries.
+      try {
+        await supabase.from("admin_notifications").insert({
+          type: "concierge_intake",
+          title: "Free-tier inquiry — concierge follow-up needed",
+          message: `Inquiry from ${data.name} redirected from ${facilityForNotify?.name ?? "Free facility"} — ${data.levelOfCare ?? "level of care TBD"} | ${data.locationCityState ?? data.locationZip ?? "no location"} | ${validatedUrgency ?? "no urgency"}`,
+          metadata: {
+            inquiry_id: inquiryRow.id,
+            routing_mode: "free_tier_redirect",
+            originating_facility_id: data.facilityId,
+            originating_facility_name: facilityForNotify?.name ?? null,
+            seeker_name: data.name,
+            level_of_care: data.levelOfCare ?? null,
+            urgency: validatedUrgency ?? null,
+            location: data.locationCityState ?? data.locationZip ?? null,
+            request_id: requestId,
+          } as Record<string, unknown>,
+        });
+      } catch (adminNotifErr) {
+        log(requestId, "WARN", "Failed to create admin notification (non-blocking)", {
+          error: String(adminNotifErr),
+        });
+      }
+
+      // Log a case_created timeline event so the AdminConcierge "Timeline"
+      // tab shows the inquiry's full history from the moment it was
+      // routed in.
+      try {
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: inquiryRow.id,
+          event_type: "case_created",
+          event_data: {
+            source: "free_tier_redirect",
+            originating_facility_id: data.facilityId,
+            originating_facility_name: facilityForNotify?.name ?? null,
+          },
+          actor_type: "system",
+          actor_id: null,
+        });
+      } catch (eventErr) {
+        log(requestId, "WARN", "Failed to log case_created event (non-blocking)", {
+          error: String(eventErr),
+        });
+      }
+
+      // Round-robin auto-assign to the advisor with the fewest active
+      // cases. Mirrors submit-concierge-intake. If no advisors exist the
+      // case stays unassigned and surfaces as 'pending_intake' in the
+      // admin dashboard until an admin assigns manually.
+      try {
+        const { data: advisors } = await supabase
+          .from("admin_user_profiles")
+          .select("user_id")
+          .eq("admin_role", "advisor")
+          .eq("status", "active");
+        if (advisors && advisors.length > 0) {
+          const { data: caseLoads } = await supabase
+            .from("concierge_inquiries")
+            .select("assigned_advisor_id")
+            .not("status", "in", '("closed","completed")')
+            .not("assigned_advisor_id", "is", null);
+          const loadMap = new Map<string, number>();
+          for (const a of advisors) loadMap.set(a.user_id, 0);
+          for (const c of (caseLoads || [])) {
+            if (c.assigned_advisor_id && loadMap.has(c.assigned_advisor_id)) {
+              loadMap.set(c.assigned_advisor_id, (loadMap.get(c.assigned_advisor_id) || 0) + 1);
+            }
+          }
+          const sorted = [...loadMap.entries()].sort((a, b) => a[1] - b[1]);
+          const pickedAdvisor = sorted[0]?.[0];
+          if (pickedAdvisor) {
+            await supabase
+              .from("concierge_inquiries")
+              .update({ assigned_advisor_id: pickedAdvisor })
+              .eq("id", inquiryRow.id)
+              .is("assigned_advisor_id", null);
+            log(requestId, "INFO", "Auto-assigned advisor to free-tier inquiry", {
+              advisorId: pickedAdvisor,
+              caseLoad: sorted[0]?.[1] ?? 0,
+            });
+          }
+        }
+      } catch (advisorErr) {
+        log(requestId, "WARN", "Failed to auto-assign advisor (non-blocking)", {
+          error: String(advisorErr),
+        });
+      }
+
+      // Send the seeker a confirmation email — the in-app redirect page
+      // works as long as the tab stays open, but the email is the
+      // durable receipt the seeker can refer back to.
+      try {
+        await sendEmailWithRetry(
+          supabase,
+          resend,
+          {
+            from: "RehabLookup Concierge <concierge@rehablookup.com>",
+            to: data.email,
+            subject: "We received your inquiry — a coordinator will be in touch within 1 business hour",
+            html: getFreeTierSeekerConfirmationEmail({
+              seekerName: data.name,
+              originatingFacilityName: facilityForNotify?.name ?? null,
+              inquiryId: inquiryRow.id,
+              levelOfCare: data.levelOfCare ?? null,
+              urgency: validatedUrgency ?? null,
+            }),
+          },
+          {
+            emailType: "free_tier_seeker_confirmation",
+            idempotencyKey: `free-tier-seeker-${inquiryRow.id}`,
+            maxRetries: 2,
+          },
+        );
+      } catch (e) {
+        log(requestId, "WARN", "Failed to send seeker confirmation email (non-blocking)", {
+          error: String(e),
+        });
       }
 
       // Notify the Free facility of the redirect. We don't block the
