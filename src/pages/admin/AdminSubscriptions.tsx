@@ -55,7 +55,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { PLAN_DETAILS } from "@/hooks/useSubscription";
 import { AtRiskProvidersCard } from "@/components/admin/AtRiskProvidersCard";
 import { RetentionDashboard } from "@/components/admin/RetentionDashboard";
 import { SubscriptionDetailModal } from "@/components/admin/SubscriptionDetailModal";
@@ -167,8 +166,9 @@ type EnrichedSubscription = {
   facility_name: string;
   facility_city?: string;
   facility_state?: string;
-  leads_used: number;
-  location_limit: number;
+  /** Inquiries received this month for the facility — replaces the
+   *  retired `leads_used` (which referred to the unlock-credit model). */
+  leads_this_month: number;
 };
 
 const VALID_TABS = ["overview", "subscriptions", "featured", "retention", "settings"] as const;
@@ -328,15 +328,13 @@ export default function AdminSubscriptions() {
     return stripeStats.subscriptions.map((sub) => {
       const profile = emailToProfile[sub.customer_email.toLowerCase()];
       const facility = profile ? userToFacility[profile.user_id] : null;
-      const leadsUsed = facility ? (leadCounts?.[facility.id] || 0) : 0;
-      const planDetails = PLAN_DETAILS[sub.plan as keyof typeof PLAN_DETAILS];
+      const leadsThisMonth = facility ? (leadCounts?.[facility.id] || 0) : 0;
       return {
         ...sub,
         facility_name: facility?.name || "No facility",
         facility_city: facility?.city,
         facility_state: facility?.state,
-        leads_used: leadsUsed,
-        location_limit: planDetails?.location_limit || 1,
+        leads_this_month: leadsThisMonth,
       };
     });
   }, [stripeStats?.subscriptions, emailToProfile, userToFacility, leadCounts]);
@@ -631,7 +629,7 @@ export default function AdminSubscriptions() {
                       sub.plan,
                       sub.cancel_at_period_end ? "canceling" : sub.status,
                       `$${sub.monthly_amount}`,
-                      String(sub.leads_used),
+                      String(sub.leads_this_month),
                       format(new Date(sub.current_period_end), "yyyy-MM-dd"),
                       format(new Date(sub.created), "yyyy-MM-dd"),
                     ].map(v => v.includes(",") || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v));
@@ -734,10 +732,10 @@ export default function AdminSubscriptions() {
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <span className="text-sm text-muted-foreground tabular-nums cursor-default" onClick={(e) => e.stopPropagation()}>
-                                      {sub.leads_used} this mo
+                                      {sub.leads_this_month} this mo
                                     </span>
                                   </TooltipTrigger>
-                                  <TooltipContent><p>{sub.leads_used} leads unlocked this month</p></TooltipContent>
+                                  <TooltipContent><p>{sub.leads_this_month} inquiries received this month</p></TooltipContent>
                                 </Tooltip>
                               </TableCell>
                               <TableCell>

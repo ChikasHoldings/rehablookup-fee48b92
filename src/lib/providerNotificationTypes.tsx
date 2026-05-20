@@ -67,7 +67,6 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeEntry> = {
   lead_expired: { label: "Lead Expired", icon: errIcon, route: "/provider/inquiries", category: "leads" },
   lead_status_changed: { label: "Inquiry Update", icon: <MessageSquare className="h-5 w-5 text-blue-500" />, route: "/provider/inquiries", category: "leads" },
   lead_redistributed: { label: "New Inquiry", icon: leadIcon, route: "/provider/inquiries", category: "leads" },
-  lead_unlocked: { label: "Lead Unlocked", icon: successIcon, route: "/provider/inquiries", category: "leads" },
 
   // ─── Billing / subscription ─────────────────────────────────────────
   subscription_active: { label: "Pro Activated", icon: <ShieldCheck className="h-5 w-5 text-emerald-500" />, route: "/provider/billing", category: "billing" },
@@ -79,9 +78,7 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeEntry> = {
   subscription_pending_cancel: { label: "Pending Cancel", icon: warnIcon, route: "/provider/billing", category: "billing" },
   payment_failed: { label: "Payment Failed", icon: errIcon, route: "/provider/billing", category: "billing" },
   payment_confirmation: { label: "Payment Received", icon: successIcon, route: "/provider/billing", category: "billing" },
-  low_credits_warning: { label: "Low Credits", icon: warnIcon, route: "/provider/billing", category: "billing" },
   lead_limit_warning: { label: "Lead Limit", icon: warnIcon, route: "/provider/billing", category: "billing" },
-  credits_added: { label: "Credits Added", icon: <CreditCard className="h-5 w-5 text-green-500" />, route: "/provider/billing", category: "billing" },
   concierge_invoice_issued: { label: "Invoice Issued", icon: billingIcon, route: "/provider/billing", category: "billing" },
   concierge_invoice_paid: { label: "Invoice Paid", icon: <CreditCard className="h-5 w-5 text-green-500" />, route: "/provider/billing", category: "billing" },
 

@@ -116,7 +116,6 @@ export const PLAN_DETAILS = {
     period: "",
     description: "Get listed and receive direct inquiries",
     location_limit: 1,
-    unlock_discount: 0,
     features: [
       "Directory placement",
       "Family contact form on your profile",
@@ -137,7 +136,6 @@ export const PLAN_DETAILS = {
     period: "/mo",
     description: "Verified listing, lead analytics, priority placement",
     location_limit: 5,
-    unlock_discount: 0,
     features: [
       "Verified badge on listing",
       "Lead analytics + response insights",

@@ -45,7 +45,6 @@ import {
   AlertCircle,
   Calendar,
   DollarSign,
-  User,
   Building,
   Mail,
   MoreVertical,
@@ -71,8 +70,6 @@ type EnrichedSubscription = {
   facility_name: string;
   facility_city?: string;
   facility_state?: string;
-  leads_used: number;
-  location_limit: number;
   subscription_id?: string;
   pause_collection?: { behavior: string } | null;
 };
@@ -458,18 +455,6 @@ export function SubscriptionDetailModal({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-                            <div className="p-2 rounded-full bg-warning/10">
-                              <User className="h-5 w-5 text-warning" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Leads Unlocked This Month</p>
-                              <p className="font-medium">{subscription.leads_used}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Up to {subscription.location_limit} facilities
-                              </p>
-                            </div>
-                          </div>
                         </div>
                       </div>
 
