@@ -21,7 +21,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2, Save, Eye } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -183,10 +183,24 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
   const saveMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const categoryLabel = categories.find((c) => c.id === data.category)?.label || data.category;
+      const cleanSlug = data.slug.trim();
 
-      const articleData: Record<string, unknown> = {
+      // Slug-uniqueness pre-check — surfaces a friendly error before
+      // the DB returns a constraint violation toast. .maybeSingle() so
+      // 0-row results don't throw.
+      const { data: existing, error: lookupErr } = await supabase
+        .from("blog_articles")
+        .select("id")
+        .eq("slug", cleanSlug)
+        .maybeSingle();
+      if (lookupErr) throw new Error(`Slug check failed: ${lookupErr.message}`);
+      if (existing && existing.id !== article?.id) {
+        throw new Error(`Slug "${cleanSlug}" is already in use by another article. Pick a different slug.`);
+      }
+
+      const articleData = {
         title: data.title.trim(),
-        slug: data.slug.trim(),
+        slug: cleanSlug,
         excerpt: data.excerpt.trim(),
         category: data.category,
         category_label: categoryLabel,
@@ -202,20 +216,19 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
         seo_keywords: data.seo_keywords
           ? data.seo_keywords.split(",").map((k) => k.trim()).filter(Boolean)
           : null,
+        ...(data.status === "published" ? { published_at: new Date().toISOString() } : {}),
       };
-
-      if (data.status === "published") {
-        articleData.published_at = new Date().toISOString();
-      }
 
       if (isEditing && article) {
         const { error } = await supabase
           .from("blog_articles")
-          .update(articleData as any)
+          .update(articleData as never)
           .eq("id", article.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("blog_articles").insert(articleData as any);
+        const { error } = await supabase
+          .from("blog_articles")
+          .insert(articleData as never);
         if (error) throw error;
       }
 
@@ -227,20 +240,16 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
           action_type: isEditing ? "blog_article_updated" : "blog_article_created",
           target_type: "blog_article",
           target_id: article?.id || null,
-          details: { title: data.title, slug: data.slug, status: data.status },
+          details: { title: data.title, slug: cleanSlug, status: data.status },
         });
       }
     },
     onSuccess: () => {
-      toast({ title: isEditing ? "Article updated successfully" : "Article created successfully" });
+      toast.success(isEditing ? "Article updated successfully" : "Article created successfully");
       onSuccess();
     },
-    onError: (error) => {
-      toast({
-        title: "Failed to save article",
-        description: error.message,
-        variant: "destructive",
-      });
+    onError: (error: Error) => {
+      toast.error(`Failed to save article: ${error.message}`);
     },
   });
 
@@ -254,23 +263,23 @@ export function ArticleEditor({ open, onOpenChange, article, onSuccess }: Articl
 
   const validate = (): boolean => {
     if (!formData.title.trim()) {
-      toast({ title: "Title is required", variant: "destructive" });
+      toast.error("Title is required");
       return false;
     }
     if (!formData.slug.trim()) {
-      toast({ title: "Slug is required", variant: "destructive" });
+      toast.error("Slug is required");
       return false;
     }
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(formData.slug.trim())) {
-      toast({ title: "Slug must be lowercase letters, numbers, and hyphens only", variant: "destructive" });
+      toast.error("Slug must be lowercase letters, numbers, and hyphens only");
       return false;
     }
     if (!formData.excerpt.trim()) {
-      toast({ title: "Excerpt is required", variant: "destructive" });
+      toast.error("Excerpt is required");
       return false;
     }
     if (!formData.content.trim()) {
-      toast({ title: "Content is required", variant: "destructive" });
+      toast.error("Content is required");
       return false;
     }
     return true;
