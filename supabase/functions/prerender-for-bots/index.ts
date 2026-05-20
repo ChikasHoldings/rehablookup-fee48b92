@@ -582,6 +582,15 @@ async function logServerSideNotFound(
   path: string,
   reason: string,
 ): Promise<void> {
+  // Skip noisy self-referential paths (mirrors log-not-found's guard):
+  //   /404 (intentional landing), Apple AASA probes, /.well-known/* infra.
+  if (
+    path === '/404' ||
+    path === '/apple-app-site-association' ||
+    path.startsWith('/.well-known/')
+  ) {
+    return;
+  }
   try {
     await supabase.from('not_found_events').insert({
       path,
