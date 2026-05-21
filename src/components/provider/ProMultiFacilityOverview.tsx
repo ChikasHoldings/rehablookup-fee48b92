@@ -46,7 +46,7 @@ export function ProMultiFacilityOverview({ facilities }: ProMultiFacilityOvervie
               .from("provider_events")
               .select("id", { count: "exact", head: true })
               .eq("facility_id", fid)
-              .eq("event_type", "profile_view")
+              .eq("event_type", "profile_view").eq("is_internal", false).eq("is_bot", false)
               .gte("created_at", thirtyDaysAgoISO)
               .then(r => ({ fid, count: r.count ?? 0 })),
           ),

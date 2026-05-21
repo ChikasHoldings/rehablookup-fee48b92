@@ -276,6 +276,8 @@ export default function AdminAnalytics() {
         .from("provider_events")
         .select("id, facility_id, event_type, created_at, facilities!inner(city, state)")
         .in("event_type", ["profile_view", "listing_impression"])
+        .eq("is_internal", false)
+        .eq("is_bot", false)
         .gte("created_at", format(dateRange.from, "yyyy-MM-dd") + "T00:00:00")
         .lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59")
         .limit(ANALYTICS_ROW_CAP);
@@ -301,6 +303,8 @@ export default function AdminAnalytics() {
         .from("provider_events")
         .select("id, facility_id, event_type, created_at, facilities!inner(city, state)")
         .in("event_type", ["click_to_call", "website_click"])
+        .eq("is_internal", false)
+        .eq("is_bot", false)
         .gte("created_at", format(dateRange.from, "yyyy-MM-dd") + "T00:00:00")
         .lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59")
         .limit(ANALYTICS_ROW_CAP);
@@ -383,6 +387,8 @@ export default function AdminAnalytics() {
         .from("provider_events")
         .select("id, facility_id, event_type, created_at, facilities!inner(city, state)")
         .in("event_type", ["profile_view", "listing_impression"])
+        .eq("is_internal", false)
+        .eq("is_bot", false)
         .gte("created_at", format(previousDateRange.from, "yyyy-MM-dd") + "T00:00:00")
         .lte("created_at", format(previousDateRange.to, "yyyy-MM-dd") + "T23:59:59")
         .limit(ANALYTICS_ROW_CAP);
@@ -408,6 +414,8 @@ export default function AdminAnalytics() {
         .from("provider_events")
         .select("id, facility_id, event_type, created_at, facilities!inner(city, state)")
         .in("event_type", ["click_to_call", "website_click"])
+        .eq("is_internal", false)
+        .eq("is_bot", false)
         .gte("created_at", format(previousDateRange.from, "yyyy-MM-dd") + "T00:00:00")
         .lte("created_at", format(previousDateRange.to, "yyyy-MM-dd") + "T23:59:59")
         .limit(ANALYTICS_ROW_CAP);

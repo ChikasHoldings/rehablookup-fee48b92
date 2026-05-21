@@ -124,8 +124,8 @@ async function fetchSuperAdminData(supabase: any, start: string, end: string) {
 
   // Profile views and listing impressions (from provider_events — source of truth)
   const [profileViewsResult, listingImpressionsResult] = await Promise.all([
-    supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("event_type", "profile_view").gte("created_at", start).lte("created_at", end),
-    supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("event_type", "listing_impression").gte("created_at", start).lte("created_at", end),
+    supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("event_type", "profile_view").eq("is_internal", false).eq("is_bot", false).gte("created_at", start).lte("created_at", end),
+    supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("event_type", "listing_impression").eq("is_internal", false).eq("is_bot", false).gte("created_at", start).lte("created_at", end),
   ]);
   const totalViews = profileViewsResult.count || 0;
   const totalImpressions = listingImpressionsResult.count || 0;

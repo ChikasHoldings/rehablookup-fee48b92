@@ -308,7 +308,9 @@ export default function ProviderDashboardPage() {
         .from("provider_events")
         .select("id", { count: "exact", head: true })
         .eq("facility_id", facilityId)
-        .eq("event_type", "listing_impression");
+        .eq("event_type", "listing_impression")
+        .eq("is_internal", false)
+        .eq("is_bot", false);
       if (error) throw error;
       return count || 0;
     },

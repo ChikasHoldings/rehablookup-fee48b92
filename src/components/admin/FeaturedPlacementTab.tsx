@@ -113,7 +113,7 @@ export function FeaturedPlacementTab() {
         supabase
           .from("provider_events")
           .select("facility_id")
-          .eq("event_type", "profile_view")
+          .eq("event_type", "profile_view").eq("is_internal", false).eq("is_bot", false)
           .gte("created_at", thirtyDaysAgo.toISOString()),
         supabase
           .from("leads")
