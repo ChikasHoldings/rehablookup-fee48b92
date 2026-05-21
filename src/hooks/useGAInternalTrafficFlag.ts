@@ -8,26 +8,13 @@ const INTERNAL_ROLES = new Set(["admin", "super_admin", "manager"]);
 /**
  * Mount once at the SPA root (App.tsx). Decides whether the current
  * session is INTERNAL (staff: admin / super_admin / manager) or EXTERNAL
- * (everyone else, including providers and seekers, since they're real
- * users) and sets a GA4 user property accordingly.
+ * (everyone else) and sets a GA4 user property accordingly.
  *
- * GA4 reports can then exclude internal traffic via:
- *   Admin → Property → Data Filters → "Exclude traffic where
- *   user_property:traffic_type matches Internal"
- * — no IP allowlist required, no manual filter list.
- *
- * Implementation notes:
- *  - localStorage caches the resolution so subsequent loads tag GA before
- *    the network call returns (eliminates a few seconds of mistagged hits
- *    after each refresh on staff machines).
- *  - The lookup hits `user_roles` only when the cache is missing OR the
- *    user_id changed since last visit. Service-side cost: one `eq` query
- *    per session, not per page.
- *  - Re-runs on Supabase auth events so a logout → fresh anon visit
- *    flips traffic_type back to "external" immediately.
- *
- * Privacy: no PII is sent to GA. The user property is a single bucket
- * label, not a user id.
+ * Hardened 2026-05-21: every step is wrapped so the GA tagging never
+ * crashes the host app. Earlier version threw on cleanup when
+ * `supabase.auth.onAuthStateChange`'s return shape varied — that
+ * propagated into React's error boundary and blacked out every route
+ * mounted under `AppGlobals`.
  */
 export function useGAInternalTrafficFlag(): void {
   const lastUserIdRef = useRef<string | null>(null);
@@ -36,10 +23,8 @@ export function useGAInternalTrafficFlag(): void {
     if (typeof window === "undefined") return;
 
     let cancelled = false;
+    let unsubscribe: (() => void) | null = null;
 
-    // Apply cached value immediately so the very first page_view this
-    // session fires carries the right traffic_type without waiting for
-    // the auth round-trip.
     try {
       const cached = window.localStorage.getItem(STORAGE_KEY);
       if (cached === "internal" || cached === "external") {
@@ -54,8 +39,6 @@ export function useGAInternalTrafficFlag(): void {
         const { data: { user } } = await supabase.auth.getUser();
         if (cancelled) return;
         const userId = user?.id ?? null;
-        // Skip the role lookup when the user_id hasn't changed since the
-        // last invocation — same identity, same role bucket.
         if (userId === lastUserIdRef.current && userId !== null) return;
         lastUserIdRef.current = userId;
 
@@ -71,7 +54,6 @@ export function useGAInternalTrafficFlag(): void {
           .eq("user_id", user.id);
         if (cancelled) return;
         if (error) {
-          // Don't taint GA on lookup failure — default to external.
           gaSetTrafficType("external");
           return;
         }
@@ -80,28 +62,41 @@ export function useGAInternalTrafficFlag(): void {
         gaSetTrafficType(kind);
         try { window.localStorage.setItem(STORAGE_KEY, kind); } catch { /* ignore */ }
       } catch {
-        // Network blip — leave the previous tagging (or cached value) in place.
+        /* network blip — leave previous tagging in place */
       }
     };
 
     void refreshFromAuth();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      // SIGNED_IN / SIGNED_OUT / USER_UPDATED — re-evaluate.
-      if (
-        event === "SIGNED_IN" ||
-        event === "SIGNED_OUT" ||
-        event === "TOKEN_REFRESHED" ||
-        event === "USER_UPDATED"
-      ) {
-        lastUserIdRef.current = null;
-        void refreshFromAuth();
+    try {
+      const result = supabase.auth.onAuthStateChange((event) => {
+        if (
+          event === "SIGNED_IN" ||
+          event === "SIGNED_OUT" ||
+          event === "TOKEN_REFRESHED" ||
+          event === "USER_UPDATED"
+        ) {
+          lastUserIdRef.current = null;
+          void refreshFromAuth();
+        }
+      });
+      // supabase-js v2 returns `{ data: { subscription } }`; older shapes
+      // returned `{ subscription }` directly. Be defensive on both.
+      const maybeSub =
+        (result as { data?: { subscription?: { unsubscribe?: () => void } } })?.data?.subscription
+        ?? (result as unknown as { subscription?: { unsubscribe?: () => void } })?.subscription;
+      if (maybeSub && typeof maybeSub.unsubscribe === "function") {
+        unsubscribe = () => {
+          try { maybeSub.unsubscribe!(); } catch { /* noop */ }
+        };
       }
-    });
+    } catch (err) {
+      console.warn("[useGAInternalTrafficFlag] onAuthStateChange unavailable", err);
+    }
 
     return () => {
       cancelled = true;
-      sub.subscription.unsubscribe();
+      if (unsubscribe) unsubscribe();
     };
   }, []);
 }
