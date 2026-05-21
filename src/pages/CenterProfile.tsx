@@ -1670,6 +1670,8 @@ const CenterProfile = () => {
             slug: facility.slug,
             logo_url: facility.logo_url,
             featured: facility.featured,
+            phone: facility.phone ?? null,
+            verified: facility.verified ?? null,
           }}
           facilityPlan={facilityPlan === "pro" ? "pro" : "free"}
           prefillData={prefillDataFromNav}

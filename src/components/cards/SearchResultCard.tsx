@@ -516,6 +516,8 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
           slug: (center as { slug?: string | null }).slug ?? null,
           logo_url: (center as { logo_url?: string | null }).logo_url ?? null,
           featured: !!showFeaturedBadge,
+          phone: center.phone ?? null,
+          verified: center.verified ?? null,
         }}
       />
     </article>
