@@ -78,6 +78,14 @@ export function notificationIconLarge(type: string): React.ReactNode {
   return map[type] || <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />;
 }
 
+// request_confirmation, request_update, facility_contacted, etc. — the
+// edge-function side of `request_confirmation` is dead code (the live
+// inquiry-confirmation email goes out from submit-qualified-lead via a
+// direct sendEmailWithRetry call, not via send-seeker-emails). The
+// map entry below is retained as a graceful-fallback for ANY legacy
+// seeker_notifications row that might still have this type — without
+// it those rows would render the default Bell icon and route to
+// /account/notifications. Cheap to keep, no harm if unused.
 const TYPE_ROUTES: Record<string, string> = {
   // Request / inquiry flow
   request_update: "/account/requests",
