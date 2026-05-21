@@ -111,8 +111,12 @@ export function useAdminUserNotifications() {
         supabase.removeChannel(channelRef.current);
       }
 
+      // Per-instance channel name so multiple admin panels mounting this
+      // hook simultaneously (sidebar bell + dashboard widget) don't share
+      // a topic and get into a fight with Supabase Realtime's
+      // subscription dedup. ChannelRef tracks the instance for cleanup.
       channelRef.current = supabase
-        .channel("admin-user-notifications-realtime")
+        .channel(`admin-user-notifications-realtime-${Math.random().toString(36).slice(2, 8)}`)
         .on(
           "postgres_changes",
           {

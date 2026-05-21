@@ -156,8 +156,14 @@ export const useStaticFacilities = () => {
       zipCode: facility.zipCode,
       address: facility.address,
       phone: facility.phone ?? "",
-      treatmentTypes: facility.treatmentTypes,
-      insuranceAccepted: facility.insuranceAccepted,
+      // Defensive defaults: the edge function already coerces these to []
+      // via `servicesMap.get(f.id) || []`, but cards across the codebase
+      // call .slice() / .length / .map() on these without their own null
+      // guards. A single old-shape JSON in localStorage cache (pre-schema
+      // bump) or a transient edge fn shape change would otherwise crash
+      // every listing card on the page.
+      treatmentTypes: facility.treatmentTypes ?? [],
+      insuranceAccepted: facility.insuranceAccepted ?? [],
       description: facility.description || "Treatment center offering quality care and support.",
       programOverview: facility.description || "Comprehensive treatment programs tailored to individual needs.",
       // Prefer the snapshot's `featured` flag (sourced from the catalog) and
@@ -181,8 +187,8 @@ export const useStaticFacilities = () => {
       responseRateScore: facility.responseRateScore,
       acceptingAdmissions: facility.acceptingAdmissions,
       hoursOfOperation: facility.hoursOfOperation,
-      languagesSpoken: facility.languagesSpoken,
-      accessibilityFeatures: facility.accessibilityFeatures,
+      languagesSpoken: facility.languagesSpoken ?? [],
+      accessibilityFeatures: facility.accessibilityFeatures ?? [],
       email: facility.email,
       website: facility.website,
       rating: null,
@@ -191,7 +197,7 @@ export const useStaticFacilities = () => {
       image: null,
       isFromDatabase: true,
       logo_url: facility.logoUrl,
-      gallery_urls: facility.galleryUrls,
+      gallery_urls: facility.galleryUrls ?? [],
       googleRating: facility.googleRating,
       googleReviewCount: facility.googleReviewCount,
     };

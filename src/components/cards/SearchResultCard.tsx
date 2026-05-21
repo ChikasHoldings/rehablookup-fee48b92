@@ -407,7 +407,7 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
 
           {/* Treatment Types & Insurance - Inline */}
           <div className="flex items-center gap-2 flex-wrap mb-3">
-            {center.treatmentTypes.slice(0, 4).map((type) => (
+            {(center.treatmentTypes ?? []).slice(0, 4).map((type) => (
               <Badge 
                 key={type} 
                 variant="outline" 
@@ -421,9 +421,9 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                 {type}
               </Badge>
             ))}
-            {center.treatmentTypes.length > 4 && (
+            {(center.treatmentTypes?.length ?? 0) > 4 && (
               <span className="text-xs text-muted-foreground">
-                +{center.treatmentTypes.length - 4} more
+                +{(center.treatmentTypes?.length ?? 0) - 4} more
               </span>
             )}
           </div>

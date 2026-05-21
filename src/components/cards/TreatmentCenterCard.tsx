@@ -474,13 +474,13 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
             silently hiding the +N badge with no indicator. The slice(0,4)
             + +N pattern below already constrains visible chip count. */}
         <div className="flex flex-wrap gap-1 mb-2">
-          {center.treatmentTypes.slice(0, 4).map((type) => (
-            <Badge 
-              key={type} 
-              variant="outline" 
+          {(center.treatmentTypes ?? []).slice(0, 4).map((type) => (
+            <Badge
+              key={type}
+              variant="outline"
               className={cn(
                 "text-xs font-medium px-2 py-0.5 rounded-full",
-                showFeaturedBadge 
+                showFeaturedBadge
                   ? "border-amber-200 text-amber-700"
                   : "border-border text-muted-foreground"
               )}
@@ -488,12 +488,12 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
               {type}
             </Badge>
           ))}
-          {center.treatmentTypes.length > 4 && (
-            <Badge 
-              variant="outline" 
+          {(center.treatmentTypes?.length ?? 0) > 4 && (
+            <Badge
+              variant="outline"
               className="text-xs px-2 py-0.5 text-muted-foreground/70 border-dashed rounded-full"
             >
-              +{center.treatmentTypes.length - 4}
+              +{(center.treatmentTypes?.length ?? 0) - 4}
             </Badge>
           )}
         </div>
