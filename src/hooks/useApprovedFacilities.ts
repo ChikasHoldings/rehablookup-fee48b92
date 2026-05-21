@@ -126,7 +126,7 @@ export const useApprovedFacilities = () => {
   // Real-time subscription for approved facilities updates
   useEffect(() => {
     const facilitiesChannel = supabase
-      .channel("approved-facilities-realtime")
+      .channel(`approved-facilities-realtime-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         {
@@ -141,7 +141,7 @@ export const useApprovedFacilities = () => {
       .subscribe();
 
     const servicesChannel = supabase
-      .channel("approved-facilities-services")
+      .channel(`approved-facilities-services-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         {
@@ -156,7 +156,7 @@ export const useApprovedFacilities = () => {
       .subscribe();
 
     const insuranceChannel = supabase
-      .channel("approved-facilities-insurance")
+      .channel(`approved-facilities-insurance-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         {

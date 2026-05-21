@@ -111,7 +111,7 @@ export function useProviderNotifications() {
       if (!user) return;
 
       channel = supabase
-        .channel("provider-notifications-realtime")
+        .channel(`provider-notifications-realtime-${Math.random().toString(36).slice(2,8)}`)
         .on(
           "postgres_changes",
           {

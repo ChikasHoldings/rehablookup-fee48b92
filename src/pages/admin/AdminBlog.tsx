@@ -217,7 +217,7 @@ export default function AdminBlog() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("admin-blog-live")
+      .channel(`admin-blog-live-${Math.random().toString(36).slice(2,8)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "blog_articles" }, () => invalidateAll())
       .subscribe();
     return () => { supabase.removeChannel(channel); };

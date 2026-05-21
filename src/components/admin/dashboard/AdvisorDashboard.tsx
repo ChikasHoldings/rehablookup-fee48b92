@@ -104,7 +104,7 @@ export function AdvisorDashboard() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("advisor-dashboard")
+      .channel(`advisor-dashboard-${Math.random().toString(36).slice(2,8)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "concierge_inquiries" }, invalidateDashboard)
       .on("postgres_changes", { event: "*", schema: "public", table: "concierge_threads" }, invalidateDashboard)
       .subscribe();

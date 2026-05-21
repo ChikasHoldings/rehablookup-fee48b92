@@ -64,7 +64,7 @@ export function ManagerDashboard() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("manager-dashboard")
+      .channel(`manager-dashboard-${Math.random().toString(36).slice(2,8)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "facilities" }, invalidateDashboard)
       .on("postgres_changes", { event: "*", schema: "public", table: "admin_escalations" }, invalidateDashboard)
       .subscribe();

@@ -152,7 +152,7 @@ export function EscalationsList({
     };
     const interval = setInterval(invalidate, 30000);
     const channel = supabase
-      .channel("admin-escalations-live")
+      .channel(`admin-escalations-live-${Math.random().toString(36).slice(2,8)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "admin_escalations" }, () => invalidate())
       .subscribe();
     return () => {

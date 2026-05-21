@@ -255,7 +255,7 @@ export default function AdminLeads() {
   // give bounded freshness regardless of connection state.
   useEffect(() => {
     const channel = supabase
-      .channel("admin-leads-live")
+      .channel(`admin-leads-live-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "leads" },

@@ -180,7 +180,7 @@ export default function AdminInsuranceVerifications() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("admin-ivr-live")
+      .channel(`admin-ivr-live-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "insurance_verification_requests" },

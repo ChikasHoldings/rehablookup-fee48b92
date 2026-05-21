@@ -58,7 +58,7 @@ export function CustomerRepDashboard() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("rep-dashboard")
+      .channel(`rep-dashboard-${Math.random().toString(36).slice(2,8)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "facility_reviews" }, invalidateDashboard)
       .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, invalidateDashboard)
       .subscribe();

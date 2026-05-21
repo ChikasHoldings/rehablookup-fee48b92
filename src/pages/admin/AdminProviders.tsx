@@ -271,12 +271,12 @@ export default function AdminProviders() {
   // Real-time subscriptions
   useEffect(() => {
     const facilitiesChannel = supabase
-      .channel("admin-providers-facilities")
+      .channel(`admin-providers-facilities-${Math.random().toString(36).slice(2,8)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "facilities" }, () => invalidateProviderQueries())
       .subscribe();
 
     const proChannel = supabase
-      .channel("admin-pro-subscriptions")
+      .channel(`admin-pro-subscriptions-${Math.random().toString(36).slice(2,8)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "pro_subscriptions" }, () => {
         queryClient.invalidateQueries({ queryKey: ["admin-pro-subscriptions"] });
       })

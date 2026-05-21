@@ -308,7 +308,7 @@ export default function AdminAuditLog() {
   // 20260626000000 (back-office hardening pass).
   useEffect(() => {
     const channel = supabase
-      .channel("admin-audit-log-live")
+      .channel(`admin-audit-log-live-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "admin_audit_log" },

@@ -137,7 +137,7 @@ export default function AdminSeekers() {
   // Same pattern as /admin/leads + /admin/insurance-verifications.
   useEffect(() => {
     const channel = supabase
-      .channel("admin-seekers-live")
+      .channel(`admin-seekers-live-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "seeker_profiles" },

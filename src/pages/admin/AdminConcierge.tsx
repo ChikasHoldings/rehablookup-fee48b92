@@ -169,7 +169,7 @@ export default function AdminConcierge() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("admin-concierge-live")
+      .channel(`admin-concierge-live-${Math.random().toString(36).slice(2,8)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "concierge_inquiries" }, () => invalidateAll())
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "concierge_inquiries" }, () => invalidateAll())
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "concierge_inquiries" }, () => invalidateAll())

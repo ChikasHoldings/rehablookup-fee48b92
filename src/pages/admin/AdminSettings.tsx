@@ -206,7 +206,7 @@ export default function AdminSettings() {
   // Real-time subscriptions - always active
   useEffect(() => {
     const facilitiesChannel = supabase
-      .channel("admin-settings-facilities")
+      .channel(`admin-settings-facilities-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "facilities" },
@@ -222,7 +222,7 @@ export default function AdminSettings() {
     }, 60000);
 
     const usersChannel = supabase
-      .channel("admin-settings-users")
+      .channel(`admin-settings-users-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "user_roles" },
@@ -238,7 +238,7 @@ export default function AdminSettings() {
     // platform_settings was added to supabase_realtime in migration
     // 20260629000000.
     const settingsChannel = supabase
-      .channel("admin-platform-settings")
+      .channel(`admin-platform-settings-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "platform_settings" },

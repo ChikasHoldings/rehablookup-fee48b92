@@ -112,7 +112,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
     if (!userId) return;
     
     const profileChannel = supabase
-      .channel("admin-header-profile-updates")
+      .channel(`admin-header-profile-updates-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         {
@@ -156,7 +156,7 @@ function AdminHeaderComponent({ userEmail, userId, adminRole, onLogout, isSuperA
   // Advisors only see provider notifications, not lead notifications
   useEffect(() => {
     const facilitiesChannel = supabase
-      .channel("admin-facilities-notifications-live")
+      .channel(`admin-facilities-notifications-live-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         {

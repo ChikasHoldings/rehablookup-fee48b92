@@ -227,7 +227,7 @@ export default function AdminMarketing() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("admin-marketing-live")
+      .channel(`admin-marketing-live-${Math.random().toString(36).slice(2,8)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "marketing_leads" }, () => invalidateAll())
       .subscribe();
     return () => { supabase.removeChannel(channel); };

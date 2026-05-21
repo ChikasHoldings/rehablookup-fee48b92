@@ -42,7 +42,7 @@ test.describe("Realtime channel isolation", () => {
         const received: unknown[] = [];
 
         const channel = client
-          .channel("isolation-test")
+          .channel(`isolation-test-${Math.random().toString(36).slice(2,8)}`)
           .on(
             "postgres_changes",
             {

@@ -173,7 +173,7 @@ export default function AdminSupport() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("admin-support-live")
+      .channel(`admin-support-live-${Math.random().toString(36).slice(2,8)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, () => invalidateAll())
       .subscribe();
     return () => { supabase.removeChannel(channel); };

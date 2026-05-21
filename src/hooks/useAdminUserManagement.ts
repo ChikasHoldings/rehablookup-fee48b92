@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -137,47 +137,64 @@ export function useAdminUserManagement() {
     queryClient.invalidateQueries({ queryKey: ["admin-users-full"] });
   }, [queryClient]);
 
-  // Real-time subscriptions
+  // Real-time subscriptions. Channel names are per-instance (random
+  // suffix) so two simultaneous mounts of useAdminUserManagement
+  // (e.g. the user-management page + a sidebar widget that reuses the
+  // hook) never collide on the same Supabase Realtime topic. Without
+  // the suffix the second mount calls `.on()` on the first mount's
+  // already-subscribed channel and throws "cannot add postgres_changes
+  // callbacks ... after subscribe()", which tripped the
+  // SeekerErrorBoundary / SEORouteBoundary on /admin/users — same
+  // pattern that took down useFavorites on 2026-05-21. Each
+  // subscribe() is also try/catch-wrapped so a transport hiccup falls
+  // back to React Query's existing invalidate-on-mutation path.
+  const channelSuffixRef = useRef<string>(Math.random().toString(36).slice(2, 8));
   useEffect(() => {
-    const rolesChannel = supabase
-      .channel("admin-users-roles")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "user_roles" },
-        (payload) => {
-          
-          invalidateAdminUsers();
-        }
-      )
-      .subscribe();
+    const suffix = channelSuffixRef.current;
+    let rolesChannel: ReturnType<typeof supabase.channel> | null = null;
+    let profilesChannel: ReturnType<typeof supabase.channel> | null = null;
+    let permissionsChannel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      rolesChannel = supabase
+        .channel(`admin-users-roles-${suffix}`)
+        .on(
+          "postgres_changes" as never,
+          { event: "*", schema: "public", table: "user_roles" } as never,
+          (() => { invalidateAdminUsers(); }) as never,
+        )
+        .subscribe();
 
-    const profilesChannel = supabase
-      .channel("admin-users-profiles")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "admin_user_profiles" },
-        (payload) => {
-          
-          invalidateAdminUsers();
-        }
-      )
-      .subscribe();
+      profilesChannel = supabase
+        .channel(`admin-users-profiles-${suffix}`)
+        .on(
+          "postgres_changes" as never,
+          { event: "*", schema: "public", table: "admin_user_profiles" } as never,
+          (() => { invalidateAdminUsers(); }) as never,
+        )
+        .subscribe();
 
-    const permissionsChannel = supabase
-      .channel("admin-users-permissions")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "admin_user_permissions" },
-        () => {
-          invalidateAdminUsers();
-        }
-      )
-      .subscribe();
+      permissionsChannel = supabase
+        .channel(`admin-users-permissions-${suffix}`)
+        .on(
+          "postgres_changes" as never,
+          { event: "*", schema: "public", table: "admin_user_permissions" } as never,
+          (() => { invalidateAdminUsers(); }) as never,
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[useAdminUserManagement] realtime subscribe failed; falling back to manual refresh", err);
+    }
 
     return () => {
-      supabase.removeChannel(rolesChannel);
-      supabase.removeChannel(profilesChannel);
-      supabase.removeChannel(permissionsChannel);
+      if (rolesChannel) {
+        try { supabase.removeChannel(rolesChannel); } catch { /* noop */ }
+      }
+      if (profilesChannel) {
+        try { supabase.removeChannel(profilesChannel); } catch { /* noop */ }
+      }
+      if (permissionsChannel) {
+        try { supabase.removeChannel(permissionsChannel); } catch { /* noop */ }
+      }
     };
   }, [invalidateAdminUsers]);
 

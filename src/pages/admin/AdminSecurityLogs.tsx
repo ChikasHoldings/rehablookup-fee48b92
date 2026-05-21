@@ -783,7 +783,7 @@ export default function AdminSecurityLogs() {
   // Real-time subscription
   useEffect(() => {
     const channel = supabase
-      .channel("security-logs-realtime")
+      .channel(`security-logs-realtime-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "rate_limit_log" },

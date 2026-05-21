@@ -90,7 +90,7 @@ export const RecentNotificationsPanel = forwardRef<HTMLDivElement>(function Rece
       if (!user) return;
 
       const channel = supabase
-        .channel("recent-notifications")
+        .channel(`recent-notifications-${Math.random().toString(36).slice(2,8)}`)
         .on(
           "postgres_changes",
           {
