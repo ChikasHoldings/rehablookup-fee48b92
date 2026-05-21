@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useFeaturedFacilityIds } from "./useApprovedFacilities";
 import type { TreatmentCenter } from "@/data/treatmentCenters";
+import { supabase } from "@/integrations/supabase/client";
 import {
   fetchPublicFacilitiesSnapshot,
   getCachedPublicFacilitiesSnapshot,
@@ -13,6 +15,8 @@ import {
  * approval flows can manually invalidate without recreating the constant.
  */
 export const PUBLIC_FACILITIES_QUERY_KEY = ["static-public-facilities"] as const;
+
+const REALTIME_INVALIDATION_DEBOUNCE_MS = 1500;
 
 export type StaticFacility = PublicFacilitySnapshot;
 
@@ -62,17 +66,11 @@ export interface PublicFacility extends TreatmentCenter {
  * open.
  */
 export const useStaticFacilities = () => {
+  const queryClient = useQueryClient();
   const { data: featuredData, isLoading: isFeaturedLoading } = useFeaturedFacilityIds();
   const proIds = featuredData?.proFacilityIds || [];
   const homepageFeaturedIds = featuredData?.homepageFeaturedIds || [];
 
-  // ROLLED BACK 2026-05-21: realtime invalidation for new-facility freshness
-  // caused the entire seeker panel (and every route mounting this hook) to
-  // throw "Something went wrong" / "This page is temporarily unavailable".
-  // The pre-realtime polling behavior (5-min React Query stale, 10-min CDN
-  // s-maxage) already gives new approvals an acceptable visibility lag.
-  // Re-add when we can attach a precise repro to the subscribe/cleanup
-  // flow without affecting unrelated routes.
   const query = useQuery({
     queryKey: PUBLIC_FACILITIES_QUERY_KEY,
     queryFn: fetchPublicFacilitiesSnapshot,
@@ -80,6 +78,66 @@ export const useStaticFacilities = () => {
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
   });
+
+  // Realtime invalidation. Per-instance channel name + try/catch on both
+  // setup and cleanup. RESTORED 2026-05-21 after the useFavorites channel-
+  // collision incident — neither this nor useGAInternalTrafficFlag was the
+  // actual cause of that outage. Pattern matches the fix applied to
+  // useFavorites: unique per-mount channel name so Supabase Realtime's
+  // channel cache can't collide when multiple `useStaticFacilities`
+  // consumers mount (which happens routinely — SearchResults, RehabCenters,
+  // CenterProfile, near-me pages all use it).
+  const invalidateTimer = useRef<number | null>(null);
+  const channelIdRef = useRef<string>(
+    `public-facilities-realtime-${Math.random().toString(36).slice(2, 10)}`,
+  );
+  useEffect(() => {
+    const scheduleInvalidate = () => {
+      if (typeof window === "undefined") return;
+      if (invalidateTimer.current !== null) {
+        window.clearTimeout(invalidateTimer.current);
+      }
+      invalidateTimer.current = window.setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: PUBLIC_FACILITIES_QUERY_KEY });
+        invalidateTimer.current = null;
+      }, REALTIME_INVALIDATION_DEBOUNCE_MS);
+    };
+
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(channelIdRef.current)
+        .on(
+          "postgres_changes" as never,
+          { event: "*", schema: "public", table: "facilities" } as never,
+          scheduleInvalidate as never,
+        )
+        .on(
+          "postgres_changes" as never,
+          { event: "*", schema: "public", table: "facility_services" } as never,
+          scheduleInvalidate as never,
+        )
+        .on(
+          "postgres_changes" as never,
+          { event: "*", schema: "public", table: "facility_insurance" } as never,
+          scheduleInvalidate as never,
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[useStaticFacilities] realtime subscribe failed; falling back to polling", err);
+      channel = null;
+    }
+
+    return () => {
+      if (invalidateTimer.current !== null) {
+        try { window.clearTimeout(invalidateTimer.current); } catch { /* noop */ }
+        invalidateTimer.current = null;
+      }
+      if (channel) {
+        try { supabase.removeChannel(channel); } catch { /* noop */ }
+      }
+    };
+  }, [queryClient]);
 
   // Transform static facilities to PublicFacility format with Pro data
   const publicFacilities: PublicFacility[] = (query.data || []).map((facility) => {
