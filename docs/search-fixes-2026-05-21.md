@@ -273,6 +273,102 @@ alias resolution:
 
 **Full suite: 197 tests pass (184 + 8 new + 5 pre-existing skipped).**
 
+## §3.6 — Freshness for newly listed facilities (Phase 2.6)
+
+Until now, a newly approved facility could take **5–10 min** to appear in
+public search results:
+1. CDN cache: `s-maxage=600` (10 min)
+2. localStorage cache: 10 min TTL
+3. React Query: 5 min staleTime
+
+The audit also surfaced a latent bug: `useApprovedFacilities` subscribed
+to realtime events but `facility_services` / `facility_insurance` weren't
+in the `supabase_realtime` publication, so service/insurance edits never
+notified subscribers.
+
+This pass closes both gaps.
+
+### Migration `20260711000000_add_facility_services_insurance_to_realtime.sql`
+Gated `ALTER PUBLICATION supabase_realtime ADD TABLE` for
+`facility_services` and `facility_insurance` (idempotent — guarded with
+`pg_publication_tables` lookups). Also sets `REPLICA IDENTITY FULL` on
+both so UPDATE/DELETE events carry the full row, letting subscribers
+correlate by `facility_id` without a follow-up query. Applied to prod via
+MCP; lives in repo under `supabase/migrations/`.
+
+### `useStaticFacilities` realtime subscription
+`src/hooks/useStaticFacilities.ts` now opens a `public-facilities-realtime`
+Supabase channel on mount and listens for `postgres_changes` on
+`facilities`, `facility_services`, and `facility_insurance`. Each event
+schedules a debounced (1.5 s) React Query invalidation. A burst of bulk
+admin approvals collapses into a single refetch.
+
+Anon RLS:
+- `facilities` — `Anon can read approved facilities for public view`
+- `facility_services` — `Anyone can view services of approved facilities`
+- `facility_insurance` — `Anyone can view insurance of approved facilities`
+
+Anon visitors receive realtime events for exactly the rows the snapshot
+includes — no privilege escalation.
+
+### CDN cache TTL tightened
+`supabase/functions/get-public-facilities/index.ts:Cache-Control`:
+- Before: `public, max-age=300, s-maxage=600, stale-while-revalidate=3600`
+  (browser 5 min, CDN 10 min)
+- After:  `public, max-age=60, s-maxage=120, stale-while-revalidate=3600`
+  (browser 1 min, CDN 2 min)
+
+First-time visitors hitting the CDN see a newly approved facility within
+~2 min worst case. `stale-while-revalidate` keeps response latency low
+during cache refresh.
+
+### Admin approval — manual invalidation
+`src/pages/admin/AdminProviders.tsx:invalidateProviderQueries()` now also
+invalidates `PUBLIC_FACILITIES_QUERY_KEY` after every mutation. The
+admin who clicked Approve sees the public directory refresh instantly,
+in addition to other connected clients receiving the realtime event.
+Covers both single-row approvals and the bulk dialog (`BulkProviderStatusDialog`
+already calls the parent `onSuccess` which routes through
+`invalidateProviderQueries`).
+
+### Resulting freshness SLAs
+| Scenario | Worst-case time to appear in search |
+|---|---|
+| Admin approves facility (same tab) | instant (manual invalidate) |
+| Approval visible to another connected client | ≤ 1.5 s (realtime debounce) |
+| Provider adds a service to existing facility | ≤ 1.5 s (realtime debounce) |
+| First-time visitor hits CDN | ≤ 2 min (s-maxage) |
+| Returning visitor with stale localStorage | instant on remount (placeholderData) + ≤ 1.5 s realtime refresh |
+
+### Deploy note
+The CDN TTL change ships in the `get-public-facilities` edge function. Until
+that function is redeployed, the OLD `s-maxage=600` headers remain in
+effect at the CDN. Trigger `deploy-all-stale-functions.yml` after this
+commit lands on main.
+
+### Smoke-test scenario (post-deploy)
+1. Run the SQL probe: `SELECT COUNT(*) FROM facilities WHERE status='approved'` — note `N`.
+2. Insert a fresh test facility via the admin UI OR direct SQL:
+   ```sql
+   INSERT INTO facilities (name, facility_type, phone, address, city, state, zip_code, status, slug)
+   VALUES ('Realtime Smoke Test Center', 'Outpatient Program', '555-0100',
+           '1 Test St', 'San Francisco', 'California', '94102', 'approved',
+           'realtime-smoke-test-center-sf-ca');
+   ```
+3. Open `/search-results?location=San+Francisco%2C+CA` in a tab that's been
+   open for at least 30 s. Within ~1.5 s the new facility should appear
+   without a reload.
+4. Open a fresh incognito tab to the same URL. The fresh fetch should hit
+   the edge function (or its CDN), which returns 2-min-cache data —
+   should include the new facility within 2 min of insert.
+5. Confirm `SELECT COUNT(*) FROM facilities WHERE status='approved'` returns
+   `N+1`.
+6. Clean up:
+   ```sql
+   DELETE FROM facilities WHERE slug = 'realtime-smoke-test-center-sf-ca';
+   ```
+   Within ~1.5 s the facility should disappear from the open search tab.
+
 ## §4 — Observability follow-ups
 
 - Add a `directory_zero_result_query` analytics event when the filtered

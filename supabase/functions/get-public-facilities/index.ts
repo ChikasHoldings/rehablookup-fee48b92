@@ -5,10 +5,15 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  // Browser cache 5 min, CDN cache 10 min, serve stale up to 1 hour while revalidating in background.
-  // stale-while-revalidate absorbs traffic spikes by letting the CDN serve cached responses
-  // even after they expire, while it refreshes in the background — zero user-facing latency.
-  "Cache-Control": "public, max-age=300, s-maxage=600, stale-while-revalidate=3600",
+  // Browser cache 1 min, CDN cache 2 min, serve stale up to 1 hour while
+  // revalidating in background. The tight s-maxage bounds the worst-case
+  // staleness for newly approved facilities to ~2 min for first-time
+  // visitors hitting the CDN; active sessions are refreshed via the
+  // realtime invalidation hook in useStaticFacilities (instant), and
+  // stale-while-revalidate keeps response latency low even on cache miss.
+  // Pre-2026-05-21 this was max-age=300/s-maxage=600 (10-min CDN), which
+  // meant admin-approved facilities took up to 10 min to appear in search.
+  "Cache-Control": "public, max-age=60, s-maxage=120, stale-while-revalidate=3600",
 };
 
 const logStep = (step: string, details?: unknown) => {

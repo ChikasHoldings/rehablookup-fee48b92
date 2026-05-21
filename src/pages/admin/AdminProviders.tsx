@@ -36,6 +36,7 @@ import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
 import { BulkProviderStatusDialog } from "@/components/admin/providers/BulkProviderStatusDialog";
 import { BulkProviderFlagDialog } from "@/components/admin/providers/BulkProviderFlagDialog";
+import { PUBLIC_FACILITIES_QUERY_KEY } from "@/hooks/useStaticFacilities";
 import {
   FACILITY_LIST_COLUMNS,
   TAB_FILTERS,
@@ -241,7 +242,11 @@ export default function AdminProviders() {
     toast.success("Providers exported to CSV");
   };
 
-  // Invalidate all provider queries for real-time updates
+  // Invalidate all provider queries for real-time updates. Also includes
+  // the PUBLIC facility snapshot key so the admin who just approved /
+  // rejected / suspended a facility sees their own /search-results and
+  // /rehab-centers pages refresh instantly (in addition to the realtime
+  // event that fires for every other connected client).
   const invalidateProviderQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-providers"] });
     queryClient.invalidateQueries({ queryKey: ["admin-providers-status-counts"] });
@@ -250,6 +255,7 @@ export default function AdminProviders() {
     queryClient.invalidateQueries({ queryKey: ["admin-provider-pending-claim-counts"] });
     queryClient.invalidateQueries({ queryKey: ["admin-pro-subscriptions"] });
     queryClient.invalidateQueries({ queryKey: ["admin-sidebar-counts"] });
+    queryClient.invalidateQueries({ queryKey: PUBLIC_FACILITIES_QUERY_KEY });
   }, [queryClient]);
 
   // Real-time subscriptions
