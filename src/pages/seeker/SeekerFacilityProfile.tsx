@@ -10,7 +10,8 @@ import { RatingBadge } from "@/components/ui/RatingBadge";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
 import { FacilityPhotoGallery } from "@/components/facility/FacilityPhotoGallery";
 import { FacilityTourRequestModal } from "@/components/facility/FacilityTourRequestModal";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+// Tooltip imports removed — only consumer was the "Unclaimed listing"
+// badge which was hidden on the seeker view (provider-only concept).
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFacilityReviews } from "@/hooks/useFacilityReviews";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
@@ -41,8 +42,6 @@ import {
   Award,
   Handshake,
   GlobeIcon,
-  Info,
-  ShieldCheck,
 } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 
@@ -278,17 +277,10 @@ export default function SeekerFacilityProfile() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Route "Claim This Listing" through the unified onboarding wizard
-  // at /provider/onboarding. The wizard reads ?intent=claim&facility_id=
-  // and pre-seeds selected_facility_id after account creation.
-  const handleClaimClick = useCallback(() => {
-    if (!facility?.id) return;
-    const search = new URLSearchParams({
-      intent: "claim",
-      facility_id: facility.id,
-    }).toString();
-    navigate(`/provider/onboarding?${search}`);
-  }, [facility?.id, navigate]);
+  // handleClaimClick was removed: the Claim CTA is provider-only and
+  // doesn't belong on a seeker view. Providers reach the claim flow
+  // through /provider/onboarding when they sign up — no entry-point
+  // is needed here.
 
   const { data: facilityPlan = "free" } = useQuery({
     queryKey: ["facility-plan", facility?.id],
@@ -511,22 +503,12 @@ export default function SeekerFacilityProfile() {
                         reviewCount={ratingData.reviewCount}
                         size="sm"
                       />
-                      {claimFlags && !claimFlags.is_claimed && (
-                        <Tooltip delayDuration={150}>
-                          <TooltipTrigger asChild>
-                            <Badge
-                              variant="secondary"
-                              className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs cursor-help"
-                            >
-                              <Info className="h-2.5 sm:h-3 w-2.5 sm:w-3" aria-hidden />
-                              Unclaimed listing
-                            </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="max-w-xs text-xs leading-snug">
-                            This listing was created from public SAMHSA records and hasn't been claimed by the facility yet. Contact information may be outdated. Need help? Call our concierge at 214-639-6420.
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
+                      {/* "Unclaimed listing" badge intentionally hidden
+                          on the seeker view — claim status is a provider
+                          concern. Seekers care about whether they can
+                          contact the facility, which works the same
+                          regardless of claim state (modal routes
+                          unclaimed inquiries through concierge intake). */}
                       {facility.featured && (
                         <Badge className="gap-1 px-1.5 sm:px-2 py-0.5 text-xs sm:text-xs bg-warning/10 text-warning border-warning/20">
                           <Sparkles className="h-2.5 sm:h-3 w-2.5 sm:w-3" />
@@ -551,17 +533,10 @@ export default function SeekerFacilityProfile() {
                           International
                         </Badge>
                       )}
-                      {claimFlags && !claimFlags.is_claimed && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={handleClaimClick}
-                          className="ml-auto h-7 px-2.5 text-xs gap-1"
-                        >
-                          <ShieldCheck className="h-3 w-3" />
-                          Claim This Listing
-                        </Button>
-                      )}
+                      {/* "Claim This Listing" button intentionally
+                          hidden on the seeker view — provider CTA.
+                          Providers reach the claim flow via
+                          /provider/onboarding when they sign up. */}
                     </div>
                   </div>
               </div>
@@ -861,20 +836,61 @@ export default function SeekerFacilityProfile() {
                       </div>
                     )}
                     
-                    {showContactDetails && (
-                      <div className="flex items-center gap-3">
-                        <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <a 
-                          href={`tel:${facility.phone}`} 
-                          className="text-sm font-medium text-primary hover:underline"
-                          onClick={() => facility?.id && trackClickToCall(facility.id, "profile")}
-                        >
-                          {formatPhoneNumber(facility.phone)}
-                        </a>
-                      </div>
+                    {/* Phone — matches the public /center/[slug] page:
+                        Pro facilities expose their direct line; Free /
+                        unclaimed surface our concierge helpline so the
+                        seeker still has a one-tap call path. The
+                        helpline number lives in VITE_CONCIERGE_HELPLINE
+                        with a stable fallback so the link works even
+                        before the env is set. */}
+                    {showContactDetails && facility.phone ? (
+                      <a
+                        href={`tel:${facility.phone}`}
+                        onClick={() => facility?.id && trackClickToCall(facility.id, "profile")}
+                        className="flex items-start gap-3 -mx-2 px-2 py-1 rounded hover:bg-muted/50 transition-colors group"
+                      >
+                        <Phone className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div className="text-sm min-w-0">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Phone</p>
+                          <p className="text-primary font-semibold group-hover:underline">{formatPhoneNumber(facility.phone)}</p>
+                        </div>
+                      </a>
+                    ) : (
+                      <a
+                        href={`tel:${(import.meta.env.VITE_CONCIERGE_HELPLINE as string | undefined) || "+18006624357"}`}
+                        className="flex items-start gap-3 -mx-2 px-2 py-1 rounded hover:bg-muted/50 transition-colors group"
+                      >
+                        <Phone className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div className="text-sm min-w-0">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Call our helpline</p>
+                          <p className="text-primary font-semibold group-hover:underline">
+                            {(import.meta.env.VITE_CONCIERGE_HELPLINE_DISPLAY as string | undefined) || "1-800-662-4357"}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">Free, confidential — we'll route you to the right team.</p>
+                        </div>
+                      </a>
                     )}
-                    
-                    {/* Email removed - provider emails are completely private */}
+
+                    {/* Website — Pro facilities only. Free facilities
+                        keep this slot empty rather than show a misleading
+                        "no website" placeholder. */}
+                    {showContactDetails && facility.website && (
+                      <a
+                        href={facility.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => facility?.id && trackWebsiteClick(facility.id, "profile")}
+                        className="flex items-start gap-3 -mx-2 px-2 py-1 rounded hover:bg-muted/50 transition-colors group"
+                      >
+                        <Globe className="h-4 w-4 text-violet-600 shrink-0 mt-0.5" />
+                        <div className="text-sm min-w-0">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Website</p>
+                          <p className="text-primary font-semibold flex items-center gap-1 group-hover:underline">
+                            Visit Website <ExternalLink className="h-3 w-3" />
+                          </p>
+                        </div>
+                      </a>
+                    )}
                   </div>
                 </div>
               )}
@@ -902,10 +918,16 @@ export default function SeekerFacilityProfile() {
       </div>
 
       {/* Modals */}
-      {/* Inquiry + tour modals — gated on claimed-state. Unclaimed listings
-          surface the "Unclaimed listing" badge + "Claim This Listing"
-          button instead of an inquiry path. */}
-      {(!claimFlags || claimFlags.is_claimed) && (
+      {/* Inquiry + tour modals always mount on the seeker view. The
+          modals handle the claim-state routing internally:
+            • Claimed facilities → submit-qualified-lead (provider inbox)
+            • Unclaimed listings → concierge match flow (placement team)
+          Previously these were gated on `claimFlags.is_claimed`, which
+          made the "Send Request" / "Request Tour" / "Ready to Connect"
+          buttons silently do nothing for unclaimed listings — the
+          seeker clicked and saw no modal. Now the buttons always
+          produce a working flow. */}
+      {(
         <>
           <RequestInfoModal
             open={requestModalOpen}
