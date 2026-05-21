@@ -616,6 +616,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/sitemap-facilities.xml",
+      "destination": "https://mldbxpntzcjalgjmwnqa.supabase.co/functions/v1/sitemap-facilities?type=facilities"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

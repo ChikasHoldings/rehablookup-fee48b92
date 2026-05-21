@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "v7.7.0";
+const VERSION = "v7.8.0";
 const DEPLOYED_AT = new Date().toISOString();
 
 // Slugify helper — must match how page routes derive slugs from facility city/state
@@ -46,6 +46,11 @@ const STATE_ABBR_TO_SLUG: Record<string, string> = {
  * Fetch the set of `${stateSlug}::${citySlug}` pairs that actually have at least
  * one approved facility. Used to filter every city-level combo route generator
  * so the sitemap never advertises a page that would render as a soft-404.
+ *
+ * Reads from the `public_facilities` view (not the raw `facilities` table)
+ * so the set matches what users actually see on /search-results and
+ * /center/:slug — suspended facilities and rows under an active claim
+ * request are excluded automatically.
  */
 async function fetchFacilityCitySet(
   supabase: any
@@ -55,9 +60,8 @@ async function fetchFacilityCitySet(
   const batchSize = 1000;
   while (true) {
     const { data, error } = await supabase
-      .from("facilities")
+      .from("public_facilities")
       .select("city, state")
-      .eq("status", "approved")
       .range(from, from + batchSize - 1);
     if (error) {
       console.error(`[Sitemap ${VERSION}] fetchFacilityCitySet error:`, error);
@@ -1898,11 +1902,17 @@ async function generateFacilitiesSitemap(): Promise<string> {
   let from = 0;
   const batchSize = 1000;
 
+  // Read from `public_facilities` view so the sitemap inherits the
+  // canonical visibility rules (status='approved' AND not suspended AND
+  // no pending claim_request). Previously this queried the raw `facilities`
+  // table with just `.eq("status","approved")`, which could emit /center/
+  // URLs for facilities under an active claim review or marked suspended
+  // — both render as soft-404s on the live site because the SPA reads
+  // from the same view.
   while (true) {
     const { data: batch, error } = await supabase
-      .from("facilities")
+      .from("public_facilities")
       .select("slug, updated_at, name, city, state, featured, logo_url, gallery_urls")
-      .eq("status", "approved")
       .not("slug", "is", null)
       .order("featured", { ascending: false })
       .order("updated_at", { ascending: false })
