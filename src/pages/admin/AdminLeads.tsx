@@ -409,7 +409,21 @@ export default function AdminLeads() {
   const filteredLeads = useMemo(() => leads || [], [leads]);
   
 
-  // Delete
+  // Delete — error toast surfaces the actual server-side reason
+  // (e.g. "Forbidden - only super admins may delete leads") instead of
+  // the generic "Failed to delete" so admins can self-diagnose blocked
+  // operations. Same pattern as AdminProviders handleConfirmAction.
+  const reasonFromInvoke = (
+    data: unknown,
+    error: unknown,
+    fallback: string,
+  ): string => {
+    const serverErr = (data as { error?: string } | null)?.error;
+    if (serverErr) return serverErr;
+    if (error instanceof Error) return error.message;
+    return fallback;
+  };
+
   const handleDeleteLead = async () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
@@ -420,10 +434,14 @@ export default function AdminLeads() {
         body: { leadIds: [deleteTarget.id] },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error || (data as { error?: string } | null)?.error) {
+        throw new Error(reasonFromInvoke(data, error, "Delete failed"));
+      }
       invalidateAll(); toast.success("Lead deleted"); setDeleteTarget(null);
-    } catch (err) { logError("delete_lead", err); toast.error("Failed to delete"); }
+    } catch (err) {
+      logError("delete_lead", err);
+      toast.error(`Failed to delete: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
     finally { setIsDeleting(false); }
   };
 
@@ -437,11 +455,15 @@ export default function AdminLeads() {
         body: { leadIds: Array.from(selectedIds) },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error || (data as { error?: string } | null)?.error) {
+        throw new Error(reasonFromInvoke(data, error, "Bulk delete failed"));
+      }
       invalidateAll(); toast.success(`${selectedIds.size} lead(s) deleted`);
       setSelectedIds(new Set()); setBulkDeleteOpen(false);
-    } catch (err) { logError("bulk_delete", err); toast.error("Failed to delete"); }
+    } catch (err) {
+      logError("bulk_delete", err);
+      toast.error(`Failed to delete: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
     finally { setIsBulkDeleting(false); }
   };
 

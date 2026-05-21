@@ -80,10 +80,11 @@ export function ProviderLeadsTab({ provider, providerFacilities }: ProviderLeads
         )}
       </div>
 
-      {/* Summary badges */}
-      <div className="flex gap-2 flex-wrap">
-        <Badge variant="outline" className="gap-1"><ArrowRightLeft className="h-3 w-3" /> Redistributed: {leads?.filter((l) => l.redistribution_status === "extended").length || 0}</Badge>
-      </div>
+      {/* Summary badge removed 2026-05-21 — "Redistributed: N" was a holdover
+          from the per-lead-sale monetization era. The current 24-hour
+          exclusivity model uses redistribution_status for routing but
+          surfacing the count adds no operational value for the admin
+          viewing a single provider's leads. */}
 
       {isLoading ? (
         <div className="space-y-2">
