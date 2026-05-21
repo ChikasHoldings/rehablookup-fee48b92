@@ -29,6 +29,12 @@ export default function SeekerSignup() {
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  // Captured at register-provider-account return time so handleVerifyCode
+  // can pass it to the welcome email (which keys idempotency by user id).
+  const newUserIdRef = useRef<string | null>(null);
+  // Guard against double-firing the post-verify flow when the user
+  // re-clicks Verify or the OTP input replays a submit.
+  const verifyCompletedRef = useRef<boolean>(false);
   
   // Anti-bot honeypot
   const [honeypot, setHoneypot] = useState('');
@@ -263,12 +269,17 @@ export default function SeekerSignup() {
         console.warn("[SeekerSignup] seeker_profiles upsert failed", err);
       }
 
-      // Fire-and-forget welcome email (never block signup).
-      void supabase.functions
-        .invoke("send-seeker-emails", {
-          body: { type: "welcome", seekerId: newUserId, email: trimmedEmail },
-        })
-        .catch(() => {});
+      // NOTE: welcome email is NOT sent here. It used to be — and that
+      // fired BEFORE the user proved ownership of their address, polluting
+      // inboxes of mistyped/abandoned signups. The welcome now fires from
+      // handleVerifyCode (post-OTP), gated on a fresh verification.
+      // Server-side dedup via idempotencyKey `seeker-welcome-${userId}`
+      // in send-seeker-emails handles the re-verification edge case so a
+      // resend → second-verify cycle within 24h doesn't double-deliver.
+
+      // Stash the new user id on a ref so handleVerifyCode can pass it
+      // to the welcome trigger after the OTP succeeds.
+      newUserIdRef.current = newUserId;
 
       // Fire-and-forget admin notification so the team has visibility into
       // new seeker signups (parity with provider signups, which already
@@ -342,19 +353,24 @@ export default function SeekerSignup() {
   };
 
   const handleVerifyCode = async () => {
+    // Idempotency guard: once a verification has completed in this
+    // mount, ignore re-submits. Prevents a fast double-click or an
+    // accidental re-render from re-running signIn + welcome.
+    if (verifyCompletedRef.current) return;
+
     const code = verificationCode.join('');
     if (code.length !== 6) {
       toast.error('Please enter the complete 6-digit code');
       return;
     }
-    
+
     setIsVerifying(true);
-    
+
     try {
       const { data, error } = await supabase.functions.invoke('verify-code', {
-        body: { email: signupEmail, code }
+        body: { email: signupEmail, code, purpose: 'signup' }
       });
-      
+
       if (error || data?.error) {
         toast.error(data?.error || 'Invalid verification code. Please try again.');
         setVerificationCode(['', '', '', '', '', '']);
@@ -362,21 +378,64 @@ export default function SeekerSignup() {
         return;
       }
 
+      // The OTP is valid. Establish a real client session now so the
+      // user lands on /account authenticated — no redirect-to-login.
+      // register-provider-account set email_confirm:true upfront, so
+      // signInWithPassword is the supported path.
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: signupEmail,
+        password,
+      });
+      if (signInErr) {
+        // The verification succeeded but we couldn't establish a session.
+        // Fall back gracefully: surface the underlying message and route
+        // to /login (rare; happens if Supabase auth is temporarily
+        // unavailable or if the password was somehow rejected — the
+        // user CAN still sign in manually with the same credentials).
+        console.warn('[SeekerSignup] post-verify signIn failed', signInErr);
+        toast.error(signInErr.message || 'Verified, but sign-in failed. Please sign in to continue.');
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      verifyCompletedRef.current = true;
+
+      // Fire welcome email AFTER verification succeeded AND a session
+      // exists. Skip if verify-code reported `alreadyVerified` (the
+      // 24-hour idempotency window in verify-code returns this when the
+      // same email was verified moments ago — typically a resend +
+      // re-verify cycle, where the welcome has already gone out).
+      // Even without this guard, send-seeker-emails' idempotencyKey
+      // (`seeker-welcome-${userId}`) dedups at the server side, so this
+      // is belt-and-suspenders.
+      if (!data?.alreadyVerified && newUserIdRef.current) {
+        void supabase.functions
+          .invoke('send-seeker-emails', {
+            body: { type: 'welcome', seekerId: newUserIdRef.current, email: signupEmail },
+          })
+          .catch((err) => {
+            // Logging-only — welcome is best-effort; never block the
+            // user-facing post-signup flow on the email send.
+            console.warn('[SeekerSignup] welcome email send failed', err);
+          });
+      }
+
       // Bulk-link any pre-signup concierge / international / VOB rows that
       // were submitted as a guest with this email so they show up in
       // /account/requests + /account/insurance-verifications immediately
-      // after first login. Fire-and-forget; we never block the redirect on
-      // the link call since the rows aren't lost — just unattached until
-      // the next sign-in if this attempt fails. (Phase 4I)
+      // after first login. Runs WITH a valid session so the linker can
+      // attribute rows by JWT email. Fire-and-forget; rows aren't lost
+      // if this fails — they remain unattached until the next sign-in.
       try {
         await supabase.functions.invoke('link-inquiry-to-user', { body: {} });
       } catch (linkErr) {
         console.warn('[SeekerSignup] inquiry bulk-link failed', linkErr);
       }
 
-      toast.success('Email verified successfully!');
+      toast.success('Email verified! Welcome to RehabLookup.');
       navigate('/account', { replace: true });
-    } catch {
+    } catch (err) {
+      console.error('[SeekerSignup] handleVerifyCode unexpected error', err);
       toast.error('Verification failed. Please try again.');
     } finally {
       setIsVerifying(false);
