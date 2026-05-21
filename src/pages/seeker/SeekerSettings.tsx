@@ -665,6 +665,20 @@ export default function SeekerSettings() {
         eventType: "password_change",
         description: "Changed account password"
       });
+      // Security signal email — confirms the change from a separate
+      // channel so a compromised account is detectable. Transactional;
+      // NOT preference-gated server-side. Idempotency at the function
+      // includes the user_id + minute window so a double-click doesn't
+      // double-deliver but a legitimate re-change tomorrow does. Fire-
+      // and-forget; the password is already changed regardless of the
+      // email landing.
+      void supabase.functions
+        .invoke("send-seeker-emails", {
+          body: { type: "password_changed", seekerId: sessionUserId, email: sessionEmail },
+        })
+        .catch((err) => {
+          console.warn("[SeekerSettings] password_changed email failed", err);
+        });
       toast({
         title: "Password updated",
         description: "Your password has been changed successfully."

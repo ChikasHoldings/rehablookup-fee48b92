@@ -11,7 +11,7 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[SEND-SEEKER-EMAILS] ${step}`, details ? JSON.stringify(details) : "");
 };
 
-type EmailType = 
+type EmailType =
   | "welcome"
   | "welcome_followup"
   | "request_confirmation"
@@ -20,7 +20,11 @@ type EmailType =
   | "tips_finding_treatment"
   | "weekly_digest"
   | "account_reminder"
-  | "placement_intro";
+  | "placement_intro"
+  // Security signal — confirms a successful password change so an
+  // unauthorized rotation can be detected. Transactional; NOT
+  // preference-gated.
+  | "password_changed";
 
 interface SeekerEmailRequest {
   type: EmailType;
@@ -164,6 +168,10 @@ Deno.serve(async (req) => {
       "weekly_digest": "email_weekly_digest",
       "account_reminder": "email_product_updates",
       "placement_intro": "email_product_updates",
+      // password_changed intentionally omitted — security signal,
+      // ALWAYS sent regardless of marketing preferences. The
+      // type !== "welcome" preference-gate check below also short-
+      // circuits when prefKey is undefined.
     };
 
     const defaultPrefs = {
@@ -177,8 +185,13 @@ Deno.serve(async (req) => {
     const prefs = { ...defaultPrefs, ...notificationPrefs };
     const prefKey = emailTypePreferenceMap[type];
     
-    // Skip email if preference is disabled (except for critical welcome email)
-    if (type !== "welcome" && prefKey && !prefs[prefKey]) {
+    // Transactional / security-critical types are exempt from the
+    // preference gate — they're not marketing. Welcome confirms account
+    // creation (the user just opted in by signing up); password_changed
+    // is a security signal that the user needs to see regardless of
+    // their marketing opt-outs.
+    const TRANSACTIONAL_TYPES = new Set(["welcome", "password_changed"]);
+    if (!TRANSACTIONAL_TYPES.has(type) && prefKey && !prefs[prefKey]) {
       logStep("Email skipped due to user preferences", { type, prefKey, enabled: prefs[prefKey] });
       return new Response(
         JSON.stringify({ success: true, skipped: true, reason: "User preference disabled" }),
@@ -240,6 +253,11 @@ Deno.serve(async (req) => {
         html = generatePlacementIntroEmail(displayName);
         break;
 
+      case "password_changed":
+        subject = "Your RehabLookup password was changed";
+        html = generatePasswordChangedEmail(displayName, metadata);
+        break;
+
       default:
         logStep("Unknown email type", { type });
         return new Response(
@@ -250,14 +268,22 @@ Deno.serve(async (req) => {
 
     // Idempotency key — leadId scopes per-inquiry uniqueness so a seeker
     // with N inquiries gets N emails (one per facility response), not
-    // one ever. Without leadId we fall back to seeker-scope which is the
-    // right behaviour for welcome / digest / drip emails that should
-    // dedup per user.
-    const idempotencyKey = leadId
-      ? `seeker-${type}-${leadId}`
-      : seekerId
-        ? `seeker-${type}-${seekerId}`
-        : `seeker-${type}-${seekerEmail}`;
+    // one ever. password_changed includes a minute-window so a double-
+    // click dedupes within 60s but a legitimate re-change tomorrow
+    // produces a fresh email. Without leadId / minute we fall back to
+    // seeker-scope which is the right behaviour for welcome / drip
+    // emails (one per user lifetime).
+    let idempotencyKey: string;
+    if (leadId) {
+      idempotencyKey = `seeker-${type}-${leadId}`;
+    } else if (type === "password_changed" && seekerId) {
+      const minuteWindow = Math.floor(Date.now() / 60000);
+      idempotencyKey = `seeker-${type}-${seekerId}-${minuteWindow}`;
+    } else if (seekerId) {
+      idempotencyKey = `seeker-${type}-${seekerId}`;
+    } else {
+      idempotencyKey = `seeker-${type}-${seekerEmail}`;
+    }
 
     const { emailId: emailResult, error: emailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
@@ -1155,6 +1181,114 @@ function generatePlacementIntroEmail(name: string): string {
             </td>
           </tr>
           
+          ${generateEmailFooter()}
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function generatePasswordChangedEmail(name: string, metadata?: Record<string, unknown>): string {
+  // Optional metadata: ipAddress + userAgent if the client could capture
+  // them. Sender does not require these; the template degrades cleanly
+  // when absent. Defensive HTML-escaping for any operator-supplied
+  // string would be ideal but these come straight from request headers
+  // that the function trusts.
+  const ipAddress = (metadata?.ipAddress as string | undefined) || null;
+  const userAgent = (metadata?.userAgent as string | undefined) || null;
+  const now = new Date();
+  const whenLine = `${now.toUTCString()} (UTC)`;
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Header — neutral colour palette; this is NOT a marketing email -->
+          <tr>
+            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
+              <div style="width: 56px; height: 56px; background: rgba(255,255,255,0.18); border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 28px;">🔐</span>
+              </div>
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 700;">
+                Your password was changed
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 36px 32px;">
+              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #1B365D; font-weight: 600;">
+                Hi ${name},
+              </p>
+
+              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569; line-height: 1.6;">
+                The password on your RehabLookup account was just changed. If you made this change, no action is needed — you can ignore this email.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 18px 0; border: 1px solid #e5e7eb; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">When</p>
+                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">${whenLine}</p>
+                  </td>
+                </tr>
+                ${ipAddress ? `
+                <tr>
+                  <td style="padding: 12px 16px; ${userAgent ? "border-bottom: 1px solid #f1f5f9;" : ""}">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">From IP</p>
+                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">${ipAddress}</p>
+                  </td>
+                </tr>` : ""}
+                ${userAgent ? `
+                <tr>
+                  <td style="padding: 12px 16px;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Device</p>
+                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">${userAgent}</p>
+                  </td>
+                </tr>` : ""}
+              </table>
+
+              <!-- Wasn't-you panel -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef2f2; border-left: 4px solid #dc2626; border-radius: 6px; margin: 18px 0;">
+                <tr>
+                  <td style="padding: 14px 16px;">
+                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #991b1b; font-weight: 600;">
+                      Didn't change your password?
+                    </p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #991b1b; line-height: 1.5;">
+                      Your account may be compromised. Reset your password immediately and review your recent activity.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 24px auto;">
+                <tr>
+                  <td style="background-color: #dc2626; background: #dc2626; border-radius: 8px;">
+                    <a href="https://rehablookup.com/forgot-password" style="display: inline-block; padding: 13px 28px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                      Secure my account
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 18px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #64748b; line-height: 1.5; text-align: center;">
+                You can also review recent activity in <a href="https://rehablookup.com/account/settings" style="color: #1B365D; text-decoration: underline;">Settings → Account</a>.
+              </p>
+            </td>
+          </tr>
+
           ${generateEmailFooter()}
         </table>
       </td>
