@@ -241,14 +241,18 @@ export default function SeekerConcierge() {
     queryFn: async () => {
       if (!selectedCase?.placed_facility_id) return null;
       
+      // .maybeSingle() — if the placed facility was deleted or RLS
+      // hides it, returning null is better UX than throwing through to
+      // the error boundary. The placement card already handles a
+      // missing facility gracefully.
       const { data, error } = await supabase
         .from("facilities")
         .select("id, name, city, state, phone, slug, logo_url, facility_type")
         .eq("id", selectedCase.placed_facility_id)
-        .single();
-      
+        .maybeSingle();
+
       if (error) throw error;
-      return data as Facility;
+      return (data ?? null) as Facility | null;
     },
     enabled: !!selectedCase?.placed_facility_id,
   });
@@ -262,6 +266,12 @@ export default function SeekerConcierge() {
 
       if (!userId) throw new Error("Not authenticated");
 
+      // .maybeSingle() — if the UPDATE matched zero rows (another tab
+      // already submitted feedback, or the case status moved out from
+      // under the conditional `.is(seeker_feedback, null)` filter),
+      // data will be null and we throw a friendly "already submitted"
+      // instead of a bare PostgrestError from .single()'s "no rows
+      // returned" error.
       const { data, error } = await supabase
         .from("concierge_inquiries")
         .update({ seeker_rating: rating, seeker_feedback: feedback })
@@ -269,11 +279,11 @@ export default function SeekerConcierge() {
         .eq("user_id", userId)
         .is("seeker_feedback", null)
         .select("id")
-        .single();
-      
+        .maybeSingle();
+
       if (error) throw error;
       if (!data) throw new Error("Feedback already submitted");
-      
+
       return data;
     },
     onSuccess: () => {

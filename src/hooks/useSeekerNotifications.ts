@@ -240,6 +240,9 @@ export function useSeekerNotifications() {
   // Re-run on authUserId change so the subscription rebinds to the new user id.
   }, [authUserId, fetchNotifications, playNotificationSound, showBrowserNotification]);
 
+  // Surface mutation failures to the user instead of swallowing them
+  // with only a console.error. Prior code silently refetched on
+  // failure — the user couldn't tell their click did nothing.
   const markAsRead = useCallback(async (notificationId: string) => {
     // Optimistic update
     setNotifications(prev =>
@@ -260,9 +263,14 @@ export function useSeekerNotifications() {
       if (error) throw error;
     } catch (err) {
       console.error("Error marking notification as read:", err);
+      toast({
+        title: "Couldn't mark as read",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
       fetchNotifications();
     }
-  }, [fetchNotifications]);
+  }, [toast, fetchNotifications]);
 
   const markAllAsRead = useCallback(async () => {
     // Optimistic update
@@ -280,12 +288,17 @@ export function useSeekerNotifications() {
         .eq("read", false);
 
       if (error) throw error;
-      
+
       toast({
         title: "All notifications marked as read",
       });
     } catch (err) {
       console.error("Error marking all as read:", err);
+      toast({
+        title: "Couldn't mark all as read",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
       // Revert on error
       fetchNotifications();
     }
@@ -314,9 +327,14 @@ export function useSeekerNotifications() {
       if (error) throw error;
     } catch (err) {
       console.error("Error deleting notification:", err);
+      toast({
+        title: "Couldn't delete notification",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
       fetchNotifications();
     }
-  }, [fetchNotifications]);
+  }, [toast, fetchNotifications]);
 
   return {
     notifications,

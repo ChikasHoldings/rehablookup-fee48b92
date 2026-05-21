@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Helmet } from "react-helmet-async";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Bell, BellOff, Check, CheckCheck, Trash2, ExternalLink, Settings,
   Send, Heart, Star, Building2, MapPin, Calendar, HeartHandshake, UserCheck, CheckCircle,
@@ -128,10 +128,31 @@ function NotificationItem({
 export default function SeekerNotifications() {
   const { isAuthenticated, isReady } = useSeekerSession();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hydratedRef = useRef(false);
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification, refetch } =
     useSeekerNotifications();
   const [filter, setFilter] = useState<FilterTab>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // URL state hydration once on mount + loop-guarded sync so the
+  // ?filter=unread bookmark works.
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    const f = searchParams.get("filter");
+    if (f === "unread" || f === "all") setFilter(f as FilterTab);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const next = new URLSearchParams(searchParams);
+    if (filter === "unread") next.set("filter", "unread");
+    else next.delete("filter");
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [filter, searchParams, setSearchParams]);
 
   const filteredNotifications = filter === "unread"
     ? notifications.filter(n => !n.read)
