@@ -1,9 +1,19 @@
-// twilio-sms-inbound v1.1.0
+// twilio-sms-inbound v1.2.0
 //
 // TCPA-compliant inbound SMS webhook. Receives Twilio "Incoming Message"
 // POSTs (application/x-www-form-urlencoded), classifies the keyword,
-// updates profiles.sms_opted_out_at / sms_opted_in_at, and returns a
+// updates profiles.sms_opted_out_at / sms_opted_in_at AND
+// seeker_profiles.sms_opted_out_at / sms_opted_in_at, then returns a
 // TwiML response that Twilio sends back to the originating handset.
+//
+// v1.2.0: seeker_profiles opt-out wiring (Phase 3 of the seeker SMS
+// audit). Previously the handler only matched against `profiles`
+// (provider table) so a seeker replying STOP from their phone got
+// the TwiML response but their `seeker_profiles` row was never
+// updated. With seeker SMS infrastructure now landing (verification
+// OTP + future welcome/alert SMS), this was the last TCPA-compliance
+// gap. Match by phone (E.164) against both tables in parallel; apply
+// opt-state to whichever rows matched.
 //
 // Deploy with verify_jwt: false because Twilio cannot send a Supabase JWT.
 // Authentication is via Twilio's X-Twilio-Signature HMAC over the request
@@ -39,7 +49,7 @@
 // sms_inbound_log for TCPA audit trail.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -167,43 +177,72 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // Match the inbound phone to a profile if we have one. profiles.user_id is
-  // the auth user; profiles.phone may be stored in varying formats, so we
-  // match on the normalized E.164 form. If multiple rows share a phone (rare
-  // — providers shouldn't, but we don't enforce uniqueness on phone), opt
-  // them all out: the safest TCPA posture.
-  let matchedUserIds: string[] = [];
+  // Match the inbound phone to a profile if we have one. Both tables
+  // (profiles for providers, seeker_profiles for seekers) store phone
+  // in E.164 form after the Phase 1 normalization pass. If multiple
+  // rows share a phone (rare — uniqueness isn't enforced), opt them
+  // all out: the safest TCPA posture.
+  let providerUserIds: string[] = [];
+  let seekerUserIds: string[] = [];
   try {
-    const { data: matched } = await svc
-      .from("profiles")
-      .select("user_id")
-      .eq("phone", fromPhone);
-    matchedUserIds = ((matched as { user_id?: string }[] | null) ?? [])
+    const [providerMatch, seekerMatch] = await Promise.all([
+      svc.from("profiles").select("user_id").eq("phone", fromPhone),
+      svc.from("seeker_profiles").select("user_id").eq("phone", fromPhone),
+    ]);
+    providerUserIds = ((providerMatch.data as { user_id?: string }[] | null) ?? [])
+      .map((r) => r.user_id)
+      .filter((id): id is string => !!id);
+    seekerUserIds = ((seekerMatch.data as { user_id?: string }[] | null) ?? [])
       .map((r) => r.user_id)
       .filter((id): id is string => !!id);
   } catch (e) {
     console.warn("[twilio-sms-inbound] match lookup failed", e);
   }
+  const matchedUserIds = [...providerUserIds, ...seekerUserIds];
 
   // Apply opt-out / opt-in across every matching profile.
-  if (matchedUserIds.length > 0) {
+  if (action === "opt_out") {
     const nowIso = new Date().toISOString();
-    if (action === "opt_out") {
-      await svc
-        .from("profiles")
-        .update({ sms_opted_out_at: nowIso, sms_opted_in_at: null })
-        .in("user_id", matchedUserIds);
-      // Also flip the per-channel toggle so the Settings UI reflects state.
-      await svc
-        .from("notification_preferences")
-        .update({ sms_lead_alerts: false })
-        .in("user_id", matchedUserIds);
-    } else if (action === "opt_in") {
-      await svc
-        .from("profiles")
-        .update({ sms_opted_out_at: null, sms_opted_in_at: nowIso })
-        .in("user_id", matchedUserIds);
+    const ops: Promise<unknown>[] = [];
+    if (providerUserIds.length > 0) {
+      ops.push(
+        svc.from("profiles")
+          .update({ sms_opted_out_at: nowIso, sms_opted_in_at: null })
+          .in("user_id", providerUserIds),
+      );
+      // Also flip provider per-channel toggle so Provider Settings UI agrees.
+      ops.push(
+        svc.from("notification_preferences")
+          .update({ sms_lead_alerts: false })
+          .in("user_id", providerUserIds),
+      );
     }
+    if (seekerUserIds.length > 0) {
+      ops.push(
+        svc.from("seeker_profiles")
+          .update({ sms_opted_out_at: nowIso, sms_opted_in_at: null })
+          .in("user_id", seekerUserIds),
+      );
+    }
+    await Promise.allSettled(ops);
+  } else if (action === "opt_in") {
+    const nowIso = new Date().toISOString();
+    const ops: Promise<unknown>[] = [];
+    if (providerUserIds.length > 0) {
+      ops.push(
+        svc.from("profiles")
+          .update({ sms_opted_out_at: null, sms_opted_in_at: nowIso })
+          .in("user_id", providerUserIds),
+      );
+    }
+    if (seekerUserIds.length > 0) {
+      ops.push(
+        svc.from("seeker_profiles")
+          .update({ sms_opted_out_at: null, sms_opted_in_at: nowIso })
+          .in("user_id", seekerUserIds),
+      );
+    }
+    await Promise.allSettled(ops);
   }
 
   // Persist the audit row regardless of match — TCPA wants the inbound trail.
@@ -228,7 +267,8 @@ Deno.serve(async (req) => {
     v: VERSION,
     action,
     keyword: keywordRaw,
-    matched: matchedUserIds.length,
+    matchedProviders: providerUserIds.length,
+    matchedSeekers: seekerUserIds.length,
   });
 
   return twiml(replyMessage);

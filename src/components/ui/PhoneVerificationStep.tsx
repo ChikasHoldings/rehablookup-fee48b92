@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatPhoneE164 } from "@/lib/phoneUtils";
 
 interface PhoneVerificationStepProps {
   phone: string;
@@ -64,19 +65,12 @@ export function PhoneVerificationStep({
     }
   }, [resendCooldown]);
 
-  // Format phone to E.164
-  const formatPhoneE164 = (phoneNumber: string): string => {
-    const cleaned = phoneNumber.replace(/\D/g, "");
-    // Assume US number if 10 digits
-    if (cleaned.length === 10) {
-      return `+1${cleaned}`;
-    }
-    // Already has country code
-    if (cleaned.length === 11 && cleaned.startsWith("1")) {
-      return `+${cleaned}`;
-    }
-    return `+${cleaned}`;
-  };
+  // E.164 formatting now lives in src/lib/phoneUtils so the signup
+  // upsert + the settings save + this verification flow all produce
+  // the same canonical form. The previous inline implementation here
+  // diverged from what SeekerSignup persisted (which was none), which
+  // caused phone-verification lookups against a stored non-normalized
+  // phone to fail. See docs/seeker-sms-system-hardening-2026-05-21.md.
 
   const isValidPhoneForVerification = (): boolean => {
     const cleaned = phone.replace(/\D/g, "");

@@ -28,6 +28,7 @@ import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { ActivityLog } from "@/components/seeker/ActivityLog";
 import { logActivity } from "@/hooks/useActivityLog";
 import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
+import { formatPhoneE164 } from "@/lib/phoneUtils";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -480,10 +481,16 @@ export default function SeekerSettings() {
     }
     lastProfileSaveRef.current = now;
 
-    // Sanitize inputs
+    // Sanitize inputs.
+    //
+    // Phone: normalized to E.164 (`+15551234567`) for storage. Same
+    // canonical form as SeekerSignup persists, send-sms-verification-
+    // code expects, and twilio-sms-inbound STOP-matching reads. If
+    // the user typed garbage, formatPhoneE164 returns "" → we store
+    // null instead of partial data.
     const cleanFirstName = sanitizePersonName(firstName);
     const cleanLastName = sanitizePersonName(lastName);
-    const cleanPhone = phone.replace(/[^\d+\-() ]/g, '').slice(0, 20);
+    const cleanPhone = formatPhoneE164(phone);
     const cleanZipcode = zipcode.replace(/[^\d\-]/g, '').slice(0, 10);
     const cleanCity = sanitizeText(city, 100);
     const cleanState = sanitizeText(state, 50);

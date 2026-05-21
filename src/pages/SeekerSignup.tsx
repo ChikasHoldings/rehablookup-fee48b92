@@ -11,7 +11,7 @@ import { Mail, Lock, User, Phone, MapPin, Eye, EyeOff, Loader2, CheckCircle, Arr
 import { SEO } from '@/components/SEO';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { EmailInput } from '@/components/ui/email-input';
-import { isValidPhoneNumber } from '@/lib/phoneUtils';
+import { isValidPhoneNumber, formatPhoneE164 } from '@/lib/phoneUtils';
 import { isValidEmail } from '@/lib/emailUtils';
 import { useZipcodeLookup } from '@/hooks/useZipcodeLookup';
 import { PasswordStrengthIndicator, calculatePasswordStrength } from '@/components/ui/password-strength-indicator';
@@ -249,6 +249,17 @@ export default function SeekerSignup() {
       // The handle_new_seeker trigger creates the base row from metadata,
       // but admin.createUser doesn't always propagate metadata fully; upsert
       // to be safe.
+      //
+      // Normalization (Phase 1 of the SMS audit):
+      //  - phone: stored as E.164 (`+15551234567`) so downstream lookups
+      //    (verify-sms-code, twilio-sms-inbound STOP matching) all see
+      //    the same canonical form. formatPhoneE164 returns "" on
+      //    invalid input — we already validated via isValidPhoneNumber
+      //    above, so this is defensive.
+      //  - zipcode: form already enforces exactly 5 digits.
+      //  - city/state: from the zipcode lookup (title-cased + 2-letter
+      //    abbr) — pass through. User can override.
+      const phoneE164 = formatPhoneE164(phone);
       try {
         await supabase
           .from("seeker_profiles")
@@ -258,7 +269,7 @@ export default function SeekerSignup() {
               first_name: sanitizedFirst,
               last_name: sanitizedLast,
               email: trimmedEmail,
-              phone,
+              phone: phoneE164 || phone,
               zipcode,
               city,
               state,
