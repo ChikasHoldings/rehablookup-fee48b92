@@ -16,6 +16,13 @@ const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/get-public-facilities`;
 // Whitelist of fields that the edge function is permitted to expose.
 // This list MUST exactly match the camelCase keys built in index.ts.
 // If you intentionally add a public field, update this list AND the view.
+//
+// Expanded 2026-05-21 to surface the public_facilities columns that the
+// search/sort pipeline reads (calculated_ranking_score, is_pro, hours,
+// languages, accessibility, admissions etc.). Pro-gated fields (phone,
+// email, website) are returned as null for non-Pro facilities by the
+// view's CASE expression — surfacing the key is safe because the value
+// is already masked at the SQL layer.
 const ALLOWED_FACILITY_KEYS = new Set<string>([
   "id",
   "name",
@@ -25,13 +32,29 @@ const ALLOWED_FACILITY_KEYS = new Set<string>([
   "zipCode",
   "address",
   "phone",
+  "email",
+  "website",
   "description",
   "featured",
+  "featuredPinned",
   "verified",
   "facilityType",
+  "bedCount",
+  "genderServed",
   "logoUrl",
   "galleryUrls",
   "yearEstablished",
+  "calculatedRankingScore",
+  "listingCompletenessScore",
+  "responseRateScore",
+  "acceptsInternationalPatients",
+  "hoursOfOperation",
+  "languagesSpoken",
+  "accessibilityFeatures",
+  "acceptingAdmissions",
+  "isClaimed",
+  "isPro",
+  "dataSource",
   "treatmentTypes",
   "insuranceAccepted",
 ]);
@@ -43,7 +66,6 @@ const FORBIDDEN_KEYS = [
   "userId",
   "admin_notes",
   "adminNotes",
-  "email",
   "reply_email",
   "replyEmail",
   "concierge_admissions_email",
@@ -56,8 +78,6 @@ const FORBIDDEN_KEYS = [
   "bonus_leads",
   "bonusLeads",
   "stripe_customer_id",
-  "calculated_ranking_score",
-  "calculatedRankingScore",
   "status",
   "suspended",
 ];
