@@ -148,16 +148,26 @@ export default function AdminProviders() {
     try {
       for (const facilityId of ids) {
         try {
-          const { error } = await supabase.functions.invoke("admin-delete-provider", {
+          // Read both `error` AND `data.error` — the edge function returns
+          // 403 with a structured body like {"error":"Forbidden - Only
+          // Super Admins ..."}. Without checking `data.error` the loop
+          // marked role-gated failures as ok, hiding why nothing actually
+          // deleted. Same fix the single-delete path already has.
+          const { data, error } = await supabase.functions.invoke("admin-delete-provider", {
             body: { facilityId, deleteUser: false },
           });
+          const serverErr = (data as { error?: string } | null)?.error;
           results.push({
             id: facilityId,
-            ok: !error,
-            message: error?.message,
+            ok: !error && !serverErr,
+            message: serverErr ?? error?.message,
           });
-        } catch (err: any) {
-          results.push({ id: facilityId, ok: false, message: err?.message ?? "Unknown error" });
+        } catch (err: unknown) {
+          results.push({
+            id: facilityId,
+            ok: false,
+            message: err instanceof Error ? err.message : "Unknown error",
+          });
         }
       }
 

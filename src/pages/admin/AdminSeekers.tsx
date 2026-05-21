@@ -232,22 +232,48 @@ export default function AdminSeekers() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
+      // Per-row error tracking — previously this loop only counted
+      // successes and silently swallowed failures, so an admin who hit
+      // a role-gate or FK constraint mid-batch saw "Deleted N accounts"
+      // when N was actually fewer than expected. We now surface a
+      // mixed-outcome toast so the admin knows exactly what landed.
       let successCount = 0;
+      const failures: { userId: string; reason: string }[] = [];
       for (const userId of selectedIds) {
-        const { error } = await supabase.functions.invoke("admin-delete-seeker", {
+        const { data, error } = await supabase.functions.invoke("admin-delete-seeker", {
           body: { targetUserId: userId, action: "delete" },
         });
-        if (!error) successCount++;
+        const serverErr = (data as { error?: string } | null)?.error;
+        if (error || serverErr) {
+          failures.push({
+            userId,
+            reason: serverErr ?? (error instanceof Error ? error.message : "Unknown error"),
+          });
+        } else {
+          successCount++;
+        }
       }
 
-      toast.success(`Deleted ${successCount} client account(s)`);
+      if (failures.length === 0) {
+        toast.success(`Deleted ${successCount} client account(s)`);
+      } else if (successCount === 0) {
+        toast.error(
+          `Bulk delete failed — 0 of ${selectedIds.size} deleted. First reason: ${failures[0].reason}`,
+        );
+      } else {
+        toast.warning(
+          `Partial delete: ${successCount} succeeded, ${failures.length} failed. First failure: ${failures[0].reason}`,
+        );
+      }
+
       setSelectedIds(new Set());
       setBulkDeleteOpen(false);
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin-users-count"] });
       queryClient.invalidateQueries({ queryKey: ["admin-users-global-stats"] });
-    } catch (err: any) {
-      toast.error("Bulk delete failed: " + (err.message || "Unknown error"));
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Bulk delete failed: ${reason}`);
     } finally {
       setBulkDeleting(false);
     }
