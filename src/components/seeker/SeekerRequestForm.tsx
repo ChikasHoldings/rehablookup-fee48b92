@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Building2,
   CheckCircle,
@@ -7,29 +5,18 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import { LeadIntakeForm } from "@/components/lead-intake";
 
+// Note: `prefillData` is intentionally NOT a prop here. The underlying
+// LeadIntakeForm already prefills from (a) the user's seeker_profile
+// via supabase and (b) a non-PII localStorage cache it manages itself
+// (see useLeadIntakeForm.ts:121-189). Re-introducing a prefillData
+// prop would create two competing sources of truth.
 interface SeekerRequestFormProps {
   facilityId: string;
   facilityName: string;
   facilityCity?: string;
   facilityState?: string;
-  prefillData?: {
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    email?: string;
-    locationZip?: string;
-    locationCityState?: string;
-    whoSeekingHelp?: "self" | "loved-one";
-    urgency?: "immediate" | "within-week" | "flexible";
-    preferredContact?: "call" | "text" | "email";
-    levelOfCare?: string;
-    insuranceType?: string;
-    primarySubstance?: string[];
-    message?: string;
-  };
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -79,12 +66,9 @@ export function SeekerRequestForm({
   facilityName,
   facilityCity,
   facilityState,
-  prefillData,
   onSuccess,
   onCancel,
 }: SeekerRequestFormProps) {
-  const navigate = useNavigate();
-
   // Custom success handler that shows facility-specific success and triggers callback
   const renderSuccess = ({ firstName }: { firstName: string; facilityName?: string | null }) => {
     // Trigger success callback after a short delay

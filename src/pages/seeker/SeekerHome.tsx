@@ -200,8 +200,14 @@ export default function SeekerHome() {
       // strip is suppressed if any single call fails so we don't
       // surface partial / misleading numbers (e.g. "0 inquiries" when
       // the RPC actually errored).
+      // get_seeker_submitted_leads is parameterless on the DB side
+      // (it reads auth.uid() + auth.users.email internally). Passing
+      // `{p_email}` made PostgREST 404 with "function does not exist"
+      // — the previous fallback `.then(r=>r,()=>({data:[]}))` ate the
+      // failure silently and the KPI strip rendered "0 inquiries"
+      // even for users with multiple pending leads.
       const [leadsRes, conciergeRes, draftRes, notifRes] = await Promise.all([
-        supabase.rpc("get_seeker_submitted_leads", { p_email: user.email } as never),
+        supabase.rpc("get_seeker_submitted_leads"),
         supabase
           .from("concierge_inquiries")
           .select("id", { count: "exact", head: true })
