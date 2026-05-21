@@ -149,7 +149,6 @@ export default function AdminLeads() {
   const [searchInput, setSearchInput] = useState(() => searchParams.get("q") ?? "");
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get("status") ?? "all");
   const [inquiryTypeFilter, setInquiryTypeFilter] = useState(() => searchParams.get("type") ?? "all");
-  const [redistributionFilter, setRedistributionFilter] = useState(() => searchParams.get("dist") ?? "all");
   const [datePreset, setDatePreset] = useState(() => searchParams.get("dp") ?? "all");
   const [dateRange, setDateRange] = useState<DateRange>(() => ({
     from: parseDate(searchParams.get("from")),
@@ -170,7 +169,7 @@ export default function AdminLeads() {
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
 
   const searchQuery = useDebounce(searchInput, 350);
-  const hasActiveFilters = statusFilter !== "all" || inquiryTypeFilter !== "all" || redistributionFilter !== "all" || searchInput !== "" || dateRange.from !== undefined;
+  const hasActiveFilters = statusFilter !== "all" || inquiryTypeFilter !== "all" || searchInput !== "" || dateRange.from !== undefined;
 
   // Sync state → URL on every change. `replace: true` keeps the
   // browser history short (one history entry per page-load, not one
@@ -181,7 +180,6 @@ export default function AdminLeads() {
     if (searchQuery) next.set("q", searchQuery);
     if (statusFilter && statusFilter !== "all") next.set("status", statusFilter);
     if (inquiryTypeFilter && inquiryTypeFilter !== "all") next.set("type", inquiryTypeFilter);
-    if (redistributionFilter && redistributionFilter !== "all") next.set("dist", redistributionFilter);
     if (datePreset && datePreset !== "all") next.set("dp", datePreset);
     if (dateRange.from) next.set("from", format(dateRange.from, "yyyy-MM-dd"));
     if (dateRange.to) next.set("to", format(dateRange.to, "yyyy-MM-dd"));
@@ -191,10 +189,10 @@ export default function AdminLeads() {
     const a = next.toString();
     const b = searchParams.toString();
     if (a !== b) setSearchParams(next, { replace: true });
-  }, [searchQuery, statusFilter, inquiryTypeFilter, redistributionFilter, datePreset, dateRange, sortKey, searchParams, setSearchParams]);
+  }, [searchQuery, statusFilter, inquiryTypeFilter, datePreset, dateRange, sortKey, searchParams, setSearchParams]);
 
   const clearAllFilters = () => {
-    setStatusFilter("all"); setInquiryTypeFilter("all"); setRedistributionFilter("all");
+    setStatusFilter("all"); setInquiryTypeFilter("all");
     setSearchInput(""); setDatePreset("all"); setDateRange({ from: undefined, to: undefined });
     setSortKey("created_at:desc"); setCurrentPage(1); setSelectedIds(new Set());
   };
@@ -283,19 +281,19 @@ export default function AdminLeads() {
   const { data: kpiStats } = useQuery({
     queryKey: ["admin-leads-kpi"],
     queryFn: async () => {
-      const [totalRes, newRes, contactedRes, convertedRes, redistRes, requestInfoRes, requestCallbackRes] = await Promise.all([
+      const [totalRes, newRes, contactedRes, convertedRes, requestInfoRes, requestCallbackRes] = await Promise.all([
         supabase.from("leads").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "contacted"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "converted"),
-        supabase.from("leads").select("id", { count: "exact", head: true }).in("redistribution_status", ["extended", "redistributed"]),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("inquiry_type", "request_info"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("inquiry_type", "request_callback"),
       ]);
+      // `redistributed` KPI removed 2026-05-21 — see note in
+      // SuperAdminDashboard.tsx + AdminLeads filter dropdown removal.
       return {
         total: totalRes.count || 0, newCount: newRes.count || 0,
         contacted: contactedRes.count || 0, converted: convertedRes.count || 0,
-        redistributed: redistRes.count || 0,
         requestInfo: requestInfoRes.count || 0, requestCallback: requestCallbackRes.count || 0,
       };
     },
@@ -334,14 +332,11 @@ export default function AdminLeads() {
 
   // Filtered count
   const { data: totalCount } = useQuery({
-    queryKey: ["admin-leads-count", statusFilter, inquiryTypeFilter, redistributionFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ["admin-leads-count", statusFilter, inquiryTypeFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async () => {
       let query = supabase.from("leads").select("id", { count: "exact", head: true });
       if (statusFilter !== "all") query = query.eq("status", statusFilter);
       if (inquiryTypeFilter !== "all") query = query.eq("inquiry_type", inquiryTypeFilter);
-      if (redistributionFilter === "redistributed") query = query.in("redistribution_status", ["extended", "redistributed"]);
-      else if (redistributionFilter === "not_redistributed") query = query.or("redistribution_status.is.null,redistribution_status.eq.exclusive");
-      else if (redistributionFilter !== "all") query = query.eq("redistribution_status", redistributionFilter);
       if (searchQuery) query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
       if (dateRange.from) query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
       if (dateRange.to) query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
@@ -359,7 +354,7 @@ export default function AdminLeads() {
 
 
   const { data: leads, isLoading, isFetching } = useQuery({
-    queryKey: ["admin-leads", statusFilter, inquiryTypeFilter, redistributionFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString(), sortKey],
+    queryKey: ["admin-leads", statusFilter, inquiryTypeFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString(), sortKey],
     queryFn: async () => {
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
@@ -386,9 +381,6 @@ export default function AdminLeads() {
 
       if (statusFilter !== "all") query = query.eq("status", statusFilter);
       if (inquiryTypeFilter !== "all") query = query.eq("inquiry_type", inquiryTypeFilter);
-      if (redistributionFilter === "redistributed") query = query.in("redistribution_status", ["extended", "redistributed"]);
-      else if (redistributionFilter === "not_redistributed") query = query.or("redistribution_status.is.null,redistribution_status.eq.exclusive");
-      else if (redistributionFilter !== "all") query = query.eq("redistribution_status", redistributionFilter);
       if (searchQuery) query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
       if (dateRange.from) query = query.gte("created_at", format(dateRange.from, "yyyy-MM-dd"));
       if (dateRange.to) query = query.lte("created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59.999Z");
@@ -592,7 +584,6 @@ export default function AdminLeads() {
               { label: "New", value: kpiStats?.newCount, icon: Mail, color: "text-info", filter: () => handleFilterChange(setStatusFilter)("new") },
               { label: "Contacted", value: kpiStats?.contacted, icon: Phone, color: "text-chart-3", filter: () => handleFilterChange(setStatusFilter)("contacted") },
               { label: "Converted", value: kpiStats?.converted, icon: Zap, color: "text-success", filter: () => handleFilterChange(setStatusFilter)("converted") },
-              { label: "Redistributed", value: kpiStats?.redistributed, icon: Share2, color: "text-info", filter: () => handleFilterChange(setRedistributionFilter)("redistributed") },
               { label: "Request Info", value: kpiStats?.requestInfo, icon: MessageSquare, color: "text-primary", filter: () => handleFilterChange(setInquiryTypeFilter)("request_info") },
               { label: "Callbacks", value: kpiStats?.requestCallback, icon: Phone, color: "text-warning", filter: () => handleFilterChange(setInquiryTypeFilter)("request_callback") },
             ].map((kpi) => (
@@ -637,15 +628,10 @@ export default function AdminLeads() {
                     <SelectItem value="tour_request">Tour</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={redistributionFilter} onValueChange={handleFilterChange(setRedistributionFilter)}>
-                  <SelectTrigger className="w-[150px]"><SelectValue placeholder="Distribution" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Distribution</SelectItem>
-                    <SelectItem value="exclusive">Exclusive</SelectItem>
-                    <SelectItem value="redistributed">Redistributed</SelectItem>
-                    <SelectItem value="not_redistributed">Not Redistributed</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Redistribution filter dropdown removed 2026-05-21 —
+                    we no longer sell leads, and the surviving
+                    redistribution_status column is just historical
+                    bookkeeping (not actionable for admin triage). */}
                 <Select value={datePreset} onValueChange={handleDatePresetChange}>
                   <SelectTrigger className="w-[130px]"><CalendarIcon className="h-4 w-4 mr-1.5" /><SelectValue placeholder="Date" /></SelectTrigger>
                   <SelectContent>

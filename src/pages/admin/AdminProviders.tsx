@@ -661,14 +661,27 @@ export default function AdminProviders() {
     } else if (confirmAction.action === "delete") {
       setIsDeleting(true);
       try {
-        const { error } = await supabase.functions.invoke("admin-delete-provider", {
+        // Capture both the error AND the response body — supabase.functions
+        // returns a 4xx/5xx as `{ data: { error: "..." }, error: FunctionsError }`
+        // and the FunctionsError's message is the generic "Edge Function
+        // returned a non-2xx status code", not the actual reason. Surfacing
+        // `data.error` lets the admin see "Forbidden - Only Super Admins
+        // and Managers can delete providers" instead of a useless generic
+        // toast when they hit the role gate.
+        const { data, error } = await supabase.functions.invoke("admin-delete-provider", {
           body: {
             facilityId: confirmAction.provider.id,
             deleteUser: deleteWithUser,
           },
         });
 
-        if (error) throw error;
+        const serverErrorMessage =
+          (data as { error?: string } | null)?.error
+          ?? (error instanceof Error ? error.message : null);
+
+        if (error || serverErrorMessage) {
+          throw new Error(serverErrorMessage ?? "Delete failed");
+        }
 
         toast.success(`Provider "${confirmAction.provider.name}" deleted successfully`);
         invalidateProviderQueries();
@@ -676,7 +689,8 @@ export default function AdminProviders() {
         setShowDetailDialog(false);
       } catch (error) {
         console.error("Delete provider failed:", error);
-        toast.error("Failed to delete provider");
+        const reason = error instanceof Error ? error.message : "Unknown error";
+        toast.error(`Failed to delete provider: ${reason}`);
       } finally {
         setIsDeleting(false);
       }
