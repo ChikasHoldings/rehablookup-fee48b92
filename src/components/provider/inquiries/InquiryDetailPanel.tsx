@@ -103,6 +103,27 @@ export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
       // below the textarea via `inquiry.provider_response_notes`.
       setResponseNotes("");
       toast.success(status === "pending" ? "Reverted to pending" : `Marked as ${status}`);
+
+      // Notify the seeker — fire-and-forget. The edge function:
+      //  • derives the seeker email + facility name from leadId
+      //  • dedups via idempotencyKey `seeker-facility_contacted_you-${leadId}`
+      //    so toggling status from "contacted" → "scheduled" doesn't
+      //    re-send (the first transition already covered "we got back
+      //    to you")
+      //  • honors the seeker's email_lead_alerts preference
+      // Skip when status reverts to pending — that's a correction, not a
+      // response.
+      if (status !== "pending") {
+        void supabase.functions
+          .invoke("send-seeker-emails", {
+            body: { type: "facility_contacted_you", leadId: inquiry.id },
+          })
+          .catch((err) => {
+            // Logging-only — best-effort; do not block the provider's
+            // status-change toast on an email-send hiccup.
+            console.warn("[InquiryDetailPanel] seeker notification failed", err);
+          });
+      }
     },
     onError: (err) => {
       console.error("[InquiryDetail] Status update failed:", err);

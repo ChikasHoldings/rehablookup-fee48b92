@@ -205,7 +205,21 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
         console.warn("[admin-audit] mark-contacted log failed (non-blocking)", e);
       }
     },
-    onSuccess: () => { onLeadUpdated(); toast.success("Marked as contacted"); },
+    onSuccess: () => {
+      onLeadUpdated();
+      toast.success("Marked as contacted");
+      // Notify the seeker their inquiry was answered. Server-side
+      // idempotency keyed by leadId so an admin double-clicking, or the
+      // provider already having triggered this from their dashboard,
+      // does not produce a second email. Honors email_lead_alerts pref.
+      void supabase.functions
+        .invoke("send-seeker-emails", {
+          body: { type: "facility_contacted_you", leadId: lead.id },
+        })
+        .catch((err) => {
+          console.warn("[InquiryDetailModal] seeker notification failed", err);
+        });
+    },
     onError: () => toast.error("Failed to update status"),
   });
 

@@ -24,9 +24,17 @@ type EmailType =
 
 interface SeekerEmailRequest {
   type: EmailType;
-  seekerId: string;
+  // seekerId is optional when leadId is provided — the function resolves
+  // seekerId from the lead row's email so guest submissions still get
+  // their notification.
+  seekerId?: string;
   email?: string;
   metadata?: Record<string, unknown>;
+  // Used by the facility_contacted_you flow so the function can derive
+  // facility name + seeker email from the lead row and key idempotency
+  // by lead id (so a seeker with multiple inquiries gets one email per
+  // facility response, not just one ever).
+  leadId?: string;
 }
 
 Deno.serve(async (req) => {
@@ -49,13 +57,70 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { type, seekerId, email, metadata }: SeekerEmailRequest = await req.json();
-    logStep("Received request", { type, seekerId, hasEmail: !!email });
+    const { type, seekerId: bodySeekerId, email, metadata: bodyMetadata, leadId }: SeekerEmailRequest = await req.json();
+    logStep("Received request", { type, seekerId: bodySeekerId, hasEmail: !!email, leadId });
 
-    // Get seeker email if not provided
+    // Allow callers to pass `leadId` instead of seekerId+email+metadata.
+    // Used by the facility_contacted_you flow (provider marks a lead as
+    // contacted/scheduled/etc in /provider/leads → InquiryDetailPanel).
+    // The function then derives everything from the lead row using the
+    // service-role client. Resolving server-side keeps the client call
+    // tiny + tamper-resistant (a malicious client can't forge a
+    // facilityName for a different lead's email).
+    let seekerId = bodySeekerId;
     let seekerEmail = email;
+    let metadata: Record<string, unknown> | undefined = bodyMetadata;
     let seekerProfile: any = null;
     let notificationPrefs: any = null;
+
+    if (leadId) {
+      const { data: leadRow, error: leadErr } = await supabase
+        .from("leads")
+        .select("id, email, name, facility_id, provider_response_status")
+        .eq("id", leadId)
+        .maybeSingle();
+      if (leadErr || !leadRow) {
+        logStep("Lead lookup failed", { leadId, error: leadErr?.message });
+        return new Response(
+          JSON.stringify({ error: "Lead not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      seekerEmail = seekerEmail || leadRow.email || undefined;
+
+      // Look up facility name (for the email subject/body) once here so
+      // the client doesn't have to.
+      if (leadRow.facility_id) {
+        const { data: fac } = await supabase
+          .from("facilities")
+          .select("name, slug")
+          .eq("id", leadRow.facility_id)
+          .maybeSingle();
+        metadata = {
+          ...(metadata || {}),
+          facilityName: (fac?.name as string) || (metadata?.facilityName as string) || "the treatment center",
+          facilitySlug: fac?.slug ?? null,
+          leadName: leadRow.name ?? null,
+        };
+      }
+
+      // Resolve a seeker user_id from the lead's email — needed so the
+      // preference gate (email_lead_alerts) reads the right row. Guest
+      // submissions (no account) skip this branch; defaultPrefs apply.
+      if (!seekerId && seekerEmail) {
+        try {
+          // deno-lint-ignore no-explicit-any
+          const { data: users } = await (supabase.auth.admin as any).listUsers({
+            filter: `email.eq.${seekerEmail.toLowerCase()}`,
+            perPage: 1,
+          });
+          const user = (users?.users ?? [])[0];
+          if (user?.id) seekerId = user.id as string;
+        } catch (e) {
+          logStep("seeker lookup-by-email failed", { error: String(e) });
+        }
+      }
+    }
 
     if (!seekerEmail && seekerId) {
       const { data: authUser } = await supabase.auth.admin.getUserById(seekerId);
@@ -183,9 +248,16 @@ Deno.serve(async (req) => {
         );
     }
 
-    const idempotencyKey = seekerId
-      ? `seeker-${type}-${seekerId}`
-      : `seeker-${type}-${seekerEmail}`;
+    // Idempotency key — leadId scopes per-inquiry uniqueness so a seeker
+    // with N inquiries gets N emails (one per facility response), not
+    // one ever. Without leadId we fall back to seeker-scope which is the
+    // right behaviour for welcome / digest / drip emails that should
+    // dedup per user.
+    const idempotencyKey = leadId
+      ? `seeker-${type}-${leadId}`
+      : seekerId
+        ? `seeker-${type}-${seekerId}`
+        : `seeker-${type}-${seekerEmail}`;
 
     const { emailId: emailResult, error: emailError } = await sendEmailWithRetry(supabase, resend, {
       from: "RehabLookup <no-reply@rehablookup.com>",
