@@ -369,6 +369,71 @@ commit lands on main.
    ```
    Within ~1.5 s the facility should disappear from the open search tab.
 
+## §3.7 — Sitemap freshness for newly approved facilities (Phase 2.7)
+
+### Audit findings
+- `https://rehablookup.com/sitemap-facilities.xml` IS served and DID contain
+  all 3,803 facilities post-deploy — the committed `public/sitemap-facilities.xml`
+  is regenerated at every Vercel build via
+  `scripts/generate-sitemaps.mjs`, which fetches the live `sitemap-facilities`
+  edge function and writes the result to disk.
+- `robots.txt` correctly references the four sitemap files
+  (`sitemap-index.xml`, `sitemap.xml`, `sitemap-extras.xml`,
+  `sitemap-facilities.xml`).
+- **Gap 1**: the edge function pre-2026-05-21 read directly from the
+  `facilities` table with `.eq("status", "approved")`. The
+  `public_facilities` view applies additional filters
+  (`COALESCE(suspended,false)=false` AND `NOT EXISTS pending claim_request`)
+  that the sitemap did NOT inherit. A facility that was approved but then
+  flagged suspended or put into pending-claim review would still have its
+  `/center/:slug` URL in the sitemap but would render a soft-404 on the
+  live site (the SPA reads from the view too).
+- **Gap 2**: the static `public/sitemap-facilities.xml` only refreshes on
+  Vercel builds (= on every push to `main`). Without a code push, a newly
+  approved facility waits for the next deploy before appearing in the
+  sitemap. No mechanism existed to auto-refresh.
+
+### Fixes
+**a) `sitemap-facilities` edge function now queries `public_facilities`**
+(both `fetchFacilityCitySet` and `generateFacilitiesSitemap`). Sitemap
+visibility now mirrors search visibility exactly; suspended +
+pending-claim facilities are excluded automatically. Version bumped to
+`v7.8.0`.
+
+**b) Vercel rewrite serves the live sitemap.** `vercel.json:rewrites` now
+proxies `/sitemap-facilities.xml` directly to the edge function. The
+edge function's own `Cache-Control: max-age=3600, s-maxage=7200` (1-hour
+browser, 2-hour CDN) governs freshness; newly approved facilities appear
+in the public sitemap **within 2 hours** of approval — no code push
+required. The static `public/sitemap-facilities.xml` is still regenerated
+at build time as a build-time validation of the edge function's output
+and as a documented fallback path (if the rewrite is reverted, the
+static file resumes serving).
+
+### Smoke checklist
+After the next edge function deploy + Vercel build:
+- [ ] `curl -sI https://rehablookup.com/sitemap-facilities.xml` returns
+  `200`, `Content-Type: application/xml; charset=utf-8`,
+  `Cache-Control: public, max-age=3600, s-maxage=7200`,
+  `X-Sitemap-Version: v7.8.0`.
+- [ ] Body starts with `<?xml version="1.0" encoding="UTF-8"?>` and
+  contains 3,803 `<loc>` elements (or current `SELECT COUNT(*) FROM
+  public_facilities`).
+- [ ] Approve a test facility in the admin panel; within 2 hours the new
+  `/center/:slug` URL appears in the live sitemap.
+- [ ] Suspend a facility; within 2 hours its URL disappears.
+- [ ] Initiate a claim_request on a facility; within 2 hours its URL
+  disappears until the claim resolves.
+
+### Auto-add SLA summary
+| Trigger | Time-to-sitemap |
+|---|---|
+| Facility approved (admin) | ≤ 2 hours (edge function CDN cache) |
+| Facility suspended | ≤ 2 hours |
+| Claim_request opened | ≤ 2 hours |
+| Facility deleted | ≤ 2 hours |
+| Code push to `main` | instant (Vercel rebuild regens the static fallback too) |
+
 ## §4 — Observability follow-ups
 
 - Add a `directory_zero_result_query` analytics event when the filtered
