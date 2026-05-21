@@ -99,6 +99,13 @@ interface Facility {
   verified_phone: string | null;
   verified_phone_set_at: string | null;
   has_facility_verified_contact: boolean | null;
+  // Profile-content columns added in migration 20260709000000.
+  // Rendered on both /center/[slug] and /account/facility/[id] via
+  // the shared FacilityProfileExtras component.
+  hours_of_operation: string | null;
+  languages_spoken: string[] | null;
+  accessibility_features: string[] | null;
+  accepting_admissions: boolean | null;
 }
 
 import {
@@ -325,7 +332,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
       const { data } = await supabase
         .from("facilities")
-        .select("id, user_id, name, slug, address, city, state, zip_code, phone, email, reply_email, reply_email_verified, reply_email_verified_at, website, description, facility_type, gender_served, bed_count, status, featured, logo_url, gallery_urls, year_established, accepts_international_patients, verified_phone, verified_phone_set_at, has_facility_verified_contact")
+        .select("id, user_id, name, slug, address, city, state, zip_code, phone, email, reply_email, reply_email_verified, reply_email_verified_at, website, description, facility_type, gender_served, bed_count, status, featured, logo_url, gallery_urls, year_established, accepts_international_patients, verified_phone, verified_phone_set_at, has_facility_verified_contact, hours_of_operation, languages_spoken, accessibility_features, accepting_admissions")
         .eq("id", currentFacilityId)
         .eq("user_id", session.user.id)
         .maybeSingle();
@@ -587,6 +594,10 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           gallery_urls: facility.gallery_urls,
           year_established: facility.year_established,
           accepts_international_patients: facility.accepts_international_patients,
+          hours_of_operation: facility.hours_of_operation,
+          languages_spoken: facility.languages_spoken,
+          accessibility_features: facility.accessibility_features,
+          accepting_admissions: facility.accepting_admissions,
         })
         .eq("id", facility.id)
         .eq("user_id", autoSaveSession.user.id);
@@ -733,6 +744,10 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           gallery_urls: facility.gallery_urls,
           year_established: facility.year_established,
           accepts_international_patients: facility.accepts_international_patients,
+          hours_of_operation: facility.hours_of_operation,
+          languages_spoken: facility.languages_spoken,
+          accessibility_features: facility.accessibility_features,
+          accepting_admissions: facility.accepting_admissions,
         })
         .eq("id", facility.id)
         .eq("user_id", saveSession.user.id);
@@ -843,11 +858,11 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     }
   };
 
-  const updateField = (field: keyof Facility, value: string | number | boolean | null) => {
+  const updateField = (field: keyof Facility, value: string | number | boolean | string[] | null) => {
     if (facility) {
       setFacility({ ...facility, [field]: value });
       setHasChanges(true);
-      
+
       if (touchedFields.has(field) && typeof value === 'string') {
         const error = validateField(field, value);
         setFieldErrors(prev => ({ ...prev, [field]: error }));
@@ -1704,6 +1719,85 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                     {facility.accepts_international_patients && (
                       <div className="mt-3 p-3 rounded-md bg-primary/5 border border-primary/10"><p className="text-xs text-primary">Your facility will be visible to international clients.</p></div>
                     )}
+                  </div>
+
+                  {/* ═══ PROFILE EXTRAS ═══
+                      Hours, languages, accessibility, admissions. All
+                      optional + display-only on the profile pages. Empty
+                      values render nothing on the public side. */}
+                  <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
+                    <div>
+                      <Label className="text-sm font-medium">Hours of Operation</Label>
+                      <p className="text-xs text-muted-foreground mb-2">Free-form. Example: "Mon-Fri 9am-5pm, Sat 10am-2pm, Sun closed"</p>
+                      <Input
+                        value={facility.hours_of_operation || ""}
+                        onChange={(e) => updateField("hours_of_operation", e.target.value.slice(0, 200))}
+                        placeholder="Mon-Fri 9am-5pm"
+                        className="h-11"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Languages Spoken</Label>
+                      <p className="text-xs text-muted-foreground mb-2">Comma-separated. Example: English, Spanish, ASL</p>
+                      <Input
+                        value={(facility.languages_spoken || []).join(", ")}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const arr = raw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20);
+                          updateField("languages_spoken", arr.length > 0 ? arr : null);
+                        }}
+                        placeholder="English, Spanish, ASL"
+                        className="h-11"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Accessibility Features</Label>
+                      <p className="text-xs text-muted-foreground mb-2">Comma-separated. Example: Wheelchair accessible, ASL interpreters available, Hearing loops</p>
+                      <Input
+                        value={(facility.accessibility_features || []).join(", ")}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const arr = raw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20);
+                          updateField("accessibility_features", arr.length > 0 ? arr : null);
+                        }}
+                        placeholder="Wheelchair accessible, ASL interpreters"
+                        className="h-11"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label className="text-sm font-medium">Currently Accepting Admissions</Label>
+                          <p className="text-xs text-muted-foreground">
+                            {facility.accepting_admissions === null
+                              ? "Status not set — no badge will display."
+                              : facility.accepting_admissions
+                                ? "Green badge will display: “Currently accepting admissions”"
+                                : "Grey badge will display: “Not currently accepting admissions”"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={facility.accepting_admissions === true ? "default" : "outline"}
+                            onClick={() => updateField("accepting_admissions", facility.accepting_admissions === true ? null : true)}
+                            className="h-8 px-3"
+                          >
+                            Yes
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={facility.accepting_admissions === false ? "default" : "outline"}
+                            onClick={() => updateField("accepting_admissions", facility.accepting_admissions === false ? null : false)}
+                            className="h-8 px-3"
+                          >
+                            No
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

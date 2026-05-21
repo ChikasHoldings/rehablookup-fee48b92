@@ -62,6 +62,7 @@ import { cn } from "@/lib/utils";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
+import { FacilityProfileExtras } from "@/components/facility/FacilityProfileExtras";
 import { RehabScorePanel } from "@/components/profile/RehabScorePanel";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { buildProfileFAQs } from "@/lib/buildProfileFAQs";
@@ -1312,6 +1313,19 @@ const CenterProfile = () => {
                     </a>
                   )}
                 </div>
+
+                {/* Hours / Languages / Accessibility / Admissions —
+                    shared block. Renders nothing when all four fields
+                    are null/empty so the section stays clean for
+                    SAMHSA-imported listings without provider input. */}
+                <FacilityProfileExtras
+                  hours={facility.hours_of_operation ?? null}
+                  languages={facility.languages_spoken ?? null}
+                  accessibility={facility.accessibility_features ?? null}
+                  acceptingAdmissions={facility.accepting_admissions ?? null}
+                  variant="full"
+                  className="mt-3 pt-4 border-t border-border/40"
+                />
               </ProfileSection>
 
               {/* Levels of Care — visual tile grid filtered to the canonical

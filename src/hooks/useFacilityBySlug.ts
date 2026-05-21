@@ -51,6 +51,20 @@ export interface FacilityBaseData {
   /** Provenance tag from the `public_facilities` view (e.g. 'samhsa_import',
    *  'self_listed', 'manual'). */
   data_source?: string | null;
+  /** Free-form hours string e.g. "Mon-Fri 9am-5pm, Sat 10am-2pm".
+   *  Null when the provider hasn't filled it in. */
+  hours_of_operation?: string | null;
+  /** Languages spoken at the facility, e.g. ['English', 'Spanish', 'ASL'].
+   *  Null/empty when not populated. */
+  languages_spoken?: string[] | null;
+  /** Accessibility features, e.g. ['Wheelchair accessible',
+   *  'ASL interpreters available']. Null/empty when not populated. */
+  accessibility_features?: string[] | null;
+  /** Three-valued admissions status:
+   *    true  → "Currently accepting"
+   *    false → "Not currently accepting / waitlist"
+   *    null  → unspecified (do not render the badge) */
+  accepting_admissions?: boolean | null;
 }
 
 export interface ClaimFlags {
@@ -95,6 +109,10 @@ const SELECT_LIST = [
   "updated_at",
   "accepts_international_patients",
   "data_source",
+  "hours_of_operation",
+  "languages_spoken",
+  "accessibility_features",
+  "accepting_admissions",
   "is_claimed",
   "is_pro",
   "is_premium_visible",
@@ -127,6 +145,13 @@ function viewRowToBase(row: Record<string, unknown>): FacilityBaseData {
         ? null
         : !!row.accepts_international_patients,
     data_source: (row.data_source as string | null) ?? null,
+    hours_of_operation: (row.hours_of_operation as string | null) ?? null,
+    languages_spoken: (row.languages_spoken as string[] | null) ?? null,
+    accessibility_features: (row.accessibility_features as string[] | null) ?? null,
+    accepting_admissions:
+      row.accepting_admissions == null
+        ? null
+        : !!row.accepting_admissions,
   };
 }
 

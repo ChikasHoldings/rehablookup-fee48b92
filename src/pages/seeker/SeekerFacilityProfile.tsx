@@ -16,6 +16,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useFacilityReviews } from "@/hooks/useFacilityReviews";
 import { useFacilityRating } from "@/hooks/useFacilityRating";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
+import { FacilityProfileExtras } from "@/components/facility/FacilityProfileExtras";
 import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { ReviewsList } from "@/components/reviews/ReviewsList";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
@@ -891,6 +892,19 @@ export default function SeekerFacilityProfile() {
                         </div>
                       </a>
                     )}
+
+                    {/* Hours / Languages / Accessibility / Admissions —
+                        shared compact block. Self-suppresses when no
+                        fields are populated, so the sidebar stays
+                        clean for SAMHSA-imported listings. */}
+                    <FacilityProfileExtras
+                      hours={facility.hours_of_operation ?? null}
+                      languages={facility.languages_spoken ?? null}
+                      accessibility={facility.accessibility_features ?? null}
+                      acceptingAdmissions={facility.accepting_admissions ?? null}
+                      variant="compact"
+                      className="pt-3 mt-1 border-t border-border/40"
+                    />
                   </div>
                 </div>
               )}
