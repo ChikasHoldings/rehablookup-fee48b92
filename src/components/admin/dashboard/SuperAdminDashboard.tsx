@@ -9,7 +9,6 @@ import SubscriptionActivityWidget from "@/components/admin/SubscriptionActivityW
 import {
   DashboardKPICards,
   DashboardChartsSection,
-  LeadRedistributionCard,
   QuickActionsCard,
   TopCitiesCard,
   RecentLeadsCard,
@@ -211,22 +210,11 @@ export function SuperAdminDashboard() {
     },
     staleTime: 2 * 60 * 1000,
   });
-  const { data: redistStats } = useQuery({
-    queryKey: ["admin-redistribution-stats"],
-    queryFn: async () => {
-      const [exclusive, extended, expired] = await Promise.all([
-        supabase.from("leads").select("id", { count: "exact", head: true }).eq("redistribution_status", "exclusive"),
-        supabase.from("leads").select("id", { count: "exact", head: true }).eq("redistribution_status", "extended"),
-        supabase.from("leads").select("id", { count: "exact", head: true }).eq("redistribution_status", "expired"),
-      ]);
-      return {
-        exclusive: exclusive.count || 0,
-        extended: extended.count || 0,
-        expired: expired.count || 0,
-      };
-    },
-    staleTime: 2 * 60 * 1000,
-  });
+  // Lead redistribution monetization was retired in the EKRA flat-fee
+  // refactor (we no longer sell leads). The corresponding KPI card +
+  // query were removed 2026-05-21. The `leads.redistribution_status`
+  // column still exists for historical row tagging but no UI surfaces
+  // it on the dashboard.
   const { data: topCities } = useQuery({
     queryKey: ["admin-top-cities"],
     queryFn: async () => {
@@ -406,11 +394,6 @@ export function SuperAdminDashboard() {
           loadingLeads={loadingLeads}
           loadingBreakdown={loadingRevenue}
         />
-      </AdminWidgetBoundary>
-
-      {/* Lead Redistribution Stats */}
-      <AdminWidgetBoundary name="Lead Redistribution">
-        <LeadRedistributionCard redistStats={redistStats} />
       </AdminWidgetBoundary>
 
       {/* Quick Actions + Top Cities */}
