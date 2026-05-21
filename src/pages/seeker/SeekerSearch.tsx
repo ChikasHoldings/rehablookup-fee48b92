@@ -118,7 +118,7 @@ const genderFilters = [
 ];
 
 export default function SeekerSearch() {
-  const { data: facilities, isLoading: facilitiesLoading } = useStaticFacilities();
+  const { data: facilities, isLoading: facilitiesLoading, error: facilitiesError, refetch: refetchFacilities } = useStaticFacilities();
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -771,6 +771,24 @@ export default function SeekerSearch() {
                   {[1, 2, 3, 4].map((i) => (
                     <FacilityCardSkeleton key={i} />
                   ))}
+                </div>
+              ) : facilitiesError ? (
+                <div
+                  role="alert"
+                  className="rounded-md border border-destructive/40 bg-destructive/5 p-4 flex items-start gap-3"
+                >
+                  <Building2 className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-destructive">
+                      Couldn't load treatment centers
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5 break-words">
+                      {facilitiesError instanceof Error ? facilitiesError.message : "Please try again."}
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => refetchFacilities()}>
+                    Retry
+                  </Button>
                 </div>
               ) : facilityCards.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">

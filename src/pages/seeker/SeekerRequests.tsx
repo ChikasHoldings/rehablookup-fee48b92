@@ -219,6 +219,9 @@ export default function SeekerRequests() {
   const [requests, setRequests] = useState<SubmittedRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Distinguish "fetch error" from "no requests yet" so we don't show
+  // the empty-state encouragement when the API actually failed.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [selectedFacility, setSelectedFacility] = useState<{
@@ -284,16 +287,22 @@ export default function SeekerRequests() {
     try {
       const { data: leadsData, error: leadsError } = await supabase.rpc("get_seeker_submitted_leads");
       if (leadsError) throw leadsError;
+      setLoadError(null);
       if (!leadsData || leadsData.length === 0) return [];
 
       const facilityIds = Array.from(new Set(pluckNonNull(leadsData as { facility_id: string | null }[], "facility_id")));
       let facilitiesMap: Record<string, any> = {};
 
       if (facilityIds.length > 0) {
-        const { data: facilitiesData } = await supabase
+        // Surface facility-fetch errors too — without this, the names
+        // silently fall back to "Treatment Center" if the join fails.
+        const { data: facilitiesData, error: facErr } = await supabase
           .from("facilities")
           .select("id, name, slug, city, state, logo_url")
           .in("id", facilityIds);
+        if (facErr) {
+          console.warn("[SeekerRequests] facility join failed:", facErr.message);
+        }
         if (facilitiesData) {
           facilitiesMap = facilitiesData.reduce((acc, f) => { acc[f.id] = f; return acc; }, {} as Record<string, any>);
         }
@@ -319,7 +328,9 @@ export default function SeekerRequests() {
       });
     } catch (error: any) {
       console.error("Error fetching requests:", error);
-      toast({ title: "Error loading inbox", description: "Could not load your inquiries. Please try again.", variant: "destructive" });
+      const msg = error?.message || "Could not load your inquiries. Please try again.";
+      setLoadError(msg);
+      toast({ title: "Error loading inbox", description: msg, variant: "destructive" });
       return [];
     }
   }, [toast]);
@@ -593,7 +604,25 @@ export default function SeekerRequests() {
           </div>
         )}
 
-        {requests.length === 0 ? (
+        {loadError && requests.length === 0 ? (
+          <Card className="border-destructive/40 bg-destructive/5" role="alert">
+            <CardContent className="p-6 flex items-start gap-3">
+              <FileText className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-destructive mb-1">Couldn't load your inbox</h3>
+                <p className="text-xs text-muted-foreground break-words">{loadError}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                Try again
+              </Button>
+            </CardContent>
+          </Card>
+        ) : requests.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="p-8 text-center">
               <div className="p-3 rounded-full bg-muted w-fit mx-auto mb-4">

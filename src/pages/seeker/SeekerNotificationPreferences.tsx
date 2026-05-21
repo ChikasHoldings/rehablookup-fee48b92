@@ -52,11 +52,25 @@ export default function SeekerNotificationPreferences() {
 
       setUserId(sessionUserId);
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('notification_preferences')
         .select('user_id, email_lead_alerts, email_weekly_digest, email_product_updates, browser_notifications, notify_lead_status_changes, notify_facility_views, followup_reminders_enabled')
         .eq('user_id', sessionUserId)
         .maybeSingle();
+
+      // Previously the fetch error was silently ignored, leaving the
+      // user with default toggles and no indication their saved
+      // preferences couldn't be read. Surface it via toast so the
+      // user knows changes from this view may not reflect their
+      // current settings.
+      if (error) {
+        console.error('[SeekerNotificationPreferences] load failed:', error);
+        toast({
+          title: "Couldn't load your preferences",
+          description: error.message || "Showing defaults — saved settings may differ.",
+          variant: "destructive",
+        });
+      }
 
       if (data) {
         setPreferences({
@@ -69,7 +83,7 @@ export default function SeekerNotificationPreferences() {
           followup_reminders_enabled: data.followup_reminders_enabled ?? true,
         });
       }
-      
+
       setIsLoading(false);
     };
 
@@ -95,7 +109,7 @@ export default function SeekerNotificationPreferences() {
       setPreferences(prev);
       toast({
         title: "Error saving",
-        description: "Could not update your preferences. Please try again.",
+        description: error.message || "Could not update your preferences. Please try again.",
         variant: "destructive"
       });
     } else {
