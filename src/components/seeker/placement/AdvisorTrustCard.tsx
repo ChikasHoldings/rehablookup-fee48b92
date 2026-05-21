@@ -8,23 +8,38 @@ import { cn } from "@/lib/utils";
 interface AdvisorTrustCardProps {
   advisorId: string | null;
   caseStatus: string;
+  // Inquiry ID is required so we can call the security-definer RPC
+  // get_inquiry_advisor_public_info(p_inquiry_id) which authorises the
+  // calling seeker via concierge_inquiries.user_id = auth.uid(). The
+  // previous direct SELECT on admin_user_profiles was RLS-blocked for
+  // seekers (only admins or the admin's own row can read it), so the
+  // card silently rendered "no advisor assigned" for every seeker
+  // with an assigned advisor.
+  inquiryId: string;
 }
 
-export function AdvisorTrustCard({ advisorId, caseStatus }: AdvisorTrustCardProps) {
-  // Fetch advisor display info
+export function AdvisorTrustCard({ advisorId, caseStatus, inquiryId }: AdvisorTrustCardProps) {
+  // Fetch advisor display info via security-definer RPC. The RPC
+  // returns the four public-safe columns (first_name, last_name,
+  // display_name, avatar_url) AND only when the calling user actually
+  // owns the inquiry. No other admin columns are exposed.
   const { data: advisor } = useQuery({
-    queryKey: ["placement-advisor", advisorId],
+    queryKey: ["placement-advisor", inquiryId, advisorId],
     queryFn: async () => {
-      if (!advisorId) return null;
-      const { data, error } = await supabase
-        .from("admin_user_profiles")
-        .select("first_name, last_name, display_name, avatar_url")
-        .eq("user_id", advisorId)
-        .maybeSingle();
-      if (error) return null;
-      return data;
+      if (!advisorId || !inquiryId) return null;
+      const { data, error } = await supabase.rpc(
+        "get_inquiry_advisor_public_info",
+        { p_inquiry_id: inquiryId },
+      );
+      if (error) {
+        console.warn("[AdvisorTrustCard] advisor info fetch failed:", error.message);
+        return null;
+      }
+      // RPC returns TABLE(...) → array; take the single row.
+      const row = Array.isArray(data) ? data[0] : data;
+      return row ?? null;
     },
-    enabled: !!advisorId,
+    enabled: !!advisorId && !!inquiryId,
     staleTime: 1000 * 60 * 10,
   });
 

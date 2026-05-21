@@ -55,9 +55,6 @@ function patchServeFor(key: string) {
   };
 }
 
-patchServeFor("submit-placement-case");
-await import("../submit-placement-case/index.ts");
-
 patchServeFor("save-international-placement-draft");
 await import("../save-international-placement-draft/index.ts");
 
@@ -70,7 +67,6 @@ await import("../submit-marketing-lead/index.ts");
 patchServeFor("submit-concierge-intake");
 await import("../submit-concierge-intake/index.ts");
 
-assertExists(captured["submit-placement-case"]);
 assertExists(captured["save-international-placement-draft"]);
 assertExists(captured["save-placement-draft"]);
 assertExists(captured["submit-marketing-lead"]);
@@ -99,26 +95,6 @@ interface FunctionSpec {
 }
 
 const SPECS: FunctionSpec[] = [
-  {
-    name: "submit-placement-case",
-    buildBody: ({ value, omit }) => {
-      const base: Record<string, unknown> = {
-        seekerName: "Test Seeker",
-        seekerPhone: "+15555550100",
-        whoSeekingHelp: "self",
-        primaryIssues: ["alcohol"],
-        levelOfCare: "residential",
-        paymentType: "self_pay",
-        preferredStates: ["CA"],
-        urgency: "within_week",
-        ageRange: "26-35",
-        specialConsiderations: [],
-        preferredContactMethod: "any",
-      };
-      if (!omit) base.seekerEmail = value;
-      return base;
-    },
-  },
   {
     name: "save-international-placement-draft",
     buildBody: ({ value, omit }) => {

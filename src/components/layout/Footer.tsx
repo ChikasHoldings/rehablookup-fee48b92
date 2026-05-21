@@ -81,10 +81,14 @@ const internationalLinks: FooterLink[] = [
 
 const resourceLinks: FooterLink[] = [
   { name: "Guides & Articles", path: "/resources" },
-  { name: "Signs of Addiction", path: "/resources/signs-of-addiction" },
-  { name: "What to Expect in Rehab", path: "/resources/what-to-expect-in-rehab" },
-  { name: "Insurance Coverage Guide", path: "/resources/insurance-coverage-guide" },
-  { name: "Paying for Rehab", path: "/resources/paying-for-rehab" },
+  // Phase AD: link directly at the canonical published articles (the
+  // legacy hand-picked slugs above didn't exist in blog_articles and
+  // were silently redirecting to /resources, which masked them as
+  // 404s once we removed the silent redirect in phase AA).
+  { name: "Signs of Addiction", path: "/resources/youth-addiction-warning-signs" },
+  { name: "Withdrawal Timeline", path: "/resources/drug-withdrawal-symptoms-timeline" },
+  { name: "Insurance Appeals", path: "/resources/insurance-appeal-rehab-denial" },
+  { name: "Paying for Rehab", path: "/resources/how-much-does-rehab-cost-per-day" },
   { name: "Detox Timeline", path: "/resources/detox-timeline" },
   { name: "Cost Estimator", path: "/cost-estimator" },
   { name: "Compare Facilities", path: "/compare", badge: "New" },
@@ -99,19 +103,45 @@ const providerLinks: FooterLink[] = [
   { name: "Marketing Strategies", path: "/provider-guides/rehab-marketing-strategies" },
   { name: "Lead Generation", path: "/provider-guides/addiction-treatment-lead-generation" },
   { name: "Provider FAQ", path: "/provider-faq" },
-  { name: "List Your Facility", path: "/provider-signup", highlight: true },
+  { name: "List Your Facility", path: "/provider/onboarding", highlight: true },
 ];
 
 const companyLinks: FooterLink[] = [
   { name: "About Us", path: "/about" },
   { name: "How It Works", path: "/how-it-works" },
+  { name: "How We Make Money", path: "/how-we-make-money" },
   { name: "Contact Us", path: "/contact" },
   { name: "Treatment Placement", path: "/concierge" },
   { name: "Editorial Team", path: "/authors", badge: "New" },
-  { name: "Blog", path: "/blog" },
   { name: "Rehab Score Methodology", path: "/rehab-score" },
   { name: "Editorial Policy", path: "/editorial-policy" },
   { name: "Medical Disclaimer", path: "/medical-disclaimer" },
+];
+
+// Popular city markets — the directory-style "browse by city" strip
+// (Healthgrades / Yelp pattern). Slugs match registered routes in
+// rehab-centers/:state/:city and the city entries in locationSeoData.
+const popularCities: { name: string; state: string; href: string }[] = [
+  { name: "Los Angeles",   state: "CA", href: "/rehab-centers/california/los-angeles" },
+  { name: "New York City", state: "NY", href: "/rehab-centers/new-york/new-york-city" },
+  { name: "Chicago",       state: "IL", href: "/rehab-centers/illinois/chicago" },
+  { name: "Houston",       state: "TX", href: "/rehab-centers/texas/houston" },
+  { name: "Phoenix",       state: "AZ", href: "/rehab-centers/arizona/phoenix" },
+  { name: "Philadelphia",  state: "PA", href: "/rehab-centers/pennsylvania/philadelphia" },
+  { name: "San Antonio",   state: "TX", href: "/rehab-centers/texas/san-antonio" },
+  { name: "San Diego",     state: "CA", href: "/rehab-centers/california/san-diego" },
+  { name: "Dallas",        state: "TX", href: "/rehab-centers/texas/dallas" },
+  { name: "Austin",        state: "TX", href: "/rehab-centers/texas/austin" },
+  { name: "Jacksonville",  state: "FL", href: "/rehab-centers/florida/jacksonville" },
+  { name: "San Francisco", state: "CA", href: "/rehab-centers/california/san-francisco" },
+  { name: "Miami",         state: "FL", href: "/rehab-centers/florida/miami" },
+  { name: "Atlanta",       state: "GA", href: "/rehab-centers/georgia/atlanta" },
+  { name: "Boston",        state: "MA", href: "/rehab-centers/massachusetts/boston" },
+  { name: "Seattle",       state: "WA", href: "/rehab-centers/washington/seattle" },
+  { name: "Denver",        state: "CO", href: "/rehab-centers/colorado/denver" },
+  { name: "Las Vegas",     state: "NV", href: "/rehab-centers/nevada/las-vegas" },
+  { name: "Nashville",     state: "TN", href: "/rehab-centers/tennessee/nashville" },
+  { name: "Portland",      state: "OR", href: "/rehab-centers/oregon/portland" },
 ];
 
 const allSections: FooterSection[] = [
@@ -283,6 +313,44 @@ export const Footer = memo(function Footer() {
                 <Globe className="h-3.5 w-3.5" /> International Patients
               </Link>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Popular Cities Strip ──────────────────────────────────────
+          Healthgrades / Yelp directory pattern: surface top markets
+          inline so visitors can browse by city without scrolling
+          through the full state list. Wraps on mobile, stays single
+          row on wider viewports.                                  */}
+      <div className="border-b border-primary-foreground/[0.06]">
+        <div className="container px-5 md:px-6 lg:px-8">
+          <div className="py-5 flex flex-col md:flex-row md:items-center gap-x-4 gap-y-2">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-accent shrink-0">
+              <Globe className="h-3 w-3" /> Popular Cities
+            </span>
+            <ul className="flex flex-wrap items-center gap-x-3 gap-y-1.5 min-w-0">
+              {popularCities.map((c, i) => (
+                <li key={c.href} className="inline-flex items-center gap-3">
+                  <Link
+                    to={c.href}
+                    className="text-[13px] text-primary-foreground/65 hover:text-primary-foreground transition-colors whitespace-nowrap"
+                  >
+                    {c.name}, <span className="text-primary-foreground/45">{c.state}</span>
+                  </Link>
+                  {i < popularCities.length - 1 && (
+                    <span aria-hidden className="text-primary-foreground/20 text-[10px]">·</span>
+                  )}
+                </li>
+              ))}
+              <li className="inline-flex">
+                <Link
+                  to="/locations"
+                  className="text-[13px] text-accent hover:text-accent/80 font-medium whitespace-nowrap inline-flex items-center gap-1"
+                >
+                  All 50 states <ArrowRight className="h-3 w-3" />
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
       </div>

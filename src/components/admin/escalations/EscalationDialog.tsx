@@ -48,23 +48,34 @@ export function EscalationDialog({
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error("Not authenticated");
-      
-      const { error } = await supabase.from("admin_escalations").insert({
+      const subj = subject.trim();
+      const desc = description.trim();
+      if (!subj) throw new Error("Subject is required");
+      if (!desc) throw new Error("Description is required");
+
+      const { data, error } = await supabase.from("admin_escalations").insert({
         created_by: user.id,
-        subject: subject.trim(),
-        description: description.trim(),
-        priority: priority as any,
+        subject: subj,
+        description: desc,
+        priority: priority as "low" | "medium" | "high" | "critical",
         related_type: relatedType || null,
         related_id: relatedId || null,
-      });
+      }).select("id").single();
 
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast.success("Escalation created", {
-        description: "A manager or super admin will review this shortly.",
+        description: "Managers and super admins were notified via the bell menu.",
       });
+      // Invalidate both the list + global count caches so the new
+      // escalation appears immediately. Realtime would catch it too
+      // (admin_escalations is now in the supabase_realtime publication
+      // — migration 20260622000000), but invalidating client-side
+      // closes the perceived gap on the originating tab.
       queryClient.invalidateQueries({ queryKey: ["admin-escalations"] });
+      queryClient.invalidateQueries({ queryKey: ["escalation-counts"] });
       setSubject("");
       setDescription("");
       setPriority("medium");
@@ -95,9 +106,10 @@ export function EscalationDialog({
               id="esc-subject"
               placeholder="Brief summary of the issue..."
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={(e) => setSubject(e.target.value.slice(0, 200))}
               maxLength={200}
             />
+            <p className="text-[11px] text-muted-foreground tabular-nums">{subject.length}/200</p>
           </div>
 
           <div className="space-y-2">
@@ -121,10 +133,11 @@ export function EscalationDialog({
               id="esc-desc"
               placeholder="Detailed description of the issue, what you've tried, and what action is needed..."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value.slice(0, 2000))}
               rows={4}
               maxLength={2000}
             />
+            <p className="text-[11px] text-muted-foreground tabular-nums">{description.length}/2000</p>
           </div>
 
           {relatedType && (

@@ -1,9 +1,22 @@
+/**
+ * Next-action logic for the placement workspace.
+ *
+ * Rebuilt 2026-05-20 with the current monetization model:
+ *   - Concierge is a Pro add-on subscription (no per-placement fees)
+ *   - Workflow terminates at seeker_selected ("Placed") → closed
+ *   - Admission tracking + invoicing flows were removed alongside the
+ *     paid-placement product retirement
+ *
+ * Legacy DB rows in admission_in_progress / admitted / billed are
+ * still type-handled (they fall through to the "Placed" terminal
+ * presentation) but no UI surface drives new cases into those
+ * statuses.
+ */
 import {
-  UserCheck, Play, Send, MessageSquare, CalendarCheck,
-  CheckCircle, DollarSign, AlertTriangle, Clock, XCircle,
-  Shield, Eye, Building2, Flag,
+  UserCheck, Play, Send, CheckCircle, AlertTriangle, XCircle,
+  Shield, Eye, Flag,
 } from "lucide-react";
-import { getStageConfig, getStageIndex, PIPELINE_STAGES } from "./placementPipelineConfig";
+import { getStageConfig, getStageIndex } from "./placementPipelineConfig";
 
 export type ActionPriority = "blocker" | "high" | "medium" | "low" | "done";
 export type ActionOwner = "admin" | "advisor" | "system" | "seeker" | "facility";
@@ -24,11 +37,8 @@ interface CaseSnapshot {
   assigned_advisor_id: string | null;
   match_count: number | null;
   placement_confirmed?: boolean | null;
-  admission_status?: string;
   tour_coordination_status?: string;
-  provider_fee_status?: string | null;
   seeker_confirmed?: boolean | null;
-  provider_fee_cents?: number | null;
 }
 
 /** Returns the single most important next-action label for the case list table */
@@ -39,13 +49,11 @@ export function getCaseNextAction(c: CaseSnapshot): { label: string; priority: A
   if (c.status === "completed") {
     return { label: "Complete", priority: "done", owner: "system" };
   }
-
-  const isPaid = c.payment_status === "paid" || c.payment_status === "succeeded" || c.payment_status === "free";
-
-  // Blockers
-  if (!isPaid && c.status !== "intake_submitted" && c.status !== "pending_intake") {
-    return { label: "Awaiting payment", priority: "blocker", owner: "seeker" };
+  // Legacy admission / billed rows collapse into "Placed — close case"
+  if (c.status === "admission_in_progress" || c.status === "admitted" || c.status === "billed") {
+    return { label: "Close case", priority: "high", owner: "advisor" };
   }
+
   if (!c.assigned_advisor_id && getStageIndex(c.status) >= 2) {
     return { label: "Assign advisor", priority: "blocker", owner: "admin" };
   }
@@ -58,7 +66,7 @@ export function getCaseNextAction(c: CaseSnapshot): { label: string; priority: A
 
   return {
     label: config.nextAction,
-    priority: c.status === "billed" || c.status === "admitted" ? "high" : "medium",
+    priority: c.status === "seeker_selected" ? "high" : "medium",
     owner: ownerMap[config.actionOwner] || "admin",
   };
 }
@@ -66,8 +74,6 @@ export function getCaseNextAction(c: CaseSnapshot): { label: string; priority: A
 /** Returns a blocker label if present, null otherwise */
 export function getCaseBlocker(c: CaseSnapshot): string | null {
   if (c.status === "closed" || c.status === "completed") return null;
-  const isPaid = c.payment_status === "paid" || c.payment_status === "succeeded" || c.payment_status === "free";
-  if (!isPaid && c.status !== "intake_submitted" && c.status !== "pending_intake") return "Payment pending";
   if (!c.assigned_advisor_id && getStageIndex(c.status) >= 2) return "No advisor";
   return null;
 }
@@ -75,32 +81,19 @@ export function getCaseBlocker(c: CaseSnapshot): string | null {
 /** Full next-steps list for the detail modal */
 export function getCaseNextSteps(
   caseData: CaseSnapshot,
-  introsCount: number,
-  toursCount: number
+  _introsCount: number,
+  _toursCount: number,
 ): CaseAction[] {
   const steps: CaseAction[] = [];
-  const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded" || caseData.payment_status === "free";
 
   // Blockers always first
-  if (!isPaid && caseData.status !== "intake_submitted" && caseData.status !== "pending_intake") {
-    steps.push({
-      label: "Payment not received",
-      tab: "actions",
-      icon: AlertTriangle,
-      priority: "blocker",
-      description: "Placement fee not yet paid. Domestic placement is free for clients — applies to international cases or legacy unpaid records.",
-      owner: "seeker",
-      ownerLabel: "Waiting on client",
-    });
-  }
-
   if (!caseData.assigned_advisor_id && getStageIndex(caseData.status) >= 2) {
     steps.push({
       label: "Assign an advisor",
       tab: "actions",
       icon: UserCheck,
       priority: "blocker",
-      description: "This case needs an advisor before placement can proceed.",
+      description: "This case needs an advisor before matching can proceed.",
       owner: "admin",
       ownerLabel: "Admin action",
     });
@@ -135,7 +128,7 @@ export function getCaseNextSteps(
     case "intake_reviewed":
       steps.push({
         label: "Assign a placement advisor",
-      tab: "actions",
+        tab: "actions",
         icon: UserCheck,
         priority: "high",
         description: "Assign an advisor to begin the matching process.",
@@ -147,7 +140,7 @@ export function getCaseNextSteps(
     case "advisor_assigned":
       steps.push({
         label: "Run placement engine",
-      tab: "matching",
+        tab: "matching",
         icon: Play,
         priority: "high",
         description: "Find matching treatment centers based on client criteria.",
@@ -159,7 +152,7 @@ export function getCaseNextSteps(
     case "matching_providers":
       steps.push({
         label: "Review and pre-qualify providers",
-      tab: "matching",
+        tab: "matching",
         icon: Shield,
         priority: "high",
         description: "Verify facility availability and fit before contacting them.",
@@ -171,7 +164,7 @@ export function getCaseNextSteps(
     case "provider_prequalification":
       steps.push({
         label: "Send introductions to providers",
-      tab: "intros",
+        tab: "intros",
         icon: Send,
         priority: "high",
         description: "Contact qualified facilities and await their acceptance.",
@@ -206,47 +199,27 @@ export function getCaseNextSteps(
 
     case "seeker_selected":
       steps.push({
-        label: "Schedule tour or begin admission",
-        tab: "admission",
-        icon: CalendarCheck,
+        label: "Confirm placement and close case",
+        tab: "actions",
+        icon: CheckCircle,
         priority: "high",
-        description: "Coordinate a facility visit or start admission paperwork.",
+        description: "Client has selected a facility — finalize and close the case.",
         owner: "advisor",
         ownerLabel: "Advisor action",
       });
       break;
 
     case "admission_in_progress":
-      steps.push({
-        label: "Confirm admission",
-        tab: "admission",
-        icon: Building2,
-        priority: "high",
-        description: "Verify that the client has been admitted to the facility.",
-        owner: "advisor",
-        ownerLabel: "Advisor action",
-      });
-      break;
-
     case "admitted":
-      steps.push({
-        label: "Send placement invoice",
-        tab: "billing",
-        icon: DollarSign,
-        priority: "high",
-        description: "Generate and send the provider invoice for this placement.",
-        owner: "admin",
-        ownerLabel: "Admin action",
-      });
-      break;
-
     case "billed":
+      // Legacy rows from the retired paid-placement workflow — present
+      // them as ready-to-close so they stop appearing in active queues.
       steps.push({
-        label: "Confirm payment received",
-        tab: "billing",
-        icon: DollarSign,
+        label: "Close legacy case",
+        tab: "actions",
+        icon: AlertTriangle,
         priority: "high",
-        description: "Verify payment has been received, then complete the case.",
+        description: "This case is in a status from the retired paid-placement product. Close it to clear the queue.",
         owner: "admin",
         ownerLabel: "Admin action",
       });
@@ -258,7 +231,7 @@ export function getCaseNextSteps(
         tab: "overview",
         icon: Flag,
         priority: "done",
-        description: "Placement and billing are finalized. No further action needed.",
+        description: "Placement workflow finalized. No further action needed.",
         owner: "system",
         ownerLabel: "Complete",
       });

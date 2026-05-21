@@ -25,34 +25,6 @@ const BRAND_COLORS = {
 };
 
 // ============================================================================
-// LEAD MASKING UTILITIES
-// ============================================================================
-
-export function maskLeadName(fullName: string): string {
-  if (!fullName || fullName.trim().length === 0) return "Lead";
-  const parts = fullName.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0];
-  const firstName = parts[0];
-  const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
-  return `${firstName} ${lastInitial}.`;
-}
-
-export function getHiddenContactText(): string {
-  return "Unlock to view";
-}
-
-// deno-lint-ignore no-explicit-any
-export async function isLeadUnlocked(supabase: any, leadId: string, facilityId: string): Promise<boolean> {
-  const { data } = await supabase
-    .from("lead_unlocks")
-    .select("id")
-    .eq("lead_id", leadId)
-    .eq("facility_id", facilityId)
-    .maybeSingle();
-  return !!data;
-}
-
-// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -62,7 +34,6 @@ export interface PlanInfo {
   plan: PlanType;
   planName: string;
   locationLimit: number;
-  unlockDiscount: number;
 }
 
 // ============================================================================
@@ -78,8 +49,8 @@ export const PRO_PRODUCT_IDS = [
 ];
 
 export const PLAN_CONFIG = {
-  free: { name: "Free", locationLimit: 1, unlockDiscount: 0 },
-  pro: { name: "Pro", locationLimit: 5, unlockDiscount: 20, product_ids: PRO_PRODUCT_IDS },
+  free: { name: "Free", locationLimit: 1 },
+  pro: { name: "Pro", locationLimit: Infinity, product_ids: PRO_PRODUCT_IDS },
 };
 
 // ============================================================================
@@ -87,9 +58,9 @@ export const PLAN_CONFIG = {
 // ============================================================================
 
 export async function getProviderPlan(email: string, stripe: Stripe | null): Promise<PlanInfo> {
-  const freeDefault: PlanInfo = { 
-    plan: 'free', planName: 'Free', 
-    locationLimit: PLAN_CONFIG.free.locationLimit, unlockDiscount: 0 
+  const freeDefault: PlanInfo = {
+    plan: 'free', planName: 'Free',
+    locationLimit: PLAN_CONFIG.free.locationLimit,
   };
   if (!stripe) return freeDefault;
 
@@ -105,10 +76,10 @@ export async function getProviderPlan(email: string, stripe: Stripe | null): Pro
     for (const sub of subscriptions.data) {
       const productId = sub.items.data[0]?.price?.product as string;
       if (productId && PRO_PRODUCT_IDS.includes(productId)) {
-        return { plan: 'pro', planName: 'Pro', locationLimit: PLAN_CONFIG.pro.locationLimit, unlockDiscount: PLAN_CONFIG.pro.unlockDiscount };
+        return { plan: 'pro', planName: 'Pro', locationLimit: PLAN_CONFIG.pro.locationLimit };
       }
     }
-    return { plan: 'pro', planName: 'Pro', locationLimit: PLAN_CONFIG.pro.locationLimit, unlockDiscount: PLAN_CONFIG.pro.unlockDiscount };
+    return { plan: 'pro', planName: 'Pro', locationLimit: PLAN_CONFIG.pro.locationLimit };
   } catch (error) {
     console.error('[EMAIL-TEMPLATES] Error checking plan:', error);
     return freeDefault;
@@ -121,7 +92,6 @@ export function getPlanFromProductId(productId: string): PlanInfo {
     plan: isPro ? 'pro' : 'free',
     planName: isPro ? 'Pro' : 'Free',
     locationLimit: isPro ? PLAN_CONFIG.pro.locationLimit : PLAN_CONFIG.free.locationLimit,
-    unlockDiscount: isPro ? PLAN_CONFIG.pro.unlockDiscount : 0,
   };
 }
 
@@ -264,22 +234,6 @@ export function tipBox(tipContent: string, plan: PlanType, options?: { showUpgra
                     <p style="margin: 0; font-size: 14px; color: #0C4A6E; line-height: 1.6;">
                       💡 <strong>Tip:</strong> ${tipContent}${upgradeLink}
                     </p>
-                  </td>
-                </tr>
-              </table>`;
-}
-
-export function usageBox(unlockedLeads: number, _unused: number, plan: PlanType): string {
-  const isPro = plan === 'pro';
-  const discountText = isPro ? ' (20% Pro discount applied)' : '';
-
-  return `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: ${BRAND_COLORS.background}; border-radius: 8px; margin: 20px 0;">
-                <tr>
-                  <td style="padding: 20px; text-align: center;">
-                    <p style="margin: 0 0 8px 0; font-size: 12px; color: ${BRAND_COLORS.textSecondary}; text-transform: uppercase; letter-spacing: 0.5px;">Leads Unlocked This Month</p>
-                    <p style="margin: 0; font-size: 32px; font-weight: 700; color: ${BRAND_COLORS.primary};">${unlockedLeads}</p>
-                    ${isPro ? `<p style="margin: 8px 0 0 0; font-size: 12px; color: ${BRAND_COLORS.success};">${discountText}</p>` : ''}
                   </td>
                 </tr>
               </table>`;

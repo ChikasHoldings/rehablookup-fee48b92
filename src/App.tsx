@@ -3,14 +3,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { RouteChangeTracker } from "@/components/RouteChangeTracker";
 import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
 import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
+import { StaticFileRedirect } from "@/components/seo/StaticFileRedirect";
 // CookieConsentBanner removed — US site, no opt-in required. GA4 tracks unconditionally.
-import { ExitIntentPopup } from "@/components/conversion/ExitIntentPopup";
+import { useTelClickTracking } from "@/hooks/useTelClickTracking";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
@@ -19,6 +20,7 @@ import { queryClient } from "@/lib/queryClient";
 
 // Eagerly load homepage for instant LCP
 import Index from "./pages/Index";
+const InquiryConfirmationPage = lazy(() => import("./pages/InquiryConfirmation"));
 import { SmartCatchAll } from "./components/SmartCatchAll";
 
 // Lazy load all other public pages for reduced initial bundle
@@ -65,11 +67,13 @@ const ProviderForgotPassword = lazy(() => import("./pages/ProviderForgotPassword
 const ProviderResetPassword = lazy(() => import("./pages/ProviderResetPassword"));
 const ProviderSupport = lazy(() => import("./pages/ProviderSupport"));
 const ProviderFAQ = lazy(() => import("./pages/ProviderFAQ"));
-const AuthSignup = lazy(() => import("./pages/AuthSignup"));
 const ProviderOnboarding = lazy(() => import("./pages/provider/Onboarding"));
-const NewListingForm = lazy(() => import("./pages/provider/NewListingForm"));
-const ClaimWizard = lazy(() => import("./pages/provider/ClaimWizard"));
-const ClaimSubmitted = lazy(() => import("./pages/provider/ClaimSubmitted"));
+// 2026-05-20 unification: `/provider/onboarding` is the ONLY page for
+// the provider sign-up / claim / list workflow. All legacy entry routes
+// (/auth/signup, /provider-signup, /provider/signup,
+// /provider/onboarding/new-listing, /provider/claim/:slug,
+// /provider/claim/:slug/submitted) are now inline Navigate redirects
+// defined below — no separate page files, no duplicate code paths.
 const ProviderClaims = lazy(() => import("./pages/provider/Claims"));
 const ProviderROICalculator = lazy(() => import("./pages/ProviderROICalculator"));
 
@@ -205,11 +209,11 @@ const ConciergeIntake = lazy(() => import("./pages/concierge/ConciergeIntake"));
 const ConciergeThankYou = lazy(() => import("./pages/concierge/ConciergeThankYou"));
 
 
-// International Placement (Global Clients) - lazy load
-const InternationalLanding = lazy(() => import("./pages/international/InternationalLanding"));
-const InternationalApplication = lazy(() => import("./pages/international/InternationalApplication"));
-const InternationalIntake = lazy(() => import("./pages/international/InternationalIntake"));
-const InternationalThankYou = lazy(() => import("./pages/international/InternationalThankYou"));
+// International placement (paid product retired 2026-05-20). The
+// /international landing stays as an informational redirect target;
+// the apply / intake / thank-you routes now render a retirement
+// notice that points seekers to the domestic concierge intake.
+const InternationalRetired = lazy(() => import("./pages/international/InternationalRetired"));
 const AdLanding = lazy(() => import("./pages/AdLanding"));
 const SocialLanding = lazy(() => import("./pages/SocialLanding"));
 const Resources = lazy(() => import("./pages/Resources"));
@@ -244,8 +248,10 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const EditorialPolicy = lazy(() => import("./pages/EditorialPolicy"));
 const RehabScore = lazy(() => import("./pages/RehabScore"));
+const HowWeMakeMoney = lazy(() => import("./pages/HowWeMakeMoney"));
 const MedicalDisclaimer = lazy(() => import("./pages/MedicalDisclaimer"));
 const SeekerSignup = lazy(() => import("./pages/SeekerSignup"));
+const SignupCompletePage = lazy(() => import("./pages/signup/SignupComplete"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Login = lazy(() => import("./pages/Login"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -262,7 +268,7 @@ const SeekerFacilityProfile = lazy(() => import("./pages/seeker/SeekerFacilityPr
 const SeekerSearch = lazy(() => import("./pages/seeker/SeekerSearch"));
 const SeekerHelp = lazy(() => import("./pages/seeker/SeekerHelp"));
 const SeekerConcierge = lazy(() => import("./pages/seeker/SeekerConcierge"));
-const SeekerInternationalCase = lazy(() => import("./pages/seeker/SeekerInternationalCase"));
+// SeekerInternationalCase retired 2026-05-20 — paid international placement product wound down.
 const SeekerInsuranceVerifications = lazy(() => import("./pages/seeker/SeekerInsuranceVerifications"));
 const SeekerSavedSearches = lazy(() => import("./pages/seeker/SeekerSavedSearches"));
 
@@ -272,7 +278,8 @@ const AlcoholRehabNearMe = lazy(() => import("./pages/near-me/AlcoholRehabNearMe
 const DetoxNearMe = lazy(() => import("./pages/near-me/DetoxNearMe"));
 const DualDiagnosisNearMe = lazy(() => import("./pages/near-me/DualDiagnosisNearMe"));
 const InpatientRehabNearMe = lazy(() => import("./pages/near-me/InpatientRehabNearMe"));
-const OutpatientNearMe = lazy(() => import("./pages/near-me/OutpatientNearMe"));
+// OutpatientNearMe orphaned — legacy slug now Navigates to canonical
+// outpatient-rehab-near-me (see NavigateOutpatientNearMe + App.tsx route).
 const FreeRehabNearMe = lazy(() => import("./pages/near-me/FreeRehabNearMe"));
 const LuxuryRehabNearMe = lazy(() => import("./pages/near-me/LuxuryRehabNearMe"));
 const WomensRehabNearMe = lazy(() => import("./pages/near-me/WomensRehabNearMe"));
@@ -286,7 +293,8 @@ const CourtOrderedRehabNearMe = lazy(() => import("./pages/near-me/CourtOrderedR
 const SuboxoneClinicNearMe = lazy(() => import("./pages/near-me/SuboxoneClinicNearMe"));
 const MethadoneClinicNearMe = lazy(() => import("./pages/near-me/MethadoneClinicNearMe"));
 const OutpatientRehabNearMe = lazy(() => import("./pages/near-me/OutpatientRehabNearMe"));
-const DualDiagnosisRehabNearMe = lazy(() => import("./pages/near-me/DualDiagnosisRehabNearMe"));
+// DualDiagnosisRehabNearMe orphaned — legacy slug now Navigates to canonical
+// dual-diagnosis-near-me (see NavigateDualDiagnosisRehabNearMe).
 const FaithBasedRehabNearMe = lazy(() => import("./pages/near-me/FaithBasedRehabNearMe"));
 const HolisticRehabNearMe = lazy(() => import("./pages/near-me/HolisticRehabNearMe"));
 const ChristianRehabNearMe = lazy(() => import("./pages/near-me/ChristianRehabNearMe"));
@@ -351,8 +359,16 @@ const ProviderKnowledgeBasePage = lazy(() => import("./pages/provider/KnowledgeB
 const ProviderImageGuidelines = lazy(() => import("./pages/provider/ImageGuidelines"));
 const ProviderAddLocation = lazy(() => import("./pages/provider/AddLocation"));
 const ProviderBillingPage = lazy(() => import("./pages/provider/Billing"));
-const ProviderProUpgradePage = lazy(() => import("./pages/provider/ProUpgrade"));
-const ProviderPlacementNetworkPage = lazy(() => import("./pages/provider/PlacementNetwork"));
+const ProviderBillingCancelPage = lazy(() => import("./pages/provider/BillingCancel"));
+const ProviderBillingPlacementsPage = lazy(() => import("./pages/provider/BillingPlacements"));
+const ProviderBillingConciergePage = lazy(() => import("./pages/provider/BillingConcierge"));
+const ProviderMarketingHub = lazy(() => import("./pages/provider/MarketingHub"));
+const ProviderMarketingFeatured = lazy(() => import("./pages/provider/MarketingFeatured"));
+const ProviderMarketingConcierge = lazy(() => import("./pages/provider/MarketingConcierge"));
+// Pro upgrade page + Placement network removed in monetization rebuild.
+// /provider/pro-upgrade and /provider/placement-network now Navigate
+// to /for-providers so any stale bookmark / external link still lands
+// on the new sales surface.
 
 // Admin Panel pages - lazy load (shell handles Suspense)
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
@@ -363,7 +379,6 @@ const AdminInsuranceVerifications = lazy(() => import("./pages/admin/AdminInsura
 const AdminSubscriptions = lazy(() => import("./pages/admin/AdminSubscriptions"));
 const AdminAuditLog = lazy(() => import("./pages/admin/AdminAuditLog"));
 const AdminNotFoundEvents = lazy(() => import("./pages/admin/AdminNotFoundEvents"));
-const AdminLeadUnlocks = lazy(() => import("./pages/admin/AdminLeadUnlocks"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminStaff"));
@@ -374,16 +389,37 @@ const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminSecurityLogs = lazy(() => import("./pages/admin/AdminSecurityLogs"));
 const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
 const AdminConcierge = lazy(() => import("./pages/admin/AdminConcierge"));
-const InternationalAgreementTemplate = lazy(() => import("./pages/admin/InternationalAgreementTemplate"));
-const PlacementRevenueDashboard = lazy(() => import("./pages/admin/PlacementRevenueDashboard"));
+const AdminConciergeAuditReview = lazy(() => import("./pages/admin/AdminConciergeAuditReview"));
+const AdminConciergeMetrics = lazy(() => import("./pages/admin/AdminConciergeMetrics"));
+// InternationalAgreementTemplate retired 2026-05-20 — paid international placement product wound down.
+// PlacementRevenueDashboard removed in monetization rebuild — admin
+// /admin/placement-revenue Navigate'd to /admin/dashboard below.
 const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
 const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
-const AdvisorInbox = lazy(() => import("./pages/admin/AdvisorInbox"));
+// AdvisorInbox + AdvisorProviderDirectory are now embedded as tabs inside
+// AdminConcierge (the unified Placements workspace), so they no longer
+// need a top-level lazy boundary in App.tsx — the standalone routes
+// redirect via <Navigate>.
 const AdminEscalations = lazy(() => import("./pages/admin/AdminEscalations"));
 const AdminBackOffice = lazy(() => import("./pages/admin/AdminBackOffice"));
-const AdvisorProviderDirectory = lazy(() => import("./pages/admin/AdvisorProviderDirectory"));
 const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
+
+/**
+ * Global side-effects that run once per app mount. Lives inside the
+ * React tree so it can use hooks. Sole responsibility:
+ *   useTelClickTracking — delegated click listener that records a
+ *   single `phone_click` event for every `<a href="tel:...">` on the
+ *   page, so we can measure the real conversion in this YMYL category.
+ *
+ * Exit-intent + sticky/scroll CTAs were removed (too intrusive, drew
+ * attention away from Featured facilities). The remaining inline
+ * intake widget on individual pages handles voluntary lead capture.
+ */
+function AppGlobals() {
+  useTelClickTracking();
+  return null;
+}
 
 function LegacyCenterRedirect() {
   const { slug } = useParams();
@@ -393,6 +429,65 @@ function LegacyCenterRedirect() {
 function BlogRedirect() {
   const { id } = useParams();
   return <Navigate to={`/resources/${id}`} replace />;
+}
+
+// Legacy /treatment-types/holistic/<state> → canonical holistic-therapy.
+// The old sitemap edge fn emitted this short slug; redirect any cached
+// backlinks so Googlebot lands on a real page.
+function NavigateHolisticState() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/treatment-types/holistic-therapy/${stateSlug}`} replace />;
+}
+
+// Legacy /outpatient-near-me/<state> → canonical /outpatient-rehab-near-me/<state>.
+// The canonical slug lives in src/data/nearMeTypes.ts. Preserving the state
+// segment ensures backlink rescue keeps geo context.
+function NavigateOutpatientNearMe() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/outpatient-rehab-near-me/${stateSlug}`} replace />;
+}
+
+// 2026-05-20 unification: legacy provider-entry routes collapse into
+// /provider/onboarding. These tiny inline redirects replace the
+// previously-separate page files (AuthSignup.tsx, NewListingForm.tsx,
+// LegacyClaimRedirect.tsx, ClaimSubmitted.tsx) so the unified wizard is
+// the single page for the entire sign-up/claim/list workflow.
+
+function safeReturnTo(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//")) return null;
+  if (raw.startsWith("/\\")) return null;
+  return raw;
+}
+
+/** /auth/signup → /provider/onboarding, preserving query params so deep
+ *  links (intent=claim, facility_id=…, facility_slug=…) still trickle
+ *  through to the wizard's AccountStep. */
+function NavigateAuthSignup() {
+  const [searchParams] = useSearchParams();
+  const params = new URLSearchParams(searchParams);
+  const rt = safeReturnTo(params.get("returnTo"));
+  if (rt) params.set("returnTo", rt); else params.delete("returnTo");
+  const qs = params.toString();
+  return <Navigate to={`/provider/onboarding${qs ? `?${qs}` : ""}`} replace />;
+}
+
+/** /provider/claim/:slug → /provider/onboarding?intent=claim&facility_slug=…
+ *  The unified wizard's AccountStep + post-mount seeding effect on
+ *  Onboarding resolve the slug → facility id and pre-fill
+ *  selected_facility_id once auth completes. */
+function NavigateProviderClaim() {
+  const { slug } = useParams<{ slug: string }>();
+  const params = new URLSearchParams({ intent: "claim" });
+  if (slug) params.set("facility_slug", slug);
+  return <Navigate to={`/provider/onboarding?${params.toString()}`} replace />;
+}
+
+// Legacy /dual-diagnosis-rehab-near-me/<state> → canonical /dual-diagnosis-near-me/<state>.
+function NavigateDualDiagnosisRehabNearMe() {
+  const { stateSlug } = useParams();
+  return <Navigate to={`/dual-diagnosis-near-me/${stateSlug}`} replace />;
 }
 
 // ============================================================
@@ -541,7 +636,7 @@ const AppInner = () => {
                 <ScrollToTop />
         <RouteChangeTracker />
 
-        <ExitIntentPopup />
+        <AppGlobals />
         {/* min-h-screen reserves the viewport during lazy route chunk loads
             so the layout doesn't shift downward when the route bundle lands.
             Was fallback={null} — caused visible CLS on slow networks when
@@ -552,6 +647,7 @@ const AppInner = () => {
           <Routes>
             {/* Public Routes - Providers are redirected away */}
             <Route path="/" element={<PublicRouteGuard><Index /></PublicRouteGuard>} />
+            <Route path="/inquiry/confirmation/:inquiryId" element={<PublicRouteGuard><InquiryConfirmationPage /></PublicRouteGuard>} />
             <Route path="/locations" element={<PublicRouteGuard><Locations /></PublicRouteGuard>} />
             <Route path="/rehab-centers" element={<PublicRouteGuard><RehabCenters /></PublicRouteGuard>} />
             <Route path="/compare" element={<PublicRouteGuard><FacilityCompare /></PublicRouteGuard>} />
@@ -583,6 +679,13 @@ const AppInner = () => {
             <Route path="/treatment-types/holistic-therapy" element={<PublicRouteGuard><HolisticTherapy /></PublicRouteGuard>} />
             <Route path="/treatment-types/holistic-therapy/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="holistic" /></PublicRouteGuard>} />
             <Route path="/treatment-types/holistic-treatment" element={<Navigate to="/treatment-types/holistic-therapy" replace />} />
+            {/* Legacy /treatment-types/holistic/<state> — the sitemap edge
+                fn used to emit this short slug, which doesn't match the
+                holistic-therapy route. Redirect any cached backlinks to
+                the canonical URL so Googlebot and visitors land on a
+                real page instead of the SPA 404. */}
+            <Route path="/treatment-types/holistic" element={<Navigate to="/treatment-types/holistic-therapy" replace />} />
+            <Route path="/treatment-types/holistic/:stateSlug" element={<NavigateHolisticState />} />
             <Route path="/treatment-types/luxury-rehab" element={<PublicRouteGuard><LuxuryRehab /></PublicRouteGuard>} />
             <Route path="/treatment-types/luxury-rehab/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="luxury-rehab" /></PublicRouteGuard>} />
             <Route path="/treatment-types/sober-living/:stateSlug" element={<PublicRouteGuard><StateTreatmentExpandedPage treatmentKey="sober-living" /></PublicRouteGuard>} />
@@ -853,8 +956,13 @@ const AppInner = () => {
             <Route path="/dual-diagnosis-near-me/:stateSlug" element={<PublicRouteGuard><DualDiagnosisNearMe /></PublicRouteGuard>} />
             <Route path="/inpatient-rehab-near-me" element={<PublicRouteGuard><InpatientRehabNearMe /></PublicRouteGuard>} />
             <Route path="/inpatient-rehab-near-me/:stateSlug" element={<PublicRouteGuard><InpatientRehabNearMe /></PublicRouteGuard>} />
-            <Route path="/outpatient-near-me" element={<PublicRouteGuard><OutpatientNearMe /></PublicRouteGuard>} />
-            <Route path="/outpatient-near-me/:stateSlug" element={<PublicRouteGuard><OutpatientNearMe /></PublicRouteGuard>} />
+            {/* Legacy /outpatient-near-me → canonical /outpatient-rehab-near-me.
+                The canonical slug is registered in src/data/nearMeTypes.ts;
+                this short-form survives only as a backlink-rescue alias and
+                must Navigate to canonical so internal SPA traffic + Vercel
+                edge redirects converge on the same indexable URL. */}
+            <Route path="/outpatient-near-me" element={<Navigate to="/outpatient-rehab-near-me" replace />} />
+            <Route path="/outpatient-near-me/:stateSlug" element={<NavigateOutpatientNearMe />} />
             <Route path="/free-rehab-near-me" element={<PublicRouteGuard><FreeRehabNearMe /></PublicRouteGuard>} />
             <Route path="/free-rehab-near-me/:stateSlug" element={<PublicRouteGuard><FreeRehabNearMe /></PublicRouteGuard>} />
             <Route path="/luxury-rehab-near-me" element={<PublicRouteGuard><LuxuryRehabNearMe /></PublicRouteGuard>} />
@@ -881,8 +989,12 @@ const AppInner = () => {
             <Route path="/methadone-clinic-near-me/:stateSlug" element={<PublicRouteGuard><MethadoneClinicNearMe /></PublicRouteGuard>} />
             <Route path="/outpatient-rehab-near-me" element={<PublicRouteGuard><OutpatientRehabNearMe /></PublicRouteGuard>} />
             <Route path="/outpatient-rehab-near-me/:stateSlug" element={<PublicRouteGuard><OutpatientRehabNearMe /></PublicRouteGuard>} />
-            <Route path="/dual-diagnosis-rehab-near-me" element={<PublicRouteGuard><DualDiagnosisRehabNearMe /></PublicRouteGuard>} />
-            <Route path="/dual-diagnosis-rehab-near-me/:stateSlug" element={<PublicRouteGuard><DualDiagnosisRehabNearMe /></PublicRouteGuard>} />
+            {/* Legacy /dual-diagnosis-rehab-near-me → canonical /dual-diagnosis-near-me.
+                Canonical slug per src/data/nearMeTypes.ts. Both layers (SPA
+                Navigate + Vercel edge redirect) now converge on the same
+                indexable URL. */}
+            <Route path="/dual-diagnosis-rehab-near-me" element={<Navigate to="/dual-diagnosis-near-me" replace />} />
+            <Route path="/dual-diagnosis-rehab-near-me/:stateSlug" element={<NavigateDualDiagnosisRehabNearMe />} />
             <Route path="/faith-based-rehab-near-me" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
             <Route path="/faith-based-rehab-near-me/:stateSlug" element={<PublicRouteGuard><FaithBasedRehabNearMe /></PublicRouteGuard>} />
             <Route path="/holistic-rehab-near-me" element={<PublicRouteGuard><HolisticRehabNearMe /></PublicRouteGuard>} />
@@ -968,6 +1080,8 @@ const AppInner = () => {
              <Route path="/marijuana-rehab-near-me" element={<PublicRouteGuard><GenericNearMePage configSlug="marijuana-rehab-near-me" /></PublicRouteGuard>} />
              <Route path="/marijuana-rehab-near-me/:stateSlug" element={<PublicRouteGuard><GenericNearMePage configSlug="marijuana-rehab-near-me" /></PublicRouteGuard>} />
 
+
+
              {/* Educational "What Is" Pages (Batch 2) */}
              <Route path="/what-is-detox" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
              <Route path="/what-is-mat" element={<PublicRouteGuard><EducationalPage /></PublicRouteGuard>} />
@@ -1046,11 +1160,15 @@ const AppInner = () => {
             <Route path="/treatment/alcohol-rehab" element={<Navigate to="/treatment-types/alcohol-rehabilitation" replace />} />
             <Route path="/treatment/alcohol-rehab/:stateSlug" element={<AlcoholStateRedirect />} />
 
-            {/* International Placement Routes */}
-            <Route path="/international" element={<PublicRouteGuard><InternationalLanding /></PublicRouteGuard>} />
-            <Route path="/international/apply" element={<PublicRouteGuard><InternationalApplication /></PublicRouteGuard>} />
-            <Route path="/international/intake" element={<Navigate to="/international/apply" replace />} />
-            <Route path="/international/thank-you" element={<PublicRouteGuard><InternationalThankYou /></PublicRouteGuard>} />
+            {/* International placement routes — paid product retired
+                2026-05-20. /international redirects to the SEO-friendly
+                informational page; legacy apply/intake/thank-you bookmarks
+                render the retirement notice so visitors aren't dropped
+                into a dead pipeline. */}
+            <Route path="/international" element={<Navigate to="/us-rehab/international-patients" replace />} />
+            <Route path="/international/apply" element={<PublicRouteGuard><InternationalRetired /></PublicRouteGuard>} />
+            <Route path="/international/intake" element={<PublicRouteGuard><InternationalRetired /></PublicRouteGuard>} />
+            <Route path="/international/thank-you" element={<PublicRouteGuard><InternationalRetired /></PublicRouteGuard>} />
             <Route path="/placement-help" element={<Navigate to="/concierge" replace />} />
             
             {/* US Rehab - International SEO Landing Pages */}
@@ -1128,6 +1246,35 @@ const AppInner = () => {
             <Route path="/resources" element={<PublicRouteGuard><Resources /></PublicRouteGuard>} />
             {/* Category hub MUST come before /resources/:id so it doesn't match the article slug catch-all */}
             <Route path="/resources/category/:slug" element={<PublicRouteGuard><CategoryHub /></PublicRouteGuard>} />
+            {/* Phase AD: legacy Resources mega-menu URLs Google indexed
+                when they were silently redirecting to /resources (200 OK
+                with /resources content). Those URLs now 404 after the
+                phase AA / AB fixes. Redirect to the canonical existing
+                articles. These MUST come before /resources/:id so the
+                Navigate fires first. */}
+            <Route path="/resources/signs-of-addiction" element={<Navigate to="/resources/youth-addiction-warning-signs" replace />} />
+            <Route path="/resources/what-to-expect-in-rehab" element={<Navigate to="/resources/drug-withdrawal-symptoms-timeline" replace />} />
+            <Route path="/resources/insurance-coverage-guide" element={<Navigate to="/resources/insurance-appeal-rehab-denial" replace />} />
+            <Route path="/resources/paying-for-rehab" element={<Navigate to="/resources/how-much-does-rehab-cost-per-day" replace />} />
+            <Route path="/resources/choosing-right-program" element={<Navigate to="/resources/how-to-find-good-rehab" replace />} />
+            {/* Phase AE: 12 more legacy /resources/<slug> URLs that
+                internal components still reference (Footer,
+                ArticleCategoryLinks, ArticleInterlinks) and that
+                Google likely has indexed. Each redirects to the
+                closest canonical published article in blog_articles.
+                Mapping verified by direct SQL against the live table. */}
+            <Route path="/resources/choosing-rehab-center" element={<Navigate to="/resources/how-to-find-good-rehab" replace />} />
+            <Route path="/resources/first-week-treatment" element={<Navigate to="/resources/what-happens-after-detox" replace />} />
+            <Route path="/resources/free-rehab-options" element={<Navigate to="/free-rehab-options" replace />} />
+            <Route path="/resources/inpatient-vs-outpatient" element={<Navigate to="/resources/outpatient-vs-inpatient" replace />} />
+            <Route path="/resources/intervention-guide" element={<Navigate to="/resources/how-to-stage-an-intervention" replace />} />
+            <Route path="/resources/php-vs-iop" element={<Navigate to="/resources/php-vs-iop-vs-outpatient" replace />} />
+            <Route path="/resources/questions-to-ask-rehab" element={<Navigate to="/resources/questions-to-ask-before-rehab" replace />} />
+            <Route path="/resources/rehab-success-rates" element={<Navigate to="/resources/relapse-prevention" replace />} />
+            <Route path="/resources/supporting-loved-one" element={<Navigate to="/resources/how-to-help-loved-one" replace />} />
+            <Route path="/resources/types-of-addiction-treatment" element={<Navigate to="/resources/category/treatment" replace />} />
+            <Route path="/resources/understanding-dual-diagnosis" element={<Navigate to="/resources/dual-diagnosis-explained" replace />} />
+            <Route path="/resources/what-to-expect-in-detox" element={<Navigate to="/resources/detox-timeline" replace />} />
             <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
             <Route path="/authors" element={<PublicRouteGuard><Authors /></PublicRouteGuard>} />
             <Route path="/authors/:slug" element={<PublicRouteGuard><AuthorProfile /></PublicRouteGuard>} />
@@ -1148,6 +1295,13 @@ const AppInner = () => {
             <Route path="/insurance/kaiser" element={<Navigate to="/insurance/kaiser-rehab" replace />} />
             <Route path="/insurance/medicare" element={<Navigate to="/insurance/medicare-rehab" replace />} />
             <Route path="/insurance/medicaid" element={<Navigate to="/insurance/medicaid-rehab" replace />} />
+            {/* Phase AI: bare /medicare-rehab + /medicaid-rehab redirects.
+                The 2,000-HTML sample audit found these 1-segment URLs
+                referenced in prerendered city pages but not registered as
+                routes nor prerendered as HTML — they 404'd. Both have
+                full feature pages under /insurance/<x>-rehab; 301 there. */}
+            <Route path="/medicare-rehab" element={<Navigate to="/insurance/medicare-rehab" replace />} />
+            <Route path="/medicaid-rehab" element={<Navigate to="/insurance/medicaid-rehab" replace />} />
             <Route path="/insurance/anthem" element={<Navigate to="/insurance/anthem-rehab" replace />} />
             {/* Insurance Routes - Canonical URLs (for internal links) */}
             <Route path="/insurance/aetna-rehab" element={<PublicRouteGuard><AetnaRehab /></PublicRouteGuard>} />
@@ -1177,12 +1331,19 @@ const AppInner = () => {
             <Route path="/editorial-policy" element={<PublicRouteGuard><EditorialPolicy /></PublicRouteGuard>} />
             <Route path="/rehab-score" element={<PublicRouteGuard><RehabScore /></PublicRouteGuard>} />
             <Route path="/medical-disclaimer" element={<PublicRouteGuard><MedicalDisclaimer /></PublicRouteGuard>} />
+            <Route path="/how-we-make-money" element={<PublicRouteGuard><HowWeMakeMoney /></PublicRouteGuard>} />
+            <Route path="/ekra" element={<Navigate to="/how-we-make-money" replace />} />
+            <Route path="/how-we-work" element={<Navigate to="/how-we-make-money" replace />} />
+            <Route path="/transparency" element={<Navigate to="/how-we-make-money" replace />} />
+            <Route path="/our-business-model" element={<Navigate to="/how-we-make-money" replace />} />
             
             {/* Seeker Authentication */}
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/seeker/signup" element={<SeekerSignup />} />
             <Route path="/signup" element={<Navigate to="/seeker/signup" replace />} />
+            <Route path="/signup/complete" element={<SignupCompletePage />} />
+            <Route path="/signup/subscription" element={<Navigate to="/provider/billing?signup=retry" replace />} />
             <Route path="/seeker/reset-password" element={<ResetPassword />} />
             <Route path="/reset-password" element={<Navigate to="/seeker/reset-password" replace />} />
             <Route path="/provider-reset-password" element={<Navigate to="/provider/reset-password" replace />} />
@@ -1201,7 +1362,8 @@ const AppInner = () => {
               <Route path="help" element={<SeekerHelp />} />
               <Route path="concierge" element={<SeekerConcierge />} />
               <Route path="concierge/:inquiryId" element={<SeekerConcierge />} />
-              <Route path="international" element={<SeekerInternationalCase />} />
+              {/* /seeker/international retired 2026-05-20 with the paid international placement product. */}
+              <Route path="international" element={<Navigate to="/seeker/concierge" replace />} />
               <Route path="insurance-verifications" element={<SeekerInsuranceVerifications />} />
               <Route path="saved-searches" element={<SeekerSavedSearches />} />
               <Route path="*" element={<Navigate to="/account" replace />} />
@@ -1215,16 +1377,29 @@ const AppInner = () => {
             <Route path="/provider-resources" element={<PublicRouteGuard><ProviderResources /></PublicRouteGuard>} />
             {/* /provider-guides hub — canonical redirect to /provider-resources (which lists all guides) */}
             <Route path="/provider-guides" element={<Navigate to="/provider-resources" replace />} />
-            {/* Phase 1: split signup from facility creation. Old signup
-                URL redirects to the new auth-only flow. The legacy multi-step
-                ProviderSignup component is reused at /provider/onboarding/new-listing
-                (mounted with initialStep={3} so it skips the auth steps). */}
-            <Route path="/provider-signup" element={<Navigate to="/auth/signup" replace />} />
-            <Route path="/auth/signup" element={<AuthSignup />} />
+            {/* /provider-signup is the legacy entry. Redirected to the
+                unified onboarding wizard so seekers and providers landing
+                on old links / search results / footer CTAs end up in the
+                same place. The wizard owns Account → Verify → Find or
+                List → Plan → Build/Edit. */}
+            <Route path="/provider-signup" element={<Navigate to="/provider/onboarding" replace />} />
+            <Route path="/auth/signup" element={<NavigateAuthSignup />} />
             <Route path="/provider/onboarding" element={<ProviderOnboarding />} />
-            <Route path="/provider/onboarding/new-listing" element={<NewListingForm />} />
-            <Route path="/provider/claim/:slug" element={<ClaimWizard />} />
-            <Route path="/provider/claim/:slug/submitted" element={<ClaimSubmitted />} />
+            {/* 2026-05-20 unification: every legacy entry redirects into
+                the unified wizard. "Add another facility" arrives with
+                ?action=add-listing so the wizard skips PlanStep on
+                publish. Claim deep-links carry the slug as a query param
+                so AccountStep can pre-seed selected_facility_id. The
+                post-claim status page is folded into /provider/claims. */}
+            <Route
+              path="/provider/onboarding/new-listing"
+              element={<Navigate to="/provider/onboarding?action=add-listing" replace />}
+            />
+            <Route path="/provider/claim/:slug" element={<NavigateProviderClaim />} />
+            <Route
+              path="/provider/claim/:slug/submitted"
+              element={<Navigate to="/provider/claims" replace />}
+            />
             <Route path="/provider/claims" element={<ProviderClaims />} />
             <Route path="/provider-roi-calculator" element={<PublicRouteGuard><ProviderROICalculator /></PublicRouteGuard>} />
             <Route path="/provider-login" element={<Navigate to="/login" replace />} />
@@ -1235,7 +1410,10 @@ const AppInner = () => {
             <Route path="/provider/reset-password" element={<ProviderResetPassword />} />
             <Route path="/provider/support" element={<Navigate to="/provider-support" replace />} />
             <Route path="/provider/faq" element={<Navigate to="/provider-faq" replace />} />
-            <Route path="/provider/signup" element={<Navigate to="/provider-signup" replace />} />
+            {/* Phase AC: collapsed 2-hop redirect. Previously
+                /provider/signup → /provider-signup → /provider/onboarding.
+                Direct to the canonical onboarding wizard. */}
+            <Route path="/provider/signup" element={<Navigate to="/provider/onboarding" replace />} />
             
             {/* Provider SEO Pages */}
             <Route path="/provider-guides/get-more-rehab-patients" element={<PublicRouteGuard><GetMoreRehabPatients /></PublicRouteGuard>} />
@@ -1599,17 +1777,32 @@ const AppInner = () => {
               <Route path="inquiries" element={<ProviderInquiriesPage />} />
               <Route path="reviews" element={<ProviderReviewsPage />} />
               <Route path="analytics" element={<ProviderAnalyticsPage />} />
-              <Route path="credits" element={<Navigate to="/provider/billing?purchase_credits=true" replace />} />
-              <Route path="pro-upgrade" element={<ProviderProUpgradePage />} />
+              {/* Legacy /provider/credits — the credit-purchase flow was retired
+                  during the EKRA flat-fee refactor. Send any stale bookmarks
+                  straight to billing where the active Pro / add-on state is
+                  displayed. */}
+              <Route path="credits" element={<Navigate to="/provider/billing" replace />} />
+              <Route path="pro-upgrade" element={<Navigate to="/for-providers" replace />} />
               <Route path="billing" element={<ProviderBillingPage />} />
+              <Route path="subscription" element={<ProviderBillingPage />} />
+              <Route path="billing/cancel" element={<ProviderBillingCancelPage />} />
+              <Route path="billing/placements" element={<ProviderBillingPlacementsPage />} />
+              <Route path="billing/concierge" element={<ProviderBillingConciergePage />} />
+              <Route path="marketing" element={<ProviderMarketingHub />} />
+              <Route path="marketing/featured" element={<ProviderMarketingFeatured />} />
+              <Route path="marketing/concierge" element={<ProviderMarketingConcierge />} />
               <Route path="settings" element={<ProviderSettingsPage />} />
               <Route path="embed-badge" element={<ProviderEmbedBadgePage />} />
               <Route path="notifications" element={<ProviderNotificationsPage />} />
               <Route path="help" element={<ProviderHelpPage />} />
               <Route path="knowledge-base" element={<ProviderKnowledgeBasePage />} />
               <Route path="image-guidelines" element={<ProviderImageGuidelines />} />
-              <Route path="placement-network" element={<ProviderPlacementNetworkPage />} />
-              <Route path="placements" element={<Navigate to="/provider/placement-network" replace />} />
+              {/* placement-network + placements removed — the pay-per-admission
+                  network model retired. Both navigate to the new for-providers
+                  sales surface so stale bookmarks land somewhere useful. */}
+              <Route path="placement-network" element={<Navigate to="/provider/marketing" replace />} />
+              <Route path="placements" element={<Navigate to="/provider/marketing/featured" replace />} />
+              <Route path="placement" element={<Navigate to="/provider/marketing/concierge" replace />} />
             </Route>
 
             {/* Admin Routes */}
@@ -1627,7 +1820,6 @@ const AppInner = () => {
               <Route path="subscriptions" element={<AdminSubscriptions />} />
               <Route path="featured" element={<Navigate to="/admin/subscriptions?tab=featured" replace />} />
               <Route path="audit-log" element={<AdminAuditLog />} />
-              <Route path="lead-unlocks" element={<AdminLeadUnlocks />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="users" element={<AdminUsers />} />
@@ -1636,16 +1828,26 @@ const AppInner = () => {
               <Route path="security-logs" element={<AdminSecurityLogs />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="concierge" element={<AdminConcierge />} />
+              <Route path="concierge/audit-review" element={<AdminConciergeAuditReview />} />
+              <Route path="concierge/metrics" element={<AdminConciergeMetrics />} />
+              {/* International placement admin surfaces retired 2026-05-20
+                  alongside the paid product. Both routes now redirect
+                  to the concierge dashboard so any stale admin bookmarks
+                  land somewhere useful. */}
               <Route path="international" element={<Navigate to="/admin/concierge" replace />} />
-              <Route path="international/agreement" element={<InternationalAgreementTemplate />} />
-              <Route path="placement-revenue" element={<PlacementRevenueDashboard />} />
+              <Route path="international/agreement" element={<Navigate to="/admin/concierge" replace />} />
+              <Route path="placement-revenue" element={<Navigate to="/admin" replace />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="marketing" element={<AdminMarketing />} />
               <Route path="blog" element={<AdminBlog />} />
-              <Route path="inbox" element={<AdvisorInbox />} />
+              {/* Advisor inbox + Provider directory unified into the
+                  /admin/concierge Placements workspace tabs (2026-05-20).
+                  Redirects keep old bookmarks landing on the correct
+                  tab inside the unified page. */}
+              <Route path="inbox" element={<Navigate to="/admin/concierge?tab=inbox" replace />} />
               <Route path="escalations" element={<AdminEscalations />} />
               <Route path="back-office" element={<AdminBackOffice />} />
-              <Route path="provider-directory" element={<AdvisorProviderDirectory />} />
+              <Route path="provider-directory" element={<Navigate to="/admin/concierge?tab=directory" replace />} />
               <Route path="email-logs" element={<AdminEmailLogs />} />
               <Route path="not-found-events" element={<AdminNotFoundEvents />} />
             </Route>
@@ -1660,7 +1862,12 @@ const AppInner = () => {
             <Route path="/us-rehab/california" element={<Navigate to="/rehab-centers/california" replace />} />
             
             {/* Legacy misc redirects */}
-            <Route path="/sitemap" element={<Navigate to="/sitemap-index.xml" replace />} />
+            {/* Phase AC: /sitemap-index.xml is a static file in /public.
+                React Router's <Navigate> doesn't fetch static assets —
+                it just changes the SPA route, and the catch-all renders
+                NotFound. Use StaticFileRedirect (window.location.replace)
+                so the browser issues a real HTTP request. */}
+            <Route path="/sitemap" element={<StaticFileRedirect to="/sitemap-index.xml" />} />
             <Route path="/search" element={<Navigate to="/search-results" replace />} />
             
             {/* 404 - explicit route so SEO/near-me pages can <Navigate to="/404"> without falling through SmartCatchAll's prefix matchers */}

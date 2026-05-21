@@ -118,21 +118,26 @@ export default function ProviderSupport() {
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
       <main className="flex-1">
-        {/* Hero */}
-        <section className="border-b border-border/50 py-10 md:py-14">
-          <div className="container">
+        {/* Hero — PROVIDER SUPPORT. Provider navy+gold palette. */}
+        <section className="relative overflow-hidden border-b border-white/5"
+          style={{ background: "linear-gradient(135deg, #1B365D 0%, #0E1F3A 100%)" }}>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(205,162,35,0.10),_transparent_55%)]" />
+          <div className="container relative z-10 py-6 md:py-8">
             <BreadcrumbNav
-              className="mb-4"
-              variant="light"
+              className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
+              variant="dark"
               items={[
                 { label: "For Providers", href: "/for-providers" },
                 { label: "Support" },
               ]}
             />
-            <h1 className="font-display text-2xl md:text-3xl font-semibold text-foreground">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#CDA223]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[#CDA223] ring-1 ring-[#CDA223]/30">
+              Provider Support
+            </div>
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-white">
               Support
             </h1>
-            <p className="mt-2 text-muted-foreground max-w-lg">
+            <p className="mt-1 text-sm md:text-base text-white/80 max-w-lg">
               Questions about your listing or account? We're here to help.
             </p>
           </div>

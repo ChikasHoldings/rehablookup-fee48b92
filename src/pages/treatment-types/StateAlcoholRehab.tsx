@@ -1,4 +1,4 @@
-import { useParams, Navigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -7,21 +7,31 @@ import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { TreatmentStateHero } from "@/components/seo/TreatmentStateHero";
 import {
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
   generateStateTreatmentChecklist,
 } from "@/utils/stateContentGenerator";
 import {
-  Phone, Clock, Shield, CheckCircle, MapPin, ArrowRight, Search, Heart,
+  Phone, Clock, Shield, CheckCircle, MapPin, ArrowRight, Search, Heart, Activity,
 } from "lucide-react";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const StateAlcoholRehab = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
   const stateData = statesData.find((s) => s.slug === stateSlug);
 
   if (!stateData) {
-    return <Navigate to="/treatment-types/alcohol-rehabilitation" replace />;
+    return (
+      <NotFoundInPlace
+        title="Alcohol rehab not found"
+        message="We don't have alcohol rehab data for that state yet. Browse all states."
+        backTo="/treatment-types/alcohol-rehabilitation"
+        backLabel="Browse states"
+      />
+    );
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
@@ -68,45 +78,26 @@ const StateAlcoholRehab = () => {
         ]}
       />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/95 to-primary/90 py-12 md:py-16">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40" />
-        <div className="container relative z-10">
-          <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "Treatment Types", href: "/treatment-types" },
-              { label: "Alcohol Rehab", href: "/treatment-types/alcohol-rehabilitation" },
-              { label: stateName },
-            ]}
-          />
-          <div className="flex items-center gap-2 text-white/80 mb-3">
-            <MapPin className="h-4 w-4" />
-            <span className="text-sm">{stateName}</span>
-          </div>
-          <h1 className="text-2xl md:text-4xl font-bold text-white mb-4">
-            Alcohol Rehab Centers in {stateName}
-          </h1>
-          <p className="text-white/85 text-lg max-w-2xl mb-6">
-            Find accredited alcohol addiction treatment programs across {stateName}. From medical detox to long-term 
-            recovery support, compare verified facilities and verify insurance coverage — all in one place.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild size="lg" variant="secondary">
-              <Link to="/rehab-centers">
-                <Search className="mr-2 h-4 w-4" />
-                Find Treatment
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-              <Link to={`/rehab-centers/${stateSlug}`}>
-                Browse {stateName} Centers
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <TreatmentStateHero
+        treatmentKey="alcohol"
+        treatmentName="Alcohol Rehab"
+        treatmentIcon={Activity}
+        stateName={stateName}
+        abbreviation={abbreviation}
+        stateSlug={stateSlug!}
+        treatmentHubHref="/treatment-types/alcohol-rehabilitation"
+        treatmentHubLabel="Alcohol Rehab"
+        cities={cities}
+      />
+
+      {/* Featured rotation — paid Featured pool for this
+          state, mounted directly under the hero. Visual matches
+          the homepage Featured section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="state"
+        placement_value={stateSlug}
+        title={`Featured Alcohol Rehab in ${stateName}`}
+      />
 
       {/* Trust Bar */}
       <section className="border-b bg-muted/30 py-4">

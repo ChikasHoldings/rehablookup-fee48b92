@@ -4,6 +4,7 @@ import { resolveFilterHubRedirect } from "@/lib/rehabCentersFilterRedirects";
 import { Layout } from "@/components/layout/Layout";
 import { SEO, generateDirectoryCollectionSchema } from "@/components/SEO";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import { SearchForm } from "@/components/search/SearchForm";
 import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
@@ -370,45 +371,69 @@ const RehabCenters = () => {
         ]}
       />
       
-      {/* Hero Header */}
-      <section className="relative border-b border-primary/20 bg-gradient-to-b from-primary via-primary/95 to-primary/85 py-10 md:py-14">
-        <MedicalPatternBackground />
-        <div className="container relative z-10">
+      {/* Hero — main DIRECTORY hub. Distinct from every other archetype
+          by leading with a SEARCH FORM. Smaller footprint than the
+          State page hero per the brief. */}
+      <section className="relative overflow-hidden border-b border-white/5">
+        <img
+          src="https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=1920&q=80"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/90 via-slate-900/85 to-primary/70" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
+
+        <div className="container relative z-10 py-7 md:py-10">
           <BreadcrumbNav
-            className="mb-4"
+            className="mb-4 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             variant="dark"
             items={[{ label: "Treatment Centers" }]}
           />
-          <div className="mb-6 text-center">
+          <div className="mb-5 text-center max-w-2xl mx-auto">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+              <Search className="h-3 w-3" />
+              Directory · Search Enabled
+            </div>
             <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-white md:text-3xl lg:text-4xl">
               Find Treatment Centers
             </h1>
-            <p className="mt-3 text-sm md:text-base text-white/90 max-w-lg mx-auto leading-relaxed">
-              Search verified treatment centers and find the right care for your recovery journey
+            <p className="mt-2 text-sm md:text-base text-white/85 max-w-lg mx-auto">
+              Search verified addiction treatment centers nationwide. Filter by city, treatment, or insurance.
             </p>
           </div>
 
-          {/* Search Form */}
+          {/* Search form — the page's signature affordance, kept
+              prominently in the hero. */}
           <SearchForm
             variant="directory"
             targetPath="/search-results"
             onSearchComplete={handleSearchComplete}
           />
 
-          {/* Quick Stats */}
-          <div className="mt-6 flex items-center justify-center gap-6 text-white/80 text-xs md:text-sm">
-            <div className="flex items-center gap-1.5">
-              <Building2 className="h-4 w-4" />
-              <span>{allCenters.length}+ Centers</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Shield className="h-4 w-4" />
-              <span>Verified Listings</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Star className="h-4 w-4" />
-              <span>User Reviews</span>
-            </div>
+          {/* Premium stat tiles — replaces the previous inline stats. */}
+          <div className="mt-5 grid grid-cols-3 gap-2 max-w-2xl mx-auto">
+            <LocationStatTile
+              size="sm"
+              label="Verified Centers"
+              value={`${allCenters.length.toLocaleString()}+`}
+              icon={Building2}
+            />
+            <LocationStatTile
+              size="sm"
+              label="Credentials"
+              value="Verified"
+              icon={Shield}
+            />
+            <LocationStatTile
+              size="sm"
+              label="Reviews"
+              value="Real"
+              icon={Star}
+            />
           </div>
         </div>
       </section>

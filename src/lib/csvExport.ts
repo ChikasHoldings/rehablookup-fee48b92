@@ -21,6 +21,17 @@ interface LeadExportData {
   who_seeking_help?: string | null;
   message?: string | null;
   facility_name?: string;
+  // Fields that the source data carries but the original CSV didn't
+  // export — added for admin ops use cases (cohort export, quality
+  // analysis, response-time audits).
+  inquiry_type?: string | null;
+  preferred_contact?: string | null;
+  quality_flag?: string | null;
+  provider_response_status?: string | null;
+  provider_responded_at?: string | null;
+  redistribution_status?: string | null;
+  age_range?: string | null;
+  gender?: string | null;
 }
 
 /**
@@ -78,7 +89,15 @@ export function exportLeadsToCSV(leads: LeadExportData[], filename?: string): vo
     { key: 'insurance_provider', header: 'Insurance Provider' },
     { key: 'location_city_state', header: 'Location' },
     { key: 'location_zip', header: 'ZIP Code' },
+    { key: 'age_range', header: 'Age Range' },
+    { key: 'gender', header: 'Gender' },
+    { key: 'inquiry_type', header: 'Inquiry Type' },
+    { key: 'preferred_contact', header: 'Preferred Contact' },
     { key: 'facility_name', header: 'Facility' },
+    { key: 'quality_flag', header: 'Quality Flag' },
+    { key: 'redistribution_status', header: 'Distribution' },
+    { key: 'provider_response_status', header: 'Provider Response' },
+    { key: 'provider_responded_at', header: 'Responded At' },
     { key: 'message', header: 'Message' },
   ];
 
@@ -92,10 +111,13 @@ export function exportLeadsToCSV(leads: LeadExportData[], filename?: string): vo
       let value = lead[key];
 
       // Format specific fields
-      if (key === 'created_at') {
-        value = formatDate(value as string);
-      } else if (key === 'status') {
-        value = formatStatus(value as string);
+      if (key === 'created_at' || key === 'provider_responded_at') {
+        value = value ? formatDate(value as string) : '';
+      } else if (key === 'status' || key === 'inquiry_type' || key === 'preferred_contact' ||
+                 key === 'quality_flag' || key === 'redistribution_status' ||
+                 key === 'provider_response_status') {
+        // Title-case + replace underscores for any enum-shaped string field
+        value = value ? formatStatus(value as string) : '';
       } else if (key === 'qualified') {
         value = value === true ? 'Yes' : value === false ? 'No' : '';
       } else if (key === 'primary_substance' && Array.isArray(value)) {

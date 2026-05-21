@@ -7,14 +7,10 @@ import {
   Check,
   CheckCheck,
   Trash2,
-  UserPlus,
-  Shield,
-  CreditCard,
-  AlertTriangle,
-  Settings,
-  MessageSquare,
   Filter,
   MoreHorizontal,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,99 +42,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useProviderNotifications, ProviderNotification } from "@/hooks/useProviderNotifications";
+import {
+  getNotificationEntry,
+  getNotificationRoute,
+  NOTIFICATION_CATEGORIES,
+  type NotificationCategory,
+} from "@/lib/providerNotificationTypes";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
 import { cn } from "@/lib/utils";
 
-const notificationTypeIcons: Record<string, React.ReactNode> = {
-  // Lead types
-  new_lead: <UserPlus className="h-5 w-5 text-primary" />,
-  high_intent_lead: <UserPlus className="h-5 w-5 text-orange-500" />,
-  lead_received: <UserPlus className="h-5 w-5 text-primary" />,
-  lead_reminder: <Bell className="h-5 w-5 text-amber-500" />,
-  lead_expired: <AlertTriangle className="h-5 w-5 text-red-500" />,
-  lead_status_changed: <MessageSquare className="h-5 w-5 text-blue-500" />,
-  lead_redistributed: <UserPlus className="h-5 w-5 text-primary" />,
-  lead_unlocked: <Check className="h-5 w-5 text-green-500" />,
-  // Billing types
-  credits_added: <CreditCard className="h-5 w-5 text-green-500" />,
-  subscription_updated: <CreditCard className="h-5 w-5 text-purple-500" />,
-  subscription_active: <Shield className="h-5 w-5 text-amber-500" />,
-  subscription_renewal: <CreditCard className="h-5 w-5 text-purple-500" />,
-  subscription_cancelled: <AlertTriangle className="h-5 w-5 text-red-500" />,
-  payment_failed: <AlertTriangle className="h-5 w-5 text-red-500" />,
-  low_credits_warning: <AlertTriangle className="h-5 w-5 text-amber-500" />,
-  lead_limit_warning: <AlertTriangle className="h-5 w-5 text-amber-500" />,
-  concierge_invoice_issued: <CreditCard className="h-5 w-5 text-purple-500" />,
-  concierge_invoice_paid: <CreditCard className="h-5 w-5 text-green-500" />,
-  // Listing types
-  listing_approved: <Shield className="h-5 w-5 text-green-500" />,
-  listing_rejected: <AlertTriangle className="h-5 w-5 text-red-500" />,
-  listing_needs_edits: <AlertTriangle className="h-5 w-5 text-amber-500" />,
-  featured_activated: <Shield className="h-5 w-5 text-amber-500" />,
-  featured_expired: <Shield className="h-5 w-5 text-muted-foreground" />,
-  image_flagged: <AlertTriangle className="h-5 w-5 text-red-500" />,
-  credential_verified: <Shield className="h-5 w-5 text-green-500" />,
-  credential_rejected: <AlertTriangle className="h-5 w-5 text-red-500" />,
-  // Placement & tour types
-  placement_introduction: <UserPlus className="h-5 w-5 text-indigo-500" />,
-  concierge_seeker_confirmed: <Check className="h-4 w-4 text-green-500" />,
-  concierge_placement_complete: <Check className="h-4 w-4 text-green-500" />,
-  tour_request: <MessageSquare className="h-5 w-5 text-blue-500" />,
-  tour_confirmed: <Check className="h-4 w-4 text-green-500" />,
-  tour_cancelled: <AlertTriangle className="h-5 w-5 text-red-500" />,
-  // Review & system
-  review_received: <MessageSquare className="h-5 w-5 text-yellow-500" />,
-  system: <Settings className="h-5 w-5 text-muted-foreground" />,
-};
-
-const notificationTypeLabels: Record<string, string> = {
-  new_lead: "New Inquiry",
-  high_intent_lead: "🔥 High Intent",
-  lead_received: "New Inquiry",
-  lead_reminder: "Reminder",
-  lead_expired: "Lead Expired",
-  lead_status_changed: "Inquiry Update",
-  lead_redistributed: "New Inquiry",
-  lead_unlocked: "Lead Unlocked",
-  credits_added: "Credits Added",
-  subscription_updated: "Subscription",
-  subscription_active: "Pro Activated",
-  subscription_renewal: "Subscription",
-  subscription_cancelled: "Subscription",
-  payment_failed: "Payment Failed",
-  low_credits_warning: "Low Credits",
-  lead_limit_warning: "Low Credits",
-  concierge_invoice_issued: "Billing",
-  concierge_invoice_paid: "Billing",
-  listing_approved: "Listing Approved",
-  listing_rejected: "Listing Rejected",
-  listing_needs_edits: "Listing Update",
-  featured_activated: "Featured",
-  featured_expired: "Featured",
-  image_flagged: "Image Flagged",
-  credential_verified: "Credential",
-  credential_rejected: "Credential",
-  placement_introduction: "Placement",
-  concierge_seeker_confirmed: "Placement",
-  concierge_placement_complete: "Placement",
-  tour_request: "Tour",
-  tour_confirmed: "Tour",
-  tour_cancelled: "Tour",
-  review_received: "Review",
-  system: "System",
-};
-
-type NotificationTypeFilter = "all" | "leads" | "billing" | "listings" | "placements" | "system";
-
-const typeFilterCategories: Record<NotificationTypeFilter, string[]> = {
-  all: [],
-  leads: ["new_lead", "high_intent_lead", "lead_received", "lead_reminder", "lead_expired", "lead_status_changed", "lead_redistributed", "lead_unlocked"],
-  billing: ["credits_added", "subscription_updated", "subscription_active", "subscription_renewal", "subscription_cancelled", "payment_failed", "low_credits_warning", "lead_limit_warning", "concierge_invoice_issued", "concierge_invoice_paid"],
-  listings: ["listing_approved", "listing_rejected", "listing_needs_edits", "featured_activated", "featured_expired", "image_flagged", "credential_verified", "credential_rejected"],
-  placements: ["placement_introduction", "concierge_seeker_confirmed", "concierge_placement_complete", "tour_request", "tour_confirmed", "tour_cancelled"],
-  system: ["review_received", "system"],
-};
+type NotificationTypeFilter = "all" | NotificationCategory;
 
 function NotificationItem({
   notification,
@@ -150,41 +64,18 @@ function NotificationItem({
   onDelete: (id: string) => void;
 }) {
   const navigate = useNavigate();
-  const icon = notificationTypeIcons[notification.type] || notificationTypeIcons.system;
-  const label = notificationTypeLabels[notification.type] || "Notification";
+  const entry = getNotificationEntry(notification.type);
 
   const handleClick = () => {
     if (!notification.read) {
       onMarkAsRead(notification.id);
     }
-    
-    // Check for explicit link in metadata
-    const metadata = notification.metadata as Record<string, any> | null;
-    if (metadata?.link) {
-      navigate(metadata.link);
-      return;
-    }
-    
-    // Type-based routing
-    const leadTypes = ["new_lead", "high_intent_lead", "lead_received", "lead_reminder", "lead_expired", "lead_status_changed", "lead_redistributed", "lead_unlocked"];
-    const billingTypes = ["credits_added", "subscription_updated", "subscription_active", "subscription_renewal", "subscription_cancelled", "payment_failed", "low_credits_warning", "lead_limit_warning", "concierge_invoice_issued", "concierge_invoice_paid"];
-    const listingTypes = ["listing_approved", "listing_rejected", "listing_needs_edits", "featured_activated", "featured_expired", "image_flagged", "credential_verified", "credential_rejected"];
-    const placementTypes = ["placement_introduction", "concierge_seeker_confirmed", "concierge_placement_complete"];
-    const tourTypes = ["tour_request", "tour_confirmed", "tour_cancelled"];
-
-    if (leadTypes.includes(notification.type)) {
-      navigate("/provider/inquiries");
-    } else if (billingTypes.includes(notification.type)) {
-      navigate("/provider/billing");
-    } else if (listingTypes.includes(notification.type)) {
-      navigate("/provider/listings");
-    } else if (placementTypes.includes(notification.type)) {
-      navigate("/provider/placement-network");
-    } else if (tourTypes.includes(notification.type)) {
-      navigate("/provider/placement-network");
-    } else if (notification.type === "review_received") {
-      navigate("/provider/reviews");
-    }
+    // Registry-driven routing. Honours `metadata.link` first (per-row
+    // deep link from the backend), then falls back to the type's
+    // canonical route. Unknown types route to /provider/dashboard
+    // (FALLBACK_ENTRY) and log in dev so missing types surface during
+    // testing instead of becoming a silent no-op.
+    navigate(getNotificationRoute(notification.type, notification.metadata));
   };
 
   return (
@@ -195,7 +86,7 @@ function NotificationItem({
       )}
       onClick={handleClick}
     >
-      <div className="flex-shrink-0 mt-0.5">{icon}</div>
+      <div className="flex-shrink-0 mt-0.5">{entry.icon}</div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -203,11 +94,11 @@ function NotificationItem({
               {notification.title}
             </h4>
             {!notification.read && (
-              <span className="h-2 w-2 rounded-full bg-primary" />
+              <span className="h-2 w-2 rounded-full bg-primary" aria-label="Unread" />
             )}
           </div>
           <Badge variant="outline" className="text-xs shrink-0">
-            {label}
+            {entry.label}
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
@@ -250,6 +141,8 @@ export default function ProviderNotificationsPage() {
     notifications,
     unreadCount,
     isLoading,
+    error,
+    refetch,
     markAsRead,
     markAllAsRead,
     deleteNotification,
@@ -259,7 +152,8 @@ export default function ProviderNotificationsPage() {
   // Apply both tab filter and type filter
   const filteredNotifications = notifications.filter((n) => {
     const tabMatch = activeTab === "all" || !n.read;
-    const typeMatch = typeFilter === "all" || typeFilterCategories[typeFilter].includes(n.type);
+    const typeMatch =
+      typeFilter === "all" || NOTIFICATION_CATEGORIES[typeFilter].includes(n.type);
     return tabMatch && typeMatch;
   });
 
@@ -270,11 +164,13 @@ export default function ProviderNotificationsPage() {
   });
   const visibleNotifications = notifPagination.paginate(filteredNotifications);
 
-  // Reset to page 1 on tab change so users always land on first page.
+  // Reset to page 1 on tab OR type-filter change. Previously only
+  // activeTab triggered the reset, so switching from "All / page 3" to
+  // a category with fewer results stranded the user on an empty page.
   useEffect(() => {
     notifPagination.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, typeFilter]);
 
   const groupedNotifications = visibleNotifications.reduce((groups, notification) => {
     const date = format(new Date(notification.created_at), "yyyy-MM-dd");
@@ -319,6 +215,34 @@ export default function ProviderNotificationsPage() {
             ))}
           </CardContent>
         </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        <div className="max-w-5xl mx-auto space-y-6">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">Notifications</h1>
+          <Card>
+            <CardContent className="py-14 flex flex-col items-center text-center gap-3">
+              <div className="h-12 w-12 rounded-xl bg-destructive/10 flex items-center justify-center">
+                <AlertCircle className="h-6 w-6 text-destructive" aria-hidden />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Couldn't load notifications</h3>
+                <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                  We weren't able to reach the notifications service. Existing
+                  notifications are still saved — this is just a display issue.
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
+                <RefreshCw className="h-4 w-4" aria-hidden />
+                Try again
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );

@@ -6,7 +6,6 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle, Shield, Users, Building2, TrendingUp, ChevronRight, Scale, FileText, ExternalLink, Clock } from "lucide-react";
 import { stateLicensingData } from "@/data/stateLicensingData";
-import { ProviderStickyCTA } from "@/components/provider-guides/ProviderStickyCTA";
 
 const STATE_DATA: Record<string, { name: string; abbr: string; facilities: number; searches: string }> = {
   "alabama": { name: "Alabama", abbr: "AL", facilities: 45, searches: "2,400" },
@@ -108,12 +107,15 @@ export default function ForProvidersState() {
       />
 
       <main className="flex-1">
-        {/* Hero */}
-        <section className="bg-primary py-12 md:py-20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
-          <div className="container relative z-10 max-w-4xl mx-auto px-4">
+        {/* Hero — FOR PROVIDERS / STATE. Provider navy + gold palette
+            (matches ForProviders / ProviderFAQ / ProviderResources).
+            Smaller than State per the brief. */}
+        <section className="relative overflow-hidden border-b border-white/5"
+          style={{ background: "linear-gradient(135deg, #1B365D 0%, #0E1F3A 100%)" }}>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(205,162,35,0.10),_transparent_55%)]" />
+          <div className="container relative z-10 max-w-4xl mx-auto px-4 py-6 md:py-9">
             <BreadcrumbNav
-              className="mb-5"
+              className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
               variant="dark"
               items={[
                 { label: "For Providers", href: "/for-providers" },
@@ -121,20 +123,20 @@ export default function ForProvidersState() {
               ]}
             />
             <div className="text-center">
-              <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full px-4 py-1.5 mb-5">
-                <Building2 className="h-4 w-4 text-primary-foreground/80" />
-                <span className="text-sm font-medium text-primary-foreground/90">{state.name} Provider Opportunities</span>
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#CDA223]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[#CDA223] ring-1 ring-[#CDA223]/30">
+                <Building2 className="h-3 w-3" />
+                {state.name} Provider Opportunities
               </div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-primary-foreground leading-tight mb-4 [text-wrap:balance]">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-white leading-tight mb-2 [text-wrap:balance]">
                 List Your Treatment Center in {state.name}
               </h1>
-              <p className="text-base md:text-lg text-primary-foreground/80 max-w-2xl mx-auto mb-8">
-                {state.searches}+ families search for addiction treatment in {state.name} every month. Get your facility in front of them — for free.
+              <p className="text-sm md:text-base text-white/80 max-w-2xl mx-auto mb-4">
+                {state.searches}+ families search for addiction treatment in {state.name} every month.
               </p>
               <Link to="/provider-signup">
-                <Button size="lg" variant="secondary" className="gap-2 h-14 px-10 text-base font-semibold shadow-lg">
+                <Button size="default" className="bg-[#CDA223] text-[#1B365D] hover:bg-[#B38C1C] gap-2 font-semibold shadow-lg">
                   List Your Facility Free
-                  <ArrowRight className="h-5 w-5" />
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>
@@ -397,7 +399,6 @@ export default function ForProvidersState() {
         </section>
       </main>
 
-      <ProviderStickyCTA />
       <Footer />
     </div>
   );

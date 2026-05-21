@@ -1,8 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { useAdminNotifications } from "@/hooks/useAdminNotifications";
 import { useAdminUserNotifications } from "@/hooks/useAdminUserNotifications";
+import { resolveNotificationLink } from "@/lib/notificationRouteMap";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +33,8 @@ import {
   Mail,
   Clock,
   ShieldAlert,
+  AlertCircle,
+  X,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import {
@@ -145,16 +149,61 @@ const getNotificationBadge = (type: string) => {
 };
 
 const PAYMENT_TYPES = ["payment_failed", "payment_delinquent", "placement_payment_failed"];
-const SECURITY_TYPES = ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock"];
+const SECURITY_TYPES = ["brute_force", "brute_force_alert", "login_alert", "security_event", "security_block", "security_unblock", "security_auto_block"];
+// Round-30 delivery-failure surfacing: SMS / notify-edge-fn callers
+// insert these types when Twilio or downstream functions hard-fail
+// after retry. Surfaced as a group so ops can spot outages quickly.
+const DELIVERY_FAILURE_TYPES = [
+  // SMS retry exhaustion
+  "lead_sms_delivery_failure",
+  "concierge_sms_delivery_failure",
+  "message_sms_delivery_failure",
+  "tour_sms_delivery_failure",
+  "free_tier_redirect_notify_failure",
+  // Dunning / email cascade exhaustion
+  "dunning_total_delivery_failure",
+  "dunning_email_failed",
+  "resend_api_failure",
+  // Stripe webhook / subscription / refund half-states
+  "pro_activation_db_failure",
+  "pro_activation_poll_timeout",
+  "cancellation_split_brain",
+  "out_of_band_subscription_refund",
+  "subscription_cancel_refund_failed",
+  "subscription_refund_failed",
+  "subscription_cancellation_row_insert_failed",
+  "webhook_dedup_failure",
+  // Add-on / Pro benefits partial-apply failures
+  "pro_benefits_partial_failure",
+  "featured_addon_partial_failure",
+  "concierge_addon_partial_failure",
+  "addon_waitlist_invite_email_failed",
+  "international_invoice_failed",
+  "featured_addon_activation_failed",
+  "concierge_addon_activation_failed",
+  "payment_failed_orphan_customer",
+  "addon_flag_cleared_without_audit_row",
+  "duplicate_active_pro_subscription",
+  // Lead pipeline silent-failure escalations
+  "lead_distribution_insert_failure",
+  "lead_notification_failure",
+  "lead_notification_event_failure",
+  "lead_email_log_failure",
+  "lead_status_update_failure",
+];
 
 export default function AdminNotifications() {
   const navigate = useNavigate();
-  const { logError } = useAdminErrorHandler("AdminNotifications");
+  useAdminErrorHandler("AdminNotifications");
   const { adminRole, isSuperAdmin, hasPermission } = useAdminAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hydratedRef = useRef(false);
+
   const {
     notifications: globalNotifications,
     unreadCount: globalUnreadCount,
     isLoading: globalLoading,
+    error: globalError,
     markAsRead: markGlobalAsRead,
     markAllAsRead: markAllGlobalAsRead,
     deleteNotification: deleteGlobalNotification,
@@ -166,6 +215,7 @@ export default function AdminNotifications() {
     notifications: userNotifications,
     unreadCount: userUnreadCount,
     isLoading: userLoading,
+    error: userError,
     markAsRead: markUserAsRead,
     markAllAsRead: markAllUserAsRead,
     deleteNotification: deleteUserNotification,
@@ -178,7 +228,50 @@ export default function AdminNotifications() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // URL state hydration (once on mount). Restores tab / filter / type /
+  // q if present; defaults are not written so the bare URL stays clean.
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    const t = searchParams.get("tab");
+    const f = searchParams.get("filter");
+    const ty = searchParams.get("type");
+    const q = searchParams.get("q");
+    if (t === "global" || t === "personal" || t === "all") setActiveTab(t);
+    if (f === "unread" || f === "all") setFilter(f);
+    if (ty) setTypeFilter(ty);
+    if (q) setSearchQuery(q);
+  }, [searchParams]);
+
+  // Loop-guarded URL sync.
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const next = new URLSearchParams(searchParams);
+    const setOrDelete = (key: string, value: string, defaultValue: string) => {
+      if (value && value !== defaultValue) next.set(key, value);
+      else next.delete(key);
+    };
+    setOrDelete("tab", activeTab, "all");
+    setOrDelete("filter", filter, "all");
+    setOrDelete("type", typeFilter, "all");
+    setOrDelete("q", searchQuery, "");
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [activeTab, filter, typeFilter, searchQuery, searchParams, setSearchParams]);
+
   const isLoading = globalLoading || userLoading;
+  const anyError = globalError || userError;
+
+  const filtersActive =
+    activeTab !== "all" || filter !== "all" || typeFilter !== "all" || searchQuery !== "";
+
+  const handleClearFilters = () => {
+    setActiveTab("all");
+    setFilter("all");
+    setTypeFilter("all");
+    setSearchQuery("");
+  };
 
   // Role-based notification type filtering
   // Advisors only see placement-related and system notifications
@@ -233,6 +326,8 @@ export default function AdminNotifications() {
       notifications = notifications.filter(n => PAYMENT_TYPES.includes(n.type));
     } else if (typeFilter === "security_types") {
       notifications = notifications.filter(n => SECURITY_TYPES.includes(n.type));
+    } else if (typeFilter === "delivery_failures") {
+      notifications = notifications.filter(n => DELIVERY_FAILURE_TYPES.includes(n.type));
     } else if (typeFilter !== "all") {
       notifications = notifications.filter(n => n.type === typeFilter);
     }
@@ -299,47 +394,54 @@ export default function AdminNotifications() {
     });
   };
 
-  const getNotificationLink = (notification: typeof allNotifications[0]) => {
-    const metadata = notification.metadata as Record<string, any> | null;
+  // Maps a notification to its destination route. Uses the shared
+  // `resolveNotificationLink` helper (single source of truth, mirrored
+  // by AdminSidebar's per-route badge counts). Permission-gates: if
+  // the resolved route corresponds to a permission the admin lacks,
+  // return null so the row is not clickable.
+  const ROUTE_TO_PERMISSION: Record<string, string> = {
+    "/admin/providers": "providers",
+    "/admin/leads": "leads",
+    "/admin/subscriptions": "subscriptions",
+    "/admin/reviews": "reviews",
+    "/admin/escalations": "escalations",
+    "/admin/security-logs": "security_logs",
+    "/admin/concierge": "placements",
+    "/admin/support": "support",
+    "/admin/not-found-events": "audit_log",
+    "/admin/marketing": "leads",
+    "/admin/email-logs": "security_logs",
+    "/admin/seekers": "seekers",
+    "/admin/insurance-verifications": "leads",
+    "/admin/notifications": "notifications",
+  };
 
-    if ((notification as any).link) return (notification as any).link;
-    if (metadata?.link) return metadata.link;
+  const getNotificationLink = (notification: typeof allNotifications[0]): string | null => {
+    const metadata = (notification.metadata ?? null) as Record<string, unknown> | null;
+    const explicit = (notification as { link?: string | null }).link ?? null;
+    const link = resolveNotificationLink(notification.type, metadata, explicit);
 
-    switch (notification.type) {
-      case "provider_signup":
-        return hasPermission("providers") ? "/admin/providers?status=pending" : null;
-      case "payment_failed":
-      case "payment_delinquent":
-      case "placement_payment_failed":
-      case "subscription_change":
-      case "new_subscription":
-      case "subscription_cancelled":
-      case "churn_alert":
-      case "at_risk_provider":
-      case "provider_health":
-        return hasPermission("subscriptions") ? "/admin/subscriptions" : null;
-      case "new_lead":
-      case "lead_assigned":
-        return hasPermission("leads") ? (metadata?.lead_id ? `/admin/leads?id=${metadata.lead_id}` : "/admin/leads") : null;
-      case "facility_approved":
-      case "flagged_image":
-        return hasPermission("providers") ? "/admin/providers" : null;
-      case "brute_force":
-      case "brute_force_alert":
-      case "login_alert":
-      case "security_event":
-      case "security_block":
-      case "security_unblock":
-        return hasPermission("security_logs") ? "/admin/security-logs" : null;
-      case "new_review":
-      case "review_disputed":
-        return hasPermission("reviews") ? "/admin/reviews" : null;
-      case "welcome":
-      case "system":
-        return "/admin/profile";
-      default:
-        return null;
+    // Lead deep-link enrichment: if the destination is /admin/leads
+    // and metadata carries a lead_id, append it as a query string
+    // so the page deep-links to that lead.
+    let finalLink = link;
+    if (link === "/admin/leads" && metadata && typeof metadata.lead_id === "string") {
+      finalLink = `/admin/leads?id=${metadata.lead_id}`;
     }
+    if (link === "/admin/providers" && notification.type === "provider_signup") {
+      finalLink = "/admin/providers?status=pending";
+    }
+
+    // Permission gate using the canonical route → permission map. If
+    // the admin can't access the route, return null (row stays
+    // non-clickable). We strip the query string for the lookup so
+    // enriched links like /admin/leads?id=... still resolve.
+    const basePath = finalLink.split("?")[0];
+    const permission = ROUTE_TO_PERMISSION[basePath];
+    if (permission && !hasPermission(permission) && !isSuperAdmin) {
+      return null;
+    }
+    return finalLink;
   };
 
   const handleNotificationClick = (notification: typeof allNotifications[0], link: string | null) => {
@@ -353,24 +455,44 @@ export default function AdminNotifications() {
 
   const paymentIssuesCount = useMemo(() => allNotifications.filter((n) => PAYMENT_TYPES.includes(n.type)).length, [allNotifications]);
   const securityAlertsCount = useMemo(() => allNotifications.filter((n) => SECURITY_TYPES.includes(n.type)).length, [allNotifications]);
+  const deliveryFailuresCount = useMemo(() => allNotifications.filter((n) => DELIVERY_FAILURE_TYPES.includes(n.type)).length, [allNotifications]);
 
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-xl font-semibold text-foreground">Notifications</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => { refetchGlobal(); refetchUser(); }}
             disabled={isLoading}
             className="h-8"
+            aria-label="Refresh notifications"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
           </Button>
+          {filtersActive && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearFilters}
+              aria-label="Clear all filters"
+              className="h-8 text-xs"
+            >
+              <X className="h-3.5 w-3.5 mr-1.5" />
+              Clear filters
+            </Button>
+          )}
           {totalUnreadCount > 0 && (
-            <Button variant="outline" size="sm" onClick={handleMarkAllAsRead} className="h-8 text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleMarkAllAsRead}
+              className="h-8 text-xs"
+              aria-label="Mark all notifications as read"
+            >
               <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
               Mark All Read
             </Button>
@@ -378,21 +500,34 @@ export default function AdminNotifications() {
           {allNotifications.length > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 text-xs text-destructive hover:text-destructive">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs text-destructive hover:text-destructive"
+                  aria-label="Clear notifications in this view"
+                >
                   <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                   Clear
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Clear all notifications?</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    Clear {activeTab === "all" ? "all" : activeTab} notifications?
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently delete all {activeTab === "all" ? "" : activeTab} notifications. This action cannot be undone.
+                    {activeTab === "global" || activeTab === "all"
+                      ? "Global broadcasts are shared across all admins — deleting them removes them for everyone."
+                      : "This will permanently delete your personal notifications."}{" "}
+                    This action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  <AlertDialogAction
+                    onClick={handleDeleteAll}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
                     Clear All
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -401,6 +536,34 @@ export default function AdminNotifications() {
           )}
         </div>
       </div>
+
+      {/* Query-error banner */}
+      {anyError && (
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-destructive/5 p-3 flex items-start gap-3"
+        >
+          <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-destructive">
+              Failed to load notifications
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5 break-words">
+              {anyError instanceof Error ? anyError.message : String(anyError)}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              refetchGlobal();
+              refetchUser();
+            }}
+          >
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+          </Button>
+        </div>
+      )}
 
       {/* Filter Bar */}
       <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg border text-sm overflow-x-auto">
@@ -471,6 +634,21 @@ export default function AdminNotifications() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
+              {paymentIssuesCount > 0 && (
+                <SelectItem value="payment_types">
+                  ⚠ Payment Issues ({paymentIssuesCount})
+                </SelectItem>
+              )}
+              {securityAlertsCount > 0 && (
+                <SelectItem value="security_types">
+                  🛡 Security Alerts ({securityAlertsCount})
+                </SelectItem>
+              )}
+              {deliveryFailuresCount > 0 && (
+                <SelectItem value="delivery_failures">
+                  📩 Delivery Failures ({deliveryFailuresCount})
+                </SelectItem>
+              )}
               {notificationTypes.map(type => (
                 <SelectItem key={type} value={type}>
                   {type.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}

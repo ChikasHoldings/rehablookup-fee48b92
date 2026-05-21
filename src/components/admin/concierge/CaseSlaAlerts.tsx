@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { differenceInHours } from "date-fns";
-import { AlertTriangle, Flame, Clock, Zap, UserX, MessageSquareOff, HelpCircle, CalendarOff, Receipt } from "lucide-react";
+import { AlertTriangle, Flame, Clock, Zap, UserX, MessageSquareOff, HelpCircle, CalendarOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -16,8 +16,6 @@ export interface CaseSlaData {
   assigned_advisor_id?: string | null;
   payment_status?: string;
   tour_coordination_status?: string;
-  admission_status?: string;
-  provider_fee_status?: string | null;
   placement_confirmed?: boolean | null;
   seeker_confirmed?: boolean | null;
   introductions_sent_count?: number | null;
@@ -41,11 +39,11 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
     const hoursSinceUpdate = differenceInHours(now, updatedAt);
     const hoursSinceCreation = differenceInHours(now, createdAt);
 
-    // Skip closed/completed cases
-    if (caseData.status === "closed" || caseData.status === "completed") return [];
-    const isPlacedComplete = ["admitted", "billed"].includes(caseData.status) &&
-      (caseData.provider_fee_status === "paid" || caseData.provider_fee_status === "waived");
-    if (isPlacedComplete) return [];
+    // Skip terminal cases. Legacy admission_in_progress / admitted /
+    // billed rows from the retired paid-placement workflow are also
+    // excluded — they collapse to "Placed" in the new UI and have no
+    // remaining SLA gate.
+    if (["closed", "completed", "admission_in_progress", "admitted", "billed"].includes(caseData.status)) return [];
 
     // 1. High urgency case flag
     if (caseData.timeline_urgency === "immediate") {
@@ -128,7 +126,7 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
 
     // 8. Tour not scheduled — client selected but no tour
     if (
-      ["seeker_selected", "admission_in_progress", "in_contact"].includes(caseData.status) &&
+      ["seeker_selected", "in_contact"].includes(caseData.status) &&
       (!caseData.tour_coordination_status || caseData.tour_coordination_status === "none" || caseData.tour_coordination_status === "not_started") &&
       hoursSinceUpdate >= 24
     ) {
@@ -140,20 +138,9 @@ export function useCaseSlaAlerts(caseData: CaseSlaData | null | undefined): SlaA
       });
     }
 
-    // 9. Billing pending after admission
-    if (
-      ["admitted", "billed"].includes(caseData.status) &&
-      caseData.provider_fee_status !== "paid" &&
-      caseData.provider_fee_status !== "waived"
-    ) {
-      const placedHours = hoursSinceUpdate;
-      alerts.push({
-        key: "billing-pending",
-        icon: Receipt,
-        label: placedHours >= 72 ? "Invoice overdue" : "Invoice pending",
-        severity: placedHours >= 72 ? "critical" : "warning",
-      });
-    }
+    // (Alert #9 "Billing pending after admission" retired with the
+    // domestic-concierge fee removal — the early return above already
+    // excludes admitted/billed cases from any SLA scrutiny.)
 
     return alerts;
   }, [caseData]);

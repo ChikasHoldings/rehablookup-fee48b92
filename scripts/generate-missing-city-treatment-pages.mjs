@@ -430,8 +430,8 @@ function renderPage({ prefix, city }) {
 </head>
 <body>
   ${SHARED_HEADER_HTML}
-  <nav class="breadcrumbs" aria-label="Breadcrumb"><ul><li><a href="/">Home</a> &rsaquo; </li><li><a href="${hub}">${escHtml(label)}</a> &rsaquo; </li><li>${escHtml(city.city)}</li></ul></nav>
-  <main>
+  <main class="rl-main">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><ul><li><a href="/">Home</a> &rsaquo; </li><li><a href="${hub}">${escHtml(label)}</a> &rsaquo; </li><li>${escHtml(city.city)}</li></ul></nav>
     <h1>${escHtml(title)}</h1>
     <p>Directory of ${escHtml(label.toLowerCase())} options serving ${escHtml(city.city)}${city.population ? ` (${city.population} residents)` : ""}, ${city.stateAbbr}. Compare programs by clinical level, insurance accepted, and state licensure.</p>
 

@@ -17,6 +17,7 @@ import {
   resourceLinks 
 } from "@/components/seo/InternalLinkingSection";
 import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 
 export default function DrugRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
@@ -91,6 +92,17 @@ export default function DrugRehabNearMe() {
           availableBeds: "Limited",
         }}
         treatmentType="Drug Rehab"
+      />
+
+      {/* Featured rotation — paid Featured pool for the visitor's
+          geo-resolved state, mounted directly under the hero. Visual
+          matches the homepage Featured section. Renders nothing
+          until geo-IP resolves (per spec: don't fall back to
+          national on near-me — too random for this surface). */}
+      <LandingFeaturedSection
+        placement_type="near_me"
+        placement_value={stateData?.stateAbbr ?? null}
+        title={stateData ? `Featured Drug Rehab Centers in ${stateData.state}` : "Featured Drug Rehab Centers Near You"}
       />
 
       {/* Facility Listings */}

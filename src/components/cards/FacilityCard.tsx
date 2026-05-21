@@ -140,6 +140,18 @@ export interface FacilityCardProps {
   accreditations?: string[];
   rating?: { value: number; count: number };
   className?: string;
+  /** Render the subtle "Featured" badge + tracks impression position.
+   *  Optional and defaults off so existing usages render byte-identically. */
+  featured?: boolean;
+  /** Overrides the facility's default phone for the Call CTA. Used by
+   *  Featured rendering to display the facility's verified_phone when
+   *  has_facility_verified_contact is true. Falls back to facility.phone
+   *  when null/undefined. */
+  phoneOverride?: string | null;
+  /** Fire-and-forget click handler for the Call CTA. Featured rendering
+   *  wires this to log to featured_phone_clicks. MUST NOT block or
+   *  preventDefault — the dialer should always open natively. */
+  onPhoneClick?: () => void;
 }
 
 export function FacilityCard({
@@ -150,6 +162,9 @@ export function FacilityCard({
   accreditations = [],
   rating,
   className,
+  featured = false,
+  phoneOverride,
+  onPhoneClick,
 }: FacilityCardProps) {
   const levels = services.filter((s) => LEVELS_OF_CARE.has(s));
   const specialties = services.filter((s) => !LEVELS_OF_CARE.has(s));
@@ -178,6 +193,11 @@ export function FacilityCard({
           <Monogram name={facility.name} id={facility.id} className="h-20 w-20" />
         )}
         <div className="min-w-0 flex-1">
+          {featured && (
+            <span className="inline-flex items-center rounded-md bg-[#1B365D] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white mb-1.5">
+              Featured
+            </span>
+          )}
           <div className="flex items-start justify-between gap-3">
             <h3 className="truncate text-lg font-semibold text-slate-900">
               <Link to={profileHref} className="hover:text-emerald-700">
@@ -265,14 +285,19 @@ export function FacilityCard({
         </Link>
         {isUnclaimed ? (
           <Link
-            to={facility.slug ? `/provider/claim/${facility.slug}` : "/provider-signup"}
+            to={
+              facility.id
+                ? `/provider/onboarding?intent=claim&facility_id=${facility.id}`
+                : "/provider/onboarding"
+            }
             className="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-emerald-300 hover:text-emerald-700"
           >
             Claim This Listing
           </Link>
-        ) : facility.phone ? (
+        ) : (phoneOverride ?? facility.phone) ? (
           <a
-            href={`tel:${facility.phone}`}
+            href={`tel:${phoneOverride ?? facility.phone}`}
+            onClick={onPhoneClick}
             className="inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-emerald-300 hover:text-emerald-700"
           >
             <Phone className="h-4 w-4" />

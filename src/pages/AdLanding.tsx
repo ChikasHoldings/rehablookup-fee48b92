@@ -263,8 +263,8 @@ export default function AdLanding() {
         <title>Find Treatment Options | RehabLookup</title>
         <meta name="description" content="Get help exploring treatment options today. Share a few details and we'll help connect you with appropriate treatment options — no obligation." />
         <meta name="robots" content="noindex, nofollow" />
-        <link rel="canonical" href="https://rehablookup.com/lp/ad" />
-        <meta name="robots" content="noindex, nofollow" />
+        {/* No canonical: this is a noindex paid-ad landing surface mounted at
+            /ads/:slug; pointing to a generic /lp/ad URL was misleading. */}
       </Helmet>
       
       {/* Minimal header with logo only */}
@@ -277,12 +277,14 @@ export default function AdLanding() {
       <main className="flex-1 px-4 py-6 md:py-10">
         <div className="max-w-2xl mx-auto space-y-8">
           
-          {/* Hero Section */}
-          <section className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-foreground tracking-tight leading-tight">
+          {/* Hero Section — kept tight + form-focused (conversion-LP
+              pattern). Tightened typography one tier so it doesn't
+              dominate the form below. */}
+          <section className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-foreground tracking-tight leading-tight">
               Find treatment options that fit your needs
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto">
+            <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto">
               Share a few details and we'll help connect you with appropriate treatment options — no obligation.
             </p>
           </section>

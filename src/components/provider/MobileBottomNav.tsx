@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { usePendingInquiriesCount } from "@/hooks/usePendingInquiriesCount";
 import { usePendingConciergeCount } from "@/hooks/usePendingConciergeCount";
-import { usePendingInternationalCount } from "@/hooks/usePendingInternationalCount";
+// usePendingInternationalCount retired 2026-05-20 — paid international placement product wound down.
 
 interface MobileBottomNavProps {
   onMoreClick: () => void;
@@ -33,21 +33,19 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
   // Use the same hooks as the sidebar for consistency
   const { count: pendingInquiriesCount } = usePendingInquiriesCount();
   const { count: pendingDomesticCount } = usePendingConciergeCount(selectedFacility?.id);
-  const { count: pendingInternationalCount } = usePendingInternationalCount(selectedFacility?.id);
-  
-  const totalPlacementCount = pendingDomesticCount + pendingInternationalCount;
+
+  // International placement product retired 2026-05-20 — only domestic
+  // concierge cases contribute to the placement badge now.
+  const totalPlacementCount = pendingDomesticCount;
 
   const isMoreActive = [
-    "/provider/billing", 
-    "/provider/settings", 
+    "/provider/settings",
     "/provider/reviews",
     "/provider/analytics",
     "/provider/embed-badge",
     "/provider/help",
     "/provider/knowledge-base",
     "/provider/notifications",
-    "/provider/credits",
-    "/provider/pro-upgrade",
   ].some(path => location.pathname.startsWith(path));
 
   return (

@@ -1,11 +1,12 @@
 import { useMemo } from "react";
 import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
+import { resolveCity } from "@/lib/cityLookup";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { demographicPages } from "@/data/seoDemographicConfig";
-import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
@@ -20,11 +21,9 @@ export default function DemographicCityPage() {
   }, [location.pathname]);
 
   const demographic = useMemo(() => demographicPages.find((d) => d.slug === demographicSlug) || null, [demographicSlug]);
-  const stateData = useMemo(() => statesData.find((s) => s.slug === stateSlug) || null, [stateSlug]);
-  const cityData = useMemo(() => {
-    if (!stateData) return null;
-    return stateData.cities.find((c) => c.slug === citySlug) || null;
-  }, [stateData, citySlug]);
+  const resolved = useMemo(() => resolveCity(stateSlug, citySlug), [stateSlug, citySlug]);
+  const stateData = resolved?.state ?? null;
+  const cityData = resolved?.city ?? null;
 
   const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
     if (!demographic || !stateData || !cityData) {
@@ -142,6 +141,7 @@ export default function DemographicCityPage() {
       heroSubtitle={`Specialized treatment programs in ${cityName} designed for the unique needs of this population.`}
       heroLocation={`${cityName}, ${abbreviation}`}
       heroBadge="Specialized Programs"
+      heroImage={getCityImage(stateSlug, citySlug)}
       introContent={`Looking for ${demographic.title.toLowerCase()} in ${cityName}, ${stateName}? RehabLookup connects you with verified treatment facilities offering specialized, evidence-based programs tailored to specific needs, challenges, and circumstances.`}
       sections={[
         {
@@ -152,6 +152,38 @@ export default function DemographicCityPage() {
           heading: `What to Look for in ${cityName}`,
           content: `When choosing a program, prioritize facilities with specialized staff training, peer groups with shared experiences, individualized treatment plans, accreditation from JCAHO or CARF, and comprehensive aftercare planning.`,
         },
+        {
+          heading: `Insurance & Cost in ${cityName}`,
+          content: `Most ${cityName} programs accept private insurance, Medicaid, and Medicare. Under federal parity laws, substance-use treatment is covered at the same level as other medical care. Facilities verify benefits before admission and many offer sliding-scale fees or financing for uncovered costs.`,
+        },
+        {
+          heading: `Levels of Care Offered`,
+          content: `${cityName} providers offer the full continuum: medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), standard outpatient, and recovery housing. Clinicians match level of care to severity, support system, and clinical need rather than what you can pay.`,
+        },
+        {
+          heading: `Aftercare & Long-Term Recovery in ${cityName}`,
+          content: `${cityName} supports recovery beyond discharge with peer-support meetings (12-step, SMART Recovery), alumni programming, sober living homes, and outpatient continuing care. Most treatment centers build the aftercare plan into discharge — recovery is treated as ongoing, not a one-time event.`,
+        },
+        {
+          heading: `How Facilities Are Verified`,
+          content: `Every ${cityName} facility in our directory is checked for state licensing, current accreditation (Joint Commission or CARF), and active clinical credentials. We do not sell admission slots; providers can't pay for placement. Pages are editorially curated, not lead-broker auctions.`,
+        },
+      ]}
+      whatToExpect={[
+        `Free, confidential phone or web assessment with a licensed clinician`,
+        `Insurance benefits verified before any commitment`,
+        `Custom treatment plan within 24-48 hours of intake`,
+        `Population-specific therapy groups and peer support`,
+        `Medication management when clinically indicated`,
+        `Aftercare plan + community resource referrals built into discharge`,
+      ]}
+      benefits={[
+        `Licensed, accredited ${cityName} facilities only`,
+        `Specialized programs tailored to this population's needs`,
+        `Insurance accepted: most private plans, Medicaid, Medicare, TRICARE`,
+        `Dual-diagnosis support for co-occurring mental health conditions`,
+        `Evidence-based therapies (CBT, DBT, EMDR, MAT where indicated)`,
+        `Long-term continuing care and alumni community`,
       ]}
       facilities={facilities}
       isLoading={isLoading}

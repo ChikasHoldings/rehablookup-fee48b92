@@ -41,7 +41,7 @@ interface Article {
 const categories = [
   { id: "getting-started", name: "Getting Started", icon: BookOpen, color: "bg-blue-500" },
   { id: "listing", name: "Managing Your Listing", icon: FileText, color: "bg-green-500" },
-  { id: "leads", name: "Leads & Credits", icon: Users, color: "bg-purple-500" },
+  { id: "leads", name: "Leads & Plans", icon: Users, color: "bg-purple-500" },
   { id: "placements", name: "Placement Network", icon: Handshake, color: "bg-teal-500" },
   { id: "billing", name: "Billing & Pro", icon: CreditCard, color: "bg-amber-500" },
   { id: "analytics", name: "Analytics & Insights", icon: TrendingUp, color: "bg-cyan-500" },
@@ -62,22 +62,22 @@ This guide walks you through every step from creating your listing to receiving 
 ## First Steps
 
 1. **Complete Your Listing** — Go to **My Listing** and fill in your facility name, address, description, services offered, insurance accepted, and images.
-2. **Set Up Notifications** — In **Settings > Notifications**, enable email alerts for new leads so you never miss an inquiry.
-3. **Purchase Credits** — Navigate to **Billing** to buy credits you'll use to unlock lead contact details.
+2. **Set Up Notifications** — In **Settings > Notifications**, enable email and SMS alerts for new leads so you never miss an inquiry.
+3. **Choose a Plan** — Free gets you a directory listing. Pro ($99/mo) unlocks verified badge, lead analytics, priority placement, and the Marketing Hub (Featured + Concierge add-ons).
 
 ## Understanding Your Dashboard
 
 Your dashboard shows at a glance:
 - **Profile Views** — How many families viewed your listing this period
 - **Active Leads** — New and in-progress leads awaiting action
-- **Placement Opportunities** — If you've opted into the Placement Network, pending introductions appear here
+- **Placement Opportunities** — Pending introductions surfaced by our concierge advisors
 - **Listing Status** — Whether your facility profile is live and visible in search results
 
 ## Key Concepts
 
-- **Leads** are generated when a family submits a contact or tour request from your listing. They're exclusive to your facility for 24 hours.
-- **Credits** are the currency you use to unlock a lead's full contact details (name, email, phone).
-- **Placements** are referrals from our concierge team matching pre-screened families to your facility — you pay only when a patient is admitted.
+- **Leads** are generated when a family submits a contact or tour request from your listing. They're exclusive to your facility for 24 hours, with full contact details visible to you immediately — no per-lead fees, ever.
+- **Pro plan** is a flat $99/month per provider account: verified badge, lead analytics, +50 ranking boost, 10 photos + video, Marketing Hub.
+- **Placements** are referrals from our concierge advisors matching pre-screened families to your facility. EKRA-compliant: advisors always present at least two non-partner alternatives alongside any Concierge partner.
 
 ## Need Help?
 
@@ -230,8 +230,8 @@ Use the **facility selector dropdown** in the top header bar to switch between y
 
 - Free accounts are limited to 1 facility listing
 - Each facility has its own set of leads — they are never mixed
-- Credit balances are shared across your account
-- Analytics can be viewed per-facility
+- Pro subscription is account-wide ($99/mo flat), covering up to 5 facilities
+- Analytics can be viewed per-facility or rolled up across facilities
     `,
     category: "listing",
     tags: ["multi-facility", "Pro", "management"],
@@ -239,11 +239,11 @@ Use the **facility selector dropdown** in the top header bar to switch between y
     updatedAt: "2026-04-10"
   },
 
-  // ── Leads & Credits ──
+  // ── Leads ──
   {
     id: "managing-leads",
     title: "Understanding the Lead Lifecycle",
-    excerpt: "How leads are generated, the 24-hour exclusivity window, unlocking, and best practices for conversion.",
+    excerpt: "How leads are generated, the 24-hour exclusivity window, and best practices for conversion.",
     content: `
 # Understanding the Lead Lifecycle
 
@@ -251,79 +251,81 @@ Leads are the core of how families connect with your facility.
 
 ## How Leads Are Created
 
-When a family views your facility profile and submits a **Contact Request** or **Tour Request**, it becomes a lead assigned exclusively to your facility.
+When a family views your facility profile and submits a **Contact Request** or **Tour Request**, it becomes a lead assigned exclusively to your facility — with full contact details visible to you immediately. No per-lead fees, no credits, no unlock step.
 
 ## The 24-Hour Exclusivity Window
 
-Each lead is exclusive to your facility for **24 hours**. If you don't unlock it within that window, it may be redistributed to other matching facilities. This encourages fast response times.
-
-## Lead Preview vs. Unlock
-
-- **Preview (free):** You see the inquiry type, general location, care needs, insurance type, and timestamp
-- **Unlock (costs credits):** Reveals the family's full contact details — name, email, phone — so you can reach out directly
+Each lead is exclusive to your facility for **24 hours**. If you don't respond within that window, it may be redistributed to other matching facilities. This encourages fast response times.
 
 ## Lead Statuses
 
-- **New** — Fresh lead, not yet unlocked
-- **Locked** — Preview visible, contact details hidden
-- **Unlocked** — Contact details revealed, ready for outreach
+- **New** — Fresh lead, ready for outreach
 - **Contacted** — You've made initial outreach
 - **Responded** — The family replied to your outreach
+- **Closed** — Conversation concluded
 
 ## Best Practices
 
 1. **Respond within 1 hour** — Faster responses dramatically increase conversion
-2. **Use the Call Now button** immediately after unlocking for highest connection rates
+2. **Use the Call Now button** immediately for highest connection rates
 3. **Add notes** to track your conversations
 4. **Export leads** as CSV for your CRM using the export button in the Leads section
     `,
     category: "leads",
-    tags: ["leads", "conversion", "exclusivity", "unlock"],
-    readTime: 6,
-    updatedAt: "2026-04-11"
+    tags: ["leads", "conversion", "exclusivity"],
+    readTime: 5,
+    updatedAt: "2026-05-17"
   },
   {
-    id: "credits-explained",
-    title: "How Credits Work",
-    excerpt: "Purchase tiers, bonus credits, Pro discounts, and auto-reload — everything about the credit system.",
+    id: "plan-pricing",
+    title: "Pricing & Plan Benefits",
+    excerpt: "Free vs Pro, the Featured Add-On, and the Concierge Add-On — flat fees only, no per-lead charges.",
     content: `
-# How Credits Work
+# Pricing & Plan Benefits
 
-Credits are the currency you use to unlock lead contact details.
+RehabLookup uses a flat-fee subscription model. There are no per-lead charges, no credit balances, and no per-placement fees.
 
-## Purchasing Credits
+## Free Plan
 
-Navigate to **Billing** to buy credits. Available tiers:
+| Feature | Included |
+|---|---|
+| Directory listing | Yes |
+| Family contact form | Yes |
+| Up to 5 photos | Yes |
+| Basic dashboard | Yes |
+| Per-lead charges | **None** |
 
-| Tier | Cost | Bonus | Total Value |
-|------|------|-------|-------------|
-| Starter | $200 | — | $200 |
-| Growth | $500 | +10% ($50) | $550 |
-| Scale | $1,000 | +20% ($200) | $1,200 |
+## Pro Plan — $99/month, flat
 
-## Pro Discount
+| Feature | Included |
+|---|---|
+| Everything in Free | Yes |
+| Verified badge | Yes |
+| Lead analytics + response insights | Yes |
+| Priority placement (+50 ranking) | Yes |
+| 10 photos + 1 facility video | Yes |
+| Marketing Hub (Featured + Concierge add-ons) | Yes |
+| Up to 5 facility listings | Yes |
 
-Pro subscribers save **20% on every lead unlock**. This discount is applied automatically when you unlock a lead.
+Cancel anytime from **Billing**.
 
-## Auto-Reload
+## Add-Ons (Pro-only)
 
-Never run out of credits unexpectedly:
-1. Go to **Billing > Auto-Reload**
-2. Set a minimum balance threshold
-3. Choose a reload amount ($200, $500, or $1,000)
-4. When your balance drops below the threshold, credits are purchased automatically
+| Add-On | Price | What you get |
+|---|---|---|
+| **Featured** | $599/mo | Rotating placement on the homepage + state pages |
+| **Concierge** | $1,000/mo | Verified-partner badge in advisor matching; EKRA-compliant (advisors always present ≥2 non-partner alternatives) |
 
-## Viewing Your Balance
+## Viewing & Managing Your Plan
 
-Your current credit balance is always visible:
-- In the **sidebar** at the bottom
-- On the **Billing** page
-- In the **dashboard** summary strip
+- **Billing** page shows your current plan, next renewal date, and saved payment method
+- **Marketing Hub** lets Pro users add or remove Featured / Concierge add-ons
+- **Provider Panel sidebar** shows your active plan at a glance
     `,
     category: "leads",
-    tags: ["credits", "billing", "auto-reload", "Pro discount"],
+    tags: ["pricing", "plans", "billing", "add-ons"],
     readTime: 4,
-    updatedAt: "2026-04-09"
+    updatedAt: "2026-05-17"
   },
   {
     id: "lead-notifications",
@@ -378,14 +380,14 @@ The Placement Network is a premium referral channel where our concierge team con
 3. **You Receive an Introduction** — Matched cases appear in your **Placements** tab with anonymized details (case ID, care needs, insurance, location)
 4. **You Respond** — Mark the case as "Interested" or "Not Interested"
 5. **Coordination** — If interested, our team facilitates introductions, tour scheduling, and admission coordination
-6. **Pay on Admission** — A placement fee is charged **only** when the patient is successfully admitted
+6. **EKRA-compliant matching** — Advisors always present at least two non-partner alternatives alongside any Concierge partner
 
 ## Key Benefits
 
-- **No upfront costs** — You never pay to receive or review introductions
+- **No per-placement fees** — Whether you're on Free, Pro, or have the Concierge Add-On, there are no per-admission charges
 - **Pre-screened families** — Our team verifies insurance, readiness, and fit before matching
 - **Higher conversion** — Qualified referrals convert at significantly higher rates than cold leads
-- **Pro discount** — Pro subscribers save $200 on each placement fee
+- **Concierge Add-On** ($1,000/mo, Pro-only) adds a verified-partner badge in advisor matching
     `,
     category: "placements",
     tags: ["placements", "concierge", "referrals", "network"],
@@ -485,37 +487,33 @@ The Placement Network uses a success-based billing model — you only pay when a
 
 - **Domestic placements** — A standard placement fee is charged upon admission
 - **International placements** — A premium placement fee applies for international cases
-- **Pro discount** — Pro subscribers receive a **$200 discount** on every placement fee
+- **EKRA compliance** — Advisors always present at least two non-partner alternatives alongside any Concierge partner, so families have a real choice
 
 ## When You're Charged
 
-Fees are invoiced **only after** a placement is confirmed — meaning the patient has been admitted to your facility. You'll never pay for:
-- Receiving introductions
-- Reviewing case details
-- Expressing interest
-- Cases that don't result in admission
+Nothing. The Concierge Add-On is a flat **$1,000/month** subscription for Pro providers — no per-placement fees, no per-admission fees, no commissions. EKRA-clean by design.
 
-## Invoicing
+## Tracking
 
-- Placement invoices are sent separately from credit purchases
-- View your placement billing history in **Billing > Invoices**
-- All payments are processed securely via Stripe
+- View your placement activity in the **Placements** tab of the provider panel
+- Confirmed admissions show in your dashboard's recent-activity feed
+- All Concierge invoices are accessible from **Billing > Invoices**
     `,
     category: "placements",
-    tags: ["fees", "billing", "invoicing", "Pro discount"],
+    tags: ["concierge", "placements", "EKRA"],
     readTime: 3,
-    updatedAt: "2026-04-08"
+    updatedAt: "2026-05-17"
   },
 
   // ── Billing & Pro ──
   {
     id: "how-billing-works",
     title: "How Billing Works",
-    excerpt: "Free listings, credit-based lead unlocks, and the Pro membership — a complete billing overview.",
+    excerpt: "Free listings, flat-fee Pro membership, and optional Featured / Concierge add-ons — a complete billing overview.",
     content: `
 # How Billing Works
 
-RehabLookup uses a transparent pay-per-use model with an optional Pro membership for maximum visibility.
+RehabLookup uses a flat-fee subscription model. There are no per-lead charges, no credits, and no per-placement fees.
 
 ## Free Listing
 
@@ -523,53 +521,52 @@ Every provider gets a free facility listing that includes:
 - Public profile visible in search results
 - Facility details, services, and insurance displayed
 - Basic analytics dashboard
-- Lead previews (locked contact details)
+- Family contact form — direct inquiries delivered to you with full contact details, no per-lead fees
 
-## Credit-Based Lead Unlocks
+## Pro Subscription — $99/month
 
-When a family submits an inquiry about your facility:
-- You see a **preview** with inquiry type, location, care needs, and timestamp
-- To view full contact details, **unlock the lead using credits**
-- You choose which leads to unlock — no wasted spend on leads you don't want
-
-## Pro Membership ($399/month)
-
-For facilities wanting maximum exposure and savings:
-- **20% discount** on all lead unlocks
-- **$200 off** each placement fee
-- **Featured placement** in search results and on the homepage
+For facilities wanting maximum exposure:
+- **Verified badge** on your listing
+- **Lead analytics** + response insights
+- **Priority placement** on city / state pages (+50 ranking boost)
+- **10 photos + 1 facility video**
+- **Marketing Hub** unlocked (Featured + Concierge add-ons)
 - **Up to 5 facility listings** under one account
-- **Gold Pro badge** on your listing
-- **Priority support** response times
 - **Embed badge** for your website
+
+Cancel anytime from the billing page.
+
+## Add-Ons (Pro-only)
+
+- **Featured Add-On — $599/mo**: rotating placement on the homepage + state pages
+- **Concierge Add-On — $1,000/mo**: verified-partner badge in advisor matching (EKRA-compliant)
 
 ## Payment Methods
 
 All payments are processed securely via Stripe. We accept Visa, Mastercard, Amex, and corporate cards.
     `,
     category: "billing",
-    tags: ["billing", "credits", "Pro", "pricing"],
-    readTime: 5,
-    updatedAt: "2026-04-08"
+    tags: ["billing", "Pro", "pricing", "add-ons"],
+    readTime: 4,
+    updatedAt: "2026-05-17"
   },
   {
     id: "manage-subscription",
     title: "Managing Your Subscription & Payments",
-    excerpt: "Update payment methods, view invoices, and manage your Pro membership.",
+    excerpt: "Update payment methods, view invoices, and manage your Pro subscription and add-ons.",
     content: `
 # Managing Your Subscription & Payments
 
 All billing management is available in **Settings > Billing**.
 
-## Viewing Your Balance & History
+## Viewing Plan & Add-Ons
 
-- Current credit balance is shown in the sidebar and on the Billing page
-- Click **"Transaction History"** to view all credit purchases and lead unlocks
-- Each transaction shows date, amount, type, and associated facility
+- The Billing page shows your current plan (Free or Pro), any active add-ons (Featured / Concierge), and your next renewal date
+- The sidebar shows your active plan at a glance
 
 ## Managing Your Pro Subscription
 
-If you're a Pro member:
+If you're a Pro subscriber:
 1. Go to **Billing**
 2. Click **"Manage Subscription"**
 3. From the Stripe billing portal, you can:
@@ -580,22 +577,21 @@ If you're a Pro member:
 
 ## Invoices
 
-- Credit purchases generate instant receipts
-- Pro subscription invoices are sent monthly
-- Placement fee invoices are sent upon confirmed admission
+- Pro subscription invoices are sent monthly (or annually if you chose annual billing)
+- Add-on invoices are sent on the same renewal cycle as Pro
 - All invoices are downloadable from the billing portal
     `,
     category: "billing",
     tags: ["payment", "subscription", "invoices", "Pro"],
     readTime: 3,
-    updatedAt: "2026-04-04"
+    updatedAt: "2026-05-17"
   },
 
   // ── Analytics ──
   {
     id: "understanding-analytics",
     title: "Understanding Your Analytics Dashboard",
-    excerpt: "Profile views, lead volume, unlock rates, response times, and placement activity — explained.",
+    excerpt: "Profile views, lead volume, response times, and placement activity — explained.",
     content: `
 # Understanding Your Analytics Dashboard
 
@@ -610,10 +606,6 @@ The Analytics page gives you data-driven insights into your facility's performan
 ### Lead Volume
 - Number of new leads received
 - Broken down by inquiry type (contact request, tour request)
-
-### Unlock Rate
-- Percentage of leads you chose to unlock
-- Helps you gauge lead quality and your engagement level
 
 ### Response Time
 - Average time between receiving a lead and making contact
@@ -633,8 +625,8 @@ View your data across different periods:
 ## Using Analytics to Improve
 
 - **Low views?** Update your listing description and add more images
-- **Low unlock rate?** You may be receiving leads outside your specialty — review your listing's service categories
-- **Slow response time?** Enable instant email notifications and prioritize same-day responses
+- **Low lead volume?** Ensure your service categories and insurance match what families are searching for
+- **Slow response time?** Enable instant email + SMS notifications and prioritize same-day responses
     `,
     category: "analytics",
     tags: ["metrics", "performance", "data", "reporting"],
@@ -716,8 +708,8 @@ The **facility dropdown** in the top header lets you switch between your listing
 ### Shared (Account-Wide)
 - Profile information
 - Notification preferences
-- Credit balance
-- Pro membership status
+- Pro subscription status + saved payment method
+- Featured / Concierge add-on activation
 
 ### Per-Facility
 - Leads and lead history

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link, useParams, Navigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, BookOpen, Clock, Sparkles } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ALL_BLOG_CATEGORIES,
   getCategoryBySlug,
   type BlogCategory,
 } from "@/data/blogCategories";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const SITE_URL = "https://rehablookup.com";
 
@@ -124,7 +126,14 @@ export default function CategoryHub() {
   // Unknown category → redirect to the resources hub. Avoids serving a thin
   // 404 for a URL we never want indexed.
   if (!category) {
-    return <Navigate to="/resources" replace />;
+    return (
+      <NotFoundInPlace
+        title="Topic hub not found"
+        message="We don't have a topic hub for that category yet. Browse all guides in our resources hub."
+        backTo="/resources"
+        backLabel="Browse all resources"
+      />
+    );
   }
 
   const Icon = category.icon;
@@ -194,30 +203,41 @@ export default function CategoryHub() {
         ]}
       />
 
-      {/* Hero */}
-      <section className="bg-muted/30 border-b border-border">
-        <div className="container py-10">
+      {/* Hero — CATEGORY HUB. Mirrors Resources editorial library
+          aesthetic (slate→amber + bookshelf vibe), smaller than State
+          hero per the brief. Icon sits in the eyebrow chip. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <img
+          src={TOPIC_HERO_IMAGES.editorial}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-4"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
               { label: "Resources", href: "/resources" },
               { label: category.label },
             ]}
           />
-          <div className="flex items-start gap-5 max-w-3xl">
-            <div className={`hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white ${category.color}`}>
-              <Icon className="h-7 w-7" aria-hidden="true" />
+          <div className="max-w-3xl">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 backdrop-blur-sm ring-1 ring-amber-400/25">
+              <Icon className="h-3 w-3" />
+              {category.tagline}
             </div>
-            <div>
-              <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground tracking-tight">
-                {category.label}
-              </h1>
-              <p className="mt-2 text-base text-muted-foreground">{category.tagline}</p>
-            </div>
+            <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight">
+              {category.label}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm md:text-base text-white/80 leading-relaxed">
+              {category.intro}
+            </p>
           </div>
-          <p className="mt-6 max-w-3xl text-[15px] leading-relaxed text-foreground/85">
-            {category.intro}
-          </p>
         </div>
       </section>
 

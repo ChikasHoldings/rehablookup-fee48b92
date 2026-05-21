@@ -7,6 +7,9 @@
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { dirname } from 'path';
 import { GA_MEASUREMENT_ID } from './_ga.mjs';
+import { seoHeader, seoFooter, seoStyles, seoCtaStrip } from './_seo-page-shell.mjs';
+
+const BRANDED_SHELL_CSS = seoStyles().replace(/<\/?style[^>]*>/g, '').trim();
 
 const BASE_URL = 'https://rehablookup.com';
 const PUBLIC = 'public';
@@ -92,6 +95,12 @@ function buildHtml({ path, title, description, h1, breadcrumbs }) {
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":${bcJson}}
   </script>
+  <style>${BRANDED_SHELL_CSS}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1a2b4a;line-height:1.65;margin:0;padding:0;background:#fff}
+    .rl-main{max-width:960px;margin:0 auto;padding:32px 20px}
+    .breadcrumbs{font-size:.85rem;color:#666;margin-bottom:16px}
+    .breadcrumbs a{color:#666}
+  </style>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"></script>
   <script>
@@ -107,15 +116,18 @@ function buildHtml({ path, title, description, h1, breadcrumbs }) {
   </script>
 </head>
 <body>
-  <h1>${h1}</h1>
-  <p>${description}</p>
-  <nav aria-label="breadcrumb">
-    ${breadcrumbs.map((b, i) => i < breadcrumbs.length - 1
-      ? `<a href="${b.url}">${b.name}</a> &rsaquo; `
-      : `<span>${b.name}</span>`).join('')}
-  </nav>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+  ${seoHeader()}
+  <main class="rl-main">
+    <nav class="breadcrumbs" aria-label="breadcrumb">
+      ${breadcrumbs.map((b, i) => i < breadcrumbs.length - 1
+        ? `<a href="${b.url}">${b.name}</a> &rsaquo; `
+        : `<span>${b.name}</span>`).join('')}
+    </nav>
+    <h1>${h1}</h1>
+    <p>${description}</p>
+    ${seoCtaStrip()}
+  </main>
+  ${seoFooter()}
 </body>
 </html>`;
 }
@@ -158,7 +170,7 @@ const missingTreatmentTypes = [
 for (const tt of missingTreatmentTypes) {
   const path = `/treatment-types/${tt.slug}`;
   const flatPath = `${PUBLIC}/${path.replace(/^\//, '')}.html`;
-  if (existsSync(flatPath)) continue;
+  /* always overwrite */
   const html = buildHtml({
     path,
     title: `${tt.name} Programs`,
@@ -179,7 +191,7 @@ for (const tt of missingTreatmentTypes) {
 for (const state of US_STATES) {
   const path = `/detox-centers/${state.slug}`;
   const flatPath = `${PUBLIC}/${path.replace(/^\//, '')}.html`;
-  if (existsSync(flatPath)) continue;
+  /* always overwrite */
   const html = buildHtml({
     path,
     title: `Detox Centers in ${state.name}`,
@@ -200,7 +212,7 @@ for (const state of US_STATES) {
 for (const state of US_STATES) {
   const path = `/rehab-marketing/${state.slug}`;
   const flatPath = `${PUBLIC}/${path.replace(/^\//, '')}.html`;
-  if (existsSync(flatPath)) continue;
+  /* always overwrite */
   const html = buildHtml({
     path,
     title: `Rehab Centers in ${state.name}`,

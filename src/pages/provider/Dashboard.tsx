@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { 
-  CheckCircle, 
-  Clock, 
-  AlertCircle, 
-  Users, 
+import {
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Users,
   CreditCard,
   Building2,
-  Eye,
   FileEdit,
   Phone,
   AlertTriangle,
@@ -22,10 +21,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useProviderData } from "@/hooks/useProviderData";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
-import { useProviderCredits } from "@/hooks/useProviderCredits";
 import { useFacilityLimits } from "@/hooks/useFacilityLimits";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { LeadStatusBadge, type LeadStatus } from "@/components/provider/leads/LeadStatusBadge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
@@ -35,10 +35,7 @@ import { cn } from "@/lib/utils";
 import { LeadConversionWidget } from "@/components/provider/LeadConversionWidget";
 import { ProBenefitsWidget } from "@/components/provider/ProBenefitsWidget";
 import { ProMultiFacilityOverview } from "@/components/provider/ProMultiFacilityOverview";
-import { ProROIWidget } from "@/components/provider/ProROIWidget";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
-import { ProviderWelcomeModal } from "@/components/provider/ProviderWelcomeModal";
-import { ListingPreviewModal } from "@/components/provider/listing/ListingPreviewModal";
 import { ProviderPerformanceFeedback } from "@/components/provider/ProviderPerformanceFeedback";
 
 import { DashboardKPIStrip } from "@/components/provider/DashboardKPIStrip";
@@ -126,25 +123,28 @@ export default function ProviderDashboardPage() {
   
   const { data: providerData, isLoading, isPlaceholderData } = useProviderData(facilityId);
   const { facilities } = useProviderFacilities();
-  const { data: creditsData, isLoading: creditsLoading } = useProviderCredits(facilityId);
-  const { limit: locationLimit, used: usedLocations, planTier, isLoading: proLoading } = useFacilityLimits();
+  const { planTier } = useFacilityLimits();
   const proStatus = { isPro: planTier === "pro" };
   
   const facility = selectedFacility || providerData?.facility;
   const profile = providerData?.profile;
-  const viewsCount = providerData?.viewsCount ?? 0;
   const userName = profile?.first_name || "";
   const facilityIds = facilities?.map(f => f.id) ?? [];
+  // True only when we've finished loading AND confirmed no facility exists.
+  // Without this guard the "Getting Started — create your first listing"
+  // card flashes for ~1s on every initial mount before useProviderData
+  // resolves, even for established providers.
+  const hasNoFacility = !isLoading && !isPlaceholderData && !facility;
 
-  // Welcome modal - show for first-time providers (check for falsy value since null = not yet celebrated).
-  // Guard against isPlaceholderData: when useProviderData returns placeholder (localStorage cache),
-  // isLoading is false but the real DB response hasn't arrived yet. Using isPlaceholderData prevents
-  // the modal from flashing open on refresh when the cached data has profile_completion_celebrated=false.
-  const showWelcomeModal = !isLoading && !isPlaceholderData && providerData?.facility && !providerData.facility.profile_completion_celebrated;
+  // Post-onboarding welcome modal moved to ProviderShell (single
+  // global mount via <WelcomeModal/>). The Dashboard-local
+  // ProviderWelcomeModal was retired 2026-05-20 because it gated on
+  // `profile_completion_celebrated` (a per-facility flag) while
+  // WelcomeModal gates on `profiles.welcomed_at` (a per-user flag) —
+  // both fired on first dashboard load and stacked.
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [profilePromptDismissedFields, setProfilePromptDismissedFields] = useState<string | null>(() => {
     if (!facilityId) return null;
     return localStorage.getItem(`profile-prompt-dismissed-${facilityId}`);
@@ -156,14 +156,64 @@ export default function ProviderDashboardPage() {
     }
   }, [facilityId]);
 
-  // Fetch recent leads using PII-safe view (masks locked lead contact info at DB level)
+  // Round-30 audit recovery: a user who timed out of PlanStep's
+  // Pro-confirmation poll (Stripe webhook lag > 30s) lands here with
+  // profile.onboarding_completed_at still NULL. If the subscription
+  // DID land in the meantime, complete onboarding now so the wizard
+  // doesn't re-trap them on next reload.
+  useEffect(() => {
+    if (!profile) return;
+    if (profile.onboarding_completed_at) return;
+    let cancelled = false;
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData.session?.user.id;
+      if (!uid) return;
+      const { data: sub } = await supabase
+        .from("facility_subscriptions")
+        .select("tier, status")
+        .eq("provider_id", uid)
+        .eq("status", "active")
+        .eq("tier", "pro")
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (sub?.tier === "pro") {
+        try {
+          await supabase.rpc("complete_provider_onboarding");
+          // Refetch so the rest of the dashboard re-renders with
+          // onboarding_completed_at set + Pro benefits visible. The
+          // previous version had this comment but the invalidate call
+          // was missing — the toast surfaced "Pro is active" but the
+          // gated widgets (ProBenefitsWidget, FeaturedAnalyticsWidget)
+          // wouldn't appear until the next manual reload.
+          await queryClient.invalidateQueries({ queryKey: ["provider-data"] });
+          await queryClient.invalidateQueries({ queryKey: ["pro-status"] });
+          await queryClient.invalidateQueries({
+            queryKey: ["facility-subscription"],
+          });
+          toast.success("Pro is active — welcome to RehabLookup.");
+        } catch (e) {
+          console.warn("[Dashboard] post-timeout Pro recovery RPC failed", e);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+    // Only react to the profile object identity flipping — don't
+    // re-run on every render.
+  }, [profile?.onboarding_completed_at]);
+
+  // Fetch recent leads from the PII-safe view. Pro providers see full
+  // contact details; Free providers never see leads here (those inquiries
+  // route to concierge upstream — see submit-qualified-lead). Polled
+  // every 30s while the tab is visible (React Query pauses
+  // refetchInterval automatically when the tab is hidden).
   const { data: recentLeads = [], isLoading: leadsLoading } = useQuery({
     queryKey: ["recent-leads", facilityId],
     queryFn: async (): Promise<Lead[]> => {
       if (!facilityId) return [];
-      const { data, error } = await supabase
-        .from("leads_provider_view")
-        .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, insurance_provider, message, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, provider_response_notes, preferred_contact, snooze_until, employment_status, veteran_status, legal_involvement, age_range, gender, co_occurring_conditions, readiness_level, dual_diagnosis, budget_preference, special_needs, redistribution_status, exclusive_until, extended_until, original_facility_id, assignment_status, assignment_reason, assigned_at, quality_flag, shared_with")
+      const { data, error } = await fromLeadsProviderView()
+        .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, insurance_provider, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, provider_response_notes, preferred_contact, snooze_until, employment_status, veteran_status, legal_involvement, age_range, gender, co_occurring_conditions, readiness_level, dual_diagnosis, budget_preference, special_needs, redistribution_status, exclusive_until, extended_until, original_facility_id, assignment_status, assignment_reason, assigned_at, quality_flag, shared_with")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })
         .limit(4);
@@ -174,26 +224,11 @@ export default function ProviderDashboardPage() {
     staleTime: 1000 * 60 * 2,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
     retry: 2,
   });
 
-  // Fetch unlocked lead IDs for the current facility
-  const { data: unlockedLeadIds = new Set<string>() } = useQuery({
-    queryKey: ["unlocked-lead-ids", facilityId],
-    queryFn: async (): Promise<Set<string>> => {
-      if (!facilityId) return new Set();
-      const { data, error } = await supabase
-        .from("lead_unlocks")
-        .select("lead_id")
-        .eq("facility_id", facilityId);
-      if (error) throw error;
-      return new Set((data || []).map(u => u.lead_id));
-    },
-    enabled: !!facilityId,
-    staleTime: 1000 * 60 * 2,
-  });
-
-  // Fetch total leads count via secure DB function (bypasses RLS unlock restriction for accurate counts)
+  // Fetch total leads count via SECURITY DEFINER RPC so counts are accurate regardless of view-level row filtering.
   const { data: totalLeadsCount = 0 } = useQuery({
     queryKey: ["total-leads-count", facilityId],
     queryFn: async (): Promise<number> => {
@@ -217,8 +252,7 @@ export default function ProviderDashboardPage() {
       if (!facilityId) return 0;
       const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const nowIso = new Date().toISOString();
-      const { count, error } = await supabase
-        .from("leads_provider_view")
+      const { count, error } = await fromLeadsProviderView()
         .select("id", { count: "exact", head: true })
         .eq("facility_id", facilityId)
         .eq("status", "new")
@@ -230,22 +264,6 @@ export default function ProviderDashboardPage() {
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 2,
     refetchOnMount: true,
-  });
-
-  // Fetch concierge introductions count for this facility
-  const { data: conciergeCount = 0 } = useQuery({
-    queryKey: ["concierge-count", facilityId],
-    queryFn: async (): Promise<number> => {
-      if (!facilityId) return 0;
-      const { count, error } = await supabase
-        .from("concierge_introductions")
-        .select("id", { count: "exact", head: true })
-        .eq("facility_id", facilityId);
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!facilityId,
-    staleTime: 1000 * 60 * 5,
   });
 
   const { data: servicesCount = 0 } = useQuery({
@@ -362,40 +380,20 @@ export default function ProviderDashboardPage() {
     }
   };
 
-  // Poll for new leads every 30 seconds (leads table removed from Realtime for PII security)
+  // Recent leads polls itself every 30s via refetchInterval (above);
+  // when a refetch lands we also invalidate the dependent counts so the
+  // dashboard header + KPI strip stay in sync. We can't simply put
+  // `refetchInterval` on every count query because each one has its own
+  // staleTime / window-focus behavior — coupling them here keeps the
+  // wall-clock consistent.
   useEffect(() => {
     if (!facilityId) return;
     const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
+      if (typeof document !== "undefined" && document.hidden) return;
       queryClient.invalidateQueries({ queryKey: ["total-leads-count", facilityId] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-kpi-strip", facilityId] });
-    }, 30000);
+    }, 60_000);
     return () => clearInterval(interval);
-  }, [facilityId, queryClient]);
-
-  // Real-time subscription for lead unlocks — refreshes unlock counts & credit balance instantly
-  useEffect(() => {
-    if (!facilityId) return;
-    const channel = supabase
-      .channel(`unlocks-live-${facilityId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "lead_unlocks",
-          filter: `facility_id=eq.${facilityId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["unlocked-lead-ids", facilityId] });
-          queryClient.invalidateQueries({ queryKey: ["recent-leads", facilityId] });
-          queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
-          queryClient.invalidateQueries({ queryKey: ["dashboard-kpi-strip", facilityId] });
-          queryClient.invalidateQueries({ queryKey: ["credit-spending-monthly", facilityId] });
-        }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
   }, [facilityId, queryClient]);
 
   const handleLeadClick = (lead: Lead) => {
@@ -434,9 +432,6 @@ export default function ProviderDashboardPage() {
 
   const statusConfig = facility ? getStatusConfig(facility.status) : getStatusConfig("inactive");
   const StatusIcon = statusConfig.icon;
-  // Only link to a real public profile when a slug exists. Avoid UUID-based
-  // legacy URLs (/rehab-centers/{uuid}) which render a "Not Found" page.
-  const profileUrl = facility?.slug ? `/center/${facility.slug}` : null;
 
   // Note: urgent-leads counting moved to the server-side `urgentLeadsCount`
   // query above so the alert reflects ALL stale leads (not just the 4 most
@@ -444,17 +439,12 @@ export default function ProviderDashboardPage() {
 
   return (
     <div className="min-h-full bg-background">
-      {/* Welcome Modal for New Providers */}
-      {showWelcomeModal && providerData?.facility && (
-        <ProviderWelcomeModal
-          facilityId={providerData.facility.id}
-          facilityName={providerData.facility.name}
-          isFirstLogin={true}
-          onDismiss={() => {
-            queryClient.invalidateQueries({ queryKey: ["provider-data"] });
-          }}
-        />
-      )}
+      {/* Post-onboarding welcome modal is mounted globally in
+          ProviderShell (<WelcomeModal/>) — it self-gates on
+          profiles.welcomed_at + onboarding_completed_at and is
+          plan-aware (Free → "Upgrade to Pro" CTA, Pro → "Add Featured"
+          CTA). The older ProviderWelcomeModal that used to render here
+          was a duplicate-with-different-gate and is retired. */}
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
 
@@ -479,7 +469,7 @@ export default function ProviderDashboardPage() {
                 </p>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
                   <Button asChild size="sm" variant="default" className="bg-rose-600 hover:bg-rose-700">
-                    <Link to="/provider/locations/new">Add facility now</Link>
+                    <Link to="/provider/add-location">Add facility now</Link>
                   </Button>
                   <Button size="sm" variant="ghost" onClick={dismissSignupRecovery}>
                     Dismiss
@@ -535,7 +525,7 @@ export default function ProviderDashboardPage() {
                       </Link>
                     ) : (
                       <Link
-                        to="/provider/pro-upgrade"
+                        to="/provider/billing"
                         className="group relative inline-flex items-center gap-2 pl-2.5 pr-3.5 py-2 rounded-xl border border-border/50 bg-card hover:border-primary/40 hover:bg-primary/5 transition-all text-xs font-semibold text-muted-foreground hover:text-primary"
                       >
                         <div className="h-5 w-5 rounded-md bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
@@ -562,13 +552,10 @@ export default function ProviderDashboardPage() {
               />
             )}
 
-            {/* Lead Feed — Core Money Section */}
+            {/* Lead Feed */}
             <DashboardLeadFeed
               leads={recentLeads}
-              unlockedLeadIds={unlockedLeadIds}
-              facilityId={facilityId || ""}
               facilityName={facility?.name}
-              isPro={proStatus.isPro}
               isLoading={leadsLoading}
               onLeadClick={handleLeadClick}
             />
@@ -598,11 +585,9 @@ export default function ProviderDashboardPage() {
           {/* Right Column - Sidebar */}
           <div className="lg:col-span-4 space-y-3 sm:space-y-4">
 
-            {/* Credit spending stats moved to DashboardTopBar — single credit widget */}
-
             {/* Alerts */}
             <div className="space-y-2.5">
-              {/* Locked Inquiries Alert */}
+              {/* Inquiries Available */}
               {totalLeadsCount > 0 && (
                 <Card className="border-success/30 bg-success/5">
                   <CardContent className="p-3.5">
@@ -612,9 +597,9 @@ export default function ProviderDashboardPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-foreground">
-                          <span className="tabular-nums">{totalLeadsCount}</span> Inquir{totalLeadsCount !== 1 ? 'ies' : 'y'} Available
+                          <span className="tabular-nums">{totalLeadsCount}</span> Inquir{totalLeadsCount !== 1 ? 'ies' : 'y'}
                         </p>
-                        <p className="text-xs text-muted-foreground">Unlock to view details</p>
+                        <p className="text-xs text-muted-foreground">Tap to view full details</p>
                       </div>
                       <Button size="sm" className="h-9 sm:h-8 text-xs bg-success hover:bg-success/90" asChild>
                         <Link to="/provider/inquiries">
@@ -674,7 +659,8 @@ export default function ProviderDashboardPage() {
                         </Button>
                         <button
                           onClick={(e) => handleDismissProfilePrompt(e, missingFields)}
-                          className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground"
+                          className="p-1.5 hover:bg-muted/50 rounded text-muted-foreground touch-manipulation"
+                          aria-label="Dismiss profile completion prompt"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -743,16 +729,6 @@ export default function ProviderDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* ROI Widget (Pro only) */}
-            {proStatus?.isPro && !creditsLoading && (
-              <ProROIWidget
-                transactions={creditsData?.transactions ?? []}
-                balanceCents={creditsData?.balance_cents ?? 0}
-                isPro={true}
-              />
-            )}
-
-
             {/* Featured Analytics Widget - if Pro */}
             {proStatus?.isPro && facility?.id && (
               <FeaturedAnalyticsWidget facilityId={facility.id} />
@@ -760,7 +736,7 @@ export default function ProviderDashboardPage() {
           </div>
 
           {/* Getting Started - No facility (spans both columns) */}
-          {!facility && (
+          {hasNoFacility && (
             <div className="lg:col-span-12">
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="p-5">
@@ -793,16 +769,6 @@ export default function ProviderDashboardPage() {
           onOpenChange={setDrawerOpen}
         />
       </div>
-
-      {/* Preview Modal */}
-      {facility?.slug && (
-        <ListingPreviewModal
-          open={previewOpen}
-          onOpenChange={setPreviewOpen}
-          facilityName={facility.name}
-          facilitySlug={facility.slug}
-        />
-      )}
     </div>
   );
 }

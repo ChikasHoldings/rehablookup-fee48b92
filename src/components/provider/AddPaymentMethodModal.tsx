@@ -595,9 +595,9 @@ export function AddPaymentMethodModal({
             {cardOnly ? "Add Card" : "Add Payment Method"}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            {cardOnly 
-              ? "Save a card for Pro subscription and credit purchases." 
-              : "For placement network billing. Charged only on confirmed placements."
+            {cardOnly
+              ? "Save a card for your Pro subscription and add-ons."
+              : "Saved for your Pro subscription, Featured / Concierge add-ons, and any future charges."
             }
           </DialogDescription>
         </DialogHeader>

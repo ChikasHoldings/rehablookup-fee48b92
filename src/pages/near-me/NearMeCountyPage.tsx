@@ -21,6 +21,7 @@ import {
   insuranceLinks,
   resourceLinks,
 } from "@/components/seo/InternalLinkingSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { useMemo } from "react";
 
 /**
@@ -191,6 +192,17 @@ export default function NearMeCountyPage() {
         treatmentType={nearMeType.treatmentType}
         location={{ state: stateInfo.name, stateAbbr: stateInfo.abbreviation }}
         facilityCount={facilities.length}
+      />
+
+      {/* Featured rotation — paid Featured pool for the
+          visitor's geo-resolved state. Visual matches the
+          homepage Featured section for cross-site consistency.
+          Silent absence until geo resolves AND the state has an
+          active Featured subscriber. */}
+      <LandingFeaturedSection
+        placement_type="state"
+        placement_value={stateInfo?.slug ?? null}
+        title={stateInfo && countyData ? `Featured Rehab Centers serving ${countyData.name} County` : `Featured Rehab Centers Near You`}
       />
 
       <TrustBar />

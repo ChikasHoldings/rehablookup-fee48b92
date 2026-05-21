@@ -13,7 +13,9 @@ import { BackToTop } from "@/components/ui/back-to-top";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { analytics } from "@/lib/analytics";
-import { EmailVerificationStep } from "@/components/provider/EmailVerificationStep";
+// EmailVerificationStep import removed in phase W — the unified wizard
+// (/provider/onboarding → VerifyEmailStep) handles email verification
+// before this file ever renders.
 import {
   Select,
   SelectContent,
@@ -39,6 +41,8 @@ import {
   X,
 } from "lucide-react";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
+import { useFacilityPhoneVerification } from "@/hooks/useFacilityPhoneVerification";
 import { formatPhoneNumber } from "@/lib/phoneUtils";
 import { cn } from "@/lib/utils";
 import { compressImage, validateImageFile } from "@/lib/imageUtils";
@@ -46,6 +50,8 @@ import { sanitizeText, sanitizeFacilityName, sanitizePersonName, sanitizeJobTitl
 import { FACILITY_TYPES, FACILITY_TYPE_VALUES, US_STATES, INSURANCE_PROVIDERS, TREATMENT_SERVICES, AGE_GROUPS, ACCREDITATION_OPTIONS } from "@/lib/facilityConstants";
 
 import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/components/ui/password-strength-indicator";
+import { PLAN_LIMITS, resolvePlan } from "@/lib/planLimits";
+import { UpgradeDialog } from "@/components/provider/onboarding/UpgradeDialog";
 
 // Clear all provider-related caches from any previous session
 const clearProviderCaches = () => {
@@ -103,6 +109,8 @@ const generateSessionToken = (): string => {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 };
 
+// Round-30 merge: Step 8 (Plan) removed — Plan selection now lives in
+// the unified wizard PlanStep that runs after listing publish.
 const steps = [
   { id: 1, name: "Account", icon: User },
   { id: 2, name: "Verify", icon: ShieldCheck },
@@ -120,16 +128,79 @@ const facilityTypes = FACILITY_TYPES.map(t => t.value);
 const accreditationOptions = [...ACCREDITATION_OPTIONS];
 const states = [...US_STATES];
 
-export default function ProviderSignup({ initialStep }: { initialStep?: number } = {}) {
-  const [currentStep, setCurrentStep] = useState(initialStep ?? 1);
+/**
+ * Facility-phone input with auto-triggered verification.
+ *
+ * Wraps <PhoneVerificationStep>: the "Verify" button surfaces the moment
+ * the provider types a valid 10-digit number; on success the field
+ * collapses to a green verified badge. Verification state is mirrored
+ * back onto profiles.phone + phone_verified_at by the verify-sms-code
+ * edge function. If the provider has already verified this number in a
+ * prior session (or in another tab), useFacilityPhoneVerification skips
+ * the prompt entirely.
+ *
+ * Defined here (not as its own file) because it has zero callers outside
+ * this listing-details step and keeping it local makes the page's
+ * intent clearer.
+ */
+function FacilityPhoneInputWithVerification({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const { userId, isVerifiedForCurrentNumber, markVerified } =
+    useFacilityPhoneVerification(value);
+  return (
+    <PhoneVerificationStep
+      phone={value}
+      onPhoneChange={onChange}
+      userId={userId ?? undefined}
+      userType="provider"
+      isVerified={isVerifiedForCurrentNumber}
+      onVerified={markVerified}
+      label="Facility Phone *"
+      verifiedHelper="Your facility phone is verified. We use it for lead handoffs and claim verification."
+    />
+  );
+}
+
+export default function ProviderSignup({
+  initialStep,
+  embedded = false,
+}: { initialStep?: number; embedded?: boolean } = {}) {
+  // Phase W consolidation: ProviderSignup is now ONLY the post-auth
+  // facility-build wizard (steps 3-7). Account + email verification
+  // run upstream in /provider/onboarding (AccountStep + VerifyEmailStep
+  // in src/components/provider/onboarding/). The legacy steps 1-2
+  // remain in this file for historical reference but are unreachable
+  //
+  // 2026-05-20 unification: `embedded=true` makes this component render
+  // *inside* the unified wizard's BuildStep slot — no Header/Footer/
+  // Helmet/page-title chrome, since the host page already provides
+  // them. Toggled by BuildStep when the wizard's state.mode='list'.
+  // because (a) the only caller — NewListingForm — always passes
+  // initialStep={3}, (b) entry floor below blocks prevStep / stepper
+  // clicks from descending below initialStep.
+  const entryStep = initialStep ?? 3;
+  const [currentStep, setCurrentStep] = useState(entryStep);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const [emailVerified, setEmailVerified] = useState(false);
+  // emailVerified is always true when we enter here — the wizard's
+  // VerifyEmailStep is a hard gate upstream. Kept for compatibility
+  // with the legacy step-2 JSX below (never rendered).
+  const [emailVerified, setEmailVerified] = useState(true);
+  void emailVerified;
   const { toast } = useToast();
   const navigate = useNavigate();
 
+
   // Check if user is already logged in
   useEffect(() => {
+    // Embedded inside the unified wizard → the host has already gated
+    // the session; never redirect away.
+    if (embedded) return;
     // When mounted in "add another facility" mode (initialStep >= 3 via the
     // /provider/onboarding/new-listing route), an existing session is the
     // EXPECTED state — skip the redirect to dashboard and let the form
@@ -140,12 +211,71 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         navigate("/provider/dashboard");
       }
     });
-  }, [navigate, initialStep]);
+  }, [navigate, initialStep, embedded]);
+
+  // Round-30 merge: when mounted in resume mode (the unified wizard
+  // already collected first/last name + email in Step 1), pre-fill
+  // formData so downstream welcome-email + admin-notification payloads
+  // aren't blank. Step 1's UI is hidden in this mode but the data is
+  // still referenced by the publish handler.
+  useEffect(() => {
+    if (!initialStep || initialStep < 3) return;
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user.id;
+      if (!uid) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, email, phone")
+        .eq("user_id", uid)
+        .maybeSingle();
+      if (cancelled || !profile) return;
+      setFormData((prev) => ({
+        ...prev,
+        firstName: prev.firstName || (profile.first_name ?? ""),
+        lastName: prev.lastName || (profile.last_name ?? ""),
+        email: prev.email || (profile.email ?? session?.user.email ?? ""),
+        phone: prev.phone || (profile.phone ?? ""),
+      }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialStep]);
 
   // Anti-bot honeypot
   const [honeypot, setHoneypot] = useState("");
   // Client-side rate limiting for submissions
   const [lastSubmitAttempt, setLastSubmitAttempt] = useState(0);
+
+  // Plan-aware photo cap (Section 8 of the provider onboarding spec).
+  // Free plans cap gallery at 5 photos; Pro lifts the cap to 10. We
+  // also surface an UpgradeDialog when a Free user tries to add past
+  // their cap. Defaults to 'free' until the first profile read so the
+  // cap is correctly conservative if the read fails.
+  const [providerPlan, setProviderPlan] = useState<"free" | "pro">("free");
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+      if (!userId || cancelled) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("plan")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!cancelled) {
+        setProviderPlan(resolvePlan((data as { plan: string | null } | null)?.plan ?? null));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const photoCap = PLAN_LIMITS[providerPlan].photos;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -254,6 +384,8 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
   };
 
   const nextStep = () => {
+    // Round-30 merge: max step is 7 (Review). Step 8 (Subscription) was
+    // collapsed into the wizard's PlanStep which runs AFTER publish.
     if (currentStep < 7) {
       setCurrentStep(currentStep + 1);
       window.scrollTo(0, 0);
@@ -261,16 +393,19 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
   };
 
   const prevStep = () => {
-    if (currentStep > 1) {
+    // Floor at entryStep so a user who landed here from the unified
+    // wizard at step 3 can't walk back into the orphaned account /
+    // email-verify steps (they already finished those upstream).
+    if (currentStep > entryStep) {
       setCurrentStep(currentStep - 1);
       window.scrollTo(0, 0);
     }
   };
 
-  const handleEmailVerified = () => {
-    setEmailVerified(true);
-    setCurrentStep(3); // Move to Facility step
-  };
+  // handleEmailVerified removed in phase W — the upstream
+  // /provider/onboarding → VerifyEmailStep is the only path that
+  // updates email verification state, and ProviderSignup is mounted
+  // strictly post-verification at initialStep=3.
 
   const handleSubmit = async () => {
     // Prevent double submissions (useRef survives React StrictMode double-fire)
@@ -315,7 +450,7 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
           });
           submittingRef.current = false;
           setIsSubmitting(false);
-          navigate("/auth/signup");
+          navigate("/provider/onboarding");
           return;
         }
         userId = session.user.id;
@@ -331,7 +466,7 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
       if (!seekerResult.error && seekerResult.data) {
         toast({
           title: "Account Exists",
-          description: "This email is registered as a personal account. Please use the seeker login or use a different email for your facility.",
+          description: "This email is registered as a personal account. Please sign in with your personal account or use a different email for your facility.",
           variant: "destructive",
         });
         submittingRef.current = false;
@@ -805,49 +940,95 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
         // Non-blocking - continue even if notification fails
       }
 
-      // 12. Send welcome email to provider (with idempotency key)
-      try {
-        await supabase.functions.invoke("send-provider-welcome-email", {
-          body: {
-            facilityId,
-            facilityName: safeFacilityName,
-            providerEmail: formData.email,
-            providerFirstName: safeFirstName,
-            selectedPlan: "free",
-            idempotencyKey: `welcome-${facilityId}`,
-          },
-        });
-      } catch (welcomeError) {
-        console.error("Welcome email error:", welcomeError);
-        // Non-blocking - continue even if email fails
-      }
+      // 12. Welcome email — round-30 merge removed this duplicate.
+      // VerifyEmailStep fires send-provider-welcome-email with
+      // idempotency key `welcome-<email>-<plan>` the moment OTP
+      // verification succeeds (works for both new-list AND claim flows
+      // since both go through wizard verify_email). Firing again here
+      // with a facilityId-keyed idempotency key delivered a second
+      // welcome email to every new-listing provider — friction, not
+      // value. The post-publish offer email below is the right surface
+      // for facility-aware messaging.
 
-      // 12b. Send welcome offer email (with idempotency key)
-      try {
-        await supabase.functions.invoke("send-provider-welcome-offer-email", {
-          body: {
-            facilityId,
-            facilityName: safeFacilityName,
-            providerEmail: formData.email,
-            providerFirstName: safeFirstName,
-            selectedPlan: "free",
-            idempotencyKey: `welcome-offer-${facilityId}`,
-          },
-        });
-      } catch (offerError) {
-        console.error("Welcome offer email error:", offerError);
-        // Non-blocking
-      }
+      // 12b. The legacy welcome-credits offer email was retired with the
+      //   flat-fee Pro $99/mo monetization. PlanStep + WelcomeModal handle
+      //   the Pro upsell now.
 
-      // 13. Redirect to dashboard
+      // 13. Round-30 merge: advance onboarding state to 'plan' and route
+      //   into the unified PlanStep at /provider/onboarding?step=plan.
+      //   The PlanStep handles Free (mark complete + dashboard) and Pro
+      //   (Stripe Checkout). No more page-level subscription picker.
+      //
+      // 2026-05-20 unification: the form always runs embedded inside
+      // the unified wizard now. The decision between "first-time
+      // onboarding → PlanStep" and "add another facility → dashboard"
+      // is driven by `profiles.onboarding_completed_at`, not by the
+      // call site. This makes the form robust regardless of how it
+      // was mounted.
       analytics.signupComplete('provider', 'email');
-      toast({
-        title: "Welcome to RehabLookup!",
-        description: "Your account has been created. Your listing is pending review and will be live shortly.",
-      });
-      // Wizard finished — clear the autosave draft so the next signup starts fresh.
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
-      navigate("/provider/dashboard");
+      try { sessionStorage.removeItem("provider-onboarding-handoff"); } catch { /* ignore */ }
+
+      // Read onboarding completion to decide where to land after publish.
+      let alreadyOnboarded = false;
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const uid = sessionData.session?.user.id;
+        if (uid) {
+          const { data: profileRow } = await supabase
+            .from("profiles")
+            .select("onboarding_completed_at")
+            .eq("user_id", uid)
+            .maybeSingle();
+          alreadyOnboarded = !!(profileRow as { onboarding_completed_at?: string | null } | null)?.onboarding_completed_at;
+        }
+      } catch (e) {
+        console.warn("[ProviderSignup] onboarded-check failed; defaulting to first-time path", e);
+      }
+
+      if (alreadyOnboarded) {
+        toast({
+          title: "Listing published",
+          description: "Your new facility is live.",
+        });
+        navigate("/provider/dashboard");
+        return;
+      }
+
+      // First-time onboarding — advance state then route to PlanStep.
+      // Phase X fix: hard-fail with a retry CTA instead of silently
+      // logging a warning if the upsert errors, so the user isn't
+      // trapped in a canReach() bounce loop on the wizard host.
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const uid = sessionData.session?.user.id;
+        if (!uid) {
+          throw new Error("Session expired before publish completed");
+        }
+        const { error: stateErr } = await supabase
+          .from("provider_onboarding_state")
+          .upsert(
+            { user_id: uid, current_step: "plan" } as never,
+            { onConflict: "user_id" },
+          );
+        if (stateErr) throw stateErr;
+      } catch (e) {
+        console.error("[ProviderSignup] onboarding state advance failed", e);
+        toast({
+          title: "Listing saved — couldn't open the plan step",
+          description:
+            "Your facility was published, but we couldn't advance the wizard. Reload and try again — your draft is preserved.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Listing published",
+        description: "One last step — pick your plan.",
+      });
+      navigate("/provider/onboarding?step=plan");
+      return;
     } catch (error: any) {
       console.error("Signup error:", error);
       toast({
@@ -942,13 +1123,21 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const remainingSlots = 5 - formData.galleryFiles.length;
+    // PLAN_LIMITS gates the cap: 5 photos on Free, 10 on Pro.
+    // Mirror this server-side via the facilities_plan_photo_cap_chk
+    // trigger so a client bypass can't persist over the cap.
+    const remainingSlots = photoCap - formData.galleryFiles.length;
     if (files.length > remainingSlots) {
-      toast({
-        title: "Too many images",
-        description: `You can only upload ${remainingSlots} more image${remainingSlots !== 1 ? "s" : ""}.`,
-        variant: "destructive",
-      });
+      // Free user hitting the cap → pitch Pro instead of just rejecting.
+      if (providerPlan === "free") {
+        setUpgradeOpen(true);
+      } else {
+        toast({
+          title: "Too many images",
+          description: `You can only upload ${remainingSlots} more image${remainingSlots !== 1 ? "s" : ""}.`,
+          variant: "destructive",
+        });
+      }
       return;
     }
 
@@ -986,20 +1175,30 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
     }));
   };
 
-  return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Helmet><title>List Your Facility | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
-      <Header />
-
-      <main className="flex-1 py-8 md:py-16">
-        <div className="container px-4 md:px-6">
-          {/* Value proposition — shown only on step 1 to motivate sign-up */}
-          {currentStep === 1 && (
-            <ProviderValueProp className="mb-8 mx-auto max-w-4xl" />
-          )}
-          <div className="mx-auto max-w-xl">
-            {/* Header & Progress */}
-            <div className="mb-8">
+  // 2026-05-20 unification: when `embedded=true`, render the form
+  // body without the page-level chrome (Header, Footer, Helmet,
+  // hero / value-prop, page title) — the unified wizard's host owns
+  // those, and rendering them again would double-stack. The inner
+  // step-substepper, progress bar, and form sections all stay.
+  const formBody = (
+    <>
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        feature="photos"
+        returnTo={embedded ? "/provider/onboarding?step=build" : "/provider/onboarding/new-listing"}
+      />
+      <div className={cn(embedded ? "" : "container px-4 md:px-6")}>
+        {/* Value proposition — shown only on step 1 to motivate sign-up.
+            Suppressed when embedded — the wizard's outer header handles
+            that role. */}
+        {!embedded && currentStep === 1 && (
+          <ProviderValueProp className="mb-8 mx-auto max-w-4xl" />
+        )}
+        <div className={cn(embedded ? "w-full" : "mx-auto max-w-xl")}>
+          {/* Header & Progress */}
+          <div className="mb-8">
+            {!embedded && (
               <div className="text-center mb-6">
                 <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">
                   List Your Facility
@@ -1008,6 +1207,12 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
                   Step {currentStep} of {steps.length} — {steps[currentStep - 1].name}
                 </p>
               </div>
+            )}
+            {embedded && (
+              <p className="text-xs text-muted-foreground mb-3 text-center">
+                Build sub-step {currentStep} of {steps.length} — {steps[currentStep - 1].name}
+              </p>
+            )}
 
               {/* Progress bar */}
               <div className="h-1 rounded-full bg-muted overflow-hidden">
@@ -1019,19 +1224,21 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
 
               {/* Step indicators */}
               <div className="mt-5 flex justify-center gap-2">
-                {steps.map((step) => (
+                {steps.filter((step) => step.id >= entryStep).map((step) => (
                   <button
                     key={step.id}
                     onClick={() => {
-                      // Only allow navigating to previously completed steps (not forward)
-                      if (step.id < currentStep && !(step.id === 2 && emailVerified)) {
+                      // Only allow navigating to previously completed steps,
+                      // bounded below by the entry floor — so post-auth users
+                      // can't click back into the orphaned step 1/2 cards.
+                      if (step.id < currentStep && step.id >= entryStep) {
                         setCurrentStep(step.id);
                       }
                     }}
-                    disabled={step.id >= currentStep || (step.id === 2 && emailVerified)}
+                    disabled={step.id >= currentStep || step.id < entryStep}
                     className={cn(
                       "flex items-center justify-center transition-all",
-                      step.id === 2 && emailVerified && "cursor-not-allowed opacity-50"
+                      step.id < entryStep && "hidden",
                     )}
                     title={step.name}
                   >
@@ -1193,14 +1400,11 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
               </div>
             )}
 
-            {/* Step 2: Email Verification */}
-            {currentStep === 2 && (
-              <EmailVerificationStep
-                email={formData.email}
-                onVerified={handleEmailVerified}
-                onBack={() => setCurrentStep(1)}
-              />
-            )}
+            {/* Step 2 (Email Verification) consolidated upstream into
+                /provider/onboarding → VerifyEmailStep
+                (src/components/provider/onboarding/VerifyEmailStep.tsx).
+                Removed in phase W; legacy import was deleted from
+                src/components/provider/EmailVerificationStep.tsx. */}
 
             {/* Step 3: Facility Info */}
             {currentStep === 3 && (
@@ -1242,16 +1446,15 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <Label htmlFor="facilityPhone" className="text-sm font-medium">Facility Phone *</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
-                        <PhoneInput
-                          id="facilityPhone"
-                          value={formData.facilityPhone}
-                          onChange={(value) => updateFormData("facilityPhone", value)}
-                          className="pl-10 h-10"
-                        />
-                      </div>
+                      {/* Inline phone verification auto-triggers as soon as the
+                          provider enters a valid 10-digit number. Wizard Step 3
+                          no longer asks for phone verification; this is where
+                          we collect + verify it because the number is also the
+                          listing's public callback line. */}
+                      <FacilityPhoneInputWithVerification
+                        value={formData.facilityPhone}
+                        onChange={(value) => updateFormData("facilityPhone", value)}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="facilityEmail" className="text-sm font-medium">Facility Email</Label>
@@ -1763,9 +1966,13 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
               </div>
             )}
 
+            {/* Step 8 (Subscription) removed in round-30 merge — Plan
+                selection now lives at /provider/onboarding?step=plan
+                AFTER the listing is published. */}
+
             {/* Navigation Buttons */}
             <div className="mt-8 flex justify-between gap-4">
-              {currentStep > 1 && currentStep !== 2 && (
+              {currentStep > entryStep && (
                 <Button
                   variant="outline"
                   onClick={prevStep}
@@ -1776,11 +1983,8 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
                   Back
                 </Button>
               )}
-              {currentStep === 2 && (
-                <div />
-              )}
 
-              {currentStep < 7 && currentStep !== 2 && (
+              {currentStep < 7 && (
                 <Button
                   onClick={nextStep}
                   disabled={!canProceed()}
@@ -1794,33 +1998,50 @@ export default function ProviderSignup({ initialStep }: { initialStep?: number }
 
               {currentStep === 7 && (
                 <Button
-                  onClick={handleSubmit}
+                  onClick={() => {
+                    // Round-30 merge: Step 7 is now the final UI step;
+                    // "Publish listing" submits and routes to the wizard
+                    // PlanStep where Free/Pro is picked.
+                    void handleSubmit();
+                  }}
                   disabled={!canProceed() || isSubmitting}
                   className="ml-auto"
                   size="default"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <svg className="mr-2 h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                      Creating Account...
-                    </>
-                  ) : "Create Account"}
-                  <CheckCircle className="ml-2 h-4 w-4" />
+                  {isSubmitting ? "Publishing…" : "Publish listing"}
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </div>
 
-            {/* Already have account */}
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link to="/login" className="text-primary hover:underline font-medium">
-                Sign in
-              </Link>
-            </p>
+            {/* Already have account — only meaningful for the
+                legacy public entry; suppressed when embedded since
+                the wizard host's AccountStep already provides the
+                Sign-in link AND the user is signed in by this point. */}
+            {!embedded && (
+              <p className="mt-6 text-center text-sm text-muted-foreground">
+                Already have an account?{" "}
+                <Link to="/login" className="text-primary hover:underline font-medium">
+                  Sign in
+                </Link>
+              </p>
+            )}
           </div>
         </div>
-      </main>
+      </>
+    );
 
+  if (embedded) {
+    return formBody;
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <Helmet><title>List Your Facility | RehabLookup</title><meta name="robots" content="noindex, nofollow" /></Helmet>
+      <Header />
+      <main className="flex-1 py-8 md:py-16">
+        {formBody}
+      </main>
       <Footer />
       <BackToTop />
     </div>

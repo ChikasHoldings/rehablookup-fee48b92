@@ -1,251 +1,142 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { 
-  Wallet, 
-  Plus, 
-  ArrowDownLeft, 
-  ArrowUpRight,
-  Loader2,
-  CreditCard,
-  Clock,
-  CheckCircle,
-  Sparkles,
-  Percent,
-  Star,
-  TrendingUp,
-  Award,
-  ExternalLink,
-  Trash2,
-  ChevronRight,
-  AlertTriangle,
-  Receipt,
-  ShieldCheck
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProviderCredits } from "@/hooks/useProviderCredits";
-import { PaginationFooter } from "@/components/common/PaginationFooter";
-import { usePagination } from "@/hooks/usePagination";
-import { useProStatus } from "@/hooks/useProStatus";
-import { useProviderPaymentMethods } from "@/hooks/useProviderPaymentMethods";
-import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  CreditCard,
+  Loader2,
+  Settings2,
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  RefreshCw,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { lazy, Suspense } from "react";
-const AddPaymentMethodModal = lazy(() => import("@/components/provider/AddPaymentMethodModal").then(m => ({ default: m.AddPaymentMethodModal })));
-import { AutoReloadSettings } from "@/components/provider/AutoReloadSettings";
-import { analytics } from "@/lib/analytics";
+  useFacilitySubscription,
+  useInvalidateFacilitySubscription,
+} from "@/hooks/useFacilitySubscription";
+import { SwitchToAnnualBanner } from "@/components/provider/billing/SwitchToAnnualBanner";
+import { SwitchToMonthlyAtRenewalBanner } from "@/components/provider/billing/SwitchToMonthlyAtRenewalBanner";
+import { ProUpgradeChoices } from "@/components/provider/subscription/ProUpgradeChoices";
+import { fmtMoney, TIER_PRICING } from "@/lib/billingPricing";
 
-const CREDIT_PACKAGES = [
-  { amountCents: 20000, label: "$200", credits: 200, bonusCents: 0, badge: null, savingsNote: null, perLead: "~4-13 leads" },
-  { amountCents: 50000, label: "$500", credits: 550, bonusCents: 5000, badge: "Popular", savingsNote: "+10% bonus", perLead: "~11-36 leads" },
-  { amountCents: 100000, label: "$1,000", credits: 1200, bonusCents: 20000, badge: "Best Value", savingsNote: "+20% bonus", perLead: "~24-80 leads" },
-];
-
-const PRO_BENEFITS = [
-  { icon: Percent, label: "20% off unlocks" },
-  { icon: Star, label: "Featured placement" },
-  { icon: TrendingUp, label: "Priority ranking" },
-  { icon: Award, label: "Pro badge" },
-];
-
-const TX_LABELS: Record<string, string> = {
-  purchase: "Credit Purchase",
-  unlock: "Lead Unlock",
-  refund: "Refund",
-  bonus: "Bonus Credits",
-};
-
-function isCardExpiringSoon(expMonth?: number, expYear?: number): boolean {
-  if (!expMonth || !expYear) return false;
-  const now = new Date();
-  const expDate = new Date(expYear, expMonth); // month after expiry
-  const twoMonths = new Date(now.getFullYear(), now.getMonth() + 2, now.getDate());
-  return expDate <= twoMonths;
+/**
+ * Validate a Stripe URL returned by an edge function before we hand it
+ * to window.open / window.location. Requires https + an *.stripe.com
+ * host. A malicious edge function response can otherwise redirect the
+ * user to a phishing target that just has "stripe.com" in the URL.
+ */
+function isSafeStripeUrl(rawUrl: string | null | undefined): rawUrl is string {
+  if (!rawUrl) return false;
+  try {
+    const u = new URL(rawUrl);
+    return u.protocol === "https:" && u.hostname.endsWith("stripe.com");
+  } catch {
+    return false;
+  }
 }
 
-function isCardExpired(expMonth?: number, expYear?: number): boolean {
-  if (!expMonth || !expYear) return false;
-  const now = new Date();
-  return new Date(expYear, expMonth) <= now;
-}
-
-export default function ProviderBillingPage() {
+/**
+ * /provider/subscription — Subscription management.
+ *
+ * STRUCTURAL RULE: this page is JUST about Free vs Pro. Featured and
+ * Concierge are NEVER named here except in a single helper-text link
+ * pointing to /provider/marketing. The Pro upgrade choices are the
+ * ONLY purchase surface on this page. Add-on management lives in
+ * /provider/marketing.
+ *
+ * Route remains mounted at /provider/billing for now to preserve
+ * existing bookmarks.
+ */
+export default function ProviderSubscription() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedFacility } = useSelectedFacility();
   const facilityId = selectedFacility?.id;
-  const { balanceFormatted, balance, transactions, isLoading, refetchCredits } = useProviderCredits(facilityId);
-  // BUGFIX: Previously called useProStatus() with no facilityId, causing the billing page to show
-  // the subscription status of whichever facility had the most recent period_end rather than the
-  // currently selected facility. Now scoped to the selected facility.
-  const { data: proStatus, isLoading: proLoading, refetch: refetchProStatus } = useProStatus(facilityId ?? undefined);
-  const { 
-    paymentMethods: allPaymentMethods, 
-    isLoading: paymentMethodsLoading,
-    deletePaymentMethod,
-    setDefaultPaymentMethod,
-  } = useProviderPaymentMethods(facilityId);
-  
-  const paymentMethods = useMemo(() => allPaymentMethods.filter(pm => pm.type === "card"), [allPaymentMethods]);
-  
-  const [purchaseLoading, setPurchaseLoading] = useState<number | null>(null);
-  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
-  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
-  const [upgradeLoading, setUpgradeLoading] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
-  const [deleteCardConfirm, setDeleteCardConfirm] = useState<{ id: string; isOpen: boolean }>({ id: "", isOpen: false });
-  const txPagination = usePagination({
-    tableId: "provider-billing-transactions",
-    defaultPageSize: 25,
-    totalItems: transactions.length,
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isCheckoutReturn = searchParams.get("checkout") === "success";
+
+  const [pollingActive, setPollingActive] = useState(isCheckoutReturn);
+  const {
+    data: subscription,
+    isLoading,
+    isError,
+    refetch: refetchSubscription,
+  } = useFacilitySubscription(facilityId, {
+    pollWhilePending: pollingActive,
   });
-
-  // Post-checkout polling
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pollCountRef = useRef(0);
-
-  const startPostCheckoutPolling = (refetchFn: () => void, maxPolls = 6) => {
-    if (pollingRef.current) clearInterval(pollingRef.current);
-    pollCountRef.current = 0;
-    pollingRef.current = setInterval(() => {
-      pollCountRef.current += 1;
-      refetchFn();
-      if (pollCountRef.current >= maxPolls && pollingRef.current) {
-        clearInterval(pollingRef.current);
-        pollingRef.current = null;
-      }
-    }, 5000);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
-  }, []);
-
-  // Handle success/cancel URL params from Stripe checkout
-  // HARDENING: Don't trust URL params for amounts — only use as signal to poll
-  const handledParamsRef = useRef<Set<string>>(new Set());
-
-  useEffect(() => {
-    const proSuccess = searchParams.get("pro_success");
-    const proCanceled = searchParams.get("pro_canceled");
-    const creditsSuccess = searchParams.get("credits_success");
-    const creditsCanceled = searchParams.get("credits_canceled");
-    const purchaseCredits = searchParams.get("purchase_credits");
-    const sessionId = searchParams.get("session_id");
-
-    // Prevent re-processing same params on re-renders
-    const paramKey = `${proSuccess}|${creditsSuccess}|${creditsCanceled}|${purchaseCredits}|${sessionId}`;
-    if (handledParamsRef.current.has(paramKey)) return;
-    handledParamsRef.current.add(paramKey);
-
-    if (proSuccess === "true") {
-      analytics.subscriptionPurchase('pro_monthly', 'RehabLookup Pro', 399); // $399/month Pro plan
-      toast.success("Welcome to Pro! Your benefits are now active.", { duration: 5000 });
-      refetchProStatus();
-      startPostCheckoutPolling(() => refetchProStatus());
-      searchParams.delete("pro_success");
-      setSearchParams(searchParams, { replace: true });
-    }
-
-    if (proCanceled === "true") {
-      toast.info("Pro upgrade was cancelled.");
-      searchParams.delete("pro_canceled");
-      setSearchParams(searchParams, { replace: true });
-    }
-
-    if (creditsSuccess === "true") {
-      // Don't display amounts from URL (could be spoofed) — just confirm and let polling update balance
-      analytics.creditPurchaseComplete(0); // amount unknown client-side after redirect
-      toast.success("Credits have been added to your account!", { duration: 6000 });
-      refetchCredits();
-      startPostCheckoutPolling(() => refetchCredits(), 10); // poll more aggressively
-      searchParams.delete("credits_success");
-      searchParams.delete("session_id");
-      searchParams.delete("amount");
-      searchParams.delete("bonus");
-      setSearchParams(searchParams, { replace: true });
-    }
-
-    if (creditsCanceled === "true") {
-      toast.info("Credit purchase was cancelled.");
-      searchParams.delete("credits_canceled");
-      setSearchParams(searchParams, { replace: true });
-    }
-
-    if (purchaseCredits === "true") {
-      setShowPurchaseModal(true);
-      searchParams.delete("purchase_credits");
-      searchParams.delete("amount");
-      setSearchParams(searchParams, { replace: true });
-    }
-  }, [searchParams, setSearchParams, refetchCredits, refetchProStatus]);
-
-  const purchaseDebounceRef = useRef(false);
-
-  const handlePurchase = async (amountCents: number) => {
-    if (!facilityId) {
-      toast.error("No facility selected. Please select a facility first.");
-      return;
-    }
-    if (purchaseDebounceRef.current) return;
-    purchaseDebounceRef.current = true;
-
-    setPurchaseLoading(amountCents);
-    try {
-      analytics.beginCreditPurchase(amountCents, facilityId);
-      const { data, error } = await supabase.functions.invoke("purchase-credits", {
-        body: { amountCents, facilityId },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      if (data?.checkoutUrl) {
-        try {
-          const url = new URL(data.checkoutUrl);
-          if (!url.hostname.endsWith("stripe.com")) throw new Error("Invalid checkout URL");
-          window.open(data.checkoutUrl, "_blank");
-        } catch { toast.error("Invalid checkout URL received."); }
-        setShowPurchaseModal(false);
-      } else {
-        throw new Error("No checkout URL returned");
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to start checkout.";
-      console.error("Purchase error:", err);
-      toast.error(message);
-    } finally {
-      setPurchaseLoading(null);
-      // 5-second cooldown to prevent rapid re-clicks after checkout tab opens
-      setTimeout(() => { purchaseDebounceRef.current = false; }, 5000);
-    }
-  };
-  const handleUpgrade = () => {
-    navigate("/provider/pro-upgrade");
-  };
+  const invalidateSub = useInvalidateFacilitySubscription();
 
   const portalDebounceRef = useRef(false);
+  const [portalLoading, setPortalLoading] = useState(false);
 
-  const handleManageSubscription = async () => {
+  const [pollingTimedOut, setPollingTimedOut] = useState(false);
+  useEffect(() => {
+    if (!pollingActive) return;
+    const t = setTimeout(() => {
+      setPollingTimedOut(true);
+      setPollingActive(false);
+    }, 90_000);
+    return () => clearTimeout(t);
+  }, [pollingActive]);
+  useEffect(() => {
+    if (pollingActive && subscription?.status === "active") {
+      setPollingActive(false);
+    }
+  }, [pollingActive, subscription?.status]);
+
+  useEffect(() => {
+    if (isCheckoutReturn && subscription?.status === "active") {
+      const next = new URLSearchParams(searchParams);
+      next.delete("checkout");
+      next.delete("session_id");
+      setSearchParams(next, { replace: true });
+      toast.success("Subscription active. Welcome aboard!");
+      invalidateSub(facilityId);
+    }
+  }, [isCheckoutReturn, subscription?.status, searchParams, setSearchParams, invalidateSub, facilityId]);
+
+  // 2026-05-20 hardening: handle the two upsell-deep-link query params
+  // that callers across the panel use (WelcomeModal, ProviderSidebar,
+  // KPI strip, missed-leads, performance panel, RedirectedInquiries,
+  // CentralizedEngagementAnalytics, useProviderSearch, etc.). Without
+  // these handlers, the user lands on the page with no signal that
+  // they came in via an upgrade CTA — they have to find the upgrade
+  // buttons themselves. The toast surfaces the action; the URL strip
+  // keeps the param from re-firing on every re-render.
+  //
+  //   ?upgrade=pro  — generic "they clicked an upgrade CTA" intent
+  //   ?signup=retry — they bailed out of /signup/subscription and
+  //                   are being routed here to try again
+  const upgradeIntent = searchParams.get("upgrade");
+  const signupRetry = searchParams.get("signup");
+  useEffect(() => {
+    if (isLoading) return;
+    const isPaidOrIssue = subscription?.tier === "pro";
+    if (upgradeIntent === "pro") {
+      if (!isPaidOrIssue) {
+        toast.message("Pick monthly or annual below to upgrade to Pro.");
+      } else {
+        toast.info("You're already on Pro.");
+      }
+      const next = new URLSearchParams(searchParams);
+      next.delete("upgrade");
+      setSearchParams(next, { replace: true });
+    }
+    if (signupRetry === "retry") {
+      toast.message("Pick a billing period below to retry your Pro upgrade.");
+      const next = new URLSearchParams(searchParams);
+      next.delete("signup");
+      setSearchParams(next, { replace: true });
+    }
+  }, [upgradeIntent, signupRetry, isLoading, subscription?.tier, searchParams, setSearchParams]);
+
+  const handleManageBilling = async () => {
     if (portalDebounceRef.current) return;
     portalDebounceRef.current = true;
     setPortalLoading(true);
@@ -253,594 +144,371 @@ export default function ProviderBillingPage() {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      if (data?.url) {
-        try {
-          const url = new URL(data.url);
-          if (!url.hostname.endsWith("stripe.com")) throw new Error("Invalid portal URL");
-          window.open(data.url, "_blank");
-        } catch { toast.error("Invalid billing portal URL received."); }
+      if (!isSafeStripeUrl(data?.url)) {
+        throw new Error(data?.url ? "Invalid portal URL" : "No portal URL returned");
       }
-    } catch (err) {
-      console.error("Portal error:", err);
-      toast.error("Unable to open billing portal. Please try again.");
+      window.open(data.url, "_blank", "noopener,noreferrer");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to open billing portal.";
+      console.error("[Subscription] portal error", err);
+      toast.error(message);
     } finally {
       setPortalLoading(false);
-      setTimeout(() => { portalDebounceRef.current = false; }, 2000);
+      setTimeout(() => { portalDebounceRef.current = false; }, 4000);
     }
   };
 
-  const handleDeleteCard = () => {
-    if (deleteCardConfirm.id) {
-      deletePaymentMethod.mutate(deleteCardConfirm.id);
-    }
-    setDeleteCardConfirm({ id: "", isOpen: false });
-  };
-
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case "purchase":
-        return <ArrowDownLeft className="h-4 w-4 text-emerald-600" />;
-      case "unlock":
-        return <ArrowUpRight className="h-4 w-4 text-orange-600" />;
-      case "refund":
-        return <ArrowDownLeft className="h-4 w-4 text-blue-600" />;
-      case "bonus":
-        return <CheckCircle className="h-4 w-4 text-purple-600" />;
-      default:
-        return <CreditCard className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
-
-  const getTransactionColor = (type: string) => {
-    switch (type) {
-      case "purchase":
-      case "refund":
-      case "bonus":
-        return "text-emerald-600";
-      case "unlock":
-        return "text-orange-600";
-      default:
-        return "text-foreground";
+  const handleProUpgrade = async (interval: "monthly" | "annual") => {
+    if (!facilityId) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+        body: {
+          facility_id: facilityId,
+          intent: "initial_subscription",
+          billing_period: interval,
+          items: [{ product: "pro" }],
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!isSafeStripeUrl(data?.url)) {
+        throw new Error("Invalid checkout URL");
+      }
+      window.location.assign(data.url);
+    } catch (err) {
+      console.error("[Subscription] upgrade failed", err);
+      toast.error(err instanceof Error ? err.message : "Failed to start checkout");
     }
   };
 
-  const visibleTransactions = txPagination.paginate(transactions);
+  // Status semantics:
+  //   active            → Pro is live
+  //   trialing          → Pro is live (Stripe trial)
+  //   past_due | unpaid → Pro is technically still live but the latest
+  //                       invoice failed; surface a payment-issue banner
+  //   incomplete        → Checkout finished but the first invoice hasn't
+  //                       cleared; pending state
+  //   canceled          → Not Pro
+  const status = subscription?.status ?? null;
+  const isProTier = subscription?.tier === "pro";
+  const isPro = isProTier && (status === "active" || status === "trialing");
+  const isPaymentIssue = isProTier && (status === "past_due" || status === "unpaid");
+  const isIncomplete = isProTier && status === "incomplete";
+  const isCancelScheduled = isPro && subscription?.cancel_at_period_end === true;
+  const isMonthlyPro = isPro && subscription?.billing_period === "monthly";
+  const isAnnualPro = isPro && subscription?.billing_period === "annual";
 
-  // Determine if any cards are expiring or expired
-  const hasExpiringCards = paymentMethods.some(pm => isCardExpiringSoon(pm.exp_month, pm.exp_year) && !isCardExpired(pm.exp_month, pm.exp_year));
+  const daysUntilRenewal = isAnnualPro && subscription?.current_period_end
+    ? Math.floor((new Date(subscription.current_period_end).getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+    : null;
+  const showRenewalSwitchBanner =
+    isAnnualPro && !isCancelScheduled &&
+    daysUntilRenewal !== null && daysUntilRenewal >= 0 && daysUntilRenewal <= 60;
+
+  const checkoutPolling = pollingActive && (!subscription || subscription.status !== "active");
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <Skeleton className="h-12 w-2/3 mb-6" />
+        <Skeleton className="h-48 w-full mb-6" />
+        <Skeleton className="h-80 w-full" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <Helmet>
+          <title>Subscription | RehabLookup Provider</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+        <Card>
+          <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+            <div className="h-12 w-12 rounded-xl bg-destructive/10 flex items-center justify-center">
+              <AlertCircle className="h-6 w-6 text-destructive" aria-hidden />
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">Couldn't load your subscription</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                We weren't able to reach the billing system. Your plan and any active
+                add-ons aren't affected — this is just a display issue.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetchSubscription()} className="gap-2">
+              <RefreshCw className="h-4 w-4" aria-hidden />
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-full bg-background">
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-        <div className="max-w-5xl mx-auto space-y-5 md:space-y-6">
+    <>
+      <Helmet>
+        <title>Subscription | RehabLookup Provider</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
 
-        {/* Header */}
+      <div className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
         <div>
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">Billing</h1>
-          <p className="text-muted-foreground mt-1 text-sm md:text-base">
-            Manage subscription, credits, and payment methods
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            Subscription
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Your account plan. Free or Pro — pick what fits.
           </p>
         </div>
 
-        {/* Pro Subscription */}
-        <Card>
-          <CardContent className="p-4 sm:p-5 md:p-6">
-            {proLoading ? (
-              <div className="flex items-center gap-4">
-                <Skeleton className="h-12 w-12 rounded-lg" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-5 w-40" />
-                  <Skeleton className="h-4 w-56" />
-                </div>
+        {checkoutPolling && (
+          <Card>
+            <CardContent className="p-5 flex items-center gap-3">
+              {pollingTimedOut ? null : (
+                <Loader2 className="h-5 w-5 animate-spin text-[#1B365D]" />
+              )}
+              <div className="flex-1">
+                <p className="font-medium text-slate-900">
+                  {pollingTimedOut
+                    ? "Still finalizing your subscription…"
+                    : "Processing your subscription…"}
+                </p>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  {pollingTimedOut
+                    ? "Your payment was successful, but the activation is taking longer than usual. Try checking now, or contact support if it stays in this state."
+                    : "Your payment succeeded. We're activating your account — this usually takes a few seconds."}
+                </p>
               </div>
-            ) : proStatus?.isPro ? (
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-center gap-3 md:gap-4">
-                  <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                    <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-amber-600" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-base md:text-lg font-semibold">Pro Subscription</span>
-                      {proStatus.cancelAtPeriodEnd ? (
-                        <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-0 text-xs">
-                          Canceling
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-700 border-0 text-xs">
-                          Active
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {proStatus.cancelAtPeriodEnd && proStatus.currentPeriodEnd
-                        ? `Cancels ${format(new Date(proStatus.currentPeriodEnd), "MMMM d, yyyy")} — resubscribe anytime`
-                        : proStatus.currentPeriodEnd 
-                          ? `Renews ${format(new Date(proStatus.currentPeriodEnd), "MMMM d, yyyy")}`
-                          : "Your subscription is active"
-                      }
-                    </p>
-                  </div>
-                </div>
-                <Button 
+              {pollingTimedOut && (
+                <Button
                   variant="outline"
-                  onClick={handleManageSubscription}
-                  disabled={portalLoading}
-                  className="w-full sm:w-auto"
-                >
-                  {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
-                  Manage
-                </Button>
-              </div>
-            ) : (
-              <div>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <div className="h-10 w-10 md:h-12 md:w-12 rounded-lg bg-muted flex items-center justify-center">
-                      <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <span className="text-base md:text-lg font-semibold">Upgrade to Pro</span>
-                      <p className="text-sm text-muted-foreground">$399/month · Save on every lead unlock</p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={handleUpgrade}
-                    disabled={upgradeLoading || !facilityId}
-                    className="w-full sm:w-auto"
-                  >
-                    {upgradeLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    View Benefits
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-x-4 md:gap-x-6 gap-y-1.5 text-sm text-muted-foreground">
-                  {PRO_BENEFITS.map((b, i) => {
-                    const Icon = b.icon;
-                    return (
-                      <span key={i} className="flex items-center gap-1.5">
-                        <Icon className="h-3.5 w-3.5" />
-                        {b.label}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Credits */}
-        <Card>
-          <CardContent className="p-4 sm:p-5 md:p-6">
-            {isLoading ? (
-              <div className="flex items-center gap-4">
-                <Skeleton className="h-12 w-12 rounded-lg" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-7 w-32" />
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-center gap-3 md:gap-4">
-                  <div className={cn(
-                    "h-10 w-10 md:h-12 md:w-12 rounded-lg flex items-center justify-center",
-                    balance > 0 ? "bg-primary/10" : "bg-muted"
-                  )}>
-                    <Wallet className={cn(
-                      "h-5 w-5 md:h-6 md:w-6",
-                      balance > 0 ? "text-primary" : "text-muted-foreground"
-                    )} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Credit Balance</p>
-                    <p className="text-xl md:text-2xl font-bold tabular-nums text-foreground">{balanceFormatted}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <Button variant="outline" onClick={() => setShowPurchaseModal(true)} className="flex-1 sm:flex-none">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Credits
-                  </Button>
-                </div>
-              </div>
-            )}
-            {!isLoading && balance === 0 && transactions.length === 0 && (
-              <div className="mt-4 pt-4 border-t text-center">
-                <p className="text-sm text-muted-foreground">
-                  Credits are used to unlock lead contact information. Purchase credits to get started.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Auto-Reload Settings */}
-        <AutoReloadSettings facilityId={facilityId} />
-
-        {/* Recent Transactions */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Receipt className="h-5 w-5 text-muted-foreground" />
-                Transaction History
-              </CardTitle>
-              {transactions.length > 0 && (
-                <Badge variant="secondary" className="text-xs tabular-nums">
-                  {transactions.length} total
-                </Badge>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="h-9 w-9 rounded-full" />
-                      <div className="space-y-1.5">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-3 w-20" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-4 w-12" />
-                  </div>
-                ))}
-              </div>
-            ) : transactions.length === 0 ? (
-              <div className="py-8 text-center">
-                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                  <Receipt className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <p className="text-sm text-muted-foreground">No transactions yet</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Your credit purchases and lead unlocks will appear here
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="divide-y divide-border">
-                  {visibleTransactions.map((tx) => (
-                    <div key={tx.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-                          {getTransactionIcon(tx.transaction_type)}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">
-                            {TX_LABELS[tx.transaction_type] || tx.transaction_type}
-                          </p>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <span>{format(new Date(tx.created_at), "MMM d, yyyy")}</span>
-                            {tx.description && (
-                              <>
-                                <span>·</span>
-                                <span className="truncate">{tx.description}</span>
-                              </>
-                            )}
-                          </div>
-                          {tx.discount_applied && tx.discount_amount_cents && tx.discount_amount_cents > 0 && (
-                            <p className="text-xs text-emerald-600 mt-0.5">
-                              Pro saved ${(tx.discount_amount_cents / 100).toFixed(2)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <span className={cn("font-semibold text-sm tabular-nums shrink-0 ml-3", getTransactionColor(tx.transaction_type))}>
-                        {tx.transaction_type === "unlock" ? "−" : "+"}${(Math.abs(tx.amount_cents) / 100).toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                {transactions.length > txPagination.pageSize && (
-                  <div className="pt-3 border-t mt-3">
-                    <PaginationFooter
-                      page={txPagination.page}
-                      pageSize={txPagination.pageSize}
-                      totalPages={txPagination.totalPages}
-                      totalItems={transactions.length}
-                      onPageChange={txPagination.setPage}
-                      onPageSizeChange={txPagination.setPageSize}
-                      itemLabel="transaction"
-                    />
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Payment Methods */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <CreditCard className="h-5 w-5 text-muted-foreground" />
-                Payment Methods
-              </CardTitle>
-              {hasExpiringCards && (
-                <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-0 text-xs">
-                  <AlertTriangle className="h-3 w-3 mr-1" />
-                  Expiring soon
-                </Badge>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {paymentMethodsLoading ? (
-              <div className="space-y-3">
-                {[1, 2].map(i => (
-                  <div key={i} className="flex items-center justify-between p-4 rounded-lg border">
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="h-5 w-5" />
-                      <div className="space-y-1.5">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-20" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-8 w-20" />
-                  </div>
-                ))}
-              </div>
-            ) : paymentMethods.length === 0 ? (
-              <div className="py-6 text-center">
-                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                  <CreditCard className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">No payment methods saved</p>
-                <Button variant="outline" size="sm" onClick={() => setShowPaymentMethodModal(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Card
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {paymentMethods.map((pm) => {
-                  const expired = isCardExpired(pm.exp_month, pm.exp_year);
-                  const expiringSoon = !expired && isCardExpiringSoon(pm.exp_month, pm.exp_year);
-                  return (
-                    <div 
-                      key={pm.id} 
-                      className={cn(
-                        "flex items-center justify-between p-3.5 rounded-lg border transition-colors",
-                        pm.is_default && "bg-muted/50 border-primary/20",
-                        expired && "border-destructive/30 bg-destructive/5",
-                        expiringSoon && !expired && "border-amber-500/30 bg-amber-500/5"
-                      )}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <CreditCard className={cn(
-                          "h-5 w-5 shrink-0",
-                          expired ? "text-destructive" : "text-muted-foreground"
-                        )} />
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-sm">
-                              {(pm.card_brand || "Card").charAt(0).toUpperCase() + (pm.card_brand || "Card").slice(1)} •••• {pm.last_four}
-                            </span>
-                            {pm.is_default && (
-                              <Badge variant="secondary" className="text-xs h-5">Default</Badge>
-                            )}
-                            {expired && (
-                              <Badge variant="destructive" className="text-xs h-5">Expired</Badge>
-                            )}
-                            {expiringSoon && (
-                              <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-0 text-xs h-5">
-                                Expiring soon
-                              </Badge>
-                            )}
-                          </div>
-                          {pm.exp_month && pm.exp_year && (
-                            <p className={cn(
-                              "text-xs mt-0.5",
-                              expired ? "text-destructive" : "text-muted-foreground"
-                            )}>
-                              Expires {String(pm.exp_month).padStart(2, '0')}/{pm.exp_year}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        {!pm.is_default && !expired && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-xs h-8"
-                            onClick={() => setDefaultPaymentMethod.mutate(pm.id)}
-                            disabled={setDefaultPaymentMethod.isPending}
-                          >
-                            Set default
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => setDeleteCardConfirm({ id: pm.id, isOpen: true })}
-                          disabled={deletePaymentMethod.isPending}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-                <Button 
-                  variant="ghost" 
                   size="sm"
-                  className="w-full text-sm text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowPaymentMethodModal(true)}
+                  onClick={() => {
+                    setPollingTimedOut(false);
+                    setPollingActive(true);
+                    invalidateSub(facilityId);
+                  }}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add another card
+                  Check now
                 </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Security note */}
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pb-4">
-          <ShieldCheck className="h-3.5 w-3.5" />
-          <span>All payments are securely processed via Stripe. We never store card details.</span>
-        </div>
-
-        {/* Purchase Credits Modal */}
-        <Dialog open={showPurchaseModal} onOpenChange={(open) => {
-          if (!purchaseLoading) setShowPurchaseModal(open);
-        }}>
-          <DialogContent className="w-[95vw] sm:max-w-[480px] p-0 overflow-hidden gap-0 rounded-2xl">
-            {/* Header with balance */}
-            <div className="relative bg-gradient-to-br from-primary/12 via-primary/6 to-transparent px-6 pt-7 pb-5">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.08),transparent_70%)]" />
-              <div className="relative flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-primary/15 ring-1 ring-primary/10 flex items-center justify-center shrink-0">
-                  <Wallet className="h-6 w-6 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Your Balance</p>
-                  <p className="text-3xl font-bold tabular-nums text-foreground leading-tight">{balanceFormatted}</p>
-                </div>
-                {proStatus?.isPro && (
-                  <Badge className="ml-auto bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/25 text-[11px] font-semibold px-2 py-0.5 shrink-0">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Pro&nbsp;20%&nbsp;off
-                  </Badge>
-                )}
-              </div>
-            </div>
-            
-            {/* Package Selection */}
-            <div className="px-6 pt-5 pb-6 space-y-4">
-              <div>
-                <h3 className="font-semibold text-base text-foreground">Choose a credit package</h3>
-                <p className="text-[13px] text-muted-foreground mt-0.5">Credits are used to unlock lead contact info</p>
-              </div>
-              
-              <div className="grid gap-3">
-                {CREDIT_PACKAGES.map((pkg, idx) => {
-                  const isPkgLoading = purchaseLoading === pkg.amountCents;
-                  const isDisabled = purchaseLoading !== null;
-                  const isBest = pkg.badge === "Best Value";
-                  const isPopular = pkg.badge === "Popular";
-                  const isHighlighted = isBest || isPopular;
-                  return (
-                    <div key={pkg.amountCents} className="relative">
-                      {pkg.badge && (
-                        <div className="absolute -top-2.5 left-4 z-10">
-                          <span className={cn(
-                            "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm",
-                            isBest ? "bg-emerald-600" : "bg-primary"
-                          )}>
-                            <Star className="h-2.5 w-2.5 fill-current" />
-                            {pkg.badge}
-                          </span>
-                        </div>
-                      )}
-                      <button
-                        onClick={() => handlePurchase(pkg.amountCents)}
-                        disabled={isDisabled}
-                        className={cn(
-                          "w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200 text-left group",
-                          "hover:shadow-md hover:scale-[1.01] active:scale-[0.99]",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-                          "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:scale-100",
-                          isPkgLoading && "border-primary bg-primary/5 shadow-md scale-[1.01]",
-                          isBest && !isPkgLoading
-                            ? "border-emerald-500/50 bg-emerald-50/60 dark:bg-emerald-950/20 hover:border-emerald-500/70"
-                            : isPopular && !isPkgLoading
-                            ? "border-primary/40 bg-primary/[0.04] hover:border-primary/60"
-                            : !isPkgLoading && "border-border hover:border-primary/40 hover:bg-primary/[0.03]"
-                        )}
-                      >
-                        <div className="flex items-center gap-3.5 min-w-0">
-                          <div className={cn(
-                            "h-11 w-11 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 transition-colors",
-                            isHighlighted
-                              ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
-                              : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
-                          )}>
-                            {pkg.label}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-[15px] text-foreground leading-snug">
-                              {pkg.credits.toLocaleString()} credits
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {pkg.savingsNote ? (
-                                <>
-                                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{pkg.savingsNote} · +${(pkg.bonusCents / 100).toFixed(0)} free</span>
-                                  <span className="mx-1.5 text-border">·</span>
-                                </>
-                              ) : null}
-                              {pkg.perLead}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="shrink-0 ml-2">
-                          {isPkgLoading ? (
-                            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                              <Loader2 className="h-4.5 w-4.5 animate-spin text-primary" />
-                            </div>
-                          ) : (
-                            <div className="h-9 w-9 rounded-lg bg-muted/60 group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                              <ChevronRight className="h-4.5 w-4.5 text-muted-foreground group-hover:text-primary transition-colors" />
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Trust signals */}
-              <div className="flex items-center justify-center gap-5 pt-3 pb-1">
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
-                  Credits never expire
-                </span>
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <ShieldCheck className="h-3.5 w-3.5 text-primary/70" />
-                  Secure checkout
-                </span>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Add Payment Method Modal */}
-        {showPaymentMethodModal && (
-          <Suspense fallback={null}>
-            <AddPaymentMethodModal 
-              open={showPaymentMethodModal} 
-              onOpenChange={setShowPaymentMethodModal}
-              facilityId={facilityId || ""}
-            />
-          </Suspense>
+              )}
+            </CardContent>
+          </Card>
         )}
 
-        {/* Delete Card Confirmation */}
-        <AlertDialog open={deleteCardConfirm.isOpen} onOpenChange={(open) => setDeleteCardConfirm(prev => ({ ...prev, isOpen: open }))}>
-          <AlertDialogContent className="w-[95vw] sm:max-w-md">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-base sm:text-lg">Remove Payment Method</AlertDialogTitle>
-              <AlertDialogDescription className="text-sm">
-                Are you sure you want to remove this card? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="gap-2 sm:gap-0">
-              <AlertDialogCancel className="h-9 text-sm">Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteCard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-9 text-sm">
-                Remove Card
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        </div>
+        {/* Payment-issue banner. We don't downgrade UI to Free for
+            past_due / unpaid — the user still owns a Pro subscription;
+            Stripe just needs them to fix their card. Surface it
+            prominently so they take action before Stripe cancels. */}
+        {isPaymentIssue && subscription && (
+          <Card className="border-destructive/40 bg-destructive/5">
+            <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-destructive">Payment failed on your last invoice</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Update your card in the Stripe portal to keep your Pro benefits
+                  active. Stripe will retry automatically.
+                </p>
+              </div>
+              <Button
+                onClick={handleManageBilling}
+                disabled={portalLoading || !subscription.stripe_customer_id}
+                size="sm"
+                variant="destructive"
+                className="gap-2 shrink-0"
+              >
+                <Settings2 className="h-4 w-4" aria-hidden />
+                {portalLoading ? "Opening…" : "Update payment"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {isIncomplete && (
+          <Card>
+            <CardContent className="p-5 flex items-center gap-3">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden />
+              <div className="flex-1">
+                <p className="font-medium text-foreground">Finalizing your first invoice…</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Stripe is settling your first charge. Pro benefits unlock as soon
+                  as it clears.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isMonthlyPro && subscription && !isCancelScheduled && (
+          <SwitchToAnnualBanner
+            subscription={subscription}
+            onSwitched={() => invalidateSub(facilityId)}
+          />
+        )}
+
+        {showRenewalSwitchBanner && subscription && (
+          <SwitchToMonthlyAtRenewalBanner
+            subscription={subscription}
+            onSwitched={() => invalidateSub(facilityId)}
+          />
+        )}
+
+        {(isPro || isPaymentIssue) && subscription ? (
+          <ProSubscriptionCard
+            subscription={subscription}
+            onManageBilling={handleManageBilling}
+            managingPortal={portalLoading}
+            onCancel={() => navigate("/provider/billing/cancel")}
+            isCancelScheduled={isCancelScheduled}
+          />
+        ) : (
+          <>
+            <FreeSubscriptionCard />
+            <ProUpgradeChoices onChoose={handleProUpgrade} />
+          </>
+        )}
       </div>
-    </div>
+    </>
+  );
+}
+
+function FreeSubscriptionCard() {
+  return (
+    <Card>
+      <CardContent className="p-5 md:p-6 space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-slate-500" aria-hidden />
+            <p className="font-semibold text-slate-900 text-lg">
+              You're on the Free plan
+            </p>
+          </div>
+          <Badge variant="secondary">Free</Badge>
+        </div>
+        <ul className="space-y-1.5 text-sm text-slate-700">
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" aria-hidden />
+            Listing visible in the directory
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" aria-hidden />
+            Edit description, treatments, hours, logo, up to 5 photos
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" aria-hidden />
+            SAMHSA-listed contact shown publicly
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-emerald-600" aria-hidden />
+            Inquiries route through our concierge first
+          </li>
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProSubscriptionCard({
+  subscription,
+  onManageBilling,
+  managingPortal,
+  onCancel,
+  isCancelScheduled,
+}: {
+  subscription: NonNullable<ReturnType<typeof useFacilitySubscription>["data"]>;
+  onManageBilling: () => void;
+  managingPortal: boolean;
+  onCancel: () => void;
+  isCancelScheduled: boolean;
+}) {
+  const interval = subscription.billing_period;
+  const intervalLabel = interval === "annual" ? "Annual — saving 15%" : "Monthly";
+  const periodEndStr = subscription.current_period_end
+    ? new Date(subscription.current_period_end).toLocaleDateString("en-US", {
+        month: "long", day: "numeric", year: "numeric",
+      })
+    : "—";
+  const nextChargeAmount = fmtMoney(subscription.paid_amount_cents);
+  const nextChargeLine = isCancelScheduled
+    ? `Access ends ${periodEndStr}`
+    : interval === "annual"
+      ? `Renews ${periodEndStr} — ${nextChargeAmount}`
+      : `Next charge: ${periodEndStr} — ${nextChargeAmount}`;
+
+  let savingsLine: string | null = null;
+  if (interval === "annual" && !isCancelScheduled) {
+    const savedCents =
+      subscription.discount_applied_cents ??
+      (TIER_PRICING.pro.fullAnnualCents - TIER_PRICING.pro.annualCents);
+    savingsLine = `You saved ${fmtMoney(savedCents)} with annual billing.`;
+  }
+
+  return (
+    <Card className={isCancelScheduled ? "border-amber-300/60" : undefined}>
+      <CardContent className="p-5 md:p-6 space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-[#1B365D]" aria-hidden />
+            <p className="font-semibold text-slate-900 text-lg">Your subscription</p>
+          </div>
+          <Badge className="bg-[#1B365D] hover:bg-[#1B365D] text-base px-3 py-1">Pro</Badge>
+        </div>
+
+        {isCancelScheduled && (
+          <div className="rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-950/20 p-3 flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-700 dark:text-amber-400 shrink-0" aria-hidden />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                Your subscription is scheduled to cancel
+              </p>
+              <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                You'll keep Pro access until <strong>{periodEndStr}</strong>. To stay
+                on Pro, open the billing portal and turn cancellation off.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Badge variant="secondary" className="font-medium">{intervalLabel}</Badge>
+        </div>
+
+        <div className="space-y-1 text-sm">
+          <p className="text-slate-700">{nextChargeLine}</p>
+          {savingsLine && <p className="text-emerald-700 font-medium">{savingsLine}</p>}
+        </div>
+
+        <div className="flex flex-wrap gap-3 pt-2 border-t border-slate-100">
+          <Button
+            onClick={onManageBilling}
+            disabled={managingPortal || !subscription.stripe_customer_id}
+            variant={isCancelScheduled ? "default" : "outline"}
+            className="gap-2"
+          >
+            <Settings2 className="h-4 w-4" aria-hidden />
+            {managingPortal ? "Opening…" : isCancelScheduled ? "Manage in Stripe portal" : "Payment method & invoices"}
+          </Button>
+          {!isCancelScheduled && (
+            <Button onClick={onCancel} variant="ghost" className="gap-2 text-slate-600">
+              Cancel subscription
+            </Button>
+          )}
+        </div>
+
+        <p className="text-xs text-slate-500 leading-relaxed pt-2 border-t border-slate-100">
+          Looking for marketing options like Featured placements or Concierge
+          Partner? Those are available under{" "}
+          <Link to="/provider/marketing" className="font-medium text-[#1B365D] underline underline-offset-2">
+            Marketing
+          </Link>{" "}
+          in your dashboard.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

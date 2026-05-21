@@ -56,7 +56,7 @@ const activityConfig: Record<string, { icon: typeof CreditCard; color: string; b
 };
 
 const SubscriptionActivityWidget = forwardRef<HTMLDivElement>(function SubscriptionActivityWidget(_, ref) {
-  const { data: activities, isLoading } = useQuery({
+  const { data: activities, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-subscription-activity"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -65,11 +65,10 @@ const SubscriptionActivityWidget = forwardRef<HTMLDivElement>(function Subscript
         .in("type", ["new_subscription", "subscription_cancelled", "payment_failed", "subscription_renewed"])
         .order("created_at", { ascending: false })
         .limit(6);
-
-      if (error) {
-        console.error("Error fetching subscription activity:", error);
-        return [];
-      }
+      // Throw so the widget surfaces a real error state instead of
+      // silently rendering "No subscription activity yet" when the
+      // query has actually failed (which masks outages from admins).
+      if (error) throw error;
       return data as SubscriptionActivity[];
     },
     staleTime: 60 * 1000, // 1 minute
@@ -139,6 +138,12 @@ const SubscriptionActivityWidget = forwardRef<HTMLDivElement>(function Subscript
                 </div>
               </div>
             ))}
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-3" role="alert">
+            <CreditCard className="h-10 w-10 opacity-40 text-destructive" />
+            <p className="text-sm text-destructive">Failed to load subscription activity</p>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
           </div>
         ) : activities && activities.length > 0 ? (
           <div className="divide-y divide-border">

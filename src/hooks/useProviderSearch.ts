@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { getCachedSession } from "@/lib/sessionCache";
 
 export interface SearchResult {
@@ -16,15 +17,13 @@ const NAVIGATION_PAGES: SearchResult[] = [
   { id: "dashboard", type: "page", title: "Dashboard", subtitle: "Overview & statistics", url: "/provider/dashboard" },
   { id: "listing", type: "page", title: "My Listings", subtitle: "Edit facility information", url: "/provider/listings" },
   { id: "inquiries", type: "page", title: "Inquiries", subtitle: "View all inquiries", url: "/provider/inquiries" },
-  { id: "credits", type: "page", title: "Credits", subtitle: "Purchase & manage credits", url: "/provider/billing?purchase_credits=true" },
-  { id: "unlock-history", type: "page", title: "Unlock History", subtitle: "View unlocked leads", url: "/provider/settings?tab=unlock-history" },
-  { id: "pro-upgrade", type: "page", title: "Pro Upgrade", subtitle: "Get featured placement", url: "/provider/pro-upgrade" },
+  { id: "pro-upgrade", type: "page", title: "Upgrade to Pro", subtitle: "$99/mo — featured placement, unlimited listings, Marketing Hub", url: "/provider/billing" },
   { id: "analytics", type: "page", title: "Analytics", subtitle: "Performance metrics", url: "/provider/analytics" },
   { id: "settings", type: "page", title: "Settings", subtitle: "Account preferences", url: "/provider/settings" },
   { id: "notifications", type: "page", title: "Notifications", subtitle: "View all notifications", url: "/provider/notifications" },
   { id: "reviews", type: "page", title: "Reviews", subtitle: "Manage facility reviews", url: "/provider/reviews" },
-  { id: "placement-network", type: "page", title: "Placement Network", subtitle: "Manage placements & tours", url: "/provider/placement-network" },
-  { id: "billing", type: "page", title: "Billing", subtitle: "Credits, payments & invoices", url: "/provider/billing" },
+  { id: "marketing", type: "page", title: "Marketing Hub", subtitle: "Featured + Concierge add-ons", url: "/provider/marketing" },
+  { id: "billing", type: "page", title: "Billing", subtitle: "Subscription, payments & invoices", url: "/provider/billing" },
 ];
 
 export function useProviderSearch(query: string, facilityId?: string) {
@@ -42,8 +41,7 @@ export function useProviderSearch(query: string, facilityId?: string) {
     queryKey: ["provider-search-leads", facilityId],
     queryFn: async () => {
       if (!facilityId) return [];
-      const { data, error } = await supabase
-        .from("leads_provider_view")
+      const { data, error } = await fromLeadsProviderView()
         .select("id, name, email, phone, status, created_at, message, location_city_state")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: false })

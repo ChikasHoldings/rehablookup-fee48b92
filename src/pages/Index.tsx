@@ -1,28 +1,33 @@
-import { useRef, useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Button } from "@/components/ui/button";
-import { HomepageFeaturedSection } from "@/components/home/HomepageFeaturedSection";
+// HomepageFeaturedSection retired 2026-05-20 — replaced by
+// HomepageGeoFeaturedRail (paid-only, geo-targeted, no organic backfill).
+import { HomepageGeoFeaturedRail } from "@/components/featured/HomepageGeoFeaturedRail";
+import { FindByStateSection } from "@/components/home/FindByStateSection";
+import { TrustRibbon } from "@/components/conversion/TrustRibbon";
+import { useNewCtaSystem } from "@/hooks/useNewCtaSystem";
 // TrustStrip moved to /concierge
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
-import { buildConciergeHref } from "@/lib/conciergeHref";
+import { useCountUp } from "@/hooks/useCountUp";
+import { cn } from "@/lib/utils";
 import { analytics } from "@/lib/analytics";
-import { SocialProofBar } from "@/components/conversion/SocialProofBar";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
 
 // Lazy-load below-fold sections to reduce initial JS bundle
 const InternalLinkBlock = lazy(() => import("@/components/seo/InternalLinkBlock").then(m => ({ default: m.InternalLinkBlock })));
-const InternationalCTA = lazy(() => import("@/components/home/InternationalCTA").then(m => ({ default: m.InternationalCTA })));
+const ProvidersCTA = lazy(() => import("@/components/home/ProvidersCTA").then(m => ({ default: m.ProvidersCTA })));
+const RecoveryJourneyCTA = lazy(() => import("@/components/home/RecoveryJourneyCTA").then(m => ({ default: m.RecoveryJourneyCTA })));
 const TestimonialsSection = lazy(() => import("@/components/testimonials/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
 const PageFAQ = lazy(() => import("@/components/seo/PageFAQ").then(m => ({ default: m.PageFAQ })));
 const seekerTestimonialsPromise = import("@/data/testimonials").then(m => m.seekerTestimonials);
 const homeFaqsPromise = import("@/data/pageFaqs").then(m => m.homeFaqs);
-import whyChooseUsImage from "@/assets/why-choose-us.webp";
 import {
   ArrowRight,
   Pill,
@@ -32,44 +37,28 @@ import {
   Stethoscope,
   Sparkles,
   CheckCircle,
-  Search,
-  Users,
-  Phone,
-  Heart,
   Clock,
   MapPin,
   Navigation,
-  ClipboardList,
+  ShieldCheck,
 } from "lucide-react";
 
-const blogArticles = [
-  {
-    id: "stages-of-recovery",
-    title: "Understanding the Stages of Addiction Recovery",
-    excerpt: "Recovery is a journey with distinct stages. Learn what to expect and how to navigate each phase successfully.",
-    category: "Recovery",
-    readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=600&h=400&fit=crop",
-    author: "Dr. Sarah Mitchell",
-  },
-  {
-    id: "support-loved-one",
-    title: "How to Support a Loved One in Treatment",
-    excerpt: "Family support is crucial for recovery. Discover effective ways to be there for someone during their treatment journey.",
-    category: "Family Support",
-    readTime: "4 min read",
-    image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop",
-    author: "Jennifer Walsh, LCSW",
-  },
-  {
-    id: "inpatient-vs-outpatient",
-    title: "Choosing Between Inpatient and Outpatient Care",
-    excerpt: "Not sure which treatment option is right? We break down the key differences to help you make an informed decision.",
-    category: "Treatment Options",
-    readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=400&fit=crop",
-    author: "Dr. Michael Chen",
-  },
+// Insurance carrier strip shown under the "Are You Covered?" heading.
+// The four SVG assets all carry their own tightened viewBox (in
+// public/insurance-logos/*.svg) so `object-contain` renders each one
+// at its true bounds — no per-logo `transform: scale` workaround
+// needed. Optum has no SVG asset in the repo and renders as styled
+// brand-orange text instead.
+type InsuranceLogo =
+  | { kind: "svg"; src: string; alt: string }
+  | { kind: "text"; alt: string; label: string; color: string };
+
+const INSURANCE_LOGOS: InsuranceLogo[] = [
+  { kind: "svg", src: "/insurance-logos/aetna.svg", alt: "Aetna" },
+  { kind: "text", alt: "Optum", label: "Optum", color: "#FF6200" },
+  { kind: "svg", src: "/insurance-logos/medicaid.svg", alt: "Medicaid" },
+  { kind: "svg", src: "/insurance-logos/cigna.svg", alt: "Cigna" },
+  { kind: "svg", src: "/insurance-logos/humana.svg", alt: "Humana" },
 ];
 
 
@@ -117,9 +106,21 @@ const treatmentOptions = [
 
 
 const Index = () => {
+  // NEW_CTA_SYSTEM gate — gates the TrustRibbon (and any future
+  // homepage-only conversion components). Other components self-gate.
+  const newCtaEnabled = useNewCtaSystem();
+
   // Lazy-loaded data for below-fold sections
   const [seekerTestimonials, setSeekerTestimonials] = useState<any[]>([]);
   const [homeFaqs, setHomeFaqs] = useState<any[]>([]);
+
+  // Trust-bar count-up animations. Animate once when the bar enters
+  // the viewport. The hooks honor prefers-reduced-motion (set to the
+  // final value immediately when the user prefers less motion).
+  // Target = live approved-facility count in `public_facilities`
+  // (~3,804 as of last SAMHSA ingest).
+  const facilitiesCount = useCountUp({ to: 3800 });
+  const statesCount = useCountUp({ to: 50 });
   // Geo-derived location string (e.g. "Boise, ID") forwarded to /concierge
   // so the intake form can prefill the visitor's preferred location without
   // asking them to retype it. Falls back gracefully when geo isn't ready.
@@ -133,41 +134,12 @@ const Index = () => {
     seekerTestimonialsPromise.then(setSeekerTestimonials);
     homeFaqsPromise.then(setHomeFaqs);
   }, []);
-  // Parallax effect for Why Choose Us image
-  const parallaxRef = useRef<HTMLDivElement>(null);
-  const [parallaxOffset, setParallaxOffset] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!parallaxRef.current) return;
-      
-      const rect = parallaxRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      
-      // Calculate how far the element is from the center of the viewport
-      const elementCenter = rect.top + rect.height / 2;
-      const viewportCenter = windowHeight / 2;
-      const distance = elementCenter - viewportCenter;
-      
-      // Only apply parallax when element is in view
-      if (rect.top < windowHeight && rect.bottom > 0) {
-        // Subtle parallax: move image slightly opposite to scroll direction
-        const offset = distance * 0.08;
-        setParallaxOffset(offset);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial call
-    
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
     <Layout>
       <SEO
         title="Find Drug & Alcohol Rehab Centers Near You"
-        description="Search 15,000+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help."
+        description="Search 3,800+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help."
         canonical="/"
         keywords={[
           "drug rehab near me",
@@ -189,7 +161,7 @@ const Index = () => {
             "@type": "WebPage",
             "@id": "https://rehablookup.com/#webpage",
             name: "Find Addiction Treatment Centers Near You",
-            description: "Search 15,000+ verified drug and alcohol rehab centers. Compare treatment options and find the right recovery program.",
+            description: "Search 3,800+ verified drug and alcohol rehab centers. Compare treatment options and find the right recovery program.",
             isPartOf: { "@id": "https://rehablookup.com/#website" },
             primaryImageOfPage: {
               "@type": "ImageObject",
@@ -256,13 +228,13 @@ const Index = () => {
         {/* Content */}
         <div className="container relative py-10 md:py-12 lg:py-14 px-4 md:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
-            {/* Headline */}
+            {/* Headline — outcome-led, conversion-tuned */}
             <h1 className="speakable-headline mb-3 font-display text-[1.875rem] font-bold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl lg:text-[2.75rem] animate-fade-in">
-              Find the Right<br className="sm:hidden" /> Treatment & Rehab
+              Find the Right Treatment & Rehab
             </h1>
 
             {/* Subheadline */}
-            <p className="speakable-summary mb-6 md:mb-8 text-[15px] md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
+            <p className="speakable-summary mb-4 md:mb-5 text-[15px] md:text-base text-white/90 animate-fade-in max-w-xl mx-auto leading-relaxed" style={{ animationDelay: "50ms" }}>
               Compare verified treatment centers and check your insurance coverage.
             </p>
 
@@ -271,18 +243,32 @@ const Index = () => {
               <SearchForm variant="directory" />
             </div>
 
+            {/* Risk-reversal chip row — surfaces the strongest selling
+                points right under the search. */}
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 animate-fade-in" style={{ animationDelay: "120ms" }}>
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 ring-1 ring-emerald-400/25 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-100">
+                100% free
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/10 ring-1 ring-white/15 px-2.5 py-0.5 text-[11px] font-semibold text-white/85">
+                Confidential
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/10 ring-1 ring-white/15 px-2.5 py-0.5 text-[11px] font-semibold text-white/85">
+                24/7 help
+              </span>
+            </div>
+
             {/* Quick Links */}
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in relative z-0" style={{ animationDelay: "150ms" }}>
-              <Link 
-                to="/concierge" 
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in relative z-0" style={{ animationDelay: "150ms" }}>
+              <Link
+                to="/concierge"
                 onClick={() => analytics.ctaClick("Get Free Help", "homepage_hero_quicklink")}
                 className="inline-flex items-center gap-1 text-sm font-semibold text-white hover:text-white underline underline-offset-4 transition-colors"
               >
-                Get Free Help
+                Talk to a placement specialist
               </Link>
               <span className="text-white/40">•</span>
-              <Link 
-                to="/for-providers" 
+              <Link
+                to="/for-providers"
                 className="inline-flex items-center gap-1 text-sm text-white/75 hover:text-white underline underline-offset-4 transition-colors"
               >
                 List Your Treatment Center
@@ -292,195 +278,78 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Trust Bar */}
+      {/* Trust Bar — single source of truth for top-of-page trust signals.
+          The light-background SocialProofBar that used to sit below this
+          was stacking the same claims twice; merged its strongest two
+          signals (geographic reach, HIPAA compliance) into this dark bar
+          and dropped the duplicate. Same vertical padding as before —
+          height is unchanged, only the content is denser. */}
       <section className="relative bg-primary border-y border-primary-foreground/10">
-        <div className="container py-3 md:py-4 px-4 md:px-6 lg:px-8">
+        <div className="container py-2 md:py-2.5 px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-8 lg:gap-x-14">
-            <div className="flex items-center gap-2 group">
-              <CheckCircle className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Verified Facilities</span>
+            <div ref={facilitiesCount.ref as React.RefObject<HTMLDivElement>} className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base text-primary-foreground/90">
+                {/* inline-block + min-w keeps the row from jittering while
+                    the digit count grows from 1 → 5 during the count-up. */}
+                <strong className="inline-block min-w-[3.5em] text-right font-semibold text-white tabular-nums">
+                  {facilitiesCount.value.toLocaleString()}+
+                </strong>{" "}
+                Verified Facilities
+              </span>
             </div>
-            <div className="flex items-center gap-2 group">
-              <Users className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">15,000+ Centers</span>
+            <div ref={statesCount.ref as React.RefObject<HTMLDivElement>} className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base text-primary-foreground/90">
+                <strong className="inline-block min-w-[2.5em] text-right font-semibold text-white tabular-nums">
+                  {statesCount.value === 50 ? "All 50" : statesCount.value}
+                </strong>{" "}
+                States Covered
+              </span>
             </div>
-            <div className="flex items-center gap-2 group">
-              <Clock className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">24/7 Help</span>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base font-medium text-primary-foreground/90">HIPAA Compliant</span>
             </div>
-            <div className="flex items-center gap-2 group">
-              <Phone className="h-4 w-4 text-accent shrink-0" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground/90">Free Insurance Check</span>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-accent shrink-0" aria-hidden />
+              <span className="text-sm md:text-base text-primary-foreground/90">
+                <strong className="font-semibold text-white">Free</strong> 24/7 Help
+              </span>
             </div>
           </div>
         </div>
       </section>
 
       {/* TrustStrip moved to /concierge — see ConciergeLanding.tsx */}
-      {/* Social Proof Stats Bar */}
-      <SocialProofBar className="container px-4 md:px-6 lg:px-8 border-b" />
 
-      {/* Featured Centers - Premium Horizontal Scroll */}
-      <HomepageFeaturedSection />
+      {/* Calm reassurance ribbon — only renders when the
+          NEW_CTA_SYSTEM flag is on. Sits directly below the navy
+          trust bar so the seeker sees one quiet block of facts
+          before the directory content. */}
+      {newCtaEnabled && <TrustRibbon />}
 
-      {/* Insurance Coverage Section */}
-      <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-muted/20 to-muted/30">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="rounded-2xl border border-border bg-card p-5 md:p-6 lg:p-10 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-6 lg:gap-12">
-              {/* Left Content */}
-              <div className="md:max-w-xs lg:max-w-sm text-center md:text-left shrink-0">
-                <div className="mb-2 md:mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
-                  <CheckCircle className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary">
-                    Insurance Verification
-                  </span>
-                </div>
-                <h2 className="mb-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-[1.75rem]">
-                  Are You Covered?
-                </h2>
-                <p className="mb-4 md:mb-5 text-[15px] md:text-base text-muted-foreground leading-relaxed">
-                  Most insurance plans cover addiction treatment. Check your benefits in minutes.
-                </p>
-                <Link to="/insurance">
-                  <Button size="default" className="gap-2 font-semibold shadow-md hover:shadow-lg transition-shadow md:size-lg">
-                    Check Your Coverage
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
+      {/* Featured rail — geo-targeted to the visitor's state when known
+          (via useGeoLocation IP lookup, cached in sessionStorage). NY
+          visitors see NY-paid Featured only, CA visitors see CA, etc.
+          When the visitor's state has no paid Featured subscribers, OR
+          when geo-IP hasn't resolved, the rail falls back to the
+          homepage:national bucket. When THAT pool is also empty the
+          entire section silently hides — per the 2026-05-20 "no
+          backfill with non-Featured" policy. */}
+      <HomepageGeoFeaturedRail />
 
-              {/* Insurance Logos */}
-              <div className="flex-1">
-                {/* Mobile: Horizontal scroll carousel, Tablet+: Grid */}
-                <div className="relative -mx-2 px-2 md:mx-0 md:px-0">
-                  <div className="flex gap-4 md:gap-3 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory md:grid md:grid-cols-5 md:overflow-visible md:pb-0 lg:gap-6">
-                    {/* Aetna */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/aetna.svg" alt="Aetna" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Anthem */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/anthem.svg" alt="Anthem" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* BCBS */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/bcbs.svg" alt="Blue Cross Blue Shield" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Cigna */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/cigna.svg" alt="Cigna" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Humana */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/humana.svg" alt="Humana" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Kaiser */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/kaiser.svg" alt="Kaiser Permanente" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Medicare */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/medicare.svg" alt="Medicare" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Medicaid */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/medicaid.svg" alt="Medicaid" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                    {/* Optum */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <span className="text-sm md:text-base lg:text-lg font-bold text-[#FF6200] opacity-80 hover:opacity-100 transition-opacity">Optum</span>
-                    </div>
-                    {/* Tricare */}
-                    <div className="flex min-w-[80px] shrink-0 snap-start items-center justify-center md:min-w-0 md:shrink">
-                      <img src="/insurance-logos/tricare.svg" alt="TRICARE" width={90} height={32} className="h-8 md:h-10 lg:h-12 max-w-[90px] object-contain opacity-80 hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-                  {/* Scroll hint for mobile */}
-                  <div className="mt-2 flex items-center justify-center gap-1 text-xs text-muted-foreground md:hidden">
-                    <span>Swipe to see more</span>
-                    <ArrowRight className="h-3 w-3" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* HomepageFeaturedSection (legacy editorial Featured strip that
+          backfilled with non-Featured organic content) was removed
+          2026-05-20 — it violated the "Featured must always mean paid"
+          policy. Geo-filtered paid Featured rail above replaces it.
+          Top-rated organic content lives in the directory listing
+          components further down the page (TreatmentCategoriesSection
+          + NearestFacilitiesSection). */}
 
-      {/* How It Works */}
-      <section className="py-10 md:py-12 lg:py-20">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl">
-            {/* Section Header */}
-            <div className="mb-6 md:mb-8 text-center">
-              <h2 className="font-display text-xl md:text-2xl font-bold text-foreground lg:text-3xl">
-                How It Works
-              </h2>
-              <p className="mt-1.5 md:mt-2 text-[15px] md:text-base text-muted-foreground">
-                Finding help is simple and confidential
-              </p>
-            </div>
-
-            {/* Steps - Clean numbered list */}
-            <div className="space-y-3 md:space-y-4">
-              {[
-                {
-                  step: 1,
-                  title: "Search",
-                  description: "Enter your location to find verified treatment centers near you.",
-                  icon: Search,
-                },
-                {
-                  step: 2,
-                  title: "Compare",
-                  description: "Review programs, insurance options, and facility details.",
-                  icon: Users,
-                },
-                {
-                  step: 3,
-                  title: "Connect",
-                  description: "Contact centers directly or request a callback from our team.",
-                  icon: Phone,
-                },
-              ].map((item) => (
-                <div
-                  key={item.step}
-                  className="group flex items-start gap-3 md:gap-4 rounded-xl border border-border bg-card p-3 md:p-4 transition-all hover:border-primary/30 hover:shadow-sm"
-                >
-                  {/* Step number */}
-                  <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm md:text-base font-bold text-primary-foreground">
-                    {item.step}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground text-[15px] md:text-base">
-                      {item.title}
-                    </h3>
-                    <p className="mt-0.5 text-sm md:text-base text-muted-foreground">
-                      {item.description}
-                    </p>
-                  </div>
-                  
-                  <item.icon className="h-4 w-4 md:h-5 md:w-5 shrink-0 text-muted-foreground/50 mt-0.5" />
-                </div>
-              ))}
-            </div>
-
-            {/* CTA */}
-            <div className="mt-6 md:mt-8 text-center">
-              <Link to="/rehab-centers">
-                <Button size="default" className="gap-2 md:size-lg">
-                  Start Your Search
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Treatment Options */}
+      {/* Browse by Category — directly under Featured per the directory
+          re-focus. The taxonomy entry point lives here so the homepage
+          flows Featured → categories → why-us → near-you. */}
       <section className="py-10 md:py-12 lg:py-20 bg-muted/40 border-y border-border/50">
         <div className="container px-4 md:px-6 lg:px-8">
           {/* Section Header */}
@@ -532,133 +401,94 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section className="py-10 md:py-12 lg:py-20 bg-primary">
+      {/* Find Treatment Center by State — replaces the prior "Trusted
+          by Families" block. The 4-tile stats strip lives on inside
+          FindByStateSection (Centers / States / Families / Support). */}
+      <FindByStateSection />
+
+      {/* Insurance Coverage Section — moved here from above per the
+          directory-refocus pass so seekers see the verification ramp
+          right before reading testimonials. */}
+      <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-muted/20 to-muted/30">
         <div className="container px-4 md:px-6 lg:px-8">
-          <div className="grid items-center gap-6 md:gap-8 md:grid-cols-2 lg:gap-12">
-            {/* Content */}
-            <div className="order-2 md:order-1">
-              <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">Why RehabLookup</span>
-              <h2 className="mt-1.5 md:mt-2 font-display text-xl md:text-2xl font-bold text-primary-foreground lg:text-3xl">
-                Trusted by Families Across America
-              </h2>
-              <p className="mt-2 md:mt-3 text-[15px] md:text-base text-primary-foreground/70 leading-relaxed max-w-md">
-                We're committed to helping you find the right treatment with transparency and compassion.
-              </p>
-
-              <ul className="mt-4 md:mt-6 space-y-2 md:space-y-2.5">
-                {[
-                  "Every facility verified for licensing",
-                  "Transparent program information",
-                  "No hidden fees or referrals",
-                  "Confidential communication",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-2 md:gap-2.5">
-                    <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 text-accent" />
-                    <span className="text-primary-foreground text-sm md:text-base">{item}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-5 md:mt-6">
-                <Link to="/about">
-                  <Button variant="hero-light" size="sm" className="gap-2">
-                    About Our Mission
-                    <ArrowRight className="h-3.5 w-3.5" />
+          <div className="rounded-2xl border border-border bg-card p-5 md:p-6 lg:p-10 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 md:gap-6 lg:gap-12">
+              {/* Left Content */}
+              <div className="md:max-w-xs lg:max-w-sm text-center md:text-left shrink-0">
+                <div className="mb-2 md:mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+                  <CheckCircle className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs md:text-xs font-semibold uppercase tracking-wider text-primary">
+                    Insurance Verification
+                  </span>
+                </div>
+                <h2 className="mb-2 font-display text-xl md:text-2xl font-bold text-foreground lg:text-[1.75rem]">
+                  Are You Covered?
+                </h2>
+                <p className="mb-4 md:mb-5 text-[15px] md:text-base text-muted-foreground leading-relaxed">
+                  Most insurance plans cover addiction treatment. Check your benefits in minutes.
+                </p>
+                <Link to="/insurance">
+                  <Button size="default" className="gap-2 font-semibold shadow-md hover:shadow-lg transition-shadow md:size-lg">
+                    Check Your Coverage
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
-            </div>
 
-            {/* Image with Stats Overlay */}
-            <div ref={parallaxRef} className="order-1 md:order-2">
-              <div className="relative overflow-hidden rounded-xl">
-                <img 
-                  src={whyChooseUsImage} 
-                  alt="Healthcare professional consulting with a family"
-                  className="w-full aspect-[4/3] object-cover"
-                  width={800}
-                  height={600}
-                  loading="lazy"
-                />
-                {/* Overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent" />
-                
-                {/* Stats Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 md:gap-2">
-                    {[
-                      { value: "15K+", label: "Centers" },
-                      { value: "50", label: "States" },
-                      { value: "10K+", label: "Families" },
-                      { value: "24/7", label: "Support" },
-                    ].map((stat) => (
-                      <div key={stat.label} className="text-center">
-                        <div className="font-display text-lg md:text-xl font-bold text-accent lg:text-2xl">
-                          {stat.value}
-                        </div>
-                        <p className="text-xs md:text-sm text-primary-foreground/80 lg:text-sm">{stat.label}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Placement Service */}
-      <section className="py-12 md:py-16 lg:py-20 bg-accent/5 border-y border-accent/10 relative overflow-hidden">
-        {/* Decorative background pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-        
-        <div className="container relative px-4 md:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center max-w-5xl mx-auto">
-            {/* Left side - Content */}
-            <div className="text-center md:text-left">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/15 px-4 py-1.5 border border-accent/20">
-                <Heart className="h-4 w-4 text-accent fill-accent/30" />
-                <span className="text-sm font-semibold text-accent">Placement Service</span>
-              </div>
-              <h2 className="mb-3 font-display text-xl font-bold text-foreground md:text-2xl lg:text-3xl">
-                Overwhelmed by Options?
-                <span className="block text-accent mt-1">Let Us Help.</span>
-              </h2>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                Our specialists personally connect you with verified treatment centers based on your insurance, location, and unique needs.
-              </p>
-              <Link to={buildConciergeHref({ location: homepageConciergeLocation, source: "homepage_placement_section" })}>
-                <Button size="lg" className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg shadow-accent/20">
-                  Find Treatment
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Right side - Visual steps */}
-            <div className="space-y-3">
-              {[
-                { icon: ClipboardList, title: "Tell Us Your Needs", desc: "Share your situation, preferences, and insurance" },
-                { icon: Users, title: "We Find Matches", desc: "Our team reviews programs that fit your criteria" },
-                { icon: Phone, title: "Get Connected", desc: "We introduce you directly to the best options" },
-              ].map((step, idx) => (
-                <div 
-                  key={step.title}
-                  className="flex items-start gap-4 bg-card/80 backdrop-blur-sm rounded-xl p-4 border border-border/50 shadow-sm hover:shadow-md hover:border-accent/30 transition-all"
+              {/* Insurance Logos — 5 named carriers, container-less.
+                  The five logos don't share a normalized artwork bounding
+                  box: Aetna's SVG fills its viewBox densely, while
+                  Cigna / Humana / Medicaid use a 200×50 viewBox whose
+                  content occupies only the left ~50–70%. Plain
+                  `object-contain` would render those visually ~half the
+                  size of Aetna. Per-logo `transform: scale()` brings
+                  their rendered widths roughly to Aetna's. Optum has no
+                  SVG asset in the repo, so it renders as styled
+                  brand-color text. */}
+              <div className="flex-1">
+                <div
+                  className="grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4"
+                  aria-label="Insurance carriers accepted"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-                    <step.icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-accent/60">0{idx + 1}</span>
-                      <h3 className="font-semibold text-foreground text-sm">{step.title}</h3>
+                  {INSURANCE_LOGOS.map((logo, i) => (
+                    <div
+                      key={logo.alt}
+                      className={cn(
+                        "group flex h-20 md:h-24 items-center justify-center transition-transform duration-200 hover:scale-[1.04]",
+                        i === 4 && "col-span-2 md:col-span-1",
+                      )}
+                    >
+                      {logo.kind === "text" ? (
+                        <span
+                          className="text-3xl md:text-4xl font-bold tracking-tight"
+                          style={{ color: logo.color }}
+                        >
+                          {logo.label}
+                        </span>
+                      ) : (
+                        <img
+                          src={logo.src}
+                          alt={logo.alt}
+                          className="h-14 md:h-16 w-auto max-w-full object-contain"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-0.5">{step.desc}</p>
-                  </div>
+                  ))}
                 </div>
-              ))}
+
+                {/* + more carriers link — routes to the full carrier list. */}
+                <div className="mt-4 text-center md:text-right">
+                  <Link
+                    to="/insurance"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    + more carriers accepted
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -674,10 +504,13 @@ const Index = () => {
         </Suspense>
       </LazySection>
 
-      {/* International Patients CTA */}
-      <LazySection fallbackHeight="200px">
-        <Suspense fallback={<div style={{ minHeight: "200px" }} aria-hidden="true" />}>
-          <InternationalCTA />
+      {/* For Treatment Providers CTA — repurposed from the previous
+          International Patients block on the homepage. The dedicated
+          /us-rehab/international-patients page remains untouched and
+          is still reached via the international banner + footer. */}
+      <LazySection fallbackHeight="380px">
+        <Suspense fallback={<div style={{ minHeight: "380px" }} aria-hidden="true" />}>
+          <ProvidersCTA />
         </Suspense>
       </LazySection>
 
@@ -787,7 +620,7 @@ const Index = () => {
             </Link>
 
             <Link
-              to="/outpatient-near-me"
+              to="/outpatient-rehab-near-me"
               className="group relative flex flex-col items-center gap-2 md:gap-3 rounded-xl border border-border bg-card p-4 md:p-5 text-center transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
             >
               <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110">
@@ -805,54 +638,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* Resources directory — previously rendered as 3 magazine-style article
-          cards with large images, category tags, and "X min read" metadata
-          (classic blog convention). Reworked as a compact 2-column directory
-          listing so the homepage stays directory-first; the full /resources
-          page handles the magazine treatment. */}
-      <LazySection fallbackHeight="320px">
-      <section className="py-10 md:py-12 lg:py-16">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="mb-5 md:mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recovery Resources</span>
-              <h2 className="mt-1.5 font-display text-lg md:text-xl font-bold text-foreground lg:text-2xl">
-                Browse Recovery Guides
-              </h2>
-            </div>
-            <Link to="/resources" className="group">
-              <span className="text-sm font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                View all resources
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </span>
-            </Link>
-          </div>
-
-          <ul className="divide-y divide-border rounded-xl border bg-card">
-            {blogArticles.map((article) => (
-              <li key={article.id}>
-                <Link
-                  to={`/resources/${article.id}`}
-                  className="group flex items-center gap-4 px-4 py-3 md:px-5 md:py-4 hover:bg-muted/40 transition-colors"
-                >
-                  <span className="hidden sm:inline-flex shrink-0 items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary uppercase tracking-wide">
-                    {article.category}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm md:text-base font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                      {article.title}
-                    </h3>
-                    <p className="mt-0.5 text-xs md:text-sm text-muted-foreground line-clamp-1">{article.excerpt}</p>
-                  </div>
-                  <ArrowRight className="hidden sm:block h-4 w-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-      </LazySection>
 
       {/* SEO Internal Links Section */}
       <LazySection fallbackHeight="600px">
@@ -911,36 +696,13 @@ const Index = () => {
         </section>
       </LazySection>
 
-      {/* CTA Section */}
-      <section className="py-10 md:py-14 lg:py-20">
-        <div className="container px-4 md:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl">
-            {/* Main CTA Card */}
-            <div className="rounded-xl border border-border bg-card p-6 md:p-8 lg:p-10 text-center">
-              <h2 className="font-display text-xl md:text-2xl font-semibold text-foreground lg:text-3xl">
-                Start Your Recovery Journey
-              </h2>
-              <p className="mt-1.5 md:mt-2 text-muted-foreground text-[15px] md:text-base lg:text-lg max-w-md mx-auto">
-                Connect with verified treatment centers or list your facility in our directory.
-              </p>
-              <div className="mt-5 md:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 md:gap-3">
-                <Link to={buildConciergeHref({ location: homepageConciergeLocation, source: "homepage_footer_cta" })}>
-                  <Button size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
-                    <Heart className="h-4 w-4" />
-                    Find Treatment
-                  </Button>
-                </Link>
-                <Link to="/for-providers">
-                  <Button variant="outline" size="default" className="gap-2 min-w-[160px] md:min-w-[180px] md:size-lg">
-                    List Your Facility
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* End-of-page recovery-journey CTA — two-column band with a
+          sunrise illustration on the right and a tel-first dual CTA
+          on the left. Replaced the previous lightweight rounded-card
+          to give the scroll-end more visual weight. */}
+      <Suspense fallback={<div style={{ minHeight: "440px" }} aria-hidden="true" />}>
+        <RecoveryJourneyCTA conciergeLocation={homepageConciergeLocation} />
+      </Suspense>
 
       <LazySection fallbackHeight="300px">
         <Suspense fallback={<div style={{ minHeight: "300px" }} aria-hidden="true" />}>

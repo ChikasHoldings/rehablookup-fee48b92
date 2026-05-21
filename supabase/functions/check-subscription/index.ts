@@ -9,7 +9,9 @@ const corsHeaders = {
 };
 
 // PRO SUBSCRIPTION CONFIGURATION
-// Pro subscription = $399/mo for enhanced features (20% off unlocks, 5 facilities, etc.)
+// Pro subscription = $99/mo flat fee (EKRA-clean): verified badge, lead
+// analytics, priority placement (+50 ranking), 10 photos + 1 video,
+// Marketing Hub unlocked (Featured + Concierge add-ons), up to 5 facilities.
 const PRO_PRODUCT_IDS = [
   "prod_pro_monthly", // New Pro product ID
   // Legacy product IDs for backward compatibility with existing subscriptions

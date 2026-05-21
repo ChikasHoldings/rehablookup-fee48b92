@@ -13,6 +13,8 @@ import {
   Pencil,
   Check,
   X,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -229,7 +231,7 @@ function SummaryChips({ criteria }: { criteria: Record<string, unknown> }) {
 
 export default function SeekerSavedSearches() {
   const { isReady, isAuthenticated } = useSeekerSession();
-  const { searches, isLoading } = useSavedSearches();
+  const { searches, isLoading, isError } = useSavedSearches();
 
   if (isReady && !isAuthenticated) {
     return (
@@ -276,6 +278,29 @@ export default function SeekerSavedSearches() {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
+        ) : isError ? (
+          <Card className="border-destructive/40 bg-destructive/5" role="alert">
+            <CardContent className="p-6 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-destructive">
+                  Couldn't load your saved searches
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Check your connection and try again. Email alerts continue
+                  to run from the server even if this page can't load.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.reload()}
+                className="shrink-0"
+              >
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+              </Button>
+            </CardContent>
+          </Card>
         ) : searches.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="p-8 text-center">

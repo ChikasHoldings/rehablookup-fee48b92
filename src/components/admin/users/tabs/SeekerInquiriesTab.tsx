@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Mail, Phone, MapPin, MessageSquare, Search, Building2, Clock, CheckCircle, Lock, Unlock, FileText, Calendar,
+  Mail, Phone, MapPin, MessageSquare, Search, Building2, Clock, CheckCircle, FileText, Calendar,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -64,7 +64,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
       if (!seekerEmail) return [];
       const { data } = await supabase
         .from("leads")
-        .select("id, facility_id, name, email, phone, status, source, inquiry_type, created_at, urgency, quality_flag, lead_score_label, lead_score")
+        .select("id, facility_id, name, email, phone, status, source, inquiry_type, created_at, urgency, quality_flag")
         .eq("email", seekerEmail)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -82,19 +82,12 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
         facilities?.forEach((f: any) => { fMap[f.id] = f; });
       }
 
-      // Fetch unlock status
-      const leadIds = data.map((l: any) => l.id);
-      const { data: unlocks } = await supabase
-        .from("lead_unlocks")
-        .select("lead_id, unlocked_at, facility_id")
-        .in("lead_id", leadIds);
-      const unlockMap: Record<string, any> = {};
-      unlocks?.forEach((u: any) => { unlockMap[u.lead_id] = u; });
-
+      // Unlock state retired with the EKRA flat-fee refactor — lead_unlocks
+      // table dropped. Every lead is visible to its facility owner.
       return data.map((l: any) => ({
         ...l,
         facility: fMap[l.facility_id] || null,
-        unlock: unlockMap[l.id] || null,
+        unlock: null,
       }));
     },
     enabled: !!seekerEmail,
@@ -125,7 +118,6 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
 
   // KPIs
   const totalAll = (inquiries?.length || 0) + (directLeads?.length || 0);
-  const unlockedCount = (directLeads || []).filter((l: any) => l.unlock).length;
   const placedCount = (inquiries || []).filter((i: any) => i.placement_confirmed || i.admission_status === "admitted").length;
 
   if (loading) {
@@ -142,7 +134,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
   return (
     <div className="p-5 space-y-5">
       {/* KPI Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="p-3 rounded-xl border bg-card text-center">
           <p className="text-xl font-bold tabular-nums">{totalAll}</p>
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Inquiries</p>
@@ -150,10 +142,6 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
         <div className="p-3 rounded-xl border bg-card text-center">
           <p className="text-xl font-bold tabular-nums text-primary">{directLeads?.length || 0}</p>
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Direct Leads</p>
-        </div>
-        <div className="p-3 rounded-xl border bg-card text-center">
-          <p className="text-xl font-bold tabular-nums text-chart-3">{unlockedCount}</p>
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Unlocked</p>
         </div>
         <div className="p-3 rounded-xl border bg-card text-center">
           <p className="text-xl font-bold tabular-nums text-success">{placedCount}</p>
@@ -175,7 +163,6 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="new">New</SelectItem>
             <SelectItem value="contacted">Contacted</SelectItem>
-            <SelectItem value="unlocked">Unlocked</SelectItem>
             <SelectItem value="reviewing">Reviewing</SelectItem>
             <SelectItem value="matching">Matching</SelectItem>
             <SelectItem value="matched">Matched</SelectItem>
@@ -219,18 +206,6 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
                           {lead.status}
                         </Badge>
                         {lead.urgency && <Badge variant="secondary" className="text-xs">{lead.urgency}</Badge>}
-                        {lead.lead_score_label && (
-                          <Badge variant="secondary" className="text-xs">{lead.lead_score_label} ({lead.lead_score})</Badge>
-                        )}
-                        {lead.unlock ? (
-                          <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 text-xs">
-                            <Unlock className="h-3 w-3" />Unlocked {lead.unlock.unlocked_at && format(new Date(lead.unlock.unlocked_at), "MMM d")}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-muted text-muted-foreground border-border gap-1 text-xs">
-                            <Lock className="h-3 w-3" />Locked
-                          </Badge>
-                        )}
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">

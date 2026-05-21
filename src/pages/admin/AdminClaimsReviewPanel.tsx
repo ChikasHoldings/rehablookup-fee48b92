@@ -18,7 +18,9 @@
  * Trigger side effects (handled in DB, not here):
  *   • On approve: facilities.user_id = claimant_user_id, claimed_at = now()
  *   • On approve: competing pending claims for the same facility → rejected
- *   • On approve: provider_credits row initialized for the claimant
+ *   • (Pre-2026-05-17 the trigger also seeded a provider_credits row;
+ *     that table + the entire unlock-credit model are retired — no
+ *     credit-side initialization happens any more.)
  *
  * Routes: mount this at /admin/claims (or wherever your admin routes live).
  * Access control: gate the parent route on `is_admin(auth.uid())` so non-

@@ -81,26 +81,26 @@ const RehabScore = () => {
         ]}
       />
 
-      <section className="border-b border-border bg-secondary/30 py-12">
-        <div className="container">
-          <BreadcrumbNav className="mb-4" variant="light" items={[{ label: "Rehab Score" }]} />
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <ShieldCheck className="h-6 w-6 text-primary" aria-hidden="true" />
+      {/* Hero — REHAB SCORE methodology. Editorial library palette. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
+          <BreadcrumbNav className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white" items={[{ label: "Rehab Score" }]} />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/20 ring-1 ring-amber-400/25">
+              <ShieldCheck className="h-5 w-5 text-amber-200" aria-hidden="true" />
             </div>
             <div>
-              <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+              <h1 className="font-display text-2xl md:text-3xl font-bold text-white">
                 The Rehab Score
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-xs text-white/70">
                 A transparent, weighted score families can actually trust.
               </p>
             </div>
           </div>
-          <p className="max-w-3xl text-foreground/80">
-            Most rehab directories rank facilities by who pays them. RehabLookup ranks by what
-            matters to people in crisis — licensing, clinical depth, real outcomes, and proximity.
-            This page documents exactly how the Rehab Score is built so you can audit it.
+          <p className="max-w-3xl text-sm md:text-base text-white/85">
+            Most rehab directories rank facilities by who pays them. RehabLookup ranks by what matters in crisis — licensing, clinical depth, real outcomes, and proximity.
           </p>
         </div>
       </section>

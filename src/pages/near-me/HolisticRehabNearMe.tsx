@@ -19,6 +19,7 @@ import {
 import { useNearMeFacilities } from "@/hooks/useNearMeFacilities";
 import { getHolisticRehabNearMeFAQs } from "@/components/seo/NearMeFAQData";
 
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 export default function HolisticRehabNearMe() {
   const { stateSlug } = useParams<{ stateSlug?: string }>();
 
@@ -77,6 +78,17 @@ export default function HolisticRehabNearMe() {
         treatmentType="Holistic Rehabilitation"
         location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
+      />
+
+      {/* Featured rotation — paid Featured pool for the
+          visitor's geo-resolved state. Visual matches the
+          homepage Featured section for cross-site consistency.
+          Silent absence until geo resolves AND the state has an
+          active Featured subscriber. */}
+      <LandingFeaturedSection
+        placement_type="near_me"
+        placement_value={stateData?.stateAbbr ?? null}
+        title={stateData ? `Featured Holistic Rehab Centers in ${stateData.state}` : `Featured Holistic Rehab Centers Near You`}
       />
 
       <LocalSignalsSection

@@ -21,6 +21,7 @@ import {
 import { ReactNode, useMemo } from "react";
 import { MidArticleCTA } from "@/components/articles/MidArticleCTA";
 import { ArticleShareBar } from "@/components/articles/ArticleShareBar";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { 
   InternalLinkingSection, 
   treatmentTypeLinks, 
@@ -67,6 +68,13 @@ interface DBArticle {
   meta_title: string | null;
   meta_description: string | null;
   seo_keywords: string[] | null;
+  /** Bucket key (e.g., "aetna-rehab", "detox-programs") used to pull
+   *  the end-of-article FeaturedStrip. NULL means no Featured strip
+   *  renders on this article. */
+  featured_placement_bucket: string | null;
+  /** Last-modified timestamp surfaced in article JSON-LD + the
+   *  byline "updated" line. Set by the DB on row write. */
+  updated_at?: string;
 }
 
 // Helper function to parse content with internal links and Markdown formatting.
@@ -174,6 +182,49 @@ const extractLinkedArticleIds = (content: ContentBlock[]): string[] => {
 };
 
 // Loading skeleton for article
+/**
+ * Phase AA: in-place 404 for missing article slugs. Replaces the
+ * previous silent <Navigate to="/resources" /> which was the cause of
+ * the "Resources mega-menu items fall back to the main page" bug.
+ *
+ * Renders with the standard Layout so the user keeps header/footer
+ * navigation, sees a clear error message, and gets a CTA back to the
+ * Resources hub. SEO: noindex + 404-equivalent meta so search engines
+ * don't treat the URL as duplicate content of /resources.
+ */
+function ArticleNotFound({ slug }: { slug: string }) {
+  return (
+    <Layout>
+      <SEO
+        title="Article not found — RehabLookup"
+        description="The article you were looking for couldn't be found. Browse our resources hub for related guides."
+        noindex
+      />
+      <main className="container mx-auto px-4 py-16 md:py-24 max-w-2xl text-center">
+        <div className="mx-auto h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-6">
+          <span className="text-2xl font-bold text-muted-foreground" aria-hidden>?</span>
+        </div>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+          We couldn't find that article
+        </h1>
+        <p className="text-muted-foreground mb-8 leading-relaxed">
+          The article at <code className="font-mono text-sm bg-muted px-1.5 py-0.5 rounded">{`/resources/${slug}`}</code>{" "}
+          isn't available right now — it may have been moved or unpublished.
+          Browse our full Resources hub or try one of the suggestions below.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button asChild>
+            <Link to="/resources">Browse all resources</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/">Back to home</Link>
+          </Button>
+        </div>
+      </main>
+    </Layout>
+  );
+}
+
 function ArticleSkeleton() {
   return (
     <Layout>
@@ -226,7 +277,7 @@ const ArticleDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("blog_articles")
-        .select("id, title, slug, excerpt, content, author, author_date, category, category_label, image_url, read_time, published_at, created_at, updated_at, meta_title, meta_description, seo_keywords, featured, status, author_id, medical_reviewer_id, last_medically_reviewed_at")
+        .select("id, title, slug, excerpt, content, author, author_date, category, category_label, image_url, read_time, published_at, created_at, updated_at, meta_title, meta_description, seo_keywords, featured, status, author_id, medical_reviewer_id, last_medically_reviewed_at, featured_placement_bucket")
         .eq("slug", normalizedSlug)
         .eq("status", "published")
         .single();
@@ -363,7 +414,13 @@ const ArticleDetail = () => {
   }
 
   if (error || !article) {
-    return <Navigate to="/resources" replace />;
+    // Phase AA fix: render an in-place 404 instead of silently
+    // redirecting to /resources. The previous Navigate-on-miss was
+    // the reason the Resources mega-menu items appeared to "fall back
+    // to the main page" — any header link to a slug that no longer
+    // exists in blog_articles silently jumped to /resources with no
+    // signal to the user. Now: real 404 with a clear CTA back.
+    return <ArticleNotFound slug={normalizedSlug ?? ""} />;
   }
 
   const defaultImage = "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1200&h=600&fit=crop";
@@ -559,31 +616,43 @@ const ArticleDetail = () => {
         publishedTime={article.published_at || undefined}
       />
 
-      {/* Hero */}
-      <div className="bg-gradient-to-b from-muted/60 via-muted/30 to-background py-12 md:py-16">
-        <div className="container">
+      {/* Hero — ARTICLE DETAIL. Editorial library palette (matches
+          Resources / CategoryHub / Authors / News). Smaller than
+          State per the brief. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
             items={[
               { label: "Resources", href: "/resources" },
               { label: article.category_label, href: `/resources?category=${article.category}` },
               { label: article.title },
             ]}
-            className="mb-4"
-            variant="light"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
           />
           <div className="max-w-4xl mx-auto">
 
-            <div className="mb-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                <BookOpen className="h-3.5 w-3.5" />
+            <div className="mb-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-100 ring-1 ring-amber-400/25">
+                <BookOpen className="h-3 w-3" />
                 {article.category_label}
               </span>
             </div>
 
-            <h1 className="speakable-headline font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl md:text-4xl mb-6 leading-tight">
+            <h1 className="speakable-headline font-display text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl leading-tight">
               {article.title}
             </h1>
+          </div>
+        </div>
+      </section>
 
+      {/* Byline strip — light band right below the hero. ArticleByline
+          is styled for light backgrounds (uses text-muted-foreground /
+          text-foreground) so it stays here rather than inside the
+          dark editorial hero. */}
+      <section className="border-b border-border bg-card py-4">
+        <div className="container">
+          <div className="max-w-4xl mx-auto">
             <ArticleByline
               author={authorPerson ? {
                 slug: authorPerson.slug,
@@ -607,7 +676,20 @@ const ArticleDetail = () => {
             />
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Featured rotation — paid Featured pool for this article's
+          bucket, mounted directly under the hero. Same visual as the
+          homepage Featured section for cross-site consistency.
+          Renders nothing when blog_articles.featured_placement_bucket
+          is NULL OR when the bucket has no active Featured
+          subscribers. */}
+      <LandingFeaturedSection
+        placement_type="article"
+        placement_value={article.featured_placement_bucket}
+        slot_count={6}
+        title="Featured Treatment Facilities"
+      />
 
       {/* Content */}
       <section className="py-12 md:py-16">
@@ -641,6 +723,12 @@ const ArticleDetail = () => {
                   url={`https://rehablookup.com/resources/${article.slug}`}
                 />
               </div>
+
+              {/* (Featured rotation moved to top of page — see
+                  LandingFeaturedSection mount above, directly under
+                  the hero. Single Featured surface per page keeps
+                  visual treatment consistent with the homepage and
+                  every other landing page in the site.) */}
 
               {/* Enhanced Related Articles with Smart Linking */}
               {smartRelatedArticles && smartRelatedArticles.length > 0 && (

@@ -201,52 +201,54 @@ export default function AuthorProfile() {
         ]}
       />
 
-      {/* Hero */}
-      <section className="border-b border-border bg-muted/30">
-        <div className="container py-8 md:py-10">
+      {/* Hero — AUTHOR PROFILE. Editorial library palette, smaller
+          than State per the brief. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.10),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-4"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
               { label: "Authors", href: "/authors" },
               { label: author.name },
             ]}
           />
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="shrink-0">
               {author.photo_url ? (
                 <img
                   src={author.photo_url}
                   alt={`${author.name} headshot`}
-                  className="h-24 w-24 rounded-full object-cover border-2 border-card shadow-sm"
+                  className="h-20 w-20 rounded-full object-cover border-2 border-white/20 shadow-lg"
                 />
               ) : (
-                <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center border-2 border-card shadow-sm">
-                  <RoleIcon className="h-10 w-10 text-primary" />
+                <div className="h-20 w-20 rounded-full bg-amber-500/20 flex items-center justify-center border-2 border-white/20 shadow-lg">
+                  <RoleIcon className="h-8 w-8 text-amber-200" />
                 </div>
               )}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <Badge variant="outline" className="gap-1 border-primary/30 text-primary">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-100 ring-1 ring-amber-400/25">
                   <RoleIcon className="h-3 w-3" />
                   {ROLE_LABEL[author.role]}
-                </Badge>
+                </span>
                 {author.specialties.slice(0, 3).map((s) => (
-                  <Badge key={s} variant="secondary" className="text-[11px]">
+                  <span key={s} className="inline-flex items-center rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/80 ring-1 ring-white/15">
                     {s}
-                  </Badge>
+                  </span>
                 ))}
               </div>
-              <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-white">
                 {author.name}
                 {author.credentials && (
-                  <span className="ml-2 text-muted-foreground font-semibold text-xl">
+                  <span className="ml-2 text-white/65 font-semibold text-xl">
                     , {author.credentials}
                   </span>
                 )}
               </h1>
               {author.title && (
-                <p className="mt-1 text-sm text-muted-foreground">{author.title}</p>
+                <p className="mt-1 text-sm text-white/75">{author.title}</p>
               )}
 
               <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">

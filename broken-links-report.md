@@ -1,10 +1,10 @@
 # Broken-Link Report
 
-- **HTML files scanned:** 47036
-- **Unique internal hrefs:** 56005
-- **Unique external hrefs (post allow-list):** 7
+- **HTML files scanned:** 46694
+- **Unique internal hrefs:** 52712
+- **Unique external hrefs (post allow-list):** 1
 - **Broken internal:** 0
 - **Broken external:** skipped
-- **Generated:** 2026-05-15T01:37:56.612Z
+- **Generated:** 2026-05-21T03:56:19.777Z
 
 ✅ All links resolve.

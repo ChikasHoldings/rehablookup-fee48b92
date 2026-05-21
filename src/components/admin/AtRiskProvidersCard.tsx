@@ -18,8 +18,9 @@ interface AtRiskProvider {
   riskScore: number;
   riskFactors: string[];
   lastActivity: string | null;
-  leadsUsed: number;
-  leadLimit: number;
+  /** Inquiries received for the facility this month — replaces the
+   *  retired `leadsUsed` naming (which referred to the unlock model). */
+  leadsThisMonth: number;
   daysInactive: number;
 }
 
@@ -27,11 +28,14 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
   const [isExpanded, setIsExpanded] = useState(true);
   const queryClient = useQueryClient();
 
-  const { data, isLoading, refetch, isFetching } = useQuery({
+  const { data, isLoading, refetch, isFetching, isError } = useQuery({
     queryKey: ["at-risk-providers"],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("check-provider-health-alerts");
       if (error) throw error;
+      if (data && typeof data === "object" && "error" in data && (data as { error: unknown }).error) {
+        throw new Error(String((data as { error: unknown }).error));
+      }
       return data as { atRiskProviders: AtRiskProvider[]; totalChecked: number };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -42,6 +46,9 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("send-retention-outreach");
       if (error) throw error;
+      if (data && typeof data === "object" && "error" in data && (data as { error: unknown }).error) {
+        throw new Error(String((data as { error: unknown }).error));
+      }
       return data as { emailsSent: number; emailsFailed: number; sentTo: string[] };
     },
     onSuccess: (result) => {
@@ -165,7 +172,17 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
 
         <CollapsibleContent>
           <CardContent>
-            {atRiskProviders.length === 0 ? (
+            {isError ? (
+              <div className="flex items-center justify-between gap-3 p-3 rounded-md border border-destructive/30 bg-destructive/5" role="alert">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                  <p className="text-sm text-destructive">
+                    Failed to run the provider health check. Retry, or check the edge function logs.
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
+              </div>
+            ) : atRiskProviders.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <TrendingDown className="h-10 w-10 mx-auto mb-2 opacity-50" />
                 <p>No at-risk providers detected</p>
@@ -203,8 +220,8 @@ export const AtRiskProvidersCard = forwardRef<HTMLDivElement, object>(function A
                       </div>
                       <div>
                         <span className="text-muted-foreground">Leads this month:</span>{" "}
-                        <span className={provider.leadsUsed < 3 ? "text-amber-600 font-medium" : ""}>
-                          {provider.leadsUsed}
+                        <span className={provider.leadsThisMonth < 3 ? "text-amber-600 font-medium" : ""}>
+                          {provider.leadsThisMonth}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">

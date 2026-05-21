@@ -48,7 +48,7 @@ const FAQ_ITEMS = [
   },
   {
     question: "How quickly will I hear back?",
-    answer: "Most clients receive their first program recommendations within 24-48 hours of completing their intake form.",
+    answer: "A placement coordinator reaches out within 1 business hour to acknowledge your intake and gather any missing details. Full program recommendations follow within 24-48 hours.",
   },
   {
     question: "Is my information kept confidential?",
@@ -134,9 +134,12 @@ export default function ConciergeLanding() {
         <PublicHeader />
         
         <main className="flex-1">
-          {/* Hero Section - Image Background */}
-          <section className="relative z-10 bg-primary">
-            <img 
+          {/* Hero — CONCIERGE conversion landing. Photographic hero with
+              dark editorial overlay (matches the directory archetypes
+              shipped in earlier phases). Smaller than State per the
+              brief, with risk-reversal pills + a single bold CTA. */}
+          <section className="relative overflow-hidden border-b border-white/5">
+            <img
               src={conciergeHero}
               alt=""
               role="presentation"
@@ -147,57 +150,64 @@ export default function ConciergeLanding() {
               loading="eager"
               decoding="sync"
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
-            
-            <div className="container relative mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-12 lg:py-14">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/80 to-primary/65" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
+
+            <div className="container relative z-10 mx-auto px-4 md:px-6 lg:px-8 py-7 md:py-10">
               <BreadcrumbNav
-                className="mb-4"
+                className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
                 variant="dark"
                 items={[{ label: "Concierge" }]}
               />
               <div className="max-w-3xl mx-auto text-center">
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 mb-6">
-                    <HeartHandshake className="h-4 w-4 text-accent" />
-                    <span className="text-sm font-medium text-white/90">Personalized Placement</span>
+                  <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-100 backdrop-blur-sm ring-1 ring-emerald-400/30">
+                    <HeartHandshake className="h-3 w-3" />
+                    Free Concierge Placement
                   </div>
 
-                  <h1 className="text-[1.625rem] sm:text-3xl md:text-4xl lg:text-[2.75rem] font-bold text-white mb-3 tracking-tight leading-tight">
-                    Find the Right Treatment
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 tracking-tight leading-[1.05] font-display">
+                    Talk to a real human.{" "}
+                    <span className="text-accent">Get matched today.</span>
                   </h1>
 
-                  <p className="text-base md:text-lg text-white/85 mb-4 leading-relaxed max-w-2xl mx-auto px-2">
-                    Our specialists connect you with programs that fit your needs, insurance, and location.
+                  <p className="text-base md:text-lg text-white/85 mb-3 max-w-2xl mx-auto">
+                    Our placement specialists hand-match you to verified treatment programs that accept your insurance. A coordinator reaches out within 1 business hour; full recommendations within 24-48 hours.
                   </p>
 
-                  {/* "Free for families" chip surfaces the strongest selling
-                      point above the fold. The Service schema already sets
-                      price=0; the hero copy didn't. */}
-                  <div className="flex flex-wrap items-center justify-center gap-2 mb-6 text-sm text-white/80">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 border border-emerald-400/30 px-3 py-1 text-emerald-100">
-                      <span className="font-semibold">$0</span>
-                      <span>to families</span>
+                  {/* Risk-reversal chips — "free / confidential / no
+                      obligation" above the fold. Highest-converting copy
+                      framework for behavioral-health placement LPs. */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 mb-4 text-xs md:text-sm text-white/85">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 ring-1 ring-emerald-400/30 px-2.5 py-0.5 text-emerald-100">
+                      <span className="font-semibold text-white">100% free</span> for families
                     </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 ring-1 ring-white/15 px-2.5 py-0.5">
                       Confidential
                     </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/20 px-3 py-1">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 ring-1 ring-white/15 px-2.5 py-0.5">
                       No obligation
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 ring-1 ring-white/15 px-2.5 py-0.5">
+                      24/7 response
                     </span>
                   </div>
 
-                  {/* CTA */}
-                  <div className="flex flex-col items-center">
-                    <Button asChild size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-base font-semibold shadow-lg shadow-primary/25 rounded-xl group">
+                  {/* Primary CTA — single, large, gold/accent, hover lift */}
+                  <div className="flex flex-col items-center gap-2">
+                    <Button asChild size="lg" className="w-full sm:w-auto h-12 sm:h-14 px-7 sm:px-10 text-base font-bold shadow-xl shadow-black/30 rounded-xl group transition-all hover:scale-[1.02]">
                       <Link to="/concierge/intake">
-                        Get matched, free
+                        Get matched — free
                         <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </Link>
                     </Button>
+                    <p className="text-[11px] text-white/65">
+                      Takes 2 minutes · No credit card · Insurance optional
+                    </p>
                   </div>
                 </motion.div>
               </div>

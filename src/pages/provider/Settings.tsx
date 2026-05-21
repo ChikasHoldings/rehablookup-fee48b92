@@ -4,14 +4,14 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getCachedSession } from "@/lib/sessionCache";
 import { useToast } from "@/hooks/use-toast";
-import { sanitizeText, sanitizePersonName, sanitizeJobTitle, validateEmail, validatePhone as validatePhoneSanitize } from "@/lib/facilitySanitization";
-import { 
-  Save, 
-  Mail, 
-  Bell, 
-  User, 
-  CheckCircle, 
-  Shield, 
+import { sanitizeText, sanitizePersonName, sanitizeJobTitle } from "@/lib/facilitySanitization";
+import {
+  Save,
+  Mail,
+  Bell,
+  User,
+  CheckCircle,
+  Shield,
   Key,
   Smartphone,
   Globe,
@@ -23,17 +23,11 @@ import {
   Loader2,
   LogOut,
   Activity,
-  Clock,
-  BellOff,
   HelpCircle,
-  RotateCcw,
-  History
 } from "lucide-react";
 import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
-import { formatPhoneNumber, isValidPhoneNumber } from "@/lib/phoneUtils";
 import { ActivityLogTab } from "@/components/provider/settings/ActivityLogTab";
 import { SessionManagementTab } from "@/components/provider/settings/SessionManagementTab";
-import { UnlockHistoryTab } from "@/components/provider/settings/UnlockHistoryTab";
 import { useLogActivity } from "@/hooks/useActivityLog";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -76,7 +70,6 @@ interface NotificationPreferences {
   lead_notification_frequency: 'instant' | 'daily_digest' | 'weekly_digest' | 'none';
   notify_new_leads: boolean;
   notify_lead_status_changes: boolean;
-  notify_lead_limit_warnings: boolean;
   notify_facility_views: boolean;
   digest_time: string;
   followup_reminders_enabled: boolean;
@@ -148,6 +141,7 @@ export default function ProviderSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   
@@ -167,7 +161,6 @@ export default function ProviderSettingsPage() {
   const [leadNotificationFrequency, setLeadNotificationFrequency] = useState<'instant' | 'daily_digest' | 'weekly_digest' | 'none'>('instant');
   const [notifyNewLeads, setNotifyNewLeads] = useState(true);
   const [notifyLeadStatusChanges, setNotifyLeadStatusChanges] = useState(true);
-  const [notifyLeadLimitWarnings, setNotifyLeadLimitWarnings] = useState(true);
   const [notifyFacilityViews, setNotifyFacilityViews] = useState(false);
   const [digestTime, setDigestTime] = useState('09:00');
   const [followupRemindersEnabled, setFollowupRemindersEnabled] = useState(true);
@@ -183,7 +176,7 @@ export default function ProviderSettingsPage() {
 
   // Sync tab from URL
   useEffect(() => {
-    if (urlTab && ["profile", "security", "notifications", "sessions", "activity", "unlock-history"].includes(urlTab)) {
+    if (urlTab && ["profile", "security", "notifications", "sessions", "activity"].includes(urlTab)) {
       setActiveTab(urlTab);
     }
   }, [urlTab]);
@@ -207,7 +200,7 @@ export default function ProviderSettingsPage() {
 
       const { data, error } = await supabase
         .from("notification_preferences")
-        .select("email_lead_alerts, email_weekly_digest, email_product_updates, sms_lead_alerts, browser_notifications, lead_notification_frequency, notify_new_leads, notify_lead_status_changes, notify_lead_limit_warnings, notify_facility_views, digest_time, followup_reminders_enabled, default_snooze_duration")
+        .select("email_lead_alerts, email_weekly_digest, email_product_updates, sms_lead_alerts, browser_notifications, lead_notification_frequency, notify_new_leads, notify_lead_status_changes, notify_facility_views, digest_time, followup_reminders_enabled, default_snooze_duration")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -263,7 +256,6 @@ export default function ProviderSettingsPage() {
       leadNotificationFrequency: notificationPrefs.lead_notification_frequency || 'instant',
       notifyNewLeads: notificationPrefs.notify_new_leads ?? true,
       notifyLeadStatusChanges: notificationPrefs.notify_lead_status_changes ?? true,
-      notifyLeadLimitWarnings: notificationPrefs.notify_lead_limit_warnings ?? true,
       notifyFacilityViews: notificationPrefs.notify_facility_views ?? false,
       digestTime: notificationPrefs.digest_time || '09:00',
       followupRemindersEnabled: notificationPrefs.followup_reminders_enabled ?? true,
@@ -282,7 +274,6 @@ export default function ProviderSettingsPage() {
       leadNotificationFrequency !== initialNotificationState.leadNotificationFrequency ||
       notifyNewLeads !== initialNotificationState.notifyNewLeads ||
       notifyLeadStatusChanges !== initialNotificationState.notifyLeadStatusChanges ||
-      notifyLeadLimitWarnings !== initialNotificationState.notifyLeadLimitWarnings ||
       notifyFacilityViews !== initialNotificationState.notifyFacilityViews ||
       digestTime !== initialNotificationState.digestTime ||
       followupRemindersEnabled !== initialNotificationState.followupRemindersEnabled ||
@@ -291,7 +282,7 @@ export default function ProviderSettingsPage() {
   }, [
     emailLeadAlerts, emailWeeklyDigest, emailProductUpdates, smsLeadAlerts,
     browserNotifications, leadNotificationFrequency, notifyNewLeads,
-    notifyLeadStatusChanges, notifyLeadLimitWarnings, notifyFacilityViews,
+    notifyLeadStatusChanges, notifyFacilityViews,
     digestTime, followupRemindersEnabled, defaultSnoozeDuration,
     initialNotificationState
   ]);
@@ -314,6 +305,22 @@ export default function ProviderSettingsPage() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [hasUnsavedChanges]);
 
+  // Auto-clear "Saved" confirmation pills. Each transient state was
+  // previously cleared with a free-standing setTimeout that could fire
+  // after the component unmounted, which warned in dev and could trigger
+  // state updates on a stale tree. Track the timers in effects so they
+  // get cleaned up on unmount and on rapid re-saves.
+  useEffect(() => {
+    if (!showSaved) return;
+    const t = window.setTimeout(() => setShowSaved(false), 2000);
+    return () => window.clearTimeout(t);
+  }, [showSaved]);
+  useEffect(() => {
+    if (!notificationsSaved) return;
+    const t = window.setTimeout(() => setNotificationsSaved(false), 2000);
+    return () => window.clearTimeout(t);
+  }, [notificationsSaved]);
+
   // Sync notification preferences state when data loads
   useEffect(() => {
     if (notificationPrefs) {
@@ -325,7 +332,6 @@ export default function ProviderSettingsPage() {
       setLeadNotificationFrequency(notificationPrefs.lead_notification_frequency || 'instant');
       setNotifyNewLeads(notificationPrefs.notify_new_leads ?? true);
       setNotifyLeadStatusChanges(notificationPrefs.notify_lead_status_changes ?? true);
-      setNotifyLeadLimitWarnings(notificationPrefs.notify_lead_limit_warnings ?? true);
       setNotifyFacilityViews(notificationPrefs.notify_facility_views ?? false);
       setDigestTime(notificationPrefs.digest_time || '09:00');
       setFollowupRemindersEnabled(notificationPrefs.followup_reminders_enabled ?? true);
@@ -356,7 +362,6 @@ export default function ProviderSettingsPage() {
       setLeadNotificationFrequency(notificationPrefs.lead_notification_frequency || 'instant');
       setNotifyNewLeads(notificationPrefs.notify_new_leads ?? true);
       setNotifyLeadStatusChanges(notificationPrefs.notify_lead_status_changes ?? true);
-      setNotifyLeadLimitWarnings(notificationPrefs.notify_lead_limit_warnings ?? true);
       setNotifyFacilityViews(notificationPrefs.notify_facility_views ?? false);
       setDigestTime(notificationPrefs.digest_time || '09:00');
       setFollowupRemindersEnabled(notificationPrefs.followup_reminders_enabled ?? true);
@@ -395,7 +400,6 @@ export default function ProviderSettingsPage() {
       lead_notification_frequency: leadNotificationFrequency,
       notify_new_leads: notifyNewLeads,
       notify_lead_status_changes: notifyLeadStatusChanges,
-      notify_lead_limit_warnings: notifyLeadLimitWarnings,
       notify_facility_views: notifyFacilityViews,
       digest_time: digestTime,
       followup_reminders_enabled: followupRemindersEnabled,
@@ -411,7 +415,6 @@ export default function ProviderSettingsPage() {
       if (error) throw error;
 
       setNotificationsSaved(true);
-      setTimeout(() => setNotificationsSaved(false), 2000);
       queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
       toast({
         title: "Preferences saved",
@@ -518,7 +521,6 @@ export default function ProviderSettingsPage() {
       });
       
       setShowSaved(true);
-      setTimeout(() => setShowSaved(false), 2000);
       setLocalProfile(null);
       queryClient.invalidateQueries({ queryKey: ["provider-data"] });
       toast({
@@ -591,7 +593,6 @@ export default function ProviderSettingsPage() {
     setIsUpdatingPassword(true);
     
     try {
-      // Verify current password first
       const session = await getCachedSession();
       if (!session?.user?.email) {
         setPasswordError("Session expired. Please log in again.");
@@ -599,6 +600,10 @@ export default function ProviderSettingsPage() {
         return;
       }
 
+      // Re-authenticate by signing in with the current password. Supabase
+      // doesn't expose a stand-alone "verify password" API, so this is the
+      // canonical pattern; the call refreshes the current session for the
+      // same user but does not invalidate sessions on other devices.
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: session.user.email,
         password: currentPassword,
@@ -611,7 +616,7 @@ export default function ProviderSettingsPage() {
       }
 
       const { error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (error) throw error;
@@ -621,7 +626,7 @@ export default function ProviderSettingsPage() {
         eventType: "password_change",
         eventDescription: "Password was changed successfully",
       });
-      
+
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -629,8 +634,9 @@ export default function ProviderSettingsPage() {
         title: "Password updated",
         description: "Your password has been changed successfully.",
       });
-    } catch (error: any) {
-      setPasswordError(error?.message || "Failed to update password");
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Failed to update password";
+      setPasswordError(msg);
     } finally {
       setIsUpdatingPassword(false);
     }
@@ -681,11 +687,12 @@ export default function ProviderSettingsPage() {
       await supabase.auth.signOut();
       queryClient.clear();
       navigate("/", { replace: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting account:", error);
+      const msg = error instanceof Error ? error.message : "Failed to delete your account. Please contact support.";
       toast({
         title: "Error deleting account",
-        description: error.message || "Failed to delete your account. Please contact support.",
+        description: msg,
         variant: "destructive",
       });
     } finally {
@@ -696,8 +703,14 @@ export default function ProviderSettingsPage() {
   const handleSignOutAllSessions = async () => {
     setIsSigningOutAll(true);
     try {
+      // Capture the session BEFORE signing out so we have a user id to
+      // attach to the activity row, but only insert the row if signout
+      // succeeds — otherwise we'd log an action that never happened.
       const session = await getCachedSession();
-      
+
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error) throw error;
+
       if (session) {
         logActivity.mutate({
           userId: session.user.id,
@@ -705,15 +718,16 @@ export default function ProviderSettingsPage() {
           eventDescription: "Signed out from all devices",
         });
       }
-      
-      const { error } = await supabase.auth.signOut({ scope: 'global' });
-      if (error) throw error;
-      
+
+      // Drop all cached user data so the next user (or the login screen)
+      // doesn't read stale profile / facility / lead rows from the cache.
+      queryClient.clear();
+
       toast({
         title: "Signed out",
         description: "You have been signed out from all devices.",
       });
-      
+
       navigate("/login");
     } catch (error) {
       console.error("Error signing out:", error);
@@ -770,8 +784,16 @@ export default function ProviderSettingsPage() {
           </p>
         </div>
 
-        {/* Unsaved Changes Dialog */}
-        <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+        {/* Unsaved Changes Dialog. Reset pendingTab whenever the dialog
+            closes so a back-button / esc dismiss can't leave a stale
+            pendingTab pointing at a never-followed-through navigation. */}
+        <AlertDialog
+          open={showUnsavedDialog}
+          onOpenChange={(open) => {
+            setShowUnsavedDialog(open);
+            if (!open) setPendingTab(null);
+          }}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
@@ -801,6 +823,10 @@ export default function ProviderSettingsPage() {
                   }
                   if (pendingTab) {
                     setActiveTab(pendingTab);
+                    // Keep the URL in sync with the active tab — previously
+                    // the URL stayed pointed at the prior tab even after the
+                    // user committed to switching, breaking refresh + back.
+                    setSearchParams({ tab: pendingTab }, { replace: true });
                   }
                   setShowUnsavedDialog(false);
                   setPendingTab(null);
@@ -853,13 +879,8 @@ export default function ProviderSettingsPage() {
                 <Activity className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                 Activity
               </TabsTrigger>
-              <TabsTrigger 
-                value="unlock-history" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-medium whitespace-nowrap"
-              >
-                <History className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                Unlock History
-              </TabsTrigger>
+              {/* Unlock History tab retired — lead-unlocking removed in
+                  monetization rebuild. */}
             </TabsList>
           </div>
 
@@ -942,7 +963,7 @@ export default function ProviderSettingsPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <Mail className="h-4 w-4 text-muted-foreground" aria-hidden />
                     Email Address
                   </Label>
                   <div className="flex gap-2">
@@ -952,14 +973,22 @@ export default function ProviderSettingsPage() {
                       value={profile?.email || ""}
                       disabled
                       className="h-10 bg-muted/50 flex-1"
+                      aria-describedby="email-help"
                     />
                     <Badge variant="secondary" className="h-10 px-3 flex items-center">
-                      <CheckCircle className="h-3 w-3 mr-1.5" />
+                      <CheckCircle className="h-3 w-3 mr-1.5" aria-hidden />
                       Verified
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Contact support to change your email address
+                  <p id="email-help" className="text-xs text-muted-foreground">
+                    To change your email address,{" "}
+                    <a
+                      href={`mailto:support@rehablookup.com?subject=Email%20change%20request&body=${encodeURIComponent(`Hi,\n\nPlease change the email on my account from ${profile?.email || "(current)"} to:\n\n[new email]\n\nThanks!`)}`}
+                      className="text-primary underline-offset-2 hover:underline"
+                    >
+                      contact support
+                    </a>
+                    .
                   </p>
                 </div>
 
@@ -1099,19 +1128,22 @@ export default function ProviderSettingsPage() {
                     Current Password
                   </Label>
                   <div className="relative">
-                    <Input 
-                      id="currentPassword" 
+                    <Input
+                      id="currentPassword"
                       type={showCurrentPassword ? "text" : "password"}
+                      autoComplete="current-password"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="h-10 pr-10" 
+                      className="h-10 pr-10"
                     />
                     <button
                       type="button"
                       onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+                      aria-pressed={showCurrentPassword}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded"
                     >
-                      {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showCurrentPassword ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
                     </button>
                   </div>
                 </div>
@@ -1122,22 +1154,25 @@ export default function ProviderSettingsPage() {
                       New Password
                     </Label>
                     <div className="relative">
-                      <Input 
-                        id="newPassword" 
+                      <Input
+                        id="newPassword"
                         type={showNewPassword ? "text" : "password"}
+                        autoComplete="new-password"
                         value={newPassword}
                         onChange={(e) => {
                           setNewPassword(e.target.value);
                           setPasswordError(null);
                         }}
-                        className="h-10 pr-10" 
+                        className="h-10 pr-10"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                        aria-pressed={showNewPassword}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded"
                       >
-                        {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showNewPassword ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
                       </button>
                     </div>
                   </div>
@@ -1145,16 +1180,31 @@ export default function ProviderSettingsPage() {
                     <Label htmlFor="confirmPassword" className="text-sm font-medium">
                       Confirm New Password
                     </Label>
-                    <Input 
-                      id="confirmPassword" 
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => {
-                        setConfirmPassword(e.target.value);
-                        setPasswordError(null);
-                      }}
-                      className="h-10" 
-                    />
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        value={confirmPassword}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          setPasswordError(null);
+                        }}
+                        className="h-10 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
+                        aria-pressed={showConfirmPassword}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+                      </button>
+                    </div>
+                    {confirmPassword && newPassword && confirmPassword !== newPassword && (
+                      <p className="text-xs text-destructive">Passwords do not match</p>
+                    )}
                   </div>
                 </div>
 
@@ -1169,17 +1219,16 @@ export default function ProviderSettingsPage() {
                 )}
 
                 <div className="flex justify-end">
-                  <Button 
-                    variant="outline" 
+                  <Button
                     size="sm"
                     onClick={handleUpdatePassword}
                     disabled={isUpdatingPassword || !currentPassword || !newPassword || !confirmPassword}
                     className="gap-2"
                   >
                     {isUpdatingPassword ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                     ) : (
-                      <Lock className="h-4 w-4" />
+                      <Lock className="h-4 w-4" aria-hidden />
                     )}
                     {isUpdatingPassword ? "Updating..." : "Update Password"}
                   </Button>
@@ -1370,7 +1419,6 @@ export default function ProviderSettingsPage() {
                       {[
                         { checked: notifyNewLeads, onChange: setNotifyNewLeads, label: "New Leads", desc: "When a new lead is available" },
                         { checked: notifyLeadStatusChanges, onChange: setNotifyLeadStatusChanges, label: "Status Changes", desc: "When lead status updates" },
-                        { checked: notifyLeadLimitWarnings, onChange: setNotifyLeadLimitWarnings, label: "Low Balance", desc: "When credits are running low" },
                         { checked: notifyFacilityViews, onChange: setNotifyFacilityViews, label: "Profile Views", desc: "Weekly view summary" },
                       ].map((item, idx) => (
                         <div key={idx} className="flex items-center justify-between py-2.5">
@@ -1394,7 +1442,10 @@ export default function ProviderSettingsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-0">
-                    {/* SMS */}
+                    {/* SMS — requires both a phone number AND a verified
+                        phone. An unverified number can't receive carrier-
+                        confirmed messages, so toggling SMS on would silently
+                        send alerts to nowhere. */}
                     <div className="flex items-center justify-between py-3">
                       <div className="flex items-center gap-3">
                         <Smartphone className="h-4 w-4 text-muted-foreground" />
@@ -1403,13 +1454,22 @@ export default function ProviderSettingsPage() {
                           <p className="text-xs text-muted-foreground">Text message for new leads</p>
                         </div>
                       </div>
-                      <Switch checked={smsLeadAlerts} onCheckedChange={setSmsLeadAlerts} disabled={!profile?.phone} />
+                      <Switch
+                        checked={smsLeadAlerts}
+                        onCheckedChange={setSmsLeadAlerts}
+                        disabled={!profile?.phone || !providerData?.profile?.phone_verified}
+                        aria-label="SMS lead alerts"
+                      />
                     </div>
-                    {!profile?.phone && (
+                    {!profile?.phone ? (
                       <p className="text-xs text-amber-600 dark:text-amber-400 pb-3 pl-7">
                         Add a phone number in Profile to enable SMS
                       </p>
-                    )}
+                    ) : !providerData?.profile?.phone_verified ? (
+                      <p className="text-xs text-amber-600 dark:text-amber-400 pb-3 pl-7">
+                        Verify your phone number in Profile to enable SMS
+                      </p>
+                    ) : null}
                     
                     <Separator />
                     
@@ -1540,9 +1600,7 @@ export default function ProviderSettingsPage() {
           </TabsContent>
 
           {/* Unlock History Tab */}
-          <TabsContent value="unlock-history" className="mt-6">
-            <UnlockHistoryTab />
-          </TabsContent>
+          {/* unlock-history tab content retired in monetization rebuild. */}
         </Tabs>
       </div>
     </div>

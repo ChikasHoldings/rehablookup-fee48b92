@@ -30,16 +30,16 @@ Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
 Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "test_service_role_key");
 
 // Capture the handler registered by `Deno.serve(...)` so we can call it
-// directly without binding a TCP port.
+// directly without binding a TCP port. (send-provider-welcome-offer-email
+// was retired in the monetization rebuild — only the live welcome handler
+// remains under test.)
 type Handler = (req: Request) => Response | Promise<Response>;
-const captured: { welcome?: Handler; offer?: Handler } = {};
+const captured: { welcome?: Handler } = {};
 
-function patchServeFor(key: "welcome" | "offer") {
+function patchServeFor(key: "welcome") {
   // deno-lint-ignore no-explicit-any
   (Deno as any).serve = (handler: Handler) => {
     captured[key] = handler;
-    // Return a no-op AbortController-like shim. The handler under test
-    // never inspects the return value.
     return {
       finished: Promise.resolve(),
       shutdown: () => Promise.resolve(),
@@ -49,22 +49,15 @@ function patchServeFor(key: "welcome" | "offer") {
   };
 }
 
-// Load each handler in isolation so a single `Deno.serve` capture
-// doesn't collide.
 patchServeFor("welcome");
 await import("../send-provider-welcome-email/index.ts");
 
-patchServeFor("offer");
-await import("../send-provider-welcome-offer-email/index.ts");
-
 assertExists(captured.welcome, "welcome handler must be captured");
-assertExists(captured.offer, "offer handler must be captured");
 
 const FN_URL = "https://stub.functions.local/x";
 
 const cases = [
   { key: "welcome" as const, name: "send-provider-welcome-email" },
-  { key: "offer" as const, name: "send-provider-welcome-offer-email" },
 ];
 
 for (const c of cases) {

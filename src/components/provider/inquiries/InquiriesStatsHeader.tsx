@@ -1,24 +1,22 @@
-import { Users, Lock, Unlock, PhoneCall, CheckCircle } from "lucide-react";
+import { Users, Inbox, PhoneCall, CheckCircle } from "lucide-react";
 
 interface StatsHeaderProps {
   total: number;
-  locked: number;
-  unlocked: number;
+  new: number;
   contacted: number;
   responded: number;
 }
 
-export function InquiriesStatsHeader({ total, locked, unlocked, contacted, responded }: StatsHeaderProps) {
+export function InquiriesStatsHeader({ total, new: newCount, contacted, responded }: StatsHeaderProps) {
   const stats = [
     { label: "Total", value: total, icon: Users, color: "text-foreground" },
-    { label: "Locked", value: locked, icon: Lock, color: "text-muted-foreground" },
-    { label: "Unlocked", value: unlocked, icon: Unlock, color: "text-amber-600 dark:text-amber-400" },
+    { label: "New", value: newCount, icon: Inbox, color: "text-amber-600 dark:text-amber-400" },
     { label: "Contacted", value: contacted, icon: PhoneCall, color: "text-blue-600 dark:text-blue-400" },
     { label: "Responded", value: responded, icon: CheckCircle, color: "text-emerald-600 dark:text-emerald-400" },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
       {stats.map(({ label, value, icon: Icon, color }) => (
         <div
           key={label}

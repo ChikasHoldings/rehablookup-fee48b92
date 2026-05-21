@@ -32,6 +32,8 @@ import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { TreatmentHubHero } from "@/components/seo/TreatmentHubHero";
 const detoxTypes = [
   {
     name: "Alcohol Detox",
@@ -171,45 +173,24 @@ const DetoxPrograms = () => {
         ]}
       />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
-        <div className="container">
-          <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "Treatment Types", href: "/treatment-types" },
-              { label: "Detox Programs" },
-            ]}
-          /><div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Medical Detox Centers</span>
-            </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Drug & Alcohol Detox Programs
-            </h1>
-            <p className="text-base md:text-lg text-primary-foreground/85 leading-relaxed">
-              Medical detox provides safe, supervised withdrawal from drugs and alcohol with 24/7 medical monitoring. 
-              The essential first step to recovery, detox manages dangerous withdrawal symptoms and prepares you for treatment.
-            </p>
+      <TreatmentHubHero
+        treatmentKey="detox"
+        treatmentName="Medical Detox"
+        treatmentIcon={Sparkles}
+        breadcrumbLabel="Detox Programs"
+        subtitle="Safe, supervised withdrawal from drugs and alcohol with 24/7 medical monitoring — the essential first step to recovery."
+      />
 
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/rehab-centers">
-                <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto">
-                  <Phone className="h-4 w-4" />
-                  Find Treatment
-                </Button>
-              </Link>
-              <Link to="/rehab-centers">
-                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
-                  Browse Detox Centers
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Featured rotation — paid Featured pool for this
+          page's bucket, mounted directly under the hero. Visual
+          matches the homepage Featured section for cross-site
+          consistency. Silent absence when the bucket has no
+          active Featured subscribers. */}
+      <LandingFeaturedSection
+        placement_type="treatment"
+        placement_value="detox-programs"
+        title="Featured Detox Programs"
+      />
 
       {/* Trust Bar */}
       <section className="border-b border-border bg-card py-4">

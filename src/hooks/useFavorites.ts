@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
+import { toast } from '@/hooks/use-toast';
 
 const FAVORITES_STORAGE_KEY = 'treatment-center-favorites';
 
@@ -152,9 +153,13 @@ export function useFavorites() {
     }
   }, [favorites, user]);
 
-  const toggleFavorite = useCallback(async (centerId: string) => {
+  // Returns true on success (state matches what the user intended) and
+  // false on persisted failure. Callers like SeekerSaved use the result
+  // to decide whether to apply local-state optimistic edits + success
+  // toasts; the failure toast itself is emitted from inside the hook.
+  const toggleFavorite = useCallback(async (centerId: string): Promise<boolean> => {
     const isFavorited = favorites.includes(centerId);
-    
+
     // Optimistic update
     setFavorites(prev => {
       if (isFavorited) {
@@ -163,35 +168,82 @@ export function useFavorites() {
       return [...prev, centerId];
     });
 
-    // If user is logged in, sync with database
-    if (user) {
-      if (isFavorited) {
-        // Remove from database
-        const { error } = await supabase
-          .from('user_favorites')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('facility_id', centerId);
-        
-        if (error) {
-          console.error('Error removing favorite:', error);
-          // Revert on error
-          setFavorites(prev => [...prev, centerId]);
-        }
-      } else {
-        // Add to database
-        const { error } = await supabase
-          .from('user_favorites')
-          .insert({ user_id: user.id, facility_id: centerId });
-        
-        if (error) {
-          console.error('Error adding favorite:', error);
-          // Revert on error
-          setFavorites(prev => prev.filter(id => id !== centerId));
-        }
+    // Guest mode: localStorage write happens via the effect; nothing
+    // can fail at the network layer, so signal success.
+    if (!user) return true;
+
+    if (isFavorited) {
+      const { error } = await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('facility_id', centerId);
+
+      if (error) {
+        console.error('Error removing favorite:', error);
+        setFavorites(prev => (prev.includes(centerId) ? prev : [...prev, centerId]));
+        toast({
+          title: "Couldn't remove from saved",
+          description: error.message || "Please try again.",
+          variant: "destructive",
+        });
+        return false;
       }
+      return true;
     }
+
+    const { error } = await supabase
+      .from('user_favorites')
+      .insert({ user_id: user.id, facility_id: centerId });
+
+    // 23505 is a unique-violation — already saved (e.g. tab race).
+    // Don't surface that as an error; the desired state is reached.
+    if (error && (error as { code?: string }).code !== '23505') {
+      console.error('Error adding favorite:', error);
+      setFavorites(prev => prev.filter(id => id !== centerId));
+      toast({
+        title: "Couldn't save facility",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
   }, [favorites, user]);
+
+  // Realtime cross-device sync. user_favorites was added to
+  // supabase_realtime in migration 20260702000000 so this subscription
+  // actually receives events. INSERT and DELETE both feed back into
+  // `favorites` so the bookmark toggled on one device shows up on
+  // another within ~200ms. Filtered server-side by user_id; RLS also
+  // gates the row visibility independently.
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`user-favorites-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'user_favorites', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const fid = (payload.new as { facility_id?: string }).facility_id;
+          if (!fid) return;
+          setFavorites(prev => (prev.includes(fid) ? prev : [...prev, fid]));
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'user_favorites', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const fid = (payload.old as { facility_id?: string }).facility_id;
+          if (!fid) return;
+          setFavorites(prev => prev.filter(id => id !== fid));
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const isFavorite = useCallback((centerId: string) => {
     return favorites.includes(centerId);

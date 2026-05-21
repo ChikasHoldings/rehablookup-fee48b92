@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { startOfMonth, subMonths, format, startOfDay, endOfDay, isWithinInterval, subDays } from "date-fns";
 import { Lead } from "@/components/provider/leads/LeadDetailPanel";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 
 // Re-export Lead for backwards compatibility
 export type { Lead };
@@ -71,8 +71,7 @@ export function useLeadAnalytics(facilityId: string | undefined, dateRange?: Dat
       // Fetch all leads for the facility
       // Use leads_provider_view instead of leads table directly
       // (RLS on leads requires unlock, which would hide new leads from analytics)
-      const { data: leads, error } = await supabase
-        .from("leads_provider_view")
+      const { data: leads, error } = await fromLeadsProviderView()
         .select("id, facility_id, name, status, created_at, urgency, level_of_care, source, location_city_state, insurance_type, inquiry_type, primary_substance, who_seeking_help")
         .eq("facility_id", facilityId)
         .order("created_at", { ascending: true });
@@ -200,7 +199,7 @@ function calculateAnalytics(leads: Lead[], allTimeLeads: Lead[], dateRange?: Dat
   let within48h = 0;
 
   leads.forEach((lead) => {
-    const respondedAt = (lead as any).provider_responded_at;
+    const respondedAt = lead.provider_responded_at;
     if (respondedAt) {
       respondedCount++;
       const createdDate = new Date(lead.created_at);

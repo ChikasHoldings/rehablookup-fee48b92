@@ -17,16 +17,23 @@ const prefetchedRoutes = new Set<string>();
    return visitedRoutes.has(path);
  }
 
-// Lazy import maps for each section
+// Lazy import maps for each section.
+//
+// Note: "/" (Index) is intentionally absent — Index.tsx is statically
+// imported in App.tsx so it's already in the main bundle (the
+// homepage is the most-visited route and the LCP hit of lazy-loading
+// it would outweigh any bundle savings). Adding it here would emit a
+// Vite "dynamic import will not move module into another chunk"
+// warning. Other pages remain lazy so hover-prefetch + adjacent-route
+// prefetch can pre-load them off the critical path.
 const publicPageMap: Record<string, () => Promise<unknown>> = {
-  "/": () => import("@/pages/Index"),
   "/rehab-centers": () => import("@/pages/RehabCenters"),
   "/locations": () => import("@/pages/Locations"),
   "/treatment-types": () => import("@/pages/TreatmentTypes"),
   "/how-it-works": () => import("@/pages/HowItWorks"),
   "/for-providers": () => import("@/pages/ForProviders"),
   "/concierge": () => import("@/pages/concierge/ConciergeLanding"),
-  "/international": () => import("@/pages/international/InternationalLanding"),
+  // /international prefetch retired 2026-05-20 — route now redirects to /us-rehab/international-patients.
   "/resources": () => import("@/pages/Resources"),
   "/insurance": () => import("@/pages/Insurance"),
   "/about": () => import("@/pages/About"),
@@ -55,7 +62,7 @@ const providerPageMap: Record<string, () => Promise<unknown>> = {
   "/provider/notifications": () => import("@/pages/provider/Notifications"),
   "/provider/help": () => import("@/pages/provider/Help"),
   "/provider/billing": () => import("@/pages/provider/Billing"),
-  "/provider/placement-network": () => import("@/pages/provider/PlacementNetwork"),
+  // /provider/placement-network removed in monetization rebuild.
 };
 
 const adminPageMap: Record<string, () => Promise<unknown>> = {
@@ -74,7 +81,7 @@ const adminPageMap: Record<string, () => Promise<unknown>> = {
   "/admin/profile": () => import("@/pages/admin/AdminProfile"),
   "/admin/reviews": () => import("@/pages/admin/AdminReviews"),
   "/admin/concierge": () => import("@/pages/admin/AdminConcierge"),
-  "/admin/placement-revenue": () => import("@/pages/admin/PlacementRevenueDashboard"),
+  // /admin/placement-revenue dashboard removed in monetization rebuild.
   "/admin/support": () => import("@/pages/admin/AdminSupport"),
   "/admin/marketing": () => import("@/pages/admin/AdminMarketing"),
 };
@@ -178,7 +185,6 @@ export function preloadProviderPages(): void {
     () => import("@/pages/provider/Notifications"),
     () => import("@/pages/provider/Help"),
     () => import("@/pages/provider/Billing"),
-    () => import("@/pages/provider/PlacementNetwork"),
     () => import("@/pages/provider/EmbedBadge"),
   ];
   
@@ -263,7 +269,7 @@ export function preloadPublicPages(): void {
     () => import("@/pages/RehabCenters"),
     () => import("@/pages/concierge/ConciergeLanding"),
     () => import("@/pages/Insurance"),
-    () => import("@/pages/international/InternationalLanding"),
+    // InternationalLanding prefetch retired 2026-05-20.
     () => import("@/pages/ForProviders"),
     () => import("@/pages/About"),
     () => import("@/pages/Contact"),

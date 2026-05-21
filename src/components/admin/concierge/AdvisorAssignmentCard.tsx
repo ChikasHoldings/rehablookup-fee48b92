@@ -95,19 +95,29 @@ export function AdvisorAssignmentCard({ caseData, onRefresh }: AdvisorAssignment
         });
       }
 
-      // Notify team of advisor assignment
+      // Notify team of advisor assignment. Assignment itself already
+      // succeeded — a notification failure surfaces as a warning toast
+      // so the admin knows the team email/push didn't go out and may
+      // need to ping the advisor directly.
       if (advisorId !== "unassigned") {
         const advisorEntry = adminStaff?.find(a => a.user_id === advisorId);
         const advisorLabel = advisorEntry?.display_name || advisorEntry?.first_name || advisorId;
         try {
-          await supabase.functions.invoke("send-concierge-notifications", {
+          const { data: notifData, error: notifErr } = await supabase.functions.invoke("send-concierge-notifications", {
             body: {
               type: "advisor_claimed",
               inquiryId: caseData.id,
               metadata: { advisor_id: advisorId, advisor_name: advisorLabel, self_assigned: false },
             },
           });
-        } catch (e) { console.error("Notification error:", e); }
+          if (notifErr || notifData?.error) {
+            const msg = (notifErr as Error | null)?.message || notifData?.error || "Unknown error";
+            toast.warning(`Advisor assigned, but team notification failed: ${msg}`);
+          }
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Unknown error";
+          toast.warning(`Advisor assigned, but team notification failed: ${msg}`);
+        }
       }
     },
     onSuccess: () => {

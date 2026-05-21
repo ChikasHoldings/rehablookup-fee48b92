@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { statesData } from "@/data/locationSeoData";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 interface ExpandedHubConfig {
   slug: string;
@@ -280,7 +281,14 @@ export default function ExpandedTreatmentHubPage() {
   }, [config]);
 
   if (!config) {
-    return <Navigate to="/treatment-types" replace />;
+    return (
+      <NotFoundInPlace
+        title="Treatment hub not found"
+        message="We don't have an expanded hub for that treatment yet. Browse all treatment types."
+        backTo="/treatment-types"
+        backLabel="Browse treatment types"
+      />
+    );
   }
 
   const structuredData: any[] = [
@@ -323,6 +331,7 @@ export default function ExpandedTreatmentHubPage() {
       heroTitle={config.title}
       heroSubtitle={config.heroSubtitle}
       heroBadge="Treatment Guide"
+      heroImage={TOPIC_HERO_IMAGES.treatment}
       introContent={config.overview}
       whatToExpect={config.whatToExpect}
       benefits={config.benefits}

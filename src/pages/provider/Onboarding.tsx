@@ -1,59 +1,283 @@
 /**
- * Provider Onboarding picker
- * ──────────────────────────
- * Two-card picker shown after /auth/signup completes. Lets the new provider
- * choose between listing a brand-new facility or claiming an existing
- * (SAMHSA-imported / unverified) listing.
+ * Unified provider onboarding wizard — /provider/onboarding.
  *
- * Auth gate: if the visitor isn't signed in, kick them to /login?type=provider
- * (preserving `?returnTo` if present). Already-registered providers landing
- * here while signed out are sent to login — not signup — to keep entry
- * paths consistent with the rest of the provider panel.
+ * One route that renders the current step based on the server-side
+ * `provider_onboarding_state.current_step`. ?step=… can be used for back
+ * navigation but the server is the source of truth — jumping ahead
+ * bounces the visitor back to their authoritative current step.
  *
- * "Claim an existing listing" routes to the public rehab-centers search
- * page with ?intent=claim — that mode highlights the "Claim This Listing"
- * CTA on each facility profile and skips seeker conversion prompts.
+ * Persistent stepper (5 visible tiles: Account → Verify Email → Find or
+ * List → Plan → Build/Edit). Phone verification was moved out of the
+ * wizard on 2026-05-17 and now auto-triggers inline in the listing-
+ * details step the moment the provider enters a valid facility phone.
+ * The legacy 'verify_phone' substep is retained in the state machine
+ * for backward compatibility with in-flight rows and resolves to the
+ * "Find or List" tile.
+ *
+ * Resume contract:
+ *  - Signed-out + no row: render Step 1 (Account). After submit, the
+ *    Account step seeds the onboarding-state row with
+ *    current_step='verify_email' and signs the user in.
+ *  - Signed-in + row exists + onboarding_completed_at IS NULL: render
+ *    the step that matches current_step.
+ *  - Signed-in + already-onboarded
+ *    (profiles.onboarding_completed_at IS NOT NULL): redirect to
+ *    /provider/dashboard with a flash toast "You're already onboarded."
+ *  - ?intent=claim&facility_id=… on a signed-out visitor: the param
+ *    survives through Account submit and the AccountStep seeds
+ *    selected_facility_id when the row is created.
  */
 
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo } from "react";
+import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { trackEvent } from "@/lib/analytics";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Building2, ShieldCheck, ArrowRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  useProviderOnboardingState,
+  ONBOARDING_STEPS,
+  canReach,
+  type OnboardingStep,
+  type ProviderOnboardingStateRow,
+} from "@/hooks/useProviderOnboardingState";
+import { OnboardingStepper } from "@/components/provider/onboarding/OnboardingStepper";
+import { AccountStep } from "@/components/provider/onboarding/AccountStep";
+import { VerifyEmailStep } from "@/components/provider/onboarding/VerifyEmailStep";
+import { FindOrListStep } from "@/components/provider/onboarding/FindOrListStep";
+import { PlanStep } from "@/components/provider/onboarding/PlanStep";
+import { BuildStep } from "@/components/provider/onboarding/BuildStep";
+
+/** profiles row fields the wizard reads to decide whether to redirect. */
+interface ProfileGate {
+  onboarding_completed_at: string | null;
+  email_verified_at: string | null;
+  phone_verified_at: string | null;
+}
+
+function useProviderProfile() {
+  return useQuery({
+    queryKey: ["provider-onboarding-profile"],
+    queryFn: async (): Promise<ProfileGate | null> => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user.id;
+      if (!userId) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("onboarding_completed_at, email_verified_at, phone_verified_at")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) {
+        console.error("[Onboarding] profile load failed", error);
+        return null;
+      }
+      return (data as unknown as ProfileGate) ?? null;
+    },
+    staleTime: 1000 * 5,
+  });
+}
+
+// Reject absolute, protocol-relative, and backslash-escaped paths so a
+// crafted `?returnTo=` can't redirect off-origin once email verifies.
+function safeReturnTo(raw: string | null): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//")) return null;
+  if (raw.startsWith("/\\")) return null;
+  return raw;
+}
 
 export default function ProviderOnboarding() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [checking, setChecking] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const { data: stateRow, isLoading: stateLoading, refetch: refetchState, advance } =
+    useProviderOnboardingState();
+  const { data: profile, isLoading: profileLoading } = useProviderProfile();
+
+  const addListingIntent = searchParams.get("action") === "add-listing";
+
+  // 2026-05-20 unification: when an already-signed-in user arrives with
+  // ?intent=claim + ?facility_slug=<slug> (or ?facility_id=<uuid>),
+  // pre-seed their state row's mode + selected_facility_id so they
+  // resume directly on FindOrListStep's "Continue with this facility"
+  // affordance instead of having to re-search. AccountStep handles the
+  // same for new signups; this effect is the signed-in mirror.
   useEffect(() => {
-    let cancelled = false;
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (cancelled) return;
-      if (!session?.user) {
-        const returnTo = searchParams.get("returnTo") ?? "/provider/onboarding";
-        const search = new URLSearchParams({ type: "provider", returnTo }).toString();
-        navigate(`/login?${search}`, { replace: true });
-        return;
-      }
-      setChecking(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [navigate, searchParams]);
+    if (!stateRow) return;
+    if (stateRow.selected_facility_id) return; // already seeded
+    if (searchParams.get("intent") !== "claim") return;
+    const slug = searchParams.get("facility_slug");
+    const id = searchParams.get("facility_id");
+    if (!slug && !id) return;
 
-  if (checking) {
+    let cancelled = false;
+    (async () => {
+      let resolvedId = id;
+      if (!resolvedId && slug) {
+        try {
+          const { data: lookup } = await supabase
+            .from("public_facilities")
+            .select("id")
+            .eq("slug", slug)
+            .maybeSingle();
+          resolvedId = (lookup as { id?: string } | null)?.id ?? null;
+        } catch (e) {
+          console.warn("[Onboarding] facility_slug→id lookup failed", e);
+        }
+      }
+      if (cancelled || !resolvedId) return;
+      try {
+        await advance({
+          mode: "claim",
+          selected_facility_id: resolvedId,
+        } as Partial<ProviderOnboardingStateRow>);
+      } catch (e) {
+        console.warn("[Onboarding] claim pre-seed failed", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [stateRow, searchParams, advance]);
+
+  // 2026-05-20 unification: ?action=add-listing is the entry point for
+  // already-onboarded providers adding another facility (replaces the
+  // retired /provider/onboarding/new-listing page). Reset the state
+  // row so the wizard resumes at FindOrListStep, with no pre-seed from
+  // the user's last onboarding run. The reset happens ONCE per visit;
+  // subsequent advances are normal.
+  useEffect(() => {
+    if (!addListingIntent) return;
+    if (!profile?.onboarding_completed_at) return; // only for onboarded users
+    if (!stateRow) return;
+    // Already reset (cursor sitting at find_or_list/build with the
+    // new flow data) → do nothing.
+    if (stateRow.current_step !== "completed") return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        await advance({
+          mode: null,
+          selected_facility_id: null,
+          initial_facility_name: null,
+          draft_facility_data: {},
+          current_step: "find_or_list",
+        } as Partial<ProviderOnboardingStateRow>);
+      } catch (e) {
+        console.error("[Onboarding] add-listing state reset failed", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [addListingIntent, profile?.onboarding_completed_at, stateRow, advance]);
+
+  const queryStep = searchParams.get("step") as OnboardingStep | null;
+  // Round-30 merge: when a signed-in user with a profile lands here
+  // without a state row (e.g. a pre-wizard-era signup who never
+  // finished), infer their starting step from profile flags instead of
+  // re-prompting for Account. Otherwise default to 'account'.
+  //
+  // Round-31 audit fix: previously this computed during the loading
+  // window where stateLoading=true but profileLoading=false (or vice
+  // versa), causing the resolved-step memo below to flip from
+  // `account` → `verify_email` → real-server-step as each query
+  // settled. Visible as a one-frame flash of the wrong step. We now
+  // hold the inference until BOTH queries have a definitive answer.
+  const inferredServerStep: OnboardingStep =
+    stateLoading || profileLoading
+      ? "account"
+      : profile?.email_verified_at
+        ? "find_or_list"
+        : profile
+          ? "verify_email"
+          : "account";
+  const serverStep: OnboardingStep = stateRow?.current_step ?? inferredServerStep;
+  // Round-30 merge: anon visitors to /provider/claim/:slug land here
+  // with ?returnTo=/provider/claim/:slug. Once email is verified we
+  // bounce them to the deep link they came from.
+  const returnTo = safeReturnTo(searchParams.get("returnTo"));
+
+  // Resolved visible step: ?step= when the user can reach it, otherwise
+  // serverStep (and we silently strip the param). Already-onboarded
+  // users are redirected below before this resolves.
+  const resolved: OnboardingStep = useMemo(() => {
+    if (!queryStep) return serverStep;
+    if (!ONBOARDING_STEPS.includes(queryStep)) return serverStep;
+    if (!canReach(queryStep, serverStep)) return serverStep;
+    return queryStep;
+  }, [queryStep, serverStep]);
+
+  // Strip a stale ?step= if the user tried to jump ahead. Surfaced as a
+  // toast so the redirect isn't silent.
+  useEffect(() => {
+    if (queryStep && !canReach(queryStep, serverStep)) {
+      toast.message("Let's finish the current step first.");
+      const next = new URLSearchParams(searchParams);
+      next.delete("step");
+      setSearchParams(next, { replace: true });
+    }
+  }, [queryStep, serverStep, searchParams, setSearchParams]);
+
+  // Section 10 — analytics: fire provider_onboarding_step_view each
+  // time the resolved step changes. mode/plan are stamped from the
+  // current state row so the funnel-view rows carry attribution.
+  useEffect(() => {
+    if (!stateRow) return;
+    if (resolved === "completed") return;
+    trackEvent("provider_onboarding_step_view", {
+      step_name: resolved,
+      mode: stateRow.mode ?? null,
+      plan: stateRow.plan ?? null,
+    });
+    // We intentionally re-fire on serverStep change (after each step
+    // submit advances the cursor) and on direct ?step= back-navigation.
+  }, [resolved, stateRow]);
+
+  // Round-30 merge: once the user is past email verification, bounce
+  // them to their returnTo deep link (e.g. /provider/claim/:slug).
+  // This lets anon /provider/claim/:slug visitors resume the claim flow
+  // automatically after the wizard's Account + VerifyEmail steps.
+  if (returnTo && profile?.email_verified_at) {
+    return <Navigate to={returnTo} replace />;
+  }
+
+  // Already-onboarded → bounce to dashboard, UNLESS the user is here
+  // explicitly to add another facility (?action=add-listing). In that
+  // case fall through to the wizard — the reset effect above moved
+  // their cursor back to find_or_list so the existing rendering logic
+  // handles the rest. Forms read profile.onboarding_completed_at at
+  // publish time to decide whether to advance to PlanStep (first-time)
+  // or jump straight to the dashboard (add-listing).
+  if (profile?.onboarding_completed_at && !addListingIntent) {
+    toast.success("You're already onboarded.");
+    return <Navigate to="/provider/dashboard" replace />;
+  }
+
+  if (stateLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
       </div>
     );
   }
+
+  const handleSelectStep = (target: OnboardingStep) => {
+    if (target === serverStep) return;
+    const next = new URLSearchParams(searchParams);
+    if (target === serverStep) next.delete("step");
+    else next.set("step", target);
+    setSearchParams(next, { replace: false });
+  };
+
+  const handleBack = () => {
+    const idx = ONBOARDING_STEPS.indexOf(resolved);
+    if (idx <= 0) return;
+    const prev = ONBOARDING_STEPS[idx - 1];
+    handleSelectStep(prev);
+  };
 
   return (
     <>
@@ -62,67 +286,59 @@ export default function ProviderOnboarding() {
         <meta name="robots" content="noindex" />
       </Helmet>
       <Header />
-      <main className="container mx-auto px-4 md:px-6 lg:px-8 py-10 md:py-14 max-w-4xl">
-        <header className="text-center mb-8 md:mb-10">
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-            How would you like to get started?
+      <main className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 max-w-3xl">
+        <header className="mb-6 md:mb-8">
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-slate-900">
+            List or claim your facility
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-xl mx-auto">
-            Pick the path that matches your facility. You can always add more
-            listings later from your dashboard.
+          <p className="text-sm text-slate-600 mt-1.5">
+            One quick flow — account, verification, and your listing.
           </p>
         </header>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="p-6 md:p-7 flex flex-col gap-4 hover:border-primary/40 transition-colors">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-primary" aria-hidden />
-            </div>
-            <div className="space-y-1.5">
-              <h2 className="font-semibold text-lg">List a new facility</h2>
-              <p className="text-sm text-muted-foreground">
-                Add a treatment center that isn't already on RehabLookup. You'll
-                supply the facility details, services, and any photos you want
-                to publish.
-              </p>
-            </div>
-            <Button
-              className="mt-auto w-full gap-2"
-              onClick={() => navigate("/provider/onboarding/new-listing")}
-            >
-              List a new facility
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Button>
-          </Card>
-
-          <Card className="p-6 md:p-7 flex flex-col gap-4 hover:border-primary/40 transition-colors">
-            <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5 text-emerald-600" aria-hidden />
-            </div>
-            <div className="space-y-1.5">
-              <h2 className="font-semibold text-lg">Claim an existing listing</h2>
-              <p className="text-sm text-muted-foreground">
-                Take ownership of a listing that was created from public SAMHSA
-                records. Verify your role, then enrich the listing in one flow.
-              </p>
-            </div>
-            <Button
-              variant="secondary"
-              className="mt-auto w-full gap-2"
-              onClick={() => navigate("/rehab-centers?intent=claim")}
-            >
-              Find my facility
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Tip: search by your facility name or city, then click
-              <span className="font-medium text-foreground"> &ldquo;Claim This Listing&rdquo; </span>
-              on its profile.
-            </p>
-          </Card>
+        <div className="mb-6">
+          <OnboardingStepper
+            current={resolved}
+            serverCurrent={serverStep}
+            onSelect={handleSelectStep}
+          />
         </div>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7 shadow-sm">
+          {resolved === "account" && <AccountStep onAdvance={() => void refetchState()} />}
+          {resolved === "verify_email" && (
+            <VerifyEmailStep onAdvance={() => void refetchState()} />
+          )}
+          {(resolved === "verify_phone" || resolved === "find_or_list") && (
+            <FindOrListStep
+              onAdvance={() => void refetchState()}
+              onBack={handleBack}
+            />
+          )}
+          {resolved === "plan" && (
+            <PlanStep onAdvance={() => void refetchState()} onBack={handleBack} />
+          )}
+          {resolved === "build" && (
+            <BuildStep onAdvance={() => void refetchState()} onBack={handleBack} />
+          )}
+          {resolved === "completed" && (
+            <CompletedBounce onBounce={() => navigate("/provider/dashboard", { replace: true })} />
+          )}
+        </section>
       </main>
       <Footer />
     </>
+  );
+}
+
+function CompletedBounce({ onBounce }: { onBounce: () => void }) {
+  useEffect(() => {
+    onBounce();
+  }, [onBounce]);
+  return (
+    <div className="flex items-center gap-2 text-sm text-slate-600">
+      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+      Finishing up…
+    </div>
   );
 }

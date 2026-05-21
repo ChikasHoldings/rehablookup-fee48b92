@@ -86,6 +86,7 @@ export default function SeekerGuidePage() {
       heroTitle={config.title}
       heroSubtitle={config.heroSubtitle}
       heroBadge="Family Guide"
+      heroImage={TOPIC_HERO_IMAGES.community}
       introContent={config.introContent}
       sections={config.sections}
       whatToExpect={config.actionSteps}

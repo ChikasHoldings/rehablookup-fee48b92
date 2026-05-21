@@ -165,7 +165,7 @@ export function useUpdateSupportTicket() {
     }) => {
       const { error } = await supabase
         .from("support_tickets")
-        .update(updates)
+        .update(updates as never)
         .eq("id", ticketId);
 
       if (error) throw error;
@@ -209,22 +209,23 @@ export function useAssignSupportTicket() {
         assigned_by: assigneeId ? currentUserId : null,
       };
 
-      // Auto-change status from 'new' to 'open' when assigned
+      // Auto-promote: assigning a "new" ticket bumps it to "open".
+      // Single conditional update against the optimistic `status='new'`
+      // filter — atomic. If the ticket isn't `new` (concurrent change),
+      // this update no-ops and the unconditional assignment below
+      // applies. No fetch-then-write race.
       if (assigneeId) {
-        const { data: currentTicket } = await supabase
+        const { error: promoteErr } = await supabase
           .from("support_tickets")
-          .select("status")
+          .update({ status: "open" } as never)
           .eq("id", ticketId)
-          .single();
-
-        if (currentTicket?.status === "new") {
-          updates.status = "open";
-        }
+          .eq("status", "new");
+        if (promoteErr) throw promoteErr;
       }
 
       const { error } = await supabase
         .from("support_tickets")
-        .update(updates)
+        .update(updates as never)
         .eq("id", ticketId);
 
       if (error) throw error;
@@ -244,7 +245,7 @@ export function useAssignSupportTicket() {
     },
     onError: (error) => {
       console.error("Failed to assign ticket:", error);
-      toast.error("Failed to assign ticket");
+      toast.error(error instanceof Error ? `Failed to assign ticket: ${error.message}` : "Failed to assign ticket");
     },
   });
 }

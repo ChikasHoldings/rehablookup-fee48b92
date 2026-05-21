@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
+import { resolveCity } from "@/lib/cityLookup";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
@@ -29,11 +30,9 @@ export default function DurationCityPage() {
   }, [location.pathname]);
 
   const config = useMemo(() => durationConfigs.find((d) => d.slug === durationSlug) || null, [durationSlug]);
-  const stateData = useMemo(() => statesData.find((s) => s.slug === stateSlug) || null, [stateSlug]);
-  const cityData = useMemo(() => {
-    if (!stateData) return null;
-    return stateData.cities.find((c) => c.slug === citySlug) || null;
-  }, [stateData, citySlug]);
+  const resolved = useMemo(() => resolveCity(stateSlug, citySlug), [stateSlug, citySlug]);
+  const stateData = resolved?.state ?? null;
+  const cityData = resolved?.city ?? null;
 
   const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
     if (!config || !stateData || !cityData) {
@@ -151,6 +150,7 @@ export default function DurationCityPage() {
       heroSubtitle={`Compare verified ${config.title.toLowerCase()} in ${cityName}, ${stateName}. Find the right duration and level of care for lasting recovery.`}
       heroLocation={`${cityName}, ${abbreviation}`}
       heroBadge="Treatment Programs"
+      heroImage={getCityImage(stateSlug, citySlug)}
       introContent={`Looking for ${config.title.toLowerCase()} in ${cityName}? RehabLookup connects you with verified treatment facilities offering structured programs designed for effective recovery. Compare options, check insurance coverage, and get matched with the right program.`}
       sections={[
         {
@@ -161,6 +161,38 @@ export default function DurationCityPage() {
           heading: `Choosing the Right Duration`,
           content: `Research consistently shows that longer treatment durations improve recovery outcomes. When choosing a program in ${cityName}, consider your addiction severity, co-occurring conditions, and support system. All programs on RehabLookup are verified for proper licensing and evidence-based approaches.`,
         },
+        {
+          heading: `Insurance & Cost in ${cityName}`,
+          content: `Most ${cityName} programs accept private insurance, Medicaid, and Medicare. Coverage depends on plan, level of care, and medical necessity. Facilities verify benefits before admission so there are no billing surprises, and many offer sliding-scale or financing for uncovered portions.`,
+        },
+        {
+          heading: `Levels of Care Across Program Length`,
+          content: `Across program durations, ${cityName} centers offer medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), standard outpatient, and recovery housing. Many programs step you down through levels of care over the duration so the intensity matches your progress.`,
+        },
+        {
+          heading: `Continuing Care After Discharge`,
+          content: `${cityName} treatment providers build aftercare into the discharge plan: weekly outpatient therapy, peer-support groups (12-step, SMART Recovery), alumni programming, and sober-living referrals. The transition home is structured, not abrupt — and long-term outcomes track strongly with continuing engagement.`,
+        },
+        {
+          heading: `How Facilities Are Verified`,
+          content: `Every ${cityName} program in our directory is checked for state licensing, current accreditation (Joint Commission or CARF), and active clinical credentials. We do not sell admission slots; providers can't pay for placement. Pages are editorially curated, not lead-broker auctions.`,
+        },
+      ]}
+      whatToExpect={[
+        `Free, confidential phone or web assessment with a licensed clinician`,
+        `Insurance benefits verified before any commitment`,
+        `Custom treatment plan within 24-48 hours of intake`,
+        `Medical detox first if clinically indicated, with 24/7 nursing`,
+        `Daily therapy, group, and educational programming`,
+        `Aftercare plan and continuing-care referrals built into discharge`,
+      ]}
+      benefits={[
+        `Licensed, accredited ${cityName} facilities only`,
+        `${config.title} matched to severity and clinical need`,
+        `Insurance accepted: most private plans, Medicaid, Medicare, TRICARE`,
+        `Dual-diagnosis support for co-occurring mental health conditions`,
+        `Evidence-based therapies (CBT, DBT, EMDR, MAT where indicated)`,
+        `Long-term continuing care and alumni community`,
       ]}
       facilities={facilities}
       isLoading={isLoading}

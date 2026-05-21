@@ -582,6 +582,15 @@ async function logServerSideNotFound(
   path: string,
   reason: string,
 ): Promise<void> {
+  // Skip noisy self-referential paths (mirrors log-not-found's guard):
+  //   /404 (intentional landing), Apple AASA probes, /.well-known/* infra.
+  if (
+    path === '/404' ||
+    path === '/apple-app-site-association' ||
+    path.startsWith('/.well-known/')
+  ) {
+    return;
+  }
   try {
     await supabase.from('not_found_events').insert({
       path,
@@ -738,7 +747,7 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
 
       // Pro plan check — controls whether phone is exposed in prerendered HTML / JSON-LD.
       const { data: proSub } = await supabase
-        .from('pro_subscriptions')
+        .from('facility_subscriptions')
         .select('id')
         .eq('facility_id', facilityRow.id)
         .eq('status', 'active')
@@ -833,7 +842,7 @@ async function generateFallbackHtml(path: string, supabase: ReturnType<typeof cr
       type: 'website',
     },
     `<h1>Find Trusted Addiction Treatment Centers</h1>
-    <p>Search 15,000+ verified drug and alcohol rehab centers across all 50 states.</p>
+    <p>Search 3,800+ verified drug and alcohol rehab centers across all 50 states.</p>
     <p><a href="/">Return to homepage</a> | <a href="/rehab-centers">Browse all treatment centers</a></p>`
   );
 }

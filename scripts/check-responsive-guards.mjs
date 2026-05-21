@@ -41,12 +41,18 @@ function checkLayoutShell() {
   const src = read(file);
   const required = [
     { token: "max-w-[100vw]", reason: "prevents horizontal overflow at root" },
-    { token: "overflow-x-hidden", reason: "blocks rogue child overflow" },
+    {
+      token: ["overflow-x-hidden", "[overflow-x:clip]"],
+      reason: "blocks rogue child overflow",
+    },
     { token: "min-w-0", reason: "lets <main> shrink inside flex/grid" },
   ];
   for (const r of required) {
-    if (!src.includes(r.token)) {
-      errors.push(`[layout] Layout.tsx missing "${r.token}" — ${r.reason}`);
+    const tokens = Array.isArray(r.token) ? r.token : [r.token];
+    const ok = tokens.some((t) => src.includes(t));
+    if (!ok) {
+      const display = tokens.length === 1 ? tokens[0] : tokens.join(" or ");
+      errors.push(`[layout] Layout.tsx missing ${display} — ${r.reason}`);
     }
   }
 }
@@ -174,7 +180,6 @@ function checkGridTiers() {
 // ─── Rule 8: Sticky CTA bar / header use shrink-0 + truncate ─────────────
 function checkStickyBars() {
   const files = [
-    "components/seo/StickyConversionBar.tsx",
     "components/layout/Header.tsx",
   ];
   for (const rel of files) {

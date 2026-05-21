@@ -2,15 +2,23 @@
 
 exports[`Responsive: public Layout shell > @ 320px (mobile-320) > matches structural snapshot 1`] = `
 <div
-  class="flex min-h-screen flex-col w-full max-w-[100vw] overflow-x-hidden"
+  class="flex min-h-screen flex-col w-full max-w-full [overflow-x:clip]"
 >
+  <a
+    class="skip-link"
+    href="#main"
+  >
+    Skip to main content
+  </a>
   <header
     data-testid="mock-header"
   >
     Header
   </header>
   <main
-    class="flex-1 w-full min-w-0"
+    class="flex-1 w-full min-w-0 focus:outline-none"
+    id="main"
+    tabindex="-1"
   >
     <div>
       child
@@ -26,15 +34,23 @@ exports[`Responsive: public Layout shell > @ 320px (mobile-320) > matches struct
 
 exports[`Responsive: public Layout shell > @ 768px (tablet-768) > matches structural snapshot 1`] = `
 <div
-  class="flex min-h-screen flex-col w-full max-w-[100vw] overflow-x-hidden"
+  class="flex min-h-screen flex-col w-full max-w-full [overflow-x:clip]"
 >
+  <a
+    class="skip-link"
+    href="#main"
+  >
+    Skip to main content
+  </a>
   <header
     data-testid="mock-header"
   >
     Header
   </header>
   <main
-    class="flex-1 w-full min-w-0"
+    class="flex-1 w-full min-w-0 focus:outline-none"
+    id="main"
+    tabindex="-1"
   >
     <div>
       child
@@ -50,15 +66,23 @@ exports[`Responsive: public Layout shell > @ 768px (tablet-768) > matches struct
 
 exports[`Responsive: public Layout shell > @ 1024px (desktop-1024) > matches structural snapshot 1`] = `
 <div
-  class="flex min-h-screen flex-col w-full max-w-[100vw] overflow-x-hidden"
+  class="flex min-h-screen flex-col w-full max-w-full [overflow-x:clip]"
 >
+  <a
+    class="skip-link"
+    href="#main"
+  >
+    Skip to main content
+  </a>
   <header
     data-testid="mock-header"
   >
     Header
   </header>
   <main
-    class="flex-1 w-full min-w-0"
+    class="flex-1 w-full min-w-0 focus:outline-none"
+    id="main"
+    tabindex="-1"
   >
     <div>
       child

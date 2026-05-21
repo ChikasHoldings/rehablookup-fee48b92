@@ -1,8 +1,388 @@
+// ⚠ AUTO-GENERATED HEADER ⚠
+// _shared modules have been inlined into this file so that
+// `supabase functions deploy --use-api` (server-side bundler)
+// can deploy without resolving local relative imports. The
+// canonical sources live under supabase/functions/_shared/ —
+// don't edit the inlined copies below; edit the originals and
+// re-run `python3 scripts/inline-shared.py submit-qualified-lead`.
+
+// ── URL imports (dedup'd) ──────────────────────────────────
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
-import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
-import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
 
+// ── inlined from _shared/resilient-email-sender.ts ─────────────
+/**
+ * Resilient Email Sender
+ * 
+ * Wraps Resend with:
+ * - Automatic retry with exponential backoff (up to 3 attempts)
+ * - Suppressed email checking
+ * - Full send tracking (sent/failed/retried/dlq) via email_tracking_events
+ * - Dead-letter logging for persistent failures
+ * 
+ * Usage:
+ *   import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
+ *   const result = await sendEmailWithRetry(supabase, resend, { ...emailParams }, { emailType: "provider_welcome" });
+ */
+
+interface EmailParams {
+  from: string;
+  to: string | string[];
+  subject: string;
+  html: string;
+  headers?: Record<string, string>;
+  replyTo?: string | string[];
+}
+
+interface SendOptions {
+  /** Category for tracking (e.g., "provider_welcome", "lead_notification"). REQUIRED. */
+  emailType: string;
+  /**
+   * Unique key for idempotency. STRONGLY RECOMMENDED for any event-driven
+   * email so retries (function re-invocations, cron re-runs, webhook re-deliveries)
+   * never produce duplicate sends. Format: `<event>-<id>` (e.g. `lead-new-${leadId}-${facilityId}`).
+   */
+  idempotencyKey?: string;
+  /** Max retry attempts (default: 3) */
+  maxRetries?: number;
+  /** Whether to check suppressed_emails before sending (default: true) */
+  checkSuppression?: boolean;
+  /** Additional metadata to store with the tracking event */
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Default inter-send delay for bulk email loops (ms).
+ * Keeps sends well under Resend's 10 req/s rate limit.
+ * Import and use: `await sleep(BULK_SEND_DELAY_MS)` after each send in a loop.
+ */
+export const BULK_SEND_DELAY_MS = 200;
+
+/** Default max emails per single function invocation */
+export const BULK_BATCH_LIMIT = 50;
+
+interface SendResult {
+  success: boolean;
+  /** True if the email was already sent (idempotency dedup) */
+  deduplicated?: boolean;
+  /** True if the recipient is suppressed */
+  suppressed?: boolean;
+  /** Resend email ID on success */
+  emailId?: string;
+  /** Error message on failure */
+  error?: string;
+  /** Number of attempts made */
+  attempts: number;
+  /** Whether the email was sent to dead-letter after all retries */
+  deadLettered?: boolean;
+  /** ISO timestamp of the original "sent" event when deduplicated. */
+  firstSentAt?: string;
+}
+
+// SupabaseClient generic enough for service role usage
+// deno-lint-ignore no-explicit-any
+type SupabaseClient = any;
+
+const LOG_PREFIX = "[RESILIENT-EMAIL]";
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Send an email with retry logic, tracking, and suppression checking.
+ */
+export async function sendEmailWithRetry(
+  supabase: SupabaseClient,
+  resend: InstanceType<typeof Resend>,
+  params: EmailParams,
+  options: SendOptions = { emailType: "general" }
+): Promise<SendResult> {
+  const {
+    emailType = "general",
+    idempotencyKey,
+    maxRetries = 3,
+    checkSuppression = true,
+    metadata,
+  } = options;
+
+  // Normalize to array
+  const toArray = Array.isArray(params.to) ? params.to : [params.to];
+  const normalizedParams = { ...params, to: toArray };
+  const recipientEmail = toArray[0]?.toLowerCase();
+  if (!recipientEmail) {
+    return { success: false, error: "No recipient email", attempts: 0 };
+  }
+
+  // 1. Idempotency check
+  if (idempotencyKey) {
+    const { data: existing } = await supabase
+      .from("email_tracking_events")
+      .select("id, created_at")
+      .eq("email_id", idempotencyKey)
+      .eq("email_type", emailType)
+      .eq("event_type", "sent")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      console.log(`${LOG_PREFIX} Dedup hit: ${idempotencyKey}`);
+      return {
+        success: true,
+        deduplicated: true,
+        attempts: 0,
+        emailId: idempotencyKey,
+        firstSentAt: existing.created_at ?? undefined,
+      };
+    }
+  }
+
+  // 2. Suppression check
+  if (checkSuppression) {
+    const { data: suppressed } = await supabase
+      .from("suppressed_emails")
+      .select("email")
+      .eq("email", recipientEmail)
+      .maybeSingle();
+
+    if (suppressed) {
+      console.log(`${LOG_PREFIX} Suppressed: ${recipientEmail}`);
+      await trackEvent(supabase, {
+        emailId: idempotencyKey || crypto.randomUUID(),
+        emailType,
+        eventType: "suppressed",
+        recipientEmail,
+        metadata: { ...metadata, reason: "suppressed_email" },
+      });
+      return { success: false, suppressed: true, attempts: 0 };
+    }
+  }
+
+  // 3. Retry loop with exponential backoff
+  const trackingId = idempotencyKey || crypto.randomUUID();
+  let lastError = "";
+
+  // Auto-generate plain-text fallback for better deliverability
+  const plainText = normalizedParams.html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/tr>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<a[^>]+href="([^"]*)"[^>]*>([^<]*)<\/a>/gi, "$2 ($1)")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const sendParams: Record<string, unknown> = {
+        from: normalizedParams.from,
+        to: normalizedParams.to,
+        subject: normalizedParams.subject,
+        html: normalizedParams.html,
+        text: plainText,
+      };
+      if (normalizedParams.headers) sendParams.headers = normalizedParams.headers;
+      if (normalizedParams.replyTo) sendParams.reply_to = normalizedParams.replyTo;
+
+      // deno-lint-ignore no-explicit-any
+      const { data, error } = await (resend.emails as any).send(sendParams);
+
+      if (error) {
+        lastError = error.message || JSON.stringify(error);
+        console.error(`${LOG_PREFIX} Attempt ${attempt}/${maxRetries} failed:`, lastError);
+
+        // Don't retry on permanent errors (validation, domain issues)
+        if (isPermanentError(lastError)) {
+          await trackEvent(supabase, {
+            emailId: trackingId,
+            emailType,
+            eventType: "failed",
+            recipientEmail,
+            metadata: { ...metadata, error: lastError, attempt, permanent: true },
+          });
+          return { success: false, error: lastError, attempts: attempt };
+        }
+
+        // Track retry
+        if (attempt < maxRetries) {
+          await trackEvent(supabase, {
+            emailId: trackingId,
+            emailType,
+            eventType: "retry",
+            recipientEmail,
+            metadata: { ...metadata, error: lastError, attempt },
+          });
+          // Exponential backoff: 1s, 2s, 4s
+          await sleep(1000 * Math.pow(2, attempt - 1));
+        }
+        continue;
+      }
+
+      // Success
+      await trackEvent(supabase, {
+        emailId: trackingId,
+        emailType,
+        eventType: "sent",
+        recipientEmail,
+        metadata: { ...metadata, resendId: data?.id, attempt },
+      });
+
+      console.log(`${LOG_PREFIX} Sent to ${recipientEmail} (attempt ${attempt})`);
+      return { success: true, emailId: data?.id, attempts: attempt };
+
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
+      console.error(`${LOG_PREFIX} Attempt ${attempt}/${maxRetries} exception:`, lastError);
+
+      if (attempt < maxRetries) {
+        await trackEvent(supabase, {
+          emailId: trackingId,
+          emailType,
+          eventType: "retry",
+          recipientEmail,
+          metadata: { ...metadata, error: lastError, attempt },
+        });
+        await sleep(1000 * Math.pow(2, attempt - 1));
+      }
+    }
+  }
+
+  // All retries exhausted — dead-letter
+  await trackEvent(supabase, {
+    emailId: trackingId,
+    emailType,
+    eventType: "dlq",
+    recipientEmail,
+    metadata: { ...metadata, error: lastError, maxRetries },
+  });
+
+  // Persist to email_send_failures so admins can review on the daily digest.
+  // Failures here must NEVER break the caller — swallow any insert error.
+  try {
+    await supabase.from("email_send_failures").insert({
+      email_type: emailType,
+      recipient_email: recipientEmail,
+      subject: normalizedParams.subject,
+      error_message: lastError,
+      attempts: maxRetries,
+      idempotency_key: idempotencyKey ?? null,
+      metadata: metadata ?? null,
+    });
+  } catch (err) {
+    console.error(`${LOG_PREFIX} DLQ insert failed:`, err);
+  }
+
+  console.error(`${LOG_PREFIX} Dead-lettered after ${maxRetries} attempts: ${recipientEmail}`);
+  return { success: false, error: lastError, attempts: maxRetries, deadLettered: true };
+}
+
+/**
+ * Determine if an error is permanent (no point retrying).
+ */
+function isPermanentError(errorMsg: string): boolean {
+  const lower = errorMsg.toLowerCase();
+  return (
+    lower.includes("validation_error") ||
+    lower.includes("verify a domain") ||
+    lower.includes("invalid") && lower.includes("email") ||
+    lower.includes("missing required") ||
+    lower.includes("not found") ||
+    lower.includes("blocked") ||
+    lower.includes("spam")
+  );
+}
+
+/**
+ * Track an email event in email_tracking_events.
+ */
+async function trackEvent(
+  supabase: SupabaseClient,
+  params: {
+    emailId: string;
+    emailType: string;
+    eventType: string;
+    recipientEmail: string;
+    metadata?: Record<string, unknown>;
+  }
+) {
+  try {
+    await supabase.from("email_tracking_events").insert({
+      email_id: params.emailId,
+      email_type: params.emailType,
+      event_type: params.eventType,
+      recipient_email: params.recipientEmail,
+      event_data: params.metadata || null,
+    });
+  } catch (err) {
+    // Never let tracking failures break email sending
+    console.error(`${LOG_PREFIX} Tracking insert failed:`, err);
+  }
+}
+
+// ── inlined from _shared/email-input-diagnostics.ts ─────────────
+/**
+ * Shared diagnostics helpers for email validation failures.
+ *
+ * Used to enrich `email_required` / `invalid_email` log lines with:
+ *   - field         : the request field that failed (e.g. "seekerEmail")
+ *   - inputType     : detected runtime type ("missing" | "string" | "number" | "object" | "array" | "null" | "boolean")
+ *   - inputLength   : length of the trimmed string (when applicable)
+ *   - whitespaceOnly: true when the input was a non-empty string of only whitespace
+ *
+ * The detected value itself is NEVER logged — only its shape — so we don't
+ * leak PII into log aggregators.
+ */
+
+export type EmailInputType =
+  | "missing"
+  | "null"
+  | "string"
+  | "number"
+  | "boolean"
+  | "object"
+  | "array";
+
+export interface EmailInputDiagnostics {
+  field: string;
+  inputType: EmailInputType;
+  inputLength?: number;
+  whitespaceOnly?: boolean;
+}
+
+export function detectEmailInputType(value: unknown): EmailInputType {
+  if (value === undefined) return "missing";
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "array";
+  const t = typeof value;
+  if (t === "string") return "string";
+  if (t === "number") return "number";
+  if (t === "boolean") return "boolean";
+  return "object";
+}
+
+export function describeEmailInput(field: string, value: unknown): EmailInputDiagnostics {
+  const inputType = detectEmailInputType(value);
+  const diag: EmailInputDiagnostics = { field, inputType };
+  if (inputType === "string") {
+    const s = value as string;
+    const trimmed = s.trim();
+    diag.inputLength = trimmed.length;
+    diag.whitespaceOnly = s.length > 0 && trimmed.length === 0;
+  }
+  return diag;
+}
+
+// ── submit-qualified-lead entrypoint body ─────────────────────────
 const VERSION = "2.1.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -111,15 +491,6 @@ function sanitizeGenericField(value: string | undefined, maxLen = 100): string |
 }
 
 // ============ LEAD MASKING (PRIVACY) ============
-function maskLeadName(fullName: string): string {
-  if (!fullName || fullName.trim().length === 0) return "New Lead";
-  const parts = fullName.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0];
-  const firstName = parts[0];
-  const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
-  return `${firstName} ${lastInitial}.`;
-}
-
 // ============ DUPLICATE & RATE LIMIT CHECKS ============
 // deno-lint-ignore no-explicit-any
 async function checkForDuplicate(
@@ -267,6 +638,57 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+// ---------- free-tier seeker confirmation email ----------
+// Sent when a seeker submits an inquiry on a Free-tier facility. The
+// in-app redirect page (`/inquiry/confirmation/:id`) is the primary
+// confirmation; this email is the durable backup so the seeker has a
+// receipt even if they close the tab before the coordinator calls.
+function getFreeTierSeekerConfirmationEmail(args: {
+  seekerName: string;
+  originatingFacilityName: string | null;
+  inquiryId: string;
+  levelOfCare: string | null;
+  urgency: string | null;
+}): string {
+  const { seekerName, originatingFacilityName, inquiryId, levelOfCare, urgency } = args;
+  const facilityLine = originatingFacilityName
+    ? `<strong>${originatingFacilityName}</strong>`
+    : "the facility you contacted";
+  const detailsRows: string[] = [];
+  if (levelOfCare) detailsRows.push(`<tr><td style="padding:4px 0;color:#64748b;">Level of care</td><td style="padding:4px 0;color:#0f172a;font-weight:600;">${levelOfCare}</td></tr>`);
+  if (urgency) detailsRows.push(`<tr><td style="padding:4px 0;color:#64748b;">Timeline</td><td style="padding:4px 0;color:#0f172a;font-weight:600;">${urgency}</td></tr>`);
+  return `<!DOCTYPE html>
+<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;margin:0;padding:32px 16px;">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+    <h1 style="font-size:24px;color:#0f172a;margin:0 0 16px 0;">You're connected.</h1>
+    <p style="font-size:15px;color:#334155;line-height:1.6;margin:0 0 16px 0;">
+      Hi ${seekerName}, we received your inquiry. A RehabLookup care coordinator
+      will reach out within <strong>1 business hour</strong> to introduce you to
+      ${facilityLine} along with <strong>1&ndash;2 additional matched facilities</strong>
+      so you can compare options.
+    </p>
+    ${detailsRows.length > 0 ? `
+    <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin:24px 0;">
+      <p style="font-size:13px;color:#475569;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;">Your inquiry</p>
+      <table style="width:100%;font-size:14px;border-collapse:collapse;">${detailsRows.join("")}</table>
+    </div>` : ""}
+    <p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 12px 0;">
+      <strong>What to expect:</strong> a coordinator will call or email you (whichever
+      you indicated), share contact info for the matched facilities, and let you
+      decide who to reach first. Calls go directly to the facility &mdash; we never
+      route or intermediate.
+    </p>
+    <p style="font-size:14px;color:#334155;line-height:1.6;margin:0 0 12px 0;">
+      In the meantime, you can reach us at <a href="tel:+18005551234" style="color:#1B365D;font-weight:600;">(800) 555-1234</a>.
+    </p>
+    <p style="font-size:12px;color:#94a3b8;margin:24px 0 0 0;border-top:1px solid #e2e8f0;padding-top:16px;">
+      Reference: ${inquiryId.slice(0, 8)} &middot; This is a transactional email about your
+      RehabLookup inquiry.
+    </p>
+  </div>
+</body></html>`;
+}
+
 // ---------- seeker (client) confirmation email ----------
 function getSeekerConfirmationEmail(
   name: string,
@@ -395,6 +817,8 @@ function getFacilityNotificationEmail(
   leadName: string,
   facilityName: string,
   details: {
+    email?: string;
+    phone?: string;
     urgency?: string;
     levelOfCare?: string;
     insuranceType?: string;
@@ -403,9 +827,13 @@ function getFacilityNotificationEmail(
     submittedAt?: Date;
   }
 ): string {
-  const maskedName = maskLeadName(leadName);
-  const maskedEmail = "●●●@●●●.com";
-  const maskedPhone = "(●●●) ●●●-●●●●";
+  // Pro-tier providers receive every lead with FULL PII directly in this
+  // email. (Free-tier facilities never reach this code path — their leads
+  // are routed to concierge upstream.) No masking, no unlock CTA, no
+  // pay-per-lead step under the flat-fee monetization model.
+  const safeName = escapeHtml(leadName);
+  const safeEmail = details.email ? escapeHtml(details.email) : "(not provided)";
+  const safePhone = details.phone ? escapeHtml(details.phone) : "(not provided)";
   const firstName = leadName.split(" ")[0];
   const submittedAt = details.submittedAt ?? new Date();
   const safeFacility = escapeHtml(facilityName);
@@ -454,46 +882,38 @@ function getFacilityNotificationEmail(
                           </div>
                         </td>
                         <td style="vertical-align: top; padding-left: 16px;">
-                          <p style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #1e293b;">${escapeHtml(maskedName)}</p>
+                          <p style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #1e293b;">${safeName}</p>
                           <p style="margin: 0; font-size: 13px; color: #64748b;">New inquiry • ${urgencyDisplay}</p>
                         </td>
                       </tr>
                     </table>
                     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; color: #334155; line-height: 1.6;">
-                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b; width: 170px;">Email</td><td style="padding: 6px 0;">${maskedEmail}</td></tr>
-                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Phone</td><td style="padding: 6px 0;">${maskedPhone}</td></tr>
+                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b; width: 170px;">Email</td><td style="padding: 6px 0;"><a href="mailto:${safeEmail}" style="color: #1B365D; text-decoration: none;">${safeEmail}</a></td></tr>
+                      <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Phone</td><td style="padding: 6px 0;"><a href="tel:${safePhone}" style="color: #1B365D; text-decoration: none;">${safePhone}</a></td></tr>
                       <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Level of care</td><td style="padding: 6px 0;">${levelOfCareDisplay}</td></tr>
                       ${details.insuranceType ? `<tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Insurance</td><td style="padding: 6px 0;">${escapeHtml(details.insuranceType)}</td></tr>` : ""}
                       <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Timeline</td><td style="padding: 6px 0;">${urgencyDisplay}</td></tr>
                       <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Preferred contact</td><td style="padding: 6px 0;">${preferredDisplay}</td></tr>
                     </table>
                     ${messageExcerpt ? `
-                    <div style="margin-top: 16px; padding: 14px 16px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
-                      <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">📝 Personal message included</p>
-                      <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.5;">This lead included a personal message. Unlock the lead in your dashboard to read it.</p>
+                    <div style="margin-top: 16px; padding: 14px 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
+                      <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">📝 Personal message</p>
+                      <p style="margin: 0; font-size: 13px; color: #334155; line-height: 1.6; white-space: pre-wrap;">${messageExcerpt}</p>
                     </div>
                     ` : ""}
                   </td>
                 </tr>
               </table>
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 12px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #92400e;">🔒 Full contact info is locked</p>
-                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #78350f; line-height: 1.5;">
-                      Unlock this lead in your dashboard to see ${escapeHtml(firstName)}'s full name, phone, and email so you can reach out directly.
+                    <p style="margin: 0 0 8px 0; font-size: 15px; font-weight: 600; color: #065f46;">📞 Reach out to ${escapeHtml(firstName)} now</p>
+                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #047857; line-height: 1.6;">
+                      Providers who respond within the first hour convert up to 7× more leads than those who wait a day. Their preferred contact method is <strong>${preferredDisplay}</strong>.
                     </p>
-                    <p style="margin: 0 0 16px 0; font-size: 13px; color: #78350f; line-height: 1.6;">
-                      <strong>Your next steps:</strong>
-                    </p>
-                    <ol style="margin: 0 0 16px 20px; padding: 0; font-size: 13px; color: #78350f; line-height: 1.7;">
-                      <li>Open the lead in your provider dashboard.</li>
-                      <li>Unlock to reveal contact details.</li>
-                      <li>Reach out via ${preferredDisplay} within 24 hours for the best conversion rate.</li>
-                    </ol>
                     <a href="https://rehablookup.com/provider/inquiries" style="display: inline-block; background: #1B365D; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px;">
-                      🔓 Unlock lead in dashboard
+                      View lead in dashboard
                     </a>
                   </td>
                 </tr>
@@ -566,6 +986,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Round-31 bug fix: hoist `now` to top of handler. The free-tier
+    // redirect flow at line ~1204 used `now.toISOString()` before the
+    // Pro-tier flow declared `const now = new Date()` further down,
+    // throwing ReferenceError on every Free-tier submission.
+    const now = new Date();
 
     // Extract client IP for rate limiting
     const clientIp = extractClientIp(req);
@@ -769,8 +1195,262 @@ Deno.serve(async (req) => {
       (data as Record<string, unknown>).ipHash = ipHashHex;
     }
 
-    // ===== LEAD INSERTION =====
-    const now = new Date();
+    // ===== FREE-TIER ROUTING CHECK =====
+    // Look up the facility's subscription tier server-side (never trust
+    // the client). Free-tier listings route through the concierge:
+    //   • Create a concierge_inquiries row with routing_mode =
+    //     'free_tier_redirect' and originating_facility_id pinned.
+    //   • Notify the Free facility with the upsell email.
+    //   • Return early with the redirect response shape so the client
+    //     can route to the seeker-confirmation page.
+    // Pro flow continues below unchanged.
+    const { data: facilityForTier } = await supabase
+      .from("facility_subscriptions")
+      .select("status, tier, has_featured, has_concierge_partner")
+      .eq("facility_id", data.facilityId)
+      .eq("status", "active")
+      .maybeSingle();
+    const isProTier =
+      facilityForTier?.status === "active" && facilityForTier?.tier === "pro";
+
+    if (!isProTier) {
+      log(requestId, "INFO", "Free-tier inquiry — routing through concierge", {
+        facilityId: data.facilityId,
+      });
+
+      // Pull the facility name + admissions email for the upsell
+      // notification. claim_email is the canonical inbox; fall back to
+      // public email if claim_email isn't set yet.
+      const { data: facilityForNotify } = await supabase
+        .from("facilities")
+        .select("id, name, claim_email, email, slug, user_id")
+        .eq("id", data.facilityId)
+        .single();
+
+      // Build the intake_data payload — same shape as the standard
+      // concierge intake plus the routing metadata.
+      const conciergeIntake = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        preferred_contact: validatedPreferredContact,
+        message: data.message,
+        urgency: validatedUrgency,
+        level_of_care: data.levelOfCare ?? null,
+        insurance_type: data.insuranceType ?? null,
+        insurance_provider: data.insuranceProvider ?? null,
+        location_zip: data.locationZip ?? null,
+        location_city_state: data.locationCityState ?? null,
+        primary_substance: Array.isArray(data.primarySubstance) ? data.primarySubstance : [],
+        dual_diagnosis: data.dualDiagnosis ?? null,
+        readiness_level: data.readinessLevel ?? null,
+        originating_facility_id: data.facilityId,
+        originating_facility_name: facilityForNotify?.name ?? null,
+        routing_mode: "free_tier_redirect",
+        submitted_at: now.toISOString(),
+      };
+
+      const { data: inquiryRow, error: inquiryErr } = await supabase
+        .from("concierge_inquiries")
+        .insert({
+          user_id: null,
+          user_name: data.name,
+          user_email: data.email,
+          user_phone: data.phone,
+          status: "pending_intake",
+          payment_status: "n/a",
+          payment_amount_cents: 0,
+          intake_data: conciergeIntake,
+          routing_mode: "free_tier_redirect",
+          originating_facility_id: data.facilityId,
+        })
+        .select("id, created_at")
+        .single();
+
+      if (inquiryErr || !inquiryRow) {
+        log(requestId, "ERROR", "Concierge inquiry insert failed", { error: inquiryErr });
+        return errorResponse(500, "concierge_insert_failed", "Failed to route inquiry.");
+      }
+
+      // Surface the new pending intake to ops via admin_notifications so
+      // the case doesn't sit invisibly until a coordinator manually opens
+      // the concierge dashboard. Mirrors the pattern submit-concierge-
+      // intake uses for paid intakes — same audit/timeline guarantees
+      // for free-tier-redirected inquiries.
+      try {
+        await supabase.from("admin_notifications").insert({
+          type: "concierge_intake",
+          title: "Free-tier inquiry — concierge follow-up needed",
+          message: `Inquiry from ${data.name} redirected from ${facilityForNotify?.name ?? "Free facility"} — ${data.levelOfCare ?? "level of care TBD"} | ${data.locationCityState ?? data.locationZip ?? "no location"} | ${validatedUrgency ?? "no urgency"}`,
+          metadata: {
+            inquiry_id: inquiryRow.id,
+            routing_mode: "free_tier_redirect",
+            originating_facility_id: data.facilityId,
+            originating_facility_name: facilityForNotify?.name ?? null,
+            seeker_name: data.name,
+            level_of_care: data.levelOfCare ?? null,
+            urgency: validatedUrgency ?? null,
+            location: data.locationCityState ?? data.locationZip ?? null,
+            request_id: requestId,
+          } as Record<string, unknown>,
+        });
+      } catch (adminNotifErr) {
+        log(requestId, "WARN", "Failed to create admin notification (non-blocking)", {
+          error: String(adminNotifErr),
+        });
+      }
+
+      // Log a case_created timeline event so the AdminConcierge "Timeline"
+      // tab shows the inquiry's full history from the moment it was
+      // routed in.
+      try {
+        await supabase.from("concierge_case_events").insert({
+          inquiry_id: inquiryRow.id,
+          event_type: "case_created",
+          event_data: {
+            source: "free_tier_redirect",
+            originating_facility_id: data.facilityId,
+            originating_facility_name: facilityForNotify?.name ?? null,
+          },
+          actor_type: "system",
+          actor_id: null,
+        });
+      } catch (eventErr) {
+        log(requestId, "WARN", "Failed to log case_created event (non-blocking)", {
+          error: String(eventErr),
+        });
+      }
+
+      // Round-robin auto-assign to the advisor with the fewest active
+      // cases. Mirrors submit-concierge-intake. If no advisors exist the
+      // case stays unassigned and surfaces as 'pending_intake' in the
+      // admin dashboard until an admin assigns manually.
+      try {
+        const { data: advisors } = await supabase
+          .from("admin_user_profiles")
+          .select("user_id")
+          .eq("admin_role", "advisor")
+          .eq("status", "active");
+        if (advisors && advisors.length > 0) {
+          const { data: caseLoads } = await supabase
+            .from("concierge_inquiries")
+            .select("assigned_advisor_id")
+            .not("status", "in", '("closed","completed")')
+            .not("assigned_advisor_id", "is", null);
+          const loadMap = new Map<string, number>();
+          for (const a of advisors) loadMap.set(a.user_id, 0);
+          for (const c of (caseLoads || [])) {
+            if (c.assigned_advisor_id && loadMap.has(c.assigned_advisor_id)) {
+              loadMap.set(c.assigned_advisor_id, (loadMap.get(c.assigned_advisor_id) || 0) + 1);
+            }
+          }
+          const sorted = [...loadMap.entries()].sort((a, b) => a[1] - b[1]);
+          const pickedAdvisor = sorted[0]?.[0];
+          if (pickedAdvisor) {
+            await supabase
+              .from("concierge_inquiries")
+              .update({ assigned_advisor_id: pickedAdvisor })
+              .eq("id", inquiryRow.id)
+              .is("assigned_advisor_id", null);
+            log(requestId, "INFO", "Auto-assigned advisor to free-tier inquiry", {
+              advisorId: pickedAdvisor,
+              caseLoad: sorted[0]?.[1] ?? 0,
+            });
+          }
+        }
+      } catch (advisorErr) {
+        log(requestId, "WARN", "Failed to auto-assign advisor (non-blocking)", {
+          error: String(advisorErr),
+        });
+      }
+
+      // Send the seeker a confirmation email — the in-app redirect page
+      // works as long as the tab stays open, but the email is the
+      // durable receipt the seeker can refer back to.
+      try {
+        await sendEmailWithRetry(
+          supabase,
+          resend,
+          {
+            from: "RehabLookup Concierge <concierge@rehablookup.com>",
+            to: data.email,
+            subject: "We received your inquiry — a coordinator will be in touch within 1 business hour",
+            html: getFreeTierSeekerConfirmationEmail({
+              seekerName: data.name,
+              originatingFacilityName: facilityForNotify?.name ?? null,
+              inquiryId: inquiryRow.id,
+              levelOfCare: data.levelOfCare ?? null,
+              urgency: validatedUrgency ?? null,
+            }),
+          },
+          {
+            emailType: "free_tier_seeker_confirmation",
+            idempotencyKey: `free-tier-seeker-${inquiryRow.id}`,
+            maxRetries: 2,
+          },
+        );
+      } catch (e) {
+        log(requestId, "WARN", "Failed to send seeker confirmation email (non-blocking)", {
+          error: String(e),
+        });
+      }
+
+      // Notify the Free facility of the redirect. We don't block the
+      // seeker on it — the concierge_inquiries row is the source of
+      // truth — but a hard failure should surface to ops via
+      // admin_notifications so courtesy outreach isn't silently lost
+      // during provider outages.
+      void (async () => {
+        try {
+          const { error } = await supabase.functions.invoke(
+            "notify-free-tier-inquiry-redirect",
+            {
+              body: {
+                facility_id: data.facilityId,
+                inquiry_id: inquiryRow.id,
+                level_of_care: data.levelOfCare ?? null,
+                insurance: data.insuranceProvider ?? data.insuranceType ?? null,
+                urgency: validatedUrgency,
+                location: data.locationCityState ?? data.locationZip ?? null,
+              },
+            },
+          );
+          if (error) {
+            log(requestId, "WARN", "Notify edge function returned error", { err: String(error) });
+            await supabase.from("admin_notifications").insert({
+              type: "free_tier_redirect_notify_failure",
+              title: "Free-tier redirect notification failed",
+              message: `Could not notify Free facility ${data.facilityId} of redirected inquiry ${inquiryRow.id}.`,
+              metadata: {
+                facility_id: data.facilityId,
+                inquiry_id: inquiryRow.id,
+                request_id: requestId,
+                last_error: String(error),
+              } as Record<string, unknown>,
+            });
+          }
+        } catch (err) {
+          log(requestId, "WARN", "Notify edge function threw (non-blocking)", { err: String(err) });
+        }
+      })();
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          routing_mode: "free_tier_redirect",
+          inquiry_id: inquiryRow.id,
+          confirmation_path: `/inquiry/confirmation/${inquiryRow.id}`,
+          originating_facility_name: facilityForNotify?.name ?? null,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    // ===== LEAD INSERTION (Pro-tier flow — unchanged below) =====
+    // `now` is hoisted to the top of the handler (round-31 fix); reuse it.
     const exclusiveUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const extendedUntil = new Date(now.getTime() + 72 * 60 * 60 * 1000);
 
@@ -836,7 +1516,7 @@ Deno.serve(async (req) => {
         budget_preference: data.budgetPreference || null,
         special_needs: Array.isArray(data.specialNeeds) ? data.specialNeeds : [],
       })
-      .select("id, credit_cost, lead_score_label")
+      .select("id")
       .single();
 
     if (insertError) {
@@ -855,8 +1535,13 @@ Deno.serve(async (req) => {
 
     log(requestId, "INFO", "Lead inserted", { leadId: lead.id });
 
-    // Create initial distribution record
-    await supabase
+    // Create initial distribution record. Round-30 audit: this insert
+    // was unguarded — if it failed (FK, RLS, constraint, DB timeout)
+    // the seeker still got a 200 and the lead row existed, but
+    // analytics + redistribution queries that join on lead_distributions
+    // had a missing row. Now: capture error, surface to admin, AND log
+    // hard so ops can reconcile.
+    const { error: distErr } = await supabase
       .from("lead_distributions")
       .insert({
         lead_id: lead.id,
@@ -866,6 +1551,26 @@ Deno.serve(async (req) => {
         notification_sent: true,
         notification_sent_at: now.toISOString(),
       });
+    if (distErr) {
+      log(requestId, "ERROR", "lead_distributions insert failed", { error: distErr.message });
+      try {
+        await supabase.from("admin_notifications").insert({
+          type: "lead_distribution_insert_failure",
+          title: "Lead distribution record not created",
+          message: `Lead ${lead.id} was inserted but lead_distributions insert failed: ${distErr.message}. Analytics/redistribution joins will show a missing row.`,
+          metadata: {
+            lead_id: lead.id,
+            facility_id: data.facilityId,
+            request_id: requestId,
+            db_error: distErr.message,
+          } as Record<string, unknown>,
+        });
+      } catch (adminErr) {
+        log(requestId, "WARN", "admin_notifications insert failed (dist)", {
+          error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+        });
+      }
+    }
 
     // ===== NON-BLOCKING NOTIFICATIONS (with idempotency) =====
     // Send seeker confirmation email — idempotency keyed to lead ID
@@ -930,6 +1635,8 @@ Deno.serve(async (req) => {
           to: [notificationEmail],
           subject: `New Inquiry from ${firstName} - ${facility.name}`,
           html: getFacilityNotificationEmail(data.name, facility.name, {
+            email: data.email,
+            phone: data.phone,
             urgency: data.urgency,
             levelOfCare: data.levelOfCare,
             insuranceType: data.insuranceType,
@@ -962,24 +1669,82 @@ Deno.serve(async (req) => {
           const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
           const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-          await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${supabaseKey}`,
-            },
-            body: JSON.stringify({
-              userId: facility.user_id,
-              notificationType: "new_lead",
-              data: {
-                leadName: maskLeadName(data.name),
-                leadCity: data.locationCityState?.split(",")[0]?.trim() || null,
-                levelOfCare: data.levelOfCare,
-                urgency: data.urgency,
-                facilityName: facility.name,
-              },
-            }),
-          });
+          // We DO await the response + check status so a Twilio outage or
+          // mis-config doesn't silently drop the SMS. One retry on transient
+          // failure; on final failure, insert an admin_notifications row so
+          // ops can investigate / manually resend.
+          let smsOk = false;
+          let smsResult: { sent?: boolean; reason?: string; error?: string } | null = null;
+          let lastError: string | null = null;
+          for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+              const smsResp = await fetch(
+                `${supabaseUrl}/functions/v1/send-sms-notification`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${supabaseKey}`,
+                  },
+                  body: JSON.stringify({
+                    userId: facility.user_id,
+                    notificationType: "new_lead",
+                    data: {
+                      leadName: data.name,
+                      leadCity: data.locationCityState?.split(",")[0]?.trim() || null,
+                      levelOfCare: data.levelOfCare,
+                      urgency: data.urgency,
+                      facilityName: facility.name,
+                    },
+                  }),
+                },
+              );
+              smsResult = await smsResp.json().catch(() => null);
+              if (smsResp.ok) {
+                // send-sms-notification returns 200 even for skip cases
+                // (Twilio off, opted out, phone not verified, etc.).
+                // sent=true means a real SMS went out.
+                smsOk = true;
+                log(requestId, "INFO", "SMS notification result", {
+                  attempt,
+                  sent: smsResult?.sent ?? false,
+                  reason: smsResult?.reason ?? null,
+                });
+                break;
+              }
+              lastError = `HTTP ${smsResp.status}: ${smsResult?.error ?? "unknown"}`;
+            } catch (fetchErr) {
+              lastError = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+            }
+            if (attempt === 1) {
+              // 500ms backoff before retry
+              await new Promise((r) => setTimeout(r, 500));
+            }
+          }
+          if (!smsOk) {
+            log(requestId, "ERROR", "SMS notification failed after retries", { lastError });
+            // Surface to admins via admin_notifications so a human can
+            // re-send manually + investigate the underlying Twilio issue.
+            try {
+              await supabase.from("admin_notifications").insert({
+                type: "lead_sms_delivery_failure",
+                title: "Lead SMS notification failed",
+                message: `Could not deliver SMS for new lead to facility "${facility.name}" (provider ${facility.user_id}). Last error: ${lastError}`,
+                metadata: {
+                  facility_id: facility.id,
+                  provider_user_id: facility.user_id,
+                  request_id: requestId,
+                  last_error: lastError,
+                } as Record<string, unknown>,
+              });
+            } catch (adminErr) {
+              log(requestId, "WARN", "admin_notifications insert failed", {
+                error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+              });
+            }
+          }
+        } else {
+          log(requestId, "INFO", "SMS skipped: provider has no verified phone");
         }
       } else {
         log(requestId, "INFO", "SMS channel disabled by preference; skipping");
@@ -988,15 +1753,14 @@ Deno.serve(async (req) => {
       log(requestId, "WARN", "Failed to send SMS notification", { error: String(smsError) });
     }
 
-    // In-app notification — enriched with high-intent + credit cost + direct link
-    const intentLabel = isHighIntent ? "🔥 High-Intent" : "";
+    // In-app notification — Pro providers see the full lead name directly.
     const urgencyLabel = data.urgency && ["Urgent", "Immediately", "immediate"].includes(data.urgency) ? " — Needs help now" : "";
     const notificationTitle = isHighIntent ? "🔥 High-Intent Inquiry Received" : "New Inquiry Received";
-    const notificationMessage = `${maskLeadName(data.name)} submitted an inquiry${data.levelOfCare ? ` for ${data.levelOfCare.replace(/_/g, ' ')}` : ''}${urgencyLabel}`;
+    const notificationMessage = `${data.name} submitted an inquiry${data.levelOfCare ? ` for ${data.levelOfCare.replace(/_/g, ' ')}` : ''}${urgencyLabel}`;
 
     if (inAppEnabled) {
       try {
-        await supabase.from("provider_notifications").insert({
+        const { error: notifErr } = await supabase.from("provider_notifications").insert({
           user_id: facility.user_id,
           facility_id: facility.id,
           type: isHighIntent ? "high_intent_lead" : "new_lead",
@@ -1009,24 +1773,46 @@ Deno.serve(async (req) => {
             location_city_state: data.locationCityState,
             source: validatedSource,
             high_intent: isHighIntent,
-            credit_cost: lead.credit_cost,
-            lead_score_label: lead.lead_score_label,
             inquiry_type: inquiryType,
             link: `/provider/inquiries?lead=${lead.id}`,
           },
           read: false,
         });
+        if (notifErr) throw notifErr;
       } catch (notifError) {
+        // Round-30 audit: this catch previously only logged to console.
+        // If the insert fails (RLS, FK, constraint), the provider never
+        // sees an in-app alert AND ops has no signal. Now surfaced.
         log(requestId, "WARN", "Failed to create in-app notification", { error: String(notifError) });
+        try {
+          await supabase.from("admin_notifications").insert({
+            type: "lead_notification_failure",
+            title: "Provider in-app lead notification failed",
+            message: `provider_notifications insert failed for lead ${lead.id} → provider ${facility.user_id} (facility ${facility.id}). Lead row exists but provider has no in-app alert.`,
+            metadata: {
+              lead_id: lead.id,
+              provider_user_id: facility.user_id,
+              facility_id: facility.id,
+              request_id: requestId,
+              error: notifError instanceof Error ? notifError.message : String(notifError),
+            } as Record<string, unknown>,
+          });
+        } catch (adminErr) {
+          log(requestId, "WARN", "admin_notifications insert failed (provider notif)", {
+            error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+          });
+        }
       }
     } else {
       log(requestId, "INFO", "In-app channel disabled by preference; skipping");
     }
 
 
-    // Track instant notification event
+    // Track instant notification event. Round-30 audit: catch was
+    // console-log-only; billing + analytics depend on this table to
+    // prove a lead was notified. Insert failure → admin alert.
     try {
-      await supabase.from("notification_events").insert({
+      const { error: trackErr } = await supabase.from("notification_events").insert({
         lead_id: lead.id,
         facility_id: facility.id,
         user_id: facility.user_id,
@@ -1034,10 +1820,29 @@ Deno.serve(async (req) => {
         channel: "email",
         event_type: "sent",
         notification_type: isHighIntent ? "high_intent" : "new_lead",
-        metadata: { credit_cost: lead.credit_cost, urgency: data.urgency },
+        metadata: { urgency: data.urgency },
       });
+      if (trackErr) throw trackErr;
     } catch (trackError) {
       log(requestId, "WARN", "Failed to track notification event", { error: String(trackError) });
+      try {
+        await supabase.from("admin_notifications").insert({
+          type: "lead_notification_event_failure",
+          title: "Lead notification audit trail missing",
+          message: `notification_events insert failed for lead ${lead.id} → facility ${facility.id}. Lead was notified but billing/analytics audit row is missing.`,
+          metadata: {
+            lead_id: lead.id,
+            facility_id: facility.id,
+            user_id: facility.user_id,
+            request_id: requestId,
+            error: trackError instanceof Error ? trackError.message : String(trackError),
+          } as Record<string, unknown>,
+        });
+      } catch (adminErr) {
+        log(requestId, "WARN", "admin_notifications insert failed (notif event)", {
+          error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+        });
+      }
     }
 
     log(requestId, "INFO", "Inquiry submitted successfully", { leadId: lead.id });

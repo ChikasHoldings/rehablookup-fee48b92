@@ -24,13 +24,15 @@ const STATUS_LABELS: Record<string, string> = {
   provider_prequalification: "Pre-Qualifying",
   providers_accepted: "Providers Ready",
   presented_to_seeker: "Presented",
-  seeker_selected: "Client Selected",
-  admission_in_progress: "Admitting",
-  admitted: "Admitted",
-  billed: "Billed",
+  seeker_selected: "Placed",
   completed: "Completed",
   closed: "Closed",
-  // Legacy compat
+  // Legacy paid-placement product statuses — collapse to "Placed" so
+  // historical rows display under the unified terminal label.
+  admission_in_progress: "Placed",
+  admitted: "Placed",
+  billed: "Placed",
+  // Older legacy compat
   new: "New",
   reviewing: "Reviewing",
   matching: "Matching",
@@ -84,7 +86,12 @@ export function ConciergeOverviewTab({ caseData }: ConciergeOverviewTabProps) {
   });
 
   const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded" || caseData.payment_status === "free";
-  const isPlaced = ["admitted", "billed", "completed"].includes(caseData.status);
+  // "Placed" under the rebuilt workflow includes the new terminal
+  // seeker_selected AND any legacy admission_* / billed rows. The
+  // separate "completed" archival state also reads as placed.
+  const isPlaced = [
+    "seeker_selected", "admission_in_progress", "admitted", "billed", "completed",
+  ].includes(caseData.status);
   const isClosed = caseData.status === "closed";
   const hoursSinceUpdate = (Date.now() - new Date(caseData.updated_at).getTime()) / (1000 * 60 * 60);
 

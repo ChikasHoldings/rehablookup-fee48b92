@@ -24,7 +24,6 @@ import {
   X,
   Share2,
   Star,
-  Lock,
   Smartphone,
   Briefcase,
   Scale,
@@ -62,8 +61,6 @@ import { EmailLeadDialog } from "./EmailLeadDialog";
 
 import { cn } from "@/lib/utils";
 import { formatSourceLabel } from "@/lib/sourceLabels";
-import { useLeadUnlocks } from "@/hooks/useLeadUnlocks";
-import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 
 export interface Lead {
   id: string;
@@ -123,7 +120,6 @@ export interface Lead {
   provider_responded_at: string | null;
   provider_response_notes: string | null;
   inquiry_type: string | null;
-  is_unlocked?: boolean;
 }
 
 interface LeadNote {
@@ -161,20 +157,13 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
   const queryClient = useQueryClient();
   const { trackContact } = useLeadContactTracking();
   
-  // Lead unlock status - used for UI control (show/hide buttons), not for masking
-  // Data from leads_provider_view is already masked/unmasked at the DB level
-  const { isLeadUnlocked } = useLeadUnlocks(lead?.facility_id);
-  const isUnlocked = lead ? isLeadUnlocked(lead.id) : false;
-  
-  // Display info directly from view data (already masked/unmasked by DB)
+  // EKRA flat-fee model: every lead is fully accessible to its facility
+  // owner. Credit-based unlocks + Pro-gated PII reveal are retired.
   const displayInfo = lead ? {
     name: lead.name,
     email: lead.email,
     phone: lead.phone,
-    initials: isUnlocked 
-      ? lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
-      : "??",
-    isLocked: !isUnlocked,
+    initials: lead.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase(),
   } : null;
 
   const { data: notes = [] } = useQuery({
@@ -301,14 +290,8 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
       <div className="flex-shrink-0 border-b">
         {/* Top row: Avatar, Name, Actions */}
         <div className="p-4 pb-3 flex items-center gap-3">
-          <div className={cn(
-            "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0",
-            displayInfo?.isLocked ? "bg-muted" : "bg-primary/10"
-          )}>
-            <span className={cn(
-              "text-base font-semibold",
-              displayInfo?.isLocked ? "text-muted-foreground" : "text-primary"
-            )}>
+          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-base font-semibold text-primary">
               {displayInfo?.initials || "??"}
             </span>
           </div>
@@ -317,9 +300,6 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
               <h2 className="text-xl font-semibold text-foreground truncate leading-tight">
                 {displayInfo?.name || "Unknown Lead"}
               </h2>
-              {displayInfo?.isLocked && (
-                <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              )}
             </div>
             <div className="flex items-center gap-1.5 mt-0.5 text-sm text-muted-foreground">
               {lead.location_city_state && (
@@ -336,16 +316,15 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
           </div>
           <div className="flex items-start gap-2 flex-shrink-0">
             <div className="flex flex-col gap-1.5">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="gap-1.5 h-8 px-3 w-full justify-start" 
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 h-8 px-3 w-full justify-start"
                 onClick={() => setShowEmailDialog(true)}
-                disabled={displayInfo?.isLocked}
-                title={displayInfo?.isLocked ? "Unlock lead to send email" : "Send email"}
+                title="Send email"
               >
                 <Mail className="h-3.5 w-3.5" />
-                {displayInfo?.isLocked ? "Locked" : "Send email"}
+                Send email
               </Button>
               <Select 
                 value={lead.status} 
@@ -453,14 +432,12 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
 
       </div>
 
-      {/* Email Dialog - Only render with real data when unlocked */}
-      {isUnlocked && (
-        <EmailLeadDialog
-          open={showEmailDialog}
-          onOpenChange={setShowEmailDialog}
-          lead={lead}
-        />
-      )}
+      {/* Email Dialog */}
+      <EmailLeadDialog
+        open={showEmailDialog}
+        onOpenChange={setShowEmailDialog}
+        lead={lead}
+      />
 
       {/* Status Change Confirmation Dialog */}
       <AlertDialog 
@@ -578,49 +555,11 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Phone className="h-4 w-4 text-primary" />
                   Contact Information
-                  {displayInfo?.isLocked && (
-                    <Badge variant="outline" className="ml-2 gap-1 text-xs">
-                      <Lock className="h-3 w-3" />
-                      Locked
-                    </Badge>
-                  )}
                 </h3>
               </div>
-              
-              {displayInfo?.isLocked ? (
-                /* Locked State - Show unlock prompt */
-                <div className="p-6 text-center space-y-4">
-                  <div className="h-16 w-16 rounded-full bg-muted mx-auto flex items-center justify-center">
-                    <Lock className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">Contact Details Locked</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Unlock this lead to view phone, email, and take action
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <Phone className="h-4 w-4" />
-                        {displayInfo.phone}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Mail className="h-4 w-4" />
-                        {displayInfo.email}
-                      </span>
-                    </div>
-                  </div>
-                  <UnlockLeadButton 
-                    leadId={lead.id} 
-                    facilityId={lead.facility_id}
-                    inquiryType={(lead as any).inquiry_type || 'request_info'}
-                    className="w-full max-w-xs mx-auto"
-                  />
-                </div>
-              ) : (
-                /* Unlocked State - Show full contact info with prominent CTAs */
-                <div className="p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
+
+              {/* Full contact info with prominent CTAs */}
+              <div className="p-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
                   {/* Quick Action Buttons - Prominent CTAs */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Button 
@@ -718,7 +657,6 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                     )}
                   </div>
                 </div>
-              )}
             </section>
 
             {/* Treatment Details - Card style */}

@@ -160,10 +160,11 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
         throw new Error("Failed to generate signed URL");
       }
       return { url: signedData.signedUrl, name: attachment.name };
-    } catch (error) {
-      console.error("Upload error:", error);
-      return null;
     } finally {
+      // Always release the uploading flag; the caller throws + the
+      // mutation's onError surfaces the toast. Swallowing the error
+      // here previously caused failed uploads to silently degrade
+      // into text-only messages, with the user thinking the file went.
       setUploading(false);
     }
   };
@@ -257,8 +258,11 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
         ? "message_to_seeker" 
         : "message_to_facility";
 
+      // Message itself was persisted — the send-message-notifications
+      // edge fn only handles email/push delivery to the seeker or
+      // facility. A failure here is a soft warning, not a hard error.
       try {
-        await supabase.functions.invoke("send-message-notifications", {
+        const { data: notifData, error: notifErr } = await supabase.functions.invoke("send-message-notifications", {
           body: {
             notificationType,
             threadId: selectedThread.id,
@@ -266,8 +270,13 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
             senderType: "advisor",
           },
         });
+        if (notifErr || notifData?.error) {
+          const msg = (notifErr as Error | null)?.message || notifData?.error || "Unknown error";
+          toast.warning(`Message saved, but notification delivery failed: ${msg}`);
+        }
       } catch (notifError) {
-        console.error("Failed to send notification:", notifError);
+        const msg = notifError instanceof Error ? notifError.message : "Unknown error";
+        toast.warning(`Message saved, but notification delivery failed: ${msg}`);
       }
     },
     onSuccess: () => {
@@ -277,8 +286,9 @@ export function MessagesTab({ caseData }: MessagesTabProps) {
       queryClient.invalidateQueries({ queryKey: ["admin-thread-messages", selectedThread?.id] });
       queryClient.invalidateQueries({ queryKey: ["admin-case-threads", caseData.id] });
     },
-    onError: () => {
-      toast.error("Failed to send message");
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : "Failed to send message";
+      toast.error(msg);
     },
   });
 

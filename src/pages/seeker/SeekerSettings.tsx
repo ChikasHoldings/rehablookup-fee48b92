@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
-import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, Phone, MapPin, Settings, Video, ShieldCheck } from "lucide-react";
+import { User, Lock, Bell, LogOut, Camera, Loader2, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Pencil, Trash2, MapPin, Settings, Video } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { ActivityLog } from "@/components/seeker/ActivityLog";
 import { logActivity } from "@/hooks/useActivityLog";
 import { PhoneVerificationStep } from "@/components/ui/PhoneVerificationStep";
+import { formatPhoneE164 } from "@/lib/phoneUtils";
 import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,6 +42,7 @@ interface SeekerProfile {
   last_name: string | null;
   avatar_url: string | null;
   phone: string | null;
+  phone_verified: boolean | null;
   zipcode: string | null;
   city: string | null;
   state: string | null;
@@ -88,6 +90,11 @@ export default function SeekerSettings() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  // Phone number captured at the moment phone_verified became true. Used
+  // to detect "user edited phone after verifying" so we can clear the
+  // verified flag both locally (UI) and on save (DB).
+  const verifiedPhoneRef = useRef<string>("");
   const [zipcode, setZipcode] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -122,7 +129,7 @@ export default function SeekerSettings() {
   useEffect(() => {
     const loadProfile = async () => {
       if (!isReady) return;
-      
+
       if (!sessionUserId) {
         setIsLoading(false);
         return;
@@ -131,38 +138,86 @@ export default function SeekerSettings() {
       setEmail(sessionEmail || "");
       setUserId(sessionUserId);
 
-      // Check our custom verification system using security definer function
+      // Custom verification system via SECURITY DEFINER RPC. We surface
+      // the underlying error to the console (the badge falls back to
+      // "Unverified") so a misconfigured RPC doesn't masquerade as a
+      // genuinely unverified email — operators can see the issue.
       if (sessionEmail) {
-        const { data: verified } = await supabase
+        const { data: verified, error: verifyErr } = await supabase
           .rpc('is_email_verified', { p_email: sessionEmail });
+        if (verifyErr) {
+          console.warn('[SeekerSettings] is_email_verified RPC failed:', verifyErr.message);
+        }
         setIsEmailVerified(!!verified);
       }
 
-      const { data: profile } = await supabase
+      // Fetch phone_verified alongside the rest so the badge in
+      // PhoneVerificationStep reflects DB truth. Previously phone_verified
+      // was never read, so the page always rendered the verify CTA — even
+      // for users whose number had been verified months earlier.
+      const { data: profile, error: profileErr } = await supabase
         .from('seeker_profiles')
-        .select('display_name, first_name, last_name, avatar_url, phone, zipcode, city, state')
+        .select('display_name, first_name, last_name, avatar_url, phone, phone_verified, zipcode, city, state')
         .eq('user_id', sessionUserId)
         .maybeSingle();
 
-      if (profile) {
+      if (profileErr) {
+        toast({
+          title: "Couldn't load your profile",
+          description: profileErr.message || "Please refresh the page.",
+          variant: "destructive",
+        });
+      } else if (profile) {
         setDisplayName(profile.display_name || "");
         setFirstName(profile.first_name || "");
         setLastName(profile.last_name || "");
         setAvatarUrl(profile.avatar_url);
         setPhone(profile.phone || "");
+        setPhoneVerified(!!profile.phone_verified);
+        verifiedPhoneRef.current = profile.phone_verified ? (profile.phone || "") : "";
         setZipcode(profile.zipcode || "");
         setCity(profile.city || "");
         setState(profile.state || "");
       }
-      
+
       setIsLoading(false);
     };
 
     loadProfile();
-  }, [isReady, sessionUserId, sessionEmail]);
+  }, [isReady, sessionUserId, sessionEmail, toast]);
+
+  // Realtime: seeker_profiles is in supabase_realtime (migration
+  // 20260702000000). Any UPDATE to this user's row — whether from an
+  // admin support touch, the phone-verify edge function flipping
+  // phone_verified=true, or the same user editing from another tab —
+  // propagates here within ~200ms so the UI stays honest.
+  useEffect(() => {
+    if (!sessionUserId) return;
+    const channel = supabase
+      .channel(`seeker-profile-${sessionUserId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'seeker_profiles', filter: `user_id=eq.${sessionUserId}` },
+        (payload) => {
+          const row = payload.new as Partial<SeekerProfile> | null;
+          if (!row) return;
+          if (typeof row.phone_verified === 'boolean') {
+            setPhoneVerified(row.phone_verified);
+            if (row.phone_verified) verifiedPhoneRef.current = row.phone || "";
+          }
+          if (typeof row.avatar_url !== 'undefined') {
+            setAvatarUrl(row.avatar_url ?? null);
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionUserId]);
 
   // Auto-fill city/state when zipcode changes
-   
+
   useEffect(() => {
     if (zipcode.length === 5 && !city && !state) {
       zipcodeLookup.lookup(zipcode);
@@ -210,35 +265,37 @@ export default function SeekerSettings() {
     setIsUploadingAvatar(true);
 
     try {
-      // Create unique filename - don't include bucket name in path
-      const fileExt = file.name.split('.').pop();
+      const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase();
       const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`;
 
-      // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('seeker-avatars')
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('seeker-avatars')
         .getPublicUrl(fileName);
 
-      // Upsert profile (creates if doesn't exist)
       const { error: updateError } = await supabase
         .from('seeker_profiles')
-        .upsert({ 
-          user_id: userId, 
+        .upsert({
+          user_id: userId,
           avatar_url: publicUrl,
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id' });
 
       if (updateError) throw updateError;
 
+      // After the new file is canonical, sweep prior avatars in this
+      // user's prefix so storage doesn't accumulate one file per
+      // upload-since-signup. Best-effort: a storage list/remove error
+      // doesn't undo the successful update — it just leaves a stale
+      // file for a future sweep.
+      await cleanupOldAvatars(userId, fileName);
+
       setAvatarUrl(publicUrl);
-      // Invalidate the seeker profile query to update header avatar
       queryClient.invalidateQueries({ queryKey: ['seeker-profile', userId] });
       await logActivity({
         eventType: "avatar_update",
@@ -249,14 +306,36 @@ export default function SeekerSettings() {
         description: "Your profile picture has been updated."
       });
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not upload your avatar. Please try again.";
       console.error('Avatar upload error:', error);
       toast({
         title: "Upload failed",
-        description: "Could not upload your avatar. Please try again.",
+        description: message,
         variant: "destructive"
       });
     } finally {
       setIsUploadingAvatar(false);
+    }
+  };
+
+  // List the user's prefix in seeker-avatars and remove every file
+  // except the one just written. Called after a successful upload so a
+  // failure here doesn't undo the user-facing success path.
+  const cleanupOldAvatars = async (uid: string, keepFileName: string) => {
+    try {
+      const { data: files, error: listErr } = await supabase.storage
+        .from('seeker-avatars')
+        .list(uid, { limit: 100 });
+      if (listErr || !files) return;
+      const keepBase = keepFileName.split('/').pop();
+      const toDelete = files
+        .filter((f) => f.name !== keepBase)
+        .map((f) => `${uid}/${f.name}`);
+      if (toDelete.length > 0) {
+        await supabase.storage.from('seeker-avatars').remove(toDelete);
+      }
+    } catch (err) {
+      console.warn('[SeekerSettings] avatar cleanup failed:', err);
     }
   };
 
@@ -266,20 +345,21 @@ export default function SeekerSettings() {
     setIsRemovingAvatar(true);
 
     try {
-      // Extract file path from URL to delete from storage
-      const urlParts = avatarUrl.split('/seeker-avatars/');
-      if (urlParts.length > 1) {
-        const filePath = urlParts[1];
-        await supabase.storage
-          .from('seeker-avatars')
-          .remove([filePath]);
+      // Sweep the entire user prefix — the current avatar URL may be
+      // stale (e.g. realtime updated it underneath us) so list+remove
+      // is more reliable than parsing the URL.
+      const { data: files } = await supabase.storage
+        .from('seeker-avatars')
+        .list(userId, { limit: 100 });
+      if (files && files.length > 0) {
+        const paths = files.map((f) => `${userId}/${f.name}`);
+        await supabase.storage.from('seeker-avatars').remove(paths);
       }
 
-      // Upsert profile to remove avatar_url
       const { error: updateError } = await supabase
         .from('seeker_profiles')
-        .upsert({ 
-          user_id: userId, 
+        .upsert({
+          user_id: userId,
           avatar_url: null,
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id' });
@@ -287,7 +367,6 @@ export default function SeekerSettings() {
       if (updateError) throw updateError;
 
       setAvatarUrl(null);
-      // Invalidate the seeker profile query to update header avatar
       queryClient.invalidateQueries({ queryKey: ['seeker-profile', userId] });
       await logActivity({
         eventType: "avatar_remove",
@@ -298,10 +377,11 @@ export default function SeekerSettings() {
         description: "Your profile picture has been removed."
       });
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not remove your avatar. Please try again.";
       console.error('Avatar removal error:', error);
       toast({
         title: "Removal failed",
-        description: "Could not remove your avatar. Please try again.",
+        description: message,
         variant: "destructive"
       });
     } finally {
@@ -317,34 +397,32 @@ export default function SeekerSettings() {
     try {
       const fileName = `${userId}/avatar-${Date.now()}.jpg`;
 
-      // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('seeker-avatars')
-        .upload(fileName, blob, { 
+        .upload(fileName, blob, {
           upsert: true,
           contentType: 'image/jpeg'
         });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('seeker-avatars')
         .getPublicUrl(fileName);
 
-      // Upsert profile (creates if doesn't exist)
       const { error: updateError } = await supabase
         .from('seeker_profiles')
-        .upsert({ 
-          user_id: userId, 
+        .upsert({
+          user_id: userId,
           avatar_url: publicUrl,
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id' });
 
       if (updateError) throw updateError;
 
+      await cleanupOldAvatars(userId, fileName);
+
       setAvatarUrl(publicUrl);
-      // Invalidate the seeker profile query to update header avatar
       queryClient.invalidateQueries({ queryKey: ['seeker-profile', userId] });
       await logActivity({
         eventType: "avatar_update",
@@ -355,10 +433,11 @@ export default function SeekerSettings() {
         description: "Your profile picture has been updated."
       });
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save your photo. Please try again.";
       console.error('Camera capture upload error:', error);
       toast({
         title: "Upload failed",
-        description: "Could not save your photo. Please try again.",
+        description: message,
         variant: "destructive"
       });
     } finally {
@@ -370,6 +449,7 @@ export default function SeekerSettings() {
   const lastProfileSaveRef = useRef<number>(0);
   const lastPasswordChangeRef = useRef<number>(0);
   const lastEmailChangeRef = useRef<number>(0);
+  const lastResendVerificationRef = useRef<number>(0);
 
   // Sanitize text: strip HTML tags and dangerous protocols
   const sanitizeText = (str: string, maxLen = 100): string => {
@@ -401,10 +481,16 @@ export default function SeekerSettings() {
     }
     lastProfileSaveRef.current = now;
 
-    // Sanitize inputs
+    // Sanitize inputs.
+    //
+    // Phone: normalized to E.164 (`+15551234567`) for storage. Same
+    // canonical form as SeekerSignup persists, send-sms-verification-
+    // code expects, and twilio-sms-inbound STOP-matching reads. If
+    // the user typed garbage, formatPhoneE164 returns "" → we store
+    // null instead of partial data.
     const cleanFirstName = sanitizePersonName(firstName);
     const cleanLastName = sanitizePersonName(lastName);
-    const cleanPhone = phone.replace(/[^\d+\-() ]/g, '').slice(0, 20);
+    const cleanPhone = formatPhoneE164(phone);
     const cleanZipcode = zipcode.replace(/[^\d\-]/g, '').slice(0, 10);
     const cleanCity = sanitizeText(city, 100);
     const cleanState = sanitizeText(state, 50);
@@ -417,18 +503,28 @@ export default function SeekerSettings() {
 
     setIsSaving(true);
 
-    const fullDisplayName = cleanFirstName && cleanLastName 
+    const fullDisplayName = cleanFirstName && cleanLastName
       ? `${cleanFirstName} ${cleanLastName}`
       : displayName;
 
+    // If the phone in the form differs from the last-verified phone,
+    // the row's phone_verified flag is no longer truthful. Reset it on
+    // the same write so we never persist a verified flag against an
+    // unverified number. Includes the empty-phone case (user cleared it).
+    const phoneChangedSinceVerify = cleanPhone !== verifiedPhoneRef.current;
+    const phoneVerifiedPayload = phoneChangedSinceVerify
+      ? { phone_verified: false, phone_verified_at: null }
+      : {};
+
     const { error } = await supabase
       .from('seeker_profiles')
-      .upsert({ 
+      .upsert({
         user_id: sessionUserId,
         display_name: sanitizeText(fullDisplayName, 100),
         first_name: cleanFirstName || null,
         last_name: cleanLastName || null,
         phone: cleanPhone || null,
+        ...phoneVerifiedPayload,
         zipcode: cleanZipcode || null,
         city: cleanCity || null,
         state: cleanState || null,
@@ -438,11 +534,15 @@ export default function SeekerSettings() {
     if (error) {
       toast({
         title: "Error saving",
-        description: "Could not update your profile.",
+        description: error.message || "Could not update your profile.",
         variant: "destructive"
       });
     } else {
       setDisplayName(fullDisplayName);
+      if (phoneChangedSinceVerify) {
+        setPhoneVerified(false);
+        verifiedPhoneRef.current = "";
+      }
       queryClient.invalidateQueries({ queryKey: ['seeker-profile', sessionUserId] });
       await logActivity({
         eventType: "profile_update",
@@ -458,10 +558,24 @@ export default function SeekerSettings() {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    // Log the sign-out BEFORE the auth call — once signOut completes,
+    // the JWT is invalid and the SECURITY DEFINER RPC would reject.
+    await logActivity({
+      eventType: "sign_out",
+      description: "Signed out of account",
+    });
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Couldn't sign out",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
     toast({
       title: "Signed out",
-      description: "You've been logged out."
+      description: "You've been logged out.",
     });
     navigate("/", { replace: true });
   };
@@ -558,6 +672,20 @@ export default function SeekerSettings() {
         eventType: "password_change",
         description: "Changed account password"
       });
+      // Security signal email — confirms the change from a separate
+      // channel so a compromised account is detectable. Transactional;
+      // NOT preference-gated server-side. Idempotency at the function
+      // includes the user_id + minute window so a double-click doesn't
+      // double-deliver but a legitimate re-change tomorrow does. Fire-
+      // and-forget; the password is already changed regardless of the
+      // email landing.
+      void supabase.functions
+        .invoke("send-seeker-emails", {
+          body: { type: "password_changed", seekerId: sessionUserId, email: sessionEmail },
+        })
+        .catch((err) => {
+          console.warn("[SeekerSettings] password_changed email failed", err);
+        });
       toast({
         title: "Password updated",
         description: "Your password has been changed successfully."
@@ -622,6 +750,20 @@ export default function SeekerSettings() {
   };
 
   const handleResendVerification = async () => {
+    // Client-side cooldown of 30s. The edge function has its own server-
+    // side rate limit, but without a client guard a user could click the
+    // button repeatedly while a request is in-flight and queue duplicate
+    // emails.
+    const now = Date.now();
+    if (now - lastResendVerificationRef.current < 30000) {
+      toast({
+        title: "Please wait",
+        description: "Wait a moment before requesting another verification email.",
+        variant: "destructive",
+      });
+      return;
+    }
+    lastResendVerificationRef.current = now;
     setIsResendingVerification(true);
 
     try {
@@ -670,32 +812,41 @@ export default function SeekerSettings() {
         throw new Error("Not authenticated");
       }
 
+      // The deployed `delete-seeker-account` edge function does an
+      // immediate hard delete: purge_seeker_data() then
+      // auth.admin.deleteUser(). There is no recovery window — the
+      // previous copy promising "30 days to recover" was a lie carried
+      // over from a soft-delete design that was never implemented.
+      // The dialog text below this handler now matches reality.
       const response = await supabase.functions.invoke("delete-seeker-account", {
-        // Default soft-delete: account is signed out + scheduled for purge in
-        // 30 days. The user can recover by signing back in within that window.
         body: {},
       });
 
       if (response.error) {
-        throw new Error(response.error.message || "Failed to delete account");
+        // supabase.functions.invoke surfaces a FunctionsHttpError; pull
+        // the JSON body's `error` field when present for a meaningful
+        // toast (e.g. "This account has elevated roles ...").
+        const ctx = response.error as { context?: { body?: string }; message?: string };
+        let backendMsg = "";
+        try {
+          backendMsg = ctx.context?.body ? (JSON.parse(ctx.context.body)?.error || "") : "";
+        } catch { /* body wasn't JSON */ }
+        throw new Error(backendMsg || ctx.message || "Failed to delete account");
       }
 
-      const purgeAfter = (response.data as { purgeAfter?: string } | null)?.purgeAfter;
-      const recoveryDate = purgeAfter ? new Date(purgeAfter) : null;
       toast({
-        title: "Account scheduled for deletion",
-        description: recoveryDate
-          ? `Your account will be permanently deleted on ${recoveryDate.toLocaleDateString()}. Sign back in before then to recover it.`
-          : "Your account has been scheduled for deletion. Sign back in within 30 days to recover it.",
+        title: "Account deleted",
+        description: "Your account and personal data have been permanently removed.",
       });
 
       await supabase.auth.signOut();
       navigate("/", { replace: true });
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not delete your account. Please try again.";
       console.error("Delete account error:", error);
       toast({
         title: "Error deleting account",
-        description: error.message || "Could not delete your account. Please try again.",
+        description: message,
         variant: "destructive"
       });
     } finally {
@@ -916,11 +1067,29 @@ export default function SeekerSettings() {
             {/* Phone */}
             <PhoneVerificationStep
               phone={phone}
-              onPhoneChange={setPhone}
+              onPhoneChange={(next) => {
+                // If the user edits AWAY from the previously-verified number,
+                // the verified badge is no longer truthful — clear local
+                // state immediately. handleSaveProfile will then persist
+                // phone_verified=false alongside the new number. (The
+                // PhoneInput child is disabled while localVerified is
+                // true, so this branch only fires after a re-verify reset.)
+                if (verifiedPhoneRef.current && next !== verifiedPhoneRef.current) {
+                  setPhoneVerified(false);
+                }
+                setPhone(next);
+              }}
               userId={userId || undefined}
               userType="seeker"
+              isVerified={phoneVerified}
               onVerified={() => {
+                setPhoneVerified(true);
+                verifiedPhoneRef.current = phone;
                 queryClient.invalidateQueries({ queryKey: ['seeker-profile', userId] });
+                logActivity({
+                  eventType: "phone_verify",
+                  description: "Verified phone number",
+                });
               }}
             />
 
@@ -1233,15 +1402,19 @@ export default function SeekerSettings() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete your account?</AlertDialogTitle>
                     <AlertDialogDescription className="space-y-3">
-                      <p>
-                        This action cannot be undone. This will permanently delete your account and remove all your data including:
-                      </p>
+                      <span className="block">
+                        This is permanent and cannot be undone. There is no
+                        recovery window. Deleting your account immediately
+                        removes:
+                      </span>
                       <ul className="list-disc list-inside text-sm space-y-1">
-                        <li>Your profile information</li>
-                        <li>Your saved favorites</li>
-                        <li>Your reviews</li>
+                        <li>Your profile, name, contact info, and photo</li>
+                        <li>Your saved favorites and saved searches</li>
+                        <li>Your reviews and review responses</li>
+                        <li>Your inquiry and concierge history</li>
+                        <li>Your sign-in identity</li>
                       </ul>
-                      <div className="pt-2">
+                      <span className="block pt-2">
                         <Label htmlFor="delete-confirm" className="text-foreground">
                           Type <span className="font-mono font-bold">DELETE</span> to confirm
                         </Label>
@@ -1252,7 +1425,7 @@ export default function SeekerSettings() {
                           placeholder="DELETE"
                           className="mt-2"
                         />
-                      </div>
+                      </span>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

@@ -176,19 +176,17 @@ export function InquiryDetailModal({ open, onOpenChange, leadId }: Omit<InquiryD
 
           if (facilityData) setFacility(facilityData);
 
-          // Check if provider has unlocked this lead (via RPC)
-          const { data: unlockData } = await supabase.rpc("get_seeker_lead_unlock_info", {
-            p_lead_id: leadId,
-          });
-
-          if (unlockData && unlockData.length > 0) {
-            // Get notes left by provider (via RPC)
+          // Provider response: whoever owns the facility sees this inquiry's
+          // full contact info under the flat-fee Pro model — no separate
+          // "unlock" event exists. Surface the notes (if any) and the
+          // provider_responded_at timestamp from the lead detail itself.
+          if (leadData.provider_responded_at) {
             const { data: notesData } = await supabase.rpc("get_seeker_lead_notes", {
               p_lead_id: leadId,
             });
 
             setProviderResponse({
-              unlocked_at: unlockData[0].unlocked_at,
+              unlocked_at: leadData.provider_responded_at,
               facility_name: facilityData?.name || "Treatment Center",
               facility_slug: facilityData?.slug || null,
               notes: (notesData || []).map((n: any) => n.note),

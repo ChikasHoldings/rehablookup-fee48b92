@@ -1,28 +1,28 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getCachedSession } from "@/lib/sessionCache";
 import {
   Inbox,
   Eye,
   Star,
   AlertTriangle,
   Sparkles,
-  Zap,
   ArrowRight,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek, startOfMonth } from "date-fns";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
+import { startOfWeek } from "date-fns";
 import { cn } from "@/lib/utils";
+import { AVG_REVENUE_PER_LEAD_CENTS } from "@/lib/leadValuation";
 
 interface DashboardKPIStripProps {
   facilityId: string;
   isPro: boolean;
-  proSavingsCents?: number;
   impressionCount?: number;
   reviewCount?: number;
   totalLeadsCount?: number;
@@ -30,38 +30,45 @@ interface DashboardKPIStripProps {
 
 interface WeeklyKPIs {
   received: number;
-  unlocked: number;
+  responded: number;
   missed: number;
   estimatedRevenueLostCents: number;
 }
 
-// Average revenue per admission (industry avg $2,000–$10,000; using $5,000 midpoint)
-const AVG_REVENUE_PER_LEAD_CENTS = 500000; // $5,000 average admission value
-
-export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impressionCount = 0, reviewCount = 0, totalLeadsCount = 0 }: DashboardKPIStripProps) {
+export function DashboardKPIStrip({ facilityId, isPro, impressionCount = 0, reviewCount = 0, totalLeadsCount = 0 }: DashboardKPIStripProps) {
   const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(), []);
 
+  // Three parallel head:true counts so the "received / responded /
+  // missed this week" KPIs stay accurate for any volume of leads —
+  // a prior version pulled the last 500 rows client-side and
+  // under-reported for high-volume providers (70+ leads/day).
   const { data: kpis, isLoading } = useQuery({
     queryKey: ["dashboard-kpi-strip", facilityId, weekStart],
     queryFn: async (): Promise<WeeklyKPIs> => {
-      // Fetch this week's leads for the facility
-      const { data, error } = await supabase
-        .from("leads_provider_view")
-        .select("id, status, is_unlocked, created_at")
-        .eq("facility_id", facilityId)
-        .gte("created_at", weekStart)
-        .order("created_at", { ascending: false })
-        .limit(500);
+      const base = () =>
+        fromLeadsProviderView()
+          .select("id", { count: "exact", head: true })
+          .eq("facility_id", facilityId)
+          .gte("created_at", weekStart);
 
-      if (error) throw error;
+      const [receivedRes, expiredRes, openRes] = await Promise.all([
+        base(),
+        base().eq("status", "expired"),
+        base().in("status", ["new"]),
+      ]);
 
-      const leads = data || [];
-      const received = leads.length;
-      const unlocked = leads.filter(l => l.is_unlocked).length;
-      const missed = leads.filter(l => l.status === "expired" || (l.status === "new" && !l.is_unlocked)).length;
+      if (receivedRes.error) throw receivedRes.error;
+      if (expiredRes.error) throw expiredRes.error;
+      if (openRes.error) throw openRes.error;
+
+      const received = receivedRes.count ?? 0;
+      const missed = expiredRes.count ?? 0;
+      const openCount = openRes.count ?? 0;
+      // "Responded" = anything not still-new and not expired.
+      const responded = Math.max(0, received - missed - openCount);
       const estimatedRevenueLostCents = missed * AVG_REVENUE_PER_LEAD_CENTS;
 
-      return { received, unlocked, missed, estimatedRevenueLostCents };
+      return { received, responded, missed, estimatedRevenueLostCents };
     },
     enabled: !!facilityId,
     staleTime: 1000 * 60 * 3,
@@ -69,51 +76,25 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
     retry: 2,
   });
 
-  // Fetch Pro savings this month from credit transactions
-  const monthStart = useMemo(() => startOfMonth(new Date()).toISOString(), []);
-  const { data: monthlySavings = 0 } = useQuery({
-    queryKey: ["pro-monthly-savings", facilityId, monthStart],
-    queryFn: async (): Promise<number> => {
-      const session = await getCachedSession();
-      if (!session) return 0;
-
-      const { data, error } = await supabase
-        .from("credit_transactions")
-        .select("discount_amount_cents")
-        .eq("provider_id", session.user.id)
-        .eq("transaction_type", "unlock")
-        .eq("discount_applied", true)
-        .gte("created_at", monthStart);
-
-      if (error) return 0;
-      return (data || []).reduce((sum, tx) => sum + (tx.discount_amount_cents || 0), 0);
-    },
-    enabled: isPro && !!facilityId,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const effectiveSavings = proSavingsCents || monthlySavings;
-
-  const unlockedThisWeek = kpis?.unlocked ?? 0;
-  const lockedThisWeek = Math.max(0, (kpis?.received ?? 0) - unlockedThisWeek);
+  const respondedThisWeek = kpis?.responded ?? 0;
+  const receivedThisWeek = kpis?.received ?? 0;
 
   const metrics = [
     {
       label: "Total Leads",
       value: totalLeadsCount,
-      subtitle: `${unlockedThisWeek} unlocked this week`,
+      subtitle: `${receivedThisWeek} received this week`,
       icon: Inbox,
       iconBg: "bg-primary/10",
       iconColor: "text-primary",
     },
     {
-      label: "Locked",
-      value: lockedThisWeek,
-      subtitle: "awaiting unlock",
-      icon: AlertTriangle,
-      iconBg: "bg-warning/10",
-      iconColor: "text-warning",
-      highlight: lockedThisWeek > 0,
+      label: "Responded",
+      value: respondedThisWeek,
+      subtitle: "this week",
+      icon: TrendingUp,
+      iconBg: "bg-emerald-500/10",
+      iconColor: "text-emerald-600",
     },
     {
       label: "Impressions",
@@ -134,14 +115,11 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
   return (
     <div className="space-y-3">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
         {metrics.map((m) => (
           <Card
             key={m.label}
-            className={cn(
-              "border-border/40 transition-colors",
-              (m as any).highlight && "border-destructive/30 bg-destructive/[0.02]"
-            )}
+            className="border-border/40 transition-colors"
           >
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2.5">
@@ -156,10 +134,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
                     <Skeleton className="h-6 w-10 mt-0.5" />
                   ) : (
                     <>
-                      <p className={cn(
-                        "text-lg sm:text-xl font-bold leading-tight tabular-nums",
-                        (m as any).highlight ? "text-destructive" : "text-foreground"
-                      )}>
+                      <p className="text-lg sm:text-xl font-bold leading-tight tabular-nums text-foreground">
                         {m.value}
                       </p>
                       {m.subtitle && (
@@ -192,7 +167,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         That's ~${((kpis!.missed * AVG_REVENUE_PER_LEAD_CENTS) / 100).toLocaleString()} in potential revenue.
-                        Upgrade to Pro for priority access + save 20% on every unlock.
+                        Upgrade to Pro to receive every qualified lead with full contact details.
                       </p>
                     </div>
                   </div>
@@ -201,7 +176,7 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
                     className="h-8 text-xs gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0 shadow-sm shrink-0"
                     asChild
                   >
-                    <Link to="/provider/pro-upgrade">
+                    <Link to="/provider/billing">
                       <Sparkles className="h-3.5 w-3.5" />
                       Upgrade to Pro
                       <ArrowRight className="h-3 w-3" />
@@ -217,28 +192,16 @@ export function DashboardKPIStrip({ facilityId, isPro, proSavingsCents = 0, impr
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10 text-xs text-muted-foreground">
               <TrendingUp className="h-3.5 w-3.5 text-primary shrink-0" />
               <span>
-                Great response rate! <span className="font-medium text-foreground">Upgrade to Pro</span> to save 20% on unlocks and get priority lead access.
+                Great response rate! <span className="font-medium text-foreground">Upgrade to Pro</span> to receive every qualified lead with full contact details.
               </span>
-              <Link to="/provider/pro-upgrade" className="ml-auto text-primary font-medium hover:underline shrink-0">
+              <Link to="/provider/billing" className="ml-auto text-primary font-medium hover:underline shrink-0">
                 Learn more
               </Link>
             </div>
           )}
 
-          {/* PRO USER: Savings reinforcement */}
-          {isPro && effectiveSavings > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-emerald-500/5 border border-amber-500/20 text-xs">
-              <Zap className="h-4 w-4 text-amber-500 shrink-0" />
-              <span className="text-foreground">
-                🔥 You saved <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                  ${(effectiveSavings / 100).toFixed(2)}
-                </span> with Pro this month
-              </span>
-            </div>
-          )}
-
           {/* PRO USER: Speed encouragement */}
-          {isPro && (kpis?.unlocked ?? 0) > 0 && (
+          {isPro && (kpis?.responded ?? 0) > 0 && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10 text-xs text-muted-foreground">
               <Zap className="h-3.5 w-3.5 text-primary shrink-0" />
               <span>

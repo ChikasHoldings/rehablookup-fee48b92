@@ -77,6 +77,7 @@ export default function CostInsurancePage() {
       heroTitle={config.title}
       heroSubtitle={config.heroSubtitle}
       heroBadge="Trusted Resource"
+      heroImage={TOPIC_HERO_IMAGES.finance}
       sections={config.sections}
       facilities={facilities}
       isLoading={isLoading}

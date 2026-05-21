@@ -1,8 +1,12 @@
-// Shared request/response contracts for the provider welcome email edge functions.
+// Shared request/response contracts for the provider welcome email edge function.
 //
 // This module is the single source of truth for:
 //   - send-provider-welcome-email
-//   - send-provider-welcome-offer-email
+//
+// (send-provider-welcome-offer-email was retired in the monetization
+// rebuild. The aliased WelcomeOfferRequestSchema export below is kept for
+// backwards compatibility with any consumer that still imports it; it
+// resolves to the same shape as WelcomeEmailRequestSchema.)
 //
 // It is imported by:
 //   - the edge functions themselves (Deno runtime, via esm.sh)

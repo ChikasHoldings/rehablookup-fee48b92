@@ -3,14 +3,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Star, 
-  MessageSquare, 
-  Flag, 
+import {
+  Star,
+  MessageSquare,
+  Flag,
   CheckCircle2,
   AlertTriangle,
   Loader2,
-  MapPin,
   Send,
   Edit2,
   Trash2,
@@ -30,6 +29,15 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ProviderReview } from '@/hooks/useProviderReviews';
+
+// formatDistanceToNow throws on Invalid Date; guard it so a malformed
+// timestamp from the DB never blows up the whole card.
+function formatReviewDate(iso: string | null | undefined): string {
+  if (!iso) return 'recently';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return 'recently';
+  return formatDistanceToNow(date, { addSuffix: true });
+}
 
 interface ProviderReviewCardProps {
   review: ProviderReview;
@@ -140,14 +148,12 @@ export const ProviderReviewCard = memo(forwardRef<HTMLDivElement, ProviderReview
                 </div>
                 <div className="min-w-0">
                   <p className="font-medium text-foreground truncate">{review.user_display_name}</p>
-                  {(review.reviewer_city || review.reviewer_state) && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <MapPin className="h-3 w-3" />
-                      {[review.reviewer_city, review.reviewer_state].filter(Boolean).join(', ')}
-                    </p>
-                  )}
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <div className="flex items-center">
+                    <div
+                      className="flex items-center"
+                      role="img"
+                      aria-label={`Rated ${review.rating} out of 5 stars`}
+                    >
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
@@ -157,11 +163,12 @@ export const ProviderReviewCard = memo(forwardRef<HTMLDivElement, ProviderReview
                               ? "fill-amber-400 text-amber-400"
                               : "fill-muted text-muted"
                           )}
+                          aria-hidden
                         />
                       ))}
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
+                      {formatReviewDate(review.created_at)}
                     </span>
                   </div>
                 </div>

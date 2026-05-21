@@ -68,8 +68,7 @@ export default function AddLocationPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { facilities } = useProviderFacilities();
-  const { limit: locationLimit, used: usedLocations, canAddMore, planTier, isLoading: limitsLoading } = useFacilityLimits();
-  const isPro = planTier === "pro";
+  const { used: usedLocations } = useFacilityLimits();
   
   const [formData, setFormData] = useState<FacilityFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,15 +133,6 @@ export default function AddLocationPage() {
     // Ref-based guard is checked first to prevent double-submit in React 18
     // concurrent mode where state updates may not have committed yet.
     if (submittingRef.current || isSubmitting) return;
-    
-    if (!canAddMore) {
-      toast({
-        variant: "destructive",
-        title: "Location Limit Reached",
-        description: "Please upgrade your plan to add more locations.",
-      });
-      return;
-    }
 
     // Validate required fields
     if (!formData.name || !formData.address || !formData.city || !formData.state || 
@@ -253,47 +243,6 @@ export default function AddLocationPage() {
     }
   };
 
-  // If can't add more, show upgrade message — but only after limits have loaded to prevent
-  // a false "Location Limit Reached" flash during the initial data-fetch on refresh.
-  if (!limitsLoading && !canAddMore) {
-    return (
-      <div className="p-4 md:p-6 lg:p-8">
-        <div className="max-w-2xl mx-auto">
-          <Card className="border-amber-200 bg-amber-50/50">
-            <CardHeader className="text-center">
-              <div className="h-16 w-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="h-8 w-8 text-amber-600" />
-              </div>
-              <CardTitle className="text-xl">Location Limit Reached</CardTitle>
-              <CardDescription className="text-base">
-                Your {isPro ? "Pro" : "Basic"} account allows up to {locationLimit} location{locationLimit !== 1 ? 's' : ''}.
-                You currently have {usedLocations} location{usedLocations !== 1 ? 's' : ''}.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
-              <p className="text-sm text-muted-foreground text-center">
-                Upgrade to Pro to list up to 5 facilities and get 20% off all lead unlocks.
-              </p>
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => navigate(-1)}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Go Back
-                </Button>
-                <Button 
-                  onClick={() => navigate("/provider/pro-upgrade")}
-                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
-                >
-                  Upgrade to Pro
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   // Success state
   if (success) {
     return (
@@ -338,9 +287,9 @@ export default function AddLocationPage() {
           <p className="text-muted-foreground mt-1">
             Add a new facility location to your provider account.
           </p>
-          {!limitsLoading && (
+          {usedLocations > 0 && (
             <p className="text-sm text-muted-foreground mt-1">
-              {usedLocations} of {locationLimit} location{locationLimit !== 1 ? 's' : ''} used
+              You currently manage {usedLocations} location{usedLocations !== 1 ? 's' : ''}.
             </p>
           )}
         </div>
@@ -470,8 +419,8 @@ export default function AddLocationPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {US_STATES.map((state) => (
-                        <SelectItem key={state.value} value={state.value}>
-                          {state.label}
+                        <SelectItem key={state} value={state}>
+                          {state}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -544,7 +493,7 @@ export default function AddLocationPage() {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || limitsLoading}
+              disabled={isSubmitting}
               className="min-w-[140px]"
             >
               {isSubmitting ? (

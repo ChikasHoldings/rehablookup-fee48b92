@@ -1,12 +1,10 @@
 import React, { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Handshake, Clock, CheckCircle, ArrowRight } from "lucide-react";
+import { Handshake, Clock, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 interface DashboardPlacementPanelProps {
@@ -32,20 +30,27 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 
 export function DashboardPlacementPanel({ facilityIds, isPro: _isPro }: DashboardPlacementPanelProps) {
   // `isPro` is kept on the interface for callers that already pass it but is
-  // no longer used to gate the panel — placements are open to all providers,
-  // Pro only earns a 20% fee discount on the placement-fee charge itself.
+  // no longer used to gate the panel — concierge placements are surfaced to
+  // every provider via advisor matching. The Concierge add-on ($1,000/mo)
+  // adds the verified-partner badge for matching; there are no per-placement
+  // fees in the EKRA flat-fee model.
   void _isPro;
   const queryClient = useQueryClient();
+  // Stabilize the query key so parent re-renders that produce a new
+  // facilityIds array (same contents, different reference) don't
+  // invalidate the cached placements list.
+  const sortedFacilityIds = facilityIds.slice().sort();
+  const facilityIdsKey = sortedFacilityIds.join(",");
 
   const { data: placements = [], isLoading } = useQuery({
-    queryKey: ["dashboard-placements", facilityIds],
+    queryKey: ["dashboard-placements", facilityIdsKey],
     queryFn: async (): Promise<PlacementItem[]> => {
-      if (!facilityIds.length) return [];
+      if (!sortedFacilityIds.length) return [];
 
       const { data, error } = await supabase
         .from("concierge_introductions")
         .select("id, created_at, facility_id, provider_response, inquiry_id")
-        .in("facility_id", facilityIds)
+        .in("facility_id", sortedFacilityIds)
         .order("created_at", { ascending: false })
         .limit(6);
 
@@ -58,30 +63,33 @@ export function DashboardPlacementPanel({ facilityIds, isPro: _isPro }: Dashboar
         provider_response: d.provider_response,
       }));
     },
-    enabled: facilityIds.length > 0,
+    enabled: sortedFacilityIds.length > 0,
     staleTime: 1000 * 60 * 5,
   });
 
-  // Realtime: auto-refresh when introductions change for any owned facility
+  // Realtime: auto-refresh when introductions change for any owned facility.
+  // Depend on the stringified key so identical-content facilityIds arrays
+  // don't tear down + recreate the channels on every parent render.
   useEffect(() => {
-    if (!facilityIds.length) return;
-    const channels = facilityIds.map(fid =>
+    if (!sortedFacilityIds.length) return;
+    const channels = sortedFacilityIds.map(fid =>
       supabase
         .channel(`dash-placements-${fid}`)
         .on("postgres_changes", {
           event: "*", schema: "public", table: "concierge_introductions",
           filter: `facility_id=eq.${fid}`,
         }, () => {
-          queryClient.invalidateQueries({ queryKey: ["dashboard-placements", facilityIds] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-placements", facilityIdsKey] });
         })
         .subscribe()
     );
     return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
-  }, [facilityIds, queryClient]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facilityIdsKey, queryClient]);
 
-  // Placement network is open to all providers; Pro just gets a 20% fee
-  // discount. The full panel renders for free + Pro alike; the upgrade nudge
-  // appears as a small banner inside the panel (below) when not Pro.
+  // Placement network is open to all providers (concierge advisors surface
+  // every approved facility). The Concierge add-on adds a verified-partner
+  // badge in advisor matching; no per-placement fees in the flat-fee model.
   if (isLoading) {
     return <Skeleton className="h-48 rounded-lg" />;
   }
@@ -92,21 +100,14 @@ export function DashboardPlacementPanel({ facilityIds, isPro: _isPro }: Dashboar
   return (
     <Card>
       <CardHeader className="pb-2 px-4 pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Handshake className="h-4 w-4 text-primary" />
-            <CardTitle className="text-sm font-semibold">Placement Opportunities</CardTitle>
-            {pendingCount > 0 && (
-              <Badge className="bg-blue-500/10 text-blue-600 border-blue-200 text-[10px] px-1.5 py-0">
-                {pendingCount} new
-              </Badge>
-            )}
-          </div>
-          <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" asChild>
-            <Link to="/provider/placement-network">
-              View All <ArrowRight className="h-3 w-3 ml-1" />
-            </Link>
-          </Button>
+        <div className="flex items-center gap-2">
+          <Handshake className="h-4 w-4 text-primary" />
+          <CardTitle className="text-sm font-semibold">Placement Opportunities</CardTitle>
+          {pendingCount > 0 && (
+            <Badge className="bg-blue-500/10 text-blue-600 border-blue-200 text-[10px] px-1.5 py-0">
+              {pendingCount} new
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-4">

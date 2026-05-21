@@ -1,11 +1,12 @@
 import { useMemo } from "react";
 import { Navigate, useParams, useLocation } from "react-router-dom";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getCityImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { citiesMatch } from "@/lib/cityNameMatch";
+import { resolveCity } from "@/lib/cityLookup";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { substancePages } from "@/data/seoSubstanceConfig";
-import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
 
@@ -20,11 +21,9 @@ export default function SubstanceCityPage() {
   }, [location.pathname]);
 
   const substance = useMemo(() => substancePages.find((s) => s.slug === substanceSlug) || null, [substanceSlug]);
-  const stateData = useMemo(() => statesData.find((s) => s.slug === stateSlug) || null, [stateSlug]);
-  const cityData = useMemo(() => {
-    if (!stateData) return null;
-    return stateData.cities.find((c) => c.slug === citySlug) || null;
-  }, [stateData, citySlug]);
+  const resolved = useMemo(() => resolveCity(stateSlug, citySlug), [stateSlug, citySlug]);
+  const stateData = resolved?.state ?? null;
+  const cityData = resolved?.city ?? null;
 
   const { facilities, directMatchCount, stateFallbackCount } = useMemo(() => {
     if (!substance || !stateData || !cityData) {
@@ -144,6 +143,7 @@ export default function SubstanceCityPage() {
       heroSubtitle={`Find verified ${substance.conditionName.toLowerCase()} treatment programs in ${cityName}, ${stateName}. Every facility is checked for licensing, accreditation, and clinical quality.`}
       heroLocation={`${cityName}, ${abbreviation}`}
       heroBadge="Verified Programs"
+      heroImage={getCityImage(stateSlug, citySlug)}
       introContent={`Searching for ${substance.conditionName.toLowerCase()} treatment in ${cityName}, ${stateName}? RehabLookup connects you with accredited facilities offering evidence-based care. Whether you need medical detox, residential treatment, or outpatient support, our verified directory helps you compare programs and find the right fit in ${cityName}.`}
       sections={[
         {
@@ -154,6 +154,38 @@ export default function SubstanceCityPage() {
           heading: `Finding the Right Program in ${cityName}`,
           content: `When choosing a ${substance.conditionName.toLowerCase()} treatment program in ${cityName}, consider accreditation status, treatment modalities, staff qualifications, and aftercare support. Programs listed on RehabLookup are verified for proper credentials. Many offer free insurance verification to help you understand coverage before admission.`,
         },
+        {
+          heading: `Insurance & Cost in ${cityName}`,
+          content: `Most ${cityName} ${substance.conditionName.toLowerCase()} programs accept private insurance, Medicaid, and Medicare. Under federal parity laws, substance-use treatment is covered at the same level as other medical care. Out-of-pocket costs depend on plan, level of care, and length of stay — facilities provide free benefit checks before admission and many offer sliding-scale or financing options.`,
+        },
+        {
+          heading: `Levels of Care Available`,
+          content: `Programs in ${cityName} span the full continuum of care: medically-supervised detox (3–10 days), residential inpatient (28–90 days), partial hospitalization (5–6 days/week clinic-based), intensive outpatient (3–5 days/week), standard outpatient, and recovery housing. Clinicians match level of care to severity, co-occurring conditions, and home environment.`,
+        },
+        {
+          heading: `What Recovery Looks Like in ${cityName}`,
+          content: `After treatment, ${cityName} residents have access to community support including 12-step meetings, SMART Recovery groups, alumni programs, and outpatient counseling. Sober living homes and recovery community centers provide structure and peer accountability. Most ${cityName} treatment providers build aftercare plans into discharge so the transition home is supported, not abrupt.`,
+        },
+        {
+          heading: `Verified Facilities in ${cityName}`,
+          content: `Every ${cityName} ${substance.conditionName.toLowerCase()} program in our directory is checked for state licensing, current accreditation (Joint Commission or CARF), and active clinical staff credentials. We filter out unverified listings and do not sell admission slots — providers can't pay for placement, which keeps the directory editorially independent.`,
+        },
+      ]}
+      whatToExpect={[
+        `Free, confidential phone or web assessment with a licensed clinician`,
+        `Insurance benefits verified before any commitment — no surprises`,
+        `Custom ${substance.conditionName.toLowerCase()} treatment plan within 24-48 hours`,
+        `Medically-supervised detox if needed, with 24/7 nursing`,
+        `Therapy, group support, and family programming through the stay`,
+        `Aftercare plan + sober living referrals built into discharge`,
+      ]}
+      benefits={[
+        `Licensed, accredited ${cityName} facilities only — no lead-broker listings`,
+        `Programs verified for evidence-based ${substance.conditionName.toLowerCase()} treatment`,
+        `Insurance accepted: most private plans, Medicaid, Medicare, TRICARE`,
+        `Specialized tracks for ${substance.conditionName.toLowerCase()} including MAT where clinically indicated`,
+        `Dual-diagnosis support for co-occurring mental health conditions`,
+        `Continuing-care planning and alumni community for long-term recovery`,
       ]}
       facilities={facilities}
       isLoading={isLoading}

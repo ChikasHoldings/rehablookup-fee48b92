@@ -5,7 +5,6 @@ import { SEO } from "@/components/SEO";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ArrowRight, CheckCircle, TrendingUp, Users, Shield, Zap, Building2, Phone, Star, Clock, ChevronRight } from "lucide-react";
-import { ProviderStickyCTA } from "@/components/provider-guides/ProviderStickyCTA";
 
 interface PageImage {
   src: string;
@@ -156,13 +155,16 @@ export function ProviderSEOPageLayout({
       />
 
       <main className="flex-1">
-        {/* Hero */}
-        <section className="relative bg-primary py-16 md:py-24 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-foreground/20 to-transparent" />
-          <div className="container relative z-10 max-w-4xl mx-auto px-4">
+        {/* Hero — PROVIDER GROWTH GUIDE. Navy + gold provider palette
+            (matches ForProviders / ProviderFAQ / ProviderResources).
+            Smaller than State per the brief. Powers ~75 provider-
+            guide pages (City/County/State variants). */}
+        <section className="relative overflow-hidden border-b border-white/5"
+          style={{ background: "linear-gradient(135deg, #1B365D 0%, #0E1F3A 100%)" }}>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(205,162,35,0.10),_transparent_55%)]" />
+          <div className="container relative z-10 max-w-4xl mx-auto px-4 py-6 md:py-9">
             <BreadcrumbNav
-              className="mb-6 text-left"
+              className="mb-3 text-left [&_*]:!text-white/70 [&_a:hover]:!text-white"
               variant="dark"
               items={[
                 { label: "For Providers", href: "/for-providers" },
@@ -170,30 +172,30 @@ export function ProviderSEOPageLayout({
               ]}
             />
             <div className="text-center">
-              <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full px-4 py-1.5 mb-6">
-                <Building2 className="h-4 w-4 text-primary-foreground/80" />
-                <span className="text-sm font-medium text-primary-foreground/90">Provider Growth Guide</span>
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#CDA223]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[#CDA223] ring-1 ring-[#CDA223]/30">
+                <Building2 className="h-3 w-3" />
+                Provider Growth Guide
               </div>
-              <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground leading-tight mb-6 [text-wrap:balance] max-w-3xl mx-auto">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-white leading-tight mb-2 [text-wrap:balance] max-w-3xl mx-auto">
                 {heroHeadline}
               </h1>
-              <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-10">
+              <p className="text-sm md:text-base text-white/80 max-w-2xl mx-auto mb-4">
                 {heroSubheadline}
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link to="/provider-signup">
-                  <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-8 h-13 shadow-lg hover:shadow-xl transition-all">
-                    List Your Facility — It's Free
-                    <ArrowRight className="h-5 w-5" />
+              <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
+                <Link to="/provider/onboarding">
+                  <Button size="default" className="bg-[#CDA223] text-[#1B365D] hover:bg-[#B38C1C] gap-2 font-semibold shadow-lg">
+                    List Your Facility — Free
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Link to="/for-providers">
-                  <Button size="lg" variant="outline" className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 h-13">
+                  <Button size="default" variant="outline" className="gap-2 border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm">
                     See How It Works
                   </Button>
                 </Link>
               </div>
-              <p className="text-sm text-primary-foreground/50 mt-4">No credit card required • Setup in under 5 minutes</p>
+              <p className="text-xs text-white/60 mt-3">No credit card · Setup in under 5 min</p>
             </div>
           </div>
         </section>
@@ -286,7 +288,7 @@ export function ProviderSEOPageLayout({
                             List your facility on RehabLookup for free and start receiving verified patient inquiries from families actively seeking treatment.
                           </p>
                           <div className="flex flex-col sm:flex-row gap-2">
-                            <Link to="/provider-signup">
+                            <Link to="/provider/onboarding">
                               <Button className="gap-2 h-11 px-6 font-semibold shadow-md hover:shadow-lg transition-all whitespace-nowrap">
                                 Get Listed Free
                                 <ArrowRight className="h-4 w-4" />
@@ -389,7 +391,7 @@ export function ProviderSEOPageLayout({
               {ctaSubheadline}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
-              <Link to="/provider-signup">
+              <Link to="/provider/onboarding">
                 <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-10 h-14 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all">
                   List Your Facility — It's Free
                   <ArrowRight className="h-5 w-5" />
@@ -452,7 +454,6 @@ export function ProviderSEOPageLayout({
         </section>
       </main>
 
-      <ProviderStickyCTA />
       <Footer />
     </div>
   );

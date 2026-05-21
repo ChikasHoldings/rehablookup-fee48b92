@@ -130,7 +130,11 @@ export function PlanSettingsTab() {
     expiresAt: undefined as Date | undefined,
   });
 
-  // Fetch promo code analytics
+  // Fetch promo code analytics. The manage-subscription edge fn can
+  // return 200 + { error: "..." } as payload (when Stripe itself
+  // returns a non-fatal error); both paths must throw so React Query
+  // surfaces isError and the dependent UI doesn't render with a
+  // half-empty data shape.
   const { data: analyticsData, isLoading: isLoadingAnalytics, refetch: refetchAnalytics } = useQuery({
     queryKey: ["admin-promo-analytics"],
     queryFn: async () => {
@@ -138,6 +142,7 @@ export function PlanSettingsTab() {
         body: { action: "get_promo_analytics" },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(String(data.error));
       return data as { analytics: PromoAnalytics[] };
     },
     refetchInterval: 30000, // Auto-refresh every 30 seconds
@@ -151,6 +156,7 @@ export function PlanSettingsTab() {
         body: { action: "list_coupons" },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(String(data.error));
       return data as { coupons: Coupon[]; promoCodes: PromoCode[] };
     },
     refetchInterval: 60000, // Auto-refresh every 60 seconds
@@ -213,6 +219,7 @@ export function PlanSettingsTab() {
 
       const { data, error } = await supabase.functions.invoke("manage-subscription", { body });
       if (error) throw error;
+      if (data?.error) throw new Error(String(data.error));
       return data;
     },
     onSuccess: () => {
@@ -220,6 +227,7 @@ export function PlanSettingsTab() {
       setIsCreateDialogOpen(false);
       resetForm();
       queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-promo-analytics"] });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to create promo code");
@@ -233,12 +241,14 @@ export function PlanSettingsTab() {
         body: { action: "delete_coupon", couponId },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(String(data.error));
       return data;
     },
     onSuccess: () => {
       toast.success("Coupon deleted successfully");
       setDeleteConfirm(null);
       queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-promo-analytics"] });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to delete coupon");
@@ -252,11 +262,13 @@ export function PlanSettingsTab() {
         body: { action: "deactivate_promo_code", promoCodeId },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(String(data.error));
       return data;
     },
     onSuccess: () => {
       toast.success("Promo code deactivated");
       queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-promo-analytics"] });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to deactivate promo code");
@@ -332,8 +344,9 @@ export function PlanSettingsTab() {
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• {PLAN_DETAILS.free.location_limit} facility listing</li>
-                <li>• Receive locked leads</li>
-                <li>• Pay per unlock ($25-39)</li>
+                <li>• Family contact form — full lead details</li>
+                <li>• Up to 5 photos</li>
+                <li>• No per-lead fees</li>
               </ul>
             </div>
 
@@ -345,9 +358,10 @@ export function PlanSettingsTab() {
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Up to {PLAN_DETAILS.pro.location_limit} facility listings</li>
-                <li>• {PLAN_DETAILS.pro.unlock_discount}% off lead unlocks</li>
-                <li>• Featured homepage placement</li>
-                <li>• Priority search ranking</li>
+                <li>• Verified badge + lead analytics</li>
+                <li>• Priority placement (+50 ranking)</li>
+                <li>• 10 photos + 1 facility video</li>
+                <li>• Marketing Hub (Featured + Concierge)</li>
               </ul>
             </div>
           </div>
@@ -775,6 +789,7 @@ export function PlanSettingsTab() {
                               onClick={() => deactivateMutation.mutate(promo.id)}
                               disabled={deactivateMutation.isPending}
                               title="Deactivate promo code"
+                              aria-label={`Deactivate promo code ${promo.code}`}
                             >
                               <XCircle className="h-4 w-4" />
                             </Button>
@@ -785,6 +800,7 @@ export function PlanSettingsTab() {
                             className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/5"
                             onClick={() => setDeleteConfirm(coupon?.id || promo.coupon.id)}
                             title="Delete coupon"
+                            aria-label={`Delete coupon ${promo.code}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

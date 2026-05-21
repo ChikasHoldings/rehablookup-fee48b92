@@ -39,20 +39,21 @@ function AccessDenied() {
 }
 
 export function AdminShell() {
-  const { 
-    user, 
-    isAdmin, 
+  const {
+    user,
+    isAdmin,
     isSuperAdmin,
     adminRole,
-    hasPermission, 
-    canAccessRoute, 
+    permissions,
+    hasPermission,
+    canAccessRoute,
     forcePasswordChange,
     clearForcePasswordChange,
     requireMfaSetup,
     completeMfaSetup,
     skipMfaSetup,
     isInitialized,
-    logout 
+    logout
   } = useAdminAuth();
   const { impersonating, isImpersonating, stopImpersonation } = useImpersonation();
   const mainContentRef = useRef<HTMLDivElement>(null);
@@ -119,8 +120,27 @@ export function AdminShell() {
       }
     : canAccessRoute;
 
-  // Check if user can access current route
-  const hasRouteAccess = effectiveCanAccessRoute(location.pathname);
+  // Check if user can access current route.
+  //
+  // Initialization race guard: useAdminAuth restores `isAdmin: true`
+  // from localStorage cache instantly so the shell renders without an
+  // auth-wall flash, BUT permissions are NOT cached (M7 — caching
+  // role flags would leak the menu structure). For ~1s between the
+  // cache hit and the network fetch, `permissions` is `{}` and
+  // canAccessRoute() returns false for every permission-gated route.
+  // That used to flash "Access Denied" on /admin/subscriptions and
+  // similar pages on cold load. We now wait for `isInitialized` AND a
+  // populated permissions map (or super-admin / impersonation) before
+  // evaluating the gate. Super-admins short-circuit canAccessRoute
+  // internally so they're never affected.
+  const permissionsReady =
+    effectiveIsSuperAdmin ||
+    isImpersonating ||
+    (isInitialized && Object.keys(permissions || {}).length > 0);
+  const hasRouteAccess = permissionsReady
+    ? effectiveCanAccessRoute(location.pathname)
+    : true; // optimistic — render the page while permissions hydrate;
+              // RLS still gates every data fetch server-side.
 
   // Get role-specific mobile nav and filter by permissions
   const mobileNavSections = getMobileNavForRole(effectiveAdminRole, effectiveIsSuperAdmin);

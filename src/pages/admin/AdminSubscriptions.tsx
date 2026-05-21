@@ -21,6 +21,7 @@ import {
   ChevronRight,
   ExternalLink,
   Settings2,
+  Sliders,
   Star,
   Download,
 } from "lucide-react";
@@ -54,11 +55,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { PLAN_DETAILS } from "@/hooks/useSubscription";
 import { AtRiskProvidersCard } from "@/components/admin/AtRiskProvidersCard";
 import { RetentionDashboard } from "@/components/admin/RetentionDashboard";
 import { SubscriptionDetailModal } from "@/components/admin/SubscriptionDetailModal";
 import { PlanSettingsTab } from "@/components/admin/PlanSettingsTab";
+import { AddonCapsTab } from "@/components/admin/AddonCapsTab";
 import { FeaturedPlacementTab } from "@/components/admin/FeaturedPlacementTab";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
@@ -165,11 +166,12 @@ type EnrichedSubscription = {
   facility_name: string;
   facility_city?: string;
   facility_state?: string;
-  leads_used: number;
-  location_limit: number;
+  /** Inquiries received this month for the facility — replaces the
+   *  retired `leads_used` (which referred to the unlock-credit model). */
+  leads_this_month: number;
 };
 
-const VALID_TABS = ["overview", "subscriptions", "featured", "retention", "settings"] as const;
+const VALID_TABS = ["overview", "subscriptions", "featured", "retention", "caps", "settings"] as const;
 type ValidTab = typeof VALID_TABS[number];
 
 export default function AdminSubscriptions() {
@@ -213,18 +215,17 @@ export default function AdminSubscriptions() {
     queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
   }, [queryClient]);
 
-  /* ───── Realtime channels ───── */
+  /* ───── Realtime channels ─────
+   * One channel per table — channel names must be unique within the
+   * client, so the prior duplicate "admin-subs-alerts-rt" pair was
+   * rejected by Supabase and one of the two subscriptions silently
+   * dropped. Collapsed to a single subscription per table.
+   */
   useEffect(() => {
     const channels = [
       supabase
         .channel("admin-subs-facilities-rt")
         .on("postgres_changes", { event: "*", schema: "public", table: "facilities" }, () => invalidateSubscriptionQueries())
-        .subscribe(),
-      supabase
-        .channel("admin-subs-alerts-rt")
-        .on("postgres_changes", { event: "*", schema: "public", table: "subscription_alerts" }, () => {
-          queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
-        })
         .subscribe(),
       supabase
         .channel("admin-subs-alerts-rt")
@@ -249,7 +250,13 @@ export default function AdminSubscriptions() {
     queryKey: ["admin-subscription-stats"],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("get-revenue-stats");
+      // Some Supabase edge fns return 200 + { error: "..." } as payload
+      // instead of an HTTP error. Surface both paths so isError + the
+      // useAdminErrorHandler log get the actual failure.
       if (error) throw error;
+      if (data && typeof data === "object" && "error" in data && (data as { error: unknown }).error) {
+        throw new Error(String((data as { error: unknown }).error));
+      }
       return data as SubscriptionStats;
     },
     staleTime: 1000 * 60 * 5,
@@ -280,6 +287,9 @@ export default function AdminSubscriptions() {
     },
   });
 
+  // EKRA flat-fee: per-facility unlock counts retired. The "Leads this month"
+  // column now counts qualified leads received this month directly from
+  // public.leads (no unlock model).
   const { data: leadCounts, error: leadCountsError } = useQuery({
     queryKey: ["admin-subscription-lead-counts"],
     queryFn: async () => {
@@ -287,13 +297,13 @@ export default function AdminSubscriptions() {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
       const { data } = await supabase
-        .from("lead_unlocks")
+        .from("leads")
         .select("facility_id")
         .gte("created_at", startOfMonth.toISOString())
         .limit(5000);
       const counts: Record<string, number> = {};
-      data?.forEach((u) => {
-        if (u.facility_id) counts[u.facility_id] = (counts[u.facility_id] || 0) + 1;
+      data?.forEach((l) => {
+        if (l.facility_id) counts[l.facility_id] = (counts[l.facility_id] || 0) + 1;
       });
       return counts;
     },
@@ -323,15 +333,13 @@ export default function AdminSubscriptions() {
     return stripeStats.subscriptions.map((sub) => {
       const profile = emailToProfile[sub.customer_email.toLowerCase()];
       const facility = profile ? userToFacility[profile.user_id] : null;
-      const leadsUsed = facility ? (leadCounts?.[facility.id] || 0) : 0;
-      const planDetails = PLAN_DETAILS[sub.plan as keyof typeof PLAN_DETAILS];
+      const leadsThisMonth = facility ? (leadCounts?.[facility.id] || 0) : 0;
       return {
         ...sub,
         facility_name: facility?.name || "No facility",
         facility_city: facility?.city,
         facility_state: facility?.state,
-        leads_used: leadsUsed,
-        location_limit: planDetails?.location_limit || 1,
+        leads_this_month: leadsThisMonth,
       };
     });
   }, [stripeStats?.subscriptions, emailToProfile, userToFacility, leadCounts]);
@@ -374,21 +382,21 @@ export default function AdminSubscriptions() {
     });
   }, [filteredSubscriptions, sortColumn, sortDirection]);
 
-  const handleSort = (col: SortColumn) => {
-    if (sortColumn === col) setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortColumn(col); setSortDirection("asc"); }
-    setCurrentPage(1);
-  };
-
-  // setCurrentPage is a stable setter from usePagination
-  useEffect(() => { setCurrentPage(1); }, [debouncedSearch, planFilter, statusFilter, setCurrentPage]);
-
   /* ───── Pagination ───── */
   const { page: currentPage, pageSize: itemsPerPage, totalPages, setPage: setCurrentPage, setPageSize: setItemsPerPage } = usePagination({
     tableId: "admin-subscriptions",
     defaultPageSize: 10,
     totalItems: sortedSubscriptions.length,
   });
+
+  const handleSort = (col: SortColumn) => {
+    if (sortColumn === col) setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortColumn(col); setSortDirection("asc"); }
+    setCurrentPage(1);
+  };
+
+  // Reset to first page whenever the filter / search inputs change.
+  useEffect(() => { setCurrentPage(1); }, [debouncedSearch, planFilter, statusFilter, setCurrentPage]);
   const paginatedSubscriptions = sortedSubscriptions.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -406,19 +414,27 @@ export default function AdminSubscriptions() {
   }, [stripeStats]);
 
   /* ───── Sort header helper ───── */
-  const SortHeader = ({ col, children }: { col: SortColumn; children: React.ReactNode }) => (
-    <TableHead
-      className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
-      onClick={() => handleSort(col)}
-    >
-      <div className="flex items-center gap-1">
-        {children}
-        {sortColumn === col && (
-          sortDirection === "asc" ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />
-        )}
-      </div>
-    </TableHead>
-  );
+  const SortHeader = ({ col, children }: { col: SortColumn; children: React.ReactNode }) => {
+    const ariaSort: "ascending" | "descending" | "none" =
+      sortColumn === col ? (sortDirection === "asc" ? "ascending" : "descending") : "none";
+    return (
+      <TableHead
+        aria-sort={ariaSort}
+        className="cursor-pointer select-none hover:bg-muted/50 transition-colors p-0"
+      >
+        <button
+          type="button"
+          onClick={() => handleSort(col)}
+          className="flex items-center gap-1 w-full text-left h-full px-4 py-2 font-medium"
+        >
+          {children}
+          {sortColumn === col && (
+            sortDirection === "asc" ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />
+          )}
+        </button>
+      </TableHead>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -429,24 +445,28 @@ export default function AdminSubscriptions() {
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <div className="overflow-x-auto">
-          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 sm:grid sm:w-full sm:max-w-3xl sm:grid-cols-5">
-            <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs sm:text-sm">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 sm:grid sm:w-full sm:max-w-4xl sm:grid-cols-6">
+            <TabsTrigger value="overview" aria-label="Overview" className="flex items-center gap-1.5 text-xs sm:text-sm">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="subscriptions" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="subscriptions" aria-label="Subscriptions" className="flex items-center gap-1.5 text-xs sm:text-sm">
               <List className="h-4 w-4" />
               <span className="hidden sm:inline">Subscriptions</span>
             </TabsTrigger>
-            <TabsTrigger value="featured" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="featured" aria-label="Featured" className="flex items-center gap-1.5 text-xs sm:text-sm">
               <Star className="h-4 w-4" />
               <span className="hidden sm:inline">Featured</span>
             </TabsTrigger>
-            <TabsTrigger value="retention" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="retention" aria-label="Retention" className="flex items-center gap-1.5 text-xs sm:text-sm">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Retention</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="caps" aria-label="Add-on caps" className="flex items-center gap-1.5 text-xs sm:text-sm">
+              <Sliders className="h-4 w-4" />
+              <span className="hidden sm:inline">Caps</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" aria-label="Plan settings" className="flex items-center gap-1.5 text-xs sm:text-sm">
               <Settings2 className="h-4 w-4" />
               <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
@@ -622,7 +642,7 @@ export default function AdminSubscriptions() {
                       sub.plan,
                       sub.cancel_at_period_end ? "canceling" : sub.status,
                       `$${sub.monthly_amount}`,
-                      String(sub.leads_used),
+                      String(sub.leads_this_month),
                       format(new Date(sub.current_period_end), "yyyy-MM-dd"),
                       format(new Date(sub.created), "yyyy-MM-dd"),
                     ].map(v => v.includes(",") || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v));
@@ -710,8 +730,18 @@ export default function AdminSubscriptions() {
                           {paginatedSubscriptions.map((sub) => (
                             <TableRow
                               key={sub.customer_id}
-                              className="cursor-pointer hover:bg-muted/50"
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`Open subscription details for ${sub.facility_name}`}
+                              className="cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                               onClick={() => { setSelectedSubscription(sub); setIsDetailModalOpen(true); }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setSelectedSubscription(sub);
+                                  setIsDetailModalOpen(true);
+                                }
+                              }}
                             >
                               <TableCell className="min-w-[200px]">
                                 <div className="min-w-0">
@@ -725,10 +755,10 @@ export default function AdminSubscriptions() {
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <span className="text-sm text-muted-foreground tabular-nums cursor-default" onClick={(e) => e.stopPropagation()}>
-                                      {sub.leads_used} this mo
+                                      {sub.leads_this_month} this mo
                                     </span>
                                   </TooltipTrigger>
-                                  <TooltipContent><p>{sub.leads_used} leads unlocked this month</p></TooltipContent>
+                                  <TooltipContent><p>{sub.leads_this_month} inquiries received this month</p></TooltipContent>
                                 </Tooltip>
                               </TableCell>
                               <TableCell>
@@ -778,6 +808,11 @@ export default function AdminSubscriptions() {
         {/* ═══════ Featured Tab ═══════ */}
         <TabsContent value="featured" className="space-y-6">
           <FeaturedPlacementTab />
+        </TabsContent>
+
+        {/* ═══════ Caps Tab ═══════ */}
+        <TabsContent value="caps" className="space-y-6">
+          <AddonCapsTab />
         </TabsContent>
 
         {/* ═══════ Settings Tab ═══════ */}

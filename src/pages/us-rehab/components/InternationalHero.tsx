@@ -23,28 +23,29 @@ export const InternationalHero = ({
   breadcrumbItems,
 }: InternationalHeroProps) => {
   return (
-    <section className="relative overflow-hidden bg-primary py-10 md:py-14 lg:py-16">
+    <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/65">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
 
-      <div className="container relative mx-auto px-4">
+      <div className="container relative z-10 mx-auto px-4 py-6 md:py-9">
         {breadcrumbItems && (
-          <BreadcrumbNav className="mb-6" variant="dark" items={breadcrumbItems} />
+          <BreadcrumbNav className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white" variant="dark" items={breadcrumbItems} />
         )}
 
         <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/90 px-4 py-1.5 rounded-full text-sm font-medium mb-5 backdrop-blur-sm">
-            <Globe className="h-4 w-4" />
-            <span>Serving International Clients from 50+ Countries</span>
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+            <Globe className="h-3 w-3" />
+            International · 50+ Countries
           </div>
 
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight tracking-tight">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight tracking-tight font-display">
             {title}
           </h1>
 
-          <p className="text-lg md:text-xl text-accent font-semibold mb-3">
+          <p className="text-sm md:text-base text-accent font-semibold mb-2">
             {subtitle}
           </p>
 
-          <p className="text-base md:text-lg text-white/80 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm md:text-base text-white/80 mb-4 max-w-2xl mx-auto">
             {description}
           </p>
 

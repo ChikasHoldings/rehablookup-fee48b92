@@ -1,4 +1,4 @@
-import { Link, useParams, Navigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { TreatmentStateHero } from "@/components/seo/TreatmentStateHero";
 import {
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
@@ -16,6 +18,7 @@ import {
   Sparkles, ArrowRight, Phone, CheckCircle, Shield, Clock, Heart,
   Pill, Timer, HeartPulse, Stethoscope, Thermometer, MapPin, Building2, Search,
 } from "lucide-react";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const detoxTypes = [
   { name: "Alcohol Detox", duration: "3-7 days", description: "Medically supervised alcohol withdrawal with medication support to prevent seizures and delirium tremens.", features: ["Benzodiazepine protocols", "24/7 monitoring", "Nutritional support"] },
@@ -36,7 +39,14 @@ const StateDetoxPrograms = () => {
   const stateData = statesData.find(s => s.slug === stateSlug);
 
   if (!stateData) {
-    return <Navigate to="/treatment-types/detox-programs" replace />;
+    return (
+      <NotFoundInPlace
+        title="Detox programs not found"
+        message="We don't have detox program data for that state yet. Browse all states."
+        backTo="/treatment-types/detox-programs"
+        backLabel="Browse states"
+      />
+    );
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
@@ -83,35 +93,26 @@ const StateDetoxPrograms = () => {
         ]}
       />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
-        <div className="container">
-          <BreadcrumbNav className="mb-4" items={[
-            { label: "Treatment Types", href: "/treatment-types" },
-            { label: "Detox Programs", href: "/treatment-types/detox-programs" },
-            { label: stateName },
-          ]} />
-          <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Medical Detox in {abbreviation}</span>
-            </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Detox Centers in {stateName}
-            </h1>
-            <p className="text-base md:text-lg text-primary-foreground/85 leading-relaxed">
-              Find accredited medical detox programs in {stateName} offering safe, supervised withdrawal from alcohol, opioids, 
-              benzodiazepines, and other substances with 24/7 medical monitoring and medication-assisted treatment.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Button asChild size="lg" variant="secondary"><Link to="/rehab-centers"><Search className="mr-2 h-4 w-4" />Find Treatment</Link></Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                <Link to={`/rehab-centers/${stateSlug}`}>Browse {stateName} Centers<ArrowRight className="ml-2 h-4 w-4" /></Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <TreatmentStateHero
+        treatmentKey="detox"
+        treatmentName="Medical Detox"
+        treatmentIcon={Sparkles}
+        stateName={stateName}
+        abbreviation={abbreviation}
+        stateSlug={stateSlug!}
+        treatmentHubHref="/treatment-types/detox-programs"
+        treatmentHubLabel="Detox Programs"
+        cities={cities}
+      />
+
+      {/* Featured rotation — paid Featured pool for this
+          state, mounted directly under the hero. Visual matches
+          the homepage Featured section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="state"
+        placement_value={stateSlug}
+        title={`Featured Detox Programs in ${stateName}`}
+      />
 
       {/* Trust Bar */}
       <section className="border-b border-border bg-card py-4">

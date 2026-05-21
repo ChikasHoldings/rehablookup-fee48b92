@@ -112,6 +112,25 @@ export default {
         glow: "var(--shadow-glow)",
         "accent-glow": "var(--shadow-accent-glow)",
       },
+      // Documented z-index scale used for stacking primitives. Existing
+      // numeric z-50 / z-[100] etc. usages still work — these are
+      // additional named tokens that callers can use via `z-app-header`,
+      // `z-modal`, etc. for clarity. The numeric values are spread
+      // far enough apart that ad-hoc offsets (e.g. close X inside a
+      // modal at z-modal-close = modal+10) don't collide.
+      zIndex: {
+        base: "0",
+        "in-page": "10",
+        "sticky-section": "30",
+        "app-sidebar": "40",
+        "app-header": "50",
+        dropdown: "200",
+        popover: "200",
+        tooltip: "300",
+        modal: "1000",
+        "modal-close": "1010",
+        toast: "1100",
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -164,11 +183,17 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.5s ease-out forwards",
-        "fade-in-up": "fade-in-up 0.6s ease-out forwards",
-        "scale-in": "scale-in 0.3s ease-out forwards",
-        "slide-up": "slide-up 0.4s ease-out forwards",
-        "step-enter": "step-enter 0.35s ease-out forwards",
+        // fill-mode `both` applies the 0% keyframe styles BEFORE the
+        // animation starts (during the animation-delay window) and the
+        // 100% styles AFTER it ends. Without this, elements with a
+        // staggered animationDelay render at opacity:1 during the delay,
+        // snap to opacity:0 when the animation kicks in, then fade back —
+        // the "flash" the homepage hero + featured strip showed on load.
+        "fade-in": "fade-in 0.5s ease-out both",
+        "fade-in-up": "fade-in-up 0.6s ease-out both",
+        "scale-in": "scale-in 0.3s ease-out both",
+        "slide-up": "slide-up 0.4s ease-out both",
+        "step-enter": "step-enter 0.35s ease-out both",
         "wiggle": "wiggle 0.5s ease-in-out",
         "shimmer": "shimmer 2s infinite",
         "float": "float 3s ease-in-out infinite",

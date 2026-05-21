@@ -102,47 +102,54 @@ export function useSubscription() {
   });
 }
 
-// NEW MONETIZATION MODEL: Plan definitions
-// - Free: List 1 facility, receive locked leads, pay per unlock
-// - Pro ($399/mo): Up to 5 facilities, 20% off unlocks, 20% off placement fees, featured placement
+// MONETIZATION (EKRA flat-fee): two tiers + 2 independent add-ons.
+// - Free: directory listing, family contact form, 5 photos.
+// - Pro:  $99/mo flat fee — verified badge, lead analytics, priority
+//         placement (+50 ranking), 10 photos + 1 video, Marketing Hub.
+//         Featured ($599/mo) and Concierge ($1,000/mo) are independent
+//         add-ons available to Pro subscribers.
+// No per-lead unlock fees, no credit purchases, no per-placement charges.
 export const PLAN_DETAILS = {
   free: {
     name: "Free Listing",
     price: "Free",
     period: "",
-    description: "Get listed and receive inquiries",
+    description: "Get listed and receive direct inquiries",
     location_limit: 1,
-    unlock_discount: 0,
     features: [
-      "1 facility listing",
-      "Receive locked inquiries",
-      "Pay per unlock (dynamic pricing)",
+      "Directory placement",
+      "Family contact form on your profile",
+      "Up to 5 photos",
       "Basic dashboard",
     ],
     notIncluded: [
-      "20% off lead unlocks",
-      "20% off placement fees",
-      "Featured homepage placement",
-      "Priority search ranking",
+      "Verified badge",
+      "Lead analytics + response insights",
+      "Priority placement (+50 ranking)",
+      "10 photos + 1 facility video",
+      "Marketing Hub (Featured + Concierge add-ons)",
     ],
   },
   pro: {
     name: "Pro",
-    price: "$399",
-    period: "/month",
-    description: "Enhanced visibility + discounts",
+    price: "$99",
+    period: "/mo",
+    description: "Verified listing, lead analytics, priority placement",
     location_limit: 5,
-    unlock_discount: 20,
     features: [
+      "Verified badge on listing",
+      "Lead analytics + response insights",
+      "Priority placement on city & state pages",
+      "+50 ranking-score boost",
+      "10 photos + 1 facility video",
+      "Marketing Hub (Featured + Concierge add-ons)",
       "Up to 5 facility listings",
-      "20% off lead unlocks",
-      "Placement fee: $1,000 (Pro: $800, save $200)",
-      "Featured homepage placement",
-      "Priority search ranking",
-      "Pro badge on profile",
     ],
-    price_id: "price_1Sel1C9fxdThyiakWLfgbl9K",
-    product_id: "prod_Tbyz1bf6iYyzYd",
+    // Stripe price/product ids are read from STRIPE_PRICE_PRO_ANNUAL
+    // at runtime (see scripts/stripe-setup-monetization.ts). Static
+    // ids are no longer hardcoded here.
+    price_id: null,
+    product_id: null,
   },
 };
 

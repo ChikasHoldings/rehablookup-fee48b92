@@ -4,9 +4,9 @@ import { format, formatDistanceToNow } from "date-fns";
 import {
   CheckCircle, Ban, Star, Shield, RefreshCw, ExternalLink,
   MapPin, Phone, Globe, Mail, Image, Flag, ZoomIn, AlertTriangle,
-  MessageSquare, Wallet, Users, Handshake, LayoutList,
-  BadgeCheck, Crown, Eye, MousePointerClick, Monitor,
-  Calendar, Clock, Building2, DollarSign, UserCircle,
+  MessageSquare, Users, Handshake, LayoutList,
+  Crown, Eye, MousePointerClick, Monitor,
+  Calendar, Clock, Building2, UserCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,6 @@ interface ProviderOverviewTabProps {
   provider: Facility;
   proSubscription: any;
   providerProfile: any;
-  creditBalance: number;
   providerFacilities: Facility[];
   providerLeads: any[];
   placementStats: { introductions: number; placements: number };
@@ -42,7 +41,6 @@ export function ProviderOverviewTab({
   provider,
   proSubscription,
   providerProfile,
-  creditBalance,
   providerFacilities,
   providerLeads,
   placementStats,
@@ -89,54 +87,6 @@ export function ProviderOverviewTab({
         .select("id", { count: "exact", head: true })
         .in("facility_id", facilityIds);
       return count || 0;
-    },
-  });
-
-  // Fetch unlock count
-  const { data: unlockCount } = useQuery({
-    queryKey: ["admin-provider-unlock-count", provider.user_id, facilityIds],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("lead_unlocks")
-        .select("id", { count: "exact", head: true })
-        .in("facility_id", facilityIds);
-      return count || 0;
-    },
-  });
-
-  // Fetch total amount spent (all debit transactions)
-  const { data: totalSpent } = useQuery({
-    queryKey: ["admin-provider-total-spent", provider.user_id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("credit_transactions")
-        .select("amount_cents, transaction_type")
-        .eq("provider_id", provider.user_id);
-      let spent = 0;
-      data?.forEach((tx) => {
-        if (["unlock", "placement_fee"].includes(tx.transaction_type)) {
-          spent += tx.amount_cents;
-        }
-      });
-      return spent;
-    },
-  });
-
-  // Fetch total purchased (all credit transactions)
-  const { data: totalPurchased } = useQuery({
-    queryKey: ["admin-provider-total-purchased", provider.user_id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("credit_transactions")
-        .select("amount_cents, transaction_type")
-        .eq("provider_id", provider.user_id);
-      let purchased = 0;
-      data?.forEach((tx) => {
-        if (["purchase", "admin_credit"].includes(tx.transaction_type)) {
-          purchased += tx.amount_cents;
-        }
-      });
-      return purchased;
     },
   });
 
@@ -286,23 +236,19 @@ export function ProviderOverviewTab({
 
       <Separator />
 
-      {/* KPI Cards - Row 1: Financial + Core */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <KPICard icon={Wallet} label="Credit Balance" value={`$${((creditBalance || 0) / 100).toFixed(2)}`} color="text-emerald-500" />
-        <KPICard icon={DollarSign} label="Total Spent" value={`$${((totalSpent || 0) / 100).toFixed(2)}`} color="text-destructive" />
-        <KPICard icon={DollarSign} label="Total Purchased" value={`$${((totalPurchased || 0) / 100).toFixed(2)}`} color="text-blue-500" />
+      {/* KPI Cards - Core */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
         <KPICard icon={Users} label="Total Leads" value={String(providerLeads?.length || 0)} color="text-blue-500" />
         <KPICard icon={Handshake} label="Placements" value={String(placementStats?.placements || 0)} color="text-purple-500" />
       </div>
 
-      {/* KPI Cards - Row 2: Engagement */}
-      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
+      {/* KPI Cards - Engagement */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <KPICard icon={Eye} label="Impressions" value={String(engagementMetrics?.impressions || 0)} color="text-muted-foreground" small />
         <KPICard icon={Monitor} label="Profile Views" value={String(engagementMetrics?.profile_views || 0)} color="text-blue-400" small />
         <KPICard icon={Phone} label="Click-to-Call" value={String(engagementMetrics?.click_to_call || 0)} color="text-emerald-400" small />
         <KPICard icon={MousePointerClick} label="Web Clicks" value={String(engagementMetrics?.website_clicks || 0)} color="text-amber-400" small />
         <KPICard icon={Star} label="Reviews" value={String(reviewCount || 0)} color="text-orange-400" small />
-        <KPICard icon={BadgeCheck} label="Unlocked" value={String(unlockCount || 0)} color="text-chart-3" small />
       </div>
 
       <Separator />

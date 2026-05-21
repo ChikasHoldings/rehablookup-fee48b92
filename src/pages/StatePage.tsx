@@ -21,11 +21,16 @@ const TreatmentCenterProfile = lazy(() => import("./TreatmentCenterProfile"));
 import { getStateBySlug, getNearbyStates } from "@/data/locationSeoData";
 import { getCountiesForState } from "@/data/countySeoData";
 import { getStateArticles } from "@/data/stateArticlesData";
+import { getStateStats } from "@/data/stateAddictionStats";
 import { SearchResultsLoading } from "@/components/skeletons/SearchResultSkeleton";
 import { Button } from "@/components/ui/button";
+import { FeaturedRail } from "@/components/featured/FeaturedRail";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { NearbyStatesLinks } from "@/components/seo/CityLinkGrid";
 import { RelatedLinksSection, defaultInsuranceLinks } from "@/components/seo/RelatedLinksSection";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
+import { InlineIntakeForm } from "@/components/conversion/InlineIntakeForm";
+import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import { 
   MapPin, 
   Building2, 
@@ -62,60 +67,8 @@ const treatmentTypesData = [
 ];
 import { cn } from "@/lib/utils";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { stateCapitalImages } from "@/data/locationImages";
 
-// State capital images mapping
-const stateCapitalImages: Record<string, string> = {
-  'alabama': 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=1920&q=80',
-  'alaska': 'https://images.unsplash.com/photo-1531176175280-33e68e01b7d7?w=1920&q=80',
-  'arizona': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80',
-  'arkansas': 'https://images.unsplash.com/photo-1590937276195-a0280fab0de6?w=1920&q=80',
-  'california': 'https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?w=1920&q=80',
-  'colorado': 'https://images.unsplash.com/photo-1546156929-a4c0ac411f47?w=1920&q=80',
-  'connecticut': 'https://images.unsplash.com/photo-1569012871812-f38ee64cd54c?w=1920&q=80',
-  'delaware': 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=1920&q=80',
-  'florida': 'https://images.unsplash.com/photo-1605723517503-3cadb5818a0c?w=1920&q=80',
-  'georgia': 'https://images.unsplash.com/photo-1575917649705-5b59aaa12e6b?w=1920&q=80',
-  'hawaii': 'https://images.unsplash.com/photo-1507876466758-bc54f384809c?w=1920&q=80',
-  'idaho': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
-  'illinois': 'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?w=1920&q=80',
-  'indiana': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69c07b?w=1920&q=80',
-  'iowa': 'https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=1920&q=80',
-  'kansas': 'https://images.unsplash.com/photo-1590937276234-e45c0e6c9e76?w=1920&q=80',
-  'kentucky': 'https://images.unsplash.com/photo-1578301978018-3005759f48f7?w=1920&q=80',
-  'louisiana': 'https://images.unsplash.com/photo-1568402102990-bc541580b59f?w=1920&q=80',
-  'maine': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80',
-  'maryland': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80',
-  'massachusetts': 'https://images.unsplash.com/photo-1501979376754-1d09b529c917?w=1920&q=80',
-  'michigan': 'https://images.unsplash.com/photo-1534351450181-ea9f78427fe8?w=1920&q=80',
-  'minnesota': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=80',
-  'mississippi': 'https://images.unsplash.com/photo-1590937276195-a0280fab0de6?w=1920&q=80',
-  'missouri': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80',
-  'montana': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
-  'nebraska': 'https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=1920&q=80',
-  'nevada': 'https://images.unsplash.com/photo-1581351721010-8cf859cb14a4?w=1920&q=80',
-  'new-hampshire': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80',
-  'new-jersey': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80',
-  'new-mexico': 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=1920&q=80',
-  'new-york': 'https://images.unsplash.com/photo-1538970272646-f61fabb3a8a2?w=1920&q=80',
-  'north-carolina': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80',
-  'north-dakota': 'https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=1920&q=80',
-  'ohio': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69c07b?w=1920&q=80',
-  'oklahoma': 'https://images.unsplash.com/photo-1590937276234-e45c0e6c9e76?w=1920&q=80',
-  'oregon': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80',
-  'pennsylvania': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80',
-  'rhode-island': 'https://images.unsplash.com/photo-1501979376754-1d09b529c917?w=1920&q=80',
-  'south-carolina': 'https://images.unsplash.com/photo-1575917649705-5b59aaa12e6b?w=1920&q=80',
-  'south-dakota': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
-  'tennessee': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69c07b?w=1920&q=80',
-  'texas': 'https://images.unsplash.com/photo-1531218150217-54595bc2b934?w=1920&q=80',
-  'utah': 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1920&q=80',
-  'vermont': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80',
-  'virginia': 'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd0c?w=1920&q=80',
-  'washington': 'https://images.unsplash.com/photo-1502175353174-a7a70e73b362?w=1920&q=80',
-  'west-virginia': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
-  'wisconsin': 'https://images.unsplash.com/photo-1534351450181-ea9f78427fe8?w=1920&q=80',
-  'wyoming': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
-};
 
 // FAQ data generator for each state
 const getStateFAQs = (stateName: string, abbreviation: string, cityCount: number, facilityCount: number) => [
@@ -144,6 +97,14 @@ const getStateFAQs = (stateName: string, abbreviation: string, cityCount: number
     answer: `Yes, ${stateName} has free and low-cost treatment options including state-funded programs, non-profit treatment centers, and facilities that accept Medicaid. SAMHSA's treatment locator and ${abbreviation}'s state substance abuse agency can help identify free options. Many private facilities also offer sliding-scale fees based on income.`
   }
 ];
+
+/**
+ * StatTile — directory-style metric card used in the hero stat grid
+ * and in the mobile stat band. Kept as a thin alias of the shared
+ * `LocationStatTile` so other directory pages (City, County, …) share
+ * the exact same visual treatment.
+ */
+const StatTile = LocationStatTile;
 
 const StatePage = () => {
   const { stateSlug } = useParams<{ stateSlug: string }>();
@@ -279,11 +240,13 @@ const StatePage = () => {
         ]}
       />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Hero is rendered as an <img> rather than a background-image so the
-            browser can attribute it as the LCP element + fetch with high
-            priority. Width/height eliminate CLS while the image streams in. */}
+      {/* Hero — directory-style, image-driven, low text.
+          Tighter design than the previous prose-heavy hero: bold H1,
+          one-line subtitle, breadcrumb, and a single primary CTA.
+          State data (SAMHSA facility counts, overdose stats, signature
+          context) moves into the polished "About" tile below so the
+          hero doesn't read like a blog opener. */}
+      <section className="relative overflow-hidden border-b border-white/5">
         {capitalImage && (
           <img
             src={capitalImage}
@@ -297,94 +260,184 @@ const StatePage = () => {
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-transparent to-primary/40" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/5 via-transparent to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        
-        <div className="container relative z-10 py-10 md:py-14">
+        {/* Darker, more focused overlay than the previous washed
+            primary-blue. Directories want the image visible. */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/80 to-primary/70" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(255,255,255,0.06),_transparent_60%)]" />
+
+        <div className="container relative z-10 py-8 md:py-12">
           <BreadcrumbNav
-            className="mb-4"
+            className="mb-5 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             items={[
               { label: "Find Rehab", href: "/rehab-centers" },
               { label: stateData.name },
             ]}
-          /><div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm border border-white/10">
-              <MapPin className="h-4 w-4" />
-              {stateData.abbreviation} Treatment Centers
-            </div>
-            
-            <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
-              Drug & Alcohol Rehab Centers in {stateData.name}
-            </h1>
-            
-            <p className="mt-4 text-base md:text-lg text-white/85 leading-relaxed max-w-2xl">
-              {/* De-templated description: combines real per-state stats
-                  (CDC overdose mortality, SAMHSA facility count, Medicaid
-                  expansion status, regional context, signature note) with
-                  the verified-facility count we already have. Each state
-                  now ships substantively distinct hero copy to address the
-                  audit's "templated near-verbatim" finding. The original
-                  static description survives as the fallback meta line
-                  consumed by <SEO/>. */}
-              {buildStateOverview(stateData.slug, stateData.name, stateCenters.length)}
-            </p>
-
-            <div className="mt-5 flex flex-wrap items-center gap-4 md:gap-6">
-              {/* Hide count chip while loading so prerendered HTML doesn't bake in "0" */}
-              {!isLoading && stateCenters.length > 0 && (
-                <div className="flex items-center gap-2 text-white text-sm md:text-base">
-                  <Building2 className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
-                  <span className="font-semibold">{stateCenters.length}</span>
-                  <span className="text-white/80">Verified {stateCenters.length === 1 ? "Facility" : "Facilities"}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-white text-sm md:text-base">
-                <MapPin className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
-                <span className="font-semibold">{stateData.cities.length}</span>
-                <span className="text-white/80">Cities Covered</span>
+          />
+          <div className="grid items-end gap-6 md:grid-cols-[1.4fr_1fr]">
+            <div>
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+                <MapPin className="h-3.5 w-3.5" />
+                {stateData.abbreviation} · Treatment Directory
               </div>
-              <div className="flex items-center gap-2 text-white text-sm md:text-base">
-                <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
-                <span className="text-white/80">Credentials Verified</span>
+              <h1 className="font-display text-3xl font-bold tracking-tight text-white md:text-4xl lg:text-5xl">
+                Rehab Centers in {stateData.name}
+              </h1>
+              <p className="mt-3 text-base text-white/80 md:text-lg max-w-xl">
+                Compare verified addiction treatment programs across {stateData.cities.length} {stateData.name} cities. Filter by care level, insurance, and city.
+              </p>
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <Link to="/concierge">
+                  <Button size="lg" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
+                    <Heart className="h-4 w-4" />
+                    Get Personalized Help
+                  </Button>
+                </Link>
+                <Link to={`/search-results?location=${encodeURIComponent(stateData.name)}`}>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="gap-2 w-full sm:w-auto border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
+                  >
+                    <Search className="h-4 w-4" />
+                    Browse {stateData.abbreviation} Centers
+                  </Button>
+                </Link>
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link to="/concierge">
-                <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
-                  <Heart className="h-4 w-4" />
-                  Find Treatment
-                </Button>
-              </Link>
-              <Link to={`/search-results?location=${encodeURIComponent(stateData.name)}`}>
-                <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
-                  <Search className="h-4 w-4" />
-                  Search {stateData.name}
-                </Button>
-              </Link>
+            {/* Stat tiles — right-aligned, premium directory feel.
+                Hidden on mobile to keep the hero compact; the same
+                metrics resurface in the stat band below the hero. */}
+            <div className="hidden md:grid grid-cols-2 gap-3">
+              <StatTile
+                label={stateCenters.length === 1 ? "Verified Facility" : "Verified Facilities"}
+                value={isLoading ? "—" : stateCenters.length.toLocaleString()}
+                icon={Building2}
+              />
+              <StatTile
+                label="Cities Covered"
+                value={stateData.cities.length.toLocaleString()}
+                icon={MapPin}
+              />
+              {(() => {
+                const s = getStateStats(stateData.slug);
+                if (!s) return null;
+                return (
+                  <>
+                    <StatTile
+                      label="SAMHSA Licensed"
+                      value={s.samhsaFacilities.toLocaleString() + "+"}
+                      icon={Shield}
+                    />
+                    <StatTile
+                      label="Counties"
+                      value={counties.length.toLocaleString()}
+                      icon={Stethoscope}
+                    />
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+
+        {/* Care-level filter chips: directory hallmark — jump straight
+            into the level of care the seeker is looking for. */}
+        <div className="relative z-10 border-t border-white/10 bg-black/30 backdrop-blur-sm">
+          <div className="container py-3">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <span className="shrink-0 text-xs font-medium uppercase tracking-wider text-white/60 mr-1">
+                Care:
+              </span>
+              {[
+                { label: "Detox", href: `/treatment-types/detox-programs/${stateData.slug}` },
+                { label: "Inpatient", href: `/treatment-types/residential-inpatient/${stateData.slug}` },
+                { label: "Outpatient", href: `/treatment-types/outpatient-programs/${stateData.slug}` },
+                { label: "Dual Diagnosis", href: `/treatment-types/dual-diagnosis-treatment/${stateData.slug}` },
+                { label: "Alcohol Rehab", href: `/treatment-types/alcohol-rehabilitation/${stateData.slug}` },
+                { label: "Drug Rehab", href: `/treatment-types/drug-addiction/${stateData.slug}` },
+              ].map((chip) => (
+                <Link
+                  key={chip.label}
+                  to={chip.href}
+                  className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
+                >
+                  {chip.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Results - Always at the top under hero */}
+      {/* Mobile-only stat band — surfaces the same metrics the desktop
+          hero shows in the right column. */}
+      <section className="md:hidden border-b bg-secondary/40">
+        <div className="container py-4">
+          <div className="grid grid-cols-2 gap-2">
+            <StatTile
+              label={stateCenters.length === 1 ? "Verified" : "Verified"}
+              value={isLoading ? "—" : stateCenters.length.toLocaleString()}
+              icon={Building2}
+              compact
+            />
+            <StatTile
+              label="Cities"
+              value={stateData.cities.length.toLocaleString()}
+              icon={MapPin}
+              compact
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Featured rotation — paid Featured pool for this state.
+          Mounted directly under the hero so seekers see paid
+          placements before the organic list. Silent absence when no
+          Featured subscribers match this bucket. Visual matches the
+          homepage Featured section (bordered container + scroll
+          arrows + TreatmentCenterCard) for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="state"
+        placement_value={stateData.slug}
+        title={`Featured Treatment Facilities in ${stateData.name}`}
+        view_all_href={`/search-results?location=${encodeURIComponent(stateData.name)}`}
+      />
+
+      {/* Directory results — the page's centerpiece. Section header
+          uses a directory-style two-line layout: H2 + result count
+          chip on the left, sort/view affordances on the right (the
+          "View all in Search" link). */}
       <section className="bg-background py-10 md:py-14">
         <div className="container">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">
-                Treatment Centers in {stateData.name}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">
+                  All Centers in {stateData.name}
+                </h2>
+                {!isLoading && stateCenters.length > 0 && (
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/20">
+                    {stateCenters.length}
+                  </span>
+                )}
+              </div>
               {!isLoading && (
-                <p className="mt-1 text-muted-foreground">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {stateCenters.length > 0
-                    ? `${stateCenters.length} verified ${stateCenters.length === 1 ? "facility" : "facilities"} available`
-                    : `We're actively adding verified centers in ${stateData.name}`}
+                    ? `Showing top ${Math.min(stateCenters.length, 12)} of ${stateCenters.length} verified ${stateCenters.length === 1 ? "facility" : "facilities"} · sorted by ranking`
+                    : `We're actively adding verified centers in ${stateData.name}.`}
                 </p>
               )}
             </div>
+            {!isLoading && stateCenters.length > 0 && (
+              <Link
+                to={`/search-results?location=${encodeURIComponent(stateData.name)}`}
+                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+              >
+                Full search filters <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            )}
           </div>
 
           {isLoading ? (
@@ -395,108 +448,104 @@ const StatePage = () => {
               <div className="mt-8 text-center">
                 <Link to={`/search-results?location=${encodeURIComponent(stateData.name)}`}>
                   <Button variant="outline" size="lg" className="gap-2">
-                    View All Facilities
+                    View All {stateData.abbreviation} Facilities
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
             </>
           ) : (
-            <div className="rounded-xl border bg-card p-12 text-center">
-              <Building2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
+            <div className="rounded-2xl border bg-card p-12 text-center">
+              <Building2 className="mx-auto h-12 w-12 text-muted-foreground/40" />
               <h3 className="mt-4 text-lg font-semibold">No Facilities Listed Yet</h3>
               <p className="mt-2 text-muted-foreground">
                 We're actively adding verified treatment centers in {stateData.name}.
               </p>
               <Link to="/concierge" className="mt-6 inline-block">
-                <Button>Find Treatment</Button>
+                <Button>Get Personalized Help</Button>
               </Link>
             </div>
           )}
+
+          <InlineIntakeForm
+            heading={`Find ${stateData.name} treatment programs`}
+            className="mt-10 max-w-xl mx-auto"
+          />
         </div>
       </section>
 
-      {/* Trust Signals */}
-      <section className="border-b bg-secondary/30 py-8">
+      {/* Trust Signals — compact premium row, dense info per pixel */}
+      <section className="border-b bg-secondary/30 py-6">
         <div className="container">
-          <div className="grid gap-6 md:grid-cols-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Shield className="h-5 w-5 text-primary" />
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+            {[
+              { icon: Shield, title: "Verified Facilities", sub: "Credentials checked" },
+              { icon: Clock, title: "24/7 Support", sub: "Always available" },
+              { icon: Star, title: "Quality Care", sub: "Accredited programs" },
+              { icon: CheckCircle, title: "Insurance Accepted", sub: "Most major plans" },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="flex items-center gap-3 rounded-lg border bg-card/60 px-3 py-2.5"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                  <item.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground leading-tight">{item.title}</p>
+                  <p className="text-xs text-muted-foreground">{item.sub}</p>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold text-foreground">Verified Facilities</p>
-                <p className="text-sm text-muted-foreground">All centers credential-checked</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Clock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">24/7 Support</p>
-                <p className="text-sm text-muted-foreground">Help available anytime</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <Star className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Quality Care</p>
-                <p className="text-sm text-muted-foreground">Top-rated programs</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <CheckCircle className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">Insurance Accepted</p>
-                <p className="text-sm text-muted-foreground">Most plans covered</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Expanded Cities Section */}
-      <section className="border-b bg-card py-10">
+      {/* Cities — directory navigation. Premium card per city
+          with a facility-count chip when we have one. */}
+      <section className="border-b bg-card py-10 md:py-14">
         <div className="container">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-foreground">
-                Find Treatment by City in {stateData.name}
+              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                Treatment by City
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Browse {stateData.cities.length} cities with verified rehab centers
+                {stateData.cities.length} {stateData.name} cities with verified centers
               </p>
             </div>
           </div>
-          
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {displayedCities?.map(city => (
-              <Link
-                key={city.slug}
-                to={`/rehab-centers/${stateData.slug}/${city.slug}`}
-                className="group flex items-center justify-between rounded-xl border bg-background p-4 transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+
+          <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {displayedCities?.map((city) => {
+              const cityFacilityCount = stateCenters.filter(
+                (c) => c.city?.toLowerCase() === city.name.toLowerCase(),
+              ).length;
+              return (
+                <Link
+                  key={city.slug}
+                  to={`/rehab-centers/${stateData.slug}/${city.slug}`}
+                  className="group flex items-center gap-3 rounded-xl border bg-background p-3.5 transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-md"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/15">
                     <MapPin className="h-4 w-4 text-primary" />
                   </div>
-                  <div>
-                    <span className="font-medium text-foreground group-hover:text-primary transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-foreground group-hover:text-primary transition-colors truncate">
                       {city.name}
-                    </span>
-                    <p className="text-xs text-muted-foreground">View Centers</p>
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {cityFacilityCount > 0
+                        ? `${cityFacilityCount} ${cityFacilityCount === 1 ? "center" : "centers"}`
+                        : "View centers"}
+                    </div>
                   </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-1 group-hover:text-primary" />
-              </Link>
-            ))}
+                  <ArrowRight className="h-4 w-4 text-muted-foreground/40 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
+                </Link>
+              );
+            })}
           </div>
-          
+
           {stateData.cities.length > 12 && (
             <div className="mt-6 text-center">
               <Button
@@ -504,7 +553,7 @@ const StatePage = () => {
                 onClick={() => setShowAllCities(!showAllCities)}
                 className="gap-2"
               >
-                {showAllCities ? 'Show Less' : `Show All ${stateData.cities.length} Cities`}
+                {showAllCities ? "Show less" : `Show all ${stateData.cities.length} cities`}
                 <ChevronDown className={cn("h-4 w-4 transition-transform", showAllCities && "rotate-180")} />
               </Button>
             </div>
@@ -512,39 +561,86 @@ const StatePage = () => {
         </div>
       </section>
 
-      {/* Treatment Types Section */}
-      <section className="border-t bg-secondary/30 py-10">
+      {/* Browse by Care Level — directory-style: large visual chips
+          for each treatment modality, linking to the state-scoped
+          treatment-type page. Replaces the previous prose-heavy
+          "Types of Addiction Treatment" + "Inpatient vs Outpatient"
+          sections. */}
+      <section className="border-t bg-secondary/30 py-10 md:py-14">
         <div className="container">
-          <div className="mb-6 text-center">
-            <h2 className="text-xl font-bold text-foreground md:text-2xl">
-              Types of Treatment in {stateData.name}
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Explore different addiction treatment approaches available across {stateData.abbreviation}
-            </p>
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                Browse by Care Level
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Filter {stateData.abbreviation} facilities by the level of care you need
+              </p>
+            </div>
+            <Link to="/treatment-types" className="hidden md:inline-flex text-sm font-medium text-primary hover:underline gap-1 items-center">
+              View all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-            {treatmentTypesData.map((type) => (
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+            {[
+              {
+                icon: Sparkles,
+                title: "Detox",
+                desc: "Medical detox under 24/7 supervision",
+                href: `/treatment-types/detox-programs/${stateData.slug}`,
+              },
+              {
+                icon: Home,
+                title: "Inpatient",
+                desc: "30–90 day residential treatment programs",
+                href: `/treatment-types/residential-inpatient/${stateData.slug}`,
+              },
+              {
+                icon: Stethoscope,
+                title: "Outpatient",
+                desc: "PHP, IOP, and standard outpatient care",
+                href: `/treatment-types/outpatient-programs/${stateData.slug}`,
+              },
+              {
+                icon: Brain,
+                title: "Dual Diagnosis",
+                desc: "Integrated mental health + addiction care",
+                href: `/treatment-types/dual-diagnosis-treatment/${stateData.slug}`,
+              },
+              {
+                icon: Activity,
+                title: "Alcohol Rehab",
+                desc: "Alcohol-use-disorder programs across the state",
+                href: `/treatment-types/alcohol-rehabilitation/${stateData.slug}`,
+              },
+              {
+                icon: Pill,
+                title: "Drug Rehab",
+                desc: "Opioid, stimulant, polysubstance care",
+                href: `/treatment-types/drug-addiction/${stateData.slug}`,
+              },
+            ].map((c) => (
               <Link
-                key={type.title}
-                to={type.link}
-                className="group flex flex-col items-center rounded-xl border bg-card p-4 text-center transition-all hover:border-primary/30 hover:shadow-md"
+                key={c.title}
+                to={c.href}
+                className="group relative overflow-hidden rounded-xl border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5"
               >
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
-                  <type.icon className="h-6 w-6 text-primary" />
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/15">
+                    <c.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
+                      {c.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                      {c.desc}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground/40 transition-all group-hover:translate-x-1 group-hover:text-primary" />
                 </div>
-                <span className="text-sm font-medium text-foreground">{type.title}</span>
-                <ArrowRight className="mt-2 h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
               </Link>
             ))}
-          </div>
-          <div className="mt-6 text-center">
-            <Link to="/treatment-types">
-              <Button variant="outline" className="gap-2">
-                View All Treatment Types
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
@@ -603,164 +699,102 @@ const StatePage = () => {
         </div>
       </section>
 
-      {/* SEO Content - Types of Treatment */}
-      <section className="border-t bg-secondary/30 section-padding">
+      {/* About + Insurance — consolidated premium section.
+          Replaces the previous four prose-heavy "SEO" sections with
+          one polished split-pane: state context on the left (with the
+          de-templated state stats we already have so SEO depth is
+          preserved), insurance options on the right as visual chips.
+          "How to Choose" tips collapse into 3 concise pillars. */}
+      <section className="border-t bg-secondary/30 py-12 md:py-16">
         <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-2xl font-bold text-foreground mb-6">
-              Types of Addiction Treatment in {stateData.name}
-            </h2>
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-4 text-muted-foreground leading-relaxed">
-                <p>
-                  {stateData.name} offers comprehensive addiction treatment services including medical detoxification, 
-                  residential inpatient programs, partial hospitalization (PHP), intensive outpatient (IOP), 
-                  and standard outpatient therapy. Each level of care addresses different stages of recovery.
-                </p>
-                <p>
-                  <strong className="text-foreground">Drug Rehab in {stateData.name}</strong> — Specialized programs 
-                  treating opioid addiction, stimulant abuse, benzodiazepine dependency, and polysubstance use 
-                  with medication-assisted treatment (MAT) and evidence-based therapies.
-                </p>
-              </div>
-              <div className="space-y-4 text-muted-foreground leading-relaxed">
-                <p>
-                  <strong className="text-foreground">Alcohol Rehab in {stateData.name}</strong> — Medically supervised 
-                  detox, 12-step programs, cognitive behavioral therapy, and relapse prevention strategies 
-                  designed specifically for alcohol use disorder recovery.
-                </p>
-                <p>
-                  <strong className="text-foreground">Dual Diagnosis Treatment</strong> — Many {stateData.abbreviation} facilities 
-                  provide integrated care for co-occurring mental health conditions like depression, anxiety, 
-                  PTSD, and bipolar disorder alongside addiction treatment.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SEO Content - Inpatient vs Outpatient */}
-      <section className="border-t bg-card section-padding">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-2xl font-bold text-foreground mb-6">
-              Inpatient vs Outpatient Rehab in {stateData.name}
-            </h2>
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="rounded-xl border bg-background p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <Home className="h-5 w-5 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-foreground">Inpatient Rehab in {stateData.abbreviation}</h3>
+          <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+            {/* Left: context tile with the state stats narrative
+                (kept for SEO depth, but framed as an "About" card
+                rather than free-floating paragraph). */}
+            <div className="rounded-2xl border bg-card p-6 md:p-8 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                  <Building2 className="h-4 w-4 text-primary" />
                 </div>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                    24/7 medical supervision and support
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                    Structured environment free from triggers
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                    Intensive therapy (30-90 day programs)
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                    Best for severe addiction or co-occurring disorders
-                  </li>
-                </ul>
+                <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+                  Addiction Treatment in {stateData.name}
+                </h2>
               </div>
-              <div className="rounded-xl border bg-background p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <Stethoscope className="h-5 w-5 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-foreground">Outpatient Rehab in {stateData.abbreviation}</h3>
-                </div>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                    Maintain work, school, or family obligations
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                    Flexible scheduling (evenings/weekends)
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                    Lower cost than residential programs
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                    Ideal for mild-to-moderate addiction or step-down care
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+              <p className="text-sm text-muted-foreground leading-relaxed md:text-base">
+                {buildStateOverview(stateData.slug, stateData.name, stateCenters.length)}
+              </p>
 
-      {/* SEO Content - How to Choose */}
-      <section className="border-t bg-secondary/30 section-padding">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-2xl font-bold text-foreground mb-6">
-              How to Choose a Rehab Center in {stateData.name}
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                { title: "Verify Accreditation", desc: "Look for Joint Commission or CARF accreditation ensuring quality standards" },
-                { title: "Check Treatment Approaches", desc: "Ensure they offer evidence-based therapies like CBT, DBT, or MAT" },
-                { title: "Review Staff Credentials", desc: "Licensed counselors, physicians, and addiction specialists on staff" },
-                { title: "Confirm Insurance Coverage", desc: `Verify your plan is accepted by ${stateData.abbreviation} facilities` },
-                { title: "Consider Location", desc: "Close to home for family involvement or away for focused recovery" },
-                { title: "Evaluate Aftercare Support", desc: "Strong alumni programs and ongoing support improve long-term success" },
-              ].map((item, idx) => (
-                <div key={idx} className="rounded-lg border bg-card p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                      {idx + 1}
+              {/* Three premium pillars — replaces the 6-tile "How to
+                  Choose" grid. Each pillar pairs an icon with the one
+                  thing seekers should verify. */}
+              <div className="mt-6 grid gap-3 sm:grid-cols-3 border-t pt-6">
+                {[
+                  {
+                    icon: Shield,
+                    title: "Accredited",
+                    desc: "Joint Commission or CARF",
+                  },
+                  {
+                    icon: Stethoscope,
+                    title: "Evidence-Based",
+                    desc: "CBT, DBT, MAT therapies",
+                  },
+                  {
+                    icon: Heart,
+                    title: "Aftercare",
+                    desc: "Alumni + ongoing support",
+                  },
+                ].map((p) => (
+                  <div key={p.title} className="flex items-start gap-2.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/8">
+                      <p.icon className="h-4 w-4 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-sm">{item.title}</h3>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{p.title}</p>
+                      <p className="text-xs text-muted-foreground leading-snug">{p.desc}</p>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">{item.desc}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* SEO Content - Insurance & Payment */}
-      <section className="border-t bg-card section-padding">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-2xl font-bold text-foreground mb-6">
-              Insurance & Payment Options in {stateData.name}
-            </h2>
-            <div className="space-y-4 text-muted-foreground leading-relaxed mb-6">
-              <p>
-                Most rehab centers in {stateData.name} accept major health insurance plans under the 
-                Affordable Care Act (ACA) and Mental Health Parity laws. This includes private insurance, 
-                employer-sponsored plans, {stateData.abbreviation} Medicaid, and Medicare coverage for addiction treatment.
-              </p>
-              <p>
-                For those without insurance, many {stateData.abbreviation} facilities offer sliding-scale fees based on income, 
-                payment plans, and some provide state-funded or free treatment options through SAMHSA grants.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-              {["Medicaid", "Medicare", "Private Insurance", "Self-Pay Options"].map((option) => (
-                <div key={option} className="flex items-center gap-2 rounded-lg border bg-background p-3">
-                  <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                  <span className="text-sm font-medium text-foreground">{option}</span>
+            {/* Right: insurance + payment options as compact chip grid */}
+            <div className="rounded-2xl border bg-card p-6 md:p-8 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
+                  <CheckCircle className="h-4 w-4 text-primary" />
                 </div>
-              ))}
+                <h2 className="font-display text-lg font-bold text-foreground md:text-xl">
+                  Insurance & Payment
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                Most {stateData.abbreviation} facilities accept major insurance under the ACA and Mental Health Parity.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  "Medicaid",
+                  "Medicare",
+                  "Private Insurance",
+                  "Self-Pay",
+                  "Sliding Scale",
+                  "Payment Plans",
+                ].map((option) => (
+                  <div
+                    key={option}
+                    className="flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-2"
+                  >
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <span className="text-xs font-medium text-foreground truncate">{option}</span>
+                  </div>
+                ))}
+              </div>
+              <Link
+                to="/insurance"
+                className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+              >
+                Verify coverage <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           </div>
         </div>

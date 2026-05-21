@@ -78,6 +78,27 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Server-side belt for noisy self-referential paths. The client also
+    // guards in NotFound.tsx, but well-behaved clients with stale code or
+    // server-side prerender fallthrough can still fire log-not-found for:
+    //   - "/404" canonical page (intentional landing, not a discovery)
+    //   - Apple App-Site-Association probes (handled by static asset)
+    //   - Other /.well-known/* infra probes (handled by web server)
+    // Drop these with a 200 success so callers don't retry.
+    if (
+      path === "/404" ||
+      path === "/apple-app-site-association" ||
+      path.startsWith("/.well-known/")
+    ) {
+      return new Response(
+        JSON.stringify({ ok: true, skipped: "self_referential_path" }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
     const search = clean(body.search, 1024);
     const referrer = clean(body.referrer, 2048);
     // Prefer the request UA header over body to avoid spoofing

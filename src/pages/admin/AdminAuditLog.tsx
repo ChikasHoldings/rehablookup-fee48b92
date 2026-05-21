@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
@@ -21,11 +22,23 @@ import {
   Key,
   Image,
   CreditCard,
-  ChevronLeft,
-  ChevronRight,
   RefreshCw,
   Download,
+  Link as LinkIcon,
+  Check as CheckIcon,
+  X,
+  AlertTriangle,
+  AlertCircle,
+  Copy,
+  Eye,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -192,34 +205,114 @@ const datePresets = [
   { label: "Last 90 days", days: 90 },
 ];
 
+// Server-side row cap. The page used to fetch 500 rows; at scale (admin
+// actions accumulate fast) the stats cards silently reflected only the
+// truncated slice. 10,000 covers ~2 years of current traffic. When hit,
+// the UI surfaces a banner so the admin knows to narrow the window.
+const AUDIT_LOG_CAP = 10_000;
+
+// CSV cell escape that ALSO guards against formula injection in Excel /
+// Sheets when a cell value begins with =, +, -, @, \t, or \r. Prepending
+// a single quote forces literal interpretation when opened in a
+// spreadsheet.
+function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const raw = String(value);
+  const needsQuote =
+    /^[=+\-@\t\r]/.test(raw) ||
+    raw.includes(",") ||
+    raw.includes('"') ||
+    raw.includes("\n") ||
+    raw.includes("\r");
+  const prefixed = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+  if (!needsQuote) return prefixed;
+  return `"${prefixed.replace(/"/g, '""')}"`;
+}
+
 export default function AdminAuditLog() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminAuditLog");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hydratedRef = useRef(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [targetFilter, setTargetFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: subDays(new Date(), 30), to: new Date() });
-  
+  const [detailEntry, setDetailEntry] = useState<AuditLog | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  // URL state hydration
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+
+    const q = searchParams.get("q");
+    const action = searchParams.get("action");
+    const target = searchParams.get("target");
+    const fromStr = searchParams.get("from");
+    const toStr = searchParams.get("to");
+
+    if (q) setSearchQuery(q);
+    if (action) setActionFilter(action);
+    if (target) setTargetFilter(target);
+
+    if (fromStr || toStr) {
+      const from = fromStr ? new Date(fromStr) : undefined;
+      const to = toStr ? new Date(toStr) : undefined;
+      // Guard against invalid date strings
+      const isValid = (d: Date | undefined) => !d || !Number.isNaN(d.getTime());
+      if (isValid(from) && isValid(to)) {
+        setDateRange({ from, to });
+      }
+    }
+  }, [searchParams]);
+
+  // Loop-guarded URL sync. Defaults are NOT written so /admin/audit-log stays clean.
+  const defaultFromISO = useMemo(
+    () => format(subDays(new Date(), 30), "yyyy-MM-dd"),
+    [],
+  );
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const next = new URLSearchParams(searchParams);
+    const setOrDelete = (key: string, value: string, defaultValue: string) => {
+      if (value && value !== defaultValue) next.set(key, value);
+      else next.delete(key);
+    };
+    setOrDelete("q", searchQuery, "");
+    setOrDelete("action", actionFilter, "all");
+    setOrDelete("target", targetFilter, "all");
+
+    const fromStr = dateRange.from ? format(dateRange.from, "yyyy-MM-dd") : "";
+    const toStr = dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : "";
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    setOrDelete("from", fromStr, defaultFromISO);
+    setOrDelete("to", toStr, todayStr);
+
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchQuery, actionFilter, targetFilter, dateRange, searchParams, setSearchParams, defaultFromISO]);
 
   const invalidateAuditLog = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin-audit-log"] });
     queryClient.invalidateQueries({ queryKey: ["admin-profiles-for-audit"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-audit-log-distinct-types"] });
   }, [queryClient]);
 
-  // Real-time subscription for audit log updates - always active
+  // Real-time subscription for audit log updates. Subscribes to ALL
+  // events (not just INSERT) so audit-log cleanup actions
+  // (action_type=audit_logs_cleaned) that DELETE rows are also reflected.
+  // admin_audit_log was added to supabase_realtime in migration
+  // 20260626000000 (back-office hardening pass).
   useEffect(() => {
     const channel = supabase
-      .channel("audit-log-realtime")
+      .channel("admin-audit-log-live")
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "admin_audit_log",
-        },
-        () => {
-          invalidateAuditLog();
-        }
+        { event: "*", schema: "public", table: "admin_audit_log" },
+        () => invalidateAuditLog(),
       )
       .subscribe();
 
@@ -228,7 +321,13 @@ export default function AdminAuditLog() {
     };
   }, [invalidateAuditLog]);
 
-  const { data: logs, isLoading, error: logsError } = useQuery({
+  const {
+    data: logs,
+    isLoading,
+    isFetching,
+    error: logsError,
+    refetch: refetchLogs,
+  } = useQuery({
     queryKey: ["admin-audit-log", dateRange],
     queryFn: async () => {
       let query = supabase
@@ -243,10 +342,41 @@ export default function AdminAuditLog() {
         query = query.lte("created_at", endOfDay(dateRange.to).toISOString());
       }
 
-      const { data, error } = await query.limit(500);
+      const { data, error } = await query.limit(AUDIT_LOG_CAP);
       if (error) throw error;
       return data as AuditLog[];
     },
+    staleTime: 10_000,
+  });
+
+  const logsTruncated = (logs?.length ?? 0) >= AUDIT_LOG_CAP;
+
+  // Distinct action_types + target_types in the same date window. These
+  // feed the filter Selects so admins can filter on values that may not
+  // appear in the truncated slice. Cheap because of the GROUP BY on the
+  // server.
+  const { data: distinctTypes } = useQuery({
+    queryKey: ["admin-audit-log-distinct-types", dateRange],
+    queryFn: async () => {
+      let query = supabase
+        .from("admin_audit_log")
+        .select("action_type, target_type");
+      if (dateRange.from) query = query.gte("created_at", startOfDay(dateRange.from).toISOString());
+      if (dateRange.to) query = query.lte("created_at", endOfDay(dateRange.to).toISOString());
+      const { data, error } = await query.limit(AUDIT_LOG_CAP);
+      if (error) throw error;
+      const actions = new Set<string>();
+      const targets = new Set<string>();
+      for (const row of data || []) {
+        if (row.action_type) actions.add(row.action_type);
+        if (row.target_type) targets.add(row.target_type);
+      }
+      return {
+        actions: Array.from(actions).sort(),
+        targets: Array.from(targets).sort(),
+      };
+    },
+    staleTime: 60_000,
   });
 
   // Fetch admin profiles for display names
@@ -318,17 +448,79 @@ export default function AdminAuditLog() {
     currentPage * pageSize
   );
 
-  // Get unique action types for filter
+  // Filter dropdowns are driven by the distinct-types query so they
+  // reflect everything in the date window, not just the displayed/
+  // truncated slice. The current filter is preserved as an option even
+  // if it temporarily falls out of the data (URL deep-link case).
   const actionTypes = useMemo(() => {
-    if (!logs) return [];
-    return [...new Set(logs.map(l => l.action_type))];
-  }, [logs]);
+    const list = distinctTypes?.actions ?? [];
+    if (actionFilter !== "all" && !list.includes(actionFilter)) {
+      return [actionFilter, ...list];
+    }
+    return list;
+  }, [distinctTypes, actionFilter]);
 
-  // Get unique target types for filter
   const targetTypes = useMemo(() => {
-    if (!logs) return [];
-    return [...new Set(logs.map(l => l.target_type))];
-  }, [logs]);
+    const list = distinctTypes?.targets ?? [];
+    if (targetFilter !== "all" && !list.includes(targetFilter)) {
+      return [targetFilter, ...list];
+    }
+    return list;
+  }, [distinctTypes, targetFilter]);
+
+  const filtersActive =
+    searchQuery !== "" ||
+    actionFilter !== "all" ||
+    targetFilter !== "all";
+
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery("");
+    setActionFilter("all");
+    setTargetFilter("all");
+    setDateRange({ from: subDays(new Date(), 30), to: new Date() });
+  }, []);
+
+  const handleCopyLink = useCallback(async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = url;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopiedLink(true);
+      toast.success("Filtered view link copied");
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch (err) {
+      toast.error(`Failed to copy link: ${err instanceof Error ? err.message : "unknown error"}`);
+    }
+  }, []);
+
+  const handleCopyDetailJson = useCallback(async (entry: AuditLog) => {
+    const payload = {
+      id: entry.id,
+      created_at: entry.created_at,
+      action_type: entry.action_type,
+      target_type: entry.target_type,
+      target_id: entry.target_id,
+      admin_user_id: entry.admin_user_id,
+      admin_display_name: adminProfileMap.get(entry.admin_user_id) || null,
+      details: entry.details ?? null,
+    };
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+      toast.success("Entry JSON copied to clipboard");
+    } catch (err) {
+      toast.error(`Failed to copy: ${err instanceof Error ? err.message : "unknown error"}`);
+    }
+  }, [adminProfileMap]);
 
   const handlePresetClick = (days: number) => {
     if (days === 0) {
@@ -366,7 +558,9 @@ export default function AdminAuditLog() {
     ));
   };
 
-  // CSV Export handler
+  // CSV Export handler. Uses csvCell() for formula-injection safety: any
+  // cell starting with =/+/-/@/\t/\r is prefixed with a single quote so
+  // Excel / Sheets treat it as text, not a formula.
   const handleExportCSV = useCallback(() => {
     if (filteredLogs.length === 0) {
       toast.error("No logs to export");
@@ -374,42 +568,48 @@ export default function AdminAuditLog() {
     }
 
     try {
-      // Build CSV content
-      const headers = ["Timestamp", "Admin", "Action", "Target Type", "Target ID", "Details"];
-      const escapeCSV = (value: string | null | undefined): string => {
-        if (value === null || value === undefined) return "";
-        const stringValue = String(value);
-        if (stringValue.includes(",") || stringValue.includes("\n") || stringValue.includes('"')) {
-          return `"${stringValue.replace(/"/g, '""')}"`;
-        }
-        return stringValue;
-      };
+      const headers = [
+        "Timestamp",
+        "Admin",
+        "Admin User ID",
+        "Action",
+        "Action Type",
+        "Target Type",
+        "Target Label",
+        "Target ID",
+        "Details",
+      ];
 
       const rows = filteredLogs.map((log) => {
         const adminName = adminProfileMap.get(log.admin_user_id) || "Unknown Admin";
         const actionLabel = getActionConfig(log.action_type).label;
         const targetLabel = getTargetConfig(log.target_type).label;
         const details = log.details ? JSON.stringify(log.details) : "";
-        
+
         return [
           format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss"),
-          escapeCSV(adminName),
-          escapeCSV(actionLabel),
-          escapeCSV(targetLabel),
-          escapeCSV(log.target_id || ""),
-          escapeCSV(details),
-        ].join(",");
+          adminName,
+          log.admin_user_id || "",
+          actionLabel,
+          log.action_type,
+          targetLabel,
+          log.target_type,
+          log.target_id || "",
+          details,
+        ]
+          .map(csvCell)
+          .join(",");
       });
 
-      const csvContent = [headers.join(","), ...rows].join("\n");
+      const csvContent = [headers.map(csvCell).join(","), ...rows].join("\n");
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      
-      const dateStr = dateRange.from && dateRange.to 
+
+      const dateStr = dateRange.from && dateRange.to
         ? `${format(dateRange.from, "yyyy-MM-dd")}_to_${format(dateRange.to, "yyyy-MM-dd")}`
         : format(new Date(), "yyyy-MM-dd");
-      
+
       link.setAttribute("href", url);
       link.setAttribute("download", `audit-log-${dateStr}.csv`);
       link.style.visibility = "hidden";
@@ -421,7 +621,9 @@ export default function AdminAuditLog() {
       toast.success(`Exported ${filteredLogs.length} audit log entries`);
     } catch (error) {
       console.error("Export failed:", error);
-      toast.error("Failed to export audit logs");
+      toast.error(
+        `Failed to export audit logs: ${error instanceof Error ? error.message : "unknown error"}`,
+      );
     }
   }, [filteredLogs, adminProfileMap, dateRange]);
 
@@ -429,16 +631,29 @@ export default function AdminAuditLog() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-foreground">Audit Log</h1>
           <p className="text-muted-foreground">Track all administrative actions across the platform</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopyLink}
+            aria-label="Copy link to filtered view"
+            disabled={!filtersActive}
+            className="gap-2"
+            title={filtersActive ? "Copy filtered view URL" : "Apply a filter first"}
+          >
+            {copiedLink ? <CheckIcon className="h-4 w-4 text-success" /> : <LinkIcon className="h-4 w-4" />}
+            Copy link
+          </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportCSV}
             disabled={filteredLogs.length === 0}
+            aria-label="Export current view to CSV"
             className="gap-2"
           >
             <Download className="h-4 w-4" />
@@ -447,10 +662,15 @@ export default function AdminAuditLog() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => invalidateAuditLog()}
+            onClick={() => {
+              invalidateAuditLog();
+              toast.success("Audit log refreshing");
+            }}
+            aria-label="Refresh audit log"
+            disabled={isFetching}
             className="gap-2"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} />
             Refresh
           </Button>
           {datePresets.map((preset) => (
@@ -471,6 +691,52 @@ export default function AdminAuditLog() {
           ))}
         </div>
       </div>
+
+      {/* Error banner */}
+      {logsError && (
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-destructive/5 p-3 flex items-start gap-3"
+        >
+          <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-destructive">Failed to load audit log</p>
+            <p className="text-xs text-muted-foreground mt-0.5 break-words">
+              {logsError instanceof Error ? logsError.message : String(logsError)}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => refetchLogs()}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+          </Button>
+        </div>
+      )}
+
+      {/* Truncation banner */}
+      {logsTruncated && (
+        <div
+          role="alert"
+          aria-live="polite"
+          className="rounded-md border border-warning/40 bg-warning/5 p-3 flex items-start gap-3"
+        >
+          <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-warning">
+              Showing the first {AUDIT_LOG_CAP.toLocaleString()} entries
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              The query hit the row cap. Narrow the date range to see a
+              complete window — the stats and totals above reflect only
+              the capped slice.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isFetching && !isLoading && (
+        <p className="text-xs text-muted-foreground -mt-2 px-1" aria-live="polite">
+          Refreshing audit log…
+        </p>
+      )}
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -556,7 +822,7 @@ export default function AdminAuditLog() {
 
             <div className="flex flex-wrap gap-2">
               <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setCurrentPage(1); }}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" aria-label="Filter by action type">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Action Type" />
                 </SelectTrigger>
@@ -571,7 +837,7 @@ export default function AdminAuditLog() {
               </Select>
 
               <Select value={targetFilter} onValueChange={(v) => { setTargetFilter(v); setCurrentPage(1); }}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-[160px]" aria-label="Filter by target type">
                   <SelectValue placeholder="Target Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -583,6 +849,19 @@ export default function AdminAuditLog() {
                   ))}
                 </SelectContent>
               </Select>
+
+              {filtersActive && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearFilters}
+                  aria-label="Clear all filters"
+                  className="h-9"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear
+                </Button>
+              )}
 
               <Popover>
                 <PopoverTrigger asChild>
@@ -650,10 +929,13 @@ export default function AdminAuditLog() {
                 const adminName = adminProfileMap.get(log.admin_user_id) || "Unknown Admin";
                 
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={log.id}
+                    onClick={() => setDetailEntry(log)}
+                    aria-label={`View details for ${action.label}`}
                     className={cn(
-                      "flex items-start gap-4 p-4 rounded-lg border bg-card transition-colors hover:bg-muted/50",
+                      "w-full flex items-start gap-4 p-4 rounded-lg border bg-card text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       index === 0 && "ring-1 ring-primary/20"
                     )}
                   >
@@ -707,7 +989,9 @@ export default function AdminAuditLog() {
                         {format(new Date(log.created_at), "h:mm:ss a")}
                       </p>
                     </div>
-                  </div>
+
+                    <Eye className="h-4 w-4 text-muted-foreground/40 shrink-0 self-center" aria-hidden="true" />
+                  </button>
                 );
               })}
             </div>
@@ -731,6 +1015,75 @@ export default function AdminAuditLog() {
           />
         </CardContent>
       </Card>
+
+      {/* Detail Dialog */}
+      <Dialog open={!!detailEntry} onOpenChange={(open) => !open && setDetailEntry(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardList className="h-5 w-5" />
+              Audit Entry
+            </DialogTitle>
+            <DialogDescription>
+              Full payload of a single audit log entry
+            </DialogDescription>
+          </DialogHeader>
+
+          {detailEntry && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Timestamp</p>
+                  <p className="text-sm">{format(new Date(detailEntry.created_at), "PPpp")}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Admin</p>
+                  <p className="text-sm">{adminProfileMap.get(detailEntry.admin_user_id) || "Unknown Admin"}</p>
+                  <p className="text-[11px] text-muted-foreground font-mono break-all">{detailEntry.admin_user_id}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Action</p>
+                  <p className="text-sm">{getActionConfig(detailEntry.action_type).label}</p>
+                  <p className="text-[11px] text-muted-foreground font-mono">{detailEntry.action_type}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Target</p>
+                  <p className="text-sm">{getTargetConfig(detailEntry.target_type).label}</p>
+                  <p className="text-[11px] text-muted-foreground font-mono">{detailEntry.target_type}</p>
+                </div>
+                {detailEntry.target_id && (
+                  <div className="sm:col-span-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase">Target ID</p>
+                    <p className="text-sm font-mono break-all">{detailEntry.target_id}</p>
+                  </div>
+                )}
+              </div>
+
+              {detailEntry.details && Object.keys(detailEntry.details).length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-medium text-muted-foreground uppercase">Details</p>
+                  </div>
+                  <pre className="text-xs bg-muted p-3 rounded overflow-auto max-h-72 font-mono">
+                    {JSON.stringify(detailEntry.details, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCopyDetailJson(detailEntry)}
+                  className="gap-2"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Copy JSON
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

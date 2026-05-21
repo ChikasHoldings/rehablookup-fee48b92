@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logAdminAction, AdminAuditActions } from "@/hooks/useAdminAuditLog";
@@ -17,7 +18,14 @@ import {
   AlertTriangle,
   FileCheck2,
   XCircle,
+  Download,
+  Link2,
+  RefreshCw,
+  CheckSquare,
+  Square,
+  Timer,
 } from "lucide-react";
+import { BulkStatusUpdateIvrDialog } from "@/components/admin/insurance/BulkStatusUpdateIvrDialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -109,17 +117,48 @@ function statusConfig(s: Status) {
 
 export default function AdminInsuranceVerifications() {
   const qc = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
-  const [carrierFilter, setCarrierFilter] = useState<string>("all");
-  const [search, setSearch] = useState("");
-  const [openId, setOpenId] = useState<string | null>(null);
 
-  const { data: requests = [], isLoading } = useQuery({
+  // URL-state — filter state mirrors to the URL so any view is
+  // bookmarkable / shareable / reload-stable, matching /admin/leads.
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [statusFilter, setStatusFilter] = useState<Status | "all">(
+    () => (searchParams.get("status") as Status | "all") || "all",
+  );
+  const [carrierFilter, setCarrierFilter] = useState<string>(
+    () => searchParams.get("carrier") || "all",
+  );
+  const [search, setSearch] = useState(() => searchParams.get("q") || "");
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+
+  // Sync state → URL (replace, not push). Skip defaults to keep the
+  // URL tidy. Guards against the useSearchParams render loop by
+  // comparing before write.
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (search) next.set("q", search);
+    if (statusFilter !== "all") next.set("status", statusFilter);
+    if (carrierFilter !== "all") next.set("carrier", carrierFilter);
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [search, statusFilter, carrierFilter, searchParams, setSearchParams]);
+
+  // Explicit column list — replaces the previous `.select("*")` which
+  // leaked the full row (including raw IP hash, full user-agent string)
+  // to the client. Member ID + group # are still selected because the
+  // admin detail modal needs them; admin role gates row visibility via
+  // the "Admins can read all VOB requests" RLS policy.
+  const IVR_COLUMNS = "id, created_at, updated_at, first_name, last_name, date_of_birth, phone, email, preferred_contact, carrier, member_id, group_number, policy_holder_name, policy_holder_relationship, primary_substance, urgency, level_of_care, preferred_state, preferred_city, notes, status, assigned_admin_id, admin_notes, source, verified_at, verified_by, coverage_summary, estimated_out_of_pocket_cents, linked_user_id";
+
+  const { data: requests = [], isLoading, isFetching } = useQuery({
     queryKey: ["admin-insurance-verifications", statusFilter, carrierFilter],
     queryFn: async (): Promise<VOBRequest[]> => {
       let q = supabase
         .from("insurance_verification_requests")
-        .select("*")
+        .select(IVR_COLUMNS)
         .order("created_at", { ascending: false })
         .limit(500);
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
@@ -130,6 +169,75 @@ export default function AdminInsuranceVerifications() {
     },
     staleTime: 30_000,
   });
+
+  // Realtime invalidation — Supabase channel keeps the list in sync
+  // with INSERT/UPDATE/DELETE without waiting for the staleTime to
+  // expire. RLS gates row visibility to admins; the channel only
+  // delivers events the caller's JWT can read.
+  const invalidate = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ["admin-insurance-verifications"] });
+  }, [qc]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-ivr-live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "insurance_verification_requests" },
+        () => invalidate(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "insurance_verification_requests" },
+        () => invalidate(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "insurance_verification_requests" },
+        () => invalidate(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [invalidate]);
+
+  // Copy-link helper for sharable filtered URLs.
+  const copyFilterLink = useCallback(async () => {
+    try {
+      const url = window.location.href;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const tmp = document.createElement("input");
+        tmp.value = url;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        document.body.removeChild(tmp);
+      }
+      toast.success("Filter link copied to clipboard");
+    } catch {
+      toast.error("Could not copy link");
+    }
+  }, []);
+
+  // Multi-select helpers
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = (visible: VOBRequest[]) => {
+    if (selectedIds.size === visible.length && visible.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(visible.map((r) => r.id)));
+    }
+  };
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
@@ -171,27 +279,77 @@ export default function AdminInsuranceVerifications() {
       coverageSummary?: string | null;
       estimatedOOPDollars?: number | null;
     }) => {
+      // Capture the previous state so the audit log records exactly
+      // what changed (and so the comparison can flag silent edits
+      // like coverage_summary text changes that the prior version
+      // didn't audit).
+      const previous = requests.find((r) => r.id === input.id) ?? null;
+      const newOOPCents =
+        input.estimatedOOPDollars != null
+          ? Math.round(input.estimatedOOPDollars * 100)
+          : null;
+
       const patch: Record<string, unknown> = {
         status: input.status,
         admin_notes: input.adminNotes ?? null,
       };
+      // Stamp verified_at + verified_by + coverage_summary + OOP only
+      // when transitioning into 'verified' (matches the bulk path).
       if (input.status === "verified") {
         patch.verified_at = new Date().toISOString();
         patch.coverage_summary = input.coverageSummary ?? null;
-        patch.estimated_out_of_pocket_cents =
-          input.estimatedOOPDollars != null ? Math.round(input.estimatedOOPDollars * 100) : null;
+        patch.estimated_out_of_pocket_cents = newOOPCents;
+        // Capture the verifying admin too so seeker emails / billing
+        // reconciliation can attribute the verification.
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) patch.verified_by = user.id;
       }
+      // Stamp assigned_admin_id on first move to in_progress (so an
+      // admin owns the case explicitly) — matches the bulk path.
+      if (input.status === "in_progress" && !previous?.assigned_admin_id) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) patch.assigned_admin_id = user.id;
+      }
+
       const { error } = await supabase
         .from("insurance_verification_requests")
-        .update(patch)
+        .update(patch as never)
         .eq("id", input.id);
       if (error) throw error;
+
+      // Audit log captures every field that changed, not just status.
+      // The previous version logged only `status` — coverage_summary
+      // edits, admin_notes edits, and OOP edits were silent.
       try {
+        const changes: Record<string, { from: unknown; to: unknown }> = {};
+        if (previous && previous.status !== input.status) {
+          changes.status = { from: previous.status, to: input.status };
+        }
+        if ((previous?.admin_notes ?? null) !== (input.adminNotes ?? null)) {
+          changes.admin_notes = {
+            from: previous?.admin_notes ?? null,
+            to: input.adminNotes ?? null,
+          };
+        }
+        if (input.status === "verified") {
+          if ((previous?.coverage_summary ?? null) !== (input.coverageSummary ?? null)) {
+            changes.coverage_summary = {
+              from: previous?.coverage_summary ?? null,
+              to: input.coverageSummary ?? null,
+            };
+          }
+          if ((previous?.estimated_out_of_pocket_cents ?? null) !== newOOPCents) {
+            changes.estimated_out_of_pocket_cents = {
+              from: previous?.estimated_out_of_pocket_cents ?? null,
+              to: newOOPCents,
+            };
+          }
+        }
         await logAdminAction({
-          action: AdminAuditActions.SETTING_UPDATE,
+          actionType: "insurance_verification_updated",
           targetType: "insurance_verification_request",
           targetId: input.id,
-          details: { status: input.status },
+          details: { status: input.status, changes },
         });
       } catch {
         // Audit log is best-effort.
@@ -216,6 +374,58 @@ export default function AdminInsuranceVerifications() {
     });
     return c;
   }, [requests]);
+
+  // CSV export of the currently-filtered set. Includes the fields
+  // ops actually needs for cohort analysis (carrier success rate,
+  // urgency-to-verification cycle time) without leaking sensitive
+  // raw IP / user-agent strings.
+  const exportCsv = useCallback(() => {
+    if (filtered.length === 0) {
+      toast.error("No requests to export");
+      return;
+    }
+    const headers = [
+      "ID", "Created", "Updated", "First Name", "Last Name", "DOB",
+      "Phone", "Email", "Preferred Contact", "Carrier", "Member ID",
+      "Group #", "Policy Holder", "Relationship", "Primary Substance",
+      "Urgency", "Level of Care", "Preferred State", "Preferred City",
+      "Status", "Verified At", "Coverage Summary", "OOP ($)",
+      "Notes", "Admin Notes",
+    ];
+    const escape = (v: unknown): string => {
+      if (v == null) return "";
+      const s = String(v);
+      return s.includes(",") || s.includes('"') || s.includes("\n")
+        ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows = filtered.map((r) => [
+      r.id, r.created_at, r.updated_at, r.first_name, r.last_name,
+      r.date_of_birth, r.phone, r.email, r.preferred_contact, r.carrier,
+      r.member_id, r.group_number, r.policy_holder_name,
+      r.policy_holder_relationship, r.primary_substance, r.urgency,
+      r.level_of_care, r.preferred_state, r.preferred_city, r.status,
+      r.verified_at,
+      r.coverage_summary,
+      r.estimated_out_of_pocket_cents != null
+        ? (r.estimated_out_of_pocket_cents / 100).toFixed(2)
+        : "",
+      r.notes, r.admin_notes,
+    ].map(escape).join(","));
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const date = new Date().toISOString().split("T")[0];
+    a.download = `insurance-verifications-${date}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filtered.length} requests`);
+  }, [filtered]);
+
+  const hasActiveFilters = statusFilter !== "all" || carrierFilter !== "all" || search !== "";
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -274,76 +484,210 @@ export default function AdminInsuranceVerifications() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="text-xs text-muted-foreground">
-              {filtered.length} of {requests.length}
+            <div className="flex flex-wrap items-center gap-2">
+              {selectedIds.size > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setBulkStatusOpen(true)}
+                  aria-label={`Update status for ${selectedIds.size} selected request${selectedIds.size === 1 ? "" : "s"}`}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Status</span>
+                  <span>({selectedIds.size})</span>
+                </Button>
+              )}
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={copyFilterLink}
+                  aria-label="Copy a shareable link to this filtered view"
+                  title="Copy a shareable link to this filtered view"
+                >
+                  <Link2 className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Copy link</span>
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={exportCsv}
+                disabled={filtered.length === 0}
+                aria-label="Export filtered requests to CSV"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Export</span>
+              </Button>
+              <div className="text-xs text-muted-foreground tabular-nums">
+                {filtered.length} of {requests.length}
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          {isFetching && !isLoading && (
+            <div className="px-1 pb-2 -mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground" aria-live="polite">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Refreshing…
+            </div>
+          )}
           {isLoading ? (
             <div className="py-16 flex items-center justify-center text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-16 text-center text-sm text-muted-foreground">
-              No requests match your filters.
+            <div className="py-16 text-center px-4">
+              <ShieldCheck className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" aria-hidden />
+              <p className="text-sm font-medium text-muted-foreground">
+                {hasActiveFilters ? "No requests match these filters" : "No verification requests yet"}
+              </p>
+              <p className="text-xs text-muted-foreground/80 mt-1 max-w-sm mx-auto">
+                {hasActiveFilters
+                  ? "Try clearing a filter or broadening the carrier / status selection."
+                  : "Submissions from /insurance-verification land here. Requests appear in real time."}
+              </p>
+              {hasActiveFilters && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => {
+                    setStatusFilter("all");
+                    setCarrierFilter("all");
+                    setSearch("");
+                  }}
+                  className="mt-3 text-primary"
+                >
+                  Clear all filters
+                </Button>
+              )}
             </div>
           ) : (
-            <div className="space-y-2">
-              {filtered.map((r) => {
-                const cfg = statusConfig(r.status);
-                return (
-                  <button
-                    key={r.id}
-                    onClick={() => setOpenId(r.id)}
-                    className="w-full text-left rounded-lg border border-border bg-card hover:border-primary/40 transition-colors p-3 md:p-4"
-                  >
-                    <div className="flex flex-col md:flex-row md:items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-sm">
-                            {r.first_name} {r.last_name}
+            <>
+              {/* Select-all row — gives admins a single keystroke to
+                  reach the bulk-status action. Hidden when 0 visible. */}
+              <div className="px-3 md:px-4 pb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <button
+                  type="button"
+                  onClick={() => toggleSelectAll(filtered)}
+                  className="p-1 -m-1 hover:text-foreground transition-colors"
+                  aria-label={
+                    selectedIds.size === filtered.length && filtered.length > 0
+                      ? "Deselect all visible requests"
+                      : "Select all visible requests"
+                  }
+                >
+                  {selectedIds.size === filtered.length && filtered.length > 0 ? (
+                    <CheckSquare className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Square className="h-4 w-4" />
+                  )}
+                </button>
+                <span>
+                  {selectedIds.size > 0
+                    ? `${selectedIds.size} selected`
+                    : `Select all (${filtered.length})`}
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {filtered.map((r) => {
+                  const cfg = statusConfig(r.status);
+                  // SLA indicator — surfaces requests that have sat
+                  // unverified for >24h on a still-open status, so
+                  // ops can scan for at-risk rows. Mirrors the
+                  // staleness badge in /admin/leads.
+                  const staleHours = (() => {
+                    const terminal = r.status === "verified" || r.status === "no_coverage"
+                      || r.status === "unable_to_verify" || r.status === "closed";
+                    if (terminal) return 0;
+                    const diffMs = Date.now() - new Date(r.created_at).getTime();
+                    const hours = Math.floor(diffMs / (60 * 60 * 1000));
+                    return hours >= 24 ? hours : 0;
+                  })();
+                  const isSelected = selectedIds.has(r.id);
+                  return (
+                    <div
+                      key={r.id}
+                      className={`w-full rounded-lg border bg-card hover:border-primary/40 transition-colors p-3 md:p-4 ${
+                        isSelected ? "border-primary/50 ring-1 ring-inset ring-primary/20" : "border-border"
+                      }`}
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleSelect(r.id); }}
+                          className="p-1 -m-1 shrink-0 self-start md:self-center"
+                          aria-label={isSelected ? `Deselect ${r.first_name} ${r.last_name}` : `Select ${r.first_name} ${r.last_name}`}
+                        >
+                          {isSelected ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setOpenId(r.id)}
+                          className="flex-1 min-w-0 text-left"
+                          aria-label={`Open detail for ${r.first_name} ${r.last_name}'s ${r.carrier} request`}
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-sm">
+                              {r.first_name} {r.last_name}
+                            </p>
+                            <Badge variant="outline" className={cfg.tone}>{cfg.label}</Badge>
+                            {r.urgency && r.urgency !== "flexible" && (
+                              <Badge variant="outline" className={urgencyTone(r.urgency)}>
+                                {URGENCY_LABEL[r.urgency]}
+                              </Badge>
+                            )}
+                            {staleHours > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] gap-1 border-amber-300 bg-amber-50 text-amber-800 px-1.5 py-0"
+                                title={`Open ${staleHours}h with no resolution`}
+                              >
+                                <Timer className="h-3 w-3" />
+                                {staleHours >= 72 ? `${Math.floor(staleHours / 24)}d` : `${staleHours}h`}
+                              </Badge>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                            {r.carrier}
+                            {r.member_id ? " · ID on file" : " · ID NOT provided"}
+                            {r.preferred_state ? ` · ${r.preferred_city || ""} ${r.preferred_state}` : ""}
+                            {r.primary_substance ? ` · ${r.primary_substance}` : ""}
                           </p>
-                          <Badge variant="outline" className={cfg.tone}>{cfg.label}</Badge>
-                          {r.urgency && r.urgency !== "flexible" && (
-                            <Badge variant="outline" className={urgencyTone(r.urgency)}>
-                              {URGENCY_LABEL[r.urgency]}
-                            </Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
-                          </span>
+                        </button>
+
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                          <a
+                            href={`tel:${r.phone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 hover:text-foreground"
+                          >
+                            <Phone className="h-3.5 w-3.5" />
+                            {r.phone}
+                          </a>
+                          <a
+                            href={`mailto:${r.email}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 hover:text-foreground"
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                            <span className="hidden md:inline truncate max-w-[180px]">{r.email}</span>
+                          </a>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          {r.carrier}
-                          {r.member_id ? " · ID on file" : " · ID NOT provided"}
-                          {r.preferred_state ? ` · ${r.preferred_city || ""} ${r.preferred_state}` : ""}
-                          {r.primary_substance ? ` · ${r.primary_substance}` : ""}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
-                        <a
-                          href={`tel:${r.phone}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 hover:text-foreground"
-                        >
-                          <Phone className="h-3.5 w-3.5" />
-                          {r.phone}
-                        </a>
-                        <a
-                          href={`mailto:${r.email}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 hover:text-foreground"
-                        >
-                          <Mail className="h-3.5 w-3.5" />
-                          <span className="hidden md:inline truncate max-w-[180px]">{r.email}</span>
-                        </a>
                       </div>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -356,6 +700,16 @@ export default function AdminInsuranceVerifications() {
           updating={statusMutation.isPending}
         />
       )}
+
+      <BulkStatusUpdateIvrDialog
+        open={bulkStatusOpen}
+        onOpenChange={setBulkStatusOpen}
+        selectedIds={selectedIds}
+        onSuccess={() => {
+          invalidate();
+          setSelectedIds(new Set());
+        }}
+      />
     </div>
   );
 }

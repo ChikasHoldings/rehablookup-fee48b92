@@ -82,8 +82,14 @@ async function fetchPaginated(table, cols, extraQuery = "") {
 
 /**
  * Pull every approved facility with the columns we need for aggregate-page
- * rendering. Filtered the same way as sitemap-facilities + the per-facility
- * generator so URL coverage stays consistent.
+ * rendering. Reads from the `public_facilities` VIEW (anon-readable, with
+ * paywall masking) — NOT the `facilities` TABLE, which is auth-only and
+ * returns 401 for the build's anon credentials.
+ *
+ * The view already filters status='approved' AND NOT suspended, so we
+ * don't repeat those predicates here. It also exposes computed columns
+ * (`is_claimed`, `is_pro`, `is_premium_visible`, `data_source`) that the
+ * aggregate-page renderers can use without an extra fetch.
  *
  * Cached after the first call within a build run.
  */
@@ -103,11 +109,14 @@ export async function fetchAllFacilities() {
     "featured",
     "calculated_ranking_score",
     "data_source",
+    "is_claimed",
+    "is_pro",
+    "is_premium_visible",
   ].join(",");
   const rows = await fetchPaginated(
-    "facilities",
+    "public_facilities",
     cols,
-    "status=eq.approved&slug=not.is.null&order=calculated_ranking_score.desc.nullslast",
+    "slug=not.is.null&order=calculated_ranking_score.desc.nullslast",
   );
   cachedFacilities = rows;
   return rows;

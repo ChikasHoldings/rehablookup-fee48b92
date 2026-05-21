@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users, Search, Mail, Phone, Zap, Download, X, Trash2,
-  CheckSquare, Square, Loader2, Lock, Unlock, Share2,
+  CheckSquare, Square, Loader2, Share2, UserCheck,
   MessageSquare, Building2, CalendarIcon, Clock, Timer,
+  ArrowRightLeft, ArrowUpDown, RefreshCw, Link2,
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +34,8 @@ import { cn } from "@/lib/utils";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { exportLeadsToCSV } from "@/lib/csvExport";
 import { InquiryDetailModal } from "@/components/admin/inquiries/InquiryDetailModal";
+import { BulkReassignDialog } from "@/components/admin/inquiries/BulkReassignDialog";
+import { BulkStatusUpdateDialog } from "@/components/admin/inquiries/BulkStatusUpdateDialog";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { usePagination } from "@/hooks/usePagination";
 
@@ -63,9 +67,6 @@ export type Lead = {
   age_range: string | null;
   gender: string | null;
   preferred_contact: string;
-  lead_score: number | null;
-  lead_score_label: string | null;
-  credit_cost: number | null;
   exclusive_until: string | null;
   extended_until: string | null;
   assigned_at: string | null;
@@ -92,7 +93,6 @@ function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
     new: { label: "New", className: "bg-info/10 text-info border-info/30" },
     contacted: { label: "Contacted", className: "bg-chart-3/10 text-chart-3 border-chart-3/30" },
-    unlocked: { label: "Unlocked", className: "bg-success/10 text-success border-success/30" },
     responding: { label: "Responding", className: "bg-chart-5/10 text-chart-5 border-chart-5/30" },
     converted: { label: "Converted", className: "bg-success/10 text-success border-success/30" },
     closed: { label: "Closed", className: "bg-muted text-muted-foreground border-border" },
@@ -102,19 +102,12 @@ function StatusBadge({ status }: { status: string }) {
   return <Badge variant="outline" className={cn(className, "text-xs")}>{label}</Badge>;
 }
 
-function LeadStatusBadge({ lead, unlocked }: { lead: Lead; unlocked: boolean }) {
+function LeadStatusBadge({ lead }: { lead: Lead }) {
   if (lead.redistribution_status === "extended" || lead.redistribution_status === "redistributed") {
     const badgeLabel = lead.redistribution_status === "redistributed" ? "Reassigned" : "Shared";
     return (
       <Badge variant="outline" className="bg-info/10 text-info border-info/30 gap-1 text-xs">
         <Share2 className="h-3 w-3" />{badgeLabel}
-      </Badge>
-    );
-  }
-  if (unlocked) {
-    return (
-      <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 text-xs">
-        <Unlock className="h-3 w-3" />Unlocked
       </Badge>
     );
   }
@@ -125,11 +118,7 @@ function LeadStatusBadge({ lead, unlocked }: { lead: Lead; unlocked: boolean }) 
       </Badge>
     );
   }
-  return (
-    <Badge variant="outline" className="text-xs text-muted-foreground gap-1">
-      <Lock className="h-3 w-3" />Locked
-    </Badge>
-  );
+  return null;
 }
 
 function useDebounce(value: string, delay: number) {
@@ -144,12 +133,32 @@ function useDebounce(value: string, delay: number) {
 export default function AdminLeads() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminLeads");
-  const [searchInput, setSearchInput] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [inquiryTypeFilter, setInquiryTypeFilter] = useState("all");
-  const [redistributionFilter, setRedistributionFilter] = useState("all");
-  const [datePreset, setDatePreset] = useState("all");
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+
+  // URL-state — filter + sort + date-range state mirrors to the
+  // URL search params so any filter combination is bookmarkable
+  // and shareable. On mount we hydrate state FROM the URL; on every
+  // change we write state BACK to the URL. Round-tripping through
+  // useSearchParams (replace, not push) keeps the back button sane.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const parseDate = (s: string | null): Date | undefined => {
+    if (!s) return undefined;
+    const d = new Date(s);
+    return Number.isNaN(d.getTime()) ? undefined : d;
+  };
+
+  const [searchInput, setSearchInput] = useState(() => searchParams.get("q") ?? "");
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get("status") ?? "all");
+  const [inquiryTypeFilter, setInquiryTypeFilter] = useState(() => searchParams.get("type") ?? "all");
+  const [redistributionFilter, setRedistributionFilter] = useState(() => searchParams.get("dist") ?? "all");
+  const [datePreset, setDatePreset] = useState(() => searchParams.get("dp") ?? "all");
+  const [dateRange, setDateRange] = useState<DateRange>(() => ({
+    from: parseDate(searchParams.get("from")),
+    to: parseDate(searchParams.get("to")),
+  }));
+  // Sort state — admin can sort by any of the columns. Default
+  // matches the prior locked behaviour (newest first). Each value
+  // is `${column}:${direction}` so a single Select can drive both.
+  const [sortKey, setSortKey] = useState<string>(() => searchParams.get("sort") ?? "created_at:desc");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
@@ -157,16 +166,61 @@ export default function AdminLeads() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [bulkReassignOpen, setBulkReassignOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
 
   const searchQuery = useDebounce(searchInput, 350);
   const hasActiveFilters = statusFilter !== "all" || inquiryTypeFilter !== "all" || redistributionFilter !== "all" || searchInput !== "" || dateRange.from !== undefined;
 
+  // Sync state → URL on every change. `replace: true` keeps the
+  // browser history short (one history entry per page-load, not one
+  // per keystroke), and we skip writing default ("all") values to
+  // keep the URL tidy.
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (searchQuery) next.set("q", searchQuery);
+    if (statusFilter && statusFilter !== "all") next.set("status", statusFilter);
+    if (inquiryTypeFilter && inquiryTypeFilter !== "all") next.set("type", inquiryTypeFilter);
+    if (redistributionFilter && redistributionFilter !== "all") next.set("dist", redistributionFilter);
+    if (datePreset && datePreset !== "all") next.set("dp", datePreset);
+    if (dateRange.from) next.set("from", format(dateRange.from, "yyyy-MM-dd"));
+    if (dateRange.to) next.set("to", format(dateRange.to, "yyyy-MM-dd"));
+    if (sortKey && sortKey !== "created_at:desc") next.set("sort", sortKey);
+    // Only update if the URL params actually differ — avoids a
+    // useSearchParams render loop.
+    const a = next.toString();
+    const b = searchParams.toString();
+    if (a !== b) setSearchParams(next, { replace: true });
+  }, [searchQuery, statusFilter, inquiryTypeFilter, redistributionFilter, datePreset, dateRange, sortKey, searchParams, setSearchParams]);
 
   const clearAllFilters = () => {
     setStatusFilter("all"); setInquiryTypeFilter("all"); setRedistributionFilter("all");
     setSearchInput(""); setDatePreset("all"); setDateRange({ from: undefined, to: undefined });
-    setCurrentPage(1); setSelectedIds(new Set());
+    setSortKey("created_at:desc"); setCurrentPage(1); setSelectedIds(new Set());
   };
+
+  const copyFilterLink = useCallback(async () => {
+    try {
+      const url = window.location.href;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        toast.success("Filter link copied to clipboard");
+      } else {
+        // Fallback for environments where the clipboard API is unavailable
+        // (older browsers, insecure contexts). Selecting an input is the
+        // most reliable cross-browser fallback.
+        const tmp = document.createElement("input");
+        tmp.value = url;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        document.body.removeChild(tmp);
+        toast.success("Filter link copied to clipboard");
+      }
+    } catch {
+      toast.error("Could not copy link");
+    }
+  }, []);
 
   const handleDatePresetChange = (value: string) => {
     setDatePreset(value);
@@ -192,16 +246,48 @@ export default function AdminLeads() {
     return () => clearInterval(interval);
   }, [invalidateAll]);
 
+  // Realtime invalidation — subscribe to leads-table INSERTs and
+  // UPDATEs so new inquiries and status changes appear within a few
+  // hundred milliseconds instead of waiting for the 30s poll. RLS on
+  // the leads table gates row visibility to admins; the channel only
+  // delivers events the caller's JWT can read.
+  //
+  // Polling stays as a belt-and-braces fallback in case the realtime
+  // channel drops (network blip, idle suspension). The two combined
+  // give bounded freshness regardless of connection state.
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-leads-live")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        () => invalidateAll(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "leads" },
+        () => invalidateAll(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "leads" },
+        () => invalidateAll(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [invalidateAll]);
+
   // KPI Stats
   const { data: kpiStats } = useQuery({
     queryKey: ["admin-leads-kpi"],
     queryFn: async () => {
-      const [totalRes, newRes, contactedRes, convertedRes, unlockedRes, redistRes, requestInfoRes, requestCallbackRes] = await Promise.all([
+      const [totalRes, newRes, contactedRes, convertedRes, redistRes, requestInfoRes, requestCallbackRes] = await Promise.all([
         supabase.from("leads").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "new"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "contacted"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "converted"),
-        supabase.from("lead_unlocks").select("id", { count: "exact", head: true }),
         supabase.from("leads").select("id", { count: "exact", head: true }).in("redistribution_status", ["extended", "redistributed"]),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("inquiry_type", "request_info"),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("inquiry_type", "request_callback"),
@@ -209,10 +295,40 @@ export default function AdminLeads() {
       return {
         total: totalRes.count || 0, newCount: newRes.count || 0,
         contacted: contactedRes.count || 0, converted: convertedRes.count || 0,
-        unlocked: unlockedRes.count || 0, redistributed: redistRes.count || 0,
+        redistributed: redistRes.count || 0,
         requestInfo: requestInfoRes.count || 0, requestCallback: requestCallbackRes.count || 0,
       };
     },
+  });
+
+  // Free-tier inquiries land in concierge_inquiries (not leads).
+  // Surfacing the count here lets the admin see the *full* inquiry
+  // universe at a glance — the leads table here is Pro-only, while
+  // concierge_inquiries holds Free/Unclaimed redirects + paid
+  // seeker-initiated concierge intakes. Distinct surfaces by
+  // routing decision; one navigation prompt prevents the admin
+  // from forgetting the other side exists.
+  const { data: conciergeBacklog } = useQuery({
+    queryKey: ["admin-leads-concierge-banner"],
+    queryFn: async () => {
+      const [redirectRes, allOpenRes] = await Promise.all([
+        supabase
+          .from("concierge_inquiries")
+          .select("id", { count: "exact", head: true })
+          .eq("routing_mode", "free_tier_redirect")
+          .not("status", "in", "(closed,completed)"),
+        supabase
+          .from("concierge_inquiries")
+          .select("id", { count: "exact", head: true })
+          .not("status", "in", "(closed,completed)"),
+      ]);
+      return {
+        freeTierRedirects: redirectRes.count || 0,
+        allOpen: allOpenRes.count || 0,
+      };
+    },
+    staleTime: 60_000,
+    refetchInterval: 60_000,
     staleTime: 1000 * 60 * 2,
   });
 
@@ -242,14 +358,29 @@ export default function AdminLeads() {
   });
 
 
-  const { data: leads, isLoading } = useQuery({
-    queryKey: ["admin-leads", statusFilter, inquiryTypeFilter, redistributionFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+  const { data: leads, isLoading, isFetching } = useQuery({
+    queryKey: ["admin-leads", statusFilter, inquiryTypeFilter, redistributionFilter, searchQuery, currentPage, dateRange.from?.toISOString(), dateRange.to?.toISOString(), sortKey],
     queryFn: async () => {
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
+      // Parse "column:direction" sort key; whitelist columns so a
+      // hostile state value can't inject an arbitrary column name.
+      const [rawCol, rawDir] = sortKey.split(":");
+      const sortableColumns = new Set([
+        "created_at",
+        "status",
+        "urgency",
+        "provider_response_status",
+        "assigned_at",
+      ]);
+      const sortColumn = sortableColumns.has(rawCol) ? rawCol : "created_at";
+      const sortAscending = rawDir === "asc";
       let query = supabase
         .from("leads")
-        .select("id, facility_id, original_facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, qualified, quality_flag, redistribution_status, assignment_status, age_range, gender, preferred_contact, lead_score, lead_score_label, credit_cost, exclusive_until, extended_until, assigned_at, lead_expired_at, shared_with")
+        .select("id, facility_id, original_facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, qualified, quality_flag, redistribution_status, assignment_status, age_range, gender, preferred_contact, exclusive_until, extended_until, assigned_at, lead_expired_at, shared_with")
+        .order(sortColumn, { ascending: sortAscending, nullsFirst: false })
+        // Tie-breaker on created_at DESC so equal-sort-key rows are
+        // deterministic (otherwise pagination can shuffle).
         .order("created_at", { ascending: false })
         .range(from, to);
 
@@ -264,7 +395,7 @@ export default function AdminLeads() {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Lead[];
+      return data as unknown as Lead[];
     },
   });
 
@@ -282,20 +413,6 @@ export default function AdminLeads() {
     if (!facilities) return new Map<string, Facility>();
     return new Map(facilities.map(f => [f.id, f]));
   }, [facilities]);
-
-  // Batch unlock status
-  const leadIds = useMemo(() => (leads || []).map(l => l.id), [leads]);
-  const { data: unlockMap } = useQuery({
-    queryKey: ["admin-leads-unlock-map", leadIds],
-    queryFn: async () => {
-      if (!leadIds.length) return {};
-      const { data } = await supabase.from("lead_unlocks").select("lead_id, unlocked_at, facility_id").in("lead_id", leadIds);
-      const map: Record<string, { unlocked_at: string; facility_id: string }> = {};
-      data?.forEach((u: any) => { map[u.lead_id] = u; });
-      return map;
-    },
-    enabled: leadIds.length > 0,
-  });
 
   const filteredLeads = useMemo(() => leads || [], [leads]);
   
@@ -379,18 +496,92 @@ export default function AdminLeads() {
         title="Inquiries"
         subtitle="Direct facility inquiries — click any row for full details and actions"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {selectedIds.size > 0 && (
-              <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setBulkDeleteOpen(true)}>
-                <Trash2 className="h-3.5 w-3.5" />Delete ({selectedIds.size})
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setBulkStatusOpen(true)}
+                  aria-label={`Update status for ${selectedIds.size} selected lead${selectedIds.size === 1 ? "" : "s"}`}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Status</span>
+                  <span>({selectedIds.size})</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 border-primary/40 text-primary hover:bg-primary/5"
+                  onClick={() => setBulkReassignOpen(true)}
+                  aria-label={`Reassign ${selectedIds.size} selected lead${selectedIds.size === 1 ? "" : "s"}`}
+                >
+                  <ArrowRightLeft className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Reassign</span>
+                  <span>({selectedIds.size})</span>
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setBulkDeleteOpen(true)}
+                  aria-label={`Delete ${selectedIds.size} selected lead${selectedIds.size === 1 ? "" : "s"}`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Delete</span>
+                  <span>({selectedIds.size})</span>
+                </Button>
+              </>
+            )}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={copyFilterLink}
+                aria-label="Copy a shareable link to this filtered view"
+                title="Copy a shareable link to this filtered view"
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Copy link</span>
               </Button>
             )}
             <Button variant="outline" size="sm" className="gap-2" onClick={handleExportCSV} disabled={!leads || leads.length === 0}>
-              <Download className="h-4 w-4" />Export
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export</span>
             </Button>
           </div>
         }
       />
+
+      {/* Concierge-queue awareness banner — Pro-tier inquiries live in
+          the `leads` table (this page); Free / Unclaimed-tier inquiries
+          land in `concierge_inquiries` via the routing_mode='free_tier_redirect'
+          branch in submit-qualified-lead. Surface a thin reminder + count
+          so the admin doesn't lose sight of the parallel queue. */}
+      {conciergeBacklog && conciergeBacklog.allOpen > 0 && (
+        <div className="flex items-start gap-3 rounded-lg border border-violet-200 bg-violet-50/60 px-4 py-3 text-sm">
+          <UserCheck className="h-4 w-4 text-violet-700 mt-0.5 shrink-0" aria-hidden />
+          <div className="flex-1 min-w-0">
+            <p className="text-slate-900">
+              <span className="font-semibold">{conciergeBacklog.allOpen}</span>{" "}
+              open concierge {conciergeBacklog.allOpen === 1 ? "inquiry" : "inquiries"} also need attention
+              {conciergeBacklog.freeTierRedirects > 0 && (
+                <>
+                  {" "}—{" "}
+                  <span className="font-semibold">{conciergeBacklog.freeTierRedirects}</span>{" "}
+                  from Free / Unclaimed facility inquiries
+                </>
+              )}
+              . They live on the concierge surface, not in this Pro-only table.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="outline" className="border-violet-300 text-violet-900 hover:bg-violet-100 shrink-0">
+            <Link to="/admin/concierge">Open concierge queue</Link>
+          </Button>
+        </div>
+      )}
 
       {/* KPI Summary */}
       <Card className="overflow-hidden">
@@ -401,7 +592,6 @@ export default function AdminLeads() {
               { label: "New", value: kpiStats?.newCount, icon: Mail, color: "text-info", filter: () => handleFilterChange(setStatusFilter)("new") },
               { label: "Contacted", value: kpiStats?.contacted, icon: Phone, color: "text-chart-3", filter: () => handleFilterChange(setStatusFilter)("contacted") },
               { label: "Converted", value: kpiStats?.converted, icon: Zap, color: "text-success", filter: () => handleFilterChange(setStatusFilter)("converted") },
-              { label: "Unlocked", value: kpiStats?.unlocked, icon: Unlock, color: "text-success", filter: () => {} },
               { label: "Redistributed", value: kpiStats?.redistributed, icon: Share2, color: "text-info", filter: () => handleFilterChange(setRedistributionFilter)("redistributed") },
               { label: "Request Info", value: kpiStats?.requestInfo, icon: MessageSquare, color: "text-primary", filter: () => handleFilterChange(setInquiryTypeFilter)("request_info") },
               { label: "Callbacks", value: kpiStats?.requestCallback, icon: Phone, color: "text-warning", filter: () => handleFilterChange(setInquiryTypeFilter)("request_callback") },
@@ -432,7 +622,6 @@ export default function AdminLeads() {
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="new">New</SelectItem>
                     <SelectItem value="contacted">Contacted</SelectItem>
-                    <SelectItem value="unlocked">Unlocked</SelectItem>
                     <SelectItem value="responding">Responding</SelectItem>
                     <SelectItem value="converted">Converted</SelectItem>
                     <SelectItem value="closed">Closed</SelectItem>
@@ -461,6 +650,20 @@ export default function AdminLeads() {
                   <SelectTrigger className="w-[130px]"><CalendarIcon className="h-4 w-4 mr-1.5" /><SelectValue placeholder="Date" /></SelectTrigger>
                   <SelectContent>
                     {DATE_PRESETS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={sortKey} onValueChange={(v) => { setSortKey(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-[170px]" aria-label="Sort by">
+                    <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
+                    <SelectValue placeholder="Sort" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="created_at:desc">Newest first</SelectItem>
+                    <SelectItem value="created_at:asc">Oldest first</SelectItem>
+                    <SelectItem value="status:asc">Status (A→Z)</SelectItem>
+                    <SelectItem value="urgency:desc">Urgent first</SelectItem>
+                    <SelectItem value="assigned_at:desc">Recently assigned</SelectItem>
+                    <SelectItem value="provider_response_status:asc">Unresponded first</SelectItem>
                   </SelectContent>
                 </Select>
                 {datePreset === "custom" && (
@@ -499,29 +702,62 @@ export default function AdminLeads() {
           {isLoading ? (
             <div className="p-6 space-y-3">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
           ) : filteredLeads.length > 0 ? (
-            <div className="overflow-x-auto">
+            <>
+              {/* Background-refetch indicator — surfaces the realtime/polling
+                  refresh so admins know the list is live, not stale. Hidden
+                  during the initial isLoading state. */}
+              {isFetching && (
+                <div className="px-4 pb-2 -mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground" aria-live="polite">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Refreshing…
+                </div>
+              )}
+
+              {/* Desktop / tablet — table layout */}
+              <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-10">
-                      <button onClick={toggleSelectAll} className="p-1">
+                    <TableHead scope="col" className="w-10">
+                      <button
+                        type="button"
+                        onClick={toggleSelectAll}
+                        className="p-1"
+                        aria-label={
+                          selectedIds.size === filteredLeads.length && filteredLeads.length > 0
+                            ? "Deselect all leads on this page"
+                            : "Select all leads on this page"
+                        }
+                      >
                         {selectedIds.size === filteredLeads.length && filteredLeads.length > 0
                           ? <CheckSquare className="h-4 w-4 text-primary" />
                           : <Square className="h-4 w-4 text-muted-foreground" />}
                       </button>
                     </TableHead>
-                    <TableHead className="min-w-[160px]">Client</TableHead>
-                    <TableHead className="min-w-[120px]">Facility</TableHead>
-                    <TableHead className="min-w-[70px]">Type</TableHead>
-                    <TableHead className="min-w-[80px]">Lead Status</TableHead>
-                    <TableHead className="min-w-[80px]">Status</TableHead>
-                    <TableHead className="min-w-[100px]">Date</TableHead>
+                    <TableHead scope="col" className="min-w-[160px]">Client</TableHead>
+                    <TableHead scope="col" className="min-w-[120px]">Facility</TableHead>
+                    <TableHead scope="col" className="min-w-[70px]">Type</TableHead>
+                    <TableHead scope="col" className="min-w-[80px]">Lead Status</TableHead>
+                    <TableHead scope="col" className="min-w-[80px]">Status</TableHead>
+                    <TableHead scope="col" className="min-w-[100px]">Date</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredLeads.map((lead) => {
                     const facility = lead.facility_id ? facilitiesMap.get(lead.facility_id) : null;
-                    const isUnlocked = !!unlockMap?.[lead.id];
+                    // SLA indicator: a lead is "stale" when it's been
+                    // sitting unresponded for >24h on a still-open status.
+                    // Surfaces in the Status column as a small Timer
+                    // badge so an admin can scan for at-risk rows.
+                    const staleHours = (() => {
+                      if (lead.provider_response_status === "contacted") return 0;
+                      if (lead.status === "closed" || lead.status === "expired" || lead.status === "converted") return 0;
+                      const anchor = lead.assigned_at ?? lead.created_at;
+                      if (!anchor) return 0;
+                      const diffMs = Date.now() - new Date(anchor).getTime();
+                      const hours = Math.floor(diffMs / (60 * 60 * 1000));
+                      return hours >= 24 ? hours : 0;
+                    })();
                     return (
                       <TableRow
                         key={lead.id}
@@ -556,10 +792,22 @@ export default function AdminLeads() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <LeadStatusBadge lead={lead} unlocked={isUnlocked} />
+                          <LeadStatusBadge lead={lead} />
                         </TableCell>
                         <TableCell>
-                          <StatusBadge status={lead.status} />
+                          <div className="flex items-center gap-1.5">
+                            <StatusBadge status={lead.status} />
+                            {staleHours > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] gap-1 border-amber-300 bg-amber-50 text-amber-800 px-1.5 py-0"
+                                title={`No provider response in ${staleHours}h`}
+                              >
+                                <Timer className="h-3 w-3" />
+                                {staleHours >= 72 ? `${Math.floor(staleHours / 24)}d` : `${staleHours}h`}
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -571,13 +819,117 @@ export default function AdminLeads() {
                   })}
                 </TableBody>
               </Table>
-            </div>
+              </div>
+
+              {/* Mobile — stacked card list. Same data as the table above
+                  but laid out for phone/narrow viewport (< md). Tap to
+                  open detail; the bulk-select checkbox lives in the
+                  card's top-right so single-handed users don't have to
+                  reach across to toggle. */}
+              <div className="md:hidden divide-y divide-border">
+                {filteredLeads.map((lead) => {
+                  const facility = lead.facility_id ? facilitiesMap.get(lead.facility_id) : null;
+                  const staleHours = (() => {
+                    if (lead.provider_response_status === "contacted") return 0;
+                    if (lead.status === "closed" || lead.status === "expired" || lead.status === "converted") return 0;
+                    const anchor = lead.assigned_at ?? lead.created_at;
+                    if (!anchor) return 0;
+                    const diffMs = Date.now() - new Date(anchor).getTime();
+                    const hours = Math.floor(diffMs / (60 * 60 * 1000));
+                    return hours >= 24 ? hours : 0;
+                  })();
+                  const isSelected = selectedIds.has(lead.id);
+                  return (
+                    <div
+                      key={lead.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openDetail(lead)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openDetail(lead);
+                        }
+                      }}
+                      className="px-4 py-3 hover:bg-muted/40 focus-visible:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start gap-3">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleSelect(lead.id); }}
+                          className="p-1 -m-1 shrink-0 mt-0.5"
+                          aria-label={isSelected ? `Deselect ${lead.name}` : `Select ${lead.name}`}
+                        >
+                          {isSelected ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
+                        </button>
+
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-medium text-sm truncate">{lead.name}</p>
+                                {lead.urgency === "immediate" && <Zap className="h-3 w-3 text-destructive shrink-0" />}
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
+                            </div>
+                            <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
+                              {format(new Date(lead.created_at), "MMM d")}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <StatusBadge status={lead.status} />
+                            {staleHours > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] gap-1 border-amber-300 bg-amber-50 text-amber-800 px-1.5 py-0"
+                                title={`No provider response in ${staleHours}h`}
+                              >
+                                <Timer className="h-3 w-3" />
+                                {staleHours >= 72 ? `${Math.floor(staleHours / 24)}d` : `${staleHours}h`}
+                              </Badge>
+                            )}
+                            <LeadStatusBadge lead={lead} />
+                            <Badge variant="secondary" className="text-[10px]">
+                              {lead.inquiry_type === "request_callback" ? "Callback" : lead.inquiry_type === "tour_request" ? "Tour" : "Info"}
+                            </Badge>
+                          </div>
+
+                          {facility && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                              <Building2 className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{facility.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           ) : (
-            <div className="text-center py-16">
-              <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground font-medium">No inquiries found</p>
-              <p className="text-xs text-muted-foreground mt-1">{hasActiveFilters ? "Try adjusting your filters" : "Inquiries will appear when clients contact providers"}</p>
-              {hasActiveFilters && <Button variant="link" size="sm" onClick={clearAllFilters} className="mt-3 text-primary">Clear all filters</Button>}
+            <div className="text-center py-16 px-4">
+              <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" aria-hidden />
+              <p className="text-muted-foreground font-medium">
+                {hasActiveFilters ? "No inquiries match these filters" : "No inquiries yet"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                {hasActiveFilters
+                  ? "Try adjusting your filters or clearing the date range. New inquiries appear in real time."
+                  : "Inquiries from facility-profile contact forms land here. Concierge intakes have their own dashboard."}
+              </p>
+              <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+                {hasActiveFilters && (
+                  <Button variant="outline" size="sm" onClick={clearAllFilters} className="gap-1.5">
+                    <X className="h-3.5 w-3.5" />
+                    Clear all filters
+                  </Button>
+                )}
+                <Button variant="link" size="sm" asChild>
+                  <Link to="/admin/concierge">View concierge queue →</Link>
+                </Button>
+              </div>
             </div>
           )}
 
@@ -604,6 +956,29 @@ export default function AdminLeads() {
         facilityMap={facilitiesMap}
         facilities={facilities || []}
         onLeadUpdated={invalidateAll}
+      />
+
+      {/* Bulk Reassign */}
+      <BulkReassignDialog
+        open={bulkReassignOpen}
+        onOpenChange={setBulkReassignOpen}
+        selectedIds={selectedIds}
+        facilities={facilities || []}
+        onSuccess={() => {
+          invalidateAll();
+          setSelectedIds(new Set());
+        }}
+      />
+
+      {/* Bulk Status Update */}
+      <BulkStatusUpdateDialog
+        open={bulkStatusOpen}
+        onOpenChange={setBulkStatusOpen}
+        selectedIds={selectedIds}
+        onSuccess={() => {
+          invalidateAll();
+          setSelectedIds(new Set());
+        }}
       />
 
       {/* Delete Confirmation */}

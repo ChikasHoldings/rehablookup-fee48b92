@@ -32,26 +32,18 @@
           "phone_rejected",
           "conflict",
           "rate_limited",
-          "facility_missing",
-          "lead_expired",
           "email_send_failed",
           "welcome_email_send_failed",
-          "welcome_offer_email_send_failed",
           "admin_email_send_failed",
           "admin_emails_missing",
           "admin_notification_insert_failed",
           "in_app_notification_failed",
           "missing_resend_key",
           "payment_failed",
-          "charge_failed",
-          "stripe_payment_failed",
-          "facility_invoice_payment_failed",
           "international_invoice_failed",
           "case_create_failed",
           "draft_create_failed",
           "draft_update_failed",
-          "lead_unlock_attribution_failed",
-          "unlock_rollback_failed",
           "email_sent",
           "email_deduplicated",
           "internal_error"
@@ -87,14 +79,10 @@
       "retryable": false,
       "emittedBy": [
         "send-provider-welcome-email",
-        "send-provider-welcome-offer-email",
-        "submit-placement-case",
         "submit-international-intake",
         "submit-concierge-intake",
         "save-placement-draft",
         "save-international-placement-draft",
-        "charge-placement-fee",
-        "confirm-placement",
         "delete-provider-account",
         "admin-delete-provider",
         "send-provider-support"
@@ -108,8 +96,6 @@
       "retryable": false,
       "emittedBy": [
         "send-provider-welcome-email",
-        "send-provider-welcome-offer-email",
-        "submit-placement-case",
         "submit-international-intake",
         "submit-concierge-intake",
         "save-placement-draft",
@@ -120,7 +106,7 @@
       "code": "invalid_json_body",
       "httpStatus": 400,
       "category": "transport",
-      "description": "Request body was readable but did not contain a JSON object. Legacy alias of invalid_json — prefer invalid_json for new functions.",
+      "description": "Request body was readable but did not contain a JSON object. Legacy alias of invalid_json \u2014 prefer invalid_json for new functions.",
       "retryable": false,
       "emittedBy": [
         "track-provider-event",
@@ -145,8 +131,6 @@
       "retryable": false,
       "emittedBy": [
         "send-provider-welcome-email",
-        "send-provider-welcome-offer-email",
-        "submit-placement-case",
         "submit-international-intake",
         "submit-concierge-intake",
         "save-placement-draft",
@@ -221,8 +205,7 @@
       "description": "Recipient email failed the recipient guard (disposable domain, role address, malformed). The response includes a `reason` field.",
       "retryable": false,
       "emittedBy": [
-        "send-provider-welcome-email",
-        "send-provider-welcome-offer-email"
+        "send-provider-welcome-email"
       ]
     },
     {
@@ -258,27 +241,6 @@
       ]
     },
     {
-      "code": "facility_missing",
-      "httpStatus": 404,
-      "category": "business",
-      "description": "Referenced facility does not exist or is not accessible.",
-      "retryable": false,
-      "emittedBy": [
-        "confirm-placement",
-        "charge-placement-fee"
-      ]
-    },
-    {
-      "code": "lead_expired",
-      "httpStatus": 410,
-      "category": "business",
-      "description": "Lead is past its 24-hour redistribution window and can no longer be acted on.",
-      "retryable": false,
-      "emittedBy": [
-        "confirm-placement"
-      ]
-    },
-    {
       "code": "email_send_failed",
       "httpStatus": 502,
       "category": "integration",
@@ -286,7 +248,6 @@
       "retryable": true,
       "emittedBy": [
         "send-provider-support",
-        "send-abandoned-placement-email",
         "process-provider-drip"
       ]
     },
@@ -298,16 +259,6 @@
       "retryable": true,
       "emittedBy": [
         "send-provider-welcome-email"
-      ]
-    },
-    {
-      "code": "welcome_offer_email_send_failed",
-      "httpStatus": 502,
-      "category": "integration",
-      "description": "Provider welcome-offer email could not be sent via Resend after retries.",
-      "retryable": true,
-      "emittedBy": [
-        "send-provider-welcome-offer-email"
       ]
     },
     {
@@ -358,9 +309,7 @@
       "retryable": false,
       "emittedBy": [
         "send-provider-welcome-email",
-        "send-provider-welcome-offer-email",
-        "send-provider-support",
-        "send-abandoned-placement-email"
+        "send-provider-support"
       ]
     },
     {
@@ -370,40 +319,7 @@
       "description": "Stripe charge or PaymentIntent failed (declined, insufficient funds, etc.).",
       "retryable": false,
       "emittedBy": [
-        "charge-placement-fee",
         "save-provider-payment-method"
-      ]
-    },
-    {
-      "code": "charge_failed",
-      "httpStatus": 502,
-      "category": "integration",
-      "description": "Stripe charge call returned a non-success status due to a Stripe-side error.",
-      "retryable": true,
-      "emittedBy": [
-        "charge-placement-fee"
-      ]
-    },
-    {
-      "code": "stripe_payment_failed",
-      "httpStatus": 502,
-      "category": "integration",
-      "description": "Stripe API errored while creating or confirming a payment.",
-      "retryable": true,
-      "emittedBy": [
-        "charge-placement-fee",
-        "confirm-placement"
-      ]
-    },
-    {
-      "code": "facility_invoice_payment_failed",
-      "httpStatus": 502,
-      "category": "integration",
-      "description": "Invoice charge against the facility's saved method failed.",
-      "retryable": true,
-      "emittedBy": [
-        "confirm-placement",
-        "charge-placement-fee"
       ]
     },
     {
@@ -420,10 +336,9 @@
       "code": "case_create_failed",
       "httpStatus": 500,
       "category": "integration",
-      "description": "Database insert into placement_cases failed.",
+      "description": "Database insert into international_placement_cases failed.",
       "retryable": true,
       "emittedBy": [
-        "submit-placement-case",
         "submit-international-intake"
       ]
     },
@@ -450,34 +365,13 @@
       ]
     },
     {
-      "code": "lead_unlock_attribution_failed",
-      "httpStatus": 500,
-      "category": "integration",
-      "description": "Attempted to attribute a lead unlock to a facility but the database write failed.",
-      "retryable": true,
-      "emittedBy": [
-        "confirm-placement"
-      ]
-    },
-    {
-      "code": "unlock_rollback_failed",
-      "httpStatus": 500,
-      "category": "integration",
-      "description": "Compensating rollback of a lead unlock failed after a downstream error.",
-      "retryable": true,
-      "emittedBy": [
-        "confirm-placement"
-      ]
-    },
-    {
       "code": "email_sent",
       "httpStatus": 200,
       "category": "integration",
       "description": "Email was newly sent. Returned in success responses, not in error envelopes.",
       "retryable": false,
       "emittedBy": [
-        "send-provider-welcome-email",
-        "send-provider-welcome-offer-email"
+        "send-provider-welcome-email"
       ]
     },
     {
@@ -487,8 +381,7 @@
       "description": "Idempotency key matched a prior send; no new email was dispatched. Returned in success responses, not in error envelopes.",
       "retryable": false,
       "emittedBy": [
-        "send-provider-welcome-email",
-        "send-provider-welcome-offer-email"
+        "send-provider-welcome-email"
       ]
     },
     {
@@ -499,21 +392,16 @@
       "retryable": true,
       "emittedBy": [
         "send-provider-welcome-email",
-        "send-provider-welcome-offer-email",
-        "submit-placement-case",
         "submit-international-intake",
         "submit-concierge-intake",
         "save-placement-draft",
         "save-international-placement-draft",
-        "charge-placement-fee",
-        "confirm-placement",
         "delete-provider-account",
         "admin-delete-provider",
         "send-provider-support",
         "track-provider-event",
         "notify-admin-provider-signup",
-        "process-provider-drip",
-        "send-abandoned-placement-email"
+        "process-provider-drip"
       ]
     }
   ]

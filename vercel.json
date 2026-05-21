@@ -143,7 +143,7 @@
     },
     {
       "source": "/provider-signup",
-      "destination": "/auth/signup",
+      "destination": "/provider/onboarding",
       "statusCode": 301
     },
     {
@@ -173,7 +173,7 @@
     },
     {
       "source": "/provider/signup",
-      "destination": "/provider-signup",
+      "destination": "/provider/onboarding",
       "statusCode": 301
     },
     {
@@ -335,6 +335,281 @@
       "source": "/drug-rehab",
       "destination": "/drug-rehab-centers",
       "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/holistic",
+      "destination": "/treatment-types/holistic-therapy",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/signs-of-addiction",
+      "destination": "/resources/youth-addiction-warning-signs",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/what-to-expect-in-rehab",
+      "destination": "/resources/drug-withdrawal-symptoms-timeline",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/insurance-coverage-guide",
+      "destination": "/resources/insurance-appeal-rehab-denial",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/paying-for-rehab",
+      "destination": "/resources/how-much-does-rehab-cost-per-day",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/choosing-right-program",
+      "destination": "/resources/how-to-find-good-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/choosing-rehab-center",
+      "destination": "/resources/how-to-find-good-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/first-week-treatment",
+      "destination": "/resources/what-happens-after-detox",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/free-rehab-options",
+      "destination": "/free-rehab-options",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/inpatient-vs-outpatient",
+      "destination": "/resources/outpatient-vs-inpatient",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/intervention-guide",
+      "destination": "/resources/how-to-stage-an-intervention",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/php-vs-iop",
+      "destination": "/resources/php-vs-iop-vs-outpatient",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/questions-to-ask-rehab",
+      "destination": "/resources/questions-to-ask-before-rehab",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/rehab-success-rates",
+      "destination": "/resources/relapse-prevention",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/supporting-loved-one",
+      "destination": "/resources/how-to-help-loved-one",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/types-of-addiction-treatment",
+      "destination": "/resources/category/treatment",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/understanding-dual-diagnosis",
+      "destination": "/resources/dual-diagnosis-explained",
+      "statusCode": 301
+    },
+    {
+      "source": "/resources/what-to-expect-in-detox",
+      "destination": "/resources/detox-timeline",
+      "statusCode": 301
+    },
+    {
+      "source": "/ekra",
+      "destination": "/how-we-make-money",
+      "statusCode": 301
+    },
+    {
+      "source": "/how-we-work",
+      "destination": "/how-we-make-money",
+      "statusCode": 301
+    },
+    {
+      "source": "/transparency",
+      "destination": "/how-we-make-money",
+      "statusCode": 301
+    },
+    {
+      "source": "/our-business-model",
+      "destination": "/how-we-make-money",
+      "statusCode": 301
+    },
+    {
+      "source": "/signup/subscription",
+      "destination": "/provider/billing?signup=retry",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/holistic/:state",
+      "destination": "/treatment-types/holistic-therapy/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/dual-diagnosis/:state",
+      "destination": "/treatment-types/dual-diagnosis-treatment/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/dual-diagnosis/:state/:city",
+      "destination": "/treatment-types/dual-diagnosis-treatment/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/drug-addiction-treatment/:state",
+      "destination": "/treatment-types/drug-addiction/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/drug-addiction-treatment/:state/:city",
+      "destination": "/treatment-types/drug-addiction/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/alcohol-rehab/:state",
+      "destination": "/treatment-types/alcohol-rehabilitation/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/alcohol-rehab/:state/:city",
+      "destination": "/treatment-types/alcohol-rehabilitation/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/drug-rehab/:state",
+      "destination": "/treatment-types/drug-addiction/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/drug-rehab/:state/:city",
+      "destination": "/treatment-types/drug-addiction/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/inpatient-rehab/:state",
+      "destination": "/treatment-types/residential-inpatient/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/inpatient-rehab/:state/:city",
+      "destination": "/treatment-types/residential-inpatient/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/detox-centers/:state",
+      "destination": "/treatment-types/detox-programs/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment-types/detox-centers/:state/:city",
+      "destination": "/treatment-types/detox-programs/:state/:city",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/iop",
+      "destination": "/iop-programs",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/iop/:state",
+      "destination": "/iop-programs",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/php",
+      "destination": "/php-programs",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/php/:state",
+      "destination": "/php-programs",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/holistic-rehab/:state",
+      "destination": "/treatment-types/holistic-therapy/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/drug-rehab/:state",
+      "destination": "/treatment-types/drug-addiction/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/treatment/christian-rehab/:state",
+      "destination": "/treatment-types/faith-based-rehab/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/detox-centers-in-st.-louis",
+      "destination": "/detox-centers-in-st-louis",
+      "statusCode": 301
+    },
+    {
+      "source": "/alcohol-rehab-in-st.-paul",
+      "destination": "/alcohol-rehab-in-st-paul",
+      "statusCode": 301
+    },
+    {
+      "source": "/alcohol-rehab-in-st.-louis",
+      "destination": "/alcohol-rehab-in-st-louis",
+      "statusCode": 301
+    },
+    {
+      "source": "/alcohol-rehab-in-st.-charles",
+      "destination": "/alcohol-rehab-in-st-charles",
+      "statusCode": 301
+    },
+    {
+      "source": "/insurance/:carrier/missouri/st.-louis",
+      "destination": "/insurance/:carrier/missouri/st-louis",
+      "statusCode": 301
+    },
+    {
+      "source": "/insurance/:carrier/minnesota/st.-paul",
+      "destination": "/insurance/:carrier/minnesota/st-paul",
+      "statusCode": 301
+    },
+    {
+      "source": "/outpatient-near-me",
+      "destination": "/outpatient-rehab-near-me",
+      "statusCode": 301
+    },
+    {
+      "source": "/outpatient-near-me/:state",
+      "destination": "/outpatient-rehab-near-me/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/outpatient-near-me/:state/:loc",
+      "destination": "/outpatient-rehab-near-me/:state/:loc",
+      "statusCode": 301
+    },
+    {
+      "source": "/dual-diagnosis-rehab-near-me",
+      "destination": "/dual-diagnosis-near-me",
+      "statusCode": 301
+    },
+    {
+      "source": "/dual-diagnosis-rehab-near-me/:state",
+      "destination": "/dual-diagnosis-near-me/:state",
+      "statusCode": 301
+    },
+    {
+      "source": "/dual-diagnosis-rehab-near-me/:state/:loc",
+      "destination": "/dual-diagnosis-near-me/:state/:loc",
+      "statusCode": 301
     }
   ],
   "buildCommand": "npm run build:vercel",
@@ -393,8 +668,22 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=3600, stale-while-revalidate=86400"
+          "value": "public, max-age=60, s-maxage=3600, stale-while-revalidate=3600"
         }
+      ]
+    },
+    {
+      "source": "/apple-app-site-association",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    },
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
       ]
     }
   ]

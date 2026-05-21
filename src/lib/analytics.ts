@@ -12,6 +12,8 @@
 
 const FLUSH_INTERVAL_MS = 5_000;
 const BATCH_MAX_EVENTS = 25;
+import { supabase } from "@/integrations/supabase/client";
+
 const QUEUE_HARD_CAP = 200;
 const SESSION_KEY = "rl_session_id";
 
@@ -223,27 +225,23 @@ export const analytics = {
     const assetExtension = extMatch ? `.${extMatch[1].toLowerCase()}` : null;
     const requestKind =
       assetExtension && assetExtension !== ".html" ? "static_asset" : "spa_route";
-    import("@/integrations/supabase/client")
-      .then(({ supabase }) => {
-        supabase.functions
-          .invoke("log-not-found", {
-            body: {
-              path,
-              search: search || null,
-              referrer: referrer || null,
-              viewport: viewport || null,
-              userId: userId || null,
-              sessionId: sessionId || null,
-              httpMethod: httpMethod || "GET",
-              hash: hash || null,
-              fullUrl: fullUrl || null,
-              requestKind,
-              assetExtension,
-            },
-          })
-          .catch(() => { /* fire-and-forget */ });
+    supabase.functions
+      .invoke("log-not-found", {
+        body: {
+          path,
+          search: search || null,
+          referrer: referrer || null,
+          viewport: viewport || null,
+          userId: userId || null,
+          sessionId: sessionId || null,
+          httpMethod: httpMethod || "GET",
+          hash: hash || null,
+          fullUrl: fullUrl || null,
+          requestKind,
+          assetExtension,
+        },
       })
-      .catch(() => { /* ignore */ });
+      .catch(() => { /* fire-and-forget */ });
   },
   notFoundSearchSubmit: (p: {
     location?: string;
@@ -256,25 +254,21 @@ export const analytics = {
     userId?: string | null;
   }) => {
     if (typeof window === "undefined") return;
-    import("@/integrations/supabase/client")
-      .then(({ supabase }) => {
-        supabase.functions
-          .invoke("log-not-found-search", {
-            body: {
-              eventKind: "submit",
-              location: p.location || null,
-              treatment: p.treatment || null,
-              insurance: p.insurance || null,
-              sourcePath: p.sourcePath || null,
-              referrer: p.referrer || null,
-              viewport: p.viewport || null,
-              sessionId: p.sessionId || null,
-              userId: p.userId || null,
-            },
-          })
-          .catch(() => { /* fire-and-forget */ });
+    supabase.functions
+      .invoke("log-not-found-search", {
+        body: {
+          eventKind: "submit",
+          location: p.location || null,
+          treatment: p.treatment || null,
+          insurance: p.insurance || null,
+          sourcePath: p.sourcePath || null,
+          referrer: p.referrer || null,
+          viewport: p.viewport || null,
+          sessionId: p.sessionId || null,
+          userId: p.userId || null,
+        },
       })
-      .catch(() => { /* ignore */ });
+      .catch(() => { /* fire-and-forget */ });
   },
   notFoundSearchZeroResults: (p: {
     location?: string;
@@ -288,26 +282,22 @@ export const analytics = {
     userId?: string | null;
   }) => {
     if (typeof window === "undefined") return;
-    import("@/integrations/supabase/client")
-      .then(({ supabase }) => {
-        supabase.functions
-          .invoke("log-not-found-search", {
-            body: {
-              eventKind: "zero_results",
-              location: p.location || null,
-              treatment: p.treatment || null,
-              insurance: p.insurance || null,
-              resultsCount: p.resultsCount,
-              sourcePath: p.sourcePath || null,
-              referrer: p.referrer || null,
-              viewport: p.viewport || null,
-              sessionId: p.sessionId || null,
-              userId: p.userId || null,
-            },
-          })
-          .catch(() => { /* fire-and-forget */ });
+    supabase.functions
+      .invoke("log-not-found-search", {
+        body: {
+          eventKind: "zero_results",
+          location: p.location || null,
+          treatment: p.treatment || null,
+          insurance: p.insurance || null,
+          resultsCount: p.resultsCount,
+          sourcePath: p.sourcePath || null,
+          referrer: p.referrer || null,
+          viewport: p.viewport || null,
+          sessionId: p.sessionId || null,
+          userId: p.userId || null,
+        },
       })
-      .catch(() => { /* ignore */ });
+      .catch(() => { /* fire-and-forget */ });
   },
 
   viewSubscriptionPlan: (planId: string, planName: string, price: number) =>
@@ -347,49 +337,11 @@ export const analytics = {
     enqueue("promo_applied", { promo: promoCode, discount, plan_id: planId }, "subscription"),
   checkoutAbandoned: (planId: string, planName: string, price: number) =>
     enqueue("subscription_abandon", { plan_id: planId, plan_name: planName, price }, "subscription"),
-  beginCreditPurchase: (amountCents: number, facilityId: string) =>
-    enqueue("credit_purchase_begin", { amount_cents: amountCents, facility_id: facilityId }, "credits"),
-  creditPurchaseComplete: (amountCents: number) =>
-    enqueue("credit_purchase_complete", { amount_cents: amountCents }, "credits"),
-  leadUnlocked: (
-    leadId: string,
-    facilityId: string,
-    priceCents: number,
-    paymentMethod: string,
-    discountApplied?: boolean,
-  ) =>
-    enqueue(
-      "lead_unlocked",
-      {
-        lead_id: leadId,
-        facility_id: facilityId,
-        price_cents: priceCents,
-        method: paymentMethod,
-        discount: !!discountApplied,
-      },
-      "lead",
-    ),
   conciergeIntakeSubmitted: () => enqueue("concierge_intake_submitted", undefined, "concierge"),
   beginInternationalCheckout: (country: string) =>
     enqueue("international_checkout_begin", { country }, "international"),
   internationalPaymentComplete: (sessionId: string) =>
     enqueue("international_payment_complete", { session: sessionId }, "international"),
-  placementFeeCharged: (
-    facilityId: string,
-    amountCents: number,
-    caseId: string,
-    isInternational?: boolean,
-  ) =>
-    enqueue(
-      "placement_fee_charged",
-      {
-        facility_id: facilityId,
-        amount_cents: amountCents,
-        case_id: caseId,
-        international: !!isInternational,
-      },
-      "placement",
-    ),
   signupComplete: (role: "seeker" | "provider", method: string) =>
     enqueue("signup_complete", { role, method }, "auth"),
   loginComplete: (role: string, method: string) =>

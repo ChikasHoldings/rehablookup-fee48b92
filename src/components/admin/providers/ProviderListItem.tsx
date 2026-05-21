@@ -79,7 +79,6 @@ export type ProSubscription = {
   id: string;
   facility_id: string;
   status: string;
-  unlock_discount_percent: number;
   current_period_end: string | null;
 };
 
@@ -174,8 +173,33 @@ export function getStatusBadge(provider: Facility) {
   if (provider.status === "approved") {
     return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1"><CheckCircle className="h-3 w-3" />Approved</Badge>;
   }
-  if (provider.status === "pending") {
-    return <Badge variant="secondary" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-200"><Clock className="h-3 w-3" />Pending</Badge>;
+  if (provider.status === "pending" || provider.status === "pending_review") {
+    // SLA-aware badge — show the wait time on pending facilities so
+    // admin scanning the list can spot ones that have been sitting
+    // too long. <24h: green; <7d: amber; ≥7d: red.
+    const waitHours = provider.created_at
+      ? Math.floor((Date.now() - new Date(provider.created_at).getTime()) / 3_600_000)
+      : 0;
+    let waitLabel = "";
+    let waitClass = "";
+    if (waitHours >= 24 * 7) {
+      waitLabel = `${Math.floor(waitHours / 24)}d`;
+      waitClass = "text-red-600 font-semibold";
+    } else if (waitHours >= 24) {
+      waitLabel = `${Math.floor(waitHours / 24)}d`;
+      waitClass = "text-amber-600 font-medium";
+    } else if (waitHours >= 1) {
+      waitLabel = `${waitHours}h`;
+      waitClass = "text-amber-700/70";
+    }
+    return (
+      <Badge variant="secondary" className="gap-1 bg-amber-500/10 text-amber-600 border-amber-200">
+        <Clock className="h-3 w-3" />Pending
+        {waitLabel && (
+          <span className={waitClass} title={`Submitted ${waitHours}h ago`}>· {waitLabel}</span>
+        )}
+      </Badge>
+    );
   }
   return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Rejected</Badge>;
 }

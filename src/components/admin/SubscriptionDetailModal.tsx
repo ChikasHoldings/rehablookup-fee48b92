@@ -1,4 +1,4 @@
-import { useState, forwardRef } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
@@ -45,7 +45,6 @@ import {
   AlertCircle,
   Calendar,
   DollarSign,
-  User,
   Building,
   Mail,
   MoreVertical,
@@ -71,8 +70,6 @@ type EnrichedSubscription = {
   facility_name: string;
   facility_city?: string;
   facility_state?: string;
-  leads_used: number;
-  location_limit: number;
   subscription_id?: string;
   pause_collection?: { behavior: string } | null;
 };
@@ -213,14 +210,20 @@ export function SubscriptionDetailModal({
   const [confirmAction, setConfirmAction] = useState<"cancel" | "cancel_immediately" | "pause" | "resume" | "reactivate" | null>(null);
   const [cancelReason, setCancelReason] = useState("");
 
-  const { data: details, isLoading, refetch } = useQuery({
+  const { data: details, isLoading, refetch, isError } = useQuery({
     queryKey: ["subscription-detail", subscription?.customer_email],
     queryFn: async () => {
       if (!subscription?.customer_email) return null;
       const { data, error } = await supabase.functions.invoke("get-provider-subscription", {
         body: { providerEmail: subscription.customer_email },
       });
+      // Edge fn can return 200 + { error: "..." } as payload — check both
+      // paths so isError reflects DB truth and a Stripe API failure
+      // doesn't render as a half-loaded modal with empty tabs.
       if (error) throw error;
+      if (data && typeof data === "object" && "error" in data && (data as { error: unknown }).error) {
+        throw new Error(String((data as { error: unknown }).error));
+      }
       return data as SubscriptionDetail;
     },
     enabled: open && !!subscription?.customer_email,
@@ -235,6 +238,9 @@ export function SubscriptionDetailModal({
         body: { action, subscriptionId, reason },
       });
       if (error) throw error;
+      if (data && typeof data === "object" && "error" in data && (data as { error: unknown }).error) {
+        throw new Error(String((data as { error: unknown }).error));
+      }
       return data;
     },
     onSuccess: (data) => {
@@ -378,6 +384,16 @@ export function SubscriptionDetailModal({
                       <Skeleton className="h-20 sm:h-24 w-full" />
                       <Skeleton className="h-20 sm:h-24 w-full" />
                     </div>
+                  ) : isError ? (
+                    <div className="flex items-center justify-between gap-3 p-4 rounded-lg border border-destructive/30 bg-destructive/5" role="alert">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+                        <p className="text-sm text-destructive">
+                          Failed to load Stripe details. Subscription summary is shown below from cached data.
+                        </p>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
+                    </div>
                   ) : (
                     <>
                       {/* Status Alerts */}
@@ -414,7 +430,7 @@ export function SubscriptionDetailModal({
                       )}
 
                       {/* Subscription Info */}
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-4">
                           <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
                             <div className="p-2 rounded-full bg-primary/10">
@@ -458,18 +474,6 @@ export function SubscriptionDetailModal({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-                            <div className="p-2 rounded-full bg-warning/10">
-                              <User className="h-5 w-5 text-warning" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Leads Unlocked This Month</p>
-                              <p className="font-medium">{subscription.leads_used}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Up to {subscription.location_limit} facilities
-                              </p>
-                            </div>
-                          </div>
                         </div>
                       </div>
 
@@ -479,7 +483,7 @@ export function SubscriptionDetailModal({
                           <Mail className="h-4 w-4" />
                           Customer Details
                         </h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-muted-foreground">Email</p>
                             <p className="font-medium">{subscription.customer_email}</p>

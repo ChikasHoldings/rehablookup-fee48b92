@@ -72,7 +72,7 @@ export function InternationalBanner() {
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Globe className="h-4 w-4 shrink-0 hidden sm:block" />
           <p className="text-sm font-medium truncate">
-            Outside the U.S.? Get private placement into top American rehabs.
+            Outside the U.S.? Talk to a coordinator about US treatment options.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export function InternationalBanner() {
             variant="secondary"
             className="h-7 text-xs font-semibold whitespace-nowrap"
           >
-            <Link to="/international">Find US Treatment</Link>
+            <Link to="/concierge">Talk to a Coordinator</Link>
           </Button>
 
           <button

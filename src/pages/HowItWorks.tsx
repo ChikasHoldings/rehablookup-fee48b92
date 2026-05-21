@@ -22,6 +22,7 @@ import step1Image from "@/assets/how-it-works/step-1-search.png";
 import step2Image from "@/assets/how-it-works/step-2-compare.png";
 import step3Image from "@/assets/how-it-works/step-3-connect.png";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 const steps = [
   {
@@ -138,29 +139,37 @@ const HowItWorks = () => {
           }
         ]}
       />
-      {/* Hero - Compact navy header matching About page */}
-      <section className="bg-primary py-10 px-4 md:py-14 md:px-6 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
-        </div>
-        
-        <div className="container relative">
+      {/* Hero — HOW IT WORKS. Smaller than State hero per the brief.
+          Distinct from About (mission/heart) with a procedural / step-
+          by-step palette (slate→primary cool). */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/65">
+        <img
+          src={TOPIC_HERO_IMAGES.process}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
+
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "How It Works" },
-            ]}
-          /><div className="mx-auto max-w-2xl text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm border border-white/10">
-              <CheckCircle className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Simple 3-Step Process</span>
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
+            items={[{ label: "How It Works" }]}
+          />
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+              <CheckCircle className="h-3 w-3" />
+              Simple 3-Step Process
             </div>
-            <h1 className="mb-3 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl">
+            <h1 className="mb-2 font-display text-2xl font-bold text-white md:text-3xl lg:text-4xl">
               How It Works
             </h1>
-            <p className="text-base text-primary-foreground/80 leading-relaxed md:text-lg max-w-xl mx-auto">
-              Finding the right addiction treatment center is simple, confidential, and free.
+            <p className="text-sm md:text-base text-white/80 max-w-xl mx-auto">
+              Finding the right addiction treatment center — simple, confidential, free.
             </p>
           </div>
         </div>

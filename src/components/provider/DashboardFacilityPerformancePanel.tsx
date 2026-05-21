@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { useProviderFacilities, type ProviderFacility } from "@/hooks/useProviderFacilities";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -40,27 +41,22 @@ function useFacilityPerformanceMetrics(facilityId: string | undefined) {
         .eq("id", facilityId)
         .single();
 
-      // Fetch leads — bounded to prevent unbounded scans on large providers
-      const { data: leads } = await supabase
-        .from("leads_provider_view")
-        .select("id, status, created_at, is_unlocked, provider_response_status")
-        .eq("facility_id", facilityId)
-        .limit(2000);
-
-      // Fetch unlocks — bounded
-      const { data: unlocks } = await supabase
-        .from("lead_unlocks")
-        .select("lead_id, created_at")
+      // Fetch leads — bounded to prevent unbounded scans on large providers.
+      // EKRA flat-fee: every lead is "unlocked" to the facility owner; the
+      // pay-per-unlock model is retired so "unlocked" now means "responded
+      // to" (the meaningful conversion signal for analytics).
+      const { data: leads } = await fromLeadsProviderView()
+        .select("id, status, created_at, provider_response_status")
         .eq("facility_id", facilityId)
         .limit(2000);
 
       const allLeads = leads || [];
-      const allUnlocks = unlocks || [];
-      const leadsReceived = allLeads.length;
-      const leadsUnlocked = allUnlocks.length;
-      const contactAttempts = allLeads.filter(
+      const respondedLeads = allLeads.filter(
         l => l.provider_response_status && l.provider_response_status !== "pending"
-      ).length;
+      );
+      const leadsReceived = allLeads.length;
+      const leadsUnlocked = respondedLeads.length;
+      const contactAttempts = respondedLeads.length;
       const conversionRate = leadsReceived > 0
         ? Math.round((leadsUnlocked / leadsReceived) * 100)
         : 0;
@@ -83,8 +79,9 @@ function useFacilityPerformanceMetrics(facilityId: string | undefined) {
           return d >= weekStart && d < weekEnd;
         }).length;
 
-        const weekUnlocked = allUnlocks.filter(u => {
-          const d = new Date(u.created_at);
+        // "unlocked" repurposed to mean "responded to" in the flat-fee model.
+        const weekUnlocked = respondedLeads.filter(l => {
+          const d = new Date(l.created_at);
           return d >= weekStart && d < weekEnd;
         }).length;
 
@@ -108,30 +105,39 @@ function useFacilityPerformanceMetrics(facilityId: string | undefined) {
 }
 
 function useAllFacilitiesComparison(facilityIds: string[]) {
+  const sortedIds = facilityIds.slice().sort();
+  const idsKey = sortedIds.join(",");
   return useQuery({
-    queryKey: ["facilities-comparison", facilityIds],
+    queryKey: ["facilities-comparison", idsKey],
     queryFn: async () => {
-      if (!facilityIds.length) return [];
+      if (!sortedIds.length) return [];
 
       const results = await Promise.all(
-        facilityIds.map(async fid => {
-          const [{ data: facility }, { data: leads }, { data: unlocks }] = await Promise.all([
+        sortedIds.map(async fid => {
+          const [{ data: facility }, { data: leads }] = await Promise.all([
             supabase.from("facilities").select("name").eq("id", fid).single(),
-            supabase.from("leads_provider_view").select("id").eq("facility_id", fid).limit(2000),
-            supabase.from("lead_unlocks").select("lead_id").eq("facility_id", fid).limit(2000),
+            fromLeadsProviderView()
+              .select("id, provider_response_status")
+              .eq("facility_id", fid)
+              .limit(2000),
           ]);
           const name = facility?.name || "Unknown";
           const shortName = name.length > 16 ? name.slice(0, 14) + "…" : name;
+          // EKRA flat-fee: "unlocked" repurposed to "responded to".
+          const respondedCount = (leads || []).filter(
+            (l: { provider_response_status?: string | null }) =>
+              l.provider_response_status && l.provider_response_status !== "pending"
+          ).length;
           return {
             name: shortName,
             leads: (leads || []).length,
-            unlocked: (unlocks || []).length,
+            unlocked: respondedCount,
           };
         })
       );
       return results.sort((a, b) => b.leads - a.leads);
     },
-    enabled: facilityIds.length > 1,
+    enabled: sortedIds.length > 1,
     staleTime: 1000 * 60 * 5,
     retry: 2,
   });
@@ -177,7 +183,7 @@ export function DashboardFacilityPerformancePanel({ isPro }: DashboardFacilityPe
               className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md"
               asChild
             >
-              <Link to="/provider/pro-upgrade">
+              <Link to="/provider/billing">
                 <Crown className="h-3.5 w-3.5 mr-1.5" />
                 Upgrade to Pro
               </Link>
@@ -190,7 +196,7 @@ export function DashboardFacilityPerformancePanel({ isPro }: DashboardFacilityPe
               <span className="text-sm font-semibold">Facility Performance</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {["Leads Received", "Leads Unlocked", "Conversion Rate", "Contact Attempts"].map(t => (
+              {["Leads Received", "Leads Responded", "Conversion Rate", "Contact Attempts"].map(t => (
                 <div key={t} className="rounded-md border p-2.5">
                   <p className="text-xs text-muted-foreground">{t}</p>
                   <p className="text-lg font-bold text-foreground mt-1">--</p>
@@ -244,8 +250,8 @@ export function DashboardFacilityPerformancePanel({ isPro }: DashboardFacilityPe
             {/* KPI cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <MiniKPI icon={MessageSquare} label="Leads Received" value={metrics.leadsReceived} color="blue" />
-              <MiniKPI icon={Eye} label="Leads Unlocked" value={metrics.leadsUnlocked} color="primary" />
-              <MiniKPI icon={Target} label="Conversion Rate" value={`${metrics.conversionRate}%`} color="emerald" />
+              <MiniKPI icon={Eye} label="Leads Responded" value={metrics.leadsUnlocked} color="primary" />
+              <MiniKPI icon={Target} label="Response Rate" value={`${metrics.conversionRate}%`} color="emerald" />
               <MiniKPI icon={Phone} label="Contact Attempts" value={metrics.contactAttempts} color="purple" />
             </div>
 
@@ -271,7 +277,7 @@ export function DashboardFacilityPerformancePanel({ isPro }: DashboardFacilityPe
                         }}
                       />
                       <Line type="monotone" dataKey="leads" name="Leads" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
-                      <Line type="monotone" dataKey="unlocked" name="Unlocked" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="unlocked" name="Responded" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -304,13 +310,13 @@ export function DashboardFacilityPerformancePanel({ isPro }: DashboardFacilityPe
                     }}
                   />
                   <Bar dataKey="leads" name="Leads" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={12} />
-                  <Bar dataKey="unlocked" name="Unlocked" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} barSize={12} />
+                  <Bar dataKey="unlocked" name="Responded" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} barSize={12} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="flex items-center justify-center gap-4 mt-1">
               <LegendDot color="hsl(var(--primary))" label="Leads" />
-              <LegendDot color="hsl(142, 71%, 45%)" label="Unlocked" />
+              <LegendDot color="hsl(142, 71%, 45%)" label="Responded" />
             </div>
           </div>
         )}

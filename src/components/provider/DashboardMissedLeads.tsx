@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { AVG_REVENUE_PER_LEAD_DOLLARS } from "@/lib/leadValuation";
 
 interface DashboardMissedLeadsProps {
   facilityId: string;
@@ -30,12 +32,11 @@ export function DashboardMissedLeads({ facilityId, isPro }: DashboardMissedLeads
     queryFn: async (): Promise<MissedLead[]> => {
       if (!facilityId) return [];
 
-      // Get leads that expired or were redistributed without being unlocked
-      const { data, error } = await supabase
-        .from("leads_provider_view")
-        .select("id, created_at, urgency, level_of_care, location_city_state, insurance_type, is_unlocked, status")
+      // Leads the provider never engaged with before they expired or were closed.
+      const { data, error } = await fromLeadsProviderView()
+        .select("id, created_at, urgency, level_of_care, location_city_state, insurance_type, status")
         .eq("facility_id", facilityId)
-        .eq("is_unlocked", false)
+        .is("provider_responded_at", null)
         .in("status", ["expired", "closed"])
         .order("created_at", { ascending: false })
         .limit(5);
@@ -49,12 +50,29 @@ export function DashboardMissedLeads({ facilityId, isPro }: DashboardMissedLeads
   });
 
   if (isLoading) {
-    return <Skeleton className="h-32 rounded-lg" />;
+    return (
+      <Card className="border-destructive/20 bg-destructive/[0.02]">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+            <Skeleton className="h-5 w-14 rounded-md" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-12 rounded-md" />
+            <Skeleton className="h-12 rounded-md" />
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!missedLeads.length) return null;
 
-  const estimatedRevenueLost = missedLeads.length * 5000;
+  const estimatedRevenueLost = missedLeads.length * AVG_REVENUE_PER_LEAD_DOLLARS;
 
   return (
     <Card className="border-destructive/30 bg-destructive/[0.03]">
@@ -138,16 +156,16 @@ export function DashboardMissedLeads({ facilityId, isPro }: DashboardMissedLeads
               You missed this lead — Pro providers get priority
             </p>
             <p className="text-[11px] text-muted-foreground mb-2.5">
-              Pro members get first access to every lead + 20% off every unlock. Don't let another opportunity slip away.
+              Pro subscribers receive every qualified lead with full contact details. Don't let another opportunity slip away.
             </p>
             <Button
               size="sm"
               className="h-7 text-xs bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white"
               asChild
             >
-              <Link to="/provider/pro-upgrade">
+              <Link to="/provider/billing">
                 <Crown className="h-3 w-3 mr-1" />
-                Upgrade to Pro — $399/mo
+                Upgrade to Pro
               </Link>
             </Button>
           </div>

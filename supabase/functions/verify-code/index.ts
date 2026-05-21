@@ -1,68 +1,105 @@
+// ============================================================================
+// verify-code v2.1.0
+// ----------------------------------------------------------------------------
+// Validates a 6-digit email verification OTP scoped by purpose. On signup
+// success, marks auth.users.email_confirmed_at server-side so the user can
+// sign in with password without clicking any magic link.
+//
+// Body: { email, code, purpose? = 'signup' }
+// Legacy callers that don't send purpose still work via a fallback lookup
+// that ignores the purpose filter — a WARN log surfaces those calls so
+// they can be cleaned up.
+// ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
-import { checkRateLimit, logRateLimitAttempt, rateLimitResponse } from "../_shared/rate-limit.ts";
+
+const VERSION = "2.2.0";
+const MAX_ATTEMPTS = 5;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-interface VerifyRequest {
-  email: string;
-  code: string;
+const json = (status: number, body: Record<string, unknown>) =>
+  new Response(JSON.stringify({ ...body, _version: VERSION }), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const log = (level: "INFO" | "WARN" | "ERROR", msg: string, details?: unknown) => {
+  const d = details ? ` | ${JSON.stringify(details)}` : "";
+  console.log(`[VERIFY-CODE] [${VERSION}] [${level}] ${msg}${d}`);
+};
+
+async function markAuthUserConfirmed(
+  svc: ReturnType<typeof createClient>,
+  email: string,
+) {
+  try {
+    // deno-lint-ignore no-explicit-any
+    const { data, error } = await (svc.auth.admin as any).listUsers({
+      filter: `email.eq.${email}`,
+      perPage: 1,
+    });
+    if (error) {
+      log("WARN", "listUsers failed", { error: error.message });
+      return;
+    }
+    // deno-lint-ignore no-explicit-any
+    const users = (data as any)?.users ?? [];
+    const user = users.find((u: { email?: string }) => u.email?.toLowerCase() === email);
+    if (!user) return;
+    if (!user.email_confirmed_at) {
+      const { error: updErr } = await svc.auth.admin.updateUserById(user.id, {
+        email_confirm: true,
+      });
+      if (updErr) log("WARN", "updateUserById email_confirm failed", { error: updErr.message });
+    }
+    // ALSO mark profiles.email_verified_at — wizard's source of truth for
+    // downstream steps. The auth-level email_confirmed_at flag is now set
+    // upfront by register-provider-account v1.2.0 (it's just the "may sign
+    // in with password" flag); profile-level email_verified_at is the
+    // post-OTP gate. Match by user_id to handle multi-account-per-email
+    // edge cases cleanly.
+    const { error: profErr } = await svc
+      .from("profiles")
+      .update({ email_verified_at: new Date().toISOString() })
+      .eq("user_id", user.id)
+      .is("email_verified_at", null);
+    if (profErr) log("WARN", "profiles.email_verified_at update failed", { error: profErr.message });
+  } catch (e) {
+    log("WARN", "markAuthUserConfirmed threw", { error: String(e) });
+  }
 }
 
-const MAX_ATTEMPTS = 5;
-
-const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { email, code }: VerifyRequest = await req.json();
+    let body: { email?: string; code?: string; purpose?: string };
+    try { body = await req.json(); } catch { return json(400, { error: "Invalid JSON" }); }
 
-    if (!email || !code) {
-      return new Response(
-        JSON.stringify({ error: "Email and code are required" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
+    const email = String(body.email ?? "").trim().toLowerCase();
+    const code = String(body.code ?? "").trim();
+    const purpose = String(body.purpose ?? "signup");
 
-    const normalizedEmail = email.toLowerCase().trim();
-    const normalizedCode = code.toString().trim();
+    if (!email || !code) return json(400, { error: "Email and code are required" });
+    if (!/^\d{6}$/.test(code)) return json(400, { error: "Code must be 6 digits" });
 
-    // Validate code format (6 digits)
-    if (!/^\d{6}$/.test(normalizedCode)) {
-      return new Response(
-        JSON.stringify({ error: "Code must be 6 digits" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Rate limiting: max 10 code verification attempts per email per 15 minutes
-    const rateLimitResult = await checkRateLimit(supabase, {
-      identifier: `email:${normalizedEmail}`,
-      actionType: 'verify_code',
-      maxAttempts: 10,
-      windowMinutes: 15,
-    });
-    if (!rateLimitResult.allowed) {
-      return rateLimitResponse(corsHeaders);
-    }
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const svc = createClient(SUPABASE_URL, SUPABASE_SRK);
 
     const now = new Date().toISOString();
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    // First check if email was already verified recently (handle retries/double-clicks gracefully)
-    // Use verified_at to distinguish actual verifications from invalidated codes
-    const { data: recentlyVerified, error: recentlyVerifiedError } = await supabase
+    // Idempotency: already verified within 24h for THIS purpose.
+    const { data: recent } = await svc
       .from("email_verification_codes")
-      .select("id, verified, created_at, verified_at")
-      .eq("email", normalizedEmail)
+      .select("id, verified_at")
+      .eq("email", email)
+      .eq("purpose", purpose)
       .eq("verified", true)
       .not("verified_at", "is", null)
       .gte("verified_at", twentyFourHoursAgo)
@@ -70,112 +107,81 @@ const handler = async (req: Request): Promise<Response> => {
       .limit(1)
       .maybeSingle();
 
-    if (!recentlyVerifiedError && recentlyVerified) {
-      console.log(`Email already verified (retry detected): ${normalizedEmail}`);
-      return new Response(
-        JSON.stringify({ success: true, verified: true, alreadyVerified: true }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    if (recent) {
+      log("INFO", "already verified within 24h (idempotent)");
+      if (purpose === "signup") await markAuthUserConfirmed(svc, email);
+      return json(200, { success: true, verified: true, alreadyVerified: true });
     }
 
-    // Find the MOST RECENT unverified, unexpired code for this email
-    const { data: verificationRecord, error: fetchError } = await supabase
+    let rec: { id: string; code: string; attempts: number } | null = null;
+    const { data: scoped, error: fetchErr } = await svc
       .from("email_verification_codes")
-      .select("id, code, attempts, expires_at, created_at")
-      .eq("email", normalizedEmail)
+      .select("id, code, attempts")
+      .eq("email", email)
+      .eq("purpose", purpose)
       .eq("verified", false)
       .gt("expires_at", now)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (fetchError) {
-      console.error("Error fetching verification code:", fetchError);
-      return new Response(
-        JSON.stringify({ error: "Failed to verify code. Please try again." }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    if (fetchErr) {
+      log("ERROR", "fetch failed", { error: fetchErr.message });
+      return json(500, { error: "Failed to verify code. Please try again." });
+    }
+    if (scoped) {
+      rec = scoped as typeof rec;
+    } else {
+      // Tolerate clients that didn't pass purpose yet — fall back to any-purpose
+      // lookup for legacy compatibility. Logs surface the fallback so we can
+      // clean it up once all callers send purpose.
+      const { data: legacy } = await svc
+        .from("email_verification_codes")
+        .select("id, code, attempts")
+        .eq("email", email)
+        .eq("verified", false)
+        .gt("expires_at", now)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!legacy) return json(400, { error: "Invalid or expired verification code. Please request a new code." });
+      log("WARN", "legacy code matched without purpose filter", { purpose });
+      rec = legacy as typeof rec;
     }
 
-    // No valid code found - use consistent error message to prevent email enumeration
-    // This prevents attackers from determining if an email exists in the system
-    if (!verificationRecord) {
-      // Log internally for debugging but return generic message
-      console.log(`No valid verification code found for email: ${normalizedEmail.substring(0, 3)}***`);
-      
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired verification code. Please request a new code." }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
+    if (!rec) return json(400, { error: "Invalid or expired verification code." });
 
-    // Check attempt limit
-    const attempts = verificationRecord.attempts || 0;
+    const attempts = rec.attempts || 0;
     if (attempts >= MAX_ATTEMPTS) {
-      // Mark code as expired due to too many attempts
-      await supabase
-        .from("email_verification_codes")
-        .update({ expires_at: new Date().toISOString() })
-        .eq("id", verificationRecord.id);
-
-      return new Response(
-        JSON.stringify({ error: "Too many incorrect attempts. Please request a new code." }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      await svc.from("email_verification_codes").update({ expires_at: new Date().toISOString() }).eq("id", rec.id);
+      return json(400, { error: "Too many incorrect attempts. Please request a new code." });
     }
 
-    // Compare codes (string comparison)
-    if (verificationRecord.code !== normalizedCode) {
-      // Increment attempt count
-      await supabase
-        .from("email_verification_codes")
-        .update({ attempts: attempts + 1 })
-        .eq("id", verificationRecord.id);
-
-      const remainingAttempts = MAX_ATTEMPTS - attempts - 1;
-      const errorMessage = remainingAttempts > 0
-        ? `Invalid code. ${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining.`
+    if (rec.code !== code) {
+      await svc.from("email_verification_codes").update({ attempts: attempts + 1 }).eq("id", rec.id);
+      const remaining = MAX_ATTEMPTS - attempts - 1;
+      const msg = remaining > 0
+        ? `Invalid code. ${remaining} attempt${remaining === 1 ? "" : "s"} remaining.`
         : "Invalid code. Too many incorrect attempts. Please request a new code.";
-
-      // Log without exposing codes for security
-      console.log(`Invalid code attempt for ${normalizedEmail.substring(0, 3)}***: attempt ${attempts + 1}/${MAX_ATTEMPTS}`);
-
-      return new Response(
-        JSON.stringify({ error: errorMessage }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      log("INFO", `invalid code attempt ${attempts + 1}/${MAX_ATTEMPTS}`);
+      return json(400, { error: msg });
     }
 
-    // Code matches! Mark as verified with timestamp
-    const { error: updateError } = await supabase
+    const { error: updErr } = await svc
       .from("email_verification_codes")
-      .update({ 
-        verified: true,
-        verified_at: new Date().toISOString() // Track actual verification time
-      })
-      .eq("id", verificationRecord.id);
-
-    if (updateError) {
-      console.error("Error marking code as verified:", updateError);
-      return new Response(
-        JSON.stringify({ error: "Failed to verify code. Please try again." }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      .update({ verified: true, verified_at: new Date().toISOString() })
+      .eq("id", rec.id);
+    if (updErr) {
+      log("ERROR", "mark verified failed", { error: updErr.message });
+      return json(500, { error: "Failed to verify code. Please try again." });
     }
 
-    console.log(`Email verified successfully: ${normalizedEmail}`);
+    if (purpose === "signup") await markAuthUserConfirmed(svc, email);
 
-    return new Response(
-      JSON.stringify({ success: true, verified: true }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
-  } catch (error: any) {
-    console.error("Error in verify-code:", error);
-    return new Response(
-      JSON.stringify({ error: error.message || "Failed to verify code" }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    log("INFO", `verified ${email.substring(0, 3)}*** (${purpose})`);
+    return json(200, { success: true, verified: true });
+  } catch (e) {
+    log("ERROR", "unhandled", { error: e instanceof Error ? e.message : String(e) });
+    return json(500, { error: e instanceof Error ? e.message : "Failed to verify code" });
   }
-};
-
-Deno.serve(handler);
+});

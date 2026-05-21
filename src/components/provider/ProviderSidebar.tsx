@@ -4,21 +4,20 @@ import {
   LayoutDashboard, 
   Building2, 
   Users, 
-  Wallet, 
   Settings,
   BarChart3,
   Sparkles,
   Star,
-  Network,
   HelpCircle,
+  Megaphone,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
-import { useProviderCredits } from "@/hooks/useProviderCredits";
 import { useProStatus } from "@/hooks/useProStatus";
 import { usePendingConciergeCount } from "@/hooks/usePendingConciergeCount";
-import { usePendingInternationalCount } from "@/hooks/usePendingInternationalCount";
+// usePendingInternationalCount retired 2026-05-20 — paid international placement product wound down.
 import { usePendingInquiriesCount } from "@/hooks/usePendingInquiriesCount";
 import { prefetchRoute } from "@/lib/routePrefetch";
 
@@ -26,14 +25,19 @@ interface ProviderSidebarProps {
   onNavigate?: () => void;
 }
 
+// Subscription and Marketing are surfaced as distinct nav entries so
+// providers don't conflate the foundational plan (Free/Pro) with the
+// growth tools (Featured/Concierge). Wallet/Network/legacy entries
+// removed; the canonical surfaces are /provider/subscription and
+// /provider/marketing.
 const navItems = [
   { href: "/provider/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/provider/inquiries", label: "Leads", icon: Users },
-  { href: "/provider/placement-network", label: "Placement Network", icon: Network },
   { href: "/provider/listings", label: "My Listing", icon: Building2 },
   { href: "/provider/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/provider/reviews", label: "Reviews", icon: Star },
-  { href: "/provider/billing", label: "Billing", icon: Wallet },
+  { href: "/provider/billing", label: "Subscription", icon: CreditCard },
+  { href: "/provider/marketing", label: "Marketing", icon: Megaphone },
   { href: "/provider/settings", label: "Settings", icon: Settings },
   { href: "/provider/help", label: "Help & Support", icon: HelpCircle },
 ];
@@ -43,14 +47,13 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
   const navigate = useNavigate();
   const [, startTransition] = useTransition();
   const { selectedFacility } = useSelectedFacility();
-  const { balanceFormatted } = useProviderCredits(selectedFacility?.id);
   const { data: proStatus } = useProStatus();
   const { count: pendingDomesticCount } = usePendingConciergeCount(selectedFacility?.id);
-  const { count: pendingInternationalCount } = usePendingInternationalCount(selectedFacility?.id);
   const { count: pendingInquiriesCount } = usePendingInquiriesCount();
 
-  // Combined placement count for badge
-  const totalPlacementCount = pendingDomesticCount + pendingInternationalCount;
+  // International placement product retired 2026-05-20 — only domestic
+  // concierge cases contribute to the placement badge now.
+  const totalPlacementCount = pendingDomesticCount;
 
   // Prefetch route on hover for instant navigation
   const handleMouseEnter = useCallback((path: string) => {
@@ -128,7 +131,7 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
         </ul>
       </nav>
 
-      {/* Credit Balance & Pro Status Card */}
+      {/* Pro Status Card */}
       <div className="p-2 border-t border-border">
         <div className={cn(
           "rounded-lg p-2.5 transition-all",
@@ -136,29 +139,19 @@ export function ProviderSidebar({ onNavigate }: ProviderSidebarProps) {
             ? "bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20" 
             : "bg-gradient-to-br from-primary/5 to-primary/10"
         )}>
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-1.5">
-              <Wallet className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold text-foreground">Credits</span>
-            </div>
-            <span className="text-sm font-bold text-foreground tabular-nums">{balanceFormatted}</span>
-          </div>
-          
           {proStatus?.isPro ? (
             <div className="flex items-center gap-1.5">
               <Sparkles className="h-3 w-3 text-amber-500" />
-              <span className="text-xs text-amber-600 font-medium">
-                Pro Active • {proStatus.unlockDiscountPercent}% off unlocks
-              </span>
+              <span className="text-xs text-amber-600 font-medium">Pro Active</span>
             </div>
           ) : (
-            <a 
-              href="/provider/pro-upgrade"
-              onClick={(e) => handleNavClick(e, "/provider/pro-upgrade")}
+            <a
+              href="/provider/billing"
+              onClick={(e) => handleNavClick(e, "/provider/billing")}
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
             >
               <Sparkles className="h-3 w-3" />
-              <span>Upgrade to Pro for 20% off</span>
+              <span>Upgrade to Pro</span>
             </a>
           )}
         </div>

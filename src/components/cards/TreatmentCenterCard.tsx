@@ -469,8 +469,11 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
           )}
         </div>
 
-        {/* Treatment Tags - max 2 lines */}
-        <div className="flex flex-wrap gap-1 mb-2 max-h-[44px] overflow-hidden">
+        {/* Treatment Tags — first 4 + "+N" badge for overflow.
+            Removed max-h clip: on narrow viewports two-line wrap was
+            silently hiding the +N badge with no indicator. The slice(0,4)
+            + +N pattern below already constrains visible chip count. */}
+        <div className="flex flex-wrap gap-1 mb-2">
           {center.treatmentTypes.slice(0, 4).map((type) => (
             <Badge 
               key={type} 

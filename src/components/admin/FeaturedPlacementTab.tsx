@@ -66,7 +66,10 @@ export function FeaturedPlacementTab() {
     };
   }, [invalidateFeaturedQueries]);
 
-  // Fetch all approved facilities
+  // Fetch all approved facilities. Limit at 2000 — the admin Featured
+  // tab is the source of truth for which providers can be pinned, and
+  // any deployment that exceeds 2000 approved facilities should
+  // paginate this view instead.
   const { data: allFacilities, isLoading: loadingFacilities, refetch } = useQuery({
     queryKey: ["admin-featured-facilities"],
     queryFn: async () => {
@@ -74,7 +77,8 @@ export function FeaturedPlacementTab() {
         .from("facilities")
         .select("id, name, slug, city, state, facility_type, featured, featured_pinned, featured_display_order, status, verified, logo_url, calculated_ranking_score, last_featured_shown_at, created_at, suspended")
         .eq("status", "approved")
-        .order("name");
+        .order("name")
+        .limit(2000);
       if (error) throw error;
       return data as Facility[];
     },
@@ -86,6 +90,9 @@ export function FeaturedPlacementTab() {
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("get-featured-facilities");
       if (error) throw error;
+      if (data && typeof data === "object" && "error" in data && (data as { error: unknown }).error) {
+        throw new Error(String((data as { error: unknown }).error));
+      }
       return {
         proFacilityIds: data?.proFacilityIds || [],
         homepageFeaturedIds: data?.homepageFeaturedIds || [],
@@ -163,7 +170,7 @@ export function FeaturedPlacementTab() {
       <Alert className="border-amber-200 bg-amber-50">
         <Info className="h-4 w-4 text-amber-600" />
         <AlertDescription className="text-amber-800">
-          <strong>Pro Members Only:</strong> Featured placement is automatically included with Pro subscription ($399/mo). 
+          <strong>Pro Members Only:</strong> Featured placement is automatically included with Pro subscription. 
           Pro facilities are rotated daily using a fairness algorithm to ensure equal exposure.
         </AlertDescription>
       </Alert>

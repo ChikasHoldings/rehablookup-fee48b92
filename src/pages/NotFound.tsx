@@ -101,6 +101,25 @@ const NotFound = () => {
       console.error("404 Error: User attempted to access non-existent route:", location.pathname);
     }
 
+    // Paths that should NOT generate a not_found_events entry:
+    //   - "/404": the canonical 404 page. SEO redirects + manual user
+    //     visits route here intentionally; logging would create a noisy
+    //     self-referential stream (admins saw 14 hits before this guard).
+    //   - "/apple-app-site-association" and its .well-known sibling:
+    //     iOS Universal Links probes. Vercel now serves the AASA file
+    //     as a static asset, but SPA fallthrough during local dev can
+    //     still hit the React route — we don't want to pollute the
+    //     monitor with iOS probing.
+    //   - "/.well-known/*": reserved well-known URIs are infra probes.
+    const path = location.pathname;
+    const isSelfReferential =
+      path === "/404" ||
+      path === "/apple-app-site-association" ||
+      path.startsWith("/.well-known/");
+    if (isSelfReferential) {
+      return;
+    }
+
     // Best-effort: pull the current user id (may be null for anon traffic)
     // and forward path + referrer + viewport + extra request context to GA
     // and the backend log.

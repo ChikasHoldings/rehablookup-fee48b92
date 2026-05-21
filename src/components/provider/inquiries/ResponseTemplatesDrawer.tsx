@@ -34,15 +34,24 @@ export function ResponseTemplatesDrawer({ trigger, leadName, facilityName }: Res
     return text;
   };
 
-  const copyTemplate = (template: ResponseTemplate) => {
+  const copyTemplate = async (template: ResponseTemplate) => {
     const text = fillTemplate(template);
     const full = template.subject
       ? `Subject: ${template.subject.replace(/\{\{facility_name\}\}/g, facilityName || "[Facility]")}\n\n${text}`
       : text;
-    navigator.clipboard.writeText(full);
-    setCopiedId(template.id);
-    toast.success("Template copied to clipboard");
-    setTimeout(() => setCopiedId(null), 2000);
+    // Round-30 audit: clipboard.writeText() can reject on older browsers
+    // (Safari < 13.1) or when the page lacks clipboard permission. Was
+    // showing "copied" toast unconditionally even when nothing was
+    // copied. Now: only show success when the write resolved.
+    try {
+      await navigator.clipboard.writeText(full);
+      setCopiedId(template.id);
+      toast.success("Template copied to clipboard");
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.warn("[ResponseTemplates] clipboard write failed", err);
+      toast.error("Couldn't copy — please select the text manually or allow clipboard access in your browser.");
+    }
   };
 
   const channelIcon = (channel: string) => {

@@ -1,7 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { pluckNonNull } from "@/lib/nullableRows";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { Link, useSearchParams } from "react-router-dom";
+
+// Keep the localStorage "viewed leads" set bounded so it doesn't grow
+// without limit across years of usage. 500 most-recent IDs is enough
+// to cover any realistic Inbox window.
+const MAX_VIEWED_LEAD_IDS = 500;
 import { Helmet } from "react-helmet-async";
 import {
   Send,
@@ -49,21 +54,6 @@ interface SubmittedRequest {
   preferred_contact: string;
   provider_responded_at: string | null;
   provider_response_status: string | null;
-}
-
-interface SavedRequestData {
-  firstName: string;
-  lastName: string;
-  phone: string;
-  email: string;
-  locationZip: string;
-  locationCityState: string;
-  whoSeekingHelp: "self" | "loved-one";
-  urgency: "immediate" | "within-week" | "flexible";
-  preferredContact: "call" | "text" | "email";
-  levelOfCare?: string;
-  insuranceType?: string;
-  primarySubstance?: string[];
 }
 
 type FilterTab = "all" | "pending" | "responded";
@@ -214,11 +204,15 @@ function RequestCard({ request, onClick, isNew }: { request: SubmittedRequest; o
 
 export default function SeekerRequests() {
   const { email, userId, isAuthenticated, isReady } = useSeekerSession();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hydratedRef = useRef(false);
 
   const [requests, setRequests] = useState<SubmittedRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Distinguish "fetch error" from "no requests yet" so we don't show
+  // the empty-state encouragement when the API actually failed.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [selectedFacility, setSelectedFacility] = useState<{
@@ -227,14 +221,13 @@ export default function SeekerRequests() {
     city?: string;
     state?: string;
   } | null>(null);
-  const [savedData, setSavedData] = useState<SavedRequestData | null>(null);
   const [viewedLeadIds, setViewedLeadIds] = useState<Set<string>>(new Set());
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
   // Counts of the OTHER inquiry types so this inbox can surface links to
   // /account/concierge and /account/international when the seeker has work
   // in those flows. The leads list above stays the primary feed.
   const [conciergeCount, setConciergeCount] = useState<number>(0);
-  const [internationalCount, setInternationalCount] = useState<number>(0);
+  // International placement product retired 2026-05-20.
   const [vobCount, setVobCount] = useState<number>(0);
   const [savedSearchCount, setSavedSearchCount] = useState<number>(0);
   const { toast } = useToast();
@@ -250,19 +243,52 @@ export default function SeekerRequests() {
     }
   }, [userId]);
 
-  // Mark a lead as viewed
+  // Mark a lead as viewed. Cap the set size so localStorage doesn't
+  // grow without bound — keep the MAX_VIEWED_LEAD_IDS most-recently
+  // added IDs.
   const markLeadViewed = useCallback((leadId: string) => {
     setViewedLeadIds(prev => {
-      const next = new Set(prev);
-      next.add(leadId);
+      if (prev.has(leadId)) return prev;
+      const arr = [leadId, ...prev];
+      const trimmed = arr.length > MAX_VIEWED_LEAD_IDS ? arr.slice(0, MAX_VIEWED_LEAD_IDS) : arr;
+      const next = new Set(trimmed);
       if (userId) {
-        localStorage.setItem(`seeker_viewed_leads_${userId}`, JSON.stringify([...next]));
+        try {
+          localStorage.setItem(`seeker_viewed_leads_${userId}`, JSON.stringify(trimmed));
+        } catch {
+          // Storage quota — non-fatal, the in-memory set still works
+          // for this session.
+        }
       }
       return next;
     });
   }, [userId]);
 
-  // Check if coming from a facility page with prefill
+  // URL state for filterTab (?tab=pending|responded|all) — loop-guarded
+  // sync so bookmarks restore the user's view and back/forward through
+  // the inbox preserves the tab.
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    const t = searchParams.get("tab");
+    if (t === "pending" || t === "responded" || t === "all") {
+      setFilterTab(t as FilterTab);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const next = new URLSearchParams(searchParams);
+    if (filterTab !== "all") next.set("tab", filterTab);
+    else next.delete("tab");
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [filterTab, searchParams, setSearchParams]);
+
+  // Check if coming from a facility page with prefill. Clears the
+  // search params after consuming so the dialog doesn't keep re-
+  // opening on refresh / back navigation.
   useEffect(() => {
     const facilityId = searchParams.get("facilityId");
     const facilityName = searchParams.get("facilityName");
@@ -274,8 +300,16 @@ export default function SeekerRequests() {
         state: searchParams.get("facilityState") || undefined,
       });
       setShowNewRequest(true);
+      // Drain the prefill params from the URL so a refresh after
+      // submission doesn't pop the dialog open again.
+      const drained = new URLSearchParams(searchParams);
+      drained.delete("facilityId");
+      drained.delete("facilityName");
+      drained.delete("facilityCity");
+      drained.delete("facilityState");
+      setSearchParams(drained, { replace: true });
     }
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   const fetchRequests = useCallback(async (userEmail: string): Promise<SubmittedRequest[]> => {
     const normalizedEmail = userEmail.trim().toLowerCase();
@@ -284,16 +318,22 @@ export default function SeekerRequests() {
     try {
       const { data: leadsData, error: leadsError } = await supabase.rpc("get_seeker_submitted_leads");
       if (leadsError) throw leadsError;
+      setLoadError(null);
       if (!leadsData || leadsData.length === 0) return [];
 
       const facilityIds = Array.from(new Set(pluckNonNull(leadsData as { facility_id: string | null }[], "facility_id")));
       let facilitiesMap: Record<string, any> = {};
 
       if (facilityIds.length > 0) {
-        const { data: facilitiesData } = await supabase
+        // Surface facility-fetch errors too — without this, the names
+        // silently fall back to "Treatment Center" if the join fails.
+        const { data: facilitiesData, error: facErr } = await supabase
           .from("facilities")
           .select("id, name, slug, city, state, logo_url")
           .in("id", facilityIds);
+        if (facErr) {
+          console.warn("[SeekerRequests] facility join failed:", facErr.message);
+        }
         if (facilitiesData) {
           facilitiesMap = facilitiesData.reduce((acc, f) => { acc[f.id] = f; return acc; }, {} as Record<string, any>);
         }
@@ -319,7 +359,9 @@ export default function SeekerRequests() {
       });
     } catch (error: any) {
       console.error("Error fetching requests:", error);
-      toast({ title: "Error loading inbox", description: "Could not load your inquiries. Please try again.", variant: "destructive" });
+      const msg = error?.message || "Could not load your inquiries. Please try again.";
+      setLoadError(msg);
+      toast({ title: "Error loading inbox", description: msg, variant: "destructive" });
       return [];
     }
   }, [toast]);
@@ -331,7 +373,6 @@ export default function SeekerRequests() {
     const syncRequests = async () => {
       if (!isReady) return;
       setRequests([]);
-      setSavedData(null);
 
       if (!isAuthenticated || !email || !userId) {
         if (!isCancelled) setIsLoading(false);
@@ -340,7 +381,6 @@ export default function SeekerRequests() {
 
       if (!isCancelled) {
         setIsLoading(true);
-        loadSavedData(userId);
       }
 
       const nextRequests = await fetchRequests(email);
@@ -354,27 +394,28 @@ export default function SeekerRequests() {
     return () => { isCancelled = true; };
   }, [isAuthenticated, isReady, email, userId, fetchRequests]);
 
-  // Fetch the user's concierge + international counts so we can render
-  // cross-link cards at the top of the inbox. These read via RLS on the
-  // user_id column (set by link-inquiry-to-user on signup).
+  // Fetch the user's concierge + VOB + saved-search counts so we can
+  // render cross-link cards at the top of the inbox. RLS on each table
+  // gates by user_id (set by link-inquiry-to-user on signup).
+  //
+  // Failures are console.warn'd rather than toasted — the cross-link
+  // strip is a nice-to-have, not critical. A failure should not be
+  // mistaken for "you have 0 of these" though, so the card for any
+  // failing source is suppressed (the count stays 0 + warn).
   useEffect(() => {
     if (!isAuthenticated || !userId) {
       setConciergeCount(0);
-      setInternationalCount(0);
       setVobCount(0);
       setSavedSearchCount(0);
       return;
     }
     let cancelled = false;
     (async () => {
-      const [conc, intl, vob, saved] = await Promise.all([
+      // International placement product retired 2026-05-20 — only
+      // domestic concierge, VOB requests, and saved searches remain.
+      const [conc, vob, saved] = await Promise.all([
         supabase
           .from("concierge_inquiries")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", userId)
-          .not("status", "in", "(closed,completed)"),
-        supabase
-          .from("international_placement_cases")
           .select("id", { count: "exact", head: true })
           .eq("user_id", userId)
           .not("status", "in", "(closed,completed)"),
@@ -388,25 +429,41 @@ export default function SeekerRequests() {
           .eq("user_id", userId),
       ]);
       if (cancelled) return;
-      setConciergeCount(conc.count ?? 0);
-      setInternationalCount(intl.count ?? 0);
-      setVobCount(vob.count ?? 0);
-      setSavedSearchCount(saved.count ?? 0);
+      if (conc.error) console.warn("[SeekerRequests] concierge count failed:", conc.error.message);
+      if (vob.error) console.warn("[SeekerRequests] VOB count failed:", vob.error.message);
+      if (saved.error) console.warn("[SeekerRequests] saved-search count failed:", saved.error.message);
+      setConciergeCount(conc.error ? 0 : (conc.count ?? 0));
+      setVobCount(vob.error ? 0 : (vob.count ?? 0));
+      setSavedSearchCount(saved.error ? 0 : (saved.count ?? 0));
     })();
     return () => { cancelled = true; };
   }, [isAuthenticated, userId]);
 
-  // Realtime subscription for lead status changes
+  // Realtime subscription for the seeker's own leads.
+  //
+  // Filtered server-side by email so we don't waste channel cycles on
+  // other users' lead updates (the `leads` SELECT RLS would deny
+  // delivery anyway via `email = auth.jwt()->>'email'`, but an
+  // explicit filter is faster and clearer about intent).
+  //
+  // Listens to event:"*" so INSERT (a new submission from another
+  // tab/device) and DELETE (admin clean-up) also invalidate the
+  // local list, not just status UPDATE.
   useEffect(() => {
     if (!email) return;
+    const normalizedEmail = email.trim().toLowerCase();
 
     const channel = supabase
-      .channel("seeker-inbox-realtime")
+      .channel(`seeker-inbox-${normalizedEmail}`)
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "leads" },
+        {
+          event: "*",
+          schema: "public",
+          table: "leads",
+          filter: `email=eq.${normalizedEmail}`,
+        },
         () => {
-          // Refetch on any lead update (filtered server-side by RPC)
           fetchRequests(email).then(setRequests);
         }
       )
@@ -425,24 +482,14 @@ export default function SeekerRequests() {
     setIsRefreshing(false);
   };
 
-  const loadSavedData = (currentUserId: string) => {
-    setSavedData(null);
-    if (!currentUserId) return;
-    const storageKey = `seeker_request_data_${currentUserId}`;
-    const saved = localStorage.getItem(storageKey);
-    if (!saved) return;
-    try {
-      setSavedData(JSON.parse(saved));
-    } catch {
-      localStorage.removeItem(storageKey);
-      setSavedData(null);
-    }
-  };
+  // (Previously `loadSavedData` / `savedData` machinery existed here
+  // to thread a SavedRequestData prop into SeekerRequestForm. The
+  // form's underlying LeadIntakeForm now handles its own prefill from
+  // seeker_profile + a non-PII localStorage cache, so this state was
+  // dead — only writing to localStorage on submit, never read.
+  // Removed in the 2026-05-20 hardening pass.)
 
   const handleRequestSuccess = async () => {
-    if (userId && savedData) {
-      localStorage.setItem(`seeker_request_data_${userId}`, JSON.stringify(savedData));
-    }
     setShowNewRequest(false);
     setSelectedFacility(null);
     if (!email) { setRequests([]); return; }
@@ -538,7 +585,7 @@ export default function SeekerRequests() {
         {/* Cross-link cards: surface the seeker's open concierge + international
             + insurance-verification + saved-search work so this page acts as a
             true inbox. */}
-        {(conciergeCount > 0 || internationalCount > 0 || vobCount > 0 || savedSearchCount > 0) && (
+        {(conciergeCount > 0 || vobCount > 0 || savedSearchCount > 0) && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
             {conciergeCount > 0 && (
               <Link to="/account/concierge" className="block">
@@ -558,24 +605,7 @@ export default function SeekerRequests() {
                 </Card>
               </Link>
             )}
-            {internationalCount > 0 && (
-              <Link to="/account/international" className="block">
-                <Card className="hover:border-primary/40 transition-colors">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                      <Building2 className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold">International placement</p>
-                      <p className="text-xs text-muted-foreground">
-                        {internationalCount} active case{internationalCount === 1 ? "" : "s"}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                  </CardContent>
-                </Card>
-              </Link>
-            )}
+            {/* International placement card retired 2026-05-20 with the paid product. */}
             {vobCount > 0 && (
               <Link to="/account/insurance-verifications" className="block">
                 <Card className="hover:border-primary/40 transition-colors">
@@ -615,7 +645,25 @@ export default function SeekerRequests() {
           </div>
         )}
 
-        {requests.length === 0 ? (
+        {loadError && requests.length === 0 ? (
+          <Card className="border-destructive/40 bg-destructive/5" role="alert">
+            <CardContent className="p-6 flex items-start gap-3">
+              <FileText className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-destructive mb-1">Couldn't load your inbox</h3>
+                <p className="text-xs text-muted-foreground break-words">{loadError}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                Try again
+              </Button>
+            </CardContent>
+          </Card>
+        ) : requests.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="p-8 text-center">
               <div className="p-3 rounded-full bg-muted w-fit mx-auto mb-4">
@@ -719,7 +767,6 @@ export default function SeekerRequests() {
                 facilityName={selectedFacility.name}
                 facilityCity={selectedFacility.city}
                 facilityState={selectedFacility.state}
-                prefillData={savedData || undefined}
                 onSuccess={handleRequestSuccess}
                 onCancel={() => { setShowNewRequest(false); setSelectedFacility(null); }}
               />

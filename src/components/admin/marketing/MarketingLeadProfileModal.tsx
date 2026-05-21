@@ -279,7 +279,7 @@ export function MarketingLeadProfileModal({
       toast.success("Status updated");
       onUpdated?.();
     },
-    onError: () => toast.error("Failed to update status"),
+    onError: (err: Error) => toast.error(`Failed to update status: ${err.message}`),
   });
 
   const updateNotes = useMutation({
@@ -296,7 +296,7 @@ export function MarketingLeadProfileModal({
       toast.success("Notes saved");
       onUpdated?.();
     },
-    onError: () => toast.error("Failed to save notes"),
+    onError: (err: Error) => toast.error(`Failed to save notes: ${err.message}`),
   });
   // Delete lead
   const deleteLead = useMutation({
@@ -326,7 +326,7 @@ export function MarketingLeadProfileModal({
       onOpenChange(false);
       onDeleted?.();
     },
-    onError: () => toast.error("Failed to delete lead"),
+    onError: (err: Error) => toast.error(`Failed to delete lead: ${err.message}`),
   });
 
   // Route to provider
@@ -361,7 +361,7 @@ export function MarketingLeadProfileModal({
       setFacilitySearch("");
       onUpdated?.();
     },
-    onError: () => toast.error("Failed to route lead"),
+    onError: (err: Error) => toast.error(`Failed to route lead: ${err.message}`),
   });
 
   // Convert to concierge
@@ -380,24 +380,30 @@ export function MarketingLeadProfileModal({
       toast.success("Marked as converted to concierge");
       onUpdated?.();
     },
-    onError: () => toast.error("Failed to convert"),
+    onError: (err: Error) => toast.error(`Failed to convert: ${err.message}`),
   });
 
-  // Send follow-up email manually
+  // Send follow-up email manually. Checks both the transport `error`
+  // AND the edge fn's `data?.error` payload — some edge fns return
+  // HTTP 200 with `{ error: "..." }` body when an upstream (Resend,
+  // Stripe, etc.) errors, which would otherwise be consumed as success.
   const sendFollowup = useMutation({
     mutationFn: async () => {
       if (!lead) return;
-      const { error } = await supabase.functions.invoke("send-marketing-followup", {
+      const { data, error } = await supabase.functions.invoke("send-marketing-followup", {
         body: { manualLeadId: lead.id },
       });
       if (error) throw error;
+      if (data && typeof data === "object" && "error" in data && (data as { error: unknown }).error) {
+        throw new Error(String((data as { error: unknown }).error));
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-marketing-leads"] });
       toast.success("Follow-up email sent");
       onUpdated?.();
     },
-    onError: () => toast.error("Failed to send follow-up email"),
+    onError: (err: Error) => toast.error(`Failed to send follow-up email: ${err.message}`),
   });
 
   // Search facilities for routing

@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { History, LogIn, KeyRound, UserCog, Mail, Image, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { History, LogIn, LogOut, KeyRound, UserCog, Mail, Image, Phone, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { formatDistanceToNow } from "date-fns";
@@ -16,60 +17,87 @@ interface ActivityEvent {
 
 const eventIcons: Record<string, typeof LogIn> = {
   sign_in: LogIn,
+  sign_out: LogOut,
   password_change: KeyRound,
   profile_update: UserCog,
   email_change: Mail,
   avatar_update: Image,
+  avatar_remove: Image,
+  phone_verify: Phone,
 };
 
 const eventColors: Record<string, string> = {
   sign_in: "text-blue-500 bg-blue-500/10",
+  sign_out: "text-slate-500 bg-slate-500/10",
   password_change: "text-amber-500 bg-amber-500/10",
   profile_update: "text-green-500 bg-green-500/10",
   email_change: "text-purple-500 bg-purple-500/10",
   avatar_update: "text-pink-500 bg-pink-500/10",
+  avatar_remove: "text-pink-500 bg-pink-500/10",
+  phone_verify: "text-teal-500 bg-teal-500/10",
 };
 
 export function ActivityLog(props: React.HTMLAttributes<HTMLDivElement>) {
-  const { userId, isAuthenticated, isReady } = useSeekerSession();
+  const { userId, isAuthenticated } = useSeekerSession();
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchActivities = useCallback(async () => {
     if (!userId) {
       setActivities([]);
       setIsLoading(false);
       return;
     }
+    setError(null);
+    const { data, error: queryError } = await supabase
+      .from("account_activity_log")
+      .select("id, event_type, event_description, created_at, metadata")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20);
 
-    let isMounted = true;
-    
-    const fetchActivities = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("account_activity_log")
-          .select("id, event_type, event_description, created_at, metadata")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(20);
+    if (queryError) {
+      setError(queryError.message || "Failed to load activity");
+      setActivities([]);
+    } else {
+      setActivities(data || []);
+    }
+    setIsLoading(false);
+  }, [userId]);
 
-        if (!isMounted) return;
-        
-        if (!error && data) {
-          setActivities(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch activities:", err);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await fetchActivities();
+      if (cancelled) setActivities([]);
+    })();
+    return () => { cancelled = true; };
+  }, [fetchActivities]);
+
+  // Realtime: account_activity_log was added to supabase_realtime in
+  // migration 20260704000000 so INSERT events propagate. Filter by
+  // user_id server-side; RLS independently gates row visibility.
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`seeker-activity-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "account_activity_log", filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const row = payload.new as ActivityEvent | null;
+          if (!row) return;
+          setActivities((prev) => {
+            if (prev.some((a) => a.id === row.id)) return prev;
+            return [row, ...prev].slice(0, 20);
+          });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
     };
-
-    fetchActivities();
-    
-    return () => { isMounted = false; };
   }, [userId]);
 
   const getIcon = (eventType: string) => {
@@ -111,7 +139,14 @@ export function ActivityLog(props: React.HTMLAttributes<HTMLDivElement>) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {activities.length === 0 ? (
+        {error ? (
+          <div className="text-center py-4 space-y-3">
+            <p className="text-sm text-destructive">{error}</p>
+            <Button variant="outline" size="sm" onClick={fetchActivities}>
+              Try again
+            </Button>
+          </div>
+        ) : activities.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No recent activity to show
           </p>

@@ -61,7 +61,7 @@ Deno.test("registry: every code emitted by listed functions is registered", () =
   }
 
   const codePattern =
-    /"(invalid_json|invalid_json_body|body_read_failed|validation_error|validation_failed|invalid_type|invalid_email|email_required|name_required|phone_required|email_rejected|method_not_allowed|conflict|rate_limited|facility_missing|lead_expired|email_send_failed|welcome_email_send_failed|welcome_offer_email_send_failed|admin_email_send_failed|admin_emails_missing|admin_notification_insert_failed|in_app_notification_failed|missing_resend_key|payment_failed|charge_failed|stripe_payment_failed|facility_invoice_payment_failed|international_invoice_failed|case_create_failed|draft_create_failed|draft_update_failed|lead_unlock_attribution_failed|unlock_rollback_failed|email_sent|email_deduplicated|internal_error)"/g;
+    /"(invalid_json|invalid_json_body|body_read_failed|validation_error|validation_failed|invalid_type|invalid_email|email_required|name_required|phone_required|email_rejected|method_not_allowed|conflict|rate_limited|email_send_failed|welcome_email_send_failed|admin_email_send_failed|admin_emails_missing|admin_notification_insert_failed|in_app_notification_failed|missing_resend_key|payment_failed|international_invoice_failed|case_create_failed|draft_create_failed|draft_update_failed|email_sent|email_deduplicated|internal_error)"/g;
 
   for (const fn of functions) {
     let source: string;

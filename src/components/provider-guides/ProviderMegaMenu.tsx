@@ -43,7 +43,7 @@ export function ProviderMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Guides */}
         <div className="flex-1 p-5">
-          <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-1 mb-3 flex items-center gap-1.5">
+          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-3 flex items-center gap-1.5">
             <Sparkles className="h-3 w-3" />
             Growth Guides
           </p>
@@ -105,7 +105,7 @@ export function ProviderMegaMenu({ onNavigate }: MegaMenuProps) {
                 </div>
               ))}
             </div>
-            <Link to="/provider-signup" onClick={onNavigate}>
+            <Link to="/provider/onboarding" onClick={onNavigate}>
               <Button size="sm" className="w-full gap-1.5 h-9 bg-accent text-accent-foreground hover:bg-accent/90 text-[12px] font-semibold shadow-sm">
                 List Your Facility <ArrowRight className="h-3 w-3" />
               </Button>
@@ -122,7 +122,7 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
     <div className="space-y-1">
       {/* Quick Links */}
       <div>
-        <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
+        <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-3 mb-1.5 flex items-center gap-1.5">
           <Building2 className="h-3.5 w-3.5" />
           For Providers
         </p>
@@ -163,7 +163,7 @@ export function ProviderMegaMenuMobile({ onNavigate }: MegaMenuProps) {
 
       {/* CTA */}
       <div className="mx-2 mt-1">
-        <Link to="/provider-signup" onClick={onNavigate} className="block">
+        <Link to="/provider/onboarding" onClick={onNavigate} className="block">
           <div className="rounded-lg bg-gradient-to-r from-accent/[0.08] to-primary/[0.06] border border-accent/15 p-3 flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-accent/15 flex items-center justify-center shrink-0">
               <Zap className="h-4 w-4 text-accent" />

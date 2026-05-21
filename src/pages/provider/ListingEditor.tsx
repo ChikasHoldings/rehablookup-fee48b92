@@ -60,6 +60,8 @@ import { useSelectedFacility } from "@/contexts/SelectedFacilityContext";
 import { ProviderTrustForm } from "@/components/provider/ProviderTrustForm";
 
 import { useProStatus } from "@/hooks/useProStatus";
+import { PLAN_LIMITS } from "@/lib/planLimits";
+import { FacilityPhoneVerifySection } from "@/components/provider/listing/FacilityPhoneVerifySection";
 import { cn } from "@/lib/utils";
 import {
   ListingTagChip,
@@ -94,6 +96,16 @@ interface Facility {
   gallery_urls: string[] | null;
   year_established: number | null;
   accepts_international_patients: boolean | null;
+  verified_phone: string | null;
+  verified_phone_set_at: string | null;
+  has_facility_verified_contact: boolean | null;
+  // Profile-content columns added in migration 20260709000000.
+  // Rendered on both /center/[slug] and /account/facility/[id] via
+  // the shared FacilityProfileExtras component.
+  hours_of_operation: string | null;
+  languages_spoken: string[] | null;
+  accessibility_features: string[] | null;
+  accepting_admissions: boolean | null;
 }
 
 import {
@@ -228,6 +240,37 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   useEffect(() => {
     localStorage.setItem('provider-listing-active-tab', activeTab);
   }, [activeTab]);
+
+  // Keyboard navigation between editor tabs — Left/Right (and
+  // Home/End) wrap around the EDITOR_TABS list when focus is on a
+  // tab button. Matches the WAI-ARIA "Tabs with Automatic Activation"
+  // authoring pattern.
+  const handleTabKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>, currentId: EditorTab) => {
+    const idx = EDITOR_TABS.findIndex(t => t.id === currentId);
+    if (idx === -1) return;
+    let nextIdx = idx;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      nextIdx = (idx + 1) % EDITOR_TABS.length;
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      nextIdx = (idx - 1 + EDITOR_TABS.length) % EDITOR_TABS.length;
+    } else if (e.key === "Home") {
+      nextIdx = 0;
+    } else if (e.key === "End") {
+      nextIdx = EDITOR_TABS.length - 1;
+    } else {
+      return;
+    }
+    e.preventDefault();
+    const nextTab = EDITOR_TABS[nextIdx];
+    setActiveTab(nextTab.id);
+    // Move focus to the new tab button so the user can continue
+    // arrow-navigation without re-tabbing back into the list.
+    requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLButtonElement>(`[data-editor-tab="${nextTab.id}"]`)
+        ?.focus();
+    });
+  }, []);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const prevFacilityIdRef = useRef<string | null>(null);
   const { toast } = useToast();
@@ -237,8 +280,11 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
   const currentFacilityId = propFacilityId || selectedFacility?.id;
   const { data: proStatus } = useProStatus(currentFacilityId);
   
-  // All providers can upload up to 10 gallery images
-  const galleryLimit = 10;
+  // Gallery cap reflects the active plan — Free 5, Pro 10 (matches the
+  // enforce_facility_plan_photo_cap server-side trigger). proStatus.isPro
+  // is the canonical client-side mirror of profiles.plan='pro' so this
+  // tier-flips automatically when Stripe webhook activates Pro benefits.
+  const galleryLimit = PLAN_LIMITS[proStatus?.isPro ? "pro" : "free"].photos;
 
   // Reset state when facility changes
   useEffect(() => {
@@ -286,7 +332,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
       const { data } = await supabase
         .from("facilities")
-        .select("id, user_id, name, slug, address, city, state, zip_code, phone, email, reply_email, reply_email_verified, reply_email_verified_at, website, description, facility_type, gender_served, bed_count, status, featured, logo_url, gallery_urls, year_established, accepts_international_patients")
+        .select("id, user_id, name, slug, address, city, state, zip_code, phone, email, reply_email, reply_email_verified, reply_email_verified_at, website, description, facility_type, gender_served, bed_count, status, featured, logo_url, gallery_urls, year_established, accepts_international_patients, verified_phone, verified_phone_set_at, has_facility_verified_contact, hours_of_operation, languages_spoken, accessibility_features, accepting_admissions")
         .eq("id", currentFacilityId)
         .eq("user_id", session.user.id)
         .maybeSingle();
@@ -548,6 +594,10 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           gallery_urls: facility.gallery_urls,
           year_established: facility.year_established,
           accepts_international_patients: facility.accepts_international_patients,
+          hours_of_operation: facility.hours_of_operation,
+          languages_spoken: facility.languages_spoken,
+          accessibility_features: facility.accessibility_features,
+          accepting_admissions: facility.accepting_admissions,
         })
         .eq("id", facility.id)
         .eq("user_id", autoSaveSession.user.id);
@@ -562,14 +612,28 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         setShowSaved(true);
         setTimeout(() => setShowSaved(false), 2000);
       } else {
+        // Surface auto-save failures so providers don't think their
+        // typing was saved when it silently wasn't. `hasChanges` stays
+        // true on error so the floating save bar continues to nag and
+        // the next 3-second debounce will retry automatically.
         console.error("[ListingEditor] Auto-save failed:", error.message);
+        toast({
+          title: "Auto-save failed",
+          description: "Your latest changes weren't saved. Click Save Changes or try again — we'll keep retrying.",
+          variant: "destructive",
+        });
       }
     } catch (networkErr) {
       console.error("[ListingEditor] Auto-save network error:", networkErr);
+      toast({
+        title: "Auto-save offline",
+        description: "We couldn't reach the server. Check your connection — your local edits are still in the form.",
+        variant: "destructive",
+      });
     } finally {
       setIsAutoSaving(false);
     }
-  }, [facility, isSaving, currentFacilityId, queryClient]); // toast is stable from useToast; removing it silences the unnecessary-dep warning
+  }, [facility, isSaving, currentFacilityId, queryClient, toast]);
 
   // Auto-save effect
   useEffect(() => {
@@ -680,6 +744,10 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
           gallery_urls: facility.gallery_urls,
           year_established: facility.year_established,
           accepts_international_patients: facility.accepts_international_patients,
+          hours_of_operation: facility.hours_of_operation,
+          languages_spoken: facility.languages_spoken,
+          accessibility_features: facility.accessibility_features,
+          accepting_admissions: facility.accepting_admissions,
         })
         .eq("id", facility.id)
         .eq("user_id", saveSession.user.id);
@@ -746,7 +814,8 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     } finally {
       setIsSaving(false);
     }
-  }, [facility, validateAllFields, toast, queryClient, currentFacilityId, setFacility]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- validateAllFields is declared below; React runs callbacks after the full render so the forward reference is safe.
+  }, [facility, toast, queryClient, currentFacilityId, setFacility]);
 
   // Keyboard shortcut: Ctrl+S / Cmd+S
   useEffect(() => {
@@ -789,11 +858,11 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     }
   };
 
-  const updateField = (field: keyof Facility, value: string | number | boolean | null) => {
+  const updateField = (field: keyof Facility, value: string | number | boolean | string[] | null) => {
     if (facility) {
       setFacility({ ...facility, [field]: value });
       setHasChanges(true);
-      
+
       if (touchedFields.has(field) && typeof value === 'string') {
         const error = validateField(field, value);
         setFieldErrors(prev => ({ ...prev, [field]: error }));
@@ -1151,13 +1220,22 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
     return (
       <div className="max-w-md mx-auto text-center py-20 px-4">
         <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-          <Building2 className="h-8 w-8 text-primary" />
+          <Building2 className="h-8 w-8 text-primary" aria-hidden />
         </div>
         <h2 className="text-xl font-semibold text-foreground">No Listing Found</h2>
-        <p className="mt-2 text-muted-foreground">Create your facility listing to start receiving leads from families.</p>
-        <Button asChild className="mt-6" size="lg">
-          <Link to="/provider-signup">Create Your Listing</Link>
-        </Button>
+        <p className="mt-2 text-muted-foreground">
+          Create your facility listing to start receiving leads from families.
+        </p>
+        <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
+          {/* Send signed-in providers to the in-app add flow rather than
+              back to the public marketing signup. */}
+          <Button asChild size="lg">
+            <Link to="/provider/add-location">Add facility</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link to="/provider/listings">Back to listings</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -1274,7 +1352,12 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       )}
 
       {/* ── Mobile Tab Scroll ── */}
-      <div className="md:hidden mb-4 -mx-3 px-3 overflow-x-auto scrollbar-none">
+      <div
+        role="tablist"
+        aria-label="Listing editor sections"
+        aria-orientation="horizontal"
+        className="md:hidden mb-4 -mx-3 px-3 overflow-x-auto scrollbar-none"
+      >
         <div className="flex gap-1 min-w-max pb-2">
           {EDITOR_TABS.map(tab => {
             const Icon = tab.icon;
@@ -1283,18 +1366,25 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
             return (
               <button
                 key={tab.id}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`editor-tab-panel-${tab.id}`}
+                id={`editor-tab-${tab.id}`}
+                tabIndex={isActive ? 0 : -1}
+                data-editor-tab={tab.id}
                 onClick={() => setActiveTab(tab.id)}
+                onKeyDown={(e) => handleTabKeyDown(e, tab.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
+                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-3.5 w-3.5" aria-hidden />
                 {tab.label}
                 {isComplete && !isActive && (
-                  <CircleCheck className="h-3 w-3 text-green-600" />
+                  <CircleCheck className="h-3 w-3 text-green-600" aria-label="section complete" />
                 )}
               </button>
             );
@@ -1305,7 +1395,12 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       {/* ── Desktop Layout: Sidebar Tabs + Content ── */}
       <div className="flex gap-6">
         {/* Desktop sidebar nav */}
-        <nav className="hidden md:flex flex-col w-44 shrink-0 space-y-0.5 sticky top-6 self-start">
+        <nav
+          role="tablist"
+          aria-label="Listing editor sections"
+          aria-orientation="vertical"
+          className="hidden md:flex flex-col w-44 shrink-0 space-y-0.5 sticky top-6 self-start"
+        >
           {EDITOR_TABS.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1313,18 +1408,28 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
             return (
               <button
                 key={tab.id}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`editor-tab-panel-${tab.id}`}
+                id={`editor-tab-${tab.id}`}
+                tabIndex={isActive ? 0 : -1}
+                data-editor-tab={tab.id}
                 onClick={() => setActiveTab(tab.id)}
+                onKeyDown={(e) => handleTabKeyDown(e, tab.id)}
                 className={cn(
-                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left",
+                  "flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                   isActive
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <Icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary")} />
+                <Icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary")} aria-hidden />
                 <span className="truncate flex-1">{tab.label}</span>
                 {isComplete && (
-                  <CircleCheck className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "text-green-600")} />
+                  <CircleCheck
+                    className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-primary" : "text-green-600")}
+                    aria-label="section complete"
+                  />
                 )}
               </button>
             );
@@ -1337,7 +1442,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
             <CardContent className="p-4 sm:p-6">
               {/* ═══ PHOTOS TAB ═══ */}
               {activeTab === "photos" && (
-                <div className="space-y-6">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-photos"
+                  aria-labelledby="editor-tab-photos"
+                  tabIndex={0}
+                  className="space-y-6 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Logo & Photos</h2>
                     <p className="text-sm text-muted-foreground">Showcase your facility with professional images</p>
@@ -1364,7 +1475,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ BASIC INFO TAB ═══ */}
               {activeTab === "basic" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-basic"
+                  aria-labelledby="editor-tab-basic"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Basic Information</h2>
                     <p className="text-sm text-muted-foreground">Essential details about your facility</p>
@@ -1389,7 +1506,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ LOCATION TAB ═══ */}
               {activeTab === "location" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-location"
+                  aria-labelledby="editor-tab-location"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Location</h2>
                     <p className="text-sm text-muted-foreground">Where families can find you</p>
@@ -1416,18 +1539,48 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ CONTACT TAB ═══ */}
               {activeTab === "contact" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-contact"
+                  aria-labelledby="editor-tab-contact"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Contact Information</h2>
                     <p className="text-sm text-muted-foreground">How families can reach you</p>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField label="Phone Number" required error={fieldErrors.phone} touched={touchedFields.has("phone")}>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input value={facility.phone} onChange={(e) => updateField("phone", e.target.value)} onBlur={(e) => handleFieldBlur("phone", e.target.value)} className={cn("h-11 pl-10", fieldErrors.phone && touchedFields.has("phone") && "border-destructive")} placeholder="(555) 123-4567" />
-                      </div>
-                    </FormField>
+                    <FacilityPhoneVerifySection
+                      value={facility.phone}
+                      onChange={(v) => updateField("phone", v)}
+                      onBlur={() => handleFieldBlur("phone", facility.phone)}
+                      facilityId={facility.id}
+                      alreadyVerified={
+                        !!facility.has_facility_verified_contact &&
+                        !!facility.verified_phone &&
+                        facility.verified_phone.replace(/\D/g, "").slice(-10) ===
+                          facility.phone.replace(/\D/g, "").slice(-10)
+                      }
+                      onVerified={() => {
+                        // Mirror onto local state so the badge persists
+                        // across re-renders before the next facility refetch.
+                        setFacility((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                verified_phone: prev.phone,
+                                verified_phone_set_at: new Date().toISOString(),
+                                has_facility_verified_contact: true,
+                              }
+                            : prev,
+                        );
+                      }}
+                      error={fieldErrors.phone}
+                      touched={touchedFields.has("phone")}
+                      label="Phone Number"
+                      required
+                    />
                     <FormField label="Email Address" error={fieldErrors.email} touched={touchedFields.has("email")}>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1509,7 +1662,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ PROGRAM TAB ═══ */}
               {activeTab === "program" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-program"
+                  aria-labelledby="editor-tab-program"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Program Details</h2>
                     <p className="text-sm text-muted-foreground">Treatment capacity and demographics</p>
@@ -1561,12 +1720,97 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                       <div className="mt-3 p-3 rounded-md bg-primary/5 border border-primary/10"><p className="text-xs text-primary">Your facility will be visible to international clients.</p></div>
                     )}
                   </div>
+
+                  {/* ═══ PROFILE EXTRAS ═══
+                      Hours, languages, accessibility, admissions. All
+                      optional + display-only on the profile pages. Empty
+                      values render nothing on the public side. */}
+                  <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
+                    <div>
+                      <Label className="text-sm font-medium">Hours of Operation</Label>
+                      <p className="text-xs text-muted-foreground mb-2">Free-form. Example: "Mon-Fri 9am-5pm, Sat 10am-2pm, Sun closed"</p>
+                      <Input
+                        value={facility.hours_of_operation || ""}
+                        onChange={(e) => updateField("hours_of_operation", e.target.value.slice(0, 200))}
+                        placeholder="Mon-Fri 9am-5pm"
+                        className="h-11"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Languages Spoken</Label>
+                      <p className="text-xs text-muted-foreground mb-2">Comma-separated. Example: English, Spanish, ASL</p>
+                      <Input
+                        value={(facility.languages_spoken || []).join(", ")}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const arr = raw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20);
+                          updateField("languages_spoken", arr.length > 0 ? arr : null);
+                        }}
+                        placeholder="English, Spanish, ASL"
+                        className="h-11"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Accessibility Features</Label>
+                      <p className="text-xs text-muted-foreground mb-2">Comma-separated. Example: Wheelchair accessible, ASL interpreters available, Hearing loops</p>
+                      <Input
+                        value={(facility.accessibility_features || []).join(", ")}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const arr = raw.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 20);
+                          updateField("accessibility_features", arr.length > 0 ? arr : null);
+                        }}
+                        placeholder="Wheelchair accessible, ASL interpreters"
+                        className="h-11"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label className="text-sm font-medium">Currently Accepting Admissions</Label>
+                          <p className="text-xs text-muted-foreground">
+                            {facility.accepting_admissions === null
+                              ? "Status not set — no badge will display."
+                              : facility.accepting_admissions
+                                ? "Green badge will display: “Currently accepting admissions”"
+                                : "Grey badge will display: “Not currently accepting admissions”"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={facility.accepting_admissions === true ? "default" : "outline"}
+                            onClick={() => updateField("accepting_admissions", facility.accepting_admissions === true ? null : true)}
+                            className="h-8 px-3"
+                          >
+                            Yes
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={facility.accepting_admissions === false ? "default" : "outline"}
+                            onClick={() => updateField("accepting_admissions", facility.accepting_admissions === false ? null : false)}
+                            className="h-8 px-3"
+                          >
+                            No
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {/* ═══ SERVICES TAB ═══ */}
               {activeTab === "services" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-services"
+                  aria-labelledby="editor-tab-services"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-base font-semibold text-foreground mb-1">Services Offered</h2>
@@ -1583,7 +1827,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ INSURANCE TAB ═══ */}
               {activeTab === "insurance" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-insurance"
+                  aria-labelledby="editor-tab-insurance"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-base font-semibold text-foreground mb-1">Insurance Accepted</h2>
@@ -1600,7 +1850,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ AGE GROUPS TAB ═══ */}
               {activeTab === "ageGroups" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-ageGroups"
+                  aria-labelledby="editor-tab-ageGroups"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-base font-semibold text-foreground mb-1">Age Groups Served</h2>
@@ -1617,7 +1873,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ TRUST TAB ═══ */}
               {activeTab === "trust" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-trust"
+                  aria-labelledby="editor-tab-trust"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Trust & Credentials</h2>
                     <p className="text-sm text-muted-foreground">Accreditations and certifications</p>
@@ -1628,7 +1890,13 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
               {/* ═══ STAFF TAB ═══ */}
               {activeTab === "staff" && (
-                <div className="space-y-5">
+                <div
+                  role="tabpanel"
+                  id="editor-tab-panel-staff"
+                  aria-labelledby="editor-tab-staff"
+                  tabIndex={0}
+                  className="space-y-5 focus-visible:outline-none"
+                >
                   <div>
                     <h2 className="text-base font-semibold text-foreground mb-1">Our Team</h2>
                     <p className="text-sm text-muted-foreground">Add staff and team members to your profile</p>

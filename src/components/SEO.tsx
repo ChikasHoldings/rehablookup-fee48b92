@@ -29,7 +29,7 @@ const TWITTER_HANDLE = "@rehablookup";
 
 /**
  * Normalizes a URL path or absolute URL into a canonical path on SITE_URL:
- * - Strips an absolute origin if it points to our site (or a www/preview/lovable host)
+ * - Strips an absolute origin if it points to our site (or a Vercel preview)
  * - Rejects foreign absolute URLs by falling back to "/"
  * - Removes query parameters and hash fragments
  * - Trims whitespace
@@ -55,8 +55,6 @@ function normalizeCanonicalPath(input: string | undefined | null): string {
         host === "rehablookup.com" ||
         host === "www.rehablookup.com" ||
         host.endsWith(".rehablookup.com") ||
-        host.endsWith(".lovable.app") ||
-        host.endsWith(".lovable.dev") ||
         host.endsWith(".vercel.app");
       path = isOurs ? u.pathname + u.search + u.hash : "/";
     } catch {
@@ -141,8 +139,6 @@ export function SEO({
           host === "rehablookup.com" ||
           host === "www.rehablookup.com" ||
           host.endsWith(".rehablookup.com") ||
-          host.endsWith(".lovable.app") ||
-          host.endsWith(".lovable.dev") ||
           host.endsWith(".vercel.app");
         if (!isOurs) return null;
         return `${SITE_URL}${u.pathname.toLowerCase()}${u.search}`;

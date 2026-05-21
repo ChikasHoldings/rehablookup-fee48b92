@@ -1,9 +1,12 @@
 // Provider onboarding smoke-test suite.
 //
-// Covers the three onboarding edge functions:
+// Covers the two onboarding edge functions:
 //   - notify-admin-provider-signup
 //   - send-provider-welcome-email
-//   - send-provider-welcome-offer-email
+//
+// (send-provider-welcome-offer-email was retired in the monetization
+// rebuild — the welcome-credits offer no longer applies under the flat-fee
+// Pro $99/mo model.)
 //
 // Asserted invariants (per function):
 //   1. Status codes
@@ -42,13 +45,6 @@ const FUNCTIONS = [
     path: "../send-provider-welcome-email/index.ts",
     schema: "WelcomeEmailRequestSchema",
     idempotencyPrefix: "welcome-",
-    acceptsClientIdempotencyKey: true,
-  },
-  {
-    name: "send-provider-welcome-offer-email",
-    path: "../send-provider-welcome-offer-email/index.ts",
-    schema: "WelcomeOfferRequestSchema",
-    idempotencyPrefix: "welcome-offer-",
     acceptsClientIdempotencyKey: true,
   },
 ] as const;

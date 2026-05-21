@@ -1,21 +1,24 @@
 /**
- * Claim Wizard — multi-step provider flow
- * ───────────────────────────────────────
- * Reached via /provider/claim/:slug from the "Claim This Listing" entry
- * point on unclaimed facility pages.
+ * Claim Wizard — five-step provider claim flow at /provider/claim/:slug.
  *
- * Phase 2 of the wizard ships steps 1-2:
- *   Step 1 — Confirm facility
- *   Step 2 — Your role (claimant info)
- *   Steps 3-5 — placeholder ("Coming soon"); built out in later phases.
+ *   1. Confirm facility
+ *   2. Your role (claimant info) — persists via submit-facility-claim
+ *   3. Verification (email-domain / SMS-to-facility-phone / docs)
+ *   4. Enrichment (services, photos, etc.)
+ *   5. Review & submit
  *
- * Auth gate: anon visitors are bounced to /auth/signup with a returnTo
- * pointing back here (and `claim=1` so the entry point UI can react).
+ * Entry contract:
+ *   - Anon visitors → /provider/onboarding?returnTo=/provider/claim/:slug&intent=claim
+ *     (round-30 merge: unified wizard handles account + verify, then
+ *     bounces back here via returnTo)
+ *   - Signed-in users who never went through /provider/onboarding (no
+ *     plan selection on file) → /provider/onboarding?intent=claim&
+ *     facility_id=<id>, so they pick Free vs Pro before claiming.
+ *   - Signed-in users with a plan selection → enter here directly.
  *
  * Persistence: wizard state lives in sessionStorage keyed by
- * `claim-wizard-${slug}` so a refresh doesn't lose progress. DB-side
- * persistence happens via submit-facility-claim on step 2 submission;
- * subsequent steps will update the same claim row.
+ * `claim-wizard-${slug}`. submit-facility-claim writes the canonical
+ * row on step 2; subsequent steps update it.
  */
 
 import {
@@ -68,6 +71,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { WizardStepper } from "@/components/provider/WizardStepper";
 import { useFacilityBySlug, type FacilityBaseData } from "@/hooks/useFacilityBySlug";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import {
   AlertCircle,
@@ -289,11 +293,30 @@ function dataSourceLabel(source: string | null | undefined): string {
   }
 }
 
-export default function ClaimWizard() {
-  const { slug } = useParams<{ slug: string }>();
+interface ClaimWizardProps {
+  /**
+   * 2026-05-20 unification: when `embedded=true`, render inside the
+   * unified onboarding wizard's BuildStep slot — no Header/Footer/
+   * Helmet, skip the anonymous-visitor redirect (the host has already
+   * authenticated the user), and route success → `?step=plan` instead
+   * of the standalone `/provider/claim/:slug/submitted` page.
+   */
+  embedded?: boolean;
+  /** Overrides useParams when embedded (the unified flow has no `:slug`
+   *  in the URL — the host passes the slug looked up via
+   *  selected_facility_id). */
+  slugProp?: string;
+  /** Optional callback for embedded mode's "this isn't right" path —
+   *  hands control back to the host to re-route to FindOrListStep. */
+  onCancel?: () => void;
+}
+
+export default function ClaimWizard({ embedded = false, slugProp, onCancel }: ClaimWizardProps = {}) {
+  const { slug: paramSlug } = useParams<{ slug: string }>();
+  const slug = slugProp ?? paramSlug;
   const navigate = useNavigate();
 
-  const [authChecking, setAuthChecking] = useState(true);
+  const [authChecking, setAuthChecking] = useState(!embedded);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [state, setState] = useState<WizardState>(() =>
@@ -306,27 +329,43 @@ export default function ClaimWizard() {
     if (slug) persistState(slug, state);
   }, [slug, state]);
 
-  // Auth gate. If signed out, bounce to /auth/signup with returnTo so the
-  // user can come back. The `claim=1` query param is informational; signup
-  // pages can react if they want a different copy variant.
+  // Auth gate. Signed-out → unified onboarding wizard with returnTo.
+  // Embedded mode skips this entirely — the unified host already
+  // authenticated the user; doing it again here would never trigger.
   useEffect(() => {
+    if (embedded) {
+      // Just resolve the userId synchronously and bail.
+      let cancelled = false;
+      (async () => {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (cancelled) return;
+        setCurrentUserId(sessionData.session?.user.id ?? null);
+        setCurrentUserEmail(sessionData.session?.user.email ?? null);
+      })();
+      return () => { cancelled = true; };
+    }
     let cancelled = false;
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
       if (cancelled) return;
       if (!session?.user) {
-        const returnTo = `/provider/claim/${slug ?? ""}`;
-        const search = new URLSearchParams({ returnTo, claim: "1" }).toString();
-        navigate(`/auth/signup?${search}`, { replace: true });
+        // Anon visitors land in the unified onboarding wizard.
+        const search = new URLSearchParams({
+          intent: "claim",
+          ...(slug ? { facility_slug: slug } : {}),
+        }).toString();
+        navigate(`/provider/onboarding?${search}`, { replace: true });
         return;
       }
       setCurrentUserId(session.user.id);
       setCurrentUserEmail(session.user.email ?? null);
       setAuthChecking(false);
-    });
+    })();
     return () => {
       cancelled = true;
     };
-  }, [navigate, slug]);
+  }, [navigate, slug, embedded]);
 
   // Pre-fill the claimant email once we know the session, but only if the
   // user hasn't typed something else already (rehydration from sessionStorage
@@ -338,6 +377,34 @@ export default function ClaimWizard() {
     );
   }, [currentUserEmail]);
 
+  // Round-30 merge: pre-fill claimant name + phone from profiles so
+  // Step 2 doesn't ask for data we already have. The user only needs
+  // to confirm and pick their role at the facility.
+  useEffect(() => {
+    if (!currentUserId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, phone")
+        .eq("user_id", currentUserId)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const fullName = [data.first_name, data.last_name]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      setState((prev) => ({
+        ...prev,
+        claimantName: prev.claimantName || fullName,
+        claimantPhone: prev.claimantPhone || (data.phone ?? ""),
+      }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserId]);
+
   const { facility, claimFlags, loading, notFound } = useFacilityBySlug(slug);
 
   const setStep = useCallback((next: number) => {
@@ -346,27 +413,21 @@ export default function ClaimWizard() {
 
   if (authChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={cn(embedded ? "py-6 flex items-center justify-center" : "min-h-screen flex items-center justify-center")}>
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
       </div>
     );
   }
 
-  return (
+  const wizardBody = (
     <>
-      <Helmet>
-        <title>Claim your listing — RehabLookup</title>
-        <meta name="robots" content="noindex" />
-      </Helmet>
-      <Header />
-      <main className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 max-w-2xl">
-        <WizardStepper
-          currentStep={state.currentStep}
-          totalSteps={TOTAL_STEPS}
-          labels={WIZARD_STEP_LABELS}
-          onStepClick={setStep}
-          className="mb-8"
-        />
+      <WizardStepper
+        currentStep={state.currentStep}
+        totalSteps={TOTAL_STEPS}
+        labels={WIZARD_STEP_LABELS}
+        onStepClick={setStep}
+        className="mb-8"
+      />
 
         {loading && (
           <Card className="p-8 flex flex-col items-center gap-2">
@@ -395,6 +456,8 @@ export default function ClaimWizard() {
               <Step1ConfirmFacility
                 facility={facility}
                 onNext={() => setStep(2)}
+                embedded={embedded}
+                onCancel={onCancel}
               />
             )}
 
@@ -454,15 +517,63 @@ export default function ClaimWizard() {
                 claimRequestId={state.claimRequestId}
                 onJump={setStep}
                 onBack={() => setStep(4)}
-                onSubmitted={() =>
-                  navigate(`/provider/claim/${facility.slug}/submitted`, {
-                    replace: true,
-                  })
-                }
+                onSubmitted={async () => {
+                  // 2026-05-20 unification: decide where to land based on
+                  // `profiles.onboarding_completed_at`. First-time
+                  // claimers advance state → 'plan' and route to
+                  // PlanStep. Already-onboarded users (add-another-claim
+                  // via /provider/claims) skip PlanStep and land on
+                  // /provider/claims with their new pending claim in
+                  // the list.
+                  let alreadyOnboarded = false;
+                  try {
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    const uid = sessionData.session?.user.id;
+                    if (uid) {
+                      const { data: profileRow } = await supabase
+                        .from("profiles")
+                        .select("onboarding_completed_at")
+                        .eq("user_id", uid)
+                        .maybeSingle();
+                      alreadyOnboarded = !!(profileRow as { onboarding_completed_at?: string | null } | null)?.onboarding_completed_at;
+                      if (!alreadyOnboarded) {
+                        await supabase
+                          .from("provider_onboarding_state")
+                          .upsert(
+                            { user_id: uid, current_step: "plan" } as never,
+                            { onConflict: "user_id" },
+                          );
+                      }
+                    }
+                  } catch (e) {
+                    console.warn("[ClaimWizard] post-submit advance failed", e);
+                  }
+                  if (alreadyOnboarded) {
+                    navigate("/provider/claims", { replace: true });
+                    return;
+                  }
+                  navigate("/provider/onboarding?step=plan", { replace: true });
+                }}
               />
             )}
           </>
         )}
+      </>
+  );
+
+  if (embedded) {
+    return wizardBody;
+  }
+
+  return (
+    <>
+      <Helmet>
+        <title>Claim your listing — RehabLookup</title>
+        <meta name="robots" content="noindex" />
+      </Helmet>
+      <Header />
+      <main className="container mx-auto px-4 md:px-6 lg:px-8 py-8 md:py-12 max-w-2xl">
+        {wizardBody}
       </main>
       <Footer />
     </>
@@ -474,9 +585,13 @@ export default function ClaimWizard() {
 function Step1ConfirmFacility({
   facility,
   onNext,
+  embedded,
+  onCancel,
 }: {
   facility: ReturnType<typeof useFacilityBySlug>["facility"];
   onNext: () => void;
+  embedded?: boolean;
+  onCancel?: () => void;
 }) {
   const navigate = useNavigate();
   if (!facility) return null;
@@ -528,7 +643,13 @@ function Step1ConfirmFacility({
       <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-between pt-2 border-t">
         <Button
           variant="outline"
-          onClick={() => navigate("/provider/onboarding")}
+          onClick={() => {
+            if (embedded && onCancel) {
+              onCancel();
+              return;
+            }
+            navigate("/provider/onboarding");
+          }}
           className="sm:w-auto"
         >
           <ArrowLeft className="h-4 w-4 mr-1.5" aria-hidden />
@@ -648,13 +769,13 @@ function Step2YourRole({
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-primary" aria-hidden />
           <h1 className="font-display text-xl md:text-2xl font-bold text-foreground">
-            Tell us who you are
+            Confirm who you are
           </h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          We'll use this to verify your relationship to the facility. None of
-          it gets published until you finish all the steps and we approve the
-          claim.
+          We've pre-filled what we know from your account — pick your role at
+          the facility and continue. Nothing gets published until your claim
+          is approved.
         </p>
       </header>
 
@@ -945,8 +1066,8 @@ function Step3Verification({
           </h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Pick the verification method that works for you. Email and SMS are
-          instant; document review takes 1–2 business days.
+          We picked the fastest verification method based on what's on file.
+          You can switch methods below if needed.
         </p>
       </header>
 
@@ -1045,6 +1166,21 @@ function apexDomain(host: string): string {
   return parts.length >= 2 ? parts.slice(-2).join(".") : host;
 }
 
+/**
+ * Round-30 merge: the 3-way verification picker was replaced with an
+ * auto-router that selects the single best method based on what's on
+ * file:
+ *   1. Email-domain match — if the signed-in claimant's email lives on
+ *      the facility's web apex domain (near-instant verification).
+ *   2. SMS to the facility phone — if no email match but a phone is on
+ *      file. Requires explicit consent (operator must be at the
+ *      facility to receive the code).
+ *   3. Document upload — fallback for facilities with neither a website
+ *      nor a phone, or when both fail.
+ *
+ * A small "verify a different way" disclosure preserves the safety
+ * valve so operators aren't stranded if auto-detection is wrong.
+ */
 function MethodPicker({
   facility,
   claimantEmail,
@@ -1055,9 +1191,7 @@ function MethodPicker({
 }: MethodPickerProps) {
   const hasWebsite = !!facility.website?.trim();
   const hasPhone = !!facility.phone?.trim();
-  // Recommend email_domain when the signed-in claimant's email already lives
-  // on the facility's web apex domain — that path is single-click verifiable.
-  const emailDomainRecommended = (() => {
+  const emailDomainMatch = (() => {
     if (!hasWebsite || !claimantEmail) return false;
     const facilityHost = hostnameFromUrl(facility.website);
     if (!facilityHost) return false;
@@ -1067,8 +1201,15 @@ function MethodPicker({
     if (!emailHost) return false;
     return apexDomain(emailHost) === apexDomain(facilityHost);
   })();
+  const bestMethod: VerificationMethod = emailDomainMatch
+    ? "email_domain"
+    : hasPhone
+      ? "sms_phone"
+      : "document_upload";
+
   const [smsConfirmOpen, setSmsConfirmOpen] = useState(false);
   const [smsSending, setSmsSending] = useState(false);
+  const [showAlternatives, setShowAlternatives] = useState(false);
 
   async function handleSmsSend() {
     setSmsSending(true);
@@ -1104,45 +1245,107 @@ function MethodPicker({
     }
   }
 
+  // ── Primary auto-method panel ────────────────────────────────────
+  let primary: { heading: string; sub: string; cta: string; icon: typeof Mail; onCta: () => void };
+  if (bestMethod === "email_domain") {
+    primary = {
+      icon: Mail,
+      heading: `We'll verify by email at ${apexDomain(hostnameFromUrl(facility.website) ?? "")}`,
+      sub: `Your signed-in email (${claimantEmail}) already lives on this facility's domain — we'll send a 6-digit code there.`,
+      cta: "Send verification code",
+      onCta: () => onPick("email_domain"),
+    };
+  } else if (bestMethod === "sms_phone") {
+    primary = {
+      icon: MessageSquare,
+      heading: `We'll text a code to the facility phone`,
+      sub: `We'll send a 6-digit code to ${maskPhone(facility.phone)}. You must be at the facility to receive it.`,
+      cta: "Send SMS code",
+      onCta: () => setSmsConfirmOpen(true),
+    };
+  } else {
+    primary = {
+      icon: FileText,
+      heading: "We'll verify with documents",
+      sub: "Upload a JCAHO/CARF certificate, state license, or DEA registration. Our team reviews within 1–2 business days.",
+      cta: "Continue to upload",
+      onCta: () => onPick("document_upload"),
+    };
+  }
+
   return (
     <>
-      <div className="grid gap-3 lg:grid-cols-3">
-        <MethodCard
-          icon={Mail}
-          heading="Verify with work email"
-          subtext={
-            emailDomainRecommended
-              ? "Your signed-in email already lives on this facility's domain — this will be near-instant."
-              : "Send a 6-digit code to your email at the facility's web domain. Fastest method."
-          }
-          available={hasWebsite}
-          unavailableReason={
-            hasWebsite ? undefined : "This facility doesn't have a website on file."
-          }
-          ctaLabel="Use email"
-          recommended={emailDomainRecommended}
-          onSelect={() => onPick("email_domain")}
-        />
-        <MethodCard
-          icon={MessageSquare}
-          heading="Verify with SMS"
-          subtext="We'll text a 6-digit code to the facility's listed number. You'll need to be there to receive it."
-          available={hasPhone}
-          unavailableReason={
-            hasPhone ? undefined : "This facility doesn't have a phone on file."
-          }
-          ctaLabel="Use SMS"
-          onSelect={() => setSmsConfirmOpen(true)}
-        />
-        <MethodCard
-          icon={FileText}
-          heading="Verify with a document"
-          subtext="Upload a JCAHO/CARF certificate, state license, or DEA registration. Our team reviews within 1–2 business days."
-          available
-          ctaLabel="Use document"
-          onSelect={() => onPick("document_upload")}
-        />
+      <div className="rounded-md border border-primary/40 bg-primary/[0.04] p-4 sm:p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center">
+            <primary.icon className="h-4 w-4 text-primary" aria-hidden />
+          </div>
+          <h3 className="font-semibold text-sm sm:text-base text-foreground">
+            {primary.heading}
+          </h3>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {primary.sub}
+        </p>
+        <Button onClick={primary.onCta} size="sm" className="w-full sm:w-auto">
+          {primary.cta}
+          <ArrowRight className="h-4 w-4 ml-1.5" aria-hidden />
+        </Button>
       </div>
+
+      {/* Alternatives disclosure — collapsed by default so the user
+          sees one CTA, not three. Only the OTHER methods (not the
+          primary) show up here. */}
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={() => setShowAlternatives((v) => !v)}
+          className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+        >
+          {showAlternatives ? "Hide other verification methods" : "Verify a different way"}
+        </button>
+      </div>
+
+      {showAlternatives && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {bestMethod !== "email_domain" && (
+            <MethodCard
+              icon={Mail}
+              heading="Work email"
+              subtext={
+                hasWebsite
+                  ? "Send a 6-digit code to your email at the facility's web domain."
+                  : "Unavailable — no website on file."
+              }
+              available={hasWebsite}
+              unavailableReason={hasWebsite ? undefined : "This facility doesn't have a website on file."}
+              ctaLabel="Use email"
+              onSelect={() => onPick("email_domain")}
+            />
+          )}
+          {bestMethod !== "sms_phone" && (
+            <MethodCard
+              icon={MessageSquare}
+              heading="SMS"
+              subtext="We'll text a 6-digit code to the facility's listed number."
+              available={hasPhone}
+              unavailableReason={hasPhone ? undefined : "No phone on file."}
+              ctaLabel="Use SMS"
+              onSelect={() => setSmsConfirmOpen(true)}
+            />
+          )}
+          {bestMethod !== "document_upload" && (
+            <MethodCard
+              icon={FileText}
+              heading="Document upload"
+              subtext="JCAHO/CARF, state license, or DEA registration. Reviewed in 1–2 business days."
+              available
+              ctaLabel="Use document"
+              onSelect={() => onPick("document_upload")}
+            />
+          )}
+        </div>
+      )}
 
       <div className="flex justify-start pt-2 border-t">
         <Button variant="outline" onClick={onBack} size="sm">
@@ -1863,42 +2066,75 @@ function Step4Enrichment({
   const [saving, setSaving] = useState(false);
 
   // One-time seed: pull doc-upload entries from step 3 into the accreditations
-  // list so the user can flesh them out (type, number, issuing authority).
-  // Also pre-fill the corrected-contact website with whatever the view has.
+  // list, pre-fill corrected-contact from the facility row, AND pre-fill
+  // description / services / insurance from the existing facility so SAMHSA
+  // claimers can EDIT existing data rather than starting blank. The fetch
+  // is best-effort: a failure here just leaves the section empty.
   useEffect(() => {
     if (state.step4Seeded) return;
-    setState((p) => {
-      const seededAccreditations: AccreditationEntry[] =
-        p.accreditations.length === 0 && p.uploadedDocs.length > 0
-          ? p.uploadedDocs.map((doc) => ({
-              id:
-                typeof crypto !== "undefined" && "randomUUID" in crypto
-                  ? crypto.randomUUID()
-                  : `${Date.now()}-${Math.random()}`,
-              type: "",
-              number: "",
-              issuing_authority: "",
-              document_path: doc.path,
-              document_name: doc.name,
-            }))
-          : p.accreditations;
+    let cancelled = false;
+    (async () => {
+      const [servicesRes, insuranceRes] = await Promise.all([
+        supabase
+          .from("facility_services")
+          .select("service_name")
+          .eq("facility_id", facility.id),
+        supabase
+          .from("facility_insurance")
+          .select("insurance_name")
+          .eq("facility_id", facility.id),
+      ]);
+      if (cancelled) return;
+      const existingServices = (servicesRes.data ?? [])
+        .map((r) => (r as { service_name: string | null }).service_name)
+        .filter((s): s is string => !!s && s.length > 0);
+      const existingInsurances = (insuranceRes.data ?? [])
+        .map((r) => (r as { insurance_name: string | null }).insurance_name)
+        .filter((s): s is string => !!s && s.length > 0);
 
-      const seededContact: CorrectedContact =
-        p.correctedContact.phone || p.correctedContact.email || p.correctedContact.website
-          ? p.correctedContact
-          : {
-              phone: facility.phone ?? "",
-              email: "",
-              website: facility.website ?? "",
-            };
+      setState((p) => {
+        const seededAccreditations: AccreditationEntry[] =
+          p.accreditations.length === 0 && p.uploadedDocs.length > 0
+            ? p.uploadedDocs.map((doc) => ({
+                id:
+                  typeof crypto !== "undefined" && "randomUUID" in crypto
+                    ? crypto.randomUUID()
+                    : `${Date.now()}-${Math.random()}`,
+                type: "",
+                number: "",
+                issuing_authority: "",
+                document_path: doc.path,
+                document_name: doc.name,
+              }))
+            : p.accreditations;
 
-      return {
-        ...p,
-        step4Seeded: true,
-        accreditations: seededAccreditations,
-        correctedContact: seededContact,
-      };
-    });
+        const seededContact: CorrectedContact =
+          p.correctedContact.phone || p.correctedContact.email || p.correctedContact.website
+            ? p.correctedContact
+            : {
+                phone: facility.phone ?? "",
+                email: "",
+                website: facility.website ?? "",
+              };
+
+        return {
+          ...p,
+          step4Seeded: true,
+          accreditations: seededAccreditations,
+          correctedContact: seededContact,
+          description:
+            p.description.length > 0
+              ? p.description
+              : (facility.description ?? ""),
+          services: p.services.length > 0 ? p.services : existingServices,
+          insurances:
+            p.insurances.length > 0 ? p.insurances : existingInsurances,
+        };
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-time seed
   }, []);
 

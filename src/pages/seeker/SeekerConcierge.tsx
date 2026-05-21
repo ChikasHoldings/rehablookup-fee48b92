@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,14 +21,22 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { 
+import {
   RefreshCw,
   XCircle,
   Loader2,
   ArrowLeft,
   HeartHandshake,
-  AlertTriangle
+  AlertTriangle,
+  AlertCircle,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   PlacementStatusCard, 
   PlacementHero, 
@@ -46,7 +54,6 @@ import { FeedbackForm } from "@/components/seeker/FeedbackForm";
 import { ConciergeInlineIntake } from "@/components/seeker/ConciergeInlineIntake";
 // ConciergePaymentRecovery was tied to the retired $29 paid concierge flow.
 // Domestic concierge is now free; this recovery surface no longer fires.
-import { analytics } from "@/lib/analytics";
 
 interface ConciergeInquiry {
   id: string;
@@ -90,9 +97,14 @@ interface Facility {
 export default function SeekerConcierge() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  // Deep-link support: /account/concierge/:inquiryId is a valid route
+  // (App.tsx:1364). Previously the inquiryId was silently dropped —
+  // clicking "Resume" on SeekerHome landed on the concierge page but
+  // selectedCase fell back to cases[0]. Now the route param seeds the
+  // initial selection and stays in sync with user selections.
+  const { inquiryId: routeInquiryId } = useParams<{ inquiryId?: string }>();
   const queryClient = useQueryClient();
-  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
-  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [selectedCaseId, setSelectedCaseId] = useState<string | null>(routeInquiryId ?? null);
   const [showIntakeFlow, setShowIntakeFlow] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -107,31 +119,49 @@ export default function SeekerConcierge() {
   const userEmail = currentUser?.email || "";
   const userPhone = currentUser?.user_metadata?.phone || "";
 
-  // Auto-link unlinked inquiries to current user on login (by email match)
+  // Auto-link unlinked inquiries to current user on login (by email match).
+  // Hardened:
+  //   1. Surface fetch errors via console.warn (was bare try/catch)
+  //   2. Parallelise link-inquiry-to-user calls (was serial in a for-loop)
+  //   3. Cancellation flag so a fast remount doesn't double-link
   useEffect(() => {
     if (!userId || !userEmail) return;
+    let cancelled = false;
     const linkUnlinked = async () => {
-      try {
-        const { data: unlinked } = await supabase
-          .from("concierge_inquiries")
-          .select("id")
-          .eq("user_email", userEmail.toLowerCase())
-          .is("user_id", null)
-          .in("payment_status", ["paid", "succeeded", "free"]);
-        
-        if (unlinked && unlinked.length > 0) {
-          for (const inquiry of unlinked) {
-            await supabase.functions.invoke("link-inquiry-to-user", {
-              body: { inquiryId: inquiry.id, userId },
-            }).catch(() => {}); // Non-blocking
-          }
-          refetchRef.current?.();
-        }
-      } catch {
-        // Non-blocking — don't interrupt the page
+      const { data: unlinked, error } = await supabase
+        .from("concierge_inquiries")
+        .select("id")
+        .eq("user_email", userEmail.toLowerCase())
+        .is("user_id", null)
+        .in("payment_status", ["paid", "succeeded", "free"]);
+
+      if (cancelled) return;
+      if (error) {
+        console.warn("[SeekerConcierge] auto-link lookup failed:", error.message);
+        return;
       }
+      if (!unlinked || unlinked.length === 0) return;
+
+      const results = await Promise.allSettled(
+        unlinked.map((inquiry) =>
+          supabase.functions.invoke("link-inquiry-to-user", {
+            body: { inquiryId: inquiry.id, userId },
+          }),
+        ),
+      );
+      if (cancelled) return;
+
+      const failures = results.filter((r) => r.status === "rejected").length;
+      if (failures > 0) {
+        console.warn(`[SeekerConcierge] auto-link: ${failures}/${results.length} invocations rejected`);
+      }
+      // Any success (or even error — RLS may have already linked via
+      // upstream session establish) is worth a refetch so we pick up
+      // newly-visible cases.
+      refetchRef.current?.();
     };
     linkUnlinked();
+    return () => { cancelled = true; };
   }, [userId, userEmail]);
 
   const refetchRef = useRef<(() => void) | null>(null);
@@ -181,113 +211,24 @@ export default function SeekerConcierge() {
   // Store refetch for auto-link callback
   useEffect(() => { refetchRef.current = refetch; }, [refetch]);
 
-  // Payment verification
-  const verifyPaymentAndSubmit = useCallback(async (sessionId: string) => {
-    setIsVerifyingPayment(true);
-    
-    const storeFailedSubmission = (data: any, error: string) => {
-      localStorage.setItem("concierge_failed_submission", JSON.stringify({
-        sessionId, data, error, timestamp: Date.now(),
-      }));
-    };
-
-    try {
-      const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-concierge-payment", {
-        body: { sessionId }
-      });
-
-      if (verifyError) throw verifyError;
-
-      if (verifyData?.alreadySubmitted) {
-        toast.success("Your intake was already submitted!");
-        localStorage.removeItem("concierge_pending_intake");
-        localStorage.removeItem("concierge_failed_submission");
-        refetch();
-        return;
-      }
-
-      if (verifyData?.paid) {
-        analytics.conciergeIntakeSubmitted();
-        const pendingIntake = localStorage.getItem("concierge_pending_intake");
-        if (pendingIntake) {
-          const { formData, userName, userEmail, userPhone } = JSON.parse(pendingIntake);
-          
-          const intakePayload = {
-            sessionId,
-            intakeData: {
-              ...formData,
-              decisionMakerName: userName,
-              email: userEmail,
-              phone: userPhone || "",
-            },
-            userId: currentUser?.id,
-          };
-
-          const { error: submitError } = await supabase.functions.invoke("submit-concierge-intake", {
-            body: intakePayload,
-          });
-
-          if (submitError) {
-            storeFailedSubmission(intakePayload, submitError.message);
-            throw submitError;
-          }
-
-          localStorage.removeItem("concierge_pending_intake");
-          localStorage.removeItem("concierge_failed_submission");
-          
-          toast.success("Your intake has been submitted! We'll be in touch soon.");
-          refetch();
-        } else {
-          const failedSubmission = localStorage.getItem("concierge_failed_submission");
-          if (failedSubmission) {
-            const { data: failedData } = JSON.parse(failedSubmission);
-            if (failedData?.sessionId === sessionId) {
-              const { error: retryError } = await supabase.functions.invoke("submit-concierge-intake", {
-                body: failedData,
-              });
-
-              if (!retryError) {
-                localStorage.removeItem("concierge_failed_submission");
-                toast.success("Your intake has been submitted! We'll be in touch soon.");
-                refetch();
-              } else {
-                throw retryError;
-              }
-            }
-          } else {
-            toast.success("Payment verified! Please complete the intake form.");
-          }
-        }
-      }
-
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete("session_id");
-      newParams.delete("payment");
-      setSearchParams(newParams, { replace: true });
-    } catch (err) {
-      console.error("Payment verification error:", err);
-      toast.error("Failed to submit intake. Please email placement@rehablookup.com for assistance.");
-    } finally {
-      setIsVerifyingPayment(false);
-    }
-  }, [refetch, searchParams, setSearchParams, currentUser?.id]);
-
-  // Check for payment return
+  // Legacy `?session_id=…&payment=success` and `?payment=canceled` query
+  // parameters are no longer produced by the concierge flow (domestic
+  // intake is free; the $29 Stripe step was retired 2026-05-18). Strip
+  // any stale instances from old bookmarks so they don't sit in the URL.
   useEffect(() => {
-    const sessionId = searchParams.get("session_id");
-    const paymentStatus = searchParams.get("payment");
-    
-    if (sessionId && paymentStatus === "success" && !isVerifyingPayment) {
-      verifyPaymentAndSubmit(sessionId);
-    } else if (paymentStatus === "canceled") {
-      toast.error("Payment was canceled. Please try again.");
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete("payment");
-      setSearchParams(newParams, { replace: true });
-    }
-  }, [searchParams, isVerifyingPayment, verifyPaymentAndSubmit, setSearchParams]);
+    const stalePayment = searchParams.get("payment");
+    const staleSessionId = searchParams.get("session_id");
+    if (!stalePayment && !staleSessionId) return;
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("payment");
+    newParams.delete("session_id");
+    setSearchParams(newParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
-  // Realtime: auto-refresh when case status or matches change
+  // Realtime: auto-refresh when case status or matches change.
+  // Listens to ALL events (was UPDATE only) so a new case submitted
+  // in another tab/device shows up here within ~200ms, and case
+  // deletions by the admin propagate too.
   useEffect(() => {
     if (!userId) return;
 
@@ -296,7 +237,7 @@ export default function SeekerConcierge() {
       .on(
         "postgres_changes",
         {
-          event: "UPDATE",
+          event: "*",
           schema: "public",
           table: "concierge_inquiries",
           filter: `user_id=eq.${userId}`,
@@ -312,17 +253,40 @@ export default function SeekerConcierge() {
 
   const selectedCase = cases?.find(c => c.id === selectedCaseId) || cases?.[0];
 
-  // Fetch matched facilities
-  const { data: matchedFacilities } = useQuery({
+  // Keep the URL in sync with the selected case id, so:
+  //   - /account/concierge/<id> deep-links land on the right case
+  //   - clicking a different case in the selector below updates the
+  //     URL via history.replaceState (so back/forward doesn't pile up)
+  //   - the bare /account/concierge URL drops the id when only one
+  //     case (or no cases) exists.
+  useEffect(() => {
+    if (!cases || cases.length === 0) return;
+    const targetId = selectedCase?.id ?? null;
+    if (!targetId) return;
+    if (routeInquiryId === targetId) return;
+    // Only one case + URL has no id → leave bare URL alone.
+    if (cases.length === 1 && !routeInquiryId) return;
+    navigate(`/account/concierge/${targetId}`, { replace: true });
+  }, [selectedCase?.id, routeInquiryId, cases, navigate]);
+
+  // Fetch matched facilities. The previous version dropped errors
+  // into a generic React-Query failure that rendered as an empty
+  // facilities list — visually indistinguishable from "no matches
+  // yet." Now isError is surfaced inline next to the tabs.
+  const {
+    data: matchedFacilities,
+    isError: matchedFacilitiesError,
+    refetch: refetchMatched,
+  } = useQuery({
     queryKey: ["matched-facilities", selectedCase?.matched_facility_ids],
     queryFn: async () => {
       if (!selectedCase?.matched_facility_ids?.length) return [];
-      
+
       const { data, error } = await supabase
         .from("facilities")
         .select("id, name, city, state, phone, slug, logo_url, facility_type")
         .in("id", selectedCase.matched_facility_ids);
-      
+
       if (error) throw error;
       return (data || []) as Facility[];
     },
@@ -335,14 +299,18 @@ export default function SeekerConcierge() {
     queryFn: async () => {
       if (!selectedCase?.placed_facility_id) return null;
       
+      // .maybeSingle() — if the placed facility was deleted or RLS
+      // hides it, returning null is better UX than throwing through to
+      // the error boundary. The placement card already handles a
+      // missing facility gracefully.
       const { data, error } = await supabase
         .from("facilities")
         .select("id, name, city, state, phone, slug, logo_url, facility_type")
         .eq("id", selectedCase.placed_facility_id)
-        .single();
-      
+        .maybeSingle();
+
       if (error) throw error;
-      return data as Facility;
+      return (data ?? null) as Facility | null;
     },
     enabled: !!selectedCase?.placed_facility_id,
   });
@@ -356,6 +324,12 @@ export default function SeekerConcierge() {
 
       if (!userId) throw new Error("Not authenticated");
 
+      // .maybeSingle() — if the UPDATE matched zero rows (another tab
+      // already submitted feedback, or the case status moved out from
+      // under the conditional `.is(seeker_feedback, null)` filter),
+      // data will be null and we throw a friendly "already submitted"
+      // instead of a bare PostgrestError from .single()'s "no rows
+      // returned" error.
       const { data, error } = await supabase
         .from("concierge_inquiries")
         .update({ seeker_rating: rating, seeker_feedback: feedback })
@@ -363,11 +337,11 @@ export default function SeekerConcierge() {
         .eq("user_id", userId)
         .is("seeker_feedback", null)
         .select("id")
-        .single();
-      
+        .maybeSingle();
+
       if (error) throw error;
       if (!data) throw new Error("Feedback already submitted");
-      
+
       return data;
     },
     onSuccess: () => {
@@ -415,16 +389,32 @@ export default function SeekerConcierge() {
         .maybeSingle();
 
       if (error) throw error;
-      if (!updated) return; // Already advanced/closed by someone else — idempotent.
+      if (!updated) {
+        // Optimistic-lock failed: the case advanced under us. Don't
+        // log a "seeker_cancelled" event or send the notification —
+        // they'd be inaccurate. Return a structured sentinel so
+        // onSuccess can show the right message.
+        return { cancelled: false as const };
+      }
 
       // Log case event
-      await supabase.from("concierge_case_events").insert({
-        inquiry_id: selectedCase.id,
-        event_type: "seeker_cancelled",
-        event_data: { reason: "Cancelled by seeker" },
-        actor_type: "seeker",
-        actor_id: userId,
-      });
+      const { error: eventErr } = await supabase
+        .from("concierge_case_events")
+        .insert({
+          inquiry_id: selectedCase.id,
+          event_type: "seeker_cancelled",
+          event_data: { reason: "Cancelled by seeker" },
+          actor_type: "seeker",
+          actor_id: userId,
+        });
+      if (eventErr) {
+        // The cancel itself succeeded; an event-log failure shouldn't
+        // bubble up as a user-visible error, but log it for ops.
+        console.warn(
+          "[SeekerConcierge] cancel event log failed (cancel still applied):",
+          eventErr.message,
+        );
+      }
 
       // Notify admin/advisor of cancellation (non-blocking)
       supabase.functions.invoke("send-concierge-notifications", {
@@ -433,9 +423,15 @@ export default function SeekerConcierge() {
           inquiryId: selectedCase.id,
         },
       }).catch((e) => console.error("Cancel notification error:", e));
+
+      return { cancelled: true as const };
     },
-    onSuccess: () => {
-      toast.success("Your request has been cancelled.");
+    onSuccess: (result) => {
+      if (result?.cancelled === false) {
+        toast.info("Your case has moved forward in another tab — refreshing the view.");
+      } else {
+        toast.success("Your request has been cancelled.");
+      }
       queryClient.invalidateQueries({ queryKey: ["seeker-concierge-cases"] });
     },
     onError: (error) => {
@@ -477,15 +473,6 @@ export default function SeekerConcierge() {
 
   // ========== STATE A: No case yet ==========
   if (!cases?.length) {
-    if (isVerifyingPayment) {
-      return (
-        <div className="container max-w-4xl py-8 flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Verifying your payment...</p>
-        </div>
-      );
-    }
-
     if (currentUser) {
       return (
         <>
@@ -629,19 +616,55 @@ export default function SeekerConcierge() {
           </div>
         </div>
 
-        {/* Case Selector (if multiple) */}
-        {cases.length > 1 && (
+        {/* Case Selector (when multiple). Small list = buttons; long
+            list = dropdown so it doesn't wrap into a wall of pills. */}
+        {cases.length > 1 && cases.length <= 3 && (
           <div className="flex gap-2 flex-wrap">
-            {cases.map((c) => (
-              <Button
-                key={c.id}
-                variant={selectedCaseId === c.id || (!selectedCaseId && c.id === cases[0].id) ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCaseId(c.id)}
-              >
-                Case #{c.id.slice(0, 8).toUpperCase()}
-              </Button>
-            ))}
+            {cases.map((c) => {
+              const isActive = (selectedCase?.id === c.id);
+              return (
+                <Button
+                  key={c.id}
+                  variant={isActive ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCaseId(c.id)}
+                  aria-label={`Switch to case ${c.id.slice(0, 8).toUpperCase()}`}
+                  aria-pressed={isActive}
+                >
+                  Case #{c.id.slice(0, 8).toUpperCase()}
+                </Button>
+              );
+            })}
+          </div>
+        )}
+        {cases.length > 3 && (
+          <div className="flex items-center gap-2">
+            <label htmlFor="concierge-case-select" className="text-sm text-muted-foreground">
+              Case:
+            </label>
+            <Select
+              value={selectedCase?.id ?? cases[0].id}
+              onValueChange={(v) => setSelectedCaseId(v)}
+            >
+              <SelectTrigger id="concierge-case-select" className="w-72" aria-label="Select placement case">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {cases.map((c) => {
+                  const date = new Date(c.created_at);
+                  const dateLabel = date.toLocaleDateString(undefined, {
+                    month: "short", day: "numeric", year: "numeric",
+                  });
+                  const statusLabel = c.status.replace(/_/g, " ");
+                  return (
+                    <SelectItem key={c.id} value={c.id}>
+                      <span className="font-mono text-xs mr-2">#{c.id.slice(0, 8).toUpperCase()}</span>
+                      <span className="text-xs text-muted-foreground">{dateLabel} · {statusLabel}</span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
         )}
 
@@ -657,9 +680,10 @@ export default function SeekerConcierge() {
 
         {/* Advisor Trust Layer */}
         {selectedCase && (
-          <AdvisorTrustCard 
-            advisorId={selectedCase.assigned_advisor_id} 
-            caseStatus={selectedCase.status} 
+          <AdvisorTrustCard
+            advisorId={selectedCase.assigned_advisor_id}
+            caseStatus={selectedCase.status}
+            inquiryId={selectedCase.id}
           />
         )}
 
@@ -701,9 +725,32 @@ export default function SeekerConcierge() {
           </div>
         )}
 
+        {/* Matched-facilities fetch error: surfaced inline so the
+            seeker knows their match list couldn't load (rather than
+            being silently empty). */}
+        {showMatchedFacilities && matchedFacilitiesError && (
+          <div
+            role="alert"
+            className="rounded-md border border-destructive/40 bg-destructive/5 p-3 flex items-start gap-3"
+          >
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-destructive">
+                Couldn't load your matched facilities
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Your advisor still has them — this is just a display issue. Try again.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetchMatched()}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+            </Button>
+          </div>
+        )}
+
         {/* Tabs for active cases */}
         {showMatchedFacilities && !showProviderReview && (
-          <PlacementTabs 
+          <PlacementTabs
             inquiryId={selectedCase!.id}
             matchedFacilityIds={selectedCase!.matched_facility_ids}
             matchedFacilities={matchedFacilities}

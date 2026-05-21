@@ -10,8 +10,12 @@ interface MegaMenuProps {
   onNavigate?: () => void;
 }
 
+// Country / region landing pages (informational SEO content). The
+// dedicated "/international" paid-placement entry was retired with
+// the international placement product on 2026-05-20; international
+// seekers are now routed to the same concierge intake as US seekers.
 const countryPages = [
-  { href: "/international", label: "International Placement", flag: "🌐" },
+  { href: "/us-rehab/international-patients", label: "International Patients (overview)", flag: "🌐" },
   { href: "/us-rehab/uk-patients", label: "United Kingdom & Ireland", flag: "🇬🇧" },
   { href: "/us-rehab/canadian-patients", label: "Canada", flag: "🇨🇦" },
   { href: "/us-rehab/european-patients", label: "Europe", flag: "🇪🇺" },
@@ -41,9 +45,10 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Country pages */}
         <div className="flex-1 px-5 py-4 border-r border-border/30">
-          <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
+          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-2.5 flex items-center gap-1.5">
             <Globe className="h-3 w-3" />
             International Patients
+            <span className="ml-auto text-[10px] font-semibold text-foreground/40">8 regions</span>
           </p>
           <div className="space-y-0">
             {countryPages.map((page) => (
@@ -62,7 +67,7 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
 
           {/* Programs as pills */}
           <div className="mt-3 pt-3 border-t border-border/30">
-            <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2">
+            <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-2">
               Popular Programs
             </p>
             <div className="flex flex-wrap gap-1.5 px-1">
@@ -83,9 +88,10 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
 
         {/* Right: US Destinations + CTA */}
         <div className="w-[240px] px-4 py-4">
-          <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
+          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-2.5 flex items-center gap-1.5">
             <MapPin className="h-3 w-3 text-accent" />
             Top US Destinations
+            <span className="ml-auto text-[10px] font-semibold text-foreground/40">Top states</span>
           </p>
           <div className="space-y-0">
             {usDestinations.map((dest) => (
@@ -106,19 +112,22 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
             ))}
           </div>
 
-          {/* CTA */}
+          {/* CTA — now points seekers to the unified concierge intake.
+              The dedicated international-application flow was retired
+              alongside the paid placement product. */}
           <div className="mt-3 pt-3 border-t border-border/30">
-            <Link to="/international/apply" onClick={onNavigate} className="group block">
+            <Link to="/concierge" onClick={onNavigate} className="group block">
               <div className="rounded-lg bg-gradient-to-br from-primary/[0.06] to-accent/[0.06] border border-primary/10 p-3">
                 <div className="flex items-center gap-2 mb-2">
                   <Plane className="h-4 w-4 text-accent" />
-                  <p className="text-sm font-bold text-foreground">Start Your Journey</p>
+                  <p className="text-sm font-bold text-foreground">Talk to a Coordinator</p>
                 </div>
                 <p className="text-xs text-muted-foreground leading-snug mb-2.5">
-                  We coordinate travel, visas & admissions for international patients.
+                  Our advisors match international seekers with US programs
+                  that handle travel and admissions directly.
                 </p>
                 <Button size="sm" className="w-full h-8 bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-semibold gap-1.5">
-                  Apply Now <ArrowRight className="h-3 w-3" />
+                  Start Free Intake <ArrowRight className="h-3 w-3" />
                 </Button>
               </div>
             </Link>
@@ -134,7 +143,7 @@ export function InternationalMegaMenuMobile({ onNavigate }: MegaMenuProps) {
     <div className="space-y-1">
       {/* Countries */}
       <div>
-        <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
+        <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-3 mb-1.5 flex items-center gap-1.5">
           <Globe className="h-3.5 w-3.5" />
           International Patients
         </p>
@@ -168,12 +177,12 @@ export function InternationalMegaMenuMobile({ onNavigate }: MegaMenuProps) {
         </div>
       </div>
 
-      {/* CTA */}
+      {/* CTA — unified concierge intake; international applicant flow retired 2026-05-20. */}
       <div className="border-t border-border/30 pt-2 mx-2">
-        <PrefetchLink to="/international/apply" onClick={onNavigate}
+        <PrefetchLink to="/concierge" onClick={onNavigate}
           className="flex items-center gap-2 px-1 py-2 text-sm text-accent font-semibold">
           <Plane className="h-4 w-4" />
-          Apply for Treatment <ArrowRight className="h-3.5 w-3.5" />
+          Start Free Concierge Intake <ArrowRight className="h-3.5 w-3.5" />
         </PrefetchLink>
       </div>
     </div>

@@ -197,23 +197,18 @@ export default function AdvisorInbox() {
 
   const unreadCount = threads?.filter(t => t.hasUnread).length || 0;
 
-  // Thread list view
+  // Thread list view. The page-level title/header is rendered by the
+  // parent Placements workspace tabs — this view starts at the unread
+  // badge / filter row so embedding inside a tab doesn't double-stack
+  // titles.
   if (!selectedThread) {
     return (
       <div className="space-y-4 sm:space-y-5">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Inbox className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl font-semibold tracking-tight truncate">Advisor Inbox</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-                Coordinate admissions with seekers and providers
-              </p>
-            </div>
-          </div>
+        {/* Inline summary — unread count + brief context */}
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            Coordinate admissions with seekers and providers
+          </p>
           {unreadCount > 0 && (
             <Badge variant="default" className="self-start sm:self-auto">
               {unreadCount} unread

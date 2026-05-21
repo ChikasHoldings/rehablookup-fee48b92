@@ -161,9 +161,14 @@ export function ToursTab({ caseData }: ToursTabProps) {
         actor_type: getCaseEventActorType(adminRole),
       });
 
-      // Notify facility of tour request
+      // Notify facility of tour request. Tour itself is persisted —
+      // the notification is a soft-fail: a failure surfaces a warning
+      // toast so the admin can follow up manually if email/push
+      // doesn't reach the facility.
+      let notifyOk = true;
+      let notifyErrorMessage: string | null = null;
       try {
-        await supabase.functions.invoke("send-concierge-notifications", {
+        const { data: notifData, error: notifErr } = await supabase.functions.invoke("send-concierge-notifications", {
           body: {
             type: "tour_requested",
             inquiryId: caseData.id,
@@ -171,12 +176,22 @@ export function ToursTab({ caseData }: ToursTabProps) {
             metadata: { tour_type: createTourType },
           },
         });
+        if (notifErr || notifData?.error) {
+          notifyOk = false;
+          notifyErrorMessage = (notifErr as Error | null)?.message || notifData?.error || "Unknown error";
+        }
       } catch (e) {
-        console.error("Tour notification failed:", e);
+        notifyOk = false;
+        notifyErrorMessage = e instanceof Error ? e.message : "Unknown error";
       }
+      return { notifyOk, notifyErrorMessage };
     },
-    onSuccess: () => {
-      toast.success("Tour request created and facility notified");
+    onSuccess: (result) => {
+      if (result?.notifyOk) {
+        toast.success("Tour request created and facility notified");
+      } else {
+        toast.warning(`Tour request created, but facility notification failed: ${result?.notifyErrorMessage ?? "Unknown error"}`);
+      }
       queryClient.invalidateQueries({ queryKey: ["admin-case-tours", caseData.id] });
       queryClient.invalidateQueries({ queryKey: ["case-events", caseData.id] });
       setShowCreateDialog(false);
@@ -203,8 +218,8 @@ export function ToursTab({ caseData }: ToursTabProps) {
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       
-      const { error } = await supabase
-        .from("concierge_tour_requests")
+      const { error } = await (supabase
+        .from("concierge_tour_requests") as any)
         .update(updates)
         .eq("id", tourId);
 

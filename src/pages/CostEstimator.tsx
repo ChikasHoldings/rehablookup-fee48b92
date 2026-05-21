@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "react-router-dom";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 import { Progress } from "@/components/ui/progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -215,20 +216,33 @@ const CostEstimator = () => {
         ]}
       />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <BreadcrumbNav className="mb-4" variant="light" items={[{ label: "Cost Estimator" }]} />
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-              <Calculator className="h-4 w-4" />
-              Free Tool · Updated for 2026
+      {/* Hero — COST ESTIMATOR. Smaller than State per the brief.
+          Distinct teal-cyan accent (matches Insurance hub's financial-
+          trust palette, signalling cost/financial context). */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-teal-900/80 to-cyan-700/50">
+        <img
+          src={TOPIC_HERO_IMAGES.finance}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(20,184,166,0.12),_transparent_55%)]" />
+        <div className="container relative z-10 mx-auto px-4 py-6 md:py-8">
+          <BreadcrumbNav className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white" items={[{ label: "Cost Estimator" }]} />
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-teal-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-teal-100 backdrop-blur-sm ring-1 ring-teal-400/25">
+              <Calculator className="h-3 w-3" />
+              Free Tool · 2026
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+            <h1 className="mb-2 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white">
               Treatment Cost Estimator
             </h1>
-            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Get a personalized estimate of what addiction treatment might cost based on your care level and insurance. Costs reflect current 2026 national averages.
+            <p className="text-sm md:text-base text-white/85 max-w-xl mx-auto">
+              Personalized estimate based on care level and insurance. Current 2026 national averages.
             </p>
           </div>
         </div>

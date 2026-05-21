@@ -94,18 +94,18 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
         description="The treatment center you're looking for is unavailable. Search RehabLookup's verified directory of rehab centers by city, state, or name."
         noindex={true}
       />
-      <div className="min-h-[calc(100vh-200px)] bg-gradient-to-b from-primary/5 via-background to-muted/30 py-12 px-4 md:py-20">
+      <div className="min-h-[calc(100vh-200px)] bg-gradient-to-b from-primary/5 via-background to-muted/30 py-8 px-4 md:py-12">
         <div className="max-w-4xl mx-auto">
-          {/* Hero */}
-          <div className="text-center mb-10">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 animate-fade-in">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">
-                Page not found
-              </span>
+          {/* Recovery surface — kept light + helpful tone (NOT a dark
+              directory hero). Tightened headline + padding so the
+              404 feels actionable rather than dramatic. */}
+          <div className="text-center mb-8">
+            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground animate-fade-in">
+              <Building2 className="h-3 w-3" />
+              Page Not Found
             </div>
 
-            <h1 className="mb-4 font-display text-4xl font-bold text-foreground md:text-5xl animate-fade-in">
+            <h1 className="mb-3 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-foreground animate-fade-in">
               {headline}
             </h1>
             <p className="mx-auto mb-2 max-w-xl text-muted-foreground leading-relaxed">

@@ -85,6 +85,7 @@ export default function TreatmentHubPage() {
       heroTitle={config.title}
       heroSubtitle={config.heroSubtitle}
       heroBadge="Accredited Programs"
+      heroImage={TOPIC_HERO_IMAGES.treatment}
       introContent={config.overview}
       whatToExpect={config.whatToExpect}
       benefits={config.benefits}

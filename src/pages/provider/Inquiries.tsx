@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
-import { Users, Search, X, ChevronLeft, Lock, KeyRound, Inbox, ShieldCheck, MailQuestion } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Users, Search, X, ChevronLeft, Inbox, ShieldCheck, MailQuestion } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -13,10 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useProviderFacilities } from "@/hooks/useProviderFacilities";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useDebounce } from "@/hooks/useDebounce";
 import { toast } from "sonner";
 
 import { InquiryListItem } from "@/components/provider/inquiries/InquiryListItem";
@@ -50,7 +52,6 @@ interface Lead {
   provider_response_status: string | null;
   provider_responded_at: string | null;
   provider_response_notes: string | null;
-  is_unlocked: boolean | null;
   insurance_type: string | null;
   insurance_provider: string | null;
   primary_substance: string[] | null;
@@ -81,6 +82,11 @@ export default function ProviderInquiriesPage() {
   
   const [selectedInquiry, setSelectedInquiry] = useState<LeadWithFacility | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  // Debounce the search input so typing in the box doesn't re-filter the
+  // entire client-side list on every keystroke (perceivable jank at
+  // 1000+ leads). 200ms is fast enough to feel instant while skipping
+  // the work for partial words.
+  const debouncedSearchQuery = useDebounce(searchQuery, 200);
   const [statusFilter, setStatusFilter] = useState<string>(statusParam || "all");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
@@ -102,58 +108,6 @@ export default function ProviderInquiriesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional run-once effect on mount; reads URL params to seed state
   }, []);
 
-  // ── M1: Stripe-paid unlock reconciliation ───────────────────────────────
-  // After Stripe Checkout redirects back with ?unlock_success=true&session_id=…
-  // call verify-unlock-payment so the UI doesn't show a still-locked card if
-  // the webhook is delayed. Idempotent: succeeds whether the webhook ran or not.
-  useEffect(() => {
-    const unlockSuccess = searchParams.get("unlock_success");
-    const sessionId = searchParams.get("session_id");
-    const leadParam = searchParams.get("lead");
-    if (unlockSuccess !== "true" || !sessionId || !leadParam) return;
-
-    let cancelled = false;
-    (async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("verify-unlock-payment", {
-          body: { sessionId, leadId: leadParam },
-        });
-        if (cancelled) return;
-        if (error) {
-          toast.error("Couldn't confirm your unlock. Please refresh in a moment.");
-          return;
-        }
-        if (data?.paid) {
-          toast.success(
-            data.reconciled
-              ? "Payment confirmed — lead unlocked."
-              : "Lead unlocked successfully.",
-          );
-          queryClient.invalidateQueries({ queryKey: ["provider-leads"] });
-          queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-        } else {
-          toast.message("Payment is still processing. The lead will unlock shortly.");
-        }
-      } catch {
-        if (!cancelled) toast.error("Couldn't confirm your unlock. Please refresh in a moment.");
-      } finally {
-        if (!cancelled) {
-          // Clear the redirect params so we don't re-verify on every render
-          const newParams = new URLSearchParams(searchParams);
-          newParams.delete("unlock_success");
-          newParams.delete("session_id");
-          setSearchParams(newParams, { replace: true });
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-
   // Get all facility IDs
   const facilityIds = useMemo(() => facilities.map(f => f.id), [facilities]);
 
@@ -172,9 +126,8 @@ export default function ProviderInquiriesPage() {
     queryFn: async (): Promise<LeadWithFacility[]> => {
       if (facilityIds.length === 0) return [];
       
-      const { data: allLeads, error } = await supabase
-        .from("leads_provider_view")
-        .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, insurance_provider, message, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, provider_response_notes, age_range, gender, preferred_contact, relationship_to_patient, budget_preference, dual_diagnosis, previous_treatment, previous_treatment_details, readiness_level, best_time_to_call, co_occurring_conditions, special_needs")
+      const { data: allLeads, error } = await fromLeadsProviderView()
+        .select("id, facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, insurance_provider, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, provider_response_notes, age_range, gender, preferred_contact, relationship_to_patient, budget_preference, dual_diagnosis, previous_treatment, previous_treatment_details, readiness_level, best_time_to_call, co_occurring_conditions, special_needs")
         // BUGFIX: Always filter to the provider's own facilities. Without this .in() filter,
         // the query relied solely on RLS which is correct but sends all matching rows with no
         // server-side pagination — potentially thousands of rows for large providers.
@@ -206,53 +159,46 @@ export default function ProviderInquiriesPage() {
     }
   }, [inquiriesError]);
 
-  // Poll for new leads every 30 seconds (leads/lead_unlocks removed from Realtime for PII security)
+  // Poll for new leads every 30 seconds (Realtime disabled for PII
+  // safety). Skip the round-trip when the tab is hidden.
   useEffect(() => {
     if (facilityIds.length === 0) return;
     const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-      queryClient.invalidateQueries({ queryKey: ["provider-lead-unlocks"] });
+      if (typeof document !== "undefined" && document.hidden) return;
+      queryClient.invalidateQueries({ queryKey: ["provider-inquiries", facilityIds] });
     }, 30000);
     return () => clearInterval(interval);
   }, [facilityIds, queryClient]);
 
-  // Helper to check if a lead is unlocked
-  const isLeadUnlocked = useCallback((leadId: string): boolean => {
-    const inquiry = inquiries.find(i => i.id === leadId);
-    return inquiry?.is_unlocked === true;
-  }, [inquiries]);
-
-  // Compute stats from all inquiries (unfiltered)
+  // Stats: every lead delivered to the provider is fully accessible (the
+  // credit-based lock/unlock model is retired). "new" = no response logged yet.
   const stats = useMemo(() => {
-    const locked = inquiries.filter(i => !i.is_unlocked).length;
-    const unlocked = inquiries.filter(i => i.is_unlocked && !i.provider_response_status).length;
+    const newCount = inquiries.filter(i => !i.provider_response_status).length;
     const contacted = inquiries.filter(i => i.provider_response_status === "contacted").length;
     const responded = inquiries.filter(i => i.provider_response_status === "responded").length;
-    return { total: inquiries.length, locked, unlocked, contacted, responded };
+    return { total: inquiries.length, new: newCount, contacted, responded };
   }, [inquiries]);
 
-  // Filter inquiries
+  // Filter inquiries (uses the debounced search query so re-filtering
+  // only happens after the user pauses typing).
   const filteredInquiries = useMemo(() => {
     return inquiries.filter(inquiry => {
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
+      if (debouncedSearchQuery) {
+        const q = debouncedSearchQuery.toLowerCase();
         const locationMatch = inquiry.location_city_state?.toLowerCase().includes(q);
         const careMatch = inquiry.level_of_care?.toLowerCase().includes(q);
         const nameMatch = inquiry.name?.toLowerCase().includes(q);
         const facilityMatch = inquiry.facility_name?.toLowerCase().includes(q);
         if (!locationMatch && !careMatch && !nameMatch && !facilityMatch) return false;
       }
-      
+
       if (statusFilter !== "all") {
-        const unlocked = inquiry.is_unlocked === true;
-        if (statusFilter === "new" && inquiry.status !== "new") return false;
-        if (statusFilter === "locked" && unlocked) return false;
-        if (statusFilter === "unlocked" && (!unlocked || inquiry.provider_response_status)) return false;
+        if (statusFilter === "new" && inquiry.provider_response_status) return false;
         if (statusFilter === "contacted" && inquiry.provider_response_status !== "contacted") return false;
         if (statusFilter === "responded" && inquiry.provider_response_status !== "responded") return false;
         if (statusFilter === "closed" && inquiry.provider_response_status !== "closed") return false;
       }
-      
+
       if (facilityFilter !== "all" && inquiry.facility_id !== facilityFilter) return false;
       if (dateRange.from || dateRange.to) {
         const d = new Date(inquiry.created_at);
@@ -262,7 +208,7 @@ export default function ProviderInquiriesPage() {
       }
       return true;
     });
-  }, [inquiries, searchQuery, statusFilter, facilityFilter, dateRange]);
+  }, [inquiries, debouncedSearchQuery, statusFilter, facilityFilter, dateRange]);
 
   // Pagination over filtered inquiries (numbered, persisted page size).
   const {
@@ -280,11 +226,12 @@ export default function ProviderInquiriesPage() {
   });
   const visibleInquiries = paginate(filteredInquiries);
 
-  // Reset to page 1 when any inquiry filter changes.
+  // Reset to page 1 when any inquiry filter changes. Use the debounced
+  // search value so we don't reset on every keystroke mid-typing.
   useEffect(() => {
     resetPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, statusFilter, facilityFilter, dateRange.from, dateRange.to]);
+  }, [debouncedSearchQuery, statusFilter, facilityFilter, dateRange.from, dateRange.to]);
 
 
   const clearFilters = () => {
@@ -294,7 +241,7 @@ export default function ProviderInquiriesPage() {
     setDateRange({ from: undefined, to: undefined });
   };
 
-  const hasFilters = searchQuery || statusFilter !== "all" || facilityFilter !== "all" || dateRange.from || dateRange.to;
+  const hasFilters = debouncedSearchQuery || statusFilter !== "all" || facilityFilter !== "all" || dateRange.from || dateRange.to;
 
   const handleSelectInquiry = (inquiry: LeadWithFacility) => {
     setSelectedInquiry(inquiry);
@@ -304,12 +251,6 @@ export default function ProviderInquiriesPage() {
   const handleBackToList = () => {
     setMobileView('list');
     setSelectedInquiry(null);
-  };
-
-  const handleUnlockSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-    queryClient.invalidateQueries({ queryKey: ["provider-lead-unlocks"] });
-    queryClient.invalidateQueries({ queryKey: ["provider-credits"] });
   };
 
   // Auto-select first inquiry on desktop
@@ -365,13 +306,14 @@ export default function ProviderInquiriesPage() {
 
       {/* Stats */}
       {(!isMobile || mobileView === 'list') && !isLoading && inquiries.length > 0 && (
-        <InquiriesStatsHeader
-          total={stats.total}
-          locked={stats.locked}
-          unlocked={stats.unlocked}
-          contacted={stats.contacted}
-          responded={stats.responded}
-        />
+        <div className="flex-shrink-0 px-3 sm:px-4 md:px-6 lg:px-8 py-2.5 sm:py-3 border-b bg-card">
+          <InquiriesStatsHeader
+            total={stats.total}
+            new={stats.new}
+            contacted={stats.contacted}
+            responded={stats.responded}
+          />
+        </div>
       )}
 
 
@@ -396,8 +338,6 @@ export default function ProviderInquiriesPage() {
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="new">New</SelectItem>
-                <SelectItem value="locked">Locked</SelectItem>
-                <SelectItem value="unlocked">Unlocked</SelectItem>
                 <SelectItem value="contacted">Contacted</SelectItem>
                 <SelectItem value="responded">Responded</SelectItem>
                 <SelectItem value="closed">Closed</SelectItem>
@@ -448,8 +388,12 @@ export default function ProviderInquiriesPage() {
           )}>
             <div className="flex-1 overflow-auto">
               {isLoading ? (
+                // Render the same number of skeleton rows as the user's
+                // persisted page size, so the visible list height
+                // matches what they'll see post-load (no jarring jump).
+                // Capped at 8 to keep the initial paint quick.
                 <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3" aria-busy="true" aria-label="Loading inquiries">
-                  {[1, 2, 3, 4, 5].map(i => (
+                  {Array.from({ length: Math.min(pageSize, 8) }).map((_, i) => (
                     <div
                       key={i}
                       className="rounded-lg border bg-card p-3 sm:p-4 space-y-2.5"
@@ -483,12 +427,18 @@ export default function ProviderInquiriesPage() {
                     )}
                   </div>
                   <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1.5">
-                    {hasFilters ? "No matching inquiries" : "No leads yet"}
+                    {hasFilters
+                      ? "No matching inquiries"
+                      : facilityIds.length === 0
+                        ? "No facility yet"
+                        : "No leads yet"}
                   </h3>
                   <p className="text-sm text-muted-foreground max-w-sm mb-5">
                     {hasFilters
                       ? "Try adjusting your search or filters to see more results."
-                      : "When a family submits an inquiry to one of your listings, it will appear here. New leads arrive locked to protect family privacy until you choose to unlock them."}
+                      : facilityIds.length === 0
+                        ? "You don't have any facilities yet. Add a listing to start receiving leads."
+                        : "When a family submits an inquiry to one of your listings, it will appear here with full contact details so you can respond right away."}
                   </p>
 
                   {hasFilters ? (
@@ -496,33 +446,15 @@ export default function ProviderInquiriesPage() {
                       <X className="h-4 w-4 mr-1.5" />
                       Clear filters
                     </Button>
+                  ) : facilityIds.length === 0 ? (
+                    <Button asChild size="sm">
+                      <Link to="/provider/listings?new=1">Create your first listing</Link>
+                    </Button>
                   ) : (
                     <div className="w-full max-w-sm rounded-lg border bg-muted/30 p-4 text-left space-y-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        How unlocking works
+                        How leads work
                       </p>
-                      <div className="flex items-start gap-3">
-                        <div className="h-7 w-7 rounded-full bg-background border flex items-center justify-center flex-shrink-0">
-                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                        </div>
-                        <div className="text-xs sm:text-sm">
-                          <p className="font-medium text-foreground">Leads arrive locked</p>
-                          <p className="text-muted-foreground">
-                            You'll see care needs, location, and urgency — contact details stay masked.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="h-7 w-7 rounded-full bg-background border flex items-center justify-center flex-shrink-0">
-                          <KeyRound className="h-3.5 w-3.5 text-primary" />
-                        </div>
-                        <div className="text-xs sm:text-sm">
-                          <p className="font-medium text-foreground">Unlock to reveal contact</p>
-                          <p className="text-muted-foreground">
-                            One click uses credits to reveal name, phone, and email instantly.
-                          </p>
-                        </div>
-                      </div>
                       <div className="flex items-start gap-3">
                         <div className="h-7 w-7 rounded-full bg-background border flex items-center justify-center flex-shrink-0">
                           <ShieldCheck className="h-3.5 w-3.5 text-primary" />
@@ -543,7 +475,6 @@ export default function ProviderInquiriesPage() {
                     <InquiryListItem
                       key={inquiry.id}
                       inquiry={inquiry}
-                      isUnlocked={inquiry.is_unlocked === true}
                       isSelected={selectedInquiry?.id === inquiry.id}
                       onClick={() => handleSelectInquiry(inquiry)}
                     />
@@ -571,11 +502,7 @@ export default function ProviderInquiriesPage() {
         {(!isMobile || mobileView === 'detail') && (
           <div className="flex-1 overflow-hidden">
             {selectedInquiry ? (
-              <InquiryDetailPanel
-                inquiry={selectedInquiry}
-                isUnlocked={selectedInquiry.is_unlocked === true}
-                onUnlockSuccess={handleUnlockSuccess}
-              />
+              <InquiryDetailPanel inquiry={selectedInquiry} />
             ) : isLoading ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-muted/20 gap-3">
                 <Skeleton className="h-16 w-16 rounded-full" />
@@ -591,7 +518,7 @@ export default function ProviderInquiriesPage() {
                   Your inbox is ready
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-md">
-                  New family inquiries will land here automatically. Each lead arrives locked — unlock with credits to reveal contact details and reach out.
+                  New family inquiries will land here automatically with full contact details so you can respond right away.
                 </p>
               </div>
             ) : (

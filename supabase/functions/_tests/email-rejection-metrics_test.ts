@@ -66,7 +66,7 @@ Deno.test("email rejection metric: only logs domain, never the local part (PII s
 
   const { lines } = captureConsoleLog(() =>
     recordEmailRejection({
-      fn: "send-provider-welcome-offer-email",
+      fn: "send-provider-welcome-email",
       reason: "disposable",
       email: "Sensitive.User+tag@MAILINATOR.COM",
       detail: "Disposable email domain (mailinator.com) is not allowed",

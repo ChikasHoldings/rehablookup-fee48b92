@@ -15,12 +15,10 @@ import {
   Megaphone,
   FileText,
   FileCheck2,
-  Inbox,
   AlertTriangle,
   Landmark,
   Bell,
   Mail,
-  KeyRound,
 } from "lucide-react";
 import type { AdminSidebarCounts } from "@/hooks/useAdminSidebarCounts";
 import type { AdminRoleType } from "@/hooks/useAdminAuth";
@@ -69,16 +67,11 @@ const superAdminNav: NavSection[] = [
       { to: "/admin/insurance-verifications", icon: FileCheck2, label: "Insurance VOB", permission: "leads", countKey: "insuranceVerifications" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
       { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
-      {
-        icon: UserPlus,
-        label: "Placements",
-        permission: "placements",
-        items: [
-          { to: "/admin/concierge", icon: UserPlus, label: "Command Center", permission: "placements", countKey: "placements" },
-          { to: "/admin/inbox", icon: Inbox, label: "Advisor Inbox", permission: "placements" },
-          { to: "/admin/provider-directory", icon: Building2, label: "Provider Directory", permission: "placements" },
-        ],
-      },
+      // Placements is a single unified workspace at /admin/concierge with
+      // four tabs (Cases / Network / Directory / Inbox). The previous
+      // sub-group (Command Center / Advisor Inbox / Provider Directory)
+      // is collapsed to one entry so the nav reflects the page count.
+      { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements", countKey: "placements" },
       { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
     ],
   },
@@ -116,7 +109,6 @@ const superAdminNav: NavSection[] = [
           { to: "/admin/email-logs", icon: Mail, label: "Email Logs", permission: "security_logs" },
           { to: "/admin/security-logs", icon: ShieldAlert, label: "Security Logs", permission: "security_logs" },
           { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log", permission: "audit_log" },
-          { to: "/admin/lead-unlocks", icon: KeyRound, label: "Lead Unlocks", permission: "audit_log" },
           { to: "/admin/not-found-events", icon: AlertTriangle, label: "404 Monitor", permission: "audit_log" },
         ],
       },
@@ -143,16 +135,11 @@ const managerNav: NavSection[] = [
       { to: "/admin/insurance-verifications", icon: FileCheck2, label: "Insurance VOB", permission: "leads", countKey: "insuranceVerifications" },
       { to: "/admin/providers", icon: Building2, label: "Providers", permission: "providers", countKey: "pendingProviders" },
       { to: "/admin/seekers", icon: UserSearch, label: "Clients", permission: "seekers" },
-      {
-        icon: UserPlus,
-        label: "Placements",
-        permission: "placements",
-        items: [
-          { to: "/admin/concierge", icon: UserPlus, label: "Command Center", permission: "placements", countKey: "placements" },
-          { to: "/admin/inbox", icon: Inbox, label: "Advisor Inbox", permission: "placements" },
-          { to: "/admin/provider-directory", icon: Building2, label: "Provider Directory", permission: "placements" },
-        ],
-      },
+      // Placements is a single unified workspace at /admin/concierge with
+      // four tabs (Cases / Network / Directory / Inbox). The previous
+      // sub-group (Command Center / Advisor Inbox / Provider Directory)
+      // is collapsed to one entry so the nav reflects the page count.
+      { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements", countKey: "placements" },
       { to: "/admin/subscriptions", icon: CreditCard, label: "Subscriptions", permission: "subscriptions" },
     ],
   },
@@ -185,10 +172,12 @@ const advisorNav: NavSection[] = [
   {
     sectionLabel: "My Workspace",
     entries: [
-      { to: "/admin/concierge", icon: UserPlus, label: "Placement Center", permission: "placements", countKey: "placements" },
-      { to: "/admin/inbox", icon: Inbox, label: "Messages", permission: "placements" },
-      { to: "/admin/provider-directory", icon: Building2, label: "Provider Directory", permission: "placements" },
-      { to: "/admin/placement-revenue", icon: CreditCard, label: "Earnings", permission: "placements" },
+      // The advisor's entire workspace is now the unified Placements
+      // page. The Cases / Directory / Inbox sub-functions are tabs on
+      // that page (Network tab is admin-only). Analytics lives in
+      // the global /admin/analytics surface.
+      { to: "/admin/concierge", icon: UserPlus, label: "Placements", permission: "placements", countKey: "placements" },
+      { to: "/admin/analytics", icon: CreditCard, label: "Analytics", permission: "placements" },
     ],
   },
   {

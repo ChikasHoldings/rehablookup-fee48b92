@@ -1,14 +1,45 @@
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
-const VERSION = "1.0.2";
+const VERSION = "1.0.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PRO_PRICE_ID = "price_1Sel1C9fxdThyiakWLfgbl9K";
+// Pro monthly Stripe price. We resolve this by lookup_key at request
+// time (not at module load) so the function picks up price rotations
+// automatically. The legacy hardcoded `price_1Sel1C9fxdThyiakWLfgbl9K`
+// is retained as a fallback for any transitional state where the
+// lookup_key briefly isn't attached.
+const PRO_LOOKUP_KEY = "rl_pro_monthly_v1";
+const PRO_PRICE_ID_FALLBACK = "price_1Sel1C9fxdThyiakWLfgbl9K";
+
+async function resolveProPriceId(stripe: Stripe): Promise<string> {
+  try {
+    const found = await stripe.prices.list({
+      lookup_keys: [PRO_LOOKUP_KEY],
+      active: true,
+      limit: 1,
+    });
+    if (found.data[0]?.id) return found.data[0].id;
+  } catch (e) {
+    console.warn("[CREATE-CHECKOUT] lookup_key resolution failed; falling back", e);
+  }
+  return PRO_PRICE_ID_FALLBACK;
+}
+
+function isSameOrigin(candidate: unknown, origin: string): candidate is string {
+  if (typeof candidate !== "string" || candidate.length === 0) return false;
+  try {
+    const u = new URL(candidate);
+    const o = new URL(origin);
+    return u.origin === o.origin;
+  } catch {
+    return false;
+  }
+}
 
 const logStep = (requestId: string, step: string, details?: Record<string, unknown>) => {
   const timestamp = new Date().toISOString();
@@ -32,8 +63,8 @@ Deno.serve(async (req) => {
   try {
     logStep(requestId, "Function started");
 
-    const { promoCode, action, facilityId } = await req.json();
-    logStep(requestId, "Request received", { action, facilityId, promoCode: promoCode ? "provided" : "none" });
+    const { promoCode, action, facilityId, successUrl, cancelUrl } = await req.json();
+    logStep(requestId, "Request received", { action, facilityId, promoCode: promoCode ? "provided" : "none", hasCustomUrls: !!(successUrl || cancelUrl) });
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
@@ -52,6 +83,13 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
+    // Resolve the active Pro price by lookup_key. Falls back to the
+    // legacy hardcoded id if the lookup_key isn't attached yet (e.g.
+    // mid-deploy before admin-attach-stripe-lookup-keys has run on the
+    // env). After round 27 the lookup keys are configured in Stripe.
+    const proPriceId = await resolveProPriceId(stripe);
+    logStep(requestId, "Pro price resolved", { proPriceId });
+
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined;
@@ -60,6 +98,28 @@ Deno.serve(async (req) => {
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep(requestId, "Found existing customer", { customerId });
+
+      // Single-flight guard against double-billing from tab duplicates.
+      // If an open Checkout session for this user exists from the last
+      // 30 minutes, return its URL instead of creating a new session.
+      const thirtyMinAgo = Math.floor((Date.now() - 30 * 60 * 1000) / 1000);
+      const recentSessions = await stripe.checkout.sessions.list({
+        customer: customerId,
+        limit: 5,
+        created: { gte: thirtyMinAgo },
+      });
+      const openSession = recentSessions.data.find(
+        (s) => s.status === "open" && s.mode === "subscription" && s.url,
+      );
+      if (openSession?.url) {
+        logStep(requestId, "Reusing open Checkout session (single-flight)", {
+          sessionId: openSession.id,
+        });
+        return new Response(
+          JSON.stringify({ url: openSession.url, sessionId: openSession.id, requestId, reused: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+        );
+      }
 
       // Check for existing active subscription
       const subscriptions = await stripe.subscriptions.list({
@@ -83,8 +143,8 @@ Deno.serve(async (req) => {
     if (existingSubscription) {
       const currentPriceId = existingSubscription.items.data[0]?.price.id;
       
-      // Already on Pro
-      if (currentPriceId === PRO_PRICE_ID) {
+      // Already on Pro (current OR legacy hardcoded price)
+      if (currentPriceId === proPriceId || currentPriceId === PRO_PRICE_ID_FALLBACK) {
         return new Response(
           JSON.stringify({ error: "You are already on the Pro plan", alreadySubscribed: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -93,16 +153,16 @@ Deno.serve(async (req) => {
 
       // Upgrading from legacy plan to Pro
       if (action === "upgrade") {
-        logStep(requestId, "Updating existing subscription to Pro", { 
+        logStep(requestId, "Updating existing subscription to Pro", {
           subscriptionId: existingSubscription.id,
           fromPrice: currentPriceId,
-          toPrice: PRO_PRICE_ID
+          toPrice: proPriceId,
         });
 
         await stripe.subscriptions.update(existingSubscription.id, {
           items: [{
             id: existingSubscription.items.data[0].id,
-            price: PRO_PRICE_ID,
+            price: proPriceId,
           }],
           proration_behavior: 'create_prorations',
           metadata: {
@@ -160,19 +220,32 @@ Deno.serve(async (req) => {
       payment_method_types: ["card"],
       line_items: [
         {
-          price: PRO_PRICE_ID,
+          price: proPriceId,
           quantity: 1,
         },
       ],
       mode: "subscription",
-      success_url: `${origin}/provider/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/provider/billing?canceled=true`,
+      // Callers (e.g. /provider/onboarding wizard) can override these to
+      // route the post-Checkout return into their own flow. We validate
+      // overrides are same-origin to prevent open-redirect abuse.
+      success_url: isSameOrigin(successUrl, origin)
+        ? successUrl
+        : `${origin}/provider/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: isSameOrigin(cancelUrl, origin)
+        ? cancelUrl
+        : `${origin}/provider/billing?canceled=true`,
       metadata: {
         user_id: user.id,
         type: "pro_subscription",
         facility_id: facilityId || "",
         plan: "pro",
+        plan_tier: "pro",
         plan_name: "Pro",
+        // rl_pro_monthly_v1 resolves to a monthly Stripe price. Setting
+        // billing_period explicitly so the webhook does NOT fall back to
+        // its "annual" default when deriveTierFlagsFromSubscription
+        // can't infer the interval from a lookup-key match.
+        billing_period: "monthly",
       },
       subscription_data: {
         metadata: {
@@ -180,14 +253,19 @@ Deno.serve(async (req) => {
           type: "pro_subscription",
           facility_id: facilityId || "",
           plan: "pro",
+          plan_tier: "pro",
           plan_name: "Pro",
+          billing_period: "monthly",
           created_via: "checkout",
         },
       },
-      // Custom text for the checkout page
+      // Custom text shown on the Stripe Checkout page. EKRA flat-fee
+      // model: no per-lead unlocks, no per-placement charges. The Pro
+      // plan unlocks verified badge, lead analytics, priority placement,
+      // and Marketing Hub (Featured + Concierge add-ons).
       custom_text: {
         submit: {
-          message: "Get 20% off all lead unlocks and featured placement immediately after checkout.",
+          message: "Cancel anytime. Pro unlocks verified badge, lead analytics, priority placement, and the Marketing Hub.",
         },
       },
       // Allow tax ID collection for business customers
@@ -207,11 +285,21 @@ Deno.serve(async (req) => {
       sessionConfig.allow_promotion_codes = true;
     }
 
-    const session = await stripe.checkout.sessions.create(sessionConfig);
+    // Stripe-side idempotency key — bucketed per user per 5-minute window
+    // so a network retry of the same Create-Session call always returns the
+    // same session id (Stripe stores idempotency keys for 24 h). Combined
+    // with the open-session reuse above this gives belt-and-braces
+    // double-billing protection.
+    const idempotencyBucket = Math.floor(Date.now() / (5 * 60 * 1000));
+    const idempotencyKey = `create-checkout:${user.id}:${idempotencyBucket}`;
+    const session = await stripe.checkout.sessions.create(sessionConfig, {
+      idempotencyKey,
+    });
 
-    logStep(requestId, "Checkout session created", { 
-      sessionId: session.id, 
+    logStep(requestId, "Checkout session created", {
+      sessionId: session.id,
       hasDiscount: !!discounts,
+      idempotencyKey,
     });
 
     return new Response(JSON.stringify({ url: session.url, sessionId: session.id, requestId }), {

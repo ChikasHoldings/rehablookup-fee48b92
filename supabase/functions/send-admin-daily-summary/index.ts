@@ -106,20 +106,21 @@ function wrapEmail(role: string, period: DigestPeriod, dateRange: string, name: 
 // ─── Data Fetching ───────────────────────────────────────────────────────────
 // deno-lint-ignore no-explicit-any
 async function fetchSuperAdminData(supabase: any, start: string, end: string) {
-  const [newProviders, newLeads, unlockedLeads, placements, pendingProviders, flaggedItems, conciergeInquiries, confirmedPlacements] = await Promise.all([
+  // lead_unlocks + credit_transactions dropped in monetization rebuild.
+  // The daily-summary unlock metric and unlock-revenue line are stubbed
+  // to zero here; subscription revenue will land in a follow-up PR
+  // once facility_subscriptions has Stripe payment data backfilled.
+  const [newProviders, newLeads, placements, pendingProviders, flaggedItems, conciergeInquiries, confirmedPlacements] = await Promise.all([
     supabase.from("facilities").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
-    supabase.from("lead_unlocks").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("flagged_images").select("id", { count: "exact", head: true }).eq("resolved", false),
     supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).eq("placement_confirmed", true).gte("placement_confirmed_at", start).lte("placement_confirmed_at", end),
   ]);
-
-  // Revenue from lead unlocks
-  const { data: unlockRevenue } = await supabase.from("credit_transactions").select("amount_cents").eq("transaction_type", "unlock").gte("created_at", start).lte("created_at", end);
-  const totalRevenueCents = (unlockRevenue || []).reduce((sum: number, t: { amount_cents: number }) => sum + Math.abs(t.amount_cents), 0);
+  const unlockedLeads = { count: 0 };
+  const totalRevenueCents = 0;
 
   // Profile views and listing impressions (from provider_events — source of truth)
   const [profileViewsResult, listingImpressionsResult] = await Promise.all([
@@ -174,9 +175,10 @@ async function fetchSuperAdminData(supabase: any, start: string, end: string) {
 
 // deno-lint-ignore no-explicit-any
 async function fetchManagerData(supabase: any, start: string, end: string) {
-  const [newLeads, unlockedLeads, placements, confirmedPlacements, pendingProviders, openEscalations, emailFailures] = await Promise.all([
+  // lead_unlocks dropped — unlock count stubbed to zero pending the
+  // subscription-engagement signal that ships in a follow-up PR.
+  const [newLeads, placements, confirmedPlacements, pendingProviders, openEscalations, emailFailures] = await Promise.all([
     supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
-    supabase.from("lead_unlocks").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).gte("created_at", start).lte("created_at", end),
     supabase.from("concierge_inquiries").select("id", { count: "exact", head: true }).eq("placement_confirmed", true).gte("placement_confirmed_at", start).lte("placement_confirmed_at", end),
     supabase.from("facilities").select("id", { count: "exact", head: true }).eq("status", "pending"),
@@ -184,9 +186,11 @@ async function fetchManagerData(supabase: any, start: string, end: string) {
     supabase.from("email_send_failures").select("id", { count: "exact", head: true }).is("resolved_at", null).gte("created_at", start),
   ]);
 
-  // Conversion rate
+  // Conversion rate — historically lead-unlock rate; with unlocks
+  // retired, this is stubbed to zero until the new subscription
+  // engagement signal lands.
   const totalLeads = newLeads.count || 0;
-  const totalUnlocked = unlockedLeads.count || 0;
+  const totalUnlocked = 0;
   const conversionRate = totalLeads > 0 ? ((totalUnlocked / totalLeads) * 100).toFixed(1) : "0";
 
   return {

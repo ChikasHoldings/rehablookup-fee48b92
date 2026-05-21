@@ -29,8 +29,10 @@ const STEP_LABELS: Record<string, string> = {
 };
 
 export function LeadFormAnalytics({ dateRange }: LeadFormAnalyticsProps) {
-  // Fetch analytics data from request_help_analytics table
-  const { data: analyticsData, isLoading } = useQuery({
+  // Fetch analytics data from request_help_analytics. Surfaces both
+  // isLoading + isError so the component renders a real error state
+  // instead of silently showing zeros (which masks outages).
+  const { data: analyticsData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["lead-form-analytics", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -204,6 +206,50 @@ export function LeadFormAnalytics({ dateRange }: LeadFormAnalyticsProps) {
           </CardContent>
         </Card>
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className="border-destructive/30 bg-destructive/5" role="alert">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive text-base">
+            <AlertTriangle className="h-4 w-4" />
+            Failed to load lead-form analytics
+          </CardTitle>
+          <CardDescription className="text-destructive/80">
+            {error instanceof Error ? error.message : "Unknown error"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <button
+            onClick={() => refetch()}
+            className="text-sm underline text-destructive hover:no-underline"
+            aria-label="Retry loading lead-form analytics"
+          >
+            Retry
+          </button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Genuinely-empty state — no events in the window. Surfaces an
+  // explicit empty message instead of rendering "0/0/0%" everywhere,
+  // which previously made admins think the funnel was broken.
+  if (analyticsData && analyticsData.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Eye className="h-4 w-4 text-muted-foreground" />
+            No form events in this period
+          </CardTitle>
+          <CardDescription>
+            No page views or form submissions were recorded between {format(dateRange.from, "MMM d")} and {format(dateRange.to, "MMM d, yyyy")}. Widen the date range to see historical data.
+          </CardDescription>
+        </CardHeader>
+      </Card>
     );
   }
 

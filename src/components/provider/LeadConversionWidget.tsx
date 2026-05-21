@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { differenceInHours, startOfMonth, subMonths } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -30,21 +31,23 @@ interface LeadStats {
 }
 
 export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps) {
+  // Stabilize key against array-reference churn from parent re-renders.
+  const sortedIds = facilityIds.slice().sort();
+  const facilityIdsKey = sortedIds.join(",");
   const { data: leads = [], isLoading, isError } = useQuery({
-    queryKey: ["lead-conversion-stats", facilityIds],
+    queryKey: ["lead-conversion-stats", facilityIdsKey],
     queryFn: async () => {
-      if (facilityIds.length === 0) return [];
-      
+      if (sortedIds.length === 0) return [];
+
       const startOfLastMonth = startOfMonth(subMonths(new Date(), 1));
       
       // Scope to the caller's selected facilities. The view's RLS already
       // narrows to facilities the caller owns, but explicit `.in(facility_id)`
       // prevents accidentally aggregating across unrelated facilities when
       // a future view change broadens the row set.
-      const { data, error } = await supabase
-        .from("leads_provider_view")
-        .select("id, status, created_at, provider_responded_at, qualified, facility_id")
-        .in("facility_id", facilityIds)
+      const { data, error } = await fromLeadsProviderView()
+        .select("id, status, created_at, provider_responded_at, facility_id")
+        .in("facility_id", sortedIds)
         .gte("created_at", startOfLastMonth.toISOString())
         .order("created_at", { ascending: false })
         .limit(500);
@@ -55,7 +58,7 @@ export function LeadConversionWidget({ facilityIds }: LeadConversionWidgetProps)
       }
       return data || [];
     },
-    enabled: facilityIds.length > 0,
+    enabled: sortedIds.length > 0,
     staleTime: 1000 * 60 * 5,
     retry: 2,
   });

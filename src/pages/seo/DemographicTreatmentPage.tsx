@@ -89,6 +89,7 @@ export default function DemographicTreatmentPage() {
       heroTitle={config.title}
       heroSubtitle={config.heroSubtitle}
       heroBadge="Specialized Programs"
+      heroImage={TOPIC_HERO_IMAGES.community}
       introContent={config.introContent}
       sections={config.sections}
       whatToExpect={config.whatToExpect}

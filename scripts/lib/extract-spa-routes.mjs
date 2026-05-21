@@ -48,7 +48,12 @@ const EXCLUDE_PATTERNS = [
   /^\/center\//,                 // handled by dedicated /center/ prefix
   /^\/centers\//,                // duplicate of /center/
   /^\/facility\//,               // duplicate of /center/
-  /^\/get-more-/,                // provider-facing SmartCatchAll variants
+  // NOTE: do NOT exclude /get-more- — those are public SmartCatchAll
+  // landing pages (CityTreatmentProviderPage + CityInsuranceProviderPage +
+  // GenericProviderCity). The sitemap edge fn emits ~700 of them for
+  // top cities × treatments + insurance variants, all indexable. The
+  // prior exclude here was stale and dropped every one of them from
+  // the sitemap with "no SPA route".
 ];
 
 function isExcluded(p) {

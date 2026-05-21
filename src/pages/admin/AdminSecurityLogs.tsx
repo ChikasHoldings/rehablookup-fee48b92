@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAdminErrorHandler } from "@/hooks/useAdminErrorHandler";
 import { format, formatDistanceToNow, subDays, startOfDay, endOfDay } from "date-fns";
-import { 
-  Shield, 
-  AlertTriangle, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  Shield,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
   Search,
   RefreshCw,
   Filter,
@@ -15,15 +16,17 @@ import {
   Activity,
   Ban,
   Eye,
-  ChevronLeft,
-  ChevronRight,
   MapPin,
   Globe,
   Loader2,
   Plus,
   Trash2,
   ShieldOff,
-  ShieldCheck
+  ShieldCheck,
+  AlertCircle,
+  Link as LinkIcon,
+  Check as CheckIcon,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,14 +118,65 @@ interface BlockedIdentifier {
   is_active: boolean;
 }
 
-
-
 // Cache for IP locations to avoid repeated lookups
 const ipLocationCache = new Map<string, IpLocation>();
+
+// Cap on rate_limit_log rows fetched in one go. Previously 1000 — at scale
+// (auto-blocks + brute-force probes) the limit silently truncated stats.
+// 10,000 covers ~5 months of current traffic; when hit, the UI surfaces a
+// truncation banner so the admin can narrow the window.
+const RATE_LIMIT_LOG_CAP = 10_000;
+
+// Permissive enough to catch typo'd addresses (e.g. trailing whitespace
+// stripped) without false-rejecting valid emails or v4/v6 IPs.
+const IPV4_REGEX = /^(\d{1,3}\.){3}\d{1,3}$/;
+const IPV6_REGEX = /^[0-9a-fA-F:]+$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const URL_TAB_VALUES = new Set(["activity", "suspicious", "blocked"]);
+const URL_DATE_VALUES = new Set(["24h", "7d", "30d", "custom"]);
+const URL_SUCCESS_VALUES = new Set(["all", "success", "failed"]);
+
+// CSV cell-injection guard. Excel / Sheets evaluate leading =/+/-/@ as a
+// formula; prepend a single quote on those values before quoting.
+function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const raw = String(value);
+  const needsQuote =
+    /^[=+\-@\t\r]/.test(raw) ||
+    raw.includes(",") ||
+    raw.includes('"') ||
+    raw.includes("\n") ||
+    raw.includes("\r");
+  const prefixed = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+  if (!needsQuote) return prefixed;
+  return `"${prefixed.replace(/"/g, '""')}"`;
+}
+
+function validateBlockIdentifier(
+  identifier: string,
+  type: "ip" | "email",
+): string | null {
+  const trimmed = identifier.trim();
+  if (!trimmed) return "Identifier cannot be empty";
+  if (trimmed.length > 320) return "Identifier is too long (max 320 chars)";
+  if (type === "email") {
+    if (!EMAIL_REGEX.test(trimmed)) return "Not a valid email address";
+  } else {
+    if (!IPV4_REGEX.test(trimmed) && !IPV6_REGEX.test(trimmed)) {
+      return "Not a valid IPv4 or IPv6 address";
+    }
+  }
+  return null;
+}
 
 export default function AdminSecurityLogs() {
   const queryClient = useQueryClient();
   const { logError } = useAdminErrorHandler("AdminSecurityLogs");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hydratedRef = useRef(false);
+  const lookupAbortRef = useRef<AbortController | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [successFilter, setSuccessFilter] = useState<string>("all");
@@ -135,7 +189,8 @@ export default function AdminSecurityLogs() {
   const [loadingLocations, setLoadingLocations] = useState<Set<string>>(new Set());
   const [selectedLogLocation, setSelectedLogLocation] = useState<IpLocation | null>(null);
   const [loadingSelectedLocation, setLoadingSelectedLocation] = useState(false);
-  
+  const [copiedLink, setCopiedLink] = useState(false);
+
   // Block dialog state
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [blockIdentifier, setBlockIdentifier] = useState("");
@@ -145,6 +200,51 @@ export default function AdminSecurityLogs() {
   const [unblockConfirmOpen, setUnblockConfirmOpen] = useState(false);
   const [selectedBlockedItem, setSelectedBlockedItem] = useState<BlockedIdentifier | null>(null);
   const [blockedSearchQuery, setBlockedSearchQuery] = useState("");
+
+  // URL state hydration (once)
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+
+    const q = searchParams.get("q");
+    const tab = searchParams.get("tab");
+    const date = searchParams.get("date");
+    const action = searchParams.get("action");
+    const successUrl = searchParams.get("success");
+
+    if (q) setSearchQuery(q);
+    if (tab && URL_TAB_VALUES.has(tab)) setActiveTab(tab);
+    if (date && URL_DATE_VALUES.has(date)) setDateRange(date);
+    if (action) setActionFilter(action);
+    if (successUrl && URL_SUCCESS_VALUES.has(successUrl)) setSuccessFilter(successUrl);
+  }, [searchParams]);
+
+  // Loop-guarded URL sync (defaults are not written so the bare URL stays clean)
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const next = new URLSearchParams(searchParams);
+    const setOrDelete = (key: string, value: string, defaultValue: string) => {
+      if (value && value !== defaultValue) next.set(key, value);
+      else next.delete(key);
+    };
+    setOrDelete("q", searchQuery, "");
+    setOrDelete("tab", activeTab, "activity");
+    setOrDelete("date", dateRange, "7d");
+    setOrDelete("action", actionFilter, "all");
+    setOrDelete("success", successFilter, "all");
+
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchQuery, activeTab, dateRange, actionFilter, successFilter, searchParams, setSearchParams]);
+
+  // Abort any in-flight IP lookups when the component unmounts so we don't
+  // leak fetches or update state on a dead tree.
+  useEffect(() => {
+    return () => {
+      lookupAbortRef.current?.abort();
+    };
+  }, []);
 
   // Calculate date range
   const getDateRange = () => {
@@ -169,7 +269,13 @@ export default function AdminSecurityLogs() {
   const { from: dateFrom, to: dateTo } = getDateRange();
 
   // Fetch rate limit logs
-  const { data: logs, isLoading: logsLoading, refetch: refetchLogs, error: logsError } = useQuery({
+  const {
+    data: logs,
+    isLoading: logsLoading,
+    isFetching: logsFetching,
+    refetch: refetchLogs,
+    error: logsError,
+  } = useQuery({
     queryKey: ["rate-limit-logs", actionFilter, successFilter, dateFrom.toISOString(), dateTo.toISOString()],
     queryFn: async () => {
       let query = supabase
@@ -178,7 +284,7 @@ export default function AdminSecurityLogs() {
         .gte("created_at", dateFrom.toISOString())
         .lte("created_at", dateTo.toISOString())
         .order("created_at", { ascending: false })
-        .limit(1000);
+        .limit(RATE_LIMIT_LOG_CAP);
 
       if (actionFilter !== "all") {
         query = query.eq("action_type", actionFilter);
@@ -191,7 +297,36 @@ export default function AdminSecurityLogs() {
       if (error) throw error;
       return data as RateLimitLog[];
     },
+    staleTime: 10_000,
   });
+
+  // Distinct action_types observed in the current window — feeds the
+  // Action filter dropdown so it reflects what's actually emitted by the
+  // codebase, not a stale hard-coded list. We re-query whenever the date
+  // range changes; this is cheap because the GROUP BY collapses on the
+  // server side.
+  const { data: observedActionTypes } = useQuery({
+    queryKey: ["security-action-types", dateFrom.toISOString(), dateTo.toISOString()],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rate_limit_log")
+        .select("action_type")
+        .gte("created_at", dateFrom.toISOString())
+        .lte("created_at", dateTo.toISOString())
+        .limit(RATE_LIMIT_LOG_CAP);
+      if (error) throw error;
+      const set = new Set<string>();
+      for (const row of data || []) {
+        if (row.action_type) set.add(row.action_type);
+      }
+      return Array.from(set).sort();
+    },
+    staleTime: 60_000,
+  });
+
+  // Whether the result was truncated — if so the UI surfaces an amber
+  // banner so the admin knows to narrow the window or filter further.
+  const logsTruncated = (logs?.length ?? 0) >= RATE_LIMIT_LOG_CAP;
 
   // Fetch suspicious activity (high failed attempt counts)
   const { data: suspiciousActivity, isLoading: suspiciousLoading, refetch: refetchSuspicious, error: suspiciousError } = useQuery({
@@ -262,18 +397,28 @@ export default function AdminSecurityLogs() {
     if (blockedError) logError("fetch_blocked_identifiers", blockedError, { queryKey: "blocked-identifiers" });
   }, [blockedError, logError]);
 
-  // Block identifier mutation
+  // Block identifier mutation. Hardening notes:
+  //   - admin profile lookup uses .maybeSingle() so a missing profile row
+  //     doesn't crash the whole block operation
+  //   - notification email is awaited but its failure does NOT roll back
+  //     the block (the block is the primary action; we just warn)
+  //   - audit log write is awaited; logAdminAction internally swallows
+  //     errors but at least we don't race ahead of it
   const blockMutation = useMutation({
-    mutationFn: async (params: { identifier: string; type: 'ip' | 'email'; reason: string; expiresAt: string | null }) => {
+    mutationFn: async (params: {
+      identifier: string;
+      type: 'ip' | 'email';
+      reason: string;
+      expiresAt: string | null;
+    }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Get admin display name for notification
       const { data: adminProfile } = await supabase
         .from("admin_user_profiles")
         .select("display_name")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       const { error } = await supabase
         .from("blocked_identifiers")
@@ -290,21 +435,25 @@ export default function AdminSecurityLogs() {
         if (error.code === '23505') {
           throw new Error("This identifier is already blocked");
         }
-        throw error;
+        throw new Error(`Block failed: ${error.message}`);
       }
 
-      // Send email notification (fire and forget)
-      supabase.functions.invoke('send-security-block-notification', {
-        body: {
-          identifier: params.identifier,
-          identifier_type: params.type,
-          reason: params.reason || null,
-          expires_at: params.expiresAt,
-          blocked_by_name: adminProfile?.display_name || user.email || "Admin",
+      const { error: emailErr } = await supabase.functions.invoke(
+        'send-security-block-notification',
+        {
+          body: {
+            identifier: params.identifier,
+            identifier_type: params.type,
+            reason: params.reason || null,
+            expires_at: params.expiresAt,
+            blocked_by_name: adminProfile?.display_name || user.email || "Admin",
+          },
         },
-      }).catch(err => console.error("Failed to send block notification:", err));
+      );
+      if (emailErr) {
+        console.warn("[block] notification email failed:", emailErr);
+      }
 
-      // Audit log the block action
       await logAdminAction({
         actionType: AdminAuditActions.SECURITY_BLOCK_ADDED,
         targetType: "blocked_identifier",
@@ -315,9 +464,15 @@ export default function AdminSecurityLogs() {
           expires_at: params.expiresAt,
         },
       });
+
+      return { emailSent: !emailErr };
     },
-    onSuccess: () => {
-      toast.success("Identifier blocked successfully");
+    onSuccess: (result) => {
+      toast.success(
+        result.emailSent
+          ? "Identifier blocked successfully"
+          : "Identifier blocked — notification email failed (see console)",
+      );
       queryClient.invalidateQueries({ queryKey: ["blocked-identifiers"] });
       setBlockDialogOpen(false);
       resetBlockForm();
@@ -327,37 +482,40 @@ export default function AdminSecurityLogs() {
     },
   });
 
-  // Unblock identifier mutation
+  // Unblock identifier mutation. Same hardening as block.
   const unblockMutation = useMutation({
     mutationFn: async (item: BlockedIdentifier) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Get admin display name for notification
       const { data: adminProfile } = await supabase
         .from("admin_user_profiles")
         .select("display_name")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       const { error } = await supabase
         .from("blocked_identifiers")
         .delete()
         .eq("id", item.id);
 
-      if (error) throw error;
+      if (error) throw new Error(`Unblock failed: ${error.message}`);
 
-      // Send email notification (fire and forget)
-      supabase.functions.invoke('send-security-block-notification', {
-        body: {
-          identifier: item.identifier,
-          identifier_type: item.identifier_type,
-          action: "unblock",
-          unblocked_by_name: adminProfile?.display_name || user.email || "Admin",
+      const { error: emailErr } = await supabase.functions.invoke(
+        'send-security-block-notification',
+        {
+          body: {
+            identifier: item.identifier,
+            identifier_type: item.identifier_type,
+            action: "unblock",
+            unblocked_by_name: adminProfile?.display_name || user.email || "Admin",
+          },
         },
-      }).catch(err => console.error("Failed to send unblock notification:", err));
+      );
+      if (emailErr) {
+        console.warn("[unblock] notification email failed:", emailErr);
+      }
 
-      // Audit log the unblock action
       await logAdminAction({
         actionType: AdminAuditActions.SECURITY_BLOCK_REMOVED,
         targetType: "blocked_identifier",
@@ -367,19 +525,26 @@ export default function AdminSecurityLogs() {
           identifier_type: item.identifier_type,
         },
       });
+
+      return { emailSent: !emailErr };
     },
-    onSuccess: () => {
-      toast.success("Identifier unblocked successfully");
+    onSuccess: (result) => {
+      toast.success(
+        result.emailSent
+          ? "Identifier unblocked successfully"
+          : "Identifier unblocked — notification email failed (see console)",
+      );
       queryClient.invalidateQueries({ queryKey: ["blocked-identifiers"] });
       setUnblockConfirmOpen(false);
       setSelectedBlockedItem(null);
     },
-    onError: () => {
-      toast.error("Failed to unblock identifier");
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to unblock identifier");
     },
   });
 
-  // Toggle block active status mutation
+  // Toggle block active status mutation — error message now surfaces the
+  // underlying DB / RLS failure rather than a generic string.
   const toggleBlockMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
       const { error } = await supabase
@@ -387,14 +552,14 @@ export default function AdminSecurityLogs() {
         .update({ is_active: isActive })
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) throw new Error(`Toggle failed: ${error.message}`);
     },
     onSuccess: (_, variables) => {
       toast.success(variables.isActive ? "Block reactivated" : "Block deactivated");
       queryClient.invalidateQueries({ queryKey: ["blocked-identifiers"] });
     },
-    onError: () => {
-      toast.error("Failed to update block status");
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update block status");
     },
   });
 
@@ -405,9 +570,19 @@ export default function AdminSecurityLogs() {
     setBlockExpiry("never");
   };
 
+  const blockValidationError = useMemo(
+    () =>
+      blockIdentifier.trim().length === 0
+        ? null
+        : validateBlockIdentifier(blockIdentifier, blockType),
+    [blockIdentifier, blockType],
+  );
+
   const handleBlock = () => {
-    if (!blockIdentifier.trim()) {
-      toast.error("Please enter an identifier to block");
+    const trimmed = blockIdentifier.trim();
+    const err = validateBlockIdentifier(trimmed, blockType);
+    if (err) {
+      toast.error(err);
       return;
     }
 
@@ -432,7 +607,7 @@ export default function AdminSecurityLogs() {
     }
 
     blockMutation.mutate({
-      identifier: blockIdentifier.trim(),
+      identifier: trimmed,
       type: blockType,
       reason: blockReason.trim(),
       expiresAt,
@@ -445,18 +620,25 @@ export default function AdminSecurityLogs() {
     setBlockDialogOpen(true);
   };
 
-  // Check if identifier is blocked
-  const isIdentifierBlocked = (identifier: string): boolean => {
-    if (!identifier || !blockedIdentifiers) return false;
-    return blockedIdentifiers.some(
-      (b) => b?.identifier === identifier && b?.is_active && (!b?.expires_at || new Date(b.expires_at) > new Date())
-    ) || false;
-  };
+  // Memoize the set of currently-active blocked identifiers. The old
+  // function iterated blockedIdentifiers for every row on every render,
+  // which scaled O(n*m). This is O(1) lookup per row.
+  const activeBlockedSet = useMemo(() => {
+    const set = new Set<string>();
+    const now = Date.now();
+    for (const b of blockedIdentifiers || []) {
+      if (!b?.identifier || !b?.is_active) continue;
+      if (b.expires_at && new Date(b.expires_at).getTime() <= now) continue;
+      set.add(b.identifier);
+    }
+    return set;
+  }, [blockedIdentifiers]);
 
-  // Safe data accessors
-  const safeLogs = logs || [];
-  const safeSuspiciousActivity = suspiciousActivity || [];
-  const safeBlockedIdentifiers = blockedIdentifiers || [];
+  const isIdentifierBlocked = useCallback(
+    (identifier: string): boolean =>
+      !!identifier && activeBlockedSet.has(identifier),
+    [activeBlockedSet],
+  );
 
   // Look up IP location
   const lookupIpLocation = useCallback(async (ip: string): Promise<IpLocation | null> => {
@@ -503,11 +685,13 @@ export default function AdminSecurityLogs() {
     return ipPattern.test(identifier) ? 'ip' : 'email';
   };
 
-  // Batch lookup locations for visible logs
+  // Batch lookup locations for visible logs. Aborts on unmount or when
+  // the logs list changes mid-flight so we don't leak fetches or update
+  // state on a dead tree.
   useEffect(() => {
     if (!logs || logs.length === 0) return;
 
-    const logsToLookup = logs.slice(0, 50); // Limit to first 50 to avoid rate limiting
+    const logsToLookup = logs.slice(0, 50); // first 50 only (45/min ip-api cap)
     const ipsToLookup: string[] = [];
 
     for (const log of logsToLookup) {
@@ -519,35 +703,46 @@ export default function AdminSecurityLogs() {
 
     if (ipsToLookup.length === 0) return;
 
-    // Mark as loading
-    setLoadingLocations(prev => {
+    // Abort any previous in-flight queue and start fresh.
+    lookupAbortRef.current?.abort();
+    const controller = new AbortController();
+    lookupAbortRef.current = controller;
+    const signal = controller.signal;
+
+    setLoadingLocations((prev) => {
       const newSet = new Set(prev);
-      ipsToLookup.forEach(ip => newSet.add(ip));
+      ipsToLookup.forEach((ip) => newSet.add(ip));
       return newSet;
     });
 
-    // Lookup IPs with rate limiting (one every 100ms to stay under 45/min limit)
     const lookupQueue = async () => {
       for (const ip of ipsToLookup) {
+        if (signal.aborted) return;
         const location = await lookupIpLocation(ip);
+        if (signal.aborted) return;
         if (location) {
-          setIpLocations(prev => {
+          setIpLocations((prev) => {
             const newMap = new Map(prev);
             newMap.set(ip, location);
             return newMap;
           });
         }
-        setLoadingLocations(prev => {
+        setLoadingLocations((prev) => {
           const newSet = new Set(prev);
           newSet.delete(ip);
           return newSet;
         });
-        // Small delay between requests
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // 100ms between requests stays under the 45/min ip-api cap with
+        // headroom for the on-demand lookups (Globe icon click).
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     };
 
     lookupQueue();
+
+    return () => {
+      controller.abort();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- ipLocations and loadingLocations are read as guards but must not be deps (would cause infinite re-runs)
   }, [logs, lookupIpLocation]);
 
@@ -667,38 +862,88 @@ export default function AdminSecurityLogs() {
   }, [blockedSearchQuery, setBlockedPage]);
 
   const exportLogs = () => {
-    if (!filteredLogs) return;
-    const csv = [
-      ["Timestamp", "Identifier", "Action", "Success", "Location", "Metadata"].join(","),
-      ...filteredLogs.map((log) => {
-        const ip = extractIp(log.identifier, log.metadata);
-        const location = ip ? ipLocations.get(ip) : null;
-        const locationStr = location ? `${location.city}, ${location.country}` : "";
-        return [
-          log.created_at,
-          `"${log.identifier}"`,
-          log.action_type,
-          log.success ? "Yes" : "No",
-          `"${locationStr}"`,
-          `"${JSON.stringify(log.metadata || {}).replace(/"/g, '""')}"`,
-        ].join(",");
-      }),
-    ].join("\n");
+    if (!filteredLogs || filteredLogs.length === 0) {
+      toast.error("No logs in current view to export");
+      return;
+    }
+    const header = ["Timestamp", "Identifier", "Action", "Success", "Location", "Metadata"]
+      .map(csvCell)
+      .join(",");
+    const rows = filteredLogs.map((log) => {
+      const ip = extractIp(log.identifier, log.metadata);
+      const location = ip ? ipLocations.get(ip) : null;
+      const locationStr = location ? `${location.city}, ${location.country}` : "";
+      return [
+        log.created_at,
+        log.identifier,
+        log.action_type,
+        log.success === true ? "Yes" : log.success === false ? "No" : "Unknown",
+        locationStr,
+        JSON.stringify(log.metadata || {}),
+      ]
+        .map(csvCell)
+        .join(",");
+    });
+    const csv = [header, ...rows].join("\n");
 
-    const blob = new Blob([csv], { type: "text/csv" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `security-logs-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    toast.success(`Exported ${filteredLogs.length} log${filteredLogs.length === 1 ? "" : "s"}`);
   };
 
   const handleRefresh = () => {
     refetchLogs();
     refetchSuspicious();
     refetchBlocked();
+    toast.success("Security data refreshing");
   };
+
+  const filtersActive =
+    searchQuery !== "" ||
+    actionFilter !== "all" ||
+    successFilter !== "all" ||
+    dateRange !== "7d" ||
+    activeTab !== "activity";
+
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery("");
+    setActionFilter("all");
+    setSuccessFilter("all");
+    setDateRange("7d");
+    setCustomDateFrom(undefined);
+    setCustomDateTo(undefined);
+    setActiveTab("activity");
+  }, []);
+
+  const handleCopyLink = useCallback(async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = url;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopiedLink(true);
+      toast.success("Filtered view link copied");
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch (err) {
+      toast.error(`Failed to copy link: ${err instanceof Error ? err.message : "unknown error"}`);
+    }
+  }, []);
 
   // Get location display for a log
   const getLocationDisplay = (log: RateLimitLog) => {
@@ -775,26 +1020,128 @@ export default function AdminSecurityLogs() {
     );
   };
 
+  const anyQueryError = !!logsError || !!suspiciousError || !!blockedError;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-foreground">Security Logs</h1>
           <p className="text-muted-foreground">
             Monitor login attempts and manage blocked identifiers
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={exportLogs}>
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopyLink}
+            aria-label="Copy link to filtered view"
+            disabled={!filtersActive}
+            title={filtersActive ? "Copy filtered view URL" : "Apply a filter first"}
+          >
+            {copiedLink ? (
+              <CheckIcon className="h-4 w-4 mr-2 text-success" />
+            ) : (
+              <LinkIcon className="h-4 w-4 mr-2" />
+            )}
+            Copy link
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            aria-label="Refresh security data"
+            disabled={logsFetching}
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", logsFetching && "animate-spin")} />
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportLogs}
+            aria-label="Export current logs to CSV"
+            disabled={logsLoading || (filteredLogs?.length ?? 0) === 0}
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button size="sm" onClick={() => openBlockDialog()}>
+          <Button
+            size="sm"
+            onClick={() => openBlockDialog()}
+            aria-label="Open block identifier dialog"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Block IP/Email
           </Button>
         </div>
       </div>
+
+      {/* Truncation banner — fires when the cap was hit so the admin
+          knows to narrow the window. Same pattern as AdminAnalytics. */}
+      {logsTruncated && (
+        <div
+          role="alert"
+          aria-live="polite"
+          className="rounded-md border border-warning/40 bg-warning/5 p-3 flex items-start gap-3"
+        >
+          <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-warning">
+              Showing the first {RATE_LIMIT_LOG_CAP.toLocaleString()} log entries
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              The query hit the row cap. Narrow the date range or apply a
+              filter to see a complete window — stats above reflect only the
+              capped slice.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Query-error banner. Surfaces underlying errors with a Retry. */}
+      {anyQueryError && (
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/40 bg-destructive/5 p-3 flex items-start gap-3"
+        >
+          <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-destructive">
+              Failed to load security data
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5 break-words">
+              {(logsError || suspiciousError || blockedError) instanceof Error
+                ? (logsError || suspiciousError || blockedError)!.message
+                : String(logsError || suspiciousError || blockedError)}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+          </Button>
+        </div>
+      )}
+
+      {filtersActive && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearFilters}
+            aria-label="Clear all filters"
+            className="h-7 -ml-2"
+          >
+            <X className="h-3.5 w-3.5 mr-1.5" />
+            Clear filters
+          </Button>
+          {logsFetching && !logsLoading && (
+            <span aria-live="polite" className="text-muted-foreground">
+              Refreshing…
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -930,16 +1277,27 @@ export default function AdminSecurityLogs() {
                   </div>
                 )}
                 <Select value={actionFilter} onValueChange={setActionFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[200px]" aria-label="Filter by action type">
                     <Filter className="h-4 w-4 mr-2" />
                     <SelectValue placeholder="Action Type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Actions</SelectItem>
-                    <SelectItem value="provider_login">Provider Login</SelectItem>
-                    <SelectItem value="admin_login">Admin Login</SelectItem>
-                    <SelectItem value="password_reset">Password Reset</SelectItem>
-                    <SelectItem value="login">General Login</SelectItem>
+                    {(observedActionTypes ?? []).map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t.replace(/_/g, " ")}
+                      </SelectItem>
+                    ))}
+                    {/* If the current filter doesn't appear in the observed
+                        list (e.g. user landed via a URL deep-link before
+                        new data arrived), still keep it selectable so the
+                        Select component doesn't reset to "all". */}
+                    {actionFilter !== "all" &&
+                      !(observedActionTypes ?? []).includes(actionFilter) && (
+                        <SelectItem value={actionFilter}>
+                          {actionFilter.replace(/_/g, " ")} (no matches in window)
+                        </SelectItem>
+                      )}
                   </SelectContent>
                 </Select>
                 <Select value={successFilter} onValueChange={setSuccessFilter}>
@@ -1522,8 +1880,15 @@ export default function AdminSecurityLogs() {
         </DialogContent>
       </Dialog>
 
-      {/* Block Dialog */}
-      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+      {/* Block Dialog — never dismisses while the mutation is pending */}
+      <Dialog
+        open={blockDialogOpen}
+        onOpenChange={(open) => {
+          if (blockMutation.isPending) return;
+          setBlockDialogOpen(open);
+          if (!open) resetBlockForm();
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1548,14 +1913,23 @@ export default function AdminSecurityLogs() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>
+              <Label htmlFor="block-identifier">
                 {blockType === 'ip' ? 'IP Address' : 'Email Address'}
               </Label>
               <Input
+                id="block-identifier"
                 placeholder={blockType === 'ip' ? '192.168.1.1' : 'user@example.com'}
                 value={blockIdentifier}
-                onChange={(e) => setBlockIdentifier(e.target.value)}
+                onChange={(e) => setBlockIdentifier(e.target.value.slice(0, 320))}
+                aria-invalid={!!blockValidationError}
+                disabled={blockMutation.isPending}
+                maxLength={320}
               />
+              {blockValidationError && (
+                <p className="text-[11px] text-destructive">
+                  {blockValidationError}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Reason (Optional)</Label>
@@ -1586,10 +1960,14 @@ export default function AdminSecurityLogs() {
             <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleBlock}
-              disabled={blockMutation.isPending}
+              disabled={
+                blockMutation.isPending ||
+                !blockIdentifier.trim() ||
+                !!blockValidationError
+              }
             >
               {blockMutation.isPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

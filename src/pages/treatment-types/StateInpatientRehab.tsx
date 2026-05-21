@@ -1,4 +1,4 @@
-import { Link, useParams, Navigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { StateFacilitiesSection } from "@/components/seo/StateFacilitiesSection";
 import { TreatmentFAQSection } from "@/components/seo/TreatmentFAQSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { TreatmentStateHero } from "@/components/seo/TreatmentStateHero";
 import {
   generateStateTreatmentSections,
   generateStateTreatmentFAQs,
@@ -14,8 +16,9 @@ import {
 } from "@/utils/stateContentGenerator";
 import {
   Sparkles, ArrowRight, CheckCircle, Shield, Clock, Heart,
-  Home, Users, Brain, Activity, Calendar, MapPin, Building2, Search,
+  Home, Home as HomeIcon, Users, Brain, Activity, Calendar, MapPin, Building2, Search,
 } from "lucide-react";
+import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
 
 const programFeatures = [
   { name: "30-Day Program", description: "Ideal for mild to moderate addiction requiring structured initial care and foundation building.", features: ["Medical stabilization", "Therapy introduction", "Recovery planning"] },
@@ -40,7 +43,14 @@ const StateInpatientRehab = () => {
   const stateData = statesData.find(s => s.slug === stateSlug);
 
   if (!stateData) {
-    return <Navigate to="/treatment-types/residential-inpatient" replace />;
+    return (
+      <NotFoundInPlace
+        title="Inpatient rehab not found"
+        message="We don't have inpatient rehab data for that state yet. Browse all states."
+        backTo="/treatment-types/residential-inpatient"
+        backLabel="Browse states"
+      />
+    );
   }
 
   const { name: stateName, abbreviation, cities } = stateData;
@@ -86,34 +96,26 @@ const StateInpatientRehab = () => {
         ]}
       />
 
-      <section className="relative overflow-hidden bg-primary py-12 md:py-16">
-        <div className="container">
-          <BreadcrumbNav className="mb-4" items={[
-            { label: "Treatment Types", href: "/treatment-types" },
-            { label: "Inpatient Rehab", href: "/treatment-types/residential-inpatient" },
-            { label: stateName },
-          ]} />
-          <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-primary-foreground">Residential Treatment in {abbreviation}</span>
-            </div>
-            <h1 className="mb-4 text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Inpatient Rehab Centers in {stateName}
-            </h1>
-            <p className="text-base md:text-lg text-primary-foreground/85 leading-relaxed">
-              Find accredited residential inpatient treatment programs in {stateName}. Immersive 30-90 day programs with 
-              24/7 medical care, individual therapy, and structured recovery support.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Button asChild size="lg" variant="secondary"><Link to="/rehab-centers"><Search className="mr-2 h-4 w-4" />Find Treatment</Link></Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                <Link to={`/rehab-centers/${stateSlug}`}>Browse {stateName} Centers<ArrowRight className="ml-2 h-4 w-4" /></Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <TreatmentStateHero
+        treatmentKey="inpatient"
+        treatmentName="Inpatient Rehab"
+        treatmentIcon={HomeIcon}
+        stateName={stateName}
+        abbreviation={abbreviation}
+        stateSlug={stateSlug!}
+        treatmentHubHref="/treatment-types/residential-inpatient"
+        treatmentHubLabel="Inpatient Rehab"
+        cities={cities}
+      />
+
+      {/* Featured rotation — paid Featured pool for this
+          state, mounted directly under the hero. Visual matches
+          the homepage Featured section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="state"
+        placement_value={stateSlug}
+        title={`Featured Inpatient Rehab in ${stateName}`}
+      />
 
       <section className="border-b bg-muted/30 py-4">
         <div className="container">

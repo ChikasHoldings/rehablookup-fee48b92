@@ -102,7 +102,7 @@ export function useEscalationTransition() {
 
       const { error } = await supabase
         .from("admin_escalations")
-        .update(payload)
+        .update(payload as never)
         .eq("id", id);
       if (error) throw error;
 

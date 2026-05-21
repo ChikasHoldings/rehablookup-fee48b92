@@ -7,6 +7,8 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
 import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import { InternalLinkingSection, treatmentTypeLinks, nearMeLinks, resourceLinks } from "@/components/seo/InternalLinkingSection";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
+import { InsuranceCarrierHero } from "@/components/seo/InsuranceCarrierHero";
 import { StateLinksSection } from "@/components/treatment/StateLinksSection";
 import { Shield, CheckCircle, ArrowRight, Phone, MapPin, FileText, Clock, DollarSign, Building2, Users, Stethoscope, Heart, AlertCircle } from "lucide-react";
 
@@ -36,22 +38,22 @@ export default function MagellanRehab() {
   const faqSchema = generateFAQSchema(faqs);
   return (
     <Layout>
-      <SEO title="Magellan Health Rehab Coverage | Behavioral Health Treatment" description="Find addiction treatment centers that accept Magellan Health. Learn about Magellan's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/magellan-rehab" keywords={["Magellan Health rehab coverage", "Magellan addiction treatment", "Magellan behavioral health", "Magellan drug rehab", "rehab that takes Magellan"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Magellan Rehab Coverage", url: "/insurance/magellan-rehab" }]} structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]} />
+      <SEO title="Magellan Health Rehab Coverage | Behavioral Health Treatment" description="Find addiction treatment centers that accept Magellan Health. Learn about Magellan's behavioral health coverage for detox, rehab, and outpatient programs." canonical="/insurance/magellan-rehab" keywords={["Magellan Health rehab coverage", "Magellan addiction treatment", "Magellan behavioral health", "Magellan drug rehab", "rehab that takes Magellan"]} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Insurance", url: "/insurance" }, { name: "Magellan Rehab Coverage", url: "/insurance/magellan-rehab" }]} structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]} />      <InsuranceCarrierHero
+        carrierName={"Magellan"}
+        logoSrc="/insurance-logos/magellan.svg"
+        description={"Magellan offers behavioral-health coverage including addiction treatment."}
+      />
 
-      <section className="relative overflow-hidden bg-primary py-10 md:py-14">
-        <div className="container">
-          <BreadcrumbNav className="mb-4" items={[{ label: "Insurance", href: "/insurance" }, { label: "Magellan Rehab Coverage" }]} />
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="secondary" className="bg-white/20 text-white border-0 mb-4">Behavioral Health Specialist</Badge>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">Magellan Health Rehab Coverage</h1>
-            <p className="text-primary-foreground/80 text-sm md:text-base max-w-2xl mx-auto">Magellan Health manages behavioral health benefits for millions of Americans, providing comprehensive addiction treatment coverage.</p>
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild size="lg" variant="secondary"><Link to="/rehab-centers"><MapPin className="mr-2 h-4 w-4" />Find Magellan-Accepting Centers</Link></Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10"><Link to="/insurance"><Shield className="mr-2 h-4 w-4" />All Insurance Options</Link></Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Featured rotation — paid Featured pool for this
+          page's bucket, mounted directly under the hero. Visual
+          matches the homepage Featured section for cross-site
+          consistency. Silent absence when the bucket has no
+          active Featured subscribers. */}
+      <LandingFeaturedSection
+        placement_type="insurance"
+        placement_value="magellan-rehab"
+        title="Featured Centers Accepting Magellan"
+      />
 
       <section className="border-b border-border bg-muted/50 py-4"><div className="container"><div className="flex items-center justify-center gap-3 text-sm text-muted-foreground"><AlertCircle className="h-4 w-4 text-primary shrink-0" /><p><span className="font-medium text-foreground">Coverage varies by employer plan.</span> Contact Magellan or your insurer to verify your specific behavioral health benefits.</p></div></div></section>
 

@@ -139,7 +139,7 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
         p_to: toIso,
       });
       if (error) throw error;
-      const summary = data as unknown as RpcSummary | null;
+      const summary = parseRpcSummary(data);
       if (!summary) return getEmptyAnalytics();
 
       const totalImpressions = summary.totals.impressions;
@@ -226,6 +226,41 @@ export function useCentralizedEngagementAnalytics(dateRange?: DateRange, filterF
 function calculateGrowth(current: number, previous: number): number {
   if (previous === 0) return current > 0 ? 100 : 0;
   return Math.round(((current - previous) / previous) * 100);
+}
+
+// Defensive parse of get_provider_engagement_summary's JSON return value.
+// Returns null if any required block is missing so the caller can fall back
+// to the empty-analytics shape instead of NaN-ing every metric downstream.
+function parseRpcSummary(raw: unknown): RpcSummary | null {
+  if (!raw || typeof raw !== "object") return null;
+  const obj = raw as Record<string, unknown>;
+  const safeBlock = (b: unknown): RpcSummary["totals"] | null => {
+    if (!b || typeof b !== "object") return null;
+    const block = b as Record<string, unknown>;
+    return {
+      impressions: Number(block.impressions ?? 0) || 0,
+      profileViews: Number(block.profileViews ?? 0) || 0,
+      clickToCalls: Number(block.clickToCalls ?? 0) || 0,
+      websiteClicks: Number(block.websiteClicks ?? 0) || 0,
+    };
+  };
+  const totals = safeBlock(obj.totals);
+  const period = safeBlock(obj.period);
+  const previous = safeBlock(obj.previous);
+  if (!totals || !period || !previous) {
+    console.error("[useCentralizedEngagementAnalytics] RPC returned an unexpected shape", raw);
+    return null;
+  }
+  return {
+    totals,
+    period,
+    previous,
+    facilityBreakdown: Array.isArray(obj.facilityBreakdown) ? (obj.facilityBreakdown as RpcSummary["facilityBreakdown"]) : [],
+    dailyTrends: Array.isArray(obj.dailyTrends) ? (obj.dailyTrends as RpcSummary["dailyTrends"]) : [],
+    bucketSizeDays: Number(obj.bucketSizeDays ?? 1) || 1,
+    rangeFrom: String(obj.rangeFrom ?? ""),
+    rangeTo: String(obj.rangeTo ?? ""),
+  };
 }
 
 function getEmptyAnalytics(): CentralizedEngagementAnalytics {

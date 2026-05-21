@@ -367,13 +367,6 @@ function getAuditEventInfo(
         icon: CreditCard,
         color: "text-blue-500",
       };
-    case "lead_limit_override":
-      return {
-        title: "Lead Limit Override",
-        description: detailsObj?.new_limit ? `New limit: ${detailsObj.new_limit}` : "Lead limit adjusted",
-        icon: Users,
-        color: "text-amber-500",
-      };
     case "profile_viewed":
       return {
         title: "Profile Viewed",

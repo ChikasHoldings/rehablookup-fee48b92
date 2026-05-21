@@ -28,6 +28,27 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`${LOG_PREFIX} ${step}${details ? ` - ${JSON.stringify(details)}` : ""}`);
 };
 
+// Honors notification_preferences.browser_notifications — the master
+// in-app toggle on /account/notification-preferences. When the column
+// is null (no row yet) or true, we create the notification; only an
+// explicit `false` suppresses it. This mirrors the gate that
+// send-seeker-emails already applies to its own in-app inserts so the
+// seeker's "In-App Notifications" toggle behaves consistently.
+// deno-lint-ignore no-explicit-any
+async function shouldSendSeekerInApp(supabase: any, seekerUserId: string): Promise<boolean> {
+  if (!seekerUserId) return false;
+  const { data, error } = await supabase
+    .from("notification_preferences")
+    .select("browser_notifications")
+    .eq("user_id", seekerUserId)
+    .maybeSingle();
+  if (error) {
+    console.warn(`${LOG_PREFIX} preference lookup failed — defaulting to send`, error.message);
+    return true;
+  }
+  return data?.browser_notifications !== false;
+}
+
 type NotificationType = 
   | "review_submitted"
   | "review_approved"
@@ -124,7 +145,7 @@ Deno.serve(async (req) => {
     const providerEmail = facility.reply_email || facility.email || providerProfile?.email;
     
     // Get provider plan for styling
-    const planInfo = providerEmail ? await getProviderPlan(providerEmail, stripe) : { plan: 'free' as PlanType, planName: 'Free', locationLimit: 1, unlockDiscount: 0 };
+    const planInfo = providerEmail ? await getProviderPlan(providerEmail, stripe) : { plan: 'free' as PlanType, planName: 'Free', locationLimit: 1 };
 
     // Fetch admin emails for notifications
     // Exclude advisors as they only handle placements, not general admin tasks like review moderation
@@ -321,8 +342,8 @@ async function handleReviewApproved(
     metadata: { review_id: review.id, rating: review.rating },
   });
 
-  // Notify seeker in-app
-  if (seekerProfile?.user_id) {
+  // Notify seeker in-app — gated by browser_notifications preference
+  if (seekerProfile?.user_id && await shouldSendSeekerInApp(supabase, seekerProfile.user_id)) {
     await supabase.from("seeker_notifications").insert({
       user_id: seekerProfile.user_id,
       type: "review_approved",
@@ -414,8 +435,8 @@ async function handleReviewRejected(
   const { review, facility, seekerEmail, seekerProfile, rejectionReason } = data;
   logStep("Handling review_rejected");
 
-  // Notify seeker in-app
-  if (seekerProfile?.user_id) {
+  // Notify seeker in-app — gated by browser_notifications preference
+  if (seekerProfile?.user_id && await shouldSendSeekerInApp(supabase, seekerProfile.user_id)) {
     await supabase.from("seeker_notifications").insert({
       user_id: seekerProfile.user_id,
       type: "review_rejected",
@@ -475,8 +496,8 @@ async function handleReviewResponse(
   const { review, facility, seekerEmail, seekerProfile, responseText } = data;
   logStep("Handling review_response");
 
-  // Notify seeker in-app
-  if (seekerProfile?.user_id) {
+  // Notify seeker in-app — gated by browser_notifications preference
+  if (seekerProfile?.user_id && await shouldSendSeekerInApp(supabase, seekerProfile.user_id)) {
     await supabase.from("seeker_notifications").insert({
       user_id: seekerProfile.user_id,
       type: "review_response",

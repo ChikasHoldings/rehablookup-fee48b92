@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import { BarChart3, CalendarIcon, X, ChevronDown, Building2, Download } from "lucide-react";
+import { SubscriptionAnalyticsTab } from "@/components/provider/analytics/SubscriptionAnalyticsTab";
 import { CentralizedLeadAnalyticsDashboard } from "@/components/provider/CentralizedLeadAnalyticsDashboard";
 import { CentralizedEngagementAnalytics } from "@/components/provider/CentralizedEngagementAnalytics";
 import { ProviderPerformanceAnalytics } from "@/components/provider/ProviderPerformanceAnalytics";
@@ -36,7 +37,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-type TabKey = "overview" | "engagement" | "leads" | "performance" | "roi";
+type TabKey = "overview" | "engagement" | "leads" | "performance" | "roi" | "subscription";
 
 export default function ProviderAnalyticsPage() {
   const shouldOpenCalendarFromMenuRef = useRef(false);
@@ -121,7 +122,10 @@ export default function ProviderAnalyticsPage() {
         ]);
       }
       if (leadData?.conversionFunnel) {
-        const { newLeads, contacted, qualified, converted } = leadData.conversionFunnel;
+        // `new` is a reserved word — rename via destructure pattern so the
+        // local binding doesn't collide. The source type from
+        // useCentralizedLeadAnalytics returns `{ new, contacted, qualified, converted }`.
+        const { new: newLeads, contacted, qualified, converted } = leadData.conversionFunnel;
         rows.push(["Inquiries → New", "", String(newLeads), "", ""]);
         rows.push(["Inquiries → Contacted", "", String(contacted), "", ""]);
         rows.push(["Inquiries → Qualified", "", String(qualified), "", ""]);
@@ -206,6 +210,7 @@ export default function ProviderAnalyticsPage() {
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: "overview", label: "Overview" },
+    { key: "subscription", label: "Subscription" },
     { key: "engagement", label: "Engagement" },
     { key: "leads", label: "Leads" },
     { key: "performance", label: "Performance" },
@@ -465,15 +470,41 @@ export default function ProviderAnalyticsPage() {
         )}
 
         {/* ── Tab Navigation ── */}
-        <div className="flex gap-1 border-b overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div
+          role="tablist"
+          aria-label="Analytics sections"
+          className="flex gap-1 border-b overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0"
+          onKeyDown={(e) => {
+            const idx = tabs.findIndex(t => t.key === activeTab);
+            if (idx === -1) return;
+            let nextIdx = idx;
+            if (e.key === "ArrowRight") nextIdx = (idx + 1) % tabs.length;
+            else if (e.key === "ArrowLeft") nextIdx = (idx - 1 + tabs.length) % tabs.length;
+            else if (e.key === "Home") nextIdx = 0;
+            else if (e.key === "End") nextIdx = tabs.length - 1;
+            else return;
+            e.preventDefault();
+            const next = tabs[nextIdx];
+            setActiveTab(next.key);
+            requestAnimationFrame(() => {
+              document.querySelector<HTMLButtonElement>(`[data-analytics-tab="${next.key}"]`)?.focus();
+            });
+          }}
+        >
           {tabs.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <button
                 key={tab.key}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`analytics-panel-${tab.key}`}
+                id={`analytics-tab-${tab.key}`}
+                tabIndex={isActive ? 0 : -1}
+                data-analytics-tab={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
-                  "px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap shrink-0",
+                  "px-3 sm:px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-t",
                   isActive
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
@@ -486,8 +517,15 @@ export default function ProviderAnalyticsPage() {
         </div>
 
         {/* ── Tab Content ── */}
+        {activeTab === "subscription" && (
+          <div role="tabpanel" id="analytics-panel-subscription" aria-labelledby="analytics-tab-subscription" tabIndex={0} className="focus-visible:outline-none">
+            <SubscriptionAnalyticsTab
+              facilityId={selectedFacilityId !== "all" ? selectedFacilityId : (approvedFacilities[0]?.id ?? null)}
+            />
+          </div>
+        )}
         {activeTab === "overview" && (
-          <div className="space-y-4 sm:space-y-6">
+          <div role="tabpanel" id="analytics-panel-overview" aria-labelledby="analytics-tab-overview" tabIndex={0} className="space-y-4 sm:space-y-6 focus-visible:outline-none">
             <Card>
               <CardContent className="p-3 sm:p-5">
                 <h2 className="text-sm font-semibold text-foreground mb-3 sm:mb-4">Engagement Overview</h2>
@@ -503,33 +541,41 @@ export default function ProviderAnalyticsPage() {
           </div>
         )}
         {activeTab === "engagement" && (
-          <Card>
-            <CardContent className="p-3 sm:p-5">
-              <CentralizedEngagementAnalytics dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
-            </CardContent>
-          </Card>
+          <div role="tabpanel" id="analytics-panel-engagement" aria-labelledby="analytics-tab-engagement" tabIndex={0} className="focus-visible:outline-none">
+            <Card>
+              <CardContent className="p-3 sm:p-5">
+                <CentralizedEngagementAnalytics dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
+              </CardContent>
+            </Card>
+          </div>
         )}
         {activeTab === "leads" && (
-          <Card>
-            <CardContent className="p-3 sm:p-5">
-              <CentralizedLeadAnalyticsDashboard dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
-            </CardContent>
-          </Card>
+          <div role="tabpanel" id="analytics-panel-leads" aria-labelledby="analytics-tab-leads" tabIndex={0} className="focus-visible:outline-none">
+            <Card>
+              <CardContent className="p-3 sm:p-5">
+                <CentralizedLeadAnalyticsDashboard dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
+              </CardContent>
+            </Card>
+          </div>
         )}
         {activeTab === "performance" && (
-          <Card>
-            <CardContent className="p-3 sm:p-5">
-              <ProviderPerformanceAnalytics dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
-            </CardContent>
-          </Card>
+          <div role="tabpanel" id="analytics-panel-performance" aria-labelledby="analytics-tab-performance" tabIndex={0} className="focus-visible:outline-none">
+            <Card>
+              <CardContent className="p-3 sm:p-5">
+                <ProviderPerformanceAnalytics dateRange={dateRange} facilityId={selectedFacilityId !== "all" ? selectedFacilityId : undefined} />
+              </CardContent>
+            </Card>
+          </div>
         )}
         {activeTab === "roi" && (
-          <Card>
-            <CardContent className="p-3 sm:p-5">
-              <h2 className="text-sm font-semibold text-foreground mb-3 sm:mb-4">ROI Calculator — Compare Your Lead Costs</h2>
-              <ROICalculatorWidget />
-            </CardContent>
-          </Card>
+          <div role="tabpanel" id="analytics-panel-roi" aria-labelledby="analytics-tab-roi" tabIndex={0} className="focus-visible:outline-none">
+            <Card>
+              <CardContent className="p-3 sm:p-5">
+                <h2 className="text-sm font-semibold text-foreground mb-3 sm:mb-4">ROI Calculator — Compare Your Lead Costs</h2>
+                <ROICalculatorWidget />
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </div>

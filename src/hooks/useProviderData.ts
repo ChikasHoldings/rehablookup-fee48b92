@@ -13,6 +13,13 @@ interface Profile {
   timezone: string | null;
   phone_verified: boolean | null;
   phone_verified_at: string | null;
+  /** Set by complete_provider_onboarding RPC once the wizard finishes
+   *  (or by a post-checkout Pro recovery in Dashboard.tsx). Null until
+   *  the user has finished onboarding. */
+  onboarding_completed_at: string | null;
+  /** profiles.plan mirror — 'free' | 'pro'. Lets components avoid an
+   *  extra useProStatus call when they only need the tier. */
+  plan: "free" | "pro" | null;
 }
 
 interface Facility {
@@ -31,6 +38,11 @@ interface Facility {
   zip_code: string;
   website: string | null;
   profile_completion_celebrated: boolean | null;
+  /** Reply-to address for lead notification emails. Falls back to
+   *  the account email when null. Read by EmailLeadDialog to decide
+   *  whether to show the unverified-email warning. */
+  reply_email: string | null;
+  reply_email_verified: boolean | null;
 }
 
 interface ProviderData {
@@ -108,20 +120,20 @@ export function useProviderData(facilityId?: string) {
         // Fetch profile
         supabase
           .from("profiles")
-          .select("first_name, last_name, email, phone, job_title, primary_contact_name, timezone, phone_verified, phone_verified_at")
+          .select("first_name, last_name, email, phone, job_title, primary_contact_name, timezone, phone_verified, phone_verified_at, onboarding_completed_at, plan")
           .eq("user_id", session.user.id)
           .maybeSingle(),
         // Fetch facility
         facilityId
           ? supabase
               .from("facilities")
-              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated")
+              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated, reply_email, reply_email_verified")
               .eq("id", facilityId)
               .eq("user_id", session.user.id)
               .maybeSingle()
           : supabase
               .from("facilities")
-              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated")
+              .select("id, name, slug, status, email, logo_url, gallery_urls, description, phone, address, city, state, zip_code, website, profile_completion_celebrated, reply_email, reply_email_verified")
               .eq("user_id", session.user.id)
               .limit(1)
               .maybeSingle(),
@@ -151,7 +163,9 @@ export function useProviderData(facilityId?: string) {
             .eq("facility_id", facilityData.id)
             .eq("event_type", "profile_view")
             .gte("created_at", thirtyDaysAgo.toISOString()),
-          // Accurate leads count via security definer function (bypasses RLS unlock restriction)
+          // Accurate leads count via SECURITY DEFINER RPC so the count
+          // reflects all rows owned by the facility regardless of view-
+          // level row filtering or query-level limits.
           supabase.rpc("get_facility_leads_count", { p_facility_id: facilityData.id }),
         ]);
 

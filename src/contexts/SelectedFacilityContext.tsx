@@ -51,7 +51,7 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
       
       // If user changed, reset everything
       if (currentUserId && newUserId && currentUserId !== newUserId) {
-        console.log("[SelectedFacilityContext] User changed, resetting hydration");
+        if (import.meta.env.DEV) console.log("[SelectedFacilityContext] User changed, resetting hydration");
         hydratedRef.current = false;
         setSelectedFacilityState(null);
       }
@@ -66,12 +66,12 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
       const newUserId = session?.user?.id || null;
       
       if (event === 'SIGNED_OUT') {
-        console.log("[SelectedFacilityContext] User signed out, clearing state");
+        if (import.meta.env.DEV) console.log("[SelectedFacilityContext] User signed out, clearing state");
         hydratedRef.current = false;
         setSelectedFacilityState(null);
         setCurrentUserId(null);
       } else if (event === 'SIGNED_IN' && currentUserId && newUserId !== currentUserId) {
-        console.log("[SelectedFacilityContext] Different user signed in, resetting");
+        if (import.meta.env.DEV) console.log("[SelectedFacilityContext] Different user signed in, resetting");
         hydratedRef.current = false;
         setSelectedFacilityState(null);
         setCurrentUserId(newUserId);
@@ -93,7 +93,7 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
     if (currentId) {
       const fullFacility = facilities.find(f => f.id === currentId);
       if (fullFacility && !fullFacility.suspended) {
-        console.log("[SelectedFacilityContext] Hydrated facility:", fullFacility.name);
+        if (import.meta.env.DEV) console.log("[SelectedFacilityContext] Hydrated facility:", fullFacility.name);
         setSelectedFacilityState(fullFacility);
         localStorage.setItem("selectedFacilityData", JSON.stringify(fullFacility));
         hydratedRef.current = true;
@@ -104,7 +104,7 @@ export function SelectedFacilityProvider({ children }: { children: ReactNode }) 
     // Default to first non-suspended facility
     const activeFacility = facilities.find(f => !f.suspended) ?? facilities[0];
     if (activeFacility) {
-      console.log("[SelectedFacilityContext] Defaulting to first active facility:", activeFacility.name);
+      if (import.meta.env.DEV) console.log("[SelectedFacilityContext] Defaulting to first active facility:", activeFacility.name);
       setSelectedFacilityState(activeFacility);
       localStorage.setItem("selectedFacilityId", activeFacility.id);
       localStorage.setItem("selectedFacilityData", JSON.stringify(activeFacility));

@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MapPin, Building2, CheckCircle, Heart, Search } from "lucide-react";
+import { MapPin, Building2, CheckCircle, Heart, Search, Clock } from "lucide-react";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { LocationStatTile } from "@/components/seo/LocationStatTile";
 
 interface NearMeHeroProps {
   title: string;
@@ -16,6 +17,25 @@ interface NearMeHeroProps {
   heroImage?: string;
 }
 
+/**
+ * NearMeHero — proximity / "find nearby" directory hero used by the
+ * ~30 /near-me pages. Distinct from State / City / County /
+ * Treatment-State / SEO Landing heroes in three ways:
+ *
+ *   1. EMERALD accent. The other archetypes use slate/primary
+ *      (state), warm primary/accent (city), pure primary (county),
+ *      per-modality colour (treatment), or amber (SEO landing).
+ *      Near-me leans emerald because the page promise is "show me
+ *      what's near me" — green reads as proximity / availability.
+ *   2. PULSING live-location dot in the eyebrow chip. Subtle, but
+ *      reinforces the live / right-now intent that distinguishes
+ *      near-me from the other location archetypes.
+ *   3. Stat strip emphasises NEARBY signals (Centers Nearby, Same-Day
+ *      Admit, States Covered) rather than location-static metrics.
+ *
+ * Hero footprint is intentionally smaller than the State hero
+ * (py-6 md:py-8) — State remains the network centerpiece.
+ */
 export function NearMeHero({
   title,
   subtitle,
@@ -24,25 +44,30 @@ export function NearMeHero({
   facilityCount,
   heroImage,
 }: NearMeHeroProps) {
-  const locationString = location?.city 
+  const locationString = location?.city
     ? `${location.city}, ${location.stateAbbr}`
     : location?.state || "Your Area";
 
   return (
-    <section className="relative overflow-hidden">
-      {/* Background */}
+    <section className="relative overflow-hidden border-b border-white/5">
       {heroImage && (
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroImage})` }}
+        <img
+          src={heroImage}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/85 to-primary/75" />
-      <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-transparent to-primary/40" />
-      
-      <div className="container relative z-10 py-10 md:py-14 lg:py-16">
+      {/* Emerald-tinged overlay — proximity / availability palette. */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-emerald-900/75 to-teal-700/55" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_rgba(16,185,129,0.12),_transparent_55%)]" />
+
+      <div className="container relative z-10 py-6 md:py-8">
         <BreadcrumbNav
-          className="mb-5"
+          className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
           variant="dark"
           items={[
             { label: "Treatment", href: "/treatment-types" },
@@ -54,55 +79,66 @@ export function NearMeHero({
         />
 
         <div className="max-w-3xl">
-          {/* Location badge */}
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm border border-white/10">
-            <MapPin className="h-4 w-4" />
-            {treatmentType} Near You
+          {/* Eyebrow with pulsing live-location dot — reinforces the
+              "right now / near me" intent. */}
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-100 backdrop-blur-sm ring-1 ring-emerald-400/30">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-300" />
+            </span>
+            Near You · {locationString}
           </div>
-          
-          {/* H1 - Critical for SEO */}
+
           <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl speakable-headline">
             {title}
           </h1>
-          
-          {/* Subtitle/summary for voice search */}
-          <p className="mt-4 text-base md:text-lg text-white/85 leading-relaxed max-w-2xl speakable-summary">
+
+          <p className="mt-2 text-sm md:text-base text-white/85 max-w-2xl speakable-summary">
             {subtitle}
           </p>
 
-          {/* Trust metrics */}
-          <div className="mt-5 flex flex-wrap items-center gap-4 md:gap-6">
-            <div className="flex items-center gap-2 text-white text-sm md:text-base">
-              <Building2 className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
-              <span className="font-semibold">{facilityCount > 0 ? `${facilityCount}+` : ""}</span>
-              <span className="text-white/80">{facilityCount > 0 ? "Verified Centers" : "Growing Network"}</span>
-            </div>
-            <div className="flex items-center gap-2 text-white text-sm md:text-base">
-              <MapPin className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
-              <span className="text-white/80">{locationString}</span>
-            </div>
-            <div className="flex items-center gap-2 text-white text-sm md:text-base">
-              <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-white/80" />
-              <span className="text-white/80">Credentials Verified</span>
-            </div>
-          </div>
-
-          {/* CTAs */}
-          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <div className="mt-4 flex flex-col sm:flex-row gap-2.5">
             <Link to="/concierge">
-              <Button size="lg" variant="secondary" className="gap-2 w-full sm:w-auto shadow-lg">
+              <Button size="default" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
                 <Heart className="h-4 w-4" />
                 Get Matched Instantly
               </Button>
             </Link>
-            
             <Link to="/rehab-centers">
-              <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
+              <Button
+                size="default"
+                variant="outline"
+                className="gap-2 w-full sm:w-auto border-white/30 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
+              >
                 <Search className="h-4 w-4" />
                 Browse All Centers
               </Button>
             </Link>
           </div>
+        </div>
+
+        {/* Stat strip — proximity-focused signals. Uses the same
+            LocationStatTile glass primitive as every other directory
+            hero so the visual vocabulary stays consistent. */}
+        <div className="mt-5 hidden md:grid grid-cols-3 gap-2 max-w-3xl">
+          <LocationStatTile
+            size="sm"
+            label={facilityCount > 0 ? "Centers Nearby" : "Growing Network"}
+            value={facilityCount > 0 ? `${facilityCount}+` : "Live"}
+            icon={Building2}
+          />
+          <LocationStatTile
+            size="sm"
+            label="Same-Day Admit"
+            value="24/7"
+            icon={Clock}
+          />
+          <LocationStatTile
+            size="sm"
+            label="Credentials"
+            value="Verified"
+            icon={CheckCircle}
+          />
         </div>
       </div>
     </section>

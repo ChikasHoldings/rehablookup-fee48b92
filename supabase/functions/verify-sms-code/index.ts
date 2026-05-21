@@ -45,7 +45,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { phone, code, userId, userType } = body;
+    // Profile writes key off the JWT-authenticated id, never a
+    // body-supplied userId. Anon callers (seeker-intake pre-signup)
+    // still verify the code but skip the profile write.
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const authHeader = req.headers.get("Authorization");
+    let userId: string | null = null;
+    if (authHeader) {
+      const token = authHeader.replace(/^Bearer\s+/i, "");
+      const { data: userRes, error: userErr } = await supabase.auth.getUser(token);
+      if (userErr || !userRes?.user?.id) {
+        logStep("Invalid auth token", { requestId, error: userErr?.message });
+        return new Response(
+          JSON.stringify({ error: "Invalid authentication", requestId }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      userId = userRes.user.id;
+    }
+
+    const { phone, code, userType } = body;
 
     if (!phone || !code) {
       logStep("Missing required fields", { requestId, hasPhone: !!phone, hasCode: !!code });
@@ -56,10 +75,9 @@ Deno.serve(async (req) => {
     }
 
     // Rate limiting: max 10 SMS code verification attempts per phone per 15 minutes
-    const supabaseRL = createClient(supabaseUrl, supabaseServiceKey);
     const normalizedPhone = (phone || "").replace(/\D/g, "");
     if (normalizedPhone) {
-      const rateLimitResult = await checkRateLimit(supabaseRL, {
+      const rateLimitResult = await checkRateLimit(supabase, {
         identifier: `phone:${normalizedPhone}`,
         actionType: 'verify_sms_code',
         maxAttempts: 10,
@@ -80,8 +98,6 @@ Deno.serve(async (req) => {
     }
 
     logStep("Processing verification", { requestId, userType: userType || "unknown", hasUserId: !!userId });
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Find the verification code
     const { data: verificationCode, error: fetchError } = await supabase
@@ -139,6 +155,33 @@ Deno.serve(async (req) => {
     }
 
     logStep("Code verified successfully", { requestId });
+
+    // Anti-abuse: a phone that's already verified on a DIFFERENT
+    // account can't be re-verified onto this one. Spec §6:
+    // "Block reuse of a phone already verified on another account."
+    // We check provider profiles + seeker profiles so the rule
+    // applies across user types.
+    if (userId) {
+      const conflictTable = userType === "seeker" ? "seeker_profiles" : "profiles";
+      const { data: conflictRow } = await supabase
+        .from(conflictTable)
+        .select("user_id")
+        .eq("phone", phone)
+        .not("phone_verified_at", "is", null)
+        .neq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+      if (conflictRow) {
+        logStep("Phone already verified on another account", { requestId });
+        return new Response(
+          JSON.stringify({
+            error: "This phone number is already verified on another account. Use a different number or contact support.",
+            requestId,
+          }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
 
     // Mark code as verified
     await supabase

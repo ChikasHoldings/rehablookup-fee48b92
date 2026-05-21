@@ -38,8 +38,8 @@ const STATUS_BADGES: Record<string, string> = {
 };
 
 const FUNNEL_STAGES = [
-  { key: "new" as const, label: "New", color: "bg-blue-500", textColor: "text-blue-600", desc: "Awaiting unlock" },
-  { key: "contacted" as const, label: "Contacted", color: "bg-amber-500", textColor: "text-amber-600", desc: "Unlocked & reached out" },
+  { key: "new" as const, label: "New", color: "bg-blue-500", textColor: "text-blue-600", desc: "Awaiting response" },
+  { key: "contacted" as const, label: "Contacted", color: "bg-amber-500", textColor: "text-amber-600", desc: "Provider reached out" },
   { key: "qualified" as const, label: "Qualified", color: "bg-purple-500", textColor: "text-purple-600", desc: "Good fit confirmed" },
   { key: "converted" as const, label: "Converted", color: "bg-emerald-500", textColor: "text-emerald-600", desc: "Admitted" },
 ];
@@ -75,6 +75,21 @@ export function CentralizedLeadAnalyticsDashboard({ dateRange, facilityId }: Cen
   if (!analytics) return <AnalyticsSkeleton />;
 
   if (analytics.totalLeads === 0) {
+    const isDateFiltered = !!(dateRange?.from || dateRange?.to);
+    const hasHistory = analytics.allTimeLeads > 0;
+    if (isDateFiltered && hasHistory) {
+      return (
+        <div className="py-14 flex flex-col items-center text-center">
+          <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center mb-3">
+            <Users className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="text-sm font-semibold text-foreground mb-1">No inquiries in this range</h3>
+          <p className="text-xs text-muted-foreground max-w-sm">
+            Try widening the date range or switching to All Time to see your historical inquiries.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="py-14 flex flex-col items-center text-center">
         <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center mb-3">

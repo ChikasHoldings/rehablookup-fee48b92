@@ -94,52 +94,70 @@ export function useCentralizedLeadAnalytics(dateRange?: DateRange, filterFacilit
         return getEmptyAnalytics();
       }
 
-      const { data: allLeads, error: leadsError } = await supabase
+      const ROW_LIMIT = 2000;
+
+      // All-time fetch — used for the growth-rate baseline and the empty-state
+      // earliest-lead anchor. Capped to ROW_LIMIT (most recent first) so a
+      // provider with a long history doesn't bring the browser to its knees.
+      const { data: allLeadsRaw, error: allLeadsError } = await supabase
         .from("leads_provider_view")
-        .select("id, facility_id, name, status, created_at, urgency, level_of_care, source, location_city_state, insurance_type, is_unlocked, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, primary_substance, exclusivity, preferred_contact")
+        .select("id, facility_id, name, status, created_at, urgency, level_of_care, source, location_city_state, insurance_type, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, primary_substance, exclusivity, preferred_contact")
         .in("facility_id", facilityIds)
-        .order("created_at", { ascending: true })
-        .limit(2000);
+        .order("created_at", { ascending: false })
+        .limit(ROW_LIMIT);
 
-      if (leadsError) throw leadsError;
+      if (allLeadsError) throw allLeadsError;
 
-      const leads = allLeads || [];
+      const allLeadsRows = (allLeadsRaw ?? []) as unknown as Lead[];
+      if (allLeadsRows.length === ROW_LIMIT) {
+        // Surface the truncation in dev so we know aggregates are partial.
+        console.warn(
+          `[useCentralizedLeadAnalytics] hit ${ROW_LIMIT}-row cap; aggregates reflect the ${ROW_LIMIT} most recent leads only`,
+        );
+      }
+
+      // Period fetch — when the user picked an explicit range, push the
+      // bounds to the server so we don't pull every lead just to filter
+      // most of them out client-side.
+      let periodLeadsRows: Lead[] = allLeadsRows;
+      if (dateRange?.from || dateRange?.to) {
+        let q = supabase
+          .from("leads_provider_view")
+          .select("id, facility_id, name, status, created_at, urgency, level_of_care, source, location_city_state, insurance_type, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, primary_substance, exclusivity, preferred_contact")
+          .in("facility_id", facilityIds)
+          .order("created_at", { ascending: false })
+          .limit(ROW_LIMIT);
+        if (dateRange?.from) q = q.gte("created_at", startOfDay(dateRange.from).toISOString());
+        if (dateRange?.to) q = q.lte("created_at", endOfDay(dateRange.to).toISOString());
+        const { data: periodRaw, error: periodErr } = await q;
+        if (periodErr) throw periodErr;
+        periodLeadsRows = (periodRaw ?? []) as unknown as Lead[];
+        if (periodLeadsRows.length === ROW_LIMIT) {
+          console.warn(
+            `[useCentralizedLeadAnalytics] period query hit ${ROW_LIMIT}-row cap; chart aggregates may be partial`,
+          );
+        }
+      }
+
       const facilityMap = new Map(approvedFacilities.map((f) => [f.id, f.name]));
-
-      const leadsWithFacilityNames = leads.map((lead) => ({
+      const allTimeWithNames: (Lead & { facility_name?: string })[] = allLeadsRows.map((lead) => ({
         ...lead,
         facility_name: facilityMap.get(lead.facility_id) || "Unknown Facility",
-      })) as (Lead & { facility_name?: string })[];
-
-      let filteredLeads = leadsWithFacilityNames;
-      if (dateRange?.from || dateRange?.to) {
-        filteredLeads = leadsWithFacilityNames.filter((lead) => {
-          const leadDate = new Date(lead.created_at);
-          if (dateRange.from && dateRange.to) {
-            return isWithinInterval(leadDate, {
-              start: startOfDay(dateRange.from),
-              end: endOfDay(dateRange.to),
-            });
-          }
-          if (dateRange.from) {
-            return leadDate >= startOfDay(dateRange.from);
-          }
-          if (dateRange.to) {
-            return leadDate <= endOfDay(dateRange.to);
-          }
-          return true;
-        });
-      }
+      }));
+      const periodWithNames: (Lead & { facility_name?: string })[] = periodLeadsRows.map((lead) => ({
+        ...lead,
+        facility_name: facilityMap.get(lead.facility_id) || "Unknown Facility",
+      }));
 
       const leadCap = 999999;
 
       return calculateCentralizedAnalytics(
-        filteredLeads,
-        leadsWithFacilityNames,
+        periodWithNames,
+        allTimeWithNames,
         facilityMap,
         facilityIds,
         leadCap,
-        dateRange
+        dateRange,
       );
     },
     enabled: !facilitiesLoading && facilityIds.length > 0,
@@ -256,16 +274,20 @@ function calculateCentralizedAnalytics(
     converted: leads.filter((lead) => lead.status === "converted").length,
   };
 
-  const newLeads = leads.filter((lead) => lead.status === "new").length;
-
-  // Calculate real response metrics from provider_responded_at
+  // Response metrics derive directly from `provider_responded_at` — a lead
+  // with a timestamp is a response, regardless of status. "Not responded"
+  // counts every lead that doesn't have a timestamp set yet, not just rows
+  // in status='new' (previously a lead the provider had moved to
+  // 'contacted' without logging a response was silently excluded from the
+  // not-responded count).
   let totalResponseHours = 0;
   let respondedCount = 0;
   let within24h = 0;
   let within48h = 0;
+  let notResponded = 0;
 
   leads.forEach((lead) => {
-    const respondedAt = (lead as any).provider_responded_at;
+    const respondedAt = lead.provider_responded_at;
     if (respondedAt) {
       respondedCount++;
       const createdDate = new Date(lead.created_at);
@@ -274,6 +296,8 @@ function calculateCentralizedAnalytics(
       totalResponseHours += Math.max(0, diffHours);
       if (diffHours <= 24) within24h++;
       else if (diffHours <= 48) within48h++;
+    } else {
+      notResponded++;
     }
   });
 
@@ -281,7 +305,7 @@ function calculateCentralizedAnalytics(
     avgResponseTime: respondedCount > 0 ? Math.round(totalResponseHours / respondedCount) : 0,
     respondedWithin24h: within24h,
     respondedWithin48h: within48h,
-    notResponded: newLeads,
+    notResponded,
   };
 
   const contactCounts: Record<string, number> = {};

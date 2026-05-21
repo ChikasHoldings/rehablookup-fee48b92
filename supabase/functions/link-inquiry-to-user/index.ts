@@ -120,7 +120,9 @@ Deno.serve(async (req) => {
     // Bulk-link mode: link every matching unowned row across all seeker-side
     // tables to this user by email match.
     // ──────────────────────────────────────────────
-    const result = { concierge_inquiries: 0, international_placement_cases: 0, insurance_verification_requests: 0 };
+    // international_placement_cases retired 2026-05-20 — link only
+    // domestic concierge inquiries and insurance-verification requests.
+    const result = { concierge_inquiries: 0, insurance_verification_requests: 0 };
 
     const { data: conciergeRows, error: conciergeErr } = await supabaseAdmin
       .from("concierge_inquiries")
@@ -132,18 +134,6 @@ Deno.serve(async (req) => {
       logStep("concierge_inquiries link error", { error: conciergeErr.message });
     } else {
       result.concierge_inquiries = conciergeRows?.length || 0;
-    }
-
-    const { data: intlRows, error: intlErr } = await supabaseAdmin
-      .from("international_placement_cases")
-      .update({ user_id: user.id })
-      .ilike("client_email", normalizedEmail)
-      .is("user_id", null)
-      .select("id");
-    if (intlErr) {
-      logStep("international_placement_cases link error", { error: intlErr.message });
-    } else {
-      result.international_placement_cases = intlRows?.length || 0;
     }
 
     const { data: vobRows, error: vobErr } = await supabaseAdmin

@@ -15,7 +15,7 @@ import {
 import {
   User, Mail, Phone, MapPin, Calendar, Building2,
   MessageSquare, Shield, FileText, CheckCircle,
-  Lock, Unlock, Share2, Clock, Zap, Star, Loader2,
+  Share2, Clock, Zap, Star, Loader2,
   Save, StickyNote, Handshake, Activity,
   CreditCard, Eye, ArrowRightLeft, AlertTriangle,
   Send, Flag,
@@ -40,21 +40,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
   const [savingNote, setSavingNote] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch unlock details
-  const { data: unlockData } = useQuery({
-    queryKey: ["inquiry-unlock-detail", lead?.id],
-    queryFn: async () => {
-      if (!lead?.id) return [];
-      const { data } = await supabase
-        .from("lead_unlocks")
-        .select("id, facility_id, provider_id, unlocked_at, unlock_price_cents, payment_method")
-        .eq("lead_id", lead.id)
-        .order("unlocked_at", { ascending: false });
-      return data || [];
-    },
-    enabled: !!lead?.id && open,
-  });
-
   // Fetch distribution details
   const { data: distributions } = useQuery({
     queryKey: ["inquiry-distributions", lead?.id],
@@ -65,6 +50,26 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
         .select("id, facility_id, is_original, distributed_at, unlocked_at, notification_sent, notification_sent_at")
         .eq("lead_id", lead.id)
         .order("distributed_at", { ascending: true });
+      return data || [];
+    },
+    enabled: !!lead?.id && open,
+  });
+
+  // Fetch routing-decision audit trail. This populates the "Routing"
+  // section of the timeline so an admin can see why a lead landed at
+  // a specific facility (was it Pro-tier match, was it a fallback
+  // assignment, what eligibility checks ran). Empty for legacy leads
+  // created before routing-log was instrumented; the UI handles
+  // empty gracefully.
+  const { data: routingLogs } = useQuery({
+    queryKey: ["inquiry-routing-logs", lead?.id],
+    queryFn: async () => {
+      if (!lead?.id) return [];
+      const { data } = await supabase
+        .from("lead_routing_logs")
+        .select("id, assigned_provider_id, assignment_reason, plan_tier, subscription_status, routing_source, requested_facility_id, eligibility_check_result, exclusivity, provider_routing_order, created_at")
+        .eq("lead_id", lead.id)
+        .order("created_at", { ascending: true });
       return data || [];
     },
     enabled: !!lead?.id && open,
@@ -148,7 +153,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
         updates.original_facility_id = previousFacilityId;
       }
 
-      const { error } = await supabase.from("leads").update(updates).eq("id", lead.id);
+      const { error } = await (supabase.from("leads") as any).update(updates).eq("id", lead.id);
       if (error) throw error;
 
       // Audit log so admins can trace cross-facility moves.
@@ -179,24 +184,97 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
   // Mark as contacted
   const markContactedMutation = useMutation({
     mutationFn: async () => {
+      const previousStatus = lead.provider_response_status ?? null;
       const { error } = await supabase.from("leads").update({
         provider_response_status: "contacted",
         provider_responded_at: new Date().toISOString(),
       }).eq("id", lead.id);
       if (error) throw error;
+      // Audit-log the admin action so the timeline reflects who/when
+      // an admin nudged a provider's response status.
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: user?.id ?? null,
+          action_type: "lead_marked_contacted",
+          target_type: "lead",
+          target_id: lead.id,
+          details: { previous_status: previousStatus, new_status: "contacted" },
+        });
+      } catch (e) {
+        console.warn("[admin-audit] mark-contacted log failed (non-blocking)", e);
+      }
     },
-    onSuccess: () => { onLeadUpdated(); toast.success("Marked as contacted"); },
+    onSuccess: () => {
+      onLeadUpdated();
+      toast.success("Marked as contacted");
+      // Notify the seeker their inquiry was answered. Server-side
+      // idempotency keyed by leadId so an admin double-clicking, or the
+      // provider already having triggered this from their dashboard,
+      // does not produce a second email. Honors email_lead_alerts pref.
+      void supabase.functions
+        .invoke("send-seeker-emails", {
+          body: { type: "facility_contacted_you", leadId: lead.id },
+        })
+        .catch((err) => {
+          console.warn("[InquiryDetailModal] seeker notification failed", err);
+        });
+    },
     onError: () => toast.error("Failed to update status"),
   });
 
   // Flag issue
   const flagIssueMutation = useMutation({
     mutationFn: async (flag: string) => {
+      const previousFlag = lead.quality_flag ?? null;
       const { error } = await supabase.from("leads").update({ quality_flag: flag }).eq("id", lead.id);
       if (error) throw error;
+      // Audit-log the quality-flag change. Flags are signals admins
+      // use to triage spam / duplicate / test inquiries; the log lets
+      // ops see who flagged what.
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from("admin_audit_log").insert({
+          admin_user_id: user?.id ?? null,
+          action_type: "lead_quality_flag_changed",
+          target_type: "lead",
+          target_id: lead.id,
+          details: { previous_flag: previousFlag, new_flag: flag },
+        });
+      } catch (e) {
+        console.warn("[admin-audit] flag log failed (non-blocking)", e);
+      }
     },
     onSuccess: () => { onLeadUpdated(); toast.success("Flag updated"); },
     onError: () => toast.error("Failed to flag"),
+  });
+
+  // Resend facility notification — admin-only nudge that re-fires the
+  // provider's lead-notification email. Calls the admin-resend-lead-
+  // notification edge function which rate-limits to 3 resends per
+  // (admin, lead) per hour, writes an audit-log entry, and adds a
+  // lead_notes line.
+  const resendNotificationMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+      const { data, error } = await supabase.functions.invoke("admin-resend-lead-notification", {
+        body: { leadId: lead.id },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as { recipient: string };
+    },
+    onSuccess: (res) => {
+      toast.success(`Notification resent to ${res.recipient}`);
+      refetchNotes();
+      onLeadUpdated();
+    },
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : "Failed to resend";
+      toast.error(msg);
+    },
   });
 
   // Save note
@@ -216,7 +294,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
 
   const assignedFacility = lead?.facility_id ? facilityMap.get(lead.facility_id) : providerInfo?.facility;
   const originalFacility = lead?.original_facility_id ? facilityMap.get(lead.original_facility_id) : null;
-  const isUnlocked = (unlockData?.length || 0) > 0;
   const isRedistributed = lead?.redistribution_status === "extended" || lead?.redistribution_status === "redistributed";
   const getInitials = () => lead?.name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
 
@@ -229,12 +306,14 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
     if (lead.assigned_at) events.push({ date: lead.assigned_at, label: "Lead Created & Assigned", detail: assignedFacility?.name || "Facility", icon: Building2, color: "bg-chart-3/10 text-chart-3" });
 
     distributions?.forEach((d: any) => {
-      if (!d.is_original) events.push({ date: d.distributed_at, label: "Redistributed", detail: facilityMap.get(d.facility_id)?.name || "Provider", icon: Share2, color: "bg-info/10 text-info" });
-      if (d.notification_sent_at) events.push({ date: d.notification_sent_at, label: "Provider Notified", detail: facilityMap.get(d.facility_id)?.name, icon: Send, color: "bg-muted text-muted-foreground" });
-    });
-
-    unlockData?.forEach((u: any) => {
-      events.push({ date: u.unlocked_at, label: "Lead Unlocked", detail: `$${(u.unlock_price_cents / 100).toFixed(2)} via ${u.payment_method}`, icon: Unlock, color: "bg-success/10 text-success" });
+      // Round-30 audit: facilityMap.get() returns undefined when the
+      // referenced facility was deleted but the distribution row
+      // survived. Was rendering literal "undefined" in the UI; now
+      // surfaces "(deleted facility)" so admins can spot the broken
+      // reference and reconcile.
+      const facName = facilityMap.get(d.facility_id)?.name ?? "(deleted facility)";
+      if (!d.is_original) events.push({ date: d.distributed_at, label: "Redistributed", detail: facName, icon: Share2, color: "bg-info/10 text-info" });
+      if (d.notification_sent_at) events.push({ date: d.notification_sent_at, label: "Provider Notified", detail: facName, icon: Send, color: "bg-muted text-muted-foreground" });
     });
 
     if (lead.provider_responded_at) events.push({ date: lead.provider_responded_at, label: "Provider Responded", detail: lead.provider_response_status, icon: CheckCircle, color: "bg-success/10 text-success" });
@@ -242,7 +321,7 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
     if (relatedPlacement) events.push({ date: relatedPlacement.created_at, label: "Converted to Placement", detail: relatedPlacement.primary_concern || "Case created", icon: Handshake, color: "bg-purple-500/10 text-purple-600" });
 
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [lead, unlockData, distributions, relatedPlacement, assignedFacility, facilityMap]);
+  }, [lead, distributions, relatedPlacement, assignedFacility, facilityMap]);
 
   if (!lead) return null;
 
@@ -286,11 +365,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                 <Badge variant="secondary" className="h-5 text-xs gap-1">
                   <MessageSquare className="h-3 w-3" />{lead.inquiry_type === "request_callback" ? "Callback" : lead.inquiry_type === "tour_request" ? "Tour" : "Info"}
                 </Badge>
-                {isUnlocked ? (
-                  <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 h-5 text-xs"><Unlock className="h-3 w-3" />Unlocked</Badge>
-                ) : (
-                  <Badge variant="outline" className="bg-muted text-muted-foreground border-border gap-1 h-5 text-xs"><Lock className="h-3 w-3" />Locked</Badge>
-                )}
                 {isRedistributed && (
                   <Badge variant="outline" className="bg-info/10 text-info border-info/30 gap-1 h-5 text-xs"><Share2 className="h-3 w-3" />Redistributed</Badge>
                 )}
@@ -323,11 +397,9 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
             <TabsContent value="overview" className="m-0 data-[state=inactive]:hidden">
               <div className="p-5 space-y-5">
                 {/* KPI Strip */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: "Lead Score", value: lead.lead_score ?? "—", icon: Star, color: "text-warning" },
-                    { label: "Credit Cost", value: lead.credit_cost ? `$${(lead.credit_cost / 100).toFixed(0)}` : "—", icon: CreditCard, color: "text-primary" },
-                    { label: "Unlocks", value: unlockData?.length || 0, icon: Unlock, color: "text-success" },
+                    { label: "Urgency", value: lead.urgency ?? "—", icon: Star, color: "text-warning" },
                     { label: "Distributions", value: distributions?.length || 0, icon: Share2, color: "text-info" },
                   ].map((kpi) => (
                     <div key={kpi.label} className="p-3 rounded-xl border bg-card text-center">
@@ -364,7 +436,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                     ["Urgency", lead.urgency], ["Level of Care", lead.level_of_care],
                     ["Insurance", lead.insurance_type],
                     ["Substances", lead.primary_substance?.join(", ")],
-                    ["Lead Score", lead.lead_score ? `${lead.lead_score} (${lead.lead_score_label || ""})` : null],
                     ["Submitted", format(new Date(lead.created_at), "MMM d, yyyy h:mm a")],
                   ]} />
                   {/* Lead Lifecycle */}
@@ -380,16 +451,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                           lead.status === "contacted" && "bg-chart-3/10 text-chart-3 border-chart-3/30",
                           lead.status === "converted" && "bg-success/10 text-success border-success/30",
                         )}>{lead.status}</Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Unlocked</span>
-                        {isUnlocked ? (
-                          <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 text-xs">
-                            <Unlock className="h-3 w-3" />Yes — {format(new Date(unlockData![0].unlocked_at), "MMM d, h:mm a")}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs"><Lock className="h-3 w-3 mr-1" />No</Badge>
-                        )}
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Distribution</span>
@@ -432,36 +493,9 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
             {/* ===== LEAD DETAILS TAB ===== */}
             <TabsContent value="lead" className="m-0 data-[state=inactive]:hidden">
               <div className="p-5 space-y-5">
-                {/* Unlock History */}
-                <div className="p-4 rounded-xl border bg-card">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
-                    <Unlock className="h-4 w-4 text-success" />Unlock History
-                    <Badge variant="secondary" className="h-4 text-[10px] px-1">{unlockData?.length || 0}</Badge>
-                  </h4>
-                  {(unlockData?.length || 0) > 0 ? (
-                    <div className="space-y-2">
-                      {unlockData!.map((u: any) => {
-                        const uFac = facilityMap.get(u.facility_id);
-                        return (
-                          <div key={u.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="h-8 w-8 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
-                                <Unlock className="h-4 w-4 text-success" />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium truncate">{uFac?.name || "Unknown Facility"}</p>
-                                <p className="text-xs text-muted-foreground">${(u.unlock_price_cents / 100).toFixed(2)} via {u.payment_method}</p>
-                              </div>
-                            </div>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(u.unlocked_at), "MMM d, h:mm a")}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-6">No unlocks yet</p>
-                  )}
-                </div>
+                {/* (Unlock History retired — the lead_unlocks table was dropped
+                    in the EKRA-compliant flat-fee refactor. Pro providers
+                    receive every lead with full PII on the spot.) */}
 
                 {/* Distribution History */}
                 <div className="p-4 rounded-xl border bg-card">
@@ -483,7 +517,6 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                                 <p className="text-sm font-medium truncate">{dFac?.name || "Unknown"}</p>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <span>{d.is_original ? "Original" : "Redistributed"}</span>
-                                  {d.unlocked_at && <Badge variant="outline" className="text-[10px] h-4 bg-success/10 text-success border-success/30">Unlocked</Badge>}
                                   {d.notification_sent && <Badge variant="outline" className="text-[10px] h-4">Notified</Badge>}
                                 </div>
                               </div>
@@ -495,6 +528,102 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-6">No distributions recorded</p>
+                  )}
+                </div>
+
+                {/* Routing decision history — shows WHY the lead landed
+                    at a specific facility. Reads lead_routing_logs which
+                    captures the tier check, eligibility-check outcome,
+                    and routing source for every assignment decision.
+                    Empty for leads created before the routing-log was
+                    instrumented; the empty state explains. */}
+                <div className="p-4 rounded-xl border bg-card">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                    <ArrowRightLeft className="h-4 w-4 text-primary" />Routing Decisions
+                    <Badge variant="secondary" className="h-4 text-[10px] px-1">{routingLogs?.length || 0}</Badge>
+                  </h4>
+                  {(routingLogs?.length || 0) > 0 ? (
+                    <div className="space-y-2">
+                      {routingLogs!.map((r) => {
+                        const assignedFac = r.assigned_provider_id ? facilityMap.get(r.assigned_provider_id) : null;
+                        const requestedFac = r.requested_facility_id ? facilityMap.get(r.requested_facility_id) : null;
+                        const eligibility = (r.eligibility_check_result ?? null) as Record<string, unknown> | null;
+                        return (
+                          <div key={r.id} className="p-3 rounded-lg bg-muted/30 space-y-1.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">
+                                  {r.assignment_reason || "Assignment recorded"}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                  {r.plan_tier && (
+                                    <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                      tier: {r.plan_tier}
+                                    </Badge>
+                                  )}
+                                  {r.subscription_status && (
+                                    <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                      sub: {r.subscription_status}
+                                    </Badge>
+                                  )}
+                                  {r.routing_source && (
+                                    <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                      src: {r.routing_source}
+                                    </Badge>
+                                  )}
+                                  {r.exclusivity && (
+                                    <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                      {r.exclusivity}
+                                    </Badge>
+                                  )}
+                                  {typeof r.provider_routing_order === "number" && (
+                                    <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                      order #{r.provider_routing_order}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0">
+                                {format(new Date(r.created_at), "MMM d, h:mm a")}
+                              </span>
+                            </div>
+                            {(assignedFac || requestedFac) && (
+                              <div className="text-xs text-muted-foreground space-y-0.5">
+                                {requestedFac && (
+                                  <p>
+                                    <span className="opacity-75">requested →</span> {requestedFac.name}
+                                  </p>
+                                )}
+                                {assignedFac && (
+                                  <p>
+                                    <span className="opacity-75">assigned →</span> {assignedFac.name}
+                                    {requestedFac && assignedFac.id !== requestedFac.id && (
+                                      <span className="ml-1 text-amber-700">(diverged)</span>
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            {eligibility && Object.keys(eligibility).length > 0 && (
+                              <details className="text-xs">
+                                <summary className="cursor-pointer text-muted-foreground hover:text-foreground select-none">
+                                  Eligibility check
+                                </summary>
+                                <pre className="mt-1.5 p-2 rounded bg-background/60 text-[10px] leading-snug overflow-x-auto max-h-32">
+                                  {JSON.stringify(eligibility, null, 2)}
+                                </pre>
+                              </details>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-6">
+                      No routing log entries — this lead pre-dates the routing
+                      audit, or was created via a direct facility-form submission
+                      that bypasses the routing pipeline.
+                    </p>
                   )}
                 </div>
               </div>
@@ -514,7 +643,12 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                       <Select onValueChange={(val) => reassignMutation.mutate(val)} disabled={reassignMutation.isPending}>
                         <SelectTrigger><SelectValue placeholder="Select facility..." /></SelectTrigger>
                         <SelectContent className="max-h-60">
-                          {facilities.slice(0, 100).map((f) => (
+                          {/* All facilities — no silent cap. The list is
+                              already filtered to status='approved' upstream
+                              and held in memory for the table; rendering
+                              them all here gives admins access to every
+                              live facility for reassignment. */}
+                          {facilities.map((f) => (
                             <SelectItem key={f.id} value={f.id} disabled={f.id === lead.facility_id}>
                               {f.name}{f.id === lead.facility_id ? " (Current)" : ""} — {f.city}, {f.state}
                             </SelectItem>
@@ -524,6 +658,32 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
                     </div>
                     {reassignMutation.isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                   </div>
+                </div>
+
+                {/* Resend Facility Notification */}
+                <div className="p-4 rounded-xl border bg-card">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-primary" />Resend Facility Notification
+                  </h4>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Re-fires the facility's lead-notification email. Useful when a provider says they
+                    didn't receive the original. Rate-limited to 3 resends per hour per lead.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => resendNotificationMutation.mutate()}
+                    disabled={resendNotificationMutation.isPending || !lead.facility_id}
+                    className="gap-1.5"
+                    title={!lead.facility_id ? "Lead has no facility assigned" : undefined}
+                  >
+                    {resendNotificationMutation.isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Mail className="h-3.5 w-3.5" />
+                    )}
+                    Resend notification email
+                  </Button>
                 </div>
 
                 {/* Mark Contacted */}

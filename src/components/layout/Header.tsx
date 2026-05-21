@@ -237,14 +237,20 @@ export function Header({
         <div className="container flex h-[68px] items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
-            <img 
+            {/* width/height MUST match the natural aspect ratio of the
+                source file (400×73 in src/assets/logo-header.webp) or
+                the browser reserves the wrong-shape placeholder box and
+                shifts the entire navbar horizontally when the image
+                resolves. Scaled to h-9 (36px tall): 36 × (400/73) ≈ 197. */}
+            <img
               src={headerLogo}
-              alt="RehabLookup" 
+              alt="RehabLookup"
               className="h-9 w-auto"
-              width={150}
+              width={197}
               height={36}
               loading="eager"
               decoding="async"
+              fetchPriority="high"
             />
           </Link>
 
@@ -410,7 +416,14 @@ export function Header({
             </button>
 
             <div className="hidden md:flex items-center gap-2 flex-shrink-0 min-w-[140px] lg:min-w-[200px] justify-end">
-              {isSeekerLoggedIn ? (
+              {/* Render nothing while role is still resolving — the
+                  min-w on the parent already reserves space. Prevents
+                  the Sign-In/Account flash where the un-resolved
+                  isAuthenticated=false briefly paints "Sign In" then
+                  snaps to the account pill once the session lands.
+                  Mobile-menu footer (line ~593) already uses the same
+                  guard pattern. */}
+              {roleLoading ? null : isSeekerLoggedIn ? (
                 <PrefetchLink to="/account">
                   <Button size="sm" variant="ghost" className="h-9 text-sm gap-0 relative px-1">
                     <div className="flex items-center gap-2 bg-primary/10 rounded-lg px-2 py-1">
@@ -434,7 +447,7 @@ export function Header({
                 </PrefetchLink>
               ) : (
                 <>
-                  <PrefetchLink to="/provider-signup" className="hidden lg:block">
+                  <PrefetchLink to="/provider/onboarding" className="hidden lg:block">
                     <Button size="sm" variant="outline" className="h-8 text-sm">List Your Facility</Button>
                   </PrefetchLink>
                   <PrefetchLink to="/login">
@@ -613,7 +626,7 @@ export function Header({
                     Sign In
                   </Button>
                 </PrefetchLink>
-                <PrefetchLink to="/provider-signup" onClick={() => setMobileMenuOpen(false)} className="block">
+                <PrefetchLink to="/provider/onboarding" onClick={() => setMobileMenuOpen(false)} className="block">
                   <Button variant="outline" className="w-full h-11 text-sm font-medium rounded-xl border-border/60 gap-2">
                     <Building2 className="h-4 w-4" />
                     List Your Facility

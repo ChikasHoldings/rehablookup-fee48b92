@@ -5,6 +5,7 @@ import { SEO, generateFAQSchema } from "@/components/SEO";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Search, HelpCircle, ArrowRight, Heart, Phone, Lock,
@@ -150,7 +151,7 @@ const faqCategories: FAQCategory[] = [
     icon: Building2,
     description: "How our platform works",
     faqs: [
-      { question: "Is RehabLookup free to use?", answer: "Yes. Browsing our directory, reading treatment guides, comparing facilities, verifying insurance compatibility, and using our search tools are completely free for individuals seeking treatment. Our concierge placement service provides personalized, guided matching at no cost to seekers." },
+      { question: "Is RehabLookup free to use?", answer: "Yes. Browsing our directory, reading treatment guides, comparing facilities, verifying insurance compatibility, and using our search tools are completely free for individuals seeking treatment. Our concierge placement service provides personalized, guided matching at no cost to you." },
       { question: "How are treatment centers listed on RehabLookup?", answer: "Treatment centers apply through our provider portal. We verify their state licensing, accreditations (Joint Commission, CARF, etc.), insurance relationships, and other credentials before listing. All facilities must meet our quality standards and keep their profile information accurate and current. We do not accept facilities that fail our verification process." },
       { question: "Does RehabLookup recommend specific facilities?", answer: "Our concierge team provides personalized recommendations based on your treatment needs, insurance coverage, location preference, budget, and other factors. We match based on clinical fit and quality — not advertising spend — ensuring you receive honest, unbiased guidance. We partner with a network of vetted providers to offer the best options for each individual." },
       { question: "How is RehabLookup different from other directories?", answer: "RehabLookup verifies every listed facility's credentials, provides transparent information about treatment approaches and costs, and offers a personalized concierge service that goes beyond simple directory listings. We don't accept pay-for-placement advertising, and our recommendations are based on clinical fit rather than financial relationships." },
@@ -333,26 +334,36 @@ const FAQ = () => {
         ]}
       />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-primary py-10 md:py-12">
-        <div className="container relative z-10">
+      {/* Hero — FAQ. Smaller than State per the brief. Distinct
+          slate-primary with HelpCircle accent. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/60">
+        <img
+          src={TOPIC_HERO_IMAGES.inquiry}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-4"
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
             variant="dark"
-            items={[
-              { label: "FAQ" },
-            ]}
+            items={[{ label: "FAQ" }]}
           />
           <div className="max-w-2xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-4 text-sm font-medium text-white/90 backdrop-blur-sm">
-              <HelpCircle className="h-4 w-4" />
-              <span>Frequently Asked Questions</span>
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+              <HelpCircle className="h-3 w-3" />
+              Frequently Asked Questions
             </div>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-white mb-3 leading-tight tracking-tight">
+            <h1 className="mb-2 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white">
               Your Questions, Answered
             </h1>
-            <p className="text-base text-white/80 leading-relaxed max-w-lg mx-auto">
-              Comprehensive answers about treatment, insurance, privacy, recovery, and how RehabLookup helps you find the right care.
+            <p className="text-sm md:text-base text-white/80 max-w-lg mx-auto">
+              Comprehensive answers about treatment, insurance, privacy, and recovery.
             </p>
 
             {/* Search */}

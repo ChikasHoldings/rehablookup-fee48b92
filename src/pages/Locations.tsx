@@ -7,6 +7,7 @@ import { SEO } from "@/components/SEO";
 import { statesData, getTopCities } from "@/data/locationSeoData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import { 
   MapPin, 
   Search, 
@@ -142,48 +143,53 @@ const Locations = () => {
         ]}
       />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/90 py-14 md:py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        
-        <div className="container relative">
+      {/* Hero — GEOGRAPHIC BROWSE hub. Distinct from RehabCenters
+          (search-first) by leaning into "map / atlas" aesthetic: US
+          landscape photo, Globe eyebrow, denser stat strip. */}
+      <section className="relative overflow-hidden border-b border-white/5">
+        <img
+          src="https://images.unsplash.com/photo-1521295121783-8a321d551ad2?w=1920&q=80"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-primary/80 to-primary/65" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,255,255,0.08),_transparent_55%)]" />
+
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "Locations" },
-            ]}
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
+            items={[{ label: "Locations" }]}
           />
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-sm border border-white/10">
-              <Map className="h-4 w-4" />
-              Nationwide Directory
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white/90 backdrop-blur-sm ring-1 ring-white/15">
+              <Globe className="h-3 w-3" />
+              Browse by Location
             </div>
-            
             <h1 className="font-display text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-4xl">
               Find Rehab Centers by Location
             </h1>
-            
-            <p className="mx-auto mt-5 text-lg text-white/80 leading-relaxed max-w-2xl">
-              Browse verified addiction treatment facilities across all 50 US states and major cities. 
-              Find quality care close to home or explore destination treatment options.
+            <p className="mx-auto mt-2 text-sm md:text-base text-white/80 max-w-2xl">
+              Verified treatment facilities across all 50 US states and major cities.
             </p>
 
-            {/* Search */}
-            <div className="mx-auto mt-8 max-w-lg">
+            <div className="mx-auto mt-4 max-w-lg">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Search states or cities..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-14 w-full rounded-2xl border-0 bg-white pl-12 pr-12 text-base shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-white/50"
+                  className="h-12 w-full rounded-2xl border-0 bg-white pl-11 pr-11 text-sm shadow-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-white/50"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted transition-colors"
                   >
                     <X className="h-4 w-4 text-muted-foreground" />
                   </button>
@@ -191,25 +197,10 @@ const Locations = () => {
               </div>
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-white/80 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
-                  <Globe className="h-4 w-4" />
-                </div>
-                <span><strong className="text-white tabular-nums">50</strong> States Covered</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
-                  <MapPin className="h-4 w-4" />
-                </div>
-                <span><strong className="text-white tabular-nums">1,000+</strong> Cities</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
-                  <Shield className="h-4 w-4" />
-                </div>
-                <span><strong className="text-white">Verified</strong> Facilities</span>
-              </div>
+            <div className="mt-4 grid grid-cols-3 gap-2 max-w-2xl mx-auto">
+              <LocationStatTile size="sm" label="States" value="50" icon={Globe} />
+              <LocationStatTile size="sm" label="Cities" value="1,000+" icon={MapPin} />
+              <LocationStatTile size="sm" label="Facilities" value="Verified" icon={Shield} />
             </div>
           </div>
         </div>

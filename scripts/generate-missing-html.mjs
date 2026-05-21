@@ -2,7 +2,8 @@
 /**
  * Generate static HTML for all remaining missing public routes.
  */
-import { writeFile, mkdir } from "node:fs/promises";
+import { writeFile, mkdir, unlink } from "node:fs/promises";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
@@ -11,6 +12,29 @@ import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
 const BASE_URL = "https://rehablookup.com";
+
+// Load vercel.json redirect sources so this generator NEVER writes a static
+// HTML file at a path that has a server-side 301. The competing file would
+// otherwise win Vercel's filesystem-match before the redirect rule fires —
+// the static page indexes with a canonical pointing to itself, and Google
+// reports the URL as "Alternate page with proper canonical tag" / "Page
+// with redirect" instead of consolidating signal onto the canonical target.
+const REDIRECT_SOURCES = (() => {
+  try {
+    const vc = JSON.parse(
+      readFileSync(path.resolve(__dirname, "../vercel.json"), "utf8"),
+    );
+    const set = new Set();
+    for (const r of vc.redirects || []) {
+      if (r.source && !r.source.includes(":") && !r.source.includes("*")) {
+        set.add(r.source);
+      }
+    }
+    return set;
+  } catch {
+    return new Set();
+  }
+})();
 let count = 0;
 
 function escHtml(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -251,7 +275,24 @@ if (faqIndex !== -1) {
 async function main() {
   console.log(`[missing-html] Generating ${pages.length} static HTML pages...`);
 
+  let skipped = 0;
+  let removedConflicts = 0;
   for (const p of pages) {
+    const cleanPath = p.path.replace(/^\//, "");
+    const filePath = path.join(publicDir, `${cleanPath}.html`);
+
+    // Guard: never emit a static file at a path that vercel.json redirects.
+    // If a stale file is already on disk from a previous build, delete it
+    // so the redirect can actually fire.
+    if (REDIRECT_SOURCES.has(p.path)) {
+      skipped++;
+      if (existsSync(filePath)) {
+        await unlink(filePath);
+        removedConflicts++;
+      }
+      continue;
+    }
+
     const content = `<p>${escHtml(p.desc)}</p>`;
     const h = html({
       urlPath: p.path,
@@ -263,14 +304,14 @@ async function main() {
       breadcrumbs: p.bc,
       faqs: p.faqs,
     });
-    
-    // Determine file path
-    const cleanPath = p.path.replace(/^\//, "");
-    const filePath = path.join(publicDir, `${cleanPath}.html`);
     await write(filePath, h);
   }
 
   console.log(`[missing-html] Generated ${count} static HTML pages`);
+  if (skipped > 0) {
+    console.log(`[missing-html] Skipped ${skipped} paths covered by vercel.json redirects` +
+      (removedConflicts > 0 ? ` (removed ${removedConflicts} stale conflicting files)` : ""));
+  }
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });

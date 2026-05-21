@@ -234,20 +234,37 @@ export default function InsuranceVerification() {
         }}
       />
 
-      <main className="container mx-auto max-w-3xl px-4 py-8 md:py-12">
-        <header className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 text-emerald-700 px-3 py-1 mb-4 text-xs font-semibold">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Free, confidential, no obligation
+      {/* Hero — INSURANCE VERIFICATION. Smaller than State per the
+          brief. Teal-cyan accent matches the Insurance hub. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-teal-900/80 to-cyan-700/55">
+        <img
+          src={TOPIC_HERO_IMAGES.finance}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(20,184,166,0.12),_transparent_55%)]" />
+        <div className="container relative z-10 mx-auto px-4 py-6 md:py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-100 backdrop-blur-sm ring-1 ring-emerald-400/25">
+              <ShieldCheck className="h-3 w-3" />
+              Free · Confidential · No Obligation
+            </div>
+            <h1 className="mb-2 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white">
+              Verify Insurance for Treatment
+            </h1>
+            <p className="text-sm md:text-base text-white/85 max-w-xl mx-auto">
+              We'll confirm what your plan covers for addiction treatment — usually within an hour.
+            </p>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
-            Verify your insurance for treatment
-          </h1>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Tell us your insurance details and we'll confirm what your plan covers for addiction
-            treatment — usually within an hour for urgent cases.
-          </p>
-        </header>
+        </div>
+      </section>
+
+      <main className="container mx-auto max-w-3xl px-4 py-8 md:py-10">
 
         <Card>
           <CardContent className="p-6 md:p-8">

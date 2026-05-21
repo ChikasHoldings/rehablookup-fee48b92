@@ -3,32 +3,28 @@
  * ─────────────────
  * Shared loader for the public/anon view of a facility, keyed by slug.
  *
- * Logic:
- *   1. Try the build-time static snapshot (cache, then network fetch).
- *   2. If the snapshot misses (e.g. SAMHSA-imported listing not yet in the
- *      regenerated snapshot), fall back to a direct `public_facilities`
- *      query by slug. The view enforces the same masking rules and
- *      carries `is_claimed` / `is_pro` / `is_premium_visible` inline.
- *   3. When the snapshot path returned the row, supplement with a
- *      one-shot `public_facilities` fetch by id to pick up the claim
- *      flags (the snapshot doesn't carry them).
+ * Strict contract: this hook queries the `public_facilities` view only,
+ * filtered by `slug`. It never narrows by `user_id`, never appends an
+ * owner/admin scope, and never depends on the seeker's session. This is
+ * the load that drives the public profile route — every visitor (signed
+ * out, signed in as a different user, admin, owner) must see the same
+ * row resolved by slug.
  *
- * Callers that need additional data (owner-scoped PII, Pro-gated contact
- * RPC, joined detail tables) layer those on top — this hook only owns
- * the shared "anon-visible base + claim flags" load.
+ * Previously this loader tried a build-time static snapshot first and
+ * fell back to the view. The snapshot drifted as new facilities were
+ * approved between deploys (e.g. claimed SAMHSA imports), which surfaced
+ * as "Center Not Found" for freshly approved listings whose row existed
+ * in `public_facilities` but not yet in the cached snapshot. Querying
+ * the view directly removes that drift window and keeps this hook
+ * trivially auditable: one query, one slug, one row.
  *
- * Used by: CenterProfile, SeekerFacilityProfile, and the Phase 2+ claim
- * wizard. Three call sites, one source of truth.
+ * Callers that need additional data (owner-scoped PII, joined detail
+ * tables) layer those on top via separate queries — this hook only
+ * owns the shared "anon-visible base + claim flags" load.
  */
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  fetchPublicFacilitiesSnapshot,
-  findPublicFacilityBySlug,
-  getCachedPublicFacilitiesSnapshot,
-  type PublicFacilitySnapshot,
-} from "@/lib/publicFacilitiesSnapshot";
 
 export interface FacilityBaseData {
   id: string;
@@ -53,9 +49,22 @@ export interface FacilityBaseData {
   updated_at: string;
   accepts_international_patients: boolean | null;
   /** Provenance tag from the `public_facilities` view (e.g. 'samhsa_import',
-   *  'manual'). Populated when the row was loaded via the fallback path;
-   *  undefined when sourced from the static snapshot, which doesn't carry it. */
+   *  'self_listed', 'manual'). */
   data_source?: string | null;
+  /** Free-form hours string e.g. "Mon-Fri 9am-5pm, Sat 10am-2pm".
+   *  Null when the provider hasn't filled it in. */
+  hours_of_operation?: string | null;
+  /** Languages spoken at the facility, e.g. ['English', 'Spanish', 'ASL'].
+   *  Null/empty when not populated. */
+  languages_spoken?: string[] | null;
+  /** Accessibility features, e.g. ['Wheelchair accessible',
+   *  'ASL interpreters available']. Null/empty when not populated. */
+  accessibility_features?: string[] | null;
+  /** Three-valued admissions status:
+   *    true  → "Currently accepting"
+   *    false → "Not currently accepting / waitlist"
+   *    null  → unspecified (do not render the badge) */
+  accepting_admissions?: boolean | null;
 }
 
 export interface ClaimFlags {
@@ -77,31 +86,37 @@ export interface UseFacilityBySlugResult {
   error: Error | null;
 }
 
-function snapshotToBase(snapshot: PublicFacilitySnapshot): FacilityBaseData {
-  return {
-    id: snapshot.id,
-    name: snapshot.name,
-    slug: snapshot.slug ?? "",
-    city: snapshot.city,
-    state: snapshot.state,
-    zip_code: snapshot.zipCode,
-    address: snapshot.address,
-    phone: snapshot.phone || null,
-    website: snapshot.website,
-    description: snapshot.description || null,
-    facility_type: snapshot.facilityType ?? "",
-    gender_served: snapshot.genderServed,
-    bed_count: snapshot.bedCount,
-    featured: snapshot.featured,
-    verified: snapshot.verified,
-    year_established: snapshot.yearEstablished,
-    logo_url: snapshot.logoUrl,
-    gallery_urls: snapshot.galleryUrls,
-    status: snapshot.status,
-    updated_at: snapshot.updatedAt ?? new Date().toISOString(),
-    accepts_international_patients: snapshot.acceptsInternationalPatients,
-  };
-}
+const SELECT_LIST = [
+  "id",
+  "name",
+  "slug",
+  "city",
+  "state",
+  "zip_code",
+  "address",
+  "phone",
+  "website",
+  "description",
+  "facility_type",
+  "gender_served",
+  "bed_count",
+  "featured",
+  "verified",
+  "year_established",
+  "logo_url",
+  "gallery_urls",
+  "status",
+  "updated_at",
+  "accepts_international_patients",
+  "data_source",
+  "hours_of_operation",
+  "languages_spoken",
+  "accessibility_features",
+  "accepting_admissions",
+  "is_claimed",
+  "is_pro",
+  "is_premium_visible",
+].join(",");
 
 function viewRowToBase(row: Record<string, unknown>): FacilityBaseData {
   return {
@@ -130,61 +145,35 @@ function viewRowToBase(row: Record<string, unknown>): FacilityBaseData {
         ? null
         : !!row.accepts_international_patients,
     data_source: (row.data_source as string | null) ?? null,
+    hours_of_operation: (row.hours_of_operation as string | null) ?? null,
+    languages_spoken: (row.languages_spoken as string[] | null) ?? null,
+    accessibility_features: (row.accessibility_features as string[] | null) ?? null,
+    accepting_admissions:
+      row.accepting_admissions == null
+        ? null
+        : !!row.accepting_admissions,
   };
 }
 
 /**
  * Plain async loader exposed for callers that can't use a hook (e.g.
- * inside a useQuery in another component that needs to combine this data
- * with their own queries in a single fetch). Most callers should use the
- * `useFacilityBySlug` hook instead.
+ * inside a useQuery in another component that needs to combine this
+ * data with their own queries in a single fetch). Most callers should
+ * use the `useFacilityBySlug` hook instead.
  */
 export async function loadFacilityBySlug(
   slug: string,
 ): Promise<FacilityLoadResult> {
-  // 1) Snapshot — cache first, then network.
-  let snapshotRow = findPublicFacilityBySlug(
-    getCachedPublicFacilitiesSnapshot(),
-    slug,
-  );
-  if (!snapshotRow) {
-    try {
-      const fetched = await fetchPublicFacilitiesSnapshot();
-      snapshotRow = findPublicFacilityBySlug(fetched, slug);
-    } catch {
-      // Snapshot fetch failure isn't fatal — fall through to the view.
-    }
-  }
-
-  if (snapshotRow) {
-    const base = snapshotToBase(snapshotRow);
-    // Snapshot doesn't carry claim flags; pick them up by id.
-    const { data: flagsRow } = await supabase
-      .from("public_facilities")
-      .select("is_claimed, is_pro, is_premium_visible")
-      .eq("id", base.id)
-      .maybeSingle();
-    const flags: ClaimFlags | null = flagsRow
-      ? {
-          is_claimed: !!(flagsRow as Record<string, unknown>).is_claimed,
-          is_pro: !!(flagsRow as Record<string, unknown>).is_pro,
-          is_premium_visible: !!(flagsRow as Record<string, unknown>)
-            .is_premium_visible,
-        }
-      : null;
-    return { facility: base, flags };
-  }
-
-  // 2) Fallback — public_facilities by slug. The view row carries flags inline.
-  const { data: viewRow } = await supabase
+  const { data, error } = await supabase
     .from("public_facilities")
-    .select("*")
+    .select(SELECT_LIST)
     .eq("slug", slug)
     .maybeSingle();
 
-  if (!viewRow) return { facility: null, flags: null };
+  if (error) throw error;
+  if (!data) return { facility: null, flags: null };
 
-  const row = viewRow as unknown as Record<string, unknown>;
+  const row = data as unknown as Record<string, unknown>;
   return {
     facility: viewRowToBase(row),
     flags: {

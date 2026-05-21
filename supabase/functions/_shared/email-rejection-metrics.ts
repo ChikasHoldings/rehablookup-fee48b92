@@ -9,7 +9,7 @@
  *   {
  *     metric: "email_rejected",
  *     reason: "format" | "disposable" | "role",
- *     fn: "send-provider-welcome-email" | "send-provider-welcome-offer-email" | ...,
+ *     fn: "send-provider-welcome-email" | ...,
  *     domain: "<lowercased domain or 'unknown'>",
  *     count: 1,
  *     shortId, facilityId

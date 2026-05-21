@@ -7,15 +7,13 @@ const corsHeaders = {
 
 interface SMSNotificationRequest {
   userId: string;
-  notificationType: "new_lead" | "lead_status" | "lead_limit_warning" | "subscription_alert" | "general";
+  notificationType: "new_lead" | "lead_status" | "subscription_alert" | "general";
   data: {
     leadName?: string;
     leadCity?: string;
     levelOfCare?: string;
     urgency?: string;
     facilityName?: string;
-    usedLeads?: number;
-    leadLimit?: number;
     customMessage?: string;
     alertType?: string;
   };
@@ -79,7 +77,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const validTypes = ["new_lead", "lead_status", "lead_limit_warning", "subscription_alert", "general"];
+    const validTypes = ["new_lead", "lead_status", "subscription_alert", "general"];
     if (!validTypes.includes(notificationType)) {
       logStep("Invalid notification type", { requestId, type: notificationType });
       return new Response(
@@ -94,7 +92,7 @@ Deno.serve(async (req) => {
 
     const { data: notifPrefs, error: prefsError } = await supabase
       .from("notification_preferences")
-      .select("sms_lead_alerts")
+      .select("sms_lead_alerts, notify_new_leads")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -102,8 +100,19 @@ Deno.serve(async (req) => {
       logStep("Error fetching notification preferences", { requestId, error: prefsError.message });
     }
 
-    if (!notifPrefs?.sms_lead_alerts) {
-      logStep("SMS alerts disabled for user", { requestId, userId: userId.slice(0, 8) });
+    // Respect the master switch — when the provider has turned off
+    // lead-related notifications entirely, no SMS regardless of the
+    // per-channel sms_lead_alerts toggle. Default to TRUE for both
+    // when prefs are missing (matches submit-qualified-lead behavior).
+    const masterEnabled = notifPrefs?.notify_new_leads ?? true;
+    const smsChannelEnabled = notifPrefs?.sms_lead_alerts ?? false;
+    if (!masterEnabled || !smsChannelEnabled) {
+      logStep("SMS alerts disabled for user", {
+        requestId,
+        userId: userId.slice(0, 8),
+        masterEnabled,
+        smsChannelEnabled,
+      });
       return new Response(
         JSON.stringify({ success: true, sent: false, reason: "SMS alerts disabled", requestId }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -112,7 +121,7 @@ Deno.serve(async (req) => {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("phone, phone_verified")
+      .select("phone, phone_verified, sms_opted_out_at")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -128,6 +137,17 @@ Deno.serve(async (req) => {
       logStep("No phone number for user", { requestId, userId: userId.slice(0, 8) });
       return new Response(
         JSON.stringify({ success: true, sent: false, reason: "No phone number on file", requestId }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // TCPA: refuse to send to a number that replied STOP. The
+    // twilio-sms-inbound webhook sets sms_opted_out_at when it receives
+    // any STOP-class keyword (STOP/STOPALL/UNSUBSCRIBE/CANCEL/END/QUIT).
+    if (profile.sms_opted_out_at) {
+      logStep("User opted out of SMS", { requestId, userId: userId.slice(0, 8) });
+      return new Response(
+        JSON.stringify({ success: true, sent: false, reason: "User opted out via STOP", requestId }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -202,13 +222,6 @@ Deno.serve(async (req) => {
         messageBody = `RehabLookup: Lead ${data?.leadName || ""} status updated. Check your dashboard for details.`;
         break;
         
-      case "lead_limit_warning":
-        const usedLeads = data?.usedLeads || 0;
-        const leadLimit = data?.leadLimit || 100;
-        const percentage = Math.round((usedLeads / leadLimit) * 100);
-        messageBody = `RehabLookup: You've used ${usedLeads} of ${leadLimit} leads this month (${percentage}%). Consider upgrading for more leads.`;
-        break;
-
       case "subscription_alert":
         if (data?.alertType === "expiring") {
           messageBody = `RehabLookup: Your subscription is expiring soon. Renew now to keep receiving leads.`;
@@ -231,27 +244,103 @@ Deno.serve(async (req) => {
       messageBody = messageBody.substring(0, 157) + "...";
     }
 
+    // Per-user daily SMS budget. A bug that loops a lead-event handler
+    // (or a malicious actor with valid-looking submit-qualified-lead
+    // payloads) could otherwise rack up hundreds of dollars in Twilio
+    // charges in minutes. Cap at 50 sends per provider per rolling 24h.
+    // We count successful Twilio sends in sms_inbound_log? No — that's
+    // inbound. We count from a notification audit trail. If
+    // sms_outbound_log doesn't exist yet, skip the budget check
+    // gracefully so this hardening lands ahead of the migration.
+    const DAILY_SMS_CAP = 50;
+    try {
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count: outboundCount, error: budgetErr } = await supabase
+        .from("sms_outbound_log")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("created_at", oneDayAgo);
+      if (!budgetErr && (outboundCount ?? 0) >= DAILY_SMS_CAP) {
+        logStep("Daily SMS cap reached for user", {
+          requestId,
+          userId: userId.slice(0, 8),
+          count: outboundCount,
+          cap: DAILY_SMS_CAP,
+        });
+        return new Response(
+          JSON.stringify({
+            success: true,
+            sent: false,
+            reason: "Daily SMS cap reached for this user",
+            requestId,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    } catch (_budgetCheckErr) {
+      // Budget check failure must NEVER prevent a legitimate send —
+      // it's a guardrail, not a gate. Fall through.
+    }
+
     logStep("Sending SMS via Twilio", { requestId, notificationType, messageLength: messageBody.length });
 
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
     const authHeader = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
 
-    const twilioResponse = await fetch(twilioUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Basic ${authHeader}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        To: phone,
-        From: twilioPhoneNumber,
-        Body: messageBody,
-      }),
-    });
+    // Two-attempt retry with 500ms backoff for transient 5xx / network
+    // errors. We treat 4xx as permanent (bad phone, account suspended,
+    // STOP'd at the carrier layer) and do not retry — retrying would
+    // just burn quota without changing the outcome.
+    let twilioResponse: Response | null = null;
+    let lastBody = "";
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        twilioResponse = await fetch(twilioUrl, {
+          method: "POST",
+          headers: {
+            "Authorization": `Basic ${authHeader}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            To: phone,
+            From: twilioPhoneNumber,
+            Body: messageBody,
+          }),
+        });
+        if (twilioResponse.ok) break;
+        lastBody = await twilioResponse.text();
+        // Permanent: 4xx (except 429 throttle). Stop retrying.
+        if (twilioResponse.status >= 400 && twilioResponse.status < 500 && twilioResponse.status !== 429) {
+          break;
+        }
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      } catch (fetchErr) {
+        lastBody = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      }
+    }
 
-    if (!twilioResponse.ok) {
-      const twilioError = await twilioResponse.text();
-      logStep("Twilio API error", { requestId, status: twilioResponse.status, error: twilioError.slice(0, 200) });
+    if (!twilioResponse || !twilioResponse.ok) {
+      const status = twilioResponse?.status ?? 0;
+      logStep("Twilio API error after retries", { requestId, status, error: lastBody.slice(0, 200) });
+      // Best-effort audit row so admin dashboards can spot SMS
+      // outages without grepping logs.
+      try {
+        await supabase.from("sms_outbound_log").insert({
+          user_id: userId,
+          notification_type: notificationType,
+          recipient_phone: phone,
+          status: "failed",
+          twilio_status: status || null,
+          error_message: lastBody.slice(0, 500),
+        });
+      } catch (_logErr) {
+        // sms_outbound_log may not exist yet — non-fatal.
+      }
       return new Response(
         JSON.stringify({ success: false, sent: false, reason: "Failed to send SMS", requestId }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -261,9 +350,22 @@ Deno.serve(async (req) => {
     const twilioResult = await twilioResponse.json();
     logStep("SMS sent successfully", { requestId, messageId: twilioResult.sid, notificationType });
 
+    // Audit-trail row for the daily-cap query above + admin visibility.
+    try {
+      await supabase.from("sms_outbound_log").insert({
+        user_id: userId,
+        notification_type: notificationType,
+        recipient_phone: phone,
+        status: "sent",
+        twilio_sid: twilioResult.sid,
+      });
+    } catch (_logErr) {
+      // sms_outbound_log may not exist yet — non-fatal.
+    }
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         sent: true,
         messageId: twilioResult.sid,
         requestId

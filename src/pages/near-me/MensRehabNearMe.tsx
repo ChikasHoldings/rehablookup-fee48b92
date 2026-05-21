@@ -11,6 +11,7 @@ import { statesData } from "@/data/locationSeoData";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, Shield, Users, Brain, Dumbbell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 
 const getMensRehabFAQs = (location?: { state: string }) => [
   {
@@ -103,6 +104,15 @@ export default function MensRehabNearMe() {
         treatmentType="Men's Addiction Treatment"
         location={stateData ? { state: stateData.state, stateAbbr: stateData.stateAbbr } : undefined}
         facilityCount={facilities.length}
+      />
+
+      {/* Featured rotation — paid Featured pool for the visitor's
+          geo-resolved state. Visual matches the homepage Featured
+          section for cross-site consistency. */}
+      <LandingFeaturedSection
+        placement_type="near_me"
+        placement_value={stateData?.stateAbbr ?? null}
+        title={stateData ? `Featured Men's Rehab Centers in ${stateData.state}` : "Featured Men's Rehab Centers Near You"}
       />
 
       {/* Men's Program Features */}

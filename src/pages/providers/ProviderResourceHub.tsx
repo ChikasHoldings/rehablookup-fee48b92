@@ -93,29 +93,30 @@ export default function ProviderResourceHub() {
       />
 
       <main className="flex-1">
-        {/* Hero */}
-        <section className="relative bg-primary py-14 md:py-20 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary-foreground/5 via-transparent to-transparent" />
-          <div className="container relative z-10 max-w-5xl mx-auto px-4 text-center">
-            <div className="inline-flex items-center gap-2 bg-primary-foreground/10 border border-primary-foreground/20 rounded-full px-4 py-1.5 mb-5">
-              <BookOpen className="h-4 w-4 text-primary-foreground/80" />
-              <span className="text-sm font-medium text-primary-foreground/90">Provider Resource Hub</span>
+        {/* Hero — PROVIDER RESOURCE HUB. Provider navy + gold palette. */}
+        <section className="relative overflow-hidden border-b border-white/5"
+          style={{ background: "linear-gradient(135deg, #1B365D 0%, #0E1F3A 100%)" }}>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(205,162,35,0.10),_transparent_55%)]" />
+          <div className="container relative z-10 max-w-4xl mx-auto px-4 py-6 md:py-9 text-center">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#CDA223]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[#CDA223] ring-1 ring-[#CDA223]/30">
+              <BookOpen className="h-3 w-3" />
+              Provider Resource Hub
             </div>
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground leading-tight mb-4">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-white leading-tight mb-2">
               Actionable Guides for Treatment Center Growth
             </h1>
-            <p className="text-lg text-primary-foreground/75 max-w-2xl mx-auto mb-8">
-              Deep, no-fluff resources written for facility owners and admissions directors. Everything you need to fill beds, reduce costs, and grow sustainably.
+            <p className="text-sm md:text-base text-white/80 max-w-2xl mx-auto mb-4">
+              No-fluff resources for facility owners and admissions directors — fill beds, reduce costs, grow sustainably.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
               <Link to="/provider-signup">
-                <Button size="lg" variant="secondary" className="gap-2 text-base font-semibold px-8 h-12 shadow-lg">
+                <Button size="default" className="bg-[#CDA223] text-[#1B365D] hover:bg-[#B38C1C] font-semibold gap-2 shadow-lg">
                   List Your Facility Free
-                  <ArrowRight className="h-5 w-5" />
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <a href="#categories">
-                <Button size="lg" variant="outline" className="gap-2 text-base border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 h-12">
+                <Button size="default" variant="outline" className="gap-2 border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm">
                   Browse All Guides
                 </Button>
               </a>

@@ -67,21 +67,17 @@ const faqSections = [
       },
       {
         question: "Can I have multiple facilities?",
-        answer: "Yes. Pro members can manage up to 5 facility listings from a single account. Use the facility selector in the header to switch between locations."
+        answer: "Yes. You can add unlimited facility listings from a single account, on any plan. Use the facility selector in the header to switch between locations."
       },
     ],
   },
   {
-    title: "Leads & Credits",
+    title: "Leads",
     icon: Users,
     items: [
       {
         question: "How do leads work?",
-        answer: "When someone views your profile and submits a contact or tour request, it becomes a lead. You'll see a preview with basic details. Each lead is exclusive to your facility for a 24-hour window before being redistributed."
-      },
-      {
-        question: "How do credits work?",
-        answer: "Purchase credits to unlock lead contact details. Each inquiry type has a set unlock price. Pro subscribers save 20% on every unlock. Credits can be purchased in tiers: $200, $500 (+10% bonus), or $1,000 (+20% bonus). You can also enable auto-reload to top up automatically when your balance runs low."
+        answer: "When someone views your profile and submits a contact or tour request, it becomes a lead delivered to your inbox with full contact details immediately — no fees, no credits, no unlock step. Each lead is exclusive to your facility for a 24-hour window before being redistributed."
       },
       {
         question: "How do I export my lead data?",
@@ -90,24 +86,20 @@ const faqSections = [
     ],
   },
   {
-    title: "Placement Network",
+    title: "Concierge Add-On",
     icon: Handshake,
     items: [
       {
-        question: "What is the Placement Network?",
-        answer: "Our Placement Network connects your facility with pre-screened families actively seeking treatment. Our concierge team matches cases to your facility criteria, and you only pay a placement fee when a patient is actually admitted—no upfront costs."
+        question: "What is the Concierge Add-On?",
+        answer: "The Concierge Add-On ($1,000/month) makes you a verified Concierge Partner. Our human advisors prioritize your facility when matching families whose geography and level of care fit your program. EKRA-compliant by design — never per-call, per-lead, or per-admission."
       },
       {
-        question: "How do I join the Placement Network?",
-        answer: "Go to 'Placements' in the sidebar and opt in. You'll set your admissions contact, accepted care types, and insurance. Once opted in, you'll start receiving matched introductions from our team."
+        question: "How do I enable the Concierge Add-On?",
+        answer: "Subscribe to Pro first, then go to Marketing → Concierge and activate the add-on. You'll set your admissions contact, accepted care types, and geography. Once active, you'll start receiving advisor-matched introductions."
       },
       {
-        question: "How does Placement billing work?",
-        answer: "There is no cost to join or receive introductions. A placement fee is charged only after a patient is admitted to your facility. Pro subscribers receive a $200 discount on each placement fee."
-      },
-      {
-        question: "What happens when I receive an introduction?",
-        answer: "You'll see the case details (anonymized) in your Placements tab. Review the case, then respond with 'Interested' or 'Not Interested.' If interested, our team coordinates the next steps including tours and admission."
+        question: "Are there any per-placement fees?",
+        answer: "No. The Concierge Add-On is a flat monthly subscription. There are no per-admission, per-call, or per-lead fees on any plan — RehabLookup uses flat-fee subscriptions only."
       },
     ],
   },
@@ -117,11 +109,11 @@ const faqSections = [
     items: [
       {
         question: "What does Pro membership include?",
-        answer: "Pro ($399/mo) includes: featured listing placement, 20% off all lead unlocks, $200 off placement fees, up to 5 facility listings, priority support, analytics dashboard, and an embeddable trust badge."
+        answer: "Pro ($99/month, or $1,009.80/yr — save 15%) includes: verified badge, direct contact info visible to clients, inquiries delivered directly to your inbox with full contact details, review responses, 10 photos plus 1 video, unlimited facility listings, priority support, analytics dashboard, and an embeddable trust badge. Featured rotation placements and Concierge Partner surfacing are optional add-ons priced separately — see /for-providers for the full lineup."
       },
       {
         question: "How does billing work?",
-        answer: "Your base listing is free. You pay per lead unlock using credits. Pro membership is billed monthly via Stripe. Placement fees are invoiced separately only upon successful admission."
+        answer: "Your base listing is free. Pro is a flat $99/month (or annual) subscription billed via Stripe — no per-lead fees, no credits, no per-placement charges. Featured and Concierge add-ons are billed separately as flat monthly subscriptions when activated."
       },
       {
         question: "How do I manage my subscription?",
@@ -135,7 +127,7 @@ const faqSections = [
     items: [
       {
         question: "What analytics are available?",
-        answer: "The Analytics page shows profile views, lead volume, unlock rates, response times, and placement activity. You can filter by date range including weekly, monthly, quarterly, or custom periods."
+        answer: "The Analytics page shows profile views, lead volume, response times, and placement activity. You can filter by date range including weekly, monthly, quarterly, or custom periods."
       },
       {
         question: "How do I change my notification preferences?",
@@ -162,7 +154,7 @@ const helpTopics = [
     icon: Crown,
     title: "Pro Membership",
     description: "See Pro benefits and pricing",
-    link: "/provider/pro-upgrade"
+    link: "/provider/billing?upgrade=pro"
   },
 ];
 

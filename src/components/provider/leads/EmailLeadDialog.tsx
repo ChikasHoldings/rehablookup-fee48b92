@@ -399,11 +399,11 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
       email: lead.email,
     };
 
-    const profile = providerData.profile as any;
-    const facility = providerData.facility as any;
+    const profile = providerData.profile;
+    const facility = providerData.facility;
 
     const providerDataContext: ProviderData = {
-      primary_contact_name: profile?.primary_contact_name || 
+      primary_contact_name: profile?.primary_contact_name ||
         (profile ? `${profile.first_name} ${profile.last_name}`.trim() : undefined),
       facility_name: facility.name,
       city: facility.city,
@@ -420,18 +420,18 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
 
   // Check if email sending is allowed
   const replyEmailVerified = useMemo(() => {
-    const facility = providerData?.facility as any;
-    const profile = providerData?.profile as any;
+    const facility = providerData?.facility;
+    const profile = providerData?.profile;
     const accountEmail = profile?.email?.toLowerCase().trim();
     const replyEmail = facility?.reply_email?.toLowerCase().trim();
-    
+
     if (!replyEmail) return true;
     if (replyEmail === accountEmail) return true;
     return !!facility?.reply_email_verified;
   }, [providerData]);
 
   const hasReplyEmail = useMemo(() => {
-    const facility = providerData?.facility as any;
+    const facility = providerData?.facility;
     return !!facility?.reply_email;
   }, [providerData]);
 
@@ -510,8 +510,8 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
       
       const leadFirstName = lead.name.split(" ")[0] || "there";
       const providerName = providerData.facility?.name || "Our Facility";
-      const profile = providerData.profile as any;
-      const providerContactName = profile?.primary_contact_name || 
+      const profile = providerData.profile;
+      const providerContactName = profile?.primary_contact_name ||
         (profile ? `${profile.first_name} ${profile.last_name}`.trim() : "Our Team");
       
       return text
@@ -815,8 +815,14 @@ export function EmailLeadDialog({ lead, open, onOpenChange, facilityId }: EmailL
                 </Button>
                 <Button
                   onClick={handleSend}
-                  disabled={!selectedTemplate || sendEmail.isPending || !replyEmailVerified}
+                  disabled={
+                    !selectedTemplate ||
+                    sendEmail.isPending ||
+                    !replyEmailVerified ||
+                    templateValidation.errors.length > 0
+                  }
                   className="flex-1 gap-2 rounded-lg shadow-md shadow-primary/20"
+                  aria-disabled={templateValidation.errors.length > 0 || !replyEmailVerified}
                 >
                   {sendEmail.isPending ? (
                     <>

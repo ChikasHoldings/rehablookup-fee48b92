@@ -1,9 +1,17 @@
-import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 import { describeEmailInput } from "../_shared/email-input-diagnostics.ts";
 import { checkRateLimit, rateLimitResponse } from "../_shared/rate-limit.ts";
 
-const VERSION = "2.0.0";
+// v3.0.0 — 2026-05-20: dropped the legacy paid-seeker concierge flow.
+// Domestic concierge is FREE for seekers; the Stripe Checkout pre-step
+// was retired with create-concierge-checkout (→ 410 Gone) and
+// verify-concierge-payment (→ 410 Gone). This function now has a
+// single submission path — no sessionId / no Stripe lookups. For
+// anonymous public intakes phone verification (`phoneVerifiedAt`
+// recent within 60 minutes) is the proof-of-control gate; for
+// authenticated seekers the JWT itself is the proof and the OTP
+// requirement is waived.
+const VERSION = "3.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -147,12 +155,6 @@ Deno.serve(async (req) => {
   try {
     logStep(requestId, "Function started", { version: VERSION });
 
-    // Stripe key only required for the legacy paid flow; domestic concierge is free.
-    // Validation is deferred until we know we're not skipping payment so that
-    // free-intake / validation paths (e.g. email_required) don't 500 in environments
-    // without STRIPE_SECRET_KEY configured.
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -179,28 +181,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { sessionId, intakeData, userId: passedUserId, skipPayment, emailVerifiedAt, phoneVerifiedAt } = await req.json() as { 
-      sessionId?: string; 
+    const { intakeData, userId: passedUserId, emailVerifiedAt, phoneVerifiedAt } = await req.json() as {
       intakeData: IntakeData;
       userId?: string;
-      skipPayment?: boolean;
       emailVerifiedAt?: string | null;
       phoneVerifiedAt?: string | null;
     };
-    
+
     // Validate required fields
     if (!intakeData) {
       throw new Error("Intake data is required");
     }
-    // sessionId only required when NOT skipping payment (legacy paid flow)
-    if (!skipPayment && !sessionId) {
-      throw new Error("Session ID is required");
-    }
 
-    // For the free path (skipPayment), phone verification is the only proof
-    // we have that the seeker controls the contact channel — enforce it here
-    // so the browser-side step can't be skipped via direct API call.
-    if (skipPayment) {
+    // Phone verification is the proof-of-control for anonymous public
+    // intakes (the form bakes phone OTP into the funnel). Authenticated
+    // seekers (signed-in account) bypass the recency check — their
+    // identity is already proven by the JWT — but a bearer token is
+    // still required for that path.
+    if (!authenticatedUserId) {
       const phoneOk = (() => {
         if (!phoneVerifiedAt || typeof phoneVerifiedAt !== "string") return false;
         const t = Date.parse(phoneVerifiedAt);
@@ -299,37 +297,19 @@ Deno.serve(async (req) => {
     // Use authenticated user ID first, then passed userId (if valid)
     const finalUserId = authenticatedUserId || (passedUserId && isValidUUID(passedUserId) ? passedUserId : null);
 
-    logStep(requestId, "Processing intake submission", { 
-      sessionId, 
+    logStep(requestId, "Processing intake submission", {
       email: sanitizedEmail,
       userId: finalUserId,
       hasAuthHeader: !!authHeader
     });
 
-    // Verify payment with Stripe (only when not skipping)
-    let session: Stripe.Checkout.Session | null = null;
-    let sessionUserId: string | null = null;
-    if (!skipPayment) {
-      if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-      const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-      session = await stripe.checkout.sessions.retrieve(sessionId!);
-      if (session.payment_status !== 'paid') {
-        throw new Error("Payment not verified");
-      }
-      sessionUserId = (session.metadata?.user_id as string) || null;
-      logStep(requestId, "Payment verified", { paymentStatus: session.payment_status });
-    } else {
-      logStep(requestId, "Skipping Stripe payment verification (free intake)");
-    }
+    const effectiveUserId = finalUserId;
 
-    const effectiveUserId = finalUserId || sessionUserId;
+    // Idempotency: email + 1-minute window collapses accidental retries
+    // (browser double-submit, network retry, strict-mode useEffect double-fire).
+    const idempotencyKey = `intake_free_${sanitizedEmail}_${Math.floor(Date.now() / 60000)}`;
 
-    // Create idempotency key — session-based when paid, otherwise email+timestamp-window based
-    const idempotencyKey = !skipPayment && sessionId
-      ? `intake_${sessionId}`
-      : `intake_free_${sanitizedEmail}_${Math.floor(Date.now() / 60000)}`; // 1-minute window collapses retries
-
-    // Check if already submitted (idempotency) — search by idempotency_key OR checkout_session_id
+    // Check if already submitted
     const { data: existingByKey } = await supabase
       .from('concierge_inquiries')
       .select('id, intake_submitted_at, payment_status')
@@ -340,8 +320,8 @@ Deno.serve(async (req) => {
     if (existingByKey && existingByKey.intake_submitted_at) {
       logStep(requestId, "Intake already submitted (idempotency key)", { existingId: existingByKey.id });
       return new Response(
-        JSON.stringify({ 
-          success: true, 
+        JSON.stringify({
+          success: true,
           inquiryId: existingByKey.id,
           alreadySubmitted: true,
           requestId,
@@ -354,34 +334,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Look for an existing record to update (draft from save-placement-draft or safety-net from webhook)
-    // Priority: 1) by checkout_session_id, 2) by idempotency_key (without intake), 3) by draft_id from metadata
-    let existingRecordId: string | null = existingByKey?.id || null;
-
-    if (!existingRecordId && sessionId) {
-      const { data: bySession } = await supabase
-        .from('concierge_inquiries')
-        .select('id, payment_status')
-        .eq('checkout_session_id', sessionId)
-        .maybeSingle();
-      if (bySession) {
-        existingRecordId = bySession.id;
-        logStep(requestId, "Found existing record by checkout_session_id", { id: bySession.id, paymentStatus: bySession.payment_status });
-      }
-    }
-
-    // Also check by draft_id from Stripe metadata (paid path only)
-    if (!existingRecordId && session?.metadata?.draft_id) {
-      const { data: byDraft } = await supabase
-        .from('concierge_inquiries')
-        .select('id, payment_status')
-        .eq('draft_id', session.metadata.draft_id)
-        .maybeSingle();
-      if (byDraft) {
-        existingRecordId = byDraft.id;
-        logStep(requestId, "Found existing record by draft_id", { id: byDraft.id, draftId: session.metadata.draft_id });
-      }
-    }
+    // Existing draft record (from save-placement-draft on the same browser
+    // session) may already exist — update it in place rather than create a
+    // duplicate row.
+    const existingRecordId: string | null = existingByKey?.id || null;
 
     // Normalize field names - handle both inline and full intake formats
     const currentState = (intakeData as InlineIntakeData).currentState || (intakeData as FullIntakeData).state || '';
@@ -395,17 +351,20 @@ Deno.serve(async (req) => {
       user_phone: sanitizedPhone,
       preferred_state: sanitizeString(intakeData.desiredState, 50),
       preferred_city: sanitizeString(intakeData.desiredCity || currentCity, 100),
-      payment_status: skipPayment ? 'free' : 'paid',
+      payment_status: 'free',
       payment_amount_cents: 0, // Domestic concierge is free for clients ($0).
       status: 'intake_submitted',
-      checkout_session_id: sessionId ?? null,
-      stripe_payment_intent_id: session && typeof session.payment_intent === 'string' ? session.payment_intent : null,
-      stripe_customer_id: session && typeof session.customer === 'string' ? session.customer : null,
+      checkout_session_id: null,
+      stripe_payment_intent_id: null,
+      stripe_customer_id: null,
       idempotency_key: idempotencyKey,
       intake_submitted_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       email_verified_at: emailVerifiedAt || new Date().toISOString(),
-      phone_verified_at: phoneVerifiedAt || (skipPayment ? new Date().toISOString() : null),
+      // Auth bypass: when an authenticated seeker submits, the JWT is the
+      // proof-of-control rather than a fresh OTP — stamp the verification
+      // timestamp anyway so downstream reports treat the row as verified.
+      phone_verified_at: phoneVerifiedAt || (authenticatedUserId ? new Date().toISOString() : null),
       age_range: sanitizeString(intakeData.ageRange, 50),
       gender: sanitizeString(intakeData.gender, 50),
       preferred_language: sanitizeString((intakeData as FullIntakeData).preferredLanguage, 50) || null,
@@ -522,11 +481,18 @@ Deno.serve(async (req) => {
       logStep(requestId, "Inquiry created successfully", { inquiryId, userId: effectiveUserId });
     }
 
+    // Crisis flag — when the seeker self-reports active suicidal ideation
+    // or self-harm history, ops must see this in front of everything else.
+    // We surface 988 inside the form itself (StepCareNeed) and also raise
+    // a SECOND admin notification with elevated copy so an advisor picks
+    // it up faster than the 24-hour SLA on a routine intake.
+    const isCrisis = sanitizeString((intakeData as FullIntakeData).suicideHistory, 100).toLowerCase() === "yes";
+
     // Create admin notification so admins see new placements in the dashboard
     try {
       await supabase.from('admin_notifications').insert({
         type: 'concierge_intake',
-        title: 'New Placement Request',
+        title: isCrisis ? '🚨 CRISIS — New Placement Request' : 'New Placement Request',
         message: `New concierge placement from ${sanitizedName} — ${sanitizeString(intakeData.primaryConcern, 100) || 'General'} | ${sanitizeString(intakeData.desiredState, 50) || 'No state pref'} | ${sanitizeString(intakeData.timeline, 50) || 'Flexible'}`,
         metadata: {
           inquiry_id: inquiryId,
@@ -536,11 +502,36 @@ Deno.serve(async (req) => {
           timeline: sanitizeString(intakeData.timeline, 50),
           payment_type: sanitizeString(intakeData.paymentType, 50),
           desired_state: sanitizeString(intakeData.desiredState, 50),
+          crisis_flag: isCrisis,
         },
       });
-      logStep(requestId, "Admin notification created");
+      logStep(requestId, "Admin notification created", { crisis: isCrisis });
     } catch (adminNotifErr) {
       logStep(requestId, "Warning: Failed to create admin notification", { error: String(adminNotifErr) });
+    }
+
+    // SECOND notification for active crisis cases — elevates above the
+    // routine intake stream so the on-call advisor sees it immediately,
+    // and gives ops a separate row to filter on.
+    if (isCrisis) {
+      try {
+        await supabase.from('admin_notifications').insert({
+          type: 'concierge_intake_crisis',
+          title: '🚨 CRISIS intake — seeker reports active risk',
+          message: `${sanitizedName} (${sanitizedEmail}) marked "yes" on self-harm/suicidal-thoughts history. Call within 15 minutes if possible. Inquiry ${inquiryId}.`,
+          metadata: {
+            inquiry_id: inquiryId,
+            seeker_name: sanitizedName,
+            seeker_email: sanitizedEmail,
+            seeker_phone: sanitizedPhone,
+            sla_target_minutes: 15,
+            crisis_flag: true,
+          },
+        });
+        logStep(requestId, "🚨 CRISIS admin notification created", { inquiryId });
+      } catch (crisisNotifErr) {
+        logStep(requestId, "Warning: Failed to create crisis admin notification", { error: String(crisisNotifErr) });
+      }
     }
 
     // Log case creation event for timeline
@@ -548,9 +539,9 @@ Deno.serve(async (req) => {
       await supabase.from('concierge_case_events').insert({
         inquiry_id: inquiryId,
         event_type: 'case_created',
-        event_data: { 
+        event_data: {
           source: effectiveUserId ? 'account_concierge' : 'public_concierge',
-          payment_status: skipPayment ? 'free' : 'paid',
+          payment_status: 'free',
         },
         actor_type: effectiveUserId ? 'seeker' : 'system',
         actor_id: effectiveUserId || null,
@@ -723,7 +714,36 @@ Deno.serve(async (req) => {
             logStep(requestId, "Auto-introduce disabled — admin will send introductions manually");
           }
         } else {
+          // Auto-matching returned zero facilities — case sits at
+          // intake_submitted until an advisor manually intervenes.
+          // Surface this to ops via admin_notifications so they know to
+          // either broaden the search (state/care type) or close the
+          // case with a transparent "no matches available" outcome —
+          // rather than the seeker silently waiting for a coordinator
+          // who has nothing to offer.
           logStep(requestId, "Auto-matching returned no results — case will need manual matching", { result: matchResult });
+          try {
+            await supabase.from("admin_notifications").insert({
+              type: "concierge_no_matches",
+              title: "⚠️ No facilities matched seeker intake",
+              message: `No facilities matched ${sanitizedName}'s intake (${sanitizeString(intakeData.levelOfCare, 50) || "any LoC"} in ${sanitizeString(intakeData.desiredState, 50) || "any state"}). Manual matching or broadened search needed.`,
+              metadata: {
+                inquiry_id: inquiryId,
+                seeker_name: sanitizedName,
+                level_of_care: sanitizeString(intakeData.levelOfCare, 50),
+                desired_state: sanitizeString(intakeData.desiredState, 50),
+                desired_city: sanitizeString(intakeData.desiredCity, 100),
+                primary_concern: sanitizeString(intakeData.primaryConcern, 100),
+                timeline: sanitizeString(intakeData.timeline, 50),
+                payment_type: sanitizeString(intakeData.paymentType, 50),
+                crisis_flag: isCrisis,
+              },
+            });
+          } catch (noMatchNotifErr) {
+            logStep(requestId, "Warning: Failed to create no-matches admin notification", {
+              error: String(noMatchNotifErr),
+            });
+          }
         }
       }
     } catch (matchErr) {

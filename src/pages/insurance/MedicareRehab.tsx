@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { InsuranceFacilitiesSection } from "@/components/seo/InsuranceFacilitiesSection";
+import { InsuranceCarrierHero } from "@/components/seo/InsuranceCarrierHero";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { InsuranceVerifyCarrierCTA } from "@/components/insurance/InsuranceVerifyCarrierCTA";
 import {
   Shield,
@@ -139,53 +141,22 @@ export default function MedicareRehab() {
           { name: "Medicare Rehab Coverage", url: "/insurance/medicare-rehab" },
         ]}
         structuredData={[faqSchema, { "@context": "https://schema.org", "@type": "MedicalWebPage", specialty: "Addiction Medicine", lastReviewed: new Date().toISOString().split("T")[0] }]}
+      />      <InsuranceCarrierHero
+        carrierName={"Medicare"}
+        logoSrc="/insurance-logos/medicare.svg"
+        description={"Medicare covers a wide range of addiction-treatment services for eligible enrollees."}
       />
 
-
-
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary py-10 md:py-14">
-        <div className="container">
-          <BreadcrumbNav className="mb-4"
-            items={[
-              { label: "Insurance", href: "/insurance" },
-              { label: "Medicare Rehab Coverage" },
-            ]}
-          />
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-4 flex items-center justify-center gap-3">
-              <img 
-                src="/insurance-logos/medicare.svg" 
-                alt="Medicare Logo" 
-                className="h-12 w-12 object-contain bg-white rounded-lg p-2"
-              />
-              <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                Federal Health Insurance
-              </Badge>
-            </div>
-            <h1 className="mb-4 font-display text-2xl font-bold text-primary-foreground md:text-3xl lg:text-4xl">
-              Medicare Addiction Treatment Coverage
-            </h1>
-            <p className="text-primary-foreground/80 text-sm md:text-base max-w-2xl mx-auto">
-              Medicare provides coverage for substance use disorder treatment through Parts A, B, and D. Learn about your benefits and find treatment.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild size="lg" variant="secondary">
-                <Link to="/rehab-centers">
-                  <MapPin className="mr-2 h-4 w-4" />
-                  Find Medicare-Accepting Centers
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                <Link to="/insurance">
-                  <Shield className="mr-2 h-4 w-4" />
-                  All Insurance Options
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Featured rotation — paid Featured pool for this
+          page's bucket, mounted directly under the hero. Visual
+          matches the homepage Featured section for cross-site
+          consistency. Silent absence when the bucket has no
+          active Featured subscribers. */}
+      <LandingFeaturedSection
+        placement_type="insurance"
+        placement_value="medicare-rehab"
+        title="Featured Centers Accepting Medicare"
+      />
 
       {/* Important Notice */}
       <section className="border-b border-border bg-muted/50 py-4">

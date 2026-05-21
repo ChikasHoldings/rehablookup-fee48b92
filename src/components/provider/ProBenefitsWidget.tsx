@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles, Percent, Building2, Star, ChevronRight, Phone, Globe } from "lucide-react";
+import { Sparkles, Camera, Building2, Star, ChevronRight, Phone, Globe } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,7 @@ interface ProBenefitsWidgetProps {
 
 export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
   const { data: proStatus, isLoading } = useProStatus();
-  const { limit: locationLimit, used: usedLocations } = useFacilityLimits();
+  const { used: usedLocations } = useFacilityLimits();
 
   // Don't show if not Pro or still loading
   if (isLoading || !proStatus?.isPro) {
@@ -22,23 +22,23 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
 
   const benefits = [
     {
-      icon: Percent,
-      label: `${proStatus.unlockDiscountPercent}% off unlocks`,
-      description: "Applied automatically",
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-500/10",
-    },
-    {
       icon: Star,
-      label: "Featured placement",
-      description: "Priority in search",
+      label: "Priority placement",
+      description: "+50 ranking boost in search",
       color: "text-amber-600",
       bgColor: "bg-amber-500/10",
     },
     {
+      icon: Camera,
+      label: "10-photo gallery",
+      description: "2× the Free-tier photo cap",
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-500/10",
+    },
+    {
       icon: Building2,
-      label: `${usedLocations}/${locationLimit} locations`,
-      description: "Multiple facilities",
+      label: `${usedLocations} location${usedLocations === 1 ? "" : "s"}`,
+      description: "Add unlimited facilities",
       color: "text-violet-600",
       bgColor: "bg-violet-500/10",
     },
@@ -90,7 +90,15 @@ export function ProBenefitsWidget({ className }: ProBenefitsWidgetProps) {
             );
           })}
         </div>
-        <div className="mt-3 pt-2.5 border-t border-amber-500/20">
+        <div className="mt-3 pt-2.5 border-t border-amber-500/20 space-y-2">
+          {proStatus.currentPeriodEnd && (
+            <p className="text-[11px] text-amber-800/80 text-center">
+              {proStatus.cancelAtPeriodEnd ? "Ends " : "Renews "}
+              {new Date(proStatus.currentPeriodEnd).toLocaleDateString("en-US", {
+                month: "short", day: "numeric", year: "numeric",
+              })}
+            </p>
+          )}
           <Button
             variant="ghost"
             size="sm"

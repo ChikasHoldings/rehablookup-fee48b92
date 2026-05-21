@@ -38,14 +38,37 @@
  * Idempotent: safe to re-run; skips existing files unless --force is passed.
  */
 
-import { writeFile, mkdir, access } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { writeFile, mkdir, access, unlink } from "node:fs/promises";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseStringPromise } from "xml2js";
 import { readFile } from "node:fs/promises";
 import { GA_MEASUREMENT_ID } from "./_ga.mjs";
 import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
+
+// Block this generator from writing static HTML at any path that vercel.json
+// already 301-redirects. The competing file would otherwise win Vercel's
+// filesystem-match before the redirect fires, and Google would index the
+// redirect-source URL with a self-canonical instead of consolidating signal
+// onto the canonical target. See scripts/generate-missing-html.mjs for the
+// same guard rationale.
+const REDIRECT_SOURCES = (() => {
+  try {
+    const vc = JSON.parse(
+      readFileSync(path.resolve(fileURLToPath(import.meta.url), "../../vercel.json"), "utf8"),
+    );
+    const set = new Set();
+    for (const r of vc.redirects || []) {
+      if (r.source && !r.source.includes(":") && !r.source.includes("*")) {
+        set.add(r.source);
+      }
+    }
+    return set;
+  } catch {
+    return new Set();
+  }
+})();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, "../public");
@@ -161,6 +184,16 @@ function buildHtml({ urlPath, title, metaTitle, metaDesc, h1, content, breadcrum
 async function writePage(urlPath, pageData) {
   const htmlContent = buildHtml({ urlPath, ...pageData });
   const flatPath = path.join(publicDir, urlPath.replace(/^\//, "") + ".html");
+
+  // Guard: never write a static file at a URL that has a vercel.json 301.
+  // Delete any stale copy from prior builds so the redirect can fire.
+  if (REDIRECT_SOURCES.has(urlPath)) {
+    if (existsSync(flatPath)) {
+      try { await unlink(flatPath); } catch { /* ignore */ }
+    }
+    skipped++;
+    return;
+  }
 
   // Skip if already exists and not forcing
   if (!FORCE && existsSync(flatPath)) {
@@ -402,34 +435,39 @@ function rehabMarketingStateTreatmentPage(urlPath) {
 }
 
 // Rehab-marketing county: /rehab-marketing/{state}/county/{county}
+// Provider-side marketing page. Distinct title + body from the seeker-side
+// directory at /rehab-centers/{state}/county/{county} so the two URLs don't
+// collide as "duplicate without canonical" in GSC.
 function rehabMarketingCountyPage(urlPath) {
   const parts = urlPath.replace(/^\//, "").split("/");
   const stateSlug = parts[1];
   const countySlug = parts[3];
   const stateName = slugToName(stateSlug);
   const countyName = slugToName(countySlug) + " County";
-  const title = `Rehab Centers in ${countyName}, ${stateName}`;
+  const title = `Reach Patients in ${countyName}, ${stateName}`;
   return {
     title,
-    metaTitle: `${title} — Find Treatment | RehabLookup`,
-    metaDesc: `Find accredited rehab centers in ${countyName}, ${stateName}. Compare verified addiction treatment facilities, verify insurance, and get help today.`,
-    h1: title,
+    metaTitle: `${title} — Rehab Marketing | RehabLookup for Providers`,
+    metaDesc: `List your rehab in ${countyName}, ${stateName} on RehabLookup. Reach families searching for addiction treatment in your county with verified directory placement and EKRA-compliant referrals.`,
+    h1: `Rehab Marketing in ${countyName}, ${stateName}`,
     content: `
-      <p>Find accredited addiction treatment centers in ${countyName}, ${stateName}. Our verified directory includes facilities offering detox, inpatient, outpatient, and specialty programs.</p>
-      <h2>Treatment Programs in ${countyName}</h2>
-      <p>Facilities in ${countyName} offer comprehensive addiction treatment including medical detox, residential inpatient, partial hospitalization (PHP), intensive outpatient (IOP), and standard outpatient programs.</p>
-      <h2>Insurance Accepted</h2>
-      <p>Most rehab centers in ${countyName} accept major insurance plans including Medicaid, Medicare, Aetna, Blue Cross Blue Shield, Cigna, and UnitedHealthcare.</p>
-      <p><a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
+      <p>RehabLookup connects ${countyName}, ${stateName} treatment providers with families actively searching for addiction care. Verified directory placement, geo-targeted visibility, and EKRA-compliant referrals.</p>
+      <h2>Why ${countyName} Treatment Providers List With Us</h2>
+      <p>Our directory is editorially curated, not lead-broker-driven. We do not sell admission slots; placement is earned through accreditation, licensing, and clinical quality. Providers in ${countyName} reach families searching specifically for treatment in their service area.</p>
+      <h2>How It Works for ${countyName} Facilities</h2>
+      <p>Claim your free listing or upgrade to Pro for priority placement, enriched profile content, and lead analytics. We verify every facility for state licensing and JCAHO/CARF accreditation before publishing.</p>
+      <p><a href="/for-providers">List Your Facility</a> &middot; <a href="/rehab-centers/${stateSlug}/county/${countySlug}">${countyName} Directory (Seeker View)</a> &middot; <a href="/rehab-marketing">All Provider Markets</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },
-      { name: stateName, url: `/rehab-centers/${stateSlug}` },
+      { name: "For Providers", url: "/for-providers" },
+      { name: stateName, url: `/rehab-marketing/${stateSlug}` },
       { name: countyName, url: urlPath },
     ],
   };
 }
 
 // Rehab-marketing county/treatment: /rehab-marketing/{state}/county/{county}/{treatment}
+// Provider marketing page for a specific treatment vertical in a county.
 function rehabMarketingCountyTreatmentPage(urlPath) {
   const parts = urlPath.replace(/^\//, "").split("/");
   const stateSlug = parts[1];
@@ -438,20 +476,22 @@ function rehabMarketingCountyTreatmentPage(urlPath) {
   const stateName = slugToName(stateSlug);
   const countyName = slugToName(countySlug) + " County";
   const treatmentName = slugToName(treatmentSlug);
-  const title = `${treatmentName} in ${countyName}, ${stateName}`;
+  const title = `Get More ${treatmentName} Patients in ${countyName}, ${stateName}`;
   return {
     title,
-    metaTitle: `${title} — Find Accredited Centers | RehabLookup`,
-    metaDesc: `Find accredited ${treatmentName.toLowerCase()} programs in ${countyName}, ${stateName}. Compare verified facilities and verify insurance coverage.`,
-    h1: title,
+    metaTitle: `${title} — Rehab Marketing | RehabLookup for Providers`,
+    metaDesc: `${treatmentName} providers in ${countyName}, ${stateName} — fill more beds with verified directory placement. EKRA-compliant referrals, no lead-broker fees, claim your free listing today.`,
+    h1: `${treatmentName} Marketing in ${countyName}, ${stateName}`,
     content: `
-      <p>Find accredited ${treatmentName.toLowerCase()} programs in ${countyName}, ${stateName}. Our verified directory helps you compare facilities by program type, insurance acceptance, and amenities.</p>
-      <h2>Insurance Coverage in ${countyName}</h2>
-      <p>Most major insurance plans cover ${treatmentName.toLowerCase()} in ${countyName} under the Mental Health Parity Act. Verify your benefits before starting treatment.</p>
-      <p><a href="/rehab-marketing/${stateSlug}/county/${countySlug}">All Rehab Centers in ${countyName}</a> &middot; <a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
+      <p>${treatmentName} providers serving ${countyName}, ${stateName} reach more families through RehabLookup. Verified directory placement, geo-targeted visibility for ${treatmentName.toLowerCase()} searches, and EKRA-compliant referrals.</p>
+      <h2>Why ${treatmentName} Providers in ${countyName} List With Us</h2>
+      <p>Our placement is editorial, not bid-based — facilities don't pay for admission slots. Pro listings get priority placement on the ${treatmentName.toLowerCase()} directory pages families are actually searching, plus enriched profile content and lead analytics.</p>
+      <h2>Get Started</h2>
+      <p><a href="/for-providers">List Your ${treatmentName} Facility</a> &middot; <a href="/rehab-centers/${stateSlug}/county/${countySlug}/${treatmentSlug}">${countyName} ${treatmentName} Directory</a> &middot; <a href="/rehab-marketing/${stateSlug}/county/${countySlug}">All ${countyName} Provider Markets</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },
-      { name: stateName, url: `/rehab-centers/${stateSlug}` },
+      { name: "For Providers", url: "/for-providers" },
+      { name: stateName, url: `/rehab-marketing/${stateSlug}` },
       { name: countyName, url: `/rehab-marketing/${stateSlug}/county/${countySlug}` },
       { name: treatmentName, url: urlPath },
     ],
@@ -459,6 +499,7 @@ function rehabMarketingCountyTreatmentPage(urlPath) {
 }
 
 // Rehab-marketing county/insurance: /rehab-marketing/{state}/county/{county}/insurance/{ins}
+// Provider marketing page for an insurance carrier in a county.
 function rehabMarketingCountyInsurancePage(urlPath) {
   const parts = urlPath.replace(/^\//, "").split("/");
   const stateSlug = parts[1];
@@ -467,20 +508,22 @@ function rehabMarketingCountyInsurancePage(urlPath) {
   const stateName = slugToName(stateSlug);
   const countyName = slugToName(countySlug) + " County";
   const insName = slugToName(insSlug);
-  const title = `${insName} Rehab Centers in ${countyName}, ${stateName}`;
+  const title = `Reach ${insName} Patients in ${countyName}, ${stateName}`;
   return {
     title,
-    metaTitle: `${title} — In-Network Treatment | RehabLookup`,
-    metaDesc: `Find ${insName}-covered rehab centers in ${countyName}, ${stateName}. Verify your insurance benefits and find in-network addiction treatment.`,
-    h1: title,
+    metaTitle: `${title} — Rehab Marketing | RehabLookup for Providers`,
+    metaDesc: `${insName}-accepting rehab providers in ${countyName}, ${stateName} — fill more beds via verified directory placement. EKRA-compliant referrals from families searching for in-network ${insName} treatment.`,
+    h1: `${insName} Patient Marketing in ${countyName}, ${stateName}`,
     content: `
-      <p>Find addiction treatment centers in ${countyName}, ${stateName} that accept ${insName} insurance. Our verified directory includes in-network facilities for detox, inpatient, and outpatient treatment.</p>
-      <h2>${insName} Coverage in ${countyName}</h2>
-      <p>${insName} covers substance use disorder treatment in ${countyName} under the Mental Health Parity and Addiction Equity Act. Verify your specific benefits before starting treatment.</p>
-      <p><a href="/rehab-marketing/${stateSlug}/county/${countySlug}">All Rehab Centers in ${countyName}</a> &middot; <a href="/rehab-centers/${stateSlug}">All Rehab Centers in ${stateName}</a></p>`,
+      <p>${insName}-accepting providers in ${countyName}, ${stateName} reach more in-network patients through RehabLookup. Geo-targeted visibility on the directory pages families use to find ${insName}-covered addiction treatment.</p>
+      <h2>Why ${insName}-Accepting Providers in ${countyName} List With Us</h2>
+      <p>Editorial placement, not bid-based auctions. Pro listings get priority on insurance-specific directory pages and enriched profile content showing accepted plans, network status, and verification flow.</p>
+      <h2>Get Started</h2>
+      <p><a href="/for-providers">List Your Facility</a> &middot; <a href="/insurance/${insSlug}-rehab/${stateSlug}/county/${countySlug}">${countyName} ${insName} Directory</a> &middot; <a href="/rehab-marketing/${stateSlug}/county/${countySlug}">All ${countyName} Provider Markets</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },
-      { name: stateName, url: `/rehab-centers/${stateSlug}` },
+      { name: "For Providers", url: "/for-providers" },
+      { name: stateName, url: `/rehab-marketing/${stateSlug}` },
       { name: countyName, url: `/rehab-marketing/${stateSlug}/county/${countySlug}` },
       { name: insName, url: urlPath },
     ],
@@ -688,19 +731,73 @@ function substanceCityPage(urlPath) {
   };
 }
 
-// Generic fallback for any unmatched pattern
+// Generic fallback for any unmatched pattern. Builds a contextualized
+// title from the path segments so deeply-nested URLs don't all share the
+// same one-word title (e.g. /treatment-types/<rx>/<state> was rendering
+// as just "<state> — RehabLookup" for every treatment vertical, which
+// Google flagged as 'Duplicate without user-selected canonical' across
+// all 50 states).
 function genericPage(urlPath) {
   const parts = urlPath.replace(/^\//, "").split("/");
-  const title = slugToName(parts[parts.length - 1] || parts[0]);
-  const parentTitle = parts.length > 1 ? slugToName(parts[0]) : "Home";
-  const parentUrl = parts.length > 1 ? `/${parts[0]}` : "/";
+  let title = slugToName(parts[parts.length - 1] || parts[0]);
+  if (parts.length >= 2) {
+    // For /<topic>/<X>[/<Y>] URLs, prefix the leaf segment with the topic
+    // so each combination has a distinct title. e.g.
+    //   /treatment-types/alcohol-rehabilitation/alabama
+    //     → "Alcohol Rehabilitation in Alabama"
+    //   /treatment-types/alcohol-rehabilitation/california/san-jose
+    //     → "Alcohol Rehabilitation in San Jose, California"
+    const topic = slugToName(parts[parts.length === 2 ? 0 : 1]);
+    if (parts.length === 2) {
+      title = `${slugToName(parts[1])} — ${topic}`;
+    } else if (parts.length === 3) {
+      // 3-segment URLs under /treatment-types/ are state-level (e.g.
+      // /treatment-types/dual-diagnosis-treatment/new-york). Differentiate
+      // from city-level pages that share the same place name (NYC vs NY
+      // State, etc.) by saying "Programs in <state>".
+      const isTreatmentTypesState = parts[0] === "treatment-types";
+      title = isTreatmentTypesState
+        ? `${topic} Programs in ${slugToName(parts[2])}`
+        : `${topic} in ${slugToName(parts[2])}`;
+    } else if (parts.length >= 4) {
+      const stateName = slugToName(parts[2]);
+      const cityName = slugToName(parts[3]);
+      title = `${topic} in ${cityName}, ${stateName}`;
+    }
+  }
+  // Default to Home as the parent so the breadcrumb never points at a
+  // segment that isn't a registered route (e.g. /center → Center isn't a
+  // hub; facility profiles live under /rehab-centers as the canonical
+  // browse parent). Per-prefix overrides below.
+  let parentTitle = "Home";
+  let parentUrl = "/";
+  if (parts.length > 1) {
+    if (parts[0] === "center") {
+      // /center/<facility-slug> — facility profile pages. The browse parent
+      // is the rehab-centers directory, not the literal "/center" path.
+      parentTitle = "Rehab Centers";
+      parentUrl = "/rehab-centers";
+    } else {
+      const candidateUrl = `/${parts[0]}`;
+      // Only use the candidate parent if it's a real registered route or
+      // has a prerendered HTML mirror. Otherwise fall back to Home.
+      const candidateLooksReal = /^[a-z0-9-]+$/.test(parts[0]);
+      if (candidateLooksReal) {
+        parentTitle = slugToName(parts[0]);
+        parentUrl = candidateUrl;
+      }
+    }
+  }
+  // Include the page title in the metaDesc so generic fallback pages
+  // don't all share an identical meta description (which Google flags as
+  // 'Duplicate without user-selected canonical' across the cohort).
   return {
     title,
     metaTitle: `${title} — RehabLookup`,
-    metaDesc: `Find addiction treatment resources and rehab centers. RehabLookup helps you find accredited facilities, verify insurance, and start recovery.`,
+    metaDesc: `${title} on RehabLookup — verified addiction treatment directory covering accredited facilities, insurance options, and recovery resources. Compare programs and find help today.`,
     h1: title,
     content: `
-      <p>Find addiction treatment resources and rehab centers on RehabLookup. Our verified directory covers accredited facilities across all 50 states.</p>
+      <p>${title} on RehabLookup. Our verified directory covers accredited facilities across all 50 states. Compare programs, verify insurance, and connect with treatment that fits your situation.</p>
       <p><a href="/rehab-centers">Browse All Treatment Centers</a> &middot; <a href="/resources">Recovery Resources</a></p>`,
     breadcrumbs: [
       { name: "Home", url: "/" },
@@ -811,7 +908,9 @@ async function main() {
   const allUrls = await loadSitemapUrls();
   console.log(`  Total sitemap URLs: ${allUrls.size.toLocaleString()}`);
 
-  const missing = [...allUrls].filter((u) => !hasHtmlFile(u));
+  // With --force, regenerate every URL we know about so legacy stubs that
+  // predated the branded `_seo-page-shell.mjs` upgrade get overwritten.
+  const missing = FORCE ? [...allUrls] : [...allUrls].filter((u) => !hasHtmlFile(u));
   console.log(`  Already have HTML: ${(allUrls.size - missing.length).toLocaleString()}`);
   console.log(`  Need to generate: ${missing.length.toLocaleString()}`);
   console.log();

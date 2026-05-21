@@ -19,3 +19,14 @@ export const GA_MEASUREMENT_ID =
 export const gtagSnippet = (id = GA_MEASUREMENT_ID) =>
   `  <script async src="https://www.googletagmanager.com/gtag/js?id=${id}"></script>\n` +
   `  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${id}');</script>`;
+
+// Variant for prerendered HTMLs that ALSO bootstrap the SPA via
+// `<script src="/src/main.tsx">` (the auth-page family: /login, /signup,
+// /account, /search-results, /seeker/*). For these, the gtag auto
+// page_view would fire on the static-HTML load, and then RouteChangeTracker
+// would fire a second page_view once React mounts — double-counting every
+// visit. Disable auto here so the SPA's RouteChangeTracker is the single
+// source of page_view events on this page family, matching index.html.
+export const gtagSnippetForSpaShell = (id = GA_MEASUREMENT_ID) =>
+  `  <script async src="https://www.googletagmanager.com/gtag/js?id=${id}"></script>\n` +
+  `  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${id}',{send_page_view:false});</script>`;

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { AdminRoleType } from "@/hooks/useAdminUserManagement";
 
@@ -22,32 +22,44 @@ function getStoredImpersonation(): ImpersonationTarget | null {
 
 export function useImpersonation() {
   const [impersonating, setImpersonating] = useState<ImpersonationTarget | null>(
-    getStoredImpersonation
+    getStoredImpersonation,
   );
 
+  // Start an impersonation session. The audit row is written FIRST and the
+  // local session state only flips after the insert succeeds — that way an
+  // RLS-denied / network-failed audit write doesn't leave the user in a
+  // mismatched UI state where the sidebar pretends to be a non-super-admin
+  // but the DB still treats them as their real account.
   const startImpersonation = useCallback(async (
     target: ImpersonationTarget,
-    adminUserId: string
+    adminUserId: string,
   ) => {
-    // Log to impersonation audit table
-    try {
-      await supabase.from("admin_impersonation_log").insert({
-        admin_user_id: adminUserId,
-        target_user_id: target.userId,
-        target_role: target.role,
-      });
-    } catch (err) {
-      console.error("Failed to log impersonation:", err);
+    const { error } = await supabase.from("admin_impersonation_log").insert({
+      admin_user_id: adminUserId,
+      target_user_id: target.userId,
+      target_role: target.role,
+    });
+    if (error) {
+      // Surface to the caller so they can show a toast / abort. We do NOT
+      // mutate sessionStorage or local state on failure.
+      throw new Error(
+        error.message || "Failed to record impersonation start in audit log",
+      );
     }
 
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(target));
     setImpersonating(target);
   }, []);
 
+  // Stop an impersonation session. We attempt to update the audit row's
+  // ended_at, but we ALWAYS clear local state regardless — leaving the
+  // admin trapped in impersonation because the audit write failed is worse
+  // than a missing ended_at timestamp (a 60-minute auto-expire trigger
+  // also closes orphans server-side, see migration 20260423053829).
   const stopImpersonation = useCallback(async (adminUserId: string) => {
-    // Update the ended_at on the most recent log entry
+    let auditWarning: string | null = null;
     try {
-      const { data } = await supabase
+      const { data, error: lookupErr } = await supabase
         .from("admin_impersonation_log")
         .select("id")
         .eq("admin_user_id", adminUserId)
@@ -56,18 +68,28 @@ export function useImpersonation() {
         .limit(1)
         .maybeSingle();
 
-      if (data) {
-        await supabase
+      if (lookupErr) {
+        auditWarning = `Audit lookup failed: ${lookupErr.message}`;
+      } else if (data) {
+        const { error: updateErr } = await supabase
           .from("admin_impersonation_log")
           .update({ ended_at: new Date().toISOString() })
           .eq("id", data.id);
+        if (updateErr) auditWarning = `Audit close failed: ${updateErr.message}`;
       }
     } catch (err) {
-      console.error("Failed to update impersonation log:", err);
+      auditWarning = err instanceof Error ? err.message : String(err);
     }
 
     sessionStorage.removeItem(SESSION_KEY);
     setImpersonating(null);
+
+    if (auditWarning) {
+      // The auto-expire trigger will eventually close this row; surface to
+      // the console for the on-call to investigate, but never block the
+      // user from leaving impersonation.
+      console.warn("[useImpersonation] stop audit warning:", auditWarning);
+    }
   }, []);
 
   const isImpersonating = !!impersonating;

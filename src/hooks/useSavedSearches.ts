@@ -64,6 +64,29 @@ export function useSavedSearches() {
     },
   });
 
+  // Cross-device realtime sync. saved_searches was added to
+  // supabase_realtime in migration 20260702000000. Any insert /
+  // update / delete from another tab / device propagates here within
+  // ~200ms. We just invalidate the query and let React Query refetch;
+  // optimistic updates from the mutations above keep the local view
+  // snappy for same-tab writes.
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`saved-searches-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "saved_searches", filter: `user_id=eq.${user.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient]);
+
   const create = useMutation({
     mutationFn: async (input: SavedSearchInput): Promise<SavedSearch> => {
       if (!user) throw new Error("Not authenticated");
@@ -76,11 +99,11 @@ export function useSavedSearches() {
       };
       const { data, error } = await supabase
         .from("saved_searches")
-        .insert(payload)
+        .insert(payload as never)
         .select("*")
         .single();
       if (error) throw error;
-      return data as SavedSearch;
+      return data as unknown as SavedSearch;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
@@ -92,7 +115,7 @@ export function useSavedSearches() {
       if (!user) throw new Error("Not authenticated");
       const { data, error } = await supabase
         .from("saved_searches")
-        .update(patch)
+        .update(patch as never)
         .eq("id", id)
         .eq("user_id", user.id)
         .select("*")

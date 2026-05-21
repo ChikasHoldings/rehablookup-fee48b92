@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Zap, TrendingUp, Clock, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { fromLeadsProviderView } from "@/lib/leadsProviderView";
 import { cn } from "@/lib/utils";
 
 interface ProviderPerformanceFeedbackProps {
@@ -16,56 +17,41 @@ export function ProviderPerformanceFeedback({ facilityId }: ProviderPerformanceF
       const now = new Date();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-      // Leads received this week (use PII-masked view; non-PII count only)
-      const { count: leadsThisWeek } = await supabase
-        .from("leads_provider_view")
-        .select("id", { count: "exact", head: true })
+      // EKRA flat-fee: lead_unlocks table retired; "responded to" is the
+      // meaningful engagement signal. A lead counts as "responded" when
+      // provider_response_status is set to a non-pending value (the leads
+      // table is what InquiryDetailPanel writes to).
+      const weekIso = weekAgo.toISOString();
+      const { data: weekLeads } = await fromLeadsProviderView()
+        .select("id, created_at, provider_response_status, provider_responded_at")
         .eq("facility_id", facilityId)
-        .gte("created_at", weekAgo.toISOString());
+        .gte("created_at", weekIso)
+        .limit(2000);
 
-      // Leads unlocked this week
-      const { count: unlockedThisWeek } = await supabase
-        .from("lead_unlocks")
-        .select("id", { count: "exact", head: true })
-        .eq("facility_id", facilityId)
-        .gte("unlocked_at", weekAgo.toISOString());
-
-      // Average response time (time between lead creation and unlock)
-      const { data: recentUnlocks } = await supabase
-        .from("lead_unlocks")
-        .select("lead_id, unlocked_at")
-        .eq("facility_id", facilityId)
-        .order("unlocked_at", { ascending: false })
-        .limit(20);
+      const leadsThisWeek = weekLeads?.length ?? 0;
+      const respondedThisWeek = (weekLeads ?? []).filter(
+        (l: { provider_response_status?: string | null }) =>
+          l.provider_response_status && l.provider_response_status !== "pending"
+      );
+      const unlockedThisWeek = respondedThisWeek.length;
 
       let avgResponseMinutes: number | null = null;
-      if (recentUnlocks && recentUnlocks.length > 0) {
-        const leadIds = recentUnlocks.map(u => u.lead_id);
-        const { data: leads } = await supabase
-          .from("leads_provider_view")
-          .select("id, created_at")
-          .in("id", leadIds);
-
-        if (leads && leads.length > 0) {
-          const leadMap = new Map(leads.map(l => [l.id, new Date(l.created_at)]));
-          let totalMinutes = 0;
-          let count = 0;
-          for (const unlock of recentUnlocks) {
-            const created = leadMap.get(unlock.lead_id);
-            if (created) {
-              totalMinutes += (new Date(unlock.unlocked_at).getTime() - created.getTime()) / 60000;
-              count++;
-            }
-          }
-          if (count > 0) avgResponseMinutes = Math.round(totalMinutes / count);
+      if (respondedThisWeek.length > 0) {
+        const samples = respondedThisWeek
+          .filter((l: { created_at?: string; provider_responded_at?: string | null }) => l.provider_responded_at)
+          .map((l: { created_at: string; provider_responded_at: string }) =>
+            (new Date(l.provider_responded_at).getTime() - new Date(l.created_at).getTime()) / 60000,
+          );
+        if (samples.length > 0) {
+          avgResponseMinutes = Math.round(samples.reduce((a, b) => a + b, 0) / samples.length);
         }
       }
 
-      const missedLeads = (leadsThisWeek || 0) - (unlockedThisWeek || 0);
+      const missedLeads = leadsThisWeek - unlockedThisWeek;
 
       return {
-        leadsThisWeek: leadsThisWeek || 0,
-        unlockedThisWeek: unlockedThisWeek || 0,
+        leadsThisWeek,
+        unlockedThisWeek,
         missedLeads: Math.max(missedLeads, 0),
         avgResponseMinutes,
       };
@@ -123,7 +109,7 @@ export function ProviderPerformanceFeedback({ facilityId }: ProviderPerformanceF
   if (stats.leadsThisWeek > 0 && stats.missedLeads === 0) {
     insights.push({
       icon: Zap,
-      text: `All ${stats.unlockedThisWeek} leads unlocked this week — keep it up!`,
+      text: `You responded to all ${stats.unlockedThisWeek} leads this week — keep it up!`,
       type: "success",
     });
   }

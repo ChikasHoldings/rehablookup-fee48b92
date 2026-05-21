@@ -98,8 +98,11 @@ export function FeaturedAnalyticsDashboard() {
     };
   }, [queryClient, dateRange]);
 
-  // Fetch analytics data
-  const { data: analytics, isLoading } = useQuery({
+  // Fetch analytics data. Every Supabase / edge-fn call now checks
+  // `error` (and edge-fn payload `data.error`) so a failure stops
+  // the aggregation instead of silently rendering zeros across the
+  // KPI strip.
+  const { data: analytics, isLoading, isError, error: analyticsError } = useQuery({
     queryKey: ["featured-analytics", dateRange],
     queryFn: async () => {
       const days = getDaysFromRange(dateRange);
@@ -108,8 +111,12 @@ export function FeaturedAnalyticsDashboard() {
       const startDateStr = startDate.toISOString().split("T")[0];
 
       // Fetch Pro subscriber facilities
-      const { data: featuredResponse } = await supabase.functions.invoke("get-featured-facilities");
-      const featuredIds = featuredResponse?.proFacilityIds || [];
+      const { data: featuredResponse, error: featuredErr } = await supabase.functions.invoke("get-featured-facilities");
+      if (featuredErr) throw featuredErr;
+      if (featuredResponse && typeof featuredResponse === "object" && "error" in featuredResponse && (featuredResponse as { error: unknown }).error) {
+        throw new Error(String((featuredResponse as { error: unknown }).error));
+      }
+      const featuredIds: string[] = featuredResponse?.proFacilityIds || [];
 
       if (featuredIds.length === 0) {
         return {
@@ -120,36 +127,44 @@ export function FeaturedAnalyticsDashboard() {
           avgConversion: 0,
           estimatedRevenue: 0,
           facilityMetrics: [],
+          avgLeadsPerProvider: 0,
+          topPerformer: null,
+          subscriberCount: 0,
+          impressionsAreMeasured: true,
         };
       }
 
       // Fetch analytics events
-      const { data: analyticsData } = await supabase
+      const { data: analyticsData, error: analyticsErr } = await supabase
         .from("featured_placement_analytics")
         .select("id, facility_id, event_date, event_type, event_count, metadata")
         .in("facility_id", featuredIds)
         .gte("event_date", startDateStr);
+      if (analyticsErr) throw analyticsErr;
 
       // Fetch facility profile views from provider_events (excludes impressions)
-      const { data: viewsData } = await supabase
+      const { data: viewsData, error: viewsErr } = await supabase
         .from("provider_events")
         .select("facility_id")
         .in("facility_id", featuredIds)
         .eq("event_type", "profile_view")
         .gte("created_at", startDate.toISOString());
+      if (viewsErr) throw viewsErr;
 
       // Fetch leads for conversions
-      const { data: leadsData } = await supabase
+      const { data: leadsData, error: leadsErr } = await supabase
         .from("leads")
         .select("facility_id")
         .in("facility_id", featuredIds)
         .gte("created_at", startDate.toISOString());
+      if (leadsErr) throw leadsErr;
 
       // Fetch facility names
-      const { data: facilities } = await supabase
+      const { data: facilities, error: facilitiesErr } = await supabase
         .from("facilities")
         .select("id, name")
         .in("id", featuredIds);
+      if (facilitiesErr) throw facilitiesErr;
 
       const facilityNames = new Map(facilities?.map(f => [f.id, f.name]) || []);
 
@@ -198,17 +213,30 @@ export function FeaturedAnalyticsDashboard() {
         }
       });
 
-      // Calculate rates
+      // Track whether *any* facility has real impression data so the
+      // UI can disclose when CTR is based on the fallback estimate
+      // instead of measured rows. Previously the page silently
+      // inflated impressions with a hardcoded 50/day fudge that
+      // distorted every downstream KPI (CTR especially).
+      let anyMeasuredImpression = false;
+      metricsMap.forEach((metrics) => {
+        if (metrics.impressions > 0) anyMeasuredImpression = true;
+      });
+
+      // Calculate rates. Estimated-impression fallback only runs if
+      // NO real data exists at all — otherwise we trust measured rows.
+      // The estimate is clearly labeled in the UI when it kicks in.
+      const useEstimate = !anyMeasuredImpression;
       metricsMap.forEach(metrics => {
-        // Estimate impressions based on days shown (6 slots * days)
-        if (metrics.impressions === 0) {
-          metrics.impressions = Math.round(days * 50); // Estimate avg daily impressions
+        if (useEstimate && metrics.impressions === 0) {
+          // 6 default homepage slots * ~daily impressions per slot
+          metrics.impressions = Math.round(days * 50);
         }
-        metrics.ctr = metrics.impressions > 0 
-          ? (metrics.clicks / metrics.impressions) * 100 
+        metrics.ctr = metrics.impressions > 0
+          ? (metrics.clicks / metrics.impressions) * 100
           : 0;
-        metrics.conversion_rate = metrics.clicks > 0 
-          ? (metrics.leads / metrics.clicks) * 100 
+        metrics.conversion_rate = metrics.clicks > 0
+          ? (metrics.leads / metrics.clicks) * 100
           : 0;
       });
 
@@ -223,8 +251,10 @@ export function FeaturedAnalyticsDashboard() {
       const avgCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
       const avgConversion = totalClicks > 0 ? (totalLeads / totalClicks) * 100 : 0;
       
-      // Estimate revenue: $399/month per Pro subscriber * number of subscribers
-      const estimatedRevenue = featuredIds.length * 399;
+      // Estimate Featured Add-On MRR: $599/mo per active Featured subscriber
+      // (canonical pricing — see _shared/featured-addon.ts and the marketing
+      // pages). Monthly figure; annualize by multiplying by 12 if needed.
+      const estimatedRevenue = featuredIds.length * 599;
 
       // Calculate comparison metrics
       const avgLeadsPerProvider = featuredIds.length > 0 ? totalLeads / featuredIds.length : 0;
@@ -241,6 +271,7 @@ export function FeaturedAnalyticsDashboard() {
         avgLeadsPerProvider,
         topPerformer,
         subscriberCount: featuredIds.length,
+        impressionsAreMeasured: !useEstimate,
       };
     },
     staleTime: 1000 * 60 * 2, // 2 min stale time for faster updates
@@ -264,6 +295,20 @@ export function FeaturedAnalyticsDashboard() {
     );
   }
 
+  if (isError) {
+    return (
+      <Alert className="bg-destructive/10 border-destructive/30" role="alert">
+        <Info className="h-4 w-4 text-destructive" />
+        <AlertDescription className="text-destructive flex items-center justify-between gap-3">
+          <span>Failed to load featured analytics: {analyticsError instanceof Error ? analyticsError.message : "Unknown error"}</span>
+          <Button size="sm" variant="outline" onClick={handleRefresh} aria-label="Retry loading featured analytics">
+            <RefreshCw className="h-4 w-4 mr-1" /> Retry
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   const data = analytics || {
     totalImpressions: 0,
     totalClicks: 0,
@@ -275,6 +320,7 @@ export function FeaturedAnalyticsDashboard() {
     avgLeadsPerProvider: 0,
     topPerformer: null,
     subscriberCount: 0,
+    impressionsAreMeasured: true,
   };
 
   return (
@@ -283,10 +329,26 @@ export function FeaturedAnalyticsDashboard() {
       <Alert className="bg-emerald-50 border-emerald-200">
         <Info className="h-4 w-4 text-emerald-600" />
         <AlertDescription className="text-emerald-800">
-          Analytics tracks impressions, clicks, and conversions for Pro subscribers. 
+          Analytics tracks impressions, clicks, and conversions for Pro subscribers.
           Data updates in real-time as users interact with featured listings.
         </AlertDescription>
       </Alert>
+
+      {/* Estimated-impressions disclosure — fires only when no
+          impression events exist in the window, so the page falls
+          back to a 50/day-per-facility estimate. Without this banner
+          admins could mistake the estimate for measured data. */}
+      {data.subscriberCount > 0 && !data.impressionsAreMeasured && (
+        <Alert className="bg-amber-50 border-amber-200" role="status">
+          <Info className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            <strong>Impressions are estimated</strong> — no impression events were
+            tracked in this period, so impressions and CTR are derived from a
+            50/day-per-facility baseline. Click counts, lead counts, and conversion
+            rates are measured from real events.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Header with date range selector and refresh */}
       <div className="flex items-center justify-between">
@@ -307,6 +369,7 @@ export function FeaturedAnalyticsDashboard() {
             size="sm"
             onClick={handleRefresh}
             className="gap-2"
+            aria-label="Refresh featured analytics"
           >
             <RefreshCw className="h-4 w-4" />
             Refresh

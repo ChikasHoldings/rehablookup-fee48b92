@@ -14,6 +14,14 @@
 // Concierge inquiries
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Concierge inquiry statuses. The first 11 are the current active
+// workflow (intake → match → intros → seeker_selected). The four
+// after `seeker_selected` (admission_in_progress, admitted, billed,
+// completed) are LEGACY states from the retired paid-placement
+// product — kept in the type so historical DB rows still validate,
+// but no new UI path drives cases into them. The DB trigger still
+// honors the full transition graph for forward-compat with any
+// existing rows; this client-side list mirrors that trigger.
 export const CONCIERGE_STATUSES = [
   "new",
   "pending_intake",

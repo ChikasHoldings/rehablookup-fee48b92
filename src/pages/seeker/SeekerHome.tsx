@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { pluckNonNull } from "@/lib/nullableRows";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
   Search,
@@ -98,8 +98,15 @@ function useSeekerLocation() {
   return { state, stateAbbr, nearbyStates, city, zipcode, isLoading: geo.isLoading };
 }
 
+const VALID_SORTS = new Set<SortOption>([
+  "proximity", "name-asc", "name-desc",
+  "state-asc", "state-desc", "years-desc", "years-asc",
+]);
+
 export default function SeekerHome() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hydratedRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("all");
@@ -110,6 +117,41 @@ export default function SeekerHome() {
   const { data: featuredData } = useFeaturedFacilityIds();
   const seekerLocation = useSeekerLocation();
 
+  // URL state hydration (once on mount) + loop-guarded sync so the
+  // user can bookmark a filtered view AND back/forward through pages.
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    const q = searchParams.get("q");
+    const type = searchParams.get("type");
+    const state = searchParams.get("state");
+    const sort = searchParams.get("sort");
+    const page = searchParams.get("page");
+    if (q) setSearchQuery(q);
+    if (type) setSelectedType(type);
+    if (state) setSelectedState(state);
+    if (sort && VALID_SORTS.has(sort as SortOption)) setSortBy(sort as SortOption);
+    const parsedPage = page ? parseInt(page, 10) : NaN;
+    if (Number.isFinite(parsedPage) && parsedPage > 0) setCurrentPage(parsedPage);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const next = new URLSearchParams(searchParams);
+    const setOrDelete = (key: string, value: string, defaultValue: string) => {
+      if (value && value !== defaultValue) next.set(key, value);
+      else next.delete(key);
+    };
+    setOrDelete("q", searchQuery, "");
+    setOrDelete("type", selectedType, "all");
+    setOrDelete("state", selectedState, "all");
+    setOrDelete("sort", sortBy, "proximity");
+    setOrDelete("page", String(currentPage), "1");
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchQuery, selectedType, selectedState, sortBy, currentPage, searchParams, setSearchParams]);
+
   // Returning-seeker KPIs + intake-resume card.
   // Fetch counts and the most-recent active concierge inquiry so we can
   // greet a returning user with "you have N open inquiries" / "resume your
@@ -118,28 +160,56 @@ export default function SeekerHome() {
     inquiriesOpen: number;
     inquiriesUnread: number;
     conciergeOpen: number;
-    intlOpen: number;
     resumeInquiry: { id: string; primary_concern: string | null; level_of_care: string | null; updated_at: string } | null;
   } | null>(null);
+
+  // Track the auth user-id so we re-fetch KPIs when the user signs in
+  // mid-session (the previous empty-deps useEffect ran once on mount
+  // and missed the post-login state).
+  const [authUserId, setAuthUserId] = useState<string | null>(() => getStoredUserId());
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setAuthUserId(session?.user?.id ?? null);
+      },
+    );
+    // Pick up the session that may have established between mount and
+    // this effect's subscribe call.
+    supabase.auth.getSession().then(({ data }) => {
+      const id = data.session?.user?.id ?? null;
+      setAuthUserId((prev) => (prev !== id ? id : prev));
+    });
+    return () => { subscription.unsubscribe(); };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (!authUserId) {
+        setSeekerKpis(null);
+        return;
+      }
       const { data: { user } } = await supabase.auth.getUser();
       if (cancelled || !user) {
         setSeekerKpis(null);
         return;
       }
-      const [leadsRes, conciergeRes, intlRes, draftRes, notifRes] = await Promise.all([
-        supabase
-          .rpc("get_seeker_submitted_leads", { p_email: user.email })
-          .then((r) => r, () => ({ data: [] as Array<{ id: string; status: string }> })),
+      // International placement product retired 2026-05-20 — only
+      // domestic concierge cases remain in the seeker KPI summary.
+      // .error checked on every individual call below; the entire KPI
+      // strip is suppressed if any single call fails so we don't
+      // surface partial / misleading numbers (e.g. "0 inquiries" when
+      // the RPC actually errored).
+      // get_seeker_submitted_leads is parameterless on the DB side
+      // (it reads auth.uid() + auth.users.email internally). Passing
+      // `{p_email}` made PostgREST 404 with "function does not exist"
+      // — the previous fallback `.then(r=>r,()=>({data:[]}))` ate the
+      // failure silently and the KPI strip rendered "0 inquiries"
+      // even for users with multiple pending leads.
+      const [leadsRes, conciergeRes, draftRes, notifRes] = await Promise.all([
+        supabase.rpc("get_seeker_submitted_leads"),
         supabase
           .from("concierge_inquiries")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .not("status", "in", "(closed,completed)"),
-        supabase
-          .from("international_placement_cases")
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id)
           .not("status", "in", "(closed,completed)"),
@@ -158,18 +228,38 @@ export default function SeekerHome() {
           .eq("read", false),
       ]);
       if (cancelled) return;
-      const leadRows = ((leadsRes as { data?: Array<{ id: string; status: string }> }).data ?? []);
+
+      const errors = [
+        (leadsRes as { error?: { message?: string } }).error,
+        conciergeRes.error,
+        draftRes.error,
+        notifRes.error,
+      ].filter(Boolean);
+      if (errors.length > 0) {
+        // Don't surface a noisy banner here — the seeker KPI strip is
+        // a returning-user nicety, not a critical surface. A failed
+        // strip just means the KPI card section doesn't render; the
+        // main discovery feed below is unaffected. Log to console for
+        // observability without interrupting the user.
+        console.warn(
+          "[SeekerHome] KPI fetch had errors; suppressing strip:",
+          errors[0],
+        );
+        setSeekerKpis(null);
+        return;
+      }
+
+      const leadRows = (leadsRes.data ?? []) as Array<{ id: string; status: string }>;
       const inquiriesOpen = leadRows.filter((l) => l.status !== "closed" && l.status !== "completed").length;
       setSeekerKpis({
         inquiriesOpen,
         inquiriesUnread: notifRes.count ?? 0,
         conciergeOpen: conciergeRes.count ?? 0,
-        intlOpen: intlRes.count ?? 0,
         resumeInquiry: draftRes.data ?? null,
       });
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [authUserId]);
 
   const { data: staticFacilities = [], isLoading, error: facilitiesError, refetch } = useStaticFacilities();
 
@@ -606,7 +696,7 @@ export default function SeekerHome() {
       {/* Returning-seeker KPI strip + intake-resume card.
           Only renders for signed-in users with at least one signal worth
           surfacing; pure anon discovery flow is unaffected. */}
-      {seekerKpis && (seekerKpis.inquiriesOpen > 0 || seekerKpis.conciergeOpen > 0 || seekerKpis.intlOpen > 0 || seekerKpis.resumeInquiry || seekerKpis.inquiriesUnread > 0) && (
+      {seekerKpis && (seekerKpis.inquiriesOpen > 0 || seekerKpis.conciergeOpen > 0 || seekerKpis.resumeInquiry || seekerKpis.inquiriesUnread > 0) && (
         <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-4 sm:pt-5">
           {seekerKpis.resumeInquiry && (
             <Card className="mb-3 border-amber-500/30 bg-amber-500/5">
@@ -676,7 +766,7 @@ export default function SeekerHome() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground leading-tight">Placements</p>
-                    <p className="text-base font-semibold tabular-nums">{seekerKpis.conciergeOpen + seekerKpis.intlOpen}</p>
+                    <p className="text-base font-semibold tabular-nums">{seekerKpis.conciergeOpen}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -809,8 +899,27 @@ export default function SeekerHome() {
             )}
           </div>
 
-          {/* Sidebar */}
-          <aside className="w-full lg:w-72 xl:w-80 shrink-0 space-y-3 sm:space-y-4">
+          {/* Sidebar — sticky on lg+ so it stays visible while the
+              facility-card feed on the left scrolls. The parent of
+              this aside is `<main>` (the seeker shell's scroll
+              container at SeekerShell.tsx:254), so `lg:sticky lg:top-4`
+              pins to the top of that scroll viewport.
+
+              Required combo:
+                - `lg:self-start` (the parent flex stretches children
+                  full row-height by default which would defeat
+                  position:sticky — self-start collapses this child
+                  to its content height)
+                - `lg:max-h-[calc(100vh-2rem)]` so a tall sidebar
+                  never extends past the viewport
+                - `lg:overflow-y-auto lg:overscroll-contain` so the
+                  sidebar scrolls internally if it overflows, without
+                  leaking gestures to the outer feed scroll
+                - `lg:pb-4` bottom inset so the last card doesn't
+                  butt against the viewport edge */}
+          <aside
+            className="w-full lg:w-72 xl:w-80 shrink-0 space-y-3 sm:space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:overscroll-contain lg:pb-4 lg:pr-1"
+          >
             {/* Quick Stats - mobile horizontal scroll */}
             <div className="lg:hidden">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">Your Activity</p>

@@ -13,7 +13,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/how-it-works": () => import("@/pages/HowItWorks"),
   "/for-providers": () => import("@/pages/ForProviders"),
   "/insurance": () => import("@/pages/Insurance"),
-  "/international": () => import("@/pages/international/InternationalLanding"),
+  // "/international" prefetch retired 2026-05-20 — InternationalLanding deleted; the route now redirects to /us-rehab/international-patients.
   "/about": () => import("@/pages/About"),
   "/contact": () => import("@/pages/Contact"),
   "/faq": () => import("@/pages/FAQ"),
@@ -33,7 +33,7 @@ const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   "/provider/inquiries": () => import("@/pages/provider/Inquiries"),
   "/provider/analytics": () => import("@/pages/provider/Analytics"),
   "/provider/billing": () => import("@/pages/provider/Billing"),
-  "/provider/placement-network": () => import("@/pages/provider/PlacementNetwork"),
+  // /provider/placement-network removed in monetization rebuild.
   "/provider/settings": () => import("@/pages/provider/Settings"),
   "/provider/notifications": () => import("@/pages/provider/Notifications"),
   "/provider/help": () => import("@/pages/provider/Help"),

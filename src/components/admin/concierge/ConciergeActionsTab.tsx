@@ -57,7 +57,7 @@ function getStatusOptions(currentStatus: string, isAdvisor: boolean) {
   const advisorAllowed = new Set([
     "intake_reviewed", "advisor_assigned", "matching_providers",
     "provider_prequalification", "providers_accepted",
-    "presented_to_seeker", "seeker_selected", "admission_in_progress",
+    "presented_to_seeker", "seeker_selected",
   ]);
 
   return uniqueKeys
@@ -86,10 +86,17 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
 
   const updateCaseMutation = useMutation({
     mutationFn: async (updates: Partial<ConciergeInquiry>) => {
-      // For status changes, delegate to the centralized transition hook
+      // For status changes, delegate to the centralized transition hook.
+      // Terminal states are read-only except for closing the case —
+      // `seeker_selected` is the new terminal "Placed" state; legacy
+      // admission_in_progress / admitted / billed rows behave the same
+      // way; `completed` is the historical archival state.
+      const terminalStates = new Set([
+        "seeker_selected", "admission_in_progress", "admitted", "billed", "completed",
+      ]);
       if (updates.status && updates.status !== caseData.status) {
-      if ((caseData.status === 'admitted' || caseData.status === 'completed') && updates.status !== 'closed') {
-          throw new Error("Cannot change status of a confirmed placement. Close the case instead.");
+        if (terminalStates.has(caseData.status) && updates.status !== "closed") {
+          throw new Error("This case is already placed. Close the case instead of changing status.");
         }
         // Use transition hook via mutateAsync so we get optimistic locking
         await caseTransition.mutateAsync({
@@ -155,17 +162,26 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         : `[Closed] ${closeReason}`,
     });
 
-    // Notify seeker that their case was closed by admin
+    // Notify seeker that their case was closed by admin. The close
+    // itself already succeeded — a notification failure is a soft
+    // warning, not a hard error, so the user keeps the closed state
+    // but sees that the seeker didn't get the email and may need a
+    // manual heads-up.
     try {
-      await supabase.functions.invoke("send-concierge-notifications", {
+      const { data, error } = await supabase.functions.invoke("send-concierge-notifications", {
         body: {
           type: "case_closed_by_admin",
           inquiryId: caseData.id,
           metadata: { reason: closeReason },
         },
       });
+      if (error || data?.error) {
+        const msg = (error as Error | null)?.message || data?.error || "Unknown error";
+        toast.warning(`Case closed, but seeker notification failed: ${msg}`);
+      }
     } catch (e) {
-      console.error("Close notification error:", e);
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      toast.warning(`Case closed, but seeker notification failed: ${msg}`);
     }
   };
 
@@ -194,16 +210,25 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
         actor_type: "advisor",
       });
 
-      // Notify other admins/advisors
+      // Notify other admins/advisors. Claim itself succeeded — a
+      // notification failure is surfaced as a toast warning so the
+      // claiming advisor knows their teammates may not be aware yet.
       try {
-        await supabase.functions.invoke("send-concierge-notifications", {
+        const { data, error: notifyError } = await supabase.functions.invoke("send-concierge-notifications", {
           body: {
             type: "advisor_claimed",
             inquiryId: caseData.id,
             metadata: { advisor_id: user.id, advisor_name: user.email, self_assigned: true },
           },
         });
-      } catch (e) { console.error("Notification error:", e); }
+        if (notifyError || data?.error) {
+          const msg = (notifyError as Error | null)?.message || data?.error || "Unknown error";
+          toast.warning(`Case claimed, but team notification failed: ${msg}`);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        toast.warning(`Case claimed, but team notification failed: ${msg}`);
+      }
     },
     onSuccess: () => {
       toast.success("Case assigned to you — starting placement workflow");
@@ -272,7 +297,7 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
       )}
 
       {/* Seeker confirmed indicator for admin */}
-      {caseData.seeker_confirmed && !["admitted", "completed", "billed", "closed"].includes(caseData.status) && (
+      {caseData.seeker_confirmed && !["completed", "closed"].includes(caseData.status) && (
         <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">

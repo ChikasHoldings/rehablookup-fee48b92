@@ -131,7 +131,7 @@ export default function MarketingLanding() {
           className="relative"
           overlayClassName="bg-gradient-to-b from-slate-900/80 via-slate-900/60 to-slate-900/90"
         >
-          <section className="py-10 sm:py-14 md:py-20 lg:py-24">
+          <section className="py-7 sm:py-9 md:py-12 lg:py-14">
             <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-3xl text-center">
               {/* Headline */}
               <h1 className="text-[1.75rem] sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight drop-shadow-lg [text-wrap:balance] max-w-3xl mx-auto">

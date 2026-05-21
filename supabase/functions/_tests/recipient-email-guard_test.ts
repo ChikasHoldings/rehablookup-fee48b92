@@ -90,9 +90,9 @@ Deno.env.set("SUPABASE_URL", "https://stub.supabase.co");
 Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "test_service_role_key");
 
 type Handler = (req: Request) => Response | Promise<Response>;
-const captured: { welcome?: Handler; offer?: Handler } = {};
+const captured: { welcome?: Handler } = {};
 
-function patchServeFor(key: "welcome" | "offer") {
+function patchServeFor(key: "welcome") {
   // deno-lint-ignore no-explicit-any
   (Deno as any).serve = (handler: Handler) => {
     captured[key] = handler;
@@ -107,17 +107,13 @@ function patchServeFor(key: "welcome" | "offer") {
 
 patchServeFor("welcome");
 await import("../send-provider-welcome-email/index.ts");
-patchServeFor("offer");
-await import("../send-provider-welcome-offer-email/index.ts");
 
 assertExists(captured.welcome);
-assertExists(captured.offer);
 
 const FN_URL = "https://stub.functions.local/x";
 
 const fns = [
   { key: "welcome" as const, name: "send-provider-welcome-email" },
-  { key: "offer" as const, name: "send-provider-welcome-offer-email" },
 ];
 
 const baseValidPayload = {

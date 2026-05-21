@@ -2,11 +2,11 @@ import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import NotFound from "@/pages/NotFound";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
+import { getStateImage } from "@/data/locationImages";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { cityInList } from "@/lib/cityNameMatch";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { getStateBySlug } from "@/data/locationSeoData";
-import { getCountyBySlug } from "@/data/countySeoData";
+import { resolveCounty } from "@/lib/countyLookup";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage, getFacilityDensity } from "@/utils/seoPageValidator";
 
@@ -58,8 +58,9 @@ export default function CountyTreatmentPage() {
 
   const { data: approvedFacilities = [], isLoading } = useStaticFacilities();
 
-  const stateData = stateSlug ? getStateBySlug(stateSlug) : undefined;
-  const countyData = stateSlug && countySlug ? getCountyBySlug(stateSlug, countySlug) : undefined;
+  const resolved = resolveCounty(stateSlug, countySlug);
+  const stateData = resolved?.state;
+  const countyData = resolved?.county;
   const treatment = treatmentSlug ? COUNTY_TREATMENT_TYPES[treatmentSlug] : undefined;
 
   const facilities = useMemo(() => {
@@ -162,6 +163,7 @@ export default function CountyTreatmentPage() {
       heroTitle={pageTitle}
       heroSubtitle={treatment.description}
       heroLocation={`${countyData.name} County, ${stateData.name}`}
+      heroImage={getStateImage(stateSlug)}
       heroBadge="County Treatment Guide"
       introContent={`Looking for ${treatment.label.toLowerCase()} in ${countyData.name} County, ${stateData.name}? RehabLookup connects you with verified treatment facilities serving the ${countyData.majorCities.slice(0, 4).join(", ")} area. ${density === "high" ? `${countyData.name} County has strong access to ${treatment.label.toLowerCase()} with multiple accredited programs.` : density === "moderate" ? `${countyData.name} County offers several ${treatment.label.toLowerCase()} options for residents.` : `While ${countyData.name} County has limited local options, nearby facilities across ${stateData.name} provide accessible ${treatment.label.toLowerCase()}.`}`}
       sections={[
@@ -173,6 +175,38 @@ export default function CountyTreatmentPage() {
           heading: `Choosing ${treatment.label} in ${stateData.name}`,
           content: `When selecting a ${treatment.label.toLowerCase()} program in ${countyData.name} County, consider: facility accreditation and state licensing, staff credentials and clinical expertise, treatment approaches offered, insurance acceptance and financial options, aftercare and continuing care programs, and patient reviews and outcomes data. All facilities listed on RehabLookup are verified for proper licensing and accreditation.`,
         },
+        {
+          heading: `Insurance & Cost in ${countyData.name} County`,
+          content: `Most ${treatment.label.toLowerCase()} programs serving ${countyData.name} County accept private insurance, Medicaid, and Medicare. Under the Mental Health Parity Act, ${stateData.name} plans must cover substance-use treatment at the same level as other medical care. Facilities verify benefits before admission so you know your out-of-pocket exposure in advance; sliding-scale and financing options are common for uncovered costs.`,
+        },
+        {
+          heading: `Levels of Care Across ${countyData.name} County`,
+          content: `${treatment.label} programs span the full continuum: medical detox (3-10 days), residential inpatient (28-90 days), partial hospitalization (5-6 days/week), intensive outpatient (3-5 days/week), standard outpatient, and recovery housing. Clinicians match level of care to severity, co-occurring conditions, and home environment — and step you down as you stabilize.`,
+        },
+        {
+          heading: `Communities Served`,
+          content: `Programs in ${countyData.name} County serve ${countyData.majorCities.slice(0, 4).join(", ")}, and surrounding communities. Many facilities provide transportation assistance, and telehealth options have expanded access for residents in less-populated parts of the county. Regional referrals across ${stateData.name} are common when specialty programs aren't available locally.`,
+        },
+        {
+          heading: `Aftercare & Long-Term Recovery`,
+          content: `Discharge isn't the end — ${countyData.name} County treatment providers build aftercare into every plan: outpatient therapy, peer-support groups (12-step, SMART Recovery), alumni programming, and sober-living referrals. Long-term outcomes track strongly with continuing engagement, and most programs maintain alumni networks for ongoing support.`,
+        },
+      ]}
+      whatToExpect={[
+        `Free, confidential phone or web assessment with a licensed clinician`,
+        `Insurance benefits verified before any commitment — no surprises`,
+        `Custom ${treatment.label.toLowerCase()} plan within 24-48 hours of intake`,
+        `Medical detox first if needed, with 24/7 nursing`,
+        `Daily therapy, group, and family programming through the stay`,
+        `Aftercare plan + continuing-care referrals built into discharge`,
+      ]}
+      benefits={[
+        `Licensed, accredited ${countyData.name} County facilities only`,
+        `Verified ${treatment.label.toLowerCase()} programs — no lead-broker listings`,
+        `Insurance accepted: most private plans, Medicaid, Medicare, TRICARE`,
+        `Dual-diagnosis support for co-occurring mental health conditions`,
+        `Evidence-based therapies (CBT, DBT, EMDR, MAT where indicated)`,
+        `Long-term continuing care and alumni community`,
       ]}
       facilities={facilities}
       isLoading={isLoading}

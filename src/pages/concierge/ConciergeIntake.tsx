@@ -19,7 +19,16 @@ import {
   type ConciergePrefillContext,
 } from "@/lib/conciergeAnalytics";
 
-// Step components
+// Step components — ordered to match the runtime step sequence
+//   1 StepName            (NEW — name + phone + email + best time)
+//   2 StepWhoNeedsHelp    (demographics)
+//   3 StepCareNeed        (clinical)
+//   4 StepLogistics       (location preferences)
+//   5 StepContact         (TRIMMED — alt/emergency/notes/HIPAA only)
+//   6 StepEmailVerification
+//   7 StepPhoneVerification
+//   8 StepReviewSubmit
+import { StepName } from "@/components/concierge/StepName";
 import { StepWhoNeedsHelp } from "@/components/concierge/StepWhoNeedsHelp";
 import { StepCareNeed } from "@/components/concierge/StepCareNeed";
 import { StepLogistics } from "@/components/concierge/StepLogistics";
@@ -209,42 +218,43 @@ const initialData: ConciergeIntakeData = {
   hipaaConsent: false,
 };
 
-// 7 steps: Who → Care → Logistics → Contact → Verify Email → Verify Phone → Review & Submit
+// 8 steps: Name → Who → Care → Logistics → Additional → Verify Email → Verify Phone → Review.
+// Name moved to step 1 so the user provides identity info before any
+// clinical / insurance question — same UX-trust pattern the
+// international application uses. The data model is unchanged; only
+// the UI grouping shifted.
 const STEP_CONFIG = [
-  { 
-    title: "Who Needs Help", 
+  {
+    title: "Your Name",
+    description: "How we should address you on your placement call",
+  },
+  {
+    title: "Who Needs Help",
     description: "Tell us about the person seeking treatment",
-    icon: "👤"
   },
-  { 
-    title: "Care Needs", 
+  {
+    title: "Care Needs",
     description: "Substance concerns and treatment requirements",
-    icon: "💊"
   },
-  { 
-    title: "Location & Preferences", 
+  {
+    title: "Location & Preferences",
     description: "Where and how you'd like to receive care",
-    icon: "📍"
   },
-  { 
-    title: "Contact Information", 
-    description: "How we can reach you about your placement",
-    icon: "📞"
+  {
+    title: "Additional Details",
+    description: "Optional contacts and consent",
   },
-  { 
-    title: "Verify Email", 
+  {
+    title: "Verify Email",
     description: "Confirm your email so we can send updates",
-    icon: "✉️"
   },
-  { 
-    title: "Verify Phone", 
+  {
+    title: "Verify Phone",
     description: "Confirm your phone so a specialist can reach you",
-    icon: "📱"
   },
-  { 
-    title: "Review & Submit", 
+  {
+    title: "Review & Submit",
     description: "Review your information and submit your free request",
-    icon: "✅"
   },
 ];
 
@@ -610,27 +620,7 @@ export default function ConciergeIntake() {
     const errors: Record<string, string> = {};
 
     switch (step) {
-      case 1: // Who needs help
-        if (!formData.ageRange) errors.ageRange = "Age range is required";
-        if (!formData.gender) errors.gender = "Gender is required";
-        if (!formData.state) errors.state = "State is required";
-        if (!formData.city) errors.city = "City is required";
-        if (!formData.currentLivingSituation) errors.currentLivingSituation = "Living situation is required";
-        if (!formData.relationship) errors.relationship = "Relationship is required";
-        break;
-      case 2: // Care need
-        if (!formData.primaryConcern) errors.primaryConcern = "Primary concern is required";
-        if (!formData.substanceUseFrequency) errors.substanceUseFrequency = "Use frequency is required";
-        if (!formData.detoxNeeded) errors.detoxNeeded = "Please indicate if detox is needed";
-        if (!formData.levelOfCare) errors.levelOfCare = "Level of care is required";
-        if (formData.priorTreatment === null) errors.priorTreatment = "Please indicate prior treatment";
-        break;
-      case 3: // Logistics
-        if (!formData.desiredState) errors.desiredState = "Preferred location is required";
-        if (!formData.timeline) errors.timeline = "Timeline is required";
-        if (!formData.assessmentPreference) errors.assessmentPreference = "Assessment preference is required";
-        break;
-      case 4: // Contact
+      case 1: // Name — first/last/phone/email required; bestTimeToCall optional
         if (!formData.firstName || formData.firstName.trim().length < 1) errors.firstName = "First name is required";
         if (formData.firstName && formData.firstName.length > 100) errors.firstName = "First name is too long";
         if (!formData.lastName || formData.lastName.trim().length < 1) errors.lastName = "Last name is required";
@@ -646,18 +636,39 @@ export default function ConciergeIntake() {
         if (formData.email && formData.email.length > 254) {
           errors.email = "Email address is too long";
         }
-        if (!formData.bestTimeToCall) errors.bestTimeToCall = "Best time to call is required";
+        break;
+      case 2: // Who needs help
+        if (!formData.ageRange) errors.ageRange = "Age range is required";
+        if (!formData.gender) errors.gender = "Gender is required";
+        if (!formData.state) errors.state = "State is required";
+        if (!formData.city) errors.city = "City is required";
+        if (!formData.currentLivingSituation) errors.currentLivingSituation = "Living situation is required";
+        if (!formData.relationship) errors.relationship = "Relationship is required";
+        break;
+      case 3: // Care need
+        if (!formData.primaryConcern) errors.primaryConcern = "Primary concern is required";
+        if (!formData.substanceUseFrequency) errors.substanceUseFrequency = "Use frequency is required";
+        if (!formData.detoxNeeded) errors.detoxNeeded = "Please indicate if detox is needed";
+        if (!formData.levelOfCare) errors.levelOfCare = "Level of care is required";
+        if (formData.priorTreatment === null) errors.priorTreatment = "Please indicate prior treatment";
+        break;
+      case 4: // Logistics
+        if (!formData.desiredState) errors.desiredState = "Preferred location is required";
+        if (!formData.timeline) errors.timeline = "Timeline is required";
+        if (!formData.assessmentPreference) errors.assessmentPreference = "Assessment preference is required";
+        break;
+      case 5: // Additional details — notes/HIPAA only; contacts/referral are optional
         if (formData.notes && formData.notes.length > 1000) {
           errors.notes = "Notes must be 1000 characters or less";
         }
         if (!formData.hipaaConsent) errors.hipaaConsent = "You must consent to continue";
         break;
-      case 5: // Email verification
+      case 6: // Email verification
         if (!emailVerification.verified) {
           errors.email = "Please verify your email to continue";
         }
         break;
-      case 6: // Phone verification
+      case 7: // Phone verification
         if (!phoneVerification.verified) {
           errors.phone = "Please verify your phone number to continue";
         }
@@ -732,6 +743,13 @@ export default function ConciergeIntake() {
       applied_payment_type: ctx?.applied_payment_type ?? false,
       applied_level_of_care: ctx?.applied_level_of_care ?? false,
     });
+    // Generic form-lifecycle event used by the conversion-system
+    // dashboards (one namespace across full intake + inline widget).
+    trackEvent("intake_form_started", {
+      form: "concierge_intake",
+      source: ctx?.source || "(direct)",
+      had_prefill: !!ctx,
+    });
   }, []);
 
   // Fires concierge_intake_submitted exactly once per mount, regardless of
@@ -759,9 +777,47 @@ export default function ConciergeIntake() {
         applied_level_of_care: ctx?.applied_level_of_care ?? false,
         ...extras,
       });
+      // Generic form-lifecycle event — paired with intake_form_started
+      // so a single funnel query can compute start→submit rates across
+      // both the full intake and the inline widget.
+      trackEvent("intake_form_submitted", {
+        form: "concierge_intake",
+        channel,
+        source: ctx?.source || "(direct)",
+      });
     },
     [],
   );
+
+  // Generic form-lifecycle abandonment event. Fires at most once when
+  // the user navigates away (pagehide) or backgrounds the tab AFTER
+  // they started the form but BEFORE they submit. visibilitychange is
+  // the most reliable mobile signal (beforeunload is unreliable on
+  // iOS Safari). We also guard with a ref so the same session can't
+  // double-fire if both events happen.
+  const abandonedFiredRef = useRef(false);
+  useEffect(() => {
+    const fireAbandonedIfApplicable = () => {
+      if (abandonedFiredRef.current) return;
+      if (!startedFiredRef.current) return;
+      if (submittedFiredRef.current) return;
+      abandonedFiredRef.current = true;
+      trackEvent("intake_form_abandoned", {
+        form: "concierge_intake",
+        last_step: currentStep,
+        total_steps: TOTAL_STEPS,
+      });
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") fireAbandonedIfApplicable();
+    };
+    window.addEventListener("pagehide", fireAbandonedIfApplicable);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", fireAbandonedIfApplicable);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [currentStep]);
 
   const handleNext = async () => {
     if (validateStep(currentStep)) {
@@ -774,10 +830,22 @@ export default function ConciergeIntake() {
         step_number: currentStep,
         total_steps: TOTAL_STEPS,
       });
+      // Generic form-lifecycle event — uses STEP_CONFIG[i].title as
+      // the field-group name so analytics joins cleanly across the
+      // full intake and any future inline-form variants.
+      trackEvent("intake_form_field_completed", {
+        form: "concierge_intake",
+        field_group: STEP_CONFIG[currentStep - 1]?.title ?? `step_${currentStep}`,
+        step_number: currentStep,
+        total_steps: TOTAL_STEPS,
+      });
       // Analytics provider removed — Meta Pixel call removed.
       if (currentStep < TOTAL_STEPS) {
-        // Auto-save draft to DB when leaving contact step (step 4)
-        if (currentStep === 4) {
+        // Auto-save draft to DB when leaving the last pre-verification
+        // step. Step 1 captures email (so verification can route) and
+        // step 5 captures the HIPAA consent + any final notes — saving
+        // here gives the server-side draft a complete pre-verify snapshot.
+        if (currentStep === 5) {
           try {
             const { data: draftData } = await supabase.functions.invoke("save-placement-draft", {
               body: {
@@ -858,7 +926,6 @@ export default function ConciergeIntake() {
       const { data, error } = await supabase.functions.invoke("submit-concierge-intake", {
         body: {
           intakeData: formData,
-          skipPayment: true,
           emailVerifiedAt: emailVerification.verifiedAt,
           phoneVerifiedAt: phoneVerification.verifiedAt,
         },
@@ -887,7 +954,7 @@ export default function ConciergeIntake() {
     switch (currentStep) {
       case 1:
         return (
-          <StepWhoNeedsHelp
+          <StepName
             data={formData}
             errors={stepErrors}
             onChange={updateFormData}
@@ -895,7 +962,7 @@ export default function ConciergeIntake() {
         );
       case 2:
         return (
-          <StepCareNeed
+          <StepWhoNeedsHelp
             data={formData}
             errors={stepErrors}
             onChange={updateFormData}
@@ -903,7 +970,7 @@ export default function ConciergeIntake() {
         );
       case 3:
         return (
-          <StepLogistics
+          <StepCareNeed
             data={formData}
             errors={stepErrors}
             onChange={updateFormData}
@@ -911,13 +978,21 @@ export default function ConciergeIntake() {
         );
       case 4:
         return (
-          <StepContact
+          <StepLogistics
             data={formData}
             errors={stepErrors}
             onChange={updateFormData}
           />
         );
       case 5:
+        return (
+          <StepContact
+            data={formData}
+            errors={stepErrors}
+            onChange={updateFormData}
+          />
+        );
+      case 6:
         return (
           <>
             <StepEmailVerification
@@ -948,7 +1023,7 @@ export default function ConciergeIntake() {
             />
           </>
         );
-      case 6:
+      case 7:
         return (
           <StepPhoneVerification
             phone={formData.phone}
@@ -959,7 +1034,7 @@ export default function ConciergeIntake() {
             verifiedAt={phoneVerification.verifiedAt}
           />
         );
-      case 7:
+      case 8:
         return (
           <StepReviewSubmit
             data={formData}
@@ -975,8 +1050,8 @@ export default function ConciergeIntake() {
 
   // Determine if we can proceed from current step
   const canProceed = () => {
-    if (currentStep === 5) return emailVerification.verified;
-    if (currentStep === 6) return phoneVerification.verified;
+    if (currentStep === 6) return emailVerification.verified;
+    if (currentStep === 7) return phoneVerification.verified;
     return true;
   };
 
@@ -1007,82 +1082,69 @@ export default function ConciergeIntake() {
       <div className="min-h-screen flex flex-col bg-background">
         <PublicHeader />
 
-        <main className="flex-1 py-4 sm:py-6 md:py-12">
-          <div className="container mx-auto px-3 sm:px-4">
-            <div className="max-w-2xl mx-auto">
-              {/* Form Container */}
-              <div className="bg-card border rounded-xl shadow-sm overflow-hidden">
+        <main className="flex-1 py-4 md:py-16">
+          <div className="container mx-auto px-3 md:px-4">
+            <div className="max-w-3xl mx-auto">
+              {/* Form Container — matches international/InternationalApplication
+                  shell so the two intake flows feel like one product. The
+                  step components inside are concierge-specific. */}
+              <div className="bg-card border rounded-xl md:rounded-2xl shadow-sm overflow-hidden">
                 {/* Progress */}
-                <div className="px-4 sm:px-6 md:px-8 pt-4 pb-3 border-b bg-muted/30">
+                <div className="px-3 md:px-10 pt-3 md:pt-8 pb-2 md:pb-4 border-b bg-muted/30">
                   <IntakeProgress currentStep={currentStep} totalSteps={TOTAL_STEPS} />
                 </div>
 
-                {/* Step Content */}
-                <div className="px-4 sm:px-6 md:px-8 py-5 sm:py-6 md:py-8 min-h-[300px]">
-                  {/* Step Header */}
-                  <motion.div
-                    key={`header-${currentStep}`}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-5 sm:mb-6"
-                  >
-                    <div className="flex items-center gap-2.5 mb-1.5">
-                      <span className="text-xl sm:text-2xl">{STEP_CONFIG[currentStep - 1].icon}</span>
-                      <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
-                        {STEP_CONFIG[currentStep - 1].title}
-                      </h2>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {STEP_CONFIG[currentStep - 1].description}
-                    </p>
-                  </motion.div>
-
-                  <AnimatePresence mode="wait" custom={direction}>
-                    <motion.div
-                      key={currentStep}
-                      custom={direction}
-                      variants={slideVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      transition={{
-                        x: { type: "spring", stiffness: 300, damping: 30 },
-                        opacity: { duration: 0.2 },
-                      }}
-                    >
-                      {renderStep()}
-                    </motion.div>
-                  </AnimatePresence>
+                {/* Step Content — centered column, max-w-xl inner, with
+                    a reserved min-height so the navigation row doesn't
+                    jump as steps with different field counts swap. */}
+                <div className="px-3 md:px-10 py-4 md:py-12 min-h-[320px] md:min-h-[400px] flex items-center justify-center">
+                  <div className="w-full max-w-xl">
+                    <AnimatePresence mode="wait" custom={direction}>
+                      <motion.div
+                        key={currentStep}
+                        custom={direction}
+                        variants={slideVariants}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{
+                          x: { type: "spring", stiffness: 300, damping: 30 },
+                          opacity: { duration: 0.2 },
+                        }}
+                      >
+                        {renderStep()}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
                 </div>
 
                 {/* Navigation */}
                 {currentStep < TOTAL_STEPS && (
-                  <div className="px-4 sm:px-6 md:px-8 py-4 border-t bg-muted/20 flex flex-col-reverse sm:flex-row justify-center gap-3">
-                    {currentStep > 1 && (
-                      <Button
-                        variant="outline"
-                        onClick={handlePrev}
-                        className="h-11 px-5"
-                      >
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back
-                      </Button>
-                    )}
-                    {currentStep === 5 ? (
+                  <div className="px-3 md:px-10 py-3 md:py-6 border-t bg-muted/20 flex justify-between items-center gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={handlePrev}
+                      disabled={currentStep === 1}
+                      className={`h-10 md:h-12 px-4 md:px-6 ${currentStep === 1 ? "invisible" : ""}`}
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back
+                    </Button>
+                    {currentStep === 6 ? (
                       emailVerification.verified && (
                         <Button
                           onClick={handleNext}
-                          className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
+                          className="h-10 md:h-12 px-5 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground"
                         >
                           Continue to Phone Verification
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       )
-                    ) : currentStep === 6 ? (
+                    ) : currentStep === 7 ? (
                       phoneVerification.verified && (
                         <Button
                           onClick={handleNext}
-                          className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
+                          className="h-10 md:h-12 px-5 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground"
                         >
                           Continue to Review
                           <ArrowRight className="ml-2 h-4 w-4" />
@@ -1091,9 +1153,9 @@ export default function ConciergeIntake() {
                     ) : (
                       <Button
                         onClick={handleNext}
-                        className="h-11 px-6 bg-accent hover:bg-accent/90 text-accent-foreground"
+                        className="h-10 md:h-12 px-5 md:px-8 bg-accent hover:bg-accent/90 text-accent-foreground"
                       >
-                        {currentStep === 4 ? "Verify Email" : "Continue"}
+                        {currentStep === 5 ? "Verify Email" : "Continue"}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     )}

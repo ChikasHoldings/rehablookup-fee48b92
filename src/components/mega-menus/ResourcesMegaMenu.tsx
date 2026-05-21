@@ -11,13 +11,25 @@ interface MegaMenuProps {
   onNavigate?: () => void;
 }
 
+// Phase AA fix: every href below must resolve to a row in
+// public.blog_articles with status='published'. The previous list
+// hard-coded 6 slugs but only one (detox-timeline) actually had a
+// matching article — the other 5 hit ArticleDetail's not-found
+// branch and silently redirected to /resources, which is why every
+// mega-menu item appeared to "fall back to the main page".
+//
+// If you add a new entry here:
+//   1. Confirm the slug exists in blog_articles
+//      (SELECT slug FROM blog_articles WHERE slug = ? AND status='published')
+//   2. The smoke test below scans this file for /resources/<slug> hrefs
+//      and asserts they all resolve.
 const guides = [
-  { href: "/resources/signs-of-addiction", label: "Signs of Addiction", desc: "Recognize warning signs early", icon: Heart },
-  { href: "/resources/what-to-expect-in-rehab", label: "What to Expect in Rehab", desc: "Your treatment journey", icon: FileText },
-  { href: "/resources/insurance-coverage-guide", label: "Insurance Coverage", desc: "Understanding your benefits", icon: Shield },
-  { href: "/resources/paying-for-rehab", label: "Paying for Rehab", desc: "Financing & payment options", icon: DollarSign },
+  { href: "/resources/youth-addiction-warning-signs", label: "Signs of Addiction", desc: "Recognize warning signs early", icon: Heart },
+  { href: "/resources/drug-withdrawal-symptoms-timeline", label: "Withdrawal Timeline", desc: "What to expect during detox", icon: FileText },
+  { href: "/resources/insurance-appeal-rehab-denial", label: "Insurance Appeals", desc: "Fight a denied claim", icon: Shield },
+  { href: "/resources/how-much-does-rehab-cost-per-day", label: "Paying for Rehab", desc: "Cost breakdown by program", icon: DollarSign },
   { href: "/resources/detox-timeline", label: "Detox Timeline", desc: "What happens during detox", icon: Sparkles },
-  { href: "/resources/choosing-right-program", label: "Choosing a Program", desc: "Match needs to the right care", icon: BookOpen },
+  { href: "/resources/how-to-find-good-rehab", label: "Choosing a Program", desc: "15 questions to ask first", icon: BookOpen },
 ];
 
 const tools = [
@@ -34,9 +46,10 @@ export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
       <div className="flex">
         {/* Left: Guides with icon badges */}
         <div className="flex-1 px-5 py-4 border-r border-border/30">
-          <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
+          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-2.5 flex items-center gap-1.5">
             <BookOpen className="h-3 w-3" />
             Guides & Articles
+            <span className="ml-auto text-[10px] font-semibold text-foreground/40">6 featured</span>
           </p>
           <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
             {guides.map((guide) => (
@@ -57,13 +70,13 @@ export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
             ))}
           </div>
           <PrefetchLink to="/resources" onClick={onNavigate}
-            className="inline-flex items-center gap-1 px-2 pt-2 text-xs font-semibold text-primary hover:text-primary/80">
+            className="inline-flex items-center gap-1 px-2 pt-2 text-xs font-semibold text-accent hover:text-accent/80">
             All resources <ArrowRight className="h-3 w-3" />
           </PrefetchLink>
 
           {/* Topic hubs — canonical category landing pages */}
           <div className="mt-3 pt-3 border-t border-border/30">
-            <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2 flex items-center gap-1.5">
+            <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-2 flex items-center gap-1.5">
               <Layers className="h-3 w-3 text-accent" />
               Topic hubs
             </p>
@@ -84,9 +97,10 @@ export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
 
         {/* Right: Tools + CTA */}
         <div className="w-[220px] px-4 py-4">
-          <p className="text-xs font-bold text-foreground/70 uppercase tracking-[0.15em] px-1 mb-2.5 flex items-center gap-1.5">
+          <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-1 mb-2.5 flex items-center gap-1.5">
             <Calculator className="h-3 w-3 text-accent" />
             Interactive Tools
+            <span className="ml-auto text-[10px] font-semibold text-foreground/40">5 tools</span>
           </p>
           <div className="space-y-0">
             {tools.map((tool) => (
@@ -127,7 +141,7 @@ export function ResourcesMegaMenuMobile({ onNavigate }: MegaMenuProps) {
     <div className="space-y-1">
       {/* Guides */}
       <div>
-        <p className="text-xs font-bold text-accent uppercase tracking-[0.15em] px-3 mb-1.5 flex items-center gap-1.5">
+        <p className="text-[10px] font-bold text-accent uppercase tracking-[0.18em] px-3 mb-1.5 flex items-center gap-1.5">
           <BookOpen className="h-3.5 w-3.5" />
           Guides & Articles
         </p>

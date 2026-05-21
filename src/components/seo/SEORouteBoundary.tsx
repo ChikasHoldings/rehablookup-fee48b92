@@ -4,6 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Home, Search } from "lucide-react";
+import { ensureHistoryPatched, LOCATION_CHANGE_EVENT } from "@/lib/locationChangeEvent";
 
 interface Props {
   children: React.ReactNode;
@@ -24,8 +25,17 @@ interface State {
  *   - Avoids the "Page with redirect" / "Soft 404" buckets in GSC.
  *
  * Wraps each lazy public route so a single broken page cannot blank the SPA.
+ *
+ * IMPORTANT: this boundary resets its `hasError` state whenever the URL
+ * changes. Without that reset a single throwing route would leave the
+ * fallback UI stuck across the entire app — every subsequent click would
+ * still render "This page is temporarily unavailable" until a hard reload.
+ * Non-technical / mobile users rarely know to hard-reload, so the platform
+ * effectively goes blank for them once any route throws.
  */
 export class SEORouteBoundary extends React.Component<Props, State> {
+  private locationHandler?: () => void;
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
@@ -33,6 +43,24 @@ export class SEORouteBoundary extends React.Component<Props, State> {
 
   static getDerivedStateFromError(): State {
     return { hasError: true };
+  }
+
+  componentDidMount() {
+    ensureHistoryPatched();
+    this.locationHandler = () => {
+      if (this.state.hasError) {
+        this.setState({ hasError: false });
+      }
+    };
+    window.addEventListener("popstate", this.locationHandler);
+    window.addEventListener(LOCATION_CHANGE_EVENT, this.locationHandler);
+  }
+
+  componentWillUnmount() {
+    if (this.locationHandler) {
+      window.removeEventListener("popstate", this.locationHandler);
+      window.removeEventListener(LOCATION_CHANGE_EVENT, this.locationHandler);
+    }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {

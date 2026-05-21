@@ -164,41 +164,41 @@ export default function ProviderResources() {
       
       
       <main className="flex-1">
-        {/* Hero Section - Light Background, Streamlined */}
-        <section className="relative bg-gradient-to-b from-muted/40 to-background py-12 md:py-16 overflow-hidden">
-          {/* Subtle Decorative Elements */}
-          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-accent/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-          <div className="absolute bottom-0 left-0 w-[250px] h-[250px] bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
-          
-          <div className="container relative z-10 px-5 md:px-6">
+        {/* Hero — PROVIDER RESOURCES. Navy + gold accent palette
+            (matches ForProviders / ProviderFAQ). Smaller than State. */}
+        <section className="relative overflow-hidden border-b border-white/5"
+          style={{ background: "linear-gradient(135deg, #1B365D 0%, #0E1F3A 100%)" }}>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(205,162,35,0.10),_transparent_55%)]" />
+
+          <div className="container relative z-10 px-5 md:px-6 py-6 md:py-9">
             <BreadcrumbNav
-              className="mb-4"
-              variant="light"
+              className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
+              variant="dark"
               items={[
                 { label: "For Providers", href: "/for-providers" },
                 { label: "Resources" },
               ]}
             />
-            <div className="text-center max-w-3xl mx-auto">
-              <div className="mb-4 md:mb-4 inline-flex items-center gap-2.5 md:gap-2 rounded-full bg-accent/10 px-5 md:px-4 py-2.5 md:py-1.5">
-                <Sparkles className="h-5 w-5 md:h-4 md:w-4 text-accent" />
-                <span className="text-base md:text-sm font-medium text-accent">Provider Resources</span>
+            <div className="text-center max-w-2xl mx-auto">
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#CDA223]/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-[#CDA223] ring-1 ring-[#CDA223]/30">
+                <Sparkles className="h-3 w-3" />
+                Provider Resources
               </div>
-              <h1 className="mb-4 md:mb-3 font-display text-3xl md:text-3xl lg:text-4xl font-bold text-foreground">
+              <h1 className="mb-2 font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white">
                 Tools & Guides for Success
               </h1>
-              <p className="text-lg md:text-base text-muted-foreground max-w-2xl mx-auto mb-8">
-                Access comprehensive guides, video tutorials, and tools to maximize your facility's visibility and connect with more families.
+              <p className="text-sm md:text-base text-white/80 max-w-xl mx-auto mb-4">
+                Comprehensive guides, video tutorials, and tools to maximize your facility's visibility.
               </p>
-              <div className="flex flex-col items-center justify-center gap-4 md:gap-3 sm:flex-row">
+              <div className="flex flex-col items-center justify-center gap-2.5 sm:flex-row">
                 <Link to="/login" className="w-full sm:w-auto">
-                  <Button size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
+                  <Button size="default" className="bg-[#CDA223] text-[#1B365D] hover:bg-[#B38C1C] font-semibold gap-2 w-full sm:w-auto shadow-lg">
                     Access Dashboard
-                    <ArrowRight className="h-5 w-5 md:h-4 md:w-4" />
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
                 <a href="#resources" className="w-full sm:w-auto">
-                  <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto h-14 md:h-12 text-lg md:text-base rounded-2xl md:rounded-lg">
+                  <Button variant="outline" size="default" className="gap-2 w-full sm:w-auto border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm">
                     Browse Resources
                   </Button>
                 </a>

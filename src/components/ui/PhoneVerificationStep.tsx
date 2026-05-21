@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatPhoneE164 } from "@/lib/phoneUtils";
 
 interface PhoneVerificationStepProps {
   phone: string;
@@ -16,6 +17,18 @@ interface PhoneVerificationStepProps {
   isVerified?: boolean;
   onVerified?: () => void;
   className?: string;
+  /**
+   * Optional label override. Defaults to "Phone Number". Pass e.g.
+   * "Facility Phone *" when the same number doubles as the public
+   * callback line for a listing.
+   */
+  label?: string;
+  /**
+   * Optional helper line shown beneath the input on the verified state.
+   * Defaults to "Your phone is verified. You'll receive SMS alerts for
+   * new leads."
+   */
+  verifiedHelper?: string;
 }
 
 export function PhoneVerificationStep({
@@ -26,6 +39,8 @@ export function PhoneVerificationStep({
   isVerified = false,
   onVerified,
   className = "",
+  label = "Phone Number",
+  verifiedHelper = "Your phone is verified. You'll receive SMS alerts for new leads.",
 }: PhoneVerificationStepProps) {
   const [showVerification, setShowVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
@@ -50,19 +65,12 @@ export function PhoneVerificationStep({
     }
   }, [resendCooldown]);
 
-  // Format phone to E.164
-  const formatPhoneE164 = (phoneNumber: string): string => {
-    const cleaned = phoneNumber.replace(/\D/g, "");
-    // Assume US number if 10 digits
-    if (cleaned.length === 10) {
-      return `+1${cleaned}`;
-    }
-    // Already has country code
-    if (cleaned.length === 11 && cleaned.startsWith("1")) {
-      return `+${cleaned}`;
-    }
-    return `+${cleaned}`;
-  };
+  // E.164 formatting now lives in src/lib/phoneUtils so the signup
+  // upsert + the settings save + this verification flow all produce
+  // the same canonical form. The previous inline implementation here
+  // diverged from what SeekerSignup persisted (which was none), which
+  // caused phone-verification lookups against a stored non-normalized
+  // phone to fail. See docs/seeker-sms-system-hardening-2026-05-21.md.
 
   const isValidPhoneForVerification = (): boolean => {
     const cleaned = phone.replace(/\D/g, "");
@@ -171,7 +179,7 @@ export function PhoneVerificationStep({
         <div className="flex items-center justify-between">
           <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
             <Phone className="h-4 w-4 text-muted-foreground" />
-            Phone Number
+            {label}
           </Label>
           {localVerified && (
             <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
@@ -213,9 +221,7 @@ export function PhoneVerificationStep({
         </div>
         
         {localVerified && (
-          <p className="text-xs text-muted-foreground">
-            Your phone is verified. You'll receive SMS alerts for new leads.
-          </p>
+          <p className="text-xs text-muted-foreground">{verifiedHelper}</p>
         )}
       </div>
 

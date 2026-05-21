@@ -1,22 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, format } from "date-fns";
 import {
   MapPin, Phone, Mail, MessageSquare, User, Building2,
   PhoneCall, CheckCircle, XCircle, Copy, ExternalLink, Calendar, Loader2, FileText,
-  Clock, Shield, Heart, DollarSign, AlertTriangle, Users
+  Clock, Shield, Heart, DollarSign, AlertTriangle, Users, RotateCcw
 } from "lucide-react";
 import { ResponseTemplatesDrawer } from "@/components/provider/inquiries/ResponseTemplatesDrawer";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { InquiryTypeBadge, type InquiryType } from "@/components/provider/InquiryTypeBadge";
-import { UnlockLeadButton } from "@/components/provider/UnlockLeadButton";
 import { formatSourceLabel } from "@/lib/sourceLabels";
+import { useLeadContactTracking } from "@/hooks/useLeadContactTracking";
 
 type ResponseStatus = 'pending' | 'contacted' | 'responded' | 'closed';
 
@@ -58,14 +57,24 @@ interface InquiryDetailPanelProps {
     co_occurring_conditions: string[] | null;
     special_needs: string[] | null;
   };
-  isUnlocked: boolean;
-  onUnlockSuccess: () => void;
 }
 
-export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: InquiryDetailPanelProps) {
+export function InquiryDetailPanel({ inquiry }: InquiryDetailPanelProps) {
   const queryClient = useQueryClient();
+  const { trackContact } = useLeadContactTracking();
   const [responseNotes, setResponseNotes] = useState("");
-  
+  // Track which specific status button is in-flight so the spinner only
+  // renders on the button the provider just clicked (instead of every
+  // non-active button).
+  const [pendingStatus, setPendingStatus] = useState<ResponseStatus | null>(null);
+
+  // Clear local-only state when switching to a different inquiry —
+  // otherwise notes typed for lead A would carry over to lead B's textarea.
+  useEffect(() => {
+    setResponseNotes("");
+    setPendingStatus(null);
+  }, [inquiry.id]);
+
   const updateStatus = useMutation({
     mutationFn: async ({ status, notes }: { status: ResponseStatus; notes?: string }) => {
       // BUGFIX: Scope update to both lead id AND facility_id for defence-in-depth.
@@ -77,20 +86,56 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
           provider_response_status: status === 'pending' ? null : status,
           provider_responded_at: status !== 'pending' ? new Date().toISOString() : null,
           ...(notes !== undefined ? { provider_response_notes: notes || null } : {}),
-        })
+        } as never)
         .eq("id", inquiry.id)
         .eq("facility_id", inquiry.facility_id);
       if (error) throw error;
     },
     onSuccess: (_, { status }) => {
+      // Targeted invalidation — the broad `["provider-inquiries"]` prefix
+      // would invalidate every cached facility-set as well; constrain to
+      // the keys we know about.
       queryClient.invalidateQueries({ queryKey: ["provider-inquiries"] });
-      toast.success(`Status updated to ${status}`);
+      queryClient.invalidateQueries({ queryKey: ["recent-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-kpi-strip"] });
+      // Clear the notes textarea on success so the next status change
+      // starts with a fresh note. The previous note is still visible
+      // below the textarea via `inquiry.provider_response_notes`.
+      setResponseNotes("");
+      toast.success(status === "pending" ? "Reverted to pending" : `Marked as ${status}`);
+
+      // Notify the seeker — fire-and-forget. The edge function:
+      //  • derives the seeker email + facility name from leadId
+      //  • dedups via idempotencyKey `seeker-facility_contacted_you-${leadId}`
+      //    so toggling status from "contacted" → "scheduled" doesn't
+      //    re-send (the first transition already covered "we got back
+      //    to you")
+      //  • honors the seeker's email_lead_alerts preference
+      // Skip when status reverts to pending — that's a correction, not a
+      // response.
+      if (status !== "pending") {
+        void supabase.functions
+          .invoke("send-seeker-emails", {
+            body: { type: "facility_contacted_you", leadId: inquiry.id },
+          })
+          .catch((err) => {
+            // Logging-only — best-effort; do not block the provider's
+            // status-change toast on an email-send hiccup.
+            console.warn("[InquiryDetailPanel] seeker notification failed", err);
+          });
+      }
     },
     onError: (err) => {
       console.error("[InquiryDetail] Status update failed:", err);
       toast.error("Failed to update status. Please try again.");
     },
+    onSettled: () => setPendingStatus(null),
   });
+
+  const handleStatusClick = (status: ResponseStatus) => {
+    setPendingStatus(status);
+    updateStatus.mutate({ status, notes: responseNotes || undefined });
+  };
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -98,7 +143,7 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
   };
 
   const currentStatus = (inquiry.provider_response_status || 'pending') as ResponseStatus;
-  // Data from leads_provider_view is already masked/unmasked at the DB level
+  // PII is exposed directly from leads_provider_view to the facility owner.
   const displayName = inquiry.name;
   const displayEmail = inquiry.email;
   const displayPhone = inquiry.phone;
@@ -129,24 +174,15 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
             </div>
           </div>
 
-          {!isUnlocked && (
-            <UnlockLeadButton
-              leadId={inquiry.id}
-              facilityId={inquiry.facility_id}
-              inquiryType={inquiry.inquiry_type}
-              cityState={inquiry.location_city_state}
-              hidePrice
-              onUnlockSuccess={onUnlockSuccess}
-            />
-          )}
+          {/* Lead unlocking retired — full inquiry contact info delivered
+              directly to Pro subscribers. */}
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-5 space-y-6">
-        {/* Contact Actions (only if unlocked) */}
-        {isUnlocked && (
-          <div className="space-y-3">
+        {/* Contact Actions */}
+        <div className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Contact Information
             </h3>
@@ -172,7 +208,11 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
                     <Copy className="h-4 w-4" />
                   </Button>
                   <Button size="sm" className="gap-1.5" asChild>
-                    <a href={`tel:${displayPhone}`}>
+                    <a
+                      href={`tel:${displayPhone}`}
+                      onClick={() => trackContact(inquiry.id, inquiry.facility_id, "call")}
+                      aria-label={`Call ${displayName}`}
+                    >
                       <PhoneCall className="h-4 w-4" />
                       Call
                     </a>
@@ -201,7 +241,11 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
                     <Copy className="h-4 w-4" />
                   </Button>
                   <Button size="sm" variant="outline" className="gap-1.5" asChild>
-                    <a href={`mailto:${displayEmail}`}>
+                    <a
+                      href={`mailto:${displayEmail}`}
+                      onClick={() => trackContact(inquiry.id, inquiry.facility_id, "email")}
+                      aria-label={`Email ${displayName}`}
+                    >
                       <Mail className="h-4 w-4" />
                       Email
                     </a>
@@ -221,57 +265,57 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
               }
             />
           </div>
-        )}
 
-        {/* Locked Contact Preview */}
-        {!isUnlocked && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Contact Information
-            </h3>
-            <div className="bg-muted/30 border border-dashed rounded-lg p-4 text-center space-y-2">
-              <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                <Phone className="h-4 w-4" />
-                <span>{displayPhone}</span>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <span>{displayEmail}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Unlock this inquiry to view full contact details
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Status Management (only if unlocked) */}
-        {isUnlocked && (
-          <div className="space-y-3">
+        {/* Status Management */}
+        <div className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Response Status
             </h3>
             <div className="flex items-center gap-2 flex-wrap">
-              {statusButtons.map(({ status, label, icon: Icon, activeClass }) => (
+              {statusButtons.map(({ status, label, icon: Icon, activeClass }) => {
+                const showSpinner = updateStatus.isPending && pendingStatus === status;
+                return (
+                  <Button
+                    key={status}
+                    variant={currentStatus === status ? "default" : "outline"}
+                    size="sm"
+                    className={cn(
+                      "gap-1.5 transition-all",
+                      currentStatus === status && activeClass,
+                    )}
+                    onClick={() => handleStatusClick(status)}
+                    disabled={updateStatus.isPending}
+                    aria-label={`Mark inquiry as ${label.toLowerCase()}`}
+                    aria-pressed={currentStatus === status}
+                  >
+                    {showSpinner ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Icon className="h-3.5 w-3.5" />
+                    )}
+                    {label}
+                  </Button>
+                );
+              })}
+              {/* Allow reverting a tracked status back to pending — useful
+                  when an admin mis-clicks or wants to re-queue a lead. */}
+              {currentStatus !== "pending" && (
                 <Button
-                  key={status}
-                  variant={currentStatus === status ? "default" : "outline"}
+                  variant="ghost"
                   size="sm"
-                  className={cn(
-                    "gap-1.5 transition-all",
-                    currentStatus === status && activeClass
-                  )}
-                  onClick={() => updateStatus.mutate({ status, notes: responseNotes || undefined })}
+                  className="gap-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => handleStatusClick("pending")}
                   disabled={updateStatus.isPending}
+                  aria-label="Revert to pending"
                 >
-                  {updateStatus.isPending && currentStatus !== status ? (
+                  {updateStatus.isPending && pendingStatus === "pending" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Icon className="h-3.5 w-3.5" />
+                    <RotateCcw className="h-3.5 w-3.5" />
                   )}
-                  {label}
+                  Reset
                 </Button>
-              ))}
+              )}
             </div>
             {inquiry.provider_responded_at && (
               <p className="text-xs text-muted-foreground">
@@ -295,7 +339,6 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
               )}
             </div>
           </div>
-        )}
 
         <Separator />
 
@@ -415,8 +458,8 @@ export function InquiryDetailPanel({ inquiry, isUnlocked, onUnlockSuccess }: Inq
           </>
         )}
 
-        {/* Message - only visible when unlocked */}
-        {isUnlocked && inquiry.message && (
+        {/* Message */}
+        {inquiry.message && (
           <>
             <Separator />
             <div className="space-y-3">

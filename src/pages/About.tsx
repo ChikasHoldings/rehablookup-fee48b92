@@ -24,6 +24,7 @@ import founderPortrait from "@/assets/team/founder-chiedu-kabakwu.webp";
 import medicalDirectorPortrait from "@/assets/team/medical-director-portrait.webp";
 import ctoPortrait from "@/assets/team/cto-portrait.webp";
 import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 const values = [
   {
@@ -129,28 +130,36 @@ const About = () => {
         ]}
       />
       
-      {/* Hero - Compact navy header */}
-      <section className="bg-primary py-10 px-4 md:py-14 lg:py-16 md:px-6 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2" />
-          <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl -translate-y-1/2" />
-        </div>
-        
-        <div className="container relative">
+      {/* Hero — ABOUT page. Smaller than State hero per the brief.
+          Distinct from the directory archetypes: warm slate→accent
+          gradient + Heart eyebrow signals brand/mission, not utility. */}
+      <section className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-accent/40">
+        <img
+          src={TOPIC_HERO_IMAGES.mission}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 bg-slate-950/55" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.06),_transparent_55%)]" />
+
+        <div className="container relative z-10 py-6 md:py-8">
           <BreadcrumbNav
-            className="mb-4"
-            items={[
-              { label: "About" },
-            ]}
-          /><div className="mx-auto max-w-2xl lg:max-w-3xl text-center">
-            <div className="mb-4 md:mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 md:px-5 py-2 md:py-2.5 backdrop-blur-sm border border-white/10">
-              <Heart className="h-4 w-4 md:h-5 md:w-5 text-accent" />
-              <span className="text-sm md:text-base font-medium text-primary-foreground">Our Story</span>
+            className="mb-3 [&_*]:!text-white/70 [&_a:hover]:!text-white"
+            items={[{ label: "About" }]}
+          />
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm ring-1 ring-accent/25">
+              <Heart className="h-3 w-3" />
+              Our Story
             </div>
-            <h1 className="mb-3 md:mb-4 font-display text-xl font-bold text-primary-foreground md:text-2xl lg:text-3xl xl:text-4xl">
-              About RehabLookup: Trusted Addiction Treatment Directory
+            <h1 className="mb-2 font-display text-2xl font-bold text-white md:text-3xl lg:text-4xl">
+              About RehabLookup
             </h1>
-            <p className="text-base md:text-lg text-primary-foreground/80 leading-relaxed max-w-xl md:max-w-2xl mx-auto">
+            <p className="text-sm md:text-base text-white/80 max-w-xl mx-auto">
               Connecting families with trusted addiction treatment centers through transparency and compassion.
             </p>
           </div>
