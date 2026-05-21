@@ -1086,13 +1086,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!data.phone || data.phone.length < 10) {
-      return errorResponse(400, "phone_invalid", "Please provide a valid phone number (minimum 10 digits)", "phone");
+    // Phone is OPTIONAL per the May-2026 friction-reduction directive.
+    // If provided, it must be a valid 10+ digit number; if blank, we
+    // fall back to email-only contact (preferredContact coerced below).
+    if (data.phone && data.phone.length > 0 && data.phone.length < 10) {
+      return errorResponse(400, "phone_invalid", "Please provide a valid 10-digit phone number or leave it blank", "phone");
     }
 
     // ===== ENUM VALIDATION (reject invalid values) =====
     const validatedUrgency = validateEnum(data.urgency, ALLOWED_URGENCY);
-    const validatedPreferredContact = validateEnum(data.preferredContact, ALLOWED_PREFERRED_CONTACT) || "phone";
+    // Default preferred contact channel: phone if a phone was supplied,
+    // otherwise email (the only remaining always-required identifier).
+    const validatedPreferredContact =
+      validateEnum(data.preferredContact, ALLOWED_PREFERRED_CONTACT) ||
+      (data.phone && data.phone.length >= 10 ? "phone" : "email");
     const validatedSource = validateEnum(data.source, ALLOWED_SOURCES) || "facility_profile";
 
     // ===== BLOCKED IDENTIFIER CHECK =====
