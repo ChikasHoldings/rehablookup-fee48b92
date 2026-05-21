@@ -695,11 +695,12 @@ const CenterProfile = () => {
   // and the dedicated `/provider/facility/:id` route.
   const isOwner = false;
   const isPending = facility.status === "pending";
-  // Pro-only contact channels (phone, public email, website link).
-  // Strictly gated on plan — even the facility owner sees the public-facing
-  // experience while previewing their own listing, so they can verify the
-  // upgrade incentive matches what visitors see.
-  const showContactDetails = facilityPlan === "pro";
+  // PII gate removed 2026-05-21 — every approved facility surfaces its
+  // public business contact info (phone, email, website) to every
+  // visitor. The plan tier no longer determines content visibility;
+  // facilityPlan is kept for sort priority + Featured-badge eligibility
+  // upstream but does not gate display here.
+  const showContactDetails = true;
   const yearsInBusiness = getYearsInBusiness(facility.year_established);
 
   // Map gender_served to display label
