@@ -378,13 +378,14 @@ const SearchResults = () => {
       });
     }
 
-    // Treatment filter from search form (supports comma-separated multi-select)
+    // Treatment filter from the hero search form. Supports comma-separated
+    // multi-select. Routed through the same matcher as the dropdown so
+    // `?treatment=inpatient` resolves the 44 facility_type='Residential
+    // Treatment Center' rows (previously zero-result).
     if (treatment) {
-      const treatmentValues = treatment.split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
+      const treatmentValues = treatment.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
       results = results.filter((c) =>
-        treatmentValues.some(tv => 
-          c.treatmentTypes.some((t) => t.toLowerCase() === tv || t.toLowerCase().includes(tv))
-        )
+        treatmentValues.some((tv) => matchesTreatmentFilter(asSearchableFacility(c), tv)),
       );
     }
 
@@ -395,13 +396,13 @@ const SearchResults = () => {
       );
     }
 
-    // Insurance filter from search form (supports comma-separated multi-select)
+    // Insurance filter from the hero search form. Same shared matcher as the
+    // dropdown so `?insurance=private-pay` recovers ~2,918 facilities the
+    // pre-2026-05-21 substring matcher silently excluded.
     if (insurance) {
-      const insuranceValues = insurance.split(",").map(i => i.trim().toLowerCase()).filter(Boolean);
+      const insuranceValues = insurance.split(",").map((i) => i.trim().toLowerCase()).filter(Boolean);
       results = results.filter((c) =>
-        insuranceValues.some(iv =>
-          c.insuranceAccepted.some((i) => i.toLowerCase().includes(iv))
-        )
+        insuranceValues.some((iv) => matchesInsuranceFilter(asSearchableFacility(c), iv)),
       );
     }
 

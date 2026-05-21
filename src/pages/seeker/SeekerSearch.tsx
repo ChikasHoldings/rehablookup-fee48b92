@@ -56,6 +56,13 @@ import {
 import { getPlanPriority } from "@/lib/facilityPlanSort";
 import { cn } from "@/lib/utils";
 import { getLocationSuggestions, formatLocationSuggestion, type LocationSuggestion } from "@/data/locationSuggestions";
+import {
+  TREATMENT_FILTERS,
+  INSURANCE_FILTERS,
+  matchesTreatmentFilter,
+  matchesInsuranceFilter,
+  asSearchableFacility,
+} from "@/lib/searchFilters";
 
 const SEARCH_PAGE_SIZE = 12;
 
@@ -97,33 +104,19 @@ const popularLocations = [
   { city: "Houston", state: "TX" },
 ];
 
-const treatmentTypeFilters = [
-  { value: "detox", label: "Detox" },
-  { value: "inpatient", label: "Inpatient" },
-  { value: "outpatient", label: "Outpatient" },
-  { value: "dual-diagnosis", label: "Dual Diagnosis" },
-  { value: "holistic", label: "Holistic" },
-];
+// Treatment + insurance options come from the canonical filter library so
+// the seeker workspace sees the same surface as the public /search-results
+// + /rehab-centers pages. The `bluecross` URL value is retained as a
+// legacy alias in src/lib/searchFilters.ts so saved seeker searches keep
+// working.
+const treatmentTypeFilters = TREATMENT_FILTERS.map((o) => ({ value: o.value, label: o.label }));
+const insuranceFilters = INSURANCE_FILTERS.map((o) => ({ value: o.value, label: o.label }));
 
 const facilityTypeFilters = [
   { value: "residential", label: "Residential" },
   { value: "outpatient-center", label: "Outpatient Center" },
   { value: "detox-center", label: "Detox Center" },
   { value: "sober-living", label: "Sober Living" },
-];
-
-const insuranceFilters = [
-  { value: "aetna", label: "Aetna" },
-  { value: "anthem", label: "Anthem" },
-  { value: "bluecross", label: "Blue Cross" },
-  { value: "cigna", label: "Cigna" },
-  { value: "humana", label: "Humana" },
-  { value: "kaiser", label: "Kaiser" },
-  { value: "magellan", label: "Magellan" },
-  { value: "medicaid", label: "Medicaid" },
-  { value: "medicare", label: "Medicare" },
-  { value: "tricare", label: "Tricare" },
-  { value: "united", label: "UnitedHealthcare" },
 ];
 
 const genderFilters = [
@@ -298,27 +291,31 @@ export default function SeekerSearch() {
     }
 
     if (selectedTreatmentTypes.length > 0) {
+      results = results.filter((f) =>
+        selectedTreatmentTypes.some((type) =>
+          matchesTreatmentFilter(asSearchableFacility(f), type),
+        ),
+      );
+    }
+
+    if (selectedFacilityTypes.length > 0) {
+      // facility_type is a separate dimension from clinical treatment — keep
+      // it on its own simple substring match. Whitespace folded so
+      // "outpatient-center" matches "Outpatient Program" etc.
       results = results.filter((f) => {
-        const facilityType = f.facilityType?.toLowerCase() || "";
-        const types = f.treatmentTypes?.map((t) => t.toLowerCase()) || [];
-        return selectedTreatmentTypes.some((type) =>
-          facilityType.includes(type) || types.some((t) => t.includes(type)),
+        const ft = (f.facilityType || "").toLowerCase().replace(/[\s-]+/g, "");
+        return selectedFacilityTypes.some((type) =>
+          ft.includes(type.toLowerCase().replace(/[\s-]+/g, "")),
         );
       });
     }
 
-    if (selectedFacilityTypes.length > 0) {
-      results = results.filter((f) => {
-        const facilityType = f.facilityType?.toLowerCase() || "";
-        return selectedFacilityTypes.some((type) => facilityType.includes(type));
-      });
-    }
-
     if (selectedInsurance.length > 0) {
-      results = results.filter((f) => {
-        const accepted = (f.insuranceAccepted || []).map((i) => i.toLowerCase());
-        return selectedInsurance.some((sel) => accepted.some((a) => a.includes(sel)));
-      });
+      results = results.filter((f) =>
+        selectedInsurance.some((sel) =>
+          matchesInsuranceFilter(asSearchableFacility(f), sel),
+        ),
+      );
     }
 
     if (selectedGenders.length > 0) {

@@ -180,6 +180,45 @@ describe("searchFilters — facet counts", () => {
   });
 });
 
+describe("searchFilters — label + alias resolution", () => {
+  // The hero SearchForm + sticky SearchResultsForm legacy-write human labels
+  // straight into URL params (e.g. ?treatment=Detox). The matcher must
+  // accept those without requiring every URL-writer to migrate.
+  it("matches treatment by display label 'Detox'", () => {
+    expect(matchesTreatmentFilter(make({ treatmentTypes: ["Detoxification"] }), "Detox")).toBe(true);
+  });
+
+  it("matches treatment by display label 'Inpatient' → routes to facility_type fallback", () => {
+    expect(matchesTreatmentFilter(make({ facilityType: "Residential Treatment Center" }), "Inpatient")).toBe(true);
+  });
+
+  it("matches treatment by mixed-case + extra spaces ('Dual Diagnosis')", () => {
+    expect(matchesTreatmentFilter(make({ treatmentTypes: ["Dual Diagnosis"] }), "Dual Diagnosis")).toBe(true);
+  });
+
+  it("matches insurance by display label 'Blue Cross Blue Shield'", () => {
+    expect(matchesInsuranceFilter(make({ insuranceAccepted: ["Blue Cross Blue Shield"] }), "Blue Cross Blue Shield")).toBe(true);
+  });
+
+  it("matches insurance alias 'bluecross' (legacy SeekerSearch URL)", () => {
+    expect(matchesInsuranceFilter(make({ insuranceAccepted: ["Blue Cross Blue Shield"] }), "bluecross")).toBe(true);
+  });
+
+  it("matches insurance alias 'UHC' / 'unitedhealthcare'", () => {
+    expect(matchesInsuranceFilter(make({ insuranceAccepted: ["UnitedHealthcare"] }), "UHC")).toBe(true);
+    expect(matchesInsuranceFilter(make({ insuranceAccepted: ["United Healthcare"] }), "unitedhealthcare")).toBe(true);
+  });
+
+  it("matches insurance by display label 'TRICARE'", () => {
+    expect(matchesInsuranceFilter(make({ insuranceAccepted: ["Tricare"] }), "TRICARE")).toBe(true);
+  });
+
+  it("returns false on a string that resolves to no filter", () => {
+    expect(matchesTreatmentFilter(make({ treatmentTypes: ["Detox"] }), "completely-fake-treatment")).toBe(false);
+    expect(matchesInsuranceFilter(make({ insuranceAccepted: ["Medicaid"] }), "fake-insurer")).toBe(false);
+  });
+});
+
 describe("searchFilters — canonical option lists", () => {
   it("has exactly one entry per documented treatment value", () => {
     const values = TREATMENT_FILTERS.map((o) => o.value);

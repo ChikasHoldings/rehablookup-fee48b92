@@ -20,36 +20,40 @@ export interface TreatmentCenter {
 // Production: No static mock data - all facilities come from the database
 export const treatmentCenters: TreatmentCenter[] = [];
 
+// Hero `SearchForm` dropdown options. Mirror the canonical TREATMENT_FILTERS
+// / INSURANCE_FILTERS labels in src/lib/searchFilters.ts so the values the
+// hero writes into the `?treatment=` / `?insurance=` URL params resolve
+// cleanly through `matchesTreatmentFilter` / `matchesInsuranceFilter` on
+// the receiving SearchResults page. The matcher is label- and alias-
+// tolerant so this list could in theory be free-text — keeping the labels
+// in sync just makes the URL deterministic.
 export const treatmentTypes = [
   "Detox",
-  "Inpatient",
+  "Inpatient / Residential",
   "Outpatient",
   "Dual Diagnosis",
-  "Residential Treatment",
-  "Partial Hospitalization (PHP)",
-  "Intensive Outpatient (IOP)",
+  "Holistic Therapy",
+  "Medication-Assisted (MAT)",
+  "Cognitive Behavioral (CBT)",
+  "Trauma Therapy",
+  "Aftercare / Continuing Care",
+  "12-Step Programs",
+  "Family Therapy",
 ];
 
 export const insuranceProviders = [
   "Aetna",
-  "Ambetter",
-  "Anthem",
   "Blue Cross Blue Shield",
-  "Carelon",
   "Cigna",
-  "Humana",
+  "United Healthcare",
   "Kaiser Permanente",
-  "Magellan",
+  "Humana",
+  "Anthem",
   "Medicare",
   "Medicaid",
-  "Molina Healthcare",
-  "MultiPlan",
-  "Oscar Health",
-  "Oxford",
-  "Tricare",
-  "United Healthcare",
-  "Self-Pay",
-  "Other",
+  "TRICARE",
+  "Self-Pay / Private Pay",
+  "Sliding Scale / Financial Assistance",
 ];
 
 export const usStates = [

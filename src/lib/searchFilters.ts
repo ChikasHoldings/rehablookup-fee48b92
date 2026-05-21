@@ -296,12 +296,67 @@ export const INSURANCE_FILTERS: readonly InsuranceFilterOption[] = [
  * filter value that has been collapsed into a broader canonical option.
  * Add entries here when a previously-public filter value is retired so
  * bookmarks and saved searches don't break.
+ *
+ * Many surfaces (hero `SearchForm`, sticky `SearchResultsForm`, the legacy
+ * inline forms) build URL params straight from human-readable labels
+ * ("Detox", "Inpatient", "Blue Cross Blue Shield"). Without aliasing,
+ * routing those through `matchesTreatmentFilter("inpatient")` works but
+ * `matchesTreatmentFilter("dual diagnosis")` fails. The label-lookup
+ * fallback in `resolveTreatmentFilterKey` covers that without forcing
+ * every form to migrate URL writers.
  */
 const TREATMENT_FILTER_ALIASES: Record<string, string> = {
   iop: "outpatient",
   php: "outpatient",
   "mental-health": "dual-diagnosis",
   residential: "inpatient",
+};
+
+const INSURANCE_FILTER_ALIASES: Record<string, string> = {
+  bluecross: "bcbs",
+  "blue-cross": "bcbs",
+  uhc: "united",
+  unitedhealthcare: "united",
+  "united-healthcare": "united",
+  vahealthcare: "tricare",
+  va: "tricare",
+};
+
+/** Normalizes any free-text key (canonical value, label, alias) → canonical
+ * TREATMENT_FILTERS value, or `null` if no match. Matching is whitespace +
+ * case insensitive so callers can pass "Dual Diagnosis", "dual-diagnosis",
+ * or "dualdiagnosis" interchangeably. */
+const resolveTreatmentFilterKey = (raw: string): string | null => {
+  if (!raw) return null;
+  const direct = raw.toLowerCase().trim();
+  if (TREATMENT_FILTERS.some((o) => o.value === direct)) return direct;
+  if (TREATMENT_FILTER_ALIASES[direct]) return TREATMENT_FILTER_ALIASES[direct];
+  const collapsed = normalize(raw);
+  for (const opt of TREATMENT_FILTERS) {
+    if (normalize(opt.value) === collapsed) return opt.value;
+    if (normalize(opt.label) === collapsed) return opt.value;
+  }
+  for (const [alias, target] of Object.entries(TREATMENT_FILTER_ALIASES)) {
+    if (normalize(alias) === collapsed) return target;
+  }
+  return null;
+};
+
+const resolveInsuranceFilterKey = (raw: string): string | null => {
+  if (!raw) return null;
+  const direct = raw.toLowerCase().trim();
+  if (INSURANCE_FILTERS.some((o) => o.value === direct)) return direct;
+  if (INSURANCE_FILTER_ALIASES[direct]) return INSURANCE_FILTER_ALIASES[direct];
+  const collapsed = normalize(raw);
+  for (const opt of INSURANCE_FILTERS) {
+    if (normalize(opt.value) === collapsed) return opt.value;
+    if (normalize(opt.label) === collapsed) return opt.value;
+    if (opt.matches.some((m) => normalize(m) === collapsed)) return opt.value;
+  }
+  for (const [alias, target] of Object.entries(INSURANCE_FILTER_ALIASES)) {
+    if (normalize(alias) === collapsed) return target;
+  }
+  return null;
 };
 
 /**
@@ -315,8 +370,9 @@ export function matchesTreatmentFilter(
   filterValue: string,
 ): boolean {
   if (!filterValue) return true;
-  const resolved = TREATMENT_FILTER_ALIASES[filterValue] ?? filterValue;
-  const opt = TREATMENT_FILTERS.find((o) => o.value === resolved);
+  const key = resolveTreatmentFilterKey(filterValue);
+  if (!key) return false;
+  const opt = TREATMENT_FILTERS.find((o) => o.value === key);
   if (!opt) return false;
 
   const services = (facility.treatmentTypes ?? []).map(normalize);
@@ -357,7 +413,9 @@ export function matchesInsuranceFilter(
   filterValue: string,
 ): boolean {
   if (!filterValue) return true;
-  const opt = INSURANCE_FILTERS.find((o) => o.value === filterValue);
+  const key = resolveInsuranceFilterKey(filterValue);
+  if (!key) return false;
+  const opt = INSURANCE_FILTERS.find((o) => o.value === key);
   if (!opt) return false;
 
   const data = (facility.insuranceAccepted ?? []).map(normalize);

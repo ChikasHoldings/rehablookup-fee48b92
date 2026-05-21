@@ -6,6 +6,11 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { costInsurancePages } from "@/data/seoPageConfig";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import {
+  matchesInsuranceFilter,
+  matchesTreatmentFilter,
+  asSearchableFacility,
+} from "@/lib/searchFilters";
 
 export default function CostInsurancePage() {
   const location = useLocation();
@@ -19,7 +24,18 @@ export default function CostInsurancePage() {
     if (config.filterKey) {
       const filterLower = config.filterKey.toLowerCase();
       return allFacilities
-        .filter((f) => f.insuranceAccepted?.some((i) => i.toLowerCase().includes(filterLower)) || f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower)))
+        .filter((f) => {
+          const sf = asSearchableFacility(f);
+          // Try canonical matchers first (handles aliasing + normalized
+          // whitespace) and only fall back to substring against treatment
+          // types for non-canonical filterKeys ("free", "scholarship", etc.).
+          if (matchesInsuranceFilter(sf, filterLower)) return true;
+          if (matchesTreatmentFilter(sf, filterLower)) return true;
+          return (
+            f.insuranceAccepted?.some((i) => i.toLowerCase().includes(filterLower)) ||
+            f.treatmentTypes?.some((t) => t.toLowerCase().includes(filterLower))
+          );
+        })
         .slice(0, 12);
     }
     return allFacilities

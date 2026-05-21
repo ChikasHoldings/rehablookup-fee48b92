@@ -238,6 +238,41 @@ but documented as inert until backfill lands. Tracked in §3.
 | F9-backfill | Populate `facility_reviews_config` for all 3,803 facilities via Google Places API | Same cost/integration scope as F13. |
 | F6-data | Backfill `Inpatient` rows into `facility_services` for the 44 residential facilities, plus richer service tagging across the catalog | Catalog-quality work. Tracked separately. |
 
+## §3.5 — Additional surfaces unified (Phase 2 follow-up)
+
+After the initial pass landed, a wider sweep found 7 more surfaces still
+running their own ad-hoc filter logic. All are now routed through the
+shared matcher.
+
+| Surface | File | Change |
+|---|---|---|
+| Hero URL params `?treatment=` / `?insurance=` | `src/pages/SearchResults.tsx` | inline `.includes()` chain → `matchesTreatmentFilter` / `matchesInsuranceFilter`. The hero form previously wrote display labels ("Detox", "Inpatient", "Blue Cross Blue Shield") that the receiving page couldn't fully resolve. |
+| Sticky refinement form | `src/components/search/SearchResultsForm.tsx` | inline option arrays → `TREATMENT_FILTERS` / `INSURANCE_FILTERS` imports. Sticky form now exposes the new MAT/CBT/Trauma/Aftercare/12-Step/Family + private-pay/sliding-scale options. |
+| Hero `SearchForm` dropdowns | `src/data/treatmentCenters.ts` | `treatmentTypes` and `insuranceProviders` static lists rewritten to mirror the canonical filter labels exactly. |
+| State / treatment-hub / city / near-me grids | `src/components/seo/StateFacilitiesSection.tsx` | Walks the canonical matcher first (so `treatmentFilter={["inpatient"]}` recovers the 44 residential facilities); falls back to a normalized substring search across services + facility_type + description for non-canonical keys like `"drug"`, `"opioid"`. |
+| Auth seeker workspace | `src/pages/seeker/SeekerSearch.tsx` | Local `treatmentTypeFilters` / `insuranceFilters` arrays replaced with imports from `searchFilters.ts`. Legacy `bluecross` URL value still resolves via the new `INSURANCE_FILTER_ALIASES`. Filter logic routed through shared matcher. |
+| Insurance landing pages | `src/pages/seo/CityInsurancePage.tsx`, `InsuranceStatePage.tsx`, `CountyInsurancePage.tsx` | Each replaced inline `i.toLowerCase().includes(insurerLower)` with `matchesInsuranceFilter(asSearchableFacility(f), insurer.name)`. |
+| Payment + cost insurance pages | `src/pages/seo/PaymentStatePage.tsx`, `CostInsurancePage.tsx` | Try canonical matcher first; preserve substring fallback for description-style keywords (`free`, `charity`, `scholarship`). |
+
+### Matcher additions
+- `INSURANCE_FILTER_ALIASES` now resolves legacy URL values: `bluecross` /
+  `blue-cross` → `bcbs`; `uhc` / `unitedhealthcare` / `united-healthcare`
+  → `united`; `va` / `vahealthcare` → `tricare`.
+- `resolveTreatmentFilterKey` / `resolveInsuranceFilterKey` accept the
+  canonical value, the display label, OR any alias — so URL writers that
+  pass labels ("Dual Diagnosis", "Blue Cross Blue Shield") all resolve to
+  the right canonical key without changing the URL surface.
+
+### Tests added
+8 more cases in `src/lib/__tests__/searchFilters.test.ts` lock the label +
+alias resolution:
+- Treatment by display label ("Detox", "Inpatient", "Dual Diagnosis")
+- Insurance by display label ("Blue Cross Blue Shield", "TRICARE")
+- Insurance aliases (`bluecross`, `UHC`, `unitedhealthcare`)
+- Unknown filter values still return false
+
+**Full suite: 197 tests pass (184 + 8 new + 5 pre-existing skipped).**
+
 ## §4 — Observability follow-ups
 
 - Add a `directory_zero_result_query` analytics event when the filtered

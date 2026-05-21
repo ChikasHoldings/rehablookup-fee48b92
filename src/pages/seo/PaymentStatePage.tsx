@@ -7,6 +7,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
+import { matchesInsuranceFilter, asSearchableFacility } from "@/lib/searchFilters";
 
 interface PaymentStateConfig {
   slug: string;
@@ -101,9 +102,18 @@ export default function PaymentStatePage({ paymentType }: PaymentStatePageProps)
 
     const matched = all.filter((f) => {
       const stateMatch = f.state.toLowerCase() === stateLower;
-      const keyMatch = f.insuranceAccepted?.some((i) => keywords.some((k) => i.toLowerCase().includes(k))) ||
-        f.treatmentTypes?.some((t) => keywords.some((k) => t.toLowerCase().includes(k)));
-      return stateMatch && keyMatch;
+      if (!stateMatch) return false;
+      // Try the canonical insurance matcher first — covers keywords like
+      // "private-pay" / "sliding-scale" with whitespace-folded aliasing.
+      const sf = asSearchableFacility(f);
+      const canonicalHit = keywords.some((k) => matchesInsuranceFilter(sf, k));
+      if (canonicalHit) return true;
+      // Fall back to the original substring sweep for non-canonical
+      // keywords like "free", "charity", "scholarship".
+      return (
+        f.insuranceAccepted?.some((i) => keywords.some((k) => i.toLowerCase().includes(k))) ||
+        f.treatmentTypes?.some((t) => keywords.some((k) => t.toLowerCase().includes(k)))
+      );
     });
 
     const stateAll = all.filter((f) => f.state.toLowerCase() === stateLower);
