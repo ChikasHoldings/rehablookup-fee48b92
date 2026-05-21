@@ -6,6 +6,11 @@ import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  TREATMENT_FILTERS,
+  matchesTreatmentFilter,
+  asSearchableFacility,
+} from "@/lib/searchFilters";
 
 interface StateFacilitiesSectionProps {
   stateName: string;
@@ -37,15 +42,39 @@ export function StateFacilitiesSection({
       (f) => f.state.toLowerCase() === stateLower
     );
 
-    // Optional treatment type filter
+    // Optional treatment type filter. Callers pass a mix of canonical filter
+    // values ("detox", "inpatient") and raw substring keywords ("IOP",
+    // "withdrawal", "opioid"). Test each entry against the canonical matcher
+    // first — that captures the services → facility_type → description
+    // fallback chain, so "inpatient" surfaces the 44 facility_type=
+    // 'Residential Treatment Center' rows that the old substring match
+    // missed. Unknown entries fall back to a normalized substring search
+    // across services + facility_type + description so condition/substance
+    // keywords (drug, opioid, etc.) keep working.
     if (treatmentFilter?.length) {
-      const filterLower = treatmentFilter.map((t) => t.toLowerCase());
+      const canonicalValues = new Set(TREATMENT_FILTERS.map((o) => o.value));
+      const matchEntry = (entry: string, f: typeof allFacilities[number]): boolean => {
+        const key = entry.toLowerCase().trim();
+        if (canonicalValues.has(key)) {
+          return matchesTreatmentFilter(asSearchableFacility(f), key);
+        }
+        const needle = key.replace(/\s+/g, "");
+        const haystack = [
+          ...(f.treatmentTypes ?? []),
+          f.facilityType ?? "",
+          f.description ?? "",
+        ]
+          .join(" ")
+          .toLowerCase()
+          .replace(/\s+/g, "");
+        return needle.length > 0 && haystack.includes(needle);
+      };
       const withMatch = filtered.filter((f) =>
-        f.treatmentTypes?.some((t) =>
-          filterLower.some((ft) => t.toLowerCase().includes(ft))
-        )
+        treatmentFilter.some((entry) => matchEntry(entry, f)),
       );
       // If filter yields results, use them; otherwise show all state facilities
+      // (preserves the existing "graceful degradation" UX so a niche
+      // city/treatment combo doesn't render an empty state).
       if (withMatch.length > 0) filtered = withMatch;
     }
 

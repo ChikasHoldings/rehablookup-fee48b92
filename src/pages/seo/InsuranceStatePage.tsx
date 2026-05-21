@@ -14,6 +14,7 @@ import {
 } from "@/data/seoInsuranceStateConfig";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage } from "@/utils/seoPageValidator";
+import { matchesInsuranceFilter, asSearchableFacility } from "@/lib/searchFilters";
 
 export default function InsuranceStatePage() {
   const { slug, stateSlug } = useParams<{ slug: string; stateSlug: string }>();
@@ -35,12 +36,12 @@ export default function InsuranceStatePage() {
     }
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
     const stateLower = stateConfig.state.toLowerCase();
-    const insurerLower = insurer.name.toLowerCase();
 
     const exactMatch = allFacilities.filter((f) => {
       const stateMatch = f.state.toLowerCase() === stateLower;
-      const insuranceMatch = f.insuranceAccepted?.some((i) =>
-        i.toLowerCase().includes(insurerLower)
+      const insuranceMatch = matchesInsuranceFilter(
+        asSearchableFacility(f),
+        insurer.name,
       );
       return stateMatch && insuranceMatch;
     });

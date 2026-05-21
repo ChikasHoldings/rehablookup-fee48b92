@@ -9,31 +9,16 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { TREATMENT_FILTERS, INSURANCE_FILTERS } from "@/lib/searchFilters";
 
-/**
- * Treatment options — values mirror the `treatmentTypes` URL-param values
- * already consumed by the SearchResults filter pipeline. Keep in sync.
- */
-const TREATMENT_OPTIONS = [
-  { value: "detox", label: "Detox" },
-  { value: "inpatient", label: "Inpatient" },
-  { value: "outpatient", label: "Outpatient" },
-  { value: "dual-diagnosis", label: "Dual Diagnosis" },
-  { value: "holistic", label: "Holistic" },
-] as const;
-
-const INSURANCE_OPTIONS = [
-  { value: "aetna", label: "Aetna" },
-  { value: "bcbs", label: "Blue Cross Blue Shield" },
-  { value: "cigna", label: "Cigna" },
-  { value: "united", label: "United Healthcare" },
-  { value: "kaiser", label: "Kaiser Permanente" },
-  { value: "humana", label: "Humana" },
-  { value: "anthem", label: "Anthem" },
-  { value: "medicare", label: "Medicare" },
-  { value: "medicaid", label: "Medicaid" },
-  { value: "tricare", label: "TRICARE" },
-] as const;
+// Treatment + insurance options come from the canonical filter library so
+// the sticky refinement form, the sidebar multi-select, and the
+// /rehab-centers browse dropdowns stay in lockstep. Adding a new option in
+// one place propagates everywhere; matchers in src/lib/searchFilters.ts
+// guarantee the URL values resolve to data regardless of cosmetic
+// whitespace / casing.
+const TREATMENT_OPTIONS = TREATMENT_FILTERS;
+const INSURANCE_OPTIONS = INSURANCE_FILTERS;
 
 const DISTANCE_OPTIONS = [
   { value: "10", label: "Within 10 miles" },

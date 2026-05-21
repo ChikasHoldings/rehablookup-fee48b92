@@ -10,6 +10,7 @@ import { getCountyBySlug } from "@/data/countySeoData";
 import { insurerConfigs } from "@/data/seoInsuranceStateConfig";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema, validatePage, getFacilityDensity } from "@/utils/seoPageValidator";
+import { matchesInsuranceFilter, asSearchableFacility } from "@/lib/searchFilters";
 
 export default function CountyInsurancePage() {
   const { slug, stateSlug, countySlug } = useParams<{
@@ -34,7 +35,9 @@ export default function CountyInsurancePage() {
     let filtered = allFacilities.filter((f) => {
       const stateMatch = f.state.toLowerCase() === stateNameLower || f.state.toLowerCase() === stateAbbrLower;
       const cityMatch = cityInList(f.city, countyData.majorCities);
-      const insuranceMatch = f.insuranceAccepted?.some((ins) => ins.toLowerCase().includes(insurerLower)) || f.description?.toLowerCase().includes(insurerLower);
+      const insuranceMatch =
+        matchesInsuranceFilter(asSearchableFacility(f), insurer.name) ||
+        f.description?.toLowerCase().includes(insurerLower);
       return stateMatch && cityMatch && insuranceMatch;
     });
 

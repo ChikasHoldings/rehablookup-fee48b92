@@ -75,6 +75,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { getPlanPriority } from "@/lib/facilityPlanSort";
 import { analytics } from "@/lib/analytics";
+import {
+  TREATMENT_FILTERS,
+  INSURANCE_FILTERS,
+  matchesTreatmentFilter,
+  matchesInsuranceFilter,
+  countTreatmentFacets,
+  countInsuranceFacets,
+  asSearchableFacility,
+} from "@/lib/searchFilters";
 
 // Restore user ID from localStorage to avoid getSession/getUser deadlocks
 function getStoredUserId(): string | null {
@@ -106,14 +115,9 @@ const sortOptions: { value: SortOption; label: string }[] = [
   { value: "name-desc", label: "Name (Z-A)" },
 ];
 
-// Treatment type filters with mappings to actual treatment types in data
-const treatmentTypeFilters = [
-  { value: "detox", label: "Detox", matches: ["Detox", "Detoxification"] },
-  { value: "inpatient", label: "Inpatient", matches: ["Inpatient", "Inpatient/Residential", "Residential"] },
-  { value: "outpatient", label: "Outpatient", matches: ["Outpatient", "Intensive Outpatient (IOP)", "Partial Hospitalization (PHP)"] },
-  { value: "dual-diagnosis", label: "Dual Diagnosis", matches: ["Dual Diagnosis"] },
-  { value: "holistic", label: "Holistic", matches: ["Holistic", "Holistic Therapy"] },
-];
+// Treatment + insurance filter options live in `src/lib/searchFilters.ts`
+// (shared with `RehabCenters.tsx`) so a change to a `matches` array only has
+// to happen in one place. Imported above as TREATMENT_FILTERS / INSURANCE_FILTERS.
 
 // Distance filters
 const distanceFilters = [
@@ -122,21 +126,6 @@ const distanceFilters = [
   { value: "50", label: "Within 50 miles" },
   { value: "100", label: "Within 100 miles" },
   { value: "any", label: "Any distance" },
-];
-
-// Insurance filters with logos
-const insuranceFilters = [
-  { value: "aetna", label: "Aetna", logo: "/insurance-logos/aetna.svg" },
-  { value: "bcbs", label: "Blue Cross Blue Shield", logo: "/insurance-logos/bcbs.svg" },
-  { value: "cigna", label: "Cigna", logo: "/insurance-logos/cigna.svg" },
-  { value: "united", label: "United Healthcare", logo: "/insurance-logos/united.svg" },
-  { value: "kaiser", label: "Kaiser Permanente", logo: "/insurance-logos/kaiser.svg" },
-  { value: "humana", label: "Humana", logo: "/insurance-logos/humana.svg" },
-  { value: "anthem", label: "Anthem", logo: "/insurance-logos/anthem.svg" },
-  { value: "medicare", label: "Medicare", logo: "/insurance-logos/medicare.svg" },
-  { value: "medicaid", label: "Medicaid", logo: "/insurance-logos/medicaid.svg" },
-  { value: "tricare", label: "TRICARE", logo: "/insurance-logos/tricare.svg" },
-  { value: "private-pay", label: "Self-Pay / Private Pay" },
 ];
 
 // Amenity filters
@@ -311,9 +300,14 @@ const SearchResults = () => {
     setSearchParams(newParams);
   }, [searchParams, setSearchParams]);
 
-  const { filteredCenters, isExpandedSearch } = useMemo(() => {
+  const { filteredCenters, isExpandedSearch, facetPool } = useMemo(() => {
     let results = [...allCenters];
     let expanded = false;
+    // Snapshot of the result set BEFORE treatment-multi and insurance-multi
+    // and amenities filters are applied. Facet counts are computed against
+    // this pool so toggling within a filter group doesn't suppress its
+    // own counts — selecting "Aetna" must not show "(0)" for "BCBS" etc.
+    let preMultiPool: typeof results = [];
 
     // Direct state filter from URL param (e.g. from near-me pages: ?state=FL)
     if (stateParam) {
@@ -384,13 +378,14 @@ const SearchResults = () => {
       });
     }
 
-    // Treatment filter from search form (supports comma-separated multi-select)
+    // Treatment filter from the hero search form. Supports comma-separated
+    // multi-select. Routed through the same matcher as the dropdown so
+    // `?treatment=inpatient` resolves the 44 facility_type='Residential
+    // Treatment Center' rows (previously zero-result).
     if (treatment) {
-      const treatmentValues = treatment.split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
+      const treatmentValues = treatment.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
       results = results.filter((c) =>
-        treatmentValues.some(tv => 
-          c.treatmentTypes.some((t) => t.toLowerCase() === tv || t.toLowerCase().includes(tv))
-        )
+        treatmentValues.some((tv) => matchesTreatmentFilter(asSearchableFacility(c), tv)),
       );
     }
 
@@ -401,43 +396,43 @@ const SearchResults = () => {
       );
     }
 
-    // Insurance filter from search form (supports comma-separated multi-select)
+    // Insurance filter from the hero search form. Same shared matcher as the
+    // dropdown so `?insurance=private-pay` recovers ~2,918 facilities the
+    // pre-2026-05-21 substring matcher silently excluded.
     if (insurance) {
-      const insuranceValues = insurance.split(",").map(i => i.trim().toLowerCase()).filter(Boolean);
+      const insuranceValues = insurance.split(",").map((i) => i.trim().toLowerCase()).filter(Boolean);
       results = results.filter((c) =>
-        insuranceValues.some(iv =>
-          c.insuranceAccepted.some((i) => i.toLowerCase().includes(iv))
-        )
+        insuranceValues.some((iv) => matchesInsuranceFilter(asSearchableFacility(c), iv)),
       );
     }
 
-    // Insurance Types dropdown filters
+    // Capture the pool BEFORE the multi-select treatment / insurance /
+    // amenities filters apply. Facet counts read from here so the user can
+    // freely toggle within a group without each option self-suppressing.
+    preMultiPool = results;
+
+    // Insurance Types dropdown filters — shared matcher folds case + internal
+    // whitespace and walks the alias list in src/lib/searchFilters.ts so e.g.
+    // `private-pay` matches "Self-Pay/Private Pay" (no spaces) which the
+    // production catalog actually contains.
     if (selectedInsuranceTypes.length > 0) {
-      results = results.filter((center) => {
-        return selectedInsuranceTypes.some(filterValue => {
-          const filterConfig = insuranceFilters.find(f => f.value === filterValue);
-          if (!filterConfig) return false;
-          return center.insuranceAccepted.some(ins => 
-            ins.toLowerCase().includes(filterConfig.label.toLowerCase()) ||
-            ins.toLowerCase().includes(filterValue.toLowerCase())
-          );
-        });
-      });
+      results = results.filter((center) =>
+        selectedInsuranceTypes.some((filterValue) =>
+          matchesInsuranceFilter(asSearchableFacility(center), filterValue),
+        ),
+      );
     }
 
-    // Treatment Type dropdown filters
+    // Treatment Type dropdown filters — shared matcher walks services →
+    // facility_type → description so `inpatient` (zero rows in
+    // facility_services) still resolves the 44 facilities tagged
+    // `facility_type='Residential Treatment Center'`.
     if (selectedTreatmentTypes.length > 0) {
-      results = results.filter((center) => {
-        return selectedTreatmentTypes.some(filterValue => {
-          const filterConfig = treatmentTypeFilters.find(f => f.value === filterValue);
-          if (!filterConfig) return false;
-          return center.treatmentTypes.some(tt => 
-            filterConfig.matches.some(match => 
-              tt.toLowerCase().includes(match.toLowerCase())
-            )
-          );
-        });
-      });
+      results = results.filter((center) =>
+        selectedTreatmentTypes.some((filterValue) =>
+          matchesTreatmentFilter(asSearchableFacility(center), filterValue),
+        ),
+      );
     }
 
     // Amenity filters — match against description + treatment types + facility type
@@ -594,7 +589,7 @@ const SearchResults = () => {
       });
     }
 
-    return { filteredCenters: results, isExpandedSearch: expanded };
+    return { filteredCenters: results, isExpandedSearch: expanded, facetPool: preMultiPool };
   }, [allCenters, location, effectiveLocation, treatment, insurance, type, stateParam, queryParam, sortParam, selectedTreatmentTypes, selectedAmenities, selectedInsuranceTypes, selectedDistance, verifiedOnly, featuredOnly, resolvedZipData, typeFilterMap]);
 
   const hasFilters = location || treatment || insurance || type || stateParam || queryParam || selectedTreatmentTypes.length > 0 || selectedAmenities.length > 0 || selectedInsuranceTypes.length > 0 || selectedDistance || verifiedOnly || featuredOnly;
@@ -603,11 +598,32 @@ const SearchResults = () => {
   // Count active filters
   const activeFiltersCount = selectedTreatmentTypes.length + selectedAmenities.length + selectedInsuranceTypes.length + (selectedDistance ? 1 : 0) + (verifiedOnly ? 1 : 0) + (featuredOnly ? 1 : 0);
 
-  const totalPages = Math.ceil(filteredCenters.length / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(filteredCenters.length / ITEMS_PER_PAGE));
+  // F11 clamp: ?page=99 against a 6-page result set previously rendered an
+  // empty grid; now we slice from the last available page instead.
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const paginatedCenters = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const start = (safePage - 1) * ITEMS_PER_PAGE;
     return filteredCenters.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredCenters, currentPage]);
+  }, [filteredCenters, safePage]);
+
+  // Facet counts — read from `facetPool`, which is the result set narrowed
+  // by location/state/query/type/distance/verified/featured but BEFORE the
+  // multi-select treatment + insurance + amenities filters apply. That way
+  // toggling within those groups doesn't suppress the group's own counts,
+  // while still reflecting the user's location/query context.
+  const facetSourceFacilities = useMemo(
+    () => facetPool.map(asSearchableFacility),
+    [facetPool],
+  );
+  const treatmentFacets = useMemo(
+    () => countTreatmentFacets(facetSourceFacilities),
+    [facetSourceFacilities],
+  );
+  const insuranceFacets = useMemo(
+    () => countInsuranceFacets(facetSourceFacilities),
+    [facetSourceFacilities],
+  );
 
   const handlePageChange = (page: number) => {
     const newParams = new URLSearchParams(searchParams);
@@ -893,7 +909,11 @@ const SearchResults = () => {
         </Select>
       </div>
 
-      {/* Treatment Type — single-select dropdown */}
+      {/* Treatment Type — single-select dropdown. Options come from
+          src/lib/searchFilters.ts; facet badge shows how many facilities
+          match each option against the current location/state/query filters
+          so users can see "(N)" before clicking and avoid zero-result dead
+          ends. */}
       <FilterSection id="treatment" icon={<Building2 className="h-3.5 w-3.5" />} label="Treatment Type" count={selectedTreatmentTypes.length}>
         <Select
           value={selectedTreatmentTypes[0] ?? "any"}
@@ -906,11 +926,22 @@ const SearchResults = () => {
             <SelectItem value="any" className="text-sm cursor-pointer">
               Any treatment type
             </SelectItem>
-            {treatmentTypeFilters.map((filter) => (
-              <SelectItem key={filter.value} value={filter.value} className="text-sm cursor-pointer">
-                {filter.label}
-              </SelectItem>
-            ))}
+            {TREATMENT_FILTERS.map((filter) => {
+              const count = treatmentFacets[filter.value] ?? 0;
+              return (
+                <SelectItem
+                  key={filter.value}
+                  value={filter.value}
+                  className="text-sm cursor-pointer"
+                  disabled={count === 0}
+                >
+                  <span className="flex items-center gap-2">
+                    <span>{filter.label}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">({count})</span>
+                  </span>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </FilterSection>
@@ -939,19 +970,31 @@ const SearchResults = () => {
       </FilterSection>
 
       {/* Insurance — multi-select toggle buttons (mirrors Amenities pattern).
-          Persists via the `insuranceTypes` URL param (comma-separated). */}
+          Persists via the `insuranceTypes` URL param (comma-separated).
+          Facet counts surface up-front so users see e.g. "Medicaid (2,759)" vs
+          "Aetna (2)" before they click. Options with zero matches are
+          disabled to prevent dead-end interactions. */}
       <FilterSection id="insurance" icon={<Shield className="h-3.5 w-3.5" />} label="Insurance" count={selectedInsuranceTypes.length}>
         <div className="space-y-1.5">
-          {insuranceFilters.map((filter) => {
+          {INSURANCE_FILTERS.map((filter) => {
             const active = selectedInsuranceTypes.includes(filter.value);
+            const count = insuranceFacets[filter.value] ?? 0;
+            const disabled = count === 0 && !active;
             return (
               <button
                 key={filter.value}
-                onClick={() => toggleFilter("insuranceTypes", filter.value, selectedInsuranceTypes)}
+                onClick={() => {
+                  if (disabled) return;
+                  toggleFilter("insuranceTypes", filter.value, selectedInsuranceTypes);
+                }}
                 aria-pressed={active}
+                aria-disabled={disabled}
+                disabled={disabled}
                 className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
                   active
                     ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                    : disabled
+                    ? "text-muted-foreground/50 border border-transparent cursor-not-allowed"
                     : "text-foreground hover:bg-secondary/60 border border-transparent"
                 }`}
               >
@@ -969,7 +1012,10 @@ const SearchResults = () => {
                   )}
                   <span className="truncate">{filter.label}</span>
                 </span>
-                {active && <X className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
+                <span className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs text-muted-foreground tabular-nums">({count.toLocaleString()})</span>
+                  {active && <X className="h-3.5 w-3.5" aria-hidden="true" />}
+                </span>
               </button>
             );
           })}
@@ -1408,7 +1454,7 @@ const SearchResults = () => {
                           Search Results
                         </h2>
                         <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/20 tabular-nums">
-                          {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredCenters.length)} of {filteredCenters.length}
+                          {(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, filteredCenters.length)} of {filteredCenters.length}
                         </span>
                       </div>
                       {(location || effectiveLocation) && (
@@ -1450,7 +1496,7 @@ const SearchResults = () => {
 
                   {/* Pagination */}
                   <DataPagination
-                    currentPage={currentPage}
+                    currentPage={safePage}
                     totalPages={totalPages}
                     onPageChange={handlePageChange}
                     className="mt-10 justify-center"

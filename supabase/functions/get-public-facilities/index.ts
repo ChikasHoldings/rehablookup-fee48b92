@@ -5,10 +5,15 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  // Browser cache 5 min, CDN cache 10 min, serve stale up to 1 hour while revalidating in background.
-  // stale-while-revalidate absorbs traffic spikes by letting the CDN serve cached responses
-  // even after they expire, while it refreshes in the background — zero user-facing latency.
-  "Cache-Control": "public, max-age=300, s-maxage=600, stale-while-revalidate=3600",
+  // Browser cache 1 min, CDN cache 2 min, serve stale up to 1 hour while
+  // revalidating in background. The tight s-maxage bounds the worst-case
+  // staleness for newly approved facilities to ~2 min for first-time
+  // visitors hitting the CDN; active sessions are refreshed via the
+  // realtime invalidation hook in useStaticFacilities (instant), and
+  // stale-while-revalidate keeps response latency low even on cache miss.
+  // Pre-2026-05-21 this was max-age=300/s-maxage=600 (10-min CDN), which
+  // meant admin-approved facilities took up to 10 min to appear in search.
+  "Cache-Control": "public, max-age=60, s-maxage=120, stale-while-revalidate=3600",
 };
 
 const logStep = (step: string, details?: unknown) => {
@@ -29,7 +34,14 @@ Deno.serve(async (req) => {
     // Missing env vars throw inside the helper with a clear message.
     const supabase = createServiceClient();
 
-    // Fetch all approved facilities with public data only
+    // Fetch all approved facilities with public-safe columns. Field set
+    // intentionally tracks the consumers in src/hooks/useStaticFacilities.ts
+    // and the search/sort pipeline in src/pages/SearchResults.tsx — adding a
+    // field downstream without surfacing it here was the root cause of
+    // several "sort silently does nothing" bugs (see docs/search-audit-
+    // 2026-05-21.md §3). Pro-gated fields (phone/email/website) are masked
+    // to null by the `public_facilities` view for non-Pro facilities; we
+    // pass them through unchanged.
     const { data: facilitiesData, error: facilitiesError } = await supabase
       .from("public_facilities")
       .select(`
@@ -41,13 +53,29 @@ Deno.serve(async (req) => {
         zip_code,
         address,
         phone,
+        email,
+        website,
         description,
         featured,
+        featured_pinned,
         verified,
         facility_type,
+        bed_count,
+        gender_served,
         logo_url,
         gallery_urls,
-        year_established
+        year_established,
+        calculated_ranking_score,
+        listing_completeness_score,
+        response_rate_score,
+        accepts_international_patients,
+        hours_of_operation,
+        languages_spoken,
+        accessibility_features,
+        accepting_admissions,
+        is_claimed,
+        is_pro,
+        data_source
       `);
 
     if (facilitiesError) {
@@ -105,13 +133,29 @@ Deno.serve(async (req) => {
         zipCode: f.zip_code,
         address: f.address,
         phone: f.phone,
+        email: f.email,
+        website: f.website,
         description: f.description || "",
         featured: f.featured || false,
+        featuredPinned: f.featured_pinned || false,
         verified: f.verified || false,
         facilityType: f.facility_type,
+        bedCount: f.bed_count,
+        genderServed: f.gender_served,
         logoUrl: f.logo_url,
         galleryUrls: f.gallery_urls || [],
         yearEstablished: f.year_established,
+        calculatedRankingScore: f.calculated_ranking_score ?? 0,
+        listingCompletenessScore: f.listing_completeness_score ?? 0,
+        responseRateScore: f.response_rate_score ?? 0,
+        acceptsInternationalPatients: f.accepts_international_patients ?? false,
+        hoursOfOperation: f.hours_of_operation,
+        languagesSpoken: f.languages_spoken || [],
+        accessibilityFeatures: f.accessibility_features || [],
+        acceptingAdmissions: f.accepting_admissions,
+        isClaimed: f.is_claimed || false,
+        isPro: f.is_pro || false,
+        dataSource: f.data_source,
         treatmentTypes: servicesMap.get(f.id) || [],
         insuranceAccepted: insuranceMap.get(f.id) || [],
       }));

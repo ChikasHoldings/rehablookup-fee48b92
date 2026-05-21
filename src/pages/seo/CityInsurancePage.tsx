@@ -12,6 +12,7 @@ import {
   stateInsuranceConfigs,
 } from "@/data/seoInsuranceStateConfig";
 import { statesData } from "@/data/locationSeoData";
+import { matchesInsuranceFilter, asSearchableFacility } from "@/lib/searchFilters";
 
 export default function CityInsurancePage() {
   const { insurerSlug, stateSlug, citySlug } = useParams<{
@@ -38,14 +39,20 @@ export default function CityInsurancePage() {
     if (!insurer || !stateConfig || !cityName) return [];
     const allFacilities = [...treatmentCenters, ...approvedFacilities];
     const stateLower = stateConfig.state.toLowerCase();
-    const insurerLower = insurer.name.toLowerCase();
+
+    // Use the shared insurance matcher (normalized + alias-aware). The
+    // matcher resolves the insurer name to its canonical filter key so
+    // "Self-Pay / Private Pay" lands on facilities tagged "Self-Pay/Private
+    // Pay" (no spaces) — the inline `.includes()` here previously dropped
+    // those silently. See docs/search-audit-2026-05-21.md §F1.
+    const insMatch = (f: typeof allFacilities[number]) =>
+      matchesInsuranceFilter(asSearchableFacility(f), insurer.name);
 
     // City + insurer match
     const exact = allFacilities.filter((f) => {
       const cityMatch = citiesMatch(f.city, cityName);
       const stateMatch = f.state.toLowerCase() === stateLower;
-      const insMatch = f.insuranceAccepted?.some((i) => i.toLowerCase().includes(insurerLower));
-      return cityMatch && stateMatch && insMatch;
+      return cityMatch && stateMatch && insMatch(f);
     });
 
     if (exact.length >= 3) return exact.slice(0, 12);
@@ -61,11 +68,7 @@ export default function CityInsurancePage() {
 
     // Fallback: state + insurer
     return allFacilities
-      .filter((f) => {
-        const stateMatch = f.state.toLowerCase() === stateLower;
-        const insMatch = f.insuranceAccepted?.some((i) => i.toLowerCase().includes(insurerLower));
-        return stateMatch && insMatch;
-      })
+      .filter((f) => f.state.toLowerCase() === stateLower && insMatch(f))
       .slice(0, 12);
   }, [approvedFacilities, insurer, stateConfig, cityName]);
 

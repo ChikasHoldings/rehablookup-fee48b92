@@ -48,61 +48,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  InternalLinkingSection, 
-  nearMeLinks, 
-  insuranceLinks, 
-  resourceLinks 
+import {
+  InternalLinkingSection,
+  nearMeLinks,
+  insuranceLinks,
+  resourceLinks
 } from "@/components/seo/InternalLinkingSection";
+import {
+  TREATMENT_FILTERS,
+  INSURANCE_FILTERS,
+  matchesTreatmentFilter,
+  matchesInsuranceFilter,
+  countTreatmentFacets,
+  countInsuranceFacets,
+  asSearchableFacility,
+  type SearchableFacility,
+} from "@/lib/searchFilters";
 
-// Browse panel options — labels are user-facing, values feed URL params and
-// are matched (case-insensitive substring) against center.treatmentTypes
-// and center.insuranceAccepted. Keep the option set tight so the dropdowns
-// stay scannable; rare options live in the deeper /search-results filter.
-const BROWSE_TREATMENTS = [
-  { value: "detox", label: "Detox" },
-  { value: "inpatient", label: "Inpatient / Residential" },
-  { value: "outpatient", label: "Outpatient" },
-  { value: "iop", label: "Intensive Outpatient (IOP)" },
-  { value: "php", label: "Partial Hospitalization (PHP)" },
-  { value: "dual-diagnosis", label: "Dual Diagnosis" },
-  { value: "mental-health", label: "Mental Health" },
-  { value: "holistic", label: "Holistic Therapy" },
-] as const;
+// Browse panel options live in src/lib/searchFilters.ts. We surface the same
+// canonical set as /search-results so a saved filter or shareable link works
+// identically on both surfaces.
+//
+// Pre-2026-05-21 these arrays lived inline with subtly different matching
+// rules — most notably, the inline matcher could not bridge the whitespace
+// gap between filter label "Self-Pay / Private Pay" and catalog value
+// "Self-Pay/Private Pay" (silently excluding ~2,918 facilities). The shared
+// matcher folds case + internal whitespace before testing.
+const BROWSE_TREATMENTS = TREATMENT_FILTERS;
+const BROWSE_INSURERS = INSURANCE_FILTERS;
 
-const BROWSE_INSURERS = [
-  { value: "aetna", label: "Aetna" },
-  { value: "anthem", label: "Anthem" },
-  { value: "bcbs", label: "Blue Cross Blue Shield" },
-  { value: "cigna", label: "Cigna" },
-  { value: "humana", label: "Humana" },
-  { value: "kaiser", label: "Kaiser Permanente" },
-  { value: "united", label: "United Healthcare" },
-  { value: "medicare", label: "Medicare" },
-  { value: "medicaid", label: "Medicaid" },
-  { value: "tricare", label: "TRICARE" },
-] as const;
-
-// Match URL filter values against the free-text strings stored on each center.
-// We compare against label AND value so e.g. "bcbs" matches "Blue Cross Blue Shield".
-function matchesTreatment(center: any, value: string): boolean {
-  if (!value) return true;
-  const opt = BROWSE_TREATMENTS.find((o) => o.value === value);
-  const needles = [value, opt?.label].filter(Boolean).map((s) => String(s).toLowerCase());
-  return (center.treatmentTypes ?? []).some((t: string) => {
-    const lt = t.toLowerCase();
-    return needles.some((n) => lt.includes(n) || n.includes(lt));
-  });
+function matchesTreatment(center: SearchableFacility & { facilityType?: string | null }, value: string): boolean {
+  return matchesTreatmentFilter(center, value);
 }
 
-function matchesInsurance(center: any, value: string): boolean {
-  if (!value) return true;
-  const opt = BROWSE_INSURERS.find((o) => o.value === value);
-  const needles = [value, opt?.label].filter(Boolean).map((s) => String(s).toLowerCase());
-  return (center.insuranceAccepted ?? []).some((i: string) => {
-    const li = i.toLowerCase();
-    return needles.some((n) => li.includes(n) || n.includes(li));
-  });
+function matchesInsurance(center: SearchableFacility, value: string): boolean {
+  return matchesInsuranceFilter(center, value);
 }
 
 const BROWSE_PAGE_SIZE = 12;
@@ -167,6 +147,28 @@ const RehabCenters = () => {
       (c) => matchesTreatment(c, browseTreatment) && matchesInsurance(c, browseInsurance),
     );
   }, [sorted, browseTreatment, browseInsurance]);
+
+  // Facet counts power the "(N)" badges next to each dropdown option, so
+  // users can see which filter values have results before clicking. Counted
+  // against the *other* filter's selection so each dropdown shows
+  // "given the current insurance selection, how many facilities match
+  // each treatment" and vice versa — never self-suppressing.
+  const treatmentFacetSource = useMemo(
+    () => sorted.filter((c) => matchesInsurance(c, browseInsurance)).map(asSearchableFacility),
+    [sorted, browseInsurance],
+  );
+  const insuranceFacetSource = useMemo(
+    () => sorted.filter((c) => matchesTreatment(c, browseTreatment)).map(asSearchableFacility),
+    [sorted, browseTreatment],
+  );
+  const treatmentFacets = useMemo(
+    () => countTreatmentFacets(treatmentFacetSource),
+    [treatmentFacetSource],
+  );
+  const insuranceFacets = useMemo(
+    () => countInsuranceFacets(insuranceFacetSource),
+    [insuranceFacetSource],
+  );
 
   const browseTotalPages = Math.max(1, Math.ceil(browseFiltered.length / BROWSE_PAGE_SIZE));
   const browseSafePage = Math.min(browsePage, browseTotalPages);
@@ -656,11 +658,22 @@ const RehabCenters = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border shadow-lg max-h-72">
                   <SelectItem value="any" className="text-sm">Any treatment type</SelectItem>
-                  {BROWSE_TREATMENTS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-sm">
-                      {opt.label}
-                    </SelectItem>
-                  ))}
+                  {BROWSE_TREATMENTS.map((opt) => {
+                    const count = treatmentFacets[opt.value] ?? 0;
+                    return (
+                      <SelectItem
+                        key={opt.value}
+                        value={opt.value}
+                        className="text-sm"
+                        disabled={count === 0 && browseTreatment !== opt.value}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>{opt.label}</span>
+                          <span className="text-xs text-muted-foreground tabular-nums">({count.toLocaleString()})</span>
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -678,11 +691,22 @@ const RehabCenters = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border shadow-lg max-h-72">
                   <SelectItem value="any" className="text-sm">Any insurance</SelectItem>
-                  {BROWSE_INSURERS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-sm">
-                      {opt.label}
-                    </SelectItem>
-                  ))}
+                  {BROWSE_INSURERS.map((opt) => {
+                    const count = insuranceFacets[opt.value] ?? 0;
+                    return (
+                      <SelectItem
+                        key={opt.value}
+                        value={opt.value}
+                        className="text-sm"
+                        disabled={count === 0 && browseInsurance !== opt.value}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>{opt.label}</span>
+                          <span className="text-xs text-muted-foreground tabular-nums">({count.toLocaleString()})</span>
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
