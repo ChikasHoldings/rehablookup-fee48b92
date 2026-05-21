@@ -198,9 +198,14 @@ export function useSeekerNotifications() {
 
       await fetchNotifications();
 
-      // Subscribe to realtime updates filtered by user_id
+      // Subscribe to realtime updates filtered by user_id. Channel name
+      // is per-mount-instance + user_id so the SeekerHeader bell and the
+      // /account/notifications page can both subscribe without Supabase
+      // Realtime treating them as the same topic and dropping events.
+      // The window-scoped side-effect dedup (recordSideEffect) prevents
+      // duplicate toasts when both subscriptions deliver the same row.
       channel = supabase
-        .channel("seeker-notifications-realtime")
+        .channel(`seeker-notifications-realtime-${uid}-${Math.random().toString(36).slice(2, 8)}`)
         .on(
           "postgres_changes",
           {
