@@ -29,7 +29,14 @@ Deno.serve(async (req) => {
     // Missing env vars throw inside the helper with a clear message.
     const supabase = createServiceClient();
 
-    // Fetch all approved facilities with public data only
+    // Fetch all approved facilities with public-safe columns. Field set
+    // intentionally tracks the consumers in src/hooks/useStaticFacilities.ts
+    // and the search/sort pipeline in src/pages/SearchResults.tsx — adding a
+    // field downstream without surfacing it here was the root cause of
+    // several "sort silently does nothing" bugs (see docs/search-audit-
+    // 2026-05-21.md §3). Pro-gated fields (phone/email/website) are masked
+    // to null by the `public_facilities` view for non-Pro facilities; we
+    // pass them through unchanged.
     const { data: facilitiesData, error: facilitiesError } = await supabase
       .from("public_facilities")
       .select(`
@@ -41,13 +48,29 @@ Deno.serve(async (req) => {
         zip_code,
         address,
         phone,
+        email,
+        website,
         description,
         featured,
+        featured_pinned,
         verified,
         facility_type,
+        bed_count,
+        gender_served,
         logo_url,
         gallery_urls,
-        year_established
+        year_established,
+        calculated_ranking_score,
+        listing_completeness_score,
+        response_rate_score,
+        accepts_international_patients,
+        hours_of_operation,
+        languages_spoken,
+        accessibility_features,
+        accepting_admissions,
+        is_claimed,
+        is_pro,
+        data_source
       `);
 
     if (facilitiesError) {
@@ -105,13 +128,29 @@ Deno.serve(async (req) => {
         zipCode: f.zip_code,
         address: f.address,
         phone: f.phone,
+        email: f.email,
+        website: f.website,
         description: f.description || "",
         featured: f.featured || false,
+        featuredPinned: f.featured_pinned || false,
         verified: f.verified || false,
         facilityType: f.facility_type,
+        bedCount: f.bed_count,
+        genderServed: f.gender_served,
         logoUrl: f.logo_url,
         galleryUrls: f.gallery_urls || [],
         yearEstablished: f.year_established,
+        calculatedRankingScore: f.calculated_ranking_score ?? 0,
+        listingCompletenessScore: f.listing_completeness_score ?? 0,
+        responseRateScore: f.response_rate_score ?? 0,
+        acceptsInternationalPatients: f.accepts_international_patients ?? false,
+        hoursOfOperation: f.hours_of_operation,
+        languagesSpoken: f.languages_spoken || [],
+        accessibilityFeatures: f.accessibility_features || [],
+        acceptingAdmissions: f.accepting_admissions,
+        isClaimed: f.is_claimed || false,
+        isPro: f.is_pro || false,
+        dataSource: f.data_source,
         treatmentTypes: servicesMap.get(f.id) || [],
         insuranceAccepted: insuranceMap.get(f.id) || [],
       }));
