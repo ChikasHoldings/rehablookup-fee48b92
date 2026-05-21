@@ -162,6 +162,8 @@ export function useProviderData(facilityId?: string) {
             .select("id", { count: "exact", head: true })
             .eq("facility_id", facilityData.id)
             .eq("event_type", "profile_view")
+            .eq("is_internal", false)
+            .eq("is_bot", false)
             .gte("created_at", thirtyDaysAgo.toISOString()),
           // Accurate leads count via SECURITY DEFINER RPC so the count
           // reflects all rows owned by the facility regardless of view-

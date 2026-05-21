@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
+import { gaFacilityView, gaFacilityContact } from "@/lib/ga";
 import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
@@ -320,12 +321,44 @@ export default function SeekerFacilityProfile() {
 
   const { trackProfileView, trackClickToCall, trackWebsiteClick } = useProviderEventTracking();
 
+  /**
+   * Dual-sink interaction tracker: writes to provider_events (admin
+   * dashboard / billing) AND fires a GA4 facility_contact custom event
+   * with facility identity dimensions. Use this in onClick handlers
+   * instead of calling trackClickToCall / trackWebsiteClick directly so
+   * the two streams stay in sync.
+   */
+  const handleFacilityContact = useCallback((method: "call" | "website" | "directions") => {
+    if (!facility?.id) return;
+    if (method === "call") trackClickToCall(facility.id, "profile");
+    else if (method === "website") trackWebsiteClick(facility.id, "profile");
+    gaFacilityContact({
+      facility_id: facility.id,
+      method,
+      facility_slug: facility.slug ?? null,
+      facility_state: facility.state ?? null,
+    });
+  }, [facility?.id, facility?.slug, facility?.state, trackClickToCall, trackWebsiteClick]);
+
   useEffect(() => {
     if (facility?.id) {
-      // Track profile view in provider_events (single source of truth)
+      // provider_events (admin dashboard) — seeker-panel views still count
+      // toward provider engagement KPIs because the click intent is the
+      // same as on the public profile.
       trackProfileView(facility.id);
+      // GA4 facility_view with surface=seeker_panel so reports can
+      // distinguish authenticated seeker browsing from public traffic.
+      gaFacilityView({
+        facility_id: facility.id,
+        facility_slug: facility.slug ?? null,
+        facility_name: facility.name ?? null,
+        facility_state: facility.state ?? null,
+        facility_city: facility.city ?? null,
+        facility_type: (facility as { facilityType?: string | null })?.facilityType ?? null,
+        surface: "seeker_panel",
+      });
     }
-  }, [facility?.id, trackProfileView]);
+  }, [facility?.id, facility?.slug, facility?.name, facility?.state, facility?.city, trackProfileView]);
 
   const handleFavoriteClick = useCallback(() => {
     if (facility?.id) {
@@ -775,7 +808,7 @@ export default function SeekerFacilityProfile() {
                       href={facility.website} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      onClick={() => facility?.id && trackWebsiteClick(facility.id, "profile")}
+                      onClick={() => handleFacilityContact("website")}
                       className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors py-2"
                     >
                       <Globe className="h-4 w-4" />
@@ -842,7 +875,7 @@ export default function SeekerFacilityProfile() {
                     {showContactDetails && facility.phone ? (
                       <a
                         href={`tel:${facility.phone}`}
-                        onClick={() => facility?.id && trackClickToCall(facility.id, "profile")}
+                        onClick={() => handleFacilityContact("call")}
                         className="flex items-start gap-3 -mx-2 px-2 py-1 rounded hover:bg-muted/50 transition-colors group"
                       >
                         <Phone className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -875,7 +908,7 @@ export default function SeekerFacilityProfile() {
                         href={facility.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => facility?.id && trackWebsiteClick(facility.id, "profile")}
+                        onClick={() => handleFacilityContact("website")}
                         className="flex items-start gap-3 -mx-2 px-2 py-1 rounded hover:bg-muted/50 transition-colors group"
                       >
                         <Globe className="h-4 w-4 text-violet-600 shrink-0 mt-0.5" />

@@ -65,10 +65,10 @@ export function ProviderOverviewTab({
     queryFn: async () => {
       const counts = { impressions: 0, profile_views: 0, click_to_call: 0, website_clicks: 0 };
       const [impressions, views, calls, clicks] = await Promise.all([
-        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "listing_impression"),
-        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "profile_view"),
-        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "click_to_call"),
-        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "website_click"),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "listing_impression").eq("is_internal", false).eq("is_bot", false),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "profile_view").eq("is_internal", false).eq("is_bot", false),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "click_to_call").eq("is_internal", false).eq("is_bot", false),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).in("facility_id", facilityIds).eq("event_type", "website_click").eq("is_internal", false).eq("is_bot", false),
       ]);
       counts.impressions = impressions.count || 0;
       counts.profile_views = views.count || 0;

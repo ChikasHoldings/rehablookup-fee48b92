@@ -516,8 +516,8 @@ export default function AdminSettings() {
           // combines them into one table with an extra `category` column
           // so the interactions data is no longer silently dropped.
           const [viewsResult, interactionsResult] = await Promise.all([
-            supabase.from("provider_events").select("facility_id, event_type, created_at").in("event_type", ["profile_view", "listing_impression"]).order("created_at", { ascending: false }).limit(1000),
-            supabase.from("provider_events").select("facility_id, event_type, created_at").in("event_type", ["click_to_call", "website_click"]).order("created_at", { ascending: false }).limit(1000),
+            supabase.from("provider_events").select("facility_id, event_type, created_at").in("event_type", ["profile_view", "listing_impression"]).eq("is_internal", false).eq("is_bot", false).order("created_at", { ascending: false }).limit(1000),
+            supabase.from("provider_events").select("facility_id, event_type, created_at").in("event_type", ["click_to_call", "website_click"]).eq("is_internal", false).eq("is_bot", false).order("created_at", { ascending: false }).limit(1000),
           ]);
           if (viewsResult.error) throw new Error(`Analytics views fetch failed: ${viewsResult.error.message}`);
           if (interactionsResult.error) throw new Error(`Analytics interactions fetch failed: ${interactionsResult.error.message}`);

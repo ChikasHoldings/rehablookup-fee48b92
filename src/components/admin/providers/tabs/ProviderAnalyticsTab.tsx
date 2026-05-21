@@ -32,6 +32,8 @@ export function ProviderAnalyticsTab({ provider, providerFacilities }: ProviderA
         .from("provider_events")
         .select("event_type, facility_id, created_at")
         .in("facility_id", facilityIds)
+        .eq("is_internal", false)
+        .eq("is_bot", false)
         .gte("created_at", startDate.toISOString())
         .order("created_at", { ascending: true });
       return data || [];

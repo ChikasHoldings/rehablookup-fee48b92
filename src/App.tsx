@@ -12,6 +12,7 @@ import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
 import { StaticFileRedirect } from "@/components/seo/StaticFileRedirect";
 // CookieConsentBanner removed — US site, no opt-in required. GA4 tracks unconditionally.
 import { useTelClickTracking } from "@/hooks/useTelClickTracking";
+import { useGAInternalTrafficFlag } from "@/hooks/useGAInternalTrafficFlag";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
@@ -418,6 +419,12 @@ const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
  */
 function AppGlobals() {
   useTelClickTracking();
+  // Tags the GA4 session with `traffic_type` (internal/external) once the
+  // user's role is known. Lets GA4 reports exclude staff sessions via the
+  // user property filter (Admin → Data Filters), mirroring the
+  // `is_internal` flag the `track-provider-event` edge function writes to
+  // `provider_events`. See src/lib/ga.ts + src/hooks/useGAInternalTrafficFlag.ts.
+  useGAInternalTrafficFlag();
   return null;
 }
 

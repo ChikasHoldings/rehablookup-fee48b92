@@ -49,10 +49,10 @@ function FacilityCard({ facility, isCurrent, isPro }: { facility: Facility; isCu
     queryKey: ["admin-facility-metrics", facility.id],
     queryFn: async () => {
       const [impressions, views, calls, webClicks, leadsRes, reviewsRes] = await Promise.all([
-        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "listing_impression"),
-        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "profile_view"),
-        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "click_to_call"),
-        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "website_click"),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "listing_impression").eq("is_internal", false).eq("is_bot", false),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "profile_view").eq("is_internal", false).eq("is_bot", false),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "click_to_call").eq("is_internal", false).eq("is_bot", false),
+        supabase.from("provider_events").select("id", { count: "exact", head: true }).eq("facility_id", facility.id).eq("event_type", "website_click").eq("is_internal", false).eq("is_bot", false),
         supabase.from("leads").select("id", { count: "exact", head: true }).eq("facility_id", facility.id),
         supabase.from("facility_reviews").select("id", { count: "exact", head: true }).eq("facility_id", facility.id),
       ]);

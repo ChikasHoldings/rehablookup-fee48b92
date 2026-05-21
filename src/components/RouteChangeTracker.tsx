@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { resolveContentGroup } from "@/lib/ga";
 
 /**
  * RouteChangeTracker
@@ -18,6 +19,11 @@ import { useLocation } from "react-router-dom";
  * settled to the page-specific title before we read it for page_title.
  *
  * Mounted inside <BrowserRouter> in App.tsx so `useLocation` works.
+ *
+ * Each page_view also carries `content_group` (home/facility/city/state/
+ * search/treatment_hub/insurance_hub/seeker_panel/etc.) so GA4 reports
+ * can slice traffic by section without registering N custom dimensions.
+ * Bucket logic lives in `src/lib/ga.ts:resolveContentGroup`.
  */
 export function RouteChangeTracker() {
   const location = useLocation();
@@ -39,10 +45,11 @@ export function RouteChangeTracker() {
         'link[rel="canonical"]',
       );
       const pageLocation = canonicalEl?.href || window.location.href;
-      window.gtag("event", "page_view", {
+      window.gtag!("event", "page_view", {
         page_path: path,
         page_location: pageLocation,
         page_title: document.title,
+        content_group: resolveContentGroup(location.pathname),
       });
     });
     return () => cancelAnimationFrame(raf);

@@ -61,6 +61,7 @@ import { FacilityReviewsSection } from "@/components/reviews/FacilityReviewsSect
 import { cn } from "@/lib/utils";
 import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
+import { gaFacilityView, gaFacilityContact } from "@/lib/ga";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 import { FacilityProfileExtras } from "@/components/facility/FacilityProfileExtras";
 import { RehabScorePanel } from "@/components/profile/RehabScorePanel";
@@ -505,10 +506,27 @@ const CenterProfile = () => {
 
   useEffect(() => {
     if (facility?.id) {
-      // Track profile view in provider_events (single source of truth)
+      // Track profile view in provider_events (admin dashboard source of
+      // truth — feeds /admin/analytics provider performance KPIs).
       trackProfileView(facility.id);
+      // ALSO fire a GA4 facility_view custom event with the structured
+      // dimensions GA reports need to slice traffic by facility / state /
+      // type. Registered as Custom Dimensions in GA4 → Admin → Custom
+      // definitions: facility_id, facility_state, facility_type,
+      // facility_slug. The generic page_view fired by RouteChangeTracker
+      // already records the visit; this event adds the facility identity
+      // so reports can answer "how many sessions hit /center/<this-id>?".
+      gaFacilityView({
+        facility_id: facility.id,
+        facility_slug: facility.slug,
+        facility_name: facility.name,
+        facility_state: facility.state,
+        facility_city: facility.city,
+        facility_type: facility.facilityType ?? null,
+        surface: "public",
+      });
     }
-  }, [facility?.id, trackProfileView]);
+  }, [facility?.id, facility?.slug, facility?.name, facility?.state, facility?.city, facility?.facilityType, trackProfileView]);
 
   const scrollToContact = () => {
     contactFormRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -517,20 +535,22 @@ const CenterProfile = () => {
   const trackInteraction = useCallback((type: "call" | "website" | "directions") => {
     if (!facility?.id) return;
     // Track in provider_events (single source of truth for billing/scoring).
-    // "directions" is a non-billable interaction (no PII transfer); we
-    // still want the signal in the analytics table for engagement scoring
-    // but don't have a dedicated tracker for it, so it's a no-op below.
-    // A future addition could be `trackDirectionsClick` analogous to the
-    // existing helpers; for now we tag the click with the analytics
-    // wrapper if available.
     if (type === "call") {
       trackClickToCall(facility.id, "profile");
     } else if (type === "website") {
       trackWebsiteClick(facility.id, "profile");
     }
-    // directions: intentionally not blocked from tracking, but no
-    // facility-side billing impact so no provider_events row.
-  }, [facility?.id, facility?.name, facility?.slug, trackClickToCall, trackWebsiteClick]);
+    // ALSO fire GA4 facility_contact for every method, including
+    // "directions" (provider_events has no directions table since the
+    // click doesn't transfer PII, but GA reports still benefit from the
+    // engagement signal). One event per method so funnel reports work.
+    gaFacilityContact({
+      facility_id: facility.id,
+      method: type,
+      facility_slug: facility.slug,
+      facility_state: facility.state,
+    });
+  }, [facility?.id, facility?.slug, facility?.state, facility?.name, trackClickToCall, trackWebsiteClick]);
 
   const handleRequestInfoOpen = useCallback((cta_location: string) => {
     // Always open the Message Center modal in-place. Previously the
