@@ -65,7 +65,7 @@ export function FeaturedAnalyticsDashboard() {
   // Real-time subscriptions for live updates
   useEffect(() => {
     const analyticsChannel = supabase
-      .channel("featured-analytics-updates")
+      .channel(`featured-analytics-updates-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "featured_placement_analytics" },
@@ -81,7 +81,7 @@ export function FeaturedAnalyticsDashboard() {
     }, 60000);
 
     const viewsChannel = supabase
-      .channel("featured-provider-events-updates")
+      .channel(`featured-provider-events-updates-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "provider_events" },

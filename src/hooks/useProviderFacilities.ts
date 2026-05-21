@@ -119,7 +119,7 @@ export function useProviderFacilities() {
     if (isAuthLoading || !isAuthenticated || !user?.id) return;
 
     const channel = supabase
-      .channel("provider-facilities-realtime")
+      .channel(`provider-facilities-realtime-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         {

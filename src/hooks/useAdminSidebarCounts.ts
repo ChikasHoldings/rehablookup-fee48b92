@@ -138,7 +138,7 @@ export function useAdminSidebarCounts() {
       queryClient.invalidateQueries({ queryKey: ["admin-sidebar-unread-counts"] });
     };
     const channel = supabase
-      .channel("admin-sidebar-unread-live")
+      .channel(`admin-sidebar-unread-live-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "admin_notifications" },

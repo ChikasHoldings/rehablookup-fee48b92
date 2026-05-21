@@ -53,7 +53,7 @@ export function FeaturedPlacementTab() {
   // Real-time subscriptions
   useEffect(() => {
     const facilitiesChannel = supabase
-      .channel("admin-featured-realtime")
+      .channel(`admin-featured-realtime-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "facilities" },

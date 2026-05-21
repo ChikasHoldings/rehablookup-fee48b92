@@ -225,7 +225,7 @@ export function SecurityAlertsPanel() {
   // Real-time subscription for rate limit logs
   useEffect(() => {
     const rateLimitChannel = supabase
-      .channel("security-rate-limit-realtime")
+      .channel(`security-rate-limit-realtime-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "rate_limit_log" },
@@ -236,7 +236,7 @@ export function SecurityAlertsPanel() {
       .subscribe();
 
     const blockedChannel = supabase
-      .channel("security-blocked-realtime")
+      .channel(`security-blocked-realtime-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "blocked_identifiers" },

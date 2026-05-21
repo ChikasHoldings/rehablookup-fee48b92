@@ -81,7 +81,7 @@ export function DataHealthMonitor() {
   // Monitor realtime connection
   useEffect(() => {
     const channel = supabase
-      .channel("data-health-monitor")
+      .channel(`data-health-monitor-${Math.random().toString(36).slice(2,8)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "facilities" }, () => {
         setLastSyncTime(new Date());
       })

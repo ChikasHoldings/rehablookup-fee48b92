@@ -163,7 +163,7 @@ export default function AdminNotFoundEvents() {
   // 30-second polling fallback covers channel drops.
   useEffect(() => {
     const channel = supabase
-      .channel("admin-not-found-live")
+      .channel(`admin-not-found-live-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "not_found_events" },

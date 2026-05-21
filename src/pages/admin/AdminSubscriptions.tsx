@@ -224,17 +224,17 @@ export default function AdminSubscriptions() {
   useEffect(() => {
     const channels = [
       supabase
-        .channel("admin-subs-facilities-rt")
+        .channel(`admin-subs-facilities-rt-${Math.random().toString(36).slice(2,8)}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "facilities" }, () => invalidateSubscriptionQueries())
         .subscribe(),
       supabase
-        .channel("admin-subs-alerts-rt")
+        .channel(`admin-subs-alerts-rt-${Math.random().toString(36).slice(2,8)}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "subscription_alerts" }, () => {
           queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
         })
         .subscribe(),
       supabase
-        .channel("admin-subs-activity-rt")
+        .channel(`admin-subs-activity-rt-${Math.random().toString(36).slice(2,8)}`)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "account_activity_log" }, () => {
           queryClient.invalidateQueries({ queryKey: ["retention-metrics"] });
           queryClient.invalidateQueries({ queryKey: ["at-risk-providers"] });

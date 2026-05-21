@@ -51,7 +51,7 @@ export function useAdminNotifications() {
   // Real-time subscription for instant updates
   useEffect(() => {
     const channel = supabase
-      .channel("admin-notifications-realtime")
+      .channel(`admin-notifications-realtime-${Math.random().toString(36).slice(2,8)}`)
       .on(
         "postgres_changes",
         {
