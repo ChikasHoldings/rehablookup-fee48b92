@@ -848,7 +848,6 @@ export function RequestInfoModal({
                 <span className="font-semibold text-foreground">In crisis or need immediate help?</span>{" "}
                 Call <a href="tel:988" className="font-semibold text-primary hover:underline">988</a> (Suicide &amp; Crisis Lifeline)
                 {" "}or <a href="tel:911" className="font-semibold text-primary hover:underline">911</a> for emergencies.
-                {" "}SAMHSA helpline: <a href="tel:18006624357" className="font-semibold text-primary hover:underline">1-800-662-4357</a>.
               </p>
             </div>
           </div>
