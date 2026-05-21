@@ -153,7 +153,11 @@ export function useFavorites() {
     }
   }, [favorites, user]);
 
-  const toggleFavorite = useCallback(async (centerId: string) => {
+  // Returns true on success (state matches what the user intended) and
+  // false on persisted failure. Callers like SeekerSaved use the result
+  // to decide whether to apply local-state optimistic edits + success
+  // toasts; the failure toast itself is emitted from inside the hook.
+  const toggleFavorite = useCallback(async (centerId: string): Promise<boolean> => {
     const isFavorited = favorites.includes(centerId);
 
     // Optimistic update
@@ -164,45 +168,47 @@ export function useFavorites() {
       return [...prev, centerId];
     });
 
-    // If user is logged in, sync with database. On error, revert the
-    // optimistic update AND surface the failure via toast — previously
-    // failures only logged to console, so a server-side write failure
-    // looked to the user like their click did nothing.
-    if (user) {
-      if (isFavorited) {
-        const { error } = await supabase
-          .from('user_favorites')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('facility_id', centerId);
+    // Guest mode: localStorage write happens via the effect; nothing
+    // can fail at the network layer, so signal success.
+    if (!user) return true;
 
-        if (error) {
-          console.error('Error removing favorite:', error);
-          setFavorites(prev => [...prev, centerId]);
-          toast({
-            title: "Couldn't remove from saved",
-            description: error.message || "Please try again.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        const { error } = await supabase
-          .from('user_favorites')
-          .insert({ user_id: user.id, facility_id: centerId });
+    if (isFavorited) {
+      const { error } = await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('facility_id', centerId);
 
-        // 23505 is a unique-violation — already saved (e.g. tab race).
-        // Don't surface that as an error; the desired state is reached.
-        if (error && (error as { code?: string }).code !== '23505') {
-          console.error('Error adding favorite:', error);
-          setFavorites(prev => prev.filter(id => id !== centerId));
-          toast({
-            title: "Couldn't save facility",
-            description: error.message || "Please try again.",
-            variant: "destructive",
-          });
-        }
+      if (error) {
+        console.error('Error removing favorite:', error);
+        setFavorites(prev => (prev.includes(centerId) ? prev : [...prev, centerId]));
+        toast({
+          title: "Couldn't remove from saved",
+          description: error.message || "Please try again.",
+          variant: "destructive",
+        });
+        return false;
       }
+      return true;
     }
+
+    const { error } = await supabase
+      .from('user_favorites')
+      .insert({ user_id: user.id, facility_id: centerId });
+
+    // 23505 is a unique-violation — already saved (e.g. tab race).
+    // Don't surface that as an error; the desired state is reached.
+    if (error && (error as { code?: string }).code !== '23505') {
+      console.error('Error adding favorite:', error);
+      setFavorites(prev => prev.filter(id => id !== centerId));
+      toast({
+        title: "Couldn't save facility",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
   }, [favorites, user]);
 
   // Realtime cross-device sync. user_favorites was added to

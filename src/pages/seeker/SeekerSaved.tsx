@@ -41,7 +41,7 @@ export default function SeekerSaved() {
         .limit(500);
 
       if (queryError) {
-        setError('Failed to load saved facilities');
+        setError(queryError.message || 'Failed to load saved facilities');
         setFacilities([]);
       } else {
         const mappedFacilities: FacilityCardData[] = (data || []).map((f) => ({
@@ -61,8 +61,9 @@ export default function SeekerSaved() {
         setFacilities(mappedFacilities);
         setError(null);
       }
-    } catch {
-      setError('An unexpected error occurred');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(message);
       setFacilities([]);
     } finally {
       setIsLoading(false);
@@ -81,8 +82,15 @@ export default function SeekerSaved() {
     fetchFacilities();
   };
 
-  const handleRemove = (facilityId: string) => {
-    toggleFavorite(facilityId);
+  const handleRemove = async (facilityId: string) => {
+    // Await the toggle BEFORE filtering the local state — if the DB
+    // delete fails, useFavorites re-inserts the id into `favorites`
+    // (which would trigger a refetch and re-add the row), but the
+    // optimistic local filter + premature success toast would have
+    // already lied to the user. Now we only apply the optimistic
+    // filter on success, and useFavorites surfaces the failure toast.
+    const succeeded = await toggleFavorite(facilityId);
+    if (!succeeded) return;
     setFacilities(prev => prev.filter(f => f.id !== facilityId));
     toast({
       title: "Removed from saved",
@@ -92,10 +100,13 @@ export default function SeekerSaved() {
 
   // Paginate the saved list rather than silently truncating at the fetch
   // limit. Page size persisted per-user via the usePagination hook.
+  // `syncToUrl` puts ?p= / ?ps= in the URL so bookmark + back/forward
+  // restore the seeker's exact position in their saved list.
   const pagination = usePagination({
     tableId: "seeker-saved",
     defaultPageSize: 10,
     totalItems: facilities.length,
+    syncToUrl: true,
   });
   const visibleFacilities = useMemo(
     () => pagination.paginate(facilities),
