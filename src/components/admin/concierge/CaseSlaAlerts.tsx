@@ -14,7 +14,6 @@ export interface CaseSlaData {
   introductions_sent_at?: string | null;
   timeline_urgency?: string | null;
   assigned_advisor_id?: string | null;
-  payment_status?: string;
   tour_coordination_status?: string;
   placement_confirmed?: boolean | null;
   seeker_confirmed?: boolean | null;

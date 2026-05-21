@@ -40,7 +40,7 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
     queryFn: async () => {
       const { data: inqs } = await supabase
         .from("concierge_inquiries")
-        .select("id, status, created_at, updated_at, primary_concern, level_of_care, user_name, user_email, user_phone, payment_status, preferred_city, preferred_state, assigned_advisor_id, matched_facility_ids, admin_matched_facility_ids, placed_facility_id, placement_confirmed, placement_confirmed_at, timeline_urgency, admission_status, admission_notes, tour_coordination_status, seeker_confirmed, seeker_confirmed_at, seeker_feedback, seeker_rating, closed_at, notes, introductions_sent_at, introductions_sent_count, match_count")
+        .select("id, status, created_at, updated_at, primary_concern, level_of_care, user_name, user_email, user_phone, preferred_city, preferred_state, assigned_advisor_id, matched_facility_ids, admin_matched_facility_ids, placed_facility_id, placement_confirmed, placement_confirmed_at, timeline_urgency, admission_status, admission_notes, tour_coordination_status, seeker_confirmed, seeker_confirmed_at, seeker_feedback, seeker_rating, closed_at, notes, introductions_sent_at, introductions_sent_count, match_count")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
@@ -320,14 +320,8 @@ export function SeekerPlacementsTab({ userId }: SeekerPlacementsTabProps) {
             </div>
           )}
 
-          {/* Billing & Outcome */}
-          <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div>
-              <p className="text-muted-foreground">Payment</p>
-              <Badge variant="outline" className={cn("text-xs mt-0.5",
-                (placement.payment_status === "paid" || placement.payment_status === "succeeded" || placement.payment_status === "free") && "bg-success/10 text-success border-success/30"
-              )}>{placement.payment_status || "—"}</Badge>
-            </div>
+          {/* Outcome */}
+          <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
             <div>
               <p className="text-muted-foreground">Tour Status</p>
               <p className="font-medium mt-0.5 capitalize">{placement.tour_coordination_status?.replace(/_/g, " ") || "—"}</p>

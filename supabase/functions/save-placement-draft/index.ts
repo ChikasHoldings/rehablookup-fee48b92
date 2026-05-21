@@ -216,25 +216,14 @@ Deno.serve(async (req) => {
     if (validatedDraftId) {
       const { data: existingDraft } = await supabaseAdmin
         .from("concierge_inquiries")
-        .select("id, payment_status")
+        .select("id")
         .eq("draft_id", validatedDraftId)
         .maybeSingle();
 
       if (existingDraft) {
-        // Don't update if already paid
-        if (existingDraft.payment_status === "succeeded" || existingDraft.payment_status === "paid") {
-          logStep("Draft already paid, returning existing", { draftId: validatedDraftId });
-          return successResponse({
-            success: true,
-            draftId: validatedDraftId,
-            inquiryId: existingDraft.id,
-            isUpdate: false,
-            alreadyPaid: true,
-            _version: VERSION,
-          }, corsHeaders);
-        }
-
-        // Update existing draft
+        // Update existing draft (no more "alreadyPaid" gate — concierge is
+        // free for seekers under the EKRA flat-fee model and the legacy
+        // payment_status column is being dropped).
         const { error: updateError } = await supabaseAdmin
           .from("concierge_inquiries")
           .update({
@@ -318,8 +307,6 @@ Deno.serve(async (req) => {
         user_email: email,
         user_phone: phone,
         status: "new",
-        payment_status: "pending",
-        payment_amount_cents: 0, // Domestic concierge is free for clients ($0).
         intake_data: fullIntakeData,
         email_verified_at: validatedEmailVerifiedAt,
         form_completed_at: now,

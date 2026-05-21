@@ -148,7 +148,6 @@ export function ConciergeIntakeTab({ caseData }: ConciergeIntakeTabProps) {
         <CardContent className="py-2 text-sm">
           <InfoRow label="Case ID" value={caseData.id.slice(0, 8) + "..."} />
           <InfoRow label="Created" value={format(new Date(caseData.created_at), "MMM d, yyyy h:mm a")} />
-          <InfoRow label="Payment Status" value={caseData.payment_status} />
           <InfoRow label="Referral Source" value={caseData.referral_source} />
           <InfoRow label="HIPAA Consent" value={caseData.hipaa_consent ? "Yes" : "No"} />
         </CardContent>

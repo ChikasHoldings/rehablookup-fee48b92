@@ -85,7 +85,6 @@ export function ConciergeOverviewTab({ caseData }: ConciergeOverviewTabProps) {
     enabled: !!caseData.placed_facility_id,
   });
 
-  const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded" || caseData.payment_status === "free";
   // "Placed" under the rebuilt workflow includes the new terminal
   // seeker_selected AND any legacy admission_* / billed rows. The
   // separate "completed" archival state also reads as placed.
@@ -134,14 +133,6 @@ export function ConciergeOverviewTab({ caseData }: ConciergeOverviewTabProps) {
             value={
               <Badge variant={isClosed ? "destructive" : isPlaced ? "default" : "secondary"} className="text-xs">
                 {STATUS_LABELS[caseData.status] || caseData.status}
-              </Badge>
-            }
-          />
-          <InfoRow
-            label="Payment"
-            value={
-              <Badge variant="outline" className={isPaid ? "bg-success/10 text-success border-success/30" : "bg-destructive/10 text-destructive border-destructive/30"}>
-                {isPaid ? "✓ Paid" : "⚠ Unpaid"}
               </Badge>
             }
           />

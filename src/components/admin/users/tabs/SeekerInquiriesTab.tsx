@@ -49,7 +49,7 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
     queryFn: async () => {
       const { data } = await supabase
         .from("concierge_inquiries")
-        .select("id, status, created_at, primary_concern, level_of_care, user_name, user_email, user_phone, payment_status, preferred_city, preferred_state, assigned_advisor_id, matched_facility_ids, placement_confirmed, timeline_urgency, admission_status")
+        .select("id, status, created_at, primary_concern, level_of_care, user_name, user_email, user_phone, preferred_city, preferred_state, assigned_advisor_id, matched_facility_ids, placement_confirmed, timeline_urgency, admission_status")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -248,11 +248,6 @@ export function SeekerInquiriesTab({ userId }: SeekerInquiriesTabProps) {
                       <div className="flex flex-wrap gap-2 mt-2">
                         {inquiry.level_of_care && <Badge variant="secondary" className="text-xs">{inquiry.level_of_care}</Badge>}
                         {inquiry.timeline_urgency && <Badge variant="secondary" className="text-xs">Urgency: {inquiry.timeline_urgency}</Badge>}
-                        {inquiry.payment_status && (
-                          <Badge variant="outline" className={cn("text-xs",
-                            (inquiry.payment_status === "paid" || inquiry.payment_status === "succeeded" || inquiry.payment_status === "free") && "bg-success/10 text-success border-success/30"
-                          )}>{inquiry.payment_status}</Badge>
-                        )}
                         {inquiry.matched_facility_ids?.length > 0 && (
                           <Badge variant="outline" className="text-xs gap-1">
                             <Building2 className="h-3 w-3" />{inquiry.matched_facility_ids.length} matches

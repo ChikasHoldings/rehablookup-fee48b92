@@ -128,12 +128,14 @@ export default function SeekerConcierge() {
     if (!userId || !userEmail) return;
     let cancelled = false;
     const linkUnlinked = async () => {
+      // Payment gate removed — domestic concierge is free for seekers
+      // under the EKRA flat-fee model. Auto-link any unlinked inquiry
+      // matching this email.
       const { data: unlinked, error } = await supabase
         .from("concierge_inquiries")
         .select("id")
         .eq("user_email", userEmail.toLowerCase())
-        .is("user_id", null)
-        .in("payment_status", ["paid", "succeeded", "free"]);
+        .is("user_id", null);
 
       if (cancelled) return;
       if (error) {
@@ -185,7 +187,6 @@ export default function SeekerConcierge() {
           assigned_advisor_id
         `)
         .eq("user_id", userId)
-        .in("payment_status", ["paid", "succeeded", "free"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;

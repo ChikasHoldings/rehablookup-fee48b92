@@ -87,25 +87,41 @@ Deno.test("plan-gate: ClaimSubmitted does NOT prematurely complete onboarding", 
 
 // ─── Prompt 2 — Pro upgrade hardening ───────────────────────────────────
 
-Deno.test("pro-upgrade: 6 retired edge functions vendored as 410-tombstones", async () => {
-  const retired = [
+// As of the 2026-05-21 pay-per-admission deletion pass, the legacy
+// concierge/placement payment endpoints are no longer vendored —
+// they were fully removed from the repo. This test now asserts the
+// inverse: those directories must NOT exist (any deployed-only
+// instances on the Supabase project should also be removed via the
+// edge-fn workflow). The two retained 410-tombstones cover endpoints
+// that still need a graceful-failure mode for deep-link safety.
+Deno.test("pay-per-admission: legacy placement/concierge endpoints fully deleted", async () => {
+  const deleted = [
     "create-concierge-checkout",
+    "verify-concierge-payment",
     "charge-placement-fee",
     "record-placement-agreement",
     "submit-placement-case",
+  ];
+  for (const fn of deleted) {
+    const path = `supabase/functions/${fn}/index.ts`;
+    assert(
+      !(await exists(path)),
+      `Retired pay-per-admission fn ${fn} must be fully deleted from the repo`,
+    );
+  }
+});
+
+Deno.test("pro-upgrade: remaining tombstones still vendored", async () => {
+  const retained = [
     "retry-failed-payments",
     "admin-manage-invoice",
   ];
-  for (const fn of retired) {
+  for (const fn of retained) {
     const path = `supabase/functions/${fn}/index.ts`;
-    assert(await exists(path), `Retired fn ${fn} must be vendored locally`);
+    assert(await exists(path), `Retained fn ${fn} must be vendored locally`);
     const src = await read(path);
     assertStringIncludes(src, "function_retired");
     assertStringIncludes(src, "status: 410");
-    assert(
-      /retired_at:\s*"2026-05-18"/.test(src),
-      `${fn} tombstone must stamp retired_at`,
-    );
   }
 });
 

@@ -134,16 +134,6 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
           <div className="flex items-center justify-between gap-2">
             <SheetTitle className="text-xl">{caseData.user_name}</SheetTitle>
             <div className="flex items-center gap-2">
-              <Badge 
-                variant="outline" 
-                className={
-                  (caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded' || caseData.payment_status === 'free') 
-                    ? "bg-success/10 text-success border-success/30" 
-                    : "bg-destructive/10 text-destructive border-destructive/30"
-                }
-              >
-                {(caseData.payment_status === 'paid' || caseData.payment_status === 'succeeded' || caseData.payment_status === 'free') ? '✓ Paid' : '⚠ Unpaid'}
-              </Badge>
               <Badge variant="outline" className={PIPELINE_STATUS_CONFIG[caseData.status]?.color || "bg-muted text-muted-foreground"}>
                 {PIPELINE_STATUS_CONFIG[caseData.status]?.label || caseData.status}
               </Badge>
@@ -164,7 +154,6 @@ export const ConciergeDetailSheet = forwardRef<HTMLDivElement, ConciergeDetailSh
           <PlacementProgressStepper
             caseData={{
               status: caseData.status,
-              payment_status: caseData.payment_status,
               assigned_advisor_id: caseData.assigned_advisor_id,
               match_count: caseData.match_count,
               introductions_sent_count: caseData.introductions_sent_count,

@@ -5,7 +5,6 @@ import { VISUAL_STAGES, getVisualStageIndex } from "./placementPipelineConfig";
 
 export interface PlacementCaseData {
   status: string;
-  payment_status: string;
   assigned_advisor_id: string | null;
   match_count: number | null;
   introductions_sent_count: number | null;
@@ -23,8 +22,10 @@ interface PlacementProgressStepperProps {
 export function PlacementProgressStepper({ caseData, compact }: PlacementProgressStepperProps) {
   const isClosed = caseData.status === "closed";
   const currentVisualIdx = getVisualStageIndex(caseData.status);
-  const isPaid = caseData.payment_status === "paid" || caseData.payment_status === "succeeded" || caseData.payment_status === "free";
-  const hasBlocker = (!isPaid && currentVisualIdx > 0) || (!caseData.assigned_advisor_id && currentVisualIdx >= 1);
+  // Payment-pending blocker removed — domestic concierge is free for
+  // seekers under the EKRA flat-fee model. The only remaining blocker
+  // is an unassigned advisor on a case that's progressed past intake.
+  const hasBlocker = !caseData.assigned_advisor_id && currentVisualIdx >= 1;
 
   if (isClosed) {
     return (
@@ -49,7 +50,7 @@ export function PlacementProgressStepper({ caseData, compact }: PlacementProgres
           {hasBlocker && (
             <span className="flex items-center gap-1 text-destructive text-[10px] font-medium">
               <AlertTriangle className="h-3 w-3" />
-              {!isPaid && currentVisualIdx > 0 ? "Payment pending" : "No advisor"}
+              No advisor
             </span>
           )}
           <span className="font-semibold text-foreground tabular-nums">{progressPct}%</span>

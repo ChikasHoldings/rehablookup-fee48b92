@@ -190,7 +190,7 @@ export function MarketingLeadProfileModal({
 
       const { data: conciergeInquiries } = await supabase
         .from("concierge_inquiries")
-        .select("id, status, created_at, primary_concern, level_of_care, payment_status, user_name")
+        .select("id, status, created_at, primary_concern, level_of_care, user_name")
         .or(`user_email.ilike.${lead.email},user_phone.eq.${lead.phone}`)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -931,12 +931,7 @@ export function MarketingLeadProfileModal({
                                 </p>
                               </div>
                             </div>
-                            <Badge variant="outline" className={cn(
-                              "text-xs",
-                              (inquiry.payment_status === "paid" || inquiry.payment_status === "succeeded" || inquiry.payment_status === "free")
-                                ? "bg-success/10 text-success"
-                                : "bg-warning/10 text-warning"
-                            )}>
+                            <Badge variant="outline" className="text-xs bg-muted/50">
                               {inquiry.status}
                             </Badge>
                           </div>
