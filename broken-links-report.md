@@ -5,6 +5,6 @@
 - **Unique external hrefs (post allow-list):** 1
 - **Broken internal:** 0
 - **Broken external:** skipped
-- **Generated:** 2026-05-21T15:45:11.837Z
+- **Generated:** 2026-05-21T16:10:19.206Z
 
 ✅ All links resolve.

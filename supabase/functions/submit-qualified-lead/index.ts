@@ -1449,10 +1449,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ===== LEAD INSERTION (Pro-tier flow — unchanged below) =====
-    // `now` is hoisted to the top of the handler (round-31 fix); reuse it.
-    const exclusiveUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const extendedUntil = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+    // ===== LEAD INSERTION (Pro-tier flow) =====
+    // The exclusive_until / extended_until / redistribution_status fields
+    // were part of the per-lead-sale monetization (process-lead-redistribution
+    // cron that rotated unfulfilled leads to other facilities for resale).
+    // That product was retired in the EKRA flat-fee rebuild; the cron is
+    // gone, the column writes stopped 2026-05-21. Pro leads now land in
+    // ONE provider's inbox and stay there — no reassignment, no
+    // redistribution window. `now` is hoisted to the top of the handler.
 
     // Generate idempotency key if not provided
     const idempotencyKey = data.idempotencyKey || `${data.email}-${data.facilityId}-${Date.now()}`;
@@ -1493,11 +1497,6 @@ Deno.serve(async (req) => {
         email_verified: true,
         ip_hash: (data as any).ipHash || null,
         idempotency_key: idempotencyKey,
-        // Redistribution fields
-        original_facility_id: data.facilityId,
-        exclusive_until: exclusiveUntil.toISOString(),
-        extended_until: extendedUntil.toISOString(),
-        redistribution_status: "exclusive",
         // High-intent flag
         high_intent: isHighIntent,
         // Inquiry type for pricing
@@ -1535,42 +1534,14 @@ Deno.serve(async (req) => {
 
     log(requestId, "INFO", "Lead inserted", { leadId: lead.id });
 
-    // Create initial distribution record. Round-30 audit: this insert
-    // was unguarded — if it failed (FK, RLS, constraint, DB timeout)
-    // the seeker still got a 200 and the lead row existed, but
-    // analytics + redistribution queries that join on lead_distributions
-    // had a missing row. Now: capture error, surface to admin, AND log
-    // hard so ops can reconcile.
-    const { error: distErr } = await supabase
-      .from("lead_distributions")
-      .insert({
-        lead_id: lead.id,
-        facility_id: data.facilityId,
-        is_original: true,
-        distributed_at: now.toISOString(),
-        notification_sent: true,
-        notification_sent_at: now.toISOString(),
-      });
-    if (distErr) {
-      log(requestId, "ERROR", "lead_distributions insert failed", { error: distErr.message });
-      try {
-        await supabase.from("admin_notifications").insert({
-          type: "lead_distribution_insert_failure",
-          title: "Lead distribution record not created",
-          message: `Lead ${lead.id} was inserted but lead_distributions insert failed: ${distErr.message}. Analytics/redistribution joins will show a missing row.`,
-          metadata: {
-            lead_id: lead.id,
-            facility_id: data.facilityId,
-            request_id: requestId,
-            db_error: distErr.message,
-          } as Record<string, unknown>,
-        });
-      } catch (adminErr) {
-        log(requestId, "WARN", "admin_notifications insert failed (dist)", {
-          error: adminErr instanceof Error ? adminErr.message : String(adminErr),
-        });
-      }
-    }
+    // `lead_distributions` insert removed 2026-05-21 — the table was the
+    // ledger for the retired per-lead-sale model (rotated unfulfilled leads
+    // between facilities for resale). Under the EKRA flat-fee model a lead
+    // routes to exactly one facility and stays there; the audit trail is
+    // the `leads.facility_id` itself + the admin_audit_log row written
+    // whenever an admin manually moves a lead. The historical
+    // lead_distributions rows are kept in the DB for backfill / analytics
+    // joins on legacy rows but no new rows are produced.
 
     // ===== NON-BLOCKING NOTIFICATIONS (with idempotency) =====
     // Send seeker confirmation email — idempotency keyed to lead ID
