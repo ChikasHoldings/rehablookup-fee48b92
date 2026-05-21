@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Inbox, ArrowRightLeft } from "lucide-react";
+import { Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,7 +33,7 @@ export function ProviderLeadsTab({ provider, providerFacilities }: ProviderLeads
     queryFn: async () => {
       const { data } = await supabase
         .from("leads")
-        .select("id, facility_id, name, email, phone, status, source, created_at, urgency, redistribution_status, original_facility_id")
+        .select("id, facility_id, name, email, phone, status, source, created_at, urgency, original_facility_id")
         .in("facility_id", filteredIds)
         .order("created_at", { ascending: false })
         .limit(100);
@@ -104,7 +104,9 @@ export function ProviderLeadsTab({ provider, providerFacilities }: ProviderLeads
             </TableHeader>
             <TableBody>
               {leads.map((lead) => {
-                const isRedistributed = lead.original_facility_id && lead.original_facility_id !== lead.facility_id;
+                // "Redist." per-row badge removed 2026-05-21 along with the
+                // redistribution model. original_facility_id is still read
+                // for legacy rows but no longer drives display.
                 return (
                   <TableRow key={lead.id}>
                     <TableCell>
@@ -115,14 +117,7 @@ export function ProviderLeadsTab({ provider, providerFacilities }: ProviderLeads
                     </TableCell>
                     <TableCell>{getLeadStatusBadge(lead.status)}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Badge variant="outline" className="text-xs">{formatSourceLabel(lead.source)}</Badge>
-                        {isRedistributed && (
-                          <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
-                            <ArrowRightLeft className="h-3 w-3 mr-0.5" />Redist.
-                          </Badge>
-                        )}
-                      </div>
+                      <Badge variant="outline" className="text-xs">{formatSourceLabel(lead.source)}</Badge>
                     </TableCell>
                     {providerFacilities.length > 1 && (
                       <TableCell>

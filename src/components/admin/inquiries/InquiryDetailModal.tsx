@@ -129,9 +129,13 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
 
   // === MUTATIONS ===
 
-  // Reassign lead to another facility — preserves attribution by stamping
-  // original_facility_id (if not already set) and flips redistribution_status
-  // so downstream analytics/RLS treat it as a redistributed lead.
+  // Move a lead to a different facility. Preserves attribution via
+  // original_facility_id (first move only) so the original owner stays
+  // discoverable in audit. The redistribution_status="redistributed"
+  // write was removed 2026-05-21 — that tag was a holdover from the
+  // per-lead-sale era. Today the move is just an operational
+  // reassignment, captured by assignment_status + the admin_audit_log
+  // row written immediately after.
   const reassignMutation = useMutation({
     mutationFn: async (facilityId: string) => {
       if (!lead?.id) throw new Error("No lead selected");
@@ -143,12 +147,11 @@ export function InquiryDetailModal({ lead, open, onOpenChange, facilityMap, faci
       const previousFacilityId = lead.facility_id ?? null;
       const updates: Record<string, unknown> = {
         facility_id: facilityId,
-        redistribution_status: "redistributed", // admin manual reassign (valid per constraint)
         assignment_status: "reassigned",
         assigned_at: new Date().toISOString(),
       };
-      // Only stamp original_facility_id the first time we redistribute, so
-      // we don't lose the true origin if the lead is moved more than once.
+      // Only stamp original_facility_id the first time the lead moves,
+      // so we don't lose the true origin if it's reassigned again later.
       if (!lead.original_facility_id && previousFacilityId) {
         updates.original_facility_id = previousFacilityId;
       }

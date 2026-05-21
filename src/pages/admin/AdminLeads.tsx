@@ -4,7 +4,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users, Search, Mail, Phone, Zap, Download, X, Trash2,
-  CheckSquare, Square, Loader2, Share2, UserCheck,
+  CheckSquare, Square, Loader2, UserCheck,
   MessageSquare, Building2, CalendarIcon, Clock, Timer,
   ArrowRightLeft, ArrowUpDown, RefreshCw, Link2,
 } from "lucide-react";
@@ -62,13 +62,10 @@ export type Lead = {
   provider_responded_at: string | null;
   qualified: boolean | null;
   quality_flag: string | null;
-  redistribution_status: string | null;
   assignment_status: string | null;
   age_range: string | null;
   gender: string | null;
   preferred_contact: string;
-  exclusive_until: string | null;
-  extended_until: string | null;
   assigned_at: string | null;
   lead_expired_at: string | null;
   shared_with: string[] | null;
@@ -103,14 +100,10 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function LeadStatusBadge({ lead }: { lead: Lead }) {
-  if (lead.redistribution_status === "extended" || lead.redistribution_status === "redistributed") {
-    const badgeLabel = lead.redistribution_status === "redistributed" ? "Reassigned" : "Shared";
-    return (
-      <Badge variant="outline" className="bg-info/10 text-info border-info/30 gap-1 text-xs">
-        <Share2 className="h-3 w-3" />{badgeLabel}
-      </Badge>
-    );
-  }
+  // "Shared" / "Reassigned" badges (based on redistribution_status) were
+  // removed 2026-05-21 — they were holdovers from the per-lead-sale model.
+  // Admins viewing a lead now infer reassignment context from the
+  // facility column in the row itself + the admin_audit_log entry.
   if (lead.status === "expired" || lead.lead_expired_at) {
     return (
       <Badge variant="outline" className="bg-muted text-muted-foreground border-border gap-1 text-xs">
@@ -372,7 +365,7 @@ export default function AdminLeads() {
       const sortAscending = rawDir === "asc";
       let query = supabase
         .from("leads")
-        .select("id, facility_id, original_facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, qualified, quality_flag, redistribution_status, assignment_status, age_range, gender, preferred_contact, exclusive_until, extended_until, assigned_at, lead_expired_at, shared_with")
+        .select("id, facility_id, original_facility_id, name, email, phone, status, created_at, urgency, level_of_care, source, location_city_state, location_zip, primary_substance, insurance_type, message, inquiry_type, who_seeking_help, provider_response_status, provider_responded_at, qualified, quality_flag, assignment_status, age_range, gender, preferred_contact, assigned_at, lead_expired_at, shared_with")
         .order(sortColumn, { ascending: sortAscending, nullsFirst: false })
         // Tie-breaker on created_at DESC so equal-sort-key rows are
         // deterministic (otherwise pagination can shuffle).
@@ -482,7 +475,6 @@ export default function AdminLeads() {
       id: lead.id, name: lead.name, email: lead.email, phone: lead.phone,
       created_at: lead.created_at, status: lead.status,
       inquiry_type: lead.inquiry_type || "request_info",
-      exclusivity: lead.redistribution_status || null,
       qualified: lead.qualified ?? null, urgency: lead.urgency || null,
       primary_substance: lead.primary_substance || null,
       insurance_type: lead.insurance_type || null,

@@ -125,9 +125,13 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // redistribution_status write removed 2026-05-21 — was a legacy
+      // tag from the per-lead-sale era (used to mark leads as available
+      // for resale to alternate facilities). Under the flat-fee model
+      // we just track that the admin moved the lead via
+      // assignment_status + the admin_audit_log row written below.
       const update: Record<string, unknown> = {
         facility_id: targetFacilityId,
-        redistribution_status: "redistributed",
         assignment_status: "reassigned",
         assigned_at: now,
         updated_at: now,

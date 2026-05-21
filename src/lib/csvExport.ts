@@ -29,7 +29,6 @@ interface LeadExportData {
   quality_flag?: string | null;
   provider_response_status?: string | null;
   provider_responded_at?: string | null;
-  redistribution_status?: string | null;
   age_range?: string | null;
   gender?: string | null;
 }
@@ -95,7 +94,6 @@ export function exportLeadsToCSV(leads: LeadExportData[], filename?: string): vo
     { key: 'preferred_contact', header: 'Preferred Contact' },
     { key: 'facility_name', header: 'Facility' },
     { key: 'quality_flag', header: 'Quality Flag' },
-    { key: 'redistribution_status', header: 'Distribution' },
     { key: 'provider_response_status', header: 'Provider Response' },
     { key: 'provider_responded_at', header: 'Responded At' },
     { key: 'message', header: 'Message' },
@@ -114,7 +112,7 @@ export function exportLeadsToCSV(leads: LeadExportData[], filename?: string): vo
       if (key === 'created_at' || key === 'provider_responded_at') {
         value = value ? formatDate(value as string) : '';
       } else if (key === 'status' || key === 'inquiry_type' || key === 'preferred_contact' ||
-                 key === 'quality_flag' || key === 'redistribution_status' ||
+                 key === 'quality_flag' ||
                  key === 'provider_response_status') {
         // Title-case + replace underscores for any enum-shaped string field
         value = value ? formatStatus(value as string) : '';
