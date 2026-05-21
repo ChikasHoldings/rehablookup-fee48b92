@@ -34,7 +34,10 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
 
   return (
     <>
-      {/* Mobile: Horizontal scroll gallery */}
+      {/* Mobile: Horizontal scroll gallery.
+          The first (hero) image gets eager loading + high fetchpriority
+          for LCP. Off-screen images stay lazy so the network burst on
+          mount stays small. */}
       <div className="sm:hidden">
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide">
           {images.slice(0, 8).map((img, idx) => (
@@ -50,6 +53,9 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
                 src={img}
                 alt={`${facilityName} - Photo ${idx + 1}`}
                 className="w-full h-full object-cover"
+                loading={idx === 0 ? "eager" : "lazy"}
+                fetchPriority={idx === 0 ? "high" : "auto"}
+                decoding={idx === 0 ? "sync" : "async"}
               />
               {idx === 7 && images.length > 8 && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -66,7 +72,10 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
         </p>
       </div>
 
-      {/* Desktop: Grid layout (1 large + 4 small) */}
+      {/* Desktop: Grid layout (1 large + 4 small).
+          Main image is the LCP candidate — eager + high priority + sync
+          decode so it paints with the rest of the layout instead of
+          arriving a beat late. */}
       <div className="grid grid-cols-2 sm:grid-cols-4 grid-rows-2 sm:grid-rows-2 gap-2 h-[220px] md:h-[260px] rounded-xl overflow-hidden">
         {/* Main large image */}
         <button
@@ -77,11 +86,15 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
             src={displayImages[0]}
             alt={`${facilityName} - Photo 1`}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="eager"
+            fetchPriority="high"
+            decoding="sync"
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
         </button>
 
-        {/* Small images grid (2x2) */}
+        {/* Small images grid (2x2) — lazy-loaded so they don't compete
+            with the hero for initial bandwidth. */}
         {[1, 2, 3, 4].map((idx) => (
           <button
             key={idx}
@@ -97,9 +110,11 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
                   src={displayImages[idx]}
                   alt={`${facilityName} - Photo ${idx + 1}`}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                
+
                 {/* Show +X overlay on last visible image if there are more */}
                 {idx === 4 && remainingCount > 0 && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">

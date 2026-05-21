@@ -825,13 +825,41 @@ export default function SeekerFacilityProfile() {
                     <h3 className="font-semibold text-foreground">Contact</h3>
                   </div>
                   <div className="p-4 space-y-3">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                      <div className="text-sm">
-                        <p className="text-foreground">{facility.address}</p>
-                        <p className="text-muted-foreground">{facility.city}, {facility.state} {facility.zip_code}</p>
+                    {/* Address — clickable when we have enough to build
+                        a directions URL. Opens the user's default maps
+                        app on mobile, Google Maps on desktop. No API
+                        key required. */}
+                    {(facility.address || facility.city) ? (
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                          [facility.address, facility.city, facility.state, facility.zip_code]
+                            .filter(Boolean)
+                            .join(", "),
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-start gap-3 -mx-2 px-2 py-1 rounded hover:bg-muted/50 transition-colors group"
+                        aria-label={`Get directions to ${facility.name}`}
+                      >
+                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                        <div className="text-sm min-w-0">
+                          {facility.address && (
+                            <p className="text-foreground group-hover:underline">{facility.address}</p>
+                          )}
+                          <p className="text-muted-foreground">{facility.city}, {facility.state} {facility.zip_code}</p>
+                          <p className="text-xs text-primary mt-0.5 opacity-70 group-hover:opacity-100">
+                            ↗ Get directions
+                          </p>
+                        </div>
+                      </a>
+                    ) : (
+                      <div className="flex items-start gap-3">
+                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                        <div className="text-sm">
+                          <p className="text-muted-foreground">Address not provided</p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     
                     {showContactDetails && (
                       <div className="flex items-center gap-3">

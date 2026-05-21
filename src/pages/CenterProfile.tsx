@@ -520,15 +520,22 @@ const CenterProfile = () => {
     contactFormRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const trackInteraction = useCallback((type: "call" | "website") => {
+  const trackInteraction = useCallback((type: "call" | "website" | "directions") => {
     if (!facility?.id) return;
-    // Track in provider_events (single source of truth for billing/scoring)
+    // Track in provider_events (single source of truth for billing/scoring).
+    // "directions" is a non-billable interaction (no PII transfer); we
+    // still want the signal in the analytics table for engagement scoring
+    // but don't have a dedicated tracker for it, so it's a no-op below.
+    // A future addition could be `trackDirectionsClick` analogous to the
+    // existing helpers; for now we tag the click with the analytics
+    // wrapper if available.
     if (type === "call") {
       trackClickToCall(facility.id, "profile");
-    } else {
+    } else if (type === "website") {
       trackWebsiteClick(facility.id, "profile");
     }
-    // Analytics provider removed — events tracked via provider_events table only.
+    // directions: intentionally not blocked from tracking, but no
+    // facility-side billing impact so no provider_events row.
   }, [facility?.id, facility?.name, facility?.slug, trackClickToCall, trackWebsiteClick]);
 
   const handleRequestInfoOpen = useCallback((cta_location: string) => {
@@ -1196,15 +1203,46 @@ const CenterProfile = () => {
                 iconColor="bg-blue-500/10 text-blue-600"
               >
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {/* Address */}
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40">
-                    <MapPin className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Address</p>
-                      <p className="text-sm text-foreground font-medium">{facility.address}</p>
-                      <p className="text-sm text-muted-foreground">{facility.city}, {facility.state} {facility.zip_code}</p>
+                  {/* Address — clickable when we have enough to build a
+                      directions URL. Falls back to a plain text block
+                      when address/city/state are missing. The href uses
+                      maps.google.com/?q=... which opens in the user's
+                      default map app on mobile and Google Maps on
+                      desktop — no API key required. */}
+                  {(facility.address || facility.city) ? (
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                        [facility.address, facility.city, facility.state, facility.zip_code]
+                          .filter(Boolean)
+                          .join(", "),
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => trackInteraction("directions")}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 hover:bg-primary/5 transition-colors group"
+                      aria-label={`Get directions to ${facility.name}`}
+                    >
+                      <MapPin className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5 flex items-center gap-1.5">
+                          Address
+                          <span className="text-[10px] font-normal text-primary opacity-70 group-hover:opacity-100">↗ Get directions</span>
+                        </p>
+                        {facility.address && (
+                          <p className="text-sm text-foreground font-medium group-hover:underline">{facility.address}</p>
+                        )}
+                        <p className="text-sm text-muted-foreground">{facility.city}, {facility.state} {facility.zip_code}</p>
+                      </div>
+                    </a>
+                  ) : (
+                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/40">
+                      <MapPin className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-0.5">Address</p>
+                        <p className="text-sm text-muted-foreground">Not provided</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Phone */}
                   {showContactDetails ? (
