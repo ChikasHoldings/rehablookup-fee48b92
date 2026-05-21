@@ -11,6 +11,11 @@ name: Deploy Admin Edge Functions
 #     https://github.com/chikasholdings/rehablookup-fee48b92/settings/secrets/actions/new
 #   Name: SUPABASE_ACCESS_TOKEN
 #   Value: <paste the sbp_v0_... token>
+#
+# IMPORTANT: when running, select branch "claude/phase2-deployment-5WYOn"
+# so the workflow checks out the right code with the updated function
+# source. This workflow lives on main only so GitHub's workflow_dispatch
+# UI surfaces the "Run workflow" button.
 
 on:
   workflow_dispatch:
