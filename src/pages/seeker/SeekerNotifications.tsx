@@ -3,44 +3,18 @@ import { formatDistanceToNow } from "date-fns";
 import { Helmet } from "react-helmet-async";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  Bell, BellOff, Check, CheckCheck, Trash2, ExternalLink, Settings,
-  Send, Heart, Star, Building2, MapPin, Calendar, HeartHandshake, UserCheck, CheckCircle,
-  RefreshCw, Filter
+  Bell, BellOff, Check, CheckCheck, Trash2, ExternalLink, Settings, RefreshCw,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { useSeekerNotifications, SeekerNotification } from "@/hooks/useSeekerNotifications";
 import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { cn } from "@/lib/utils";
-
-const notificationTypeIcons: Record<string, React.ReactNode> = {
-  system: <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
-  welcome: <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
-  facility_update: <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
-  saved_facility: <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
-  facility_contacted: <Send className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
-  facility_contacted_you: <Send className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
-  request_update: <Send className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
-  request_confirmation: <Send className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
-  review_response: <Star className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />,
-  review_approved: <Star className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
-  review_rejected: <Star className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />,
-  tour_proposed: <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
-  tour_confirmed: <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
-  tour_cancelled: <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />,
-  concierge_tour_proposed: <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
-  concierge_tour_confirmed: <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
-  concierge_tour_cancelled: <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />,
-  concierge_intake_received: <HeartHandshake className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
-  concierge_matches_found: <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
-  concierge_provider_interested: <UserCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
-  concierge_provider_confirmed: <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
-  concierge_placement_complete: <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-success" />,
-  concierge_message_received: <Send className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />,
-};
+import { notificationIconLarge, resolveNotificationRoute } from "@/lib/seekerNotificationRouting";
 
 type FilterTab = "all" | "unread";
 
@@ -70,7 +44,7 @@ function NotificationItem({
       )}
     >
       <div className="shrink-0 mt-0.5 flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-muted">
-        {notificationTypeIcons[notification.type] || <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />}
+        {notificationIconLarge(notification.type)}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
@@ -128,12 +102,41 @@ function NotificationItem({
 export default function SeekerNotifications() {
   const { isAuthenticated, isReady } = useSeekerSession();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const hydratedRef = useRef(false);
-  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification, refetch } =
-    useSeekerNotifications();
+  const {
+    notifications, unreadCount, isLoading, fetchError,
+    markAsRead, markAllAsRead, deleteNotification, refetch,
+    requestNotificationPermission,
+  } = useSeekerNotifications();
   const [filter, setFilter] = useState<FilterTab>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [permissionState, setPermissionState] = useState<NotificationPermission | "unsupported">(
+    typeof Notification !== "undefined" ? Notification.permission : "unsupported",
+  );
+
+  const handleEnableBrowserNotifications = async () => {
+    const result = await requestNotificationPermission();
+    if (result === "unsupported") {
+      toast({
+        title: "Not supported",
+        description: "Your browser doesn't support desktop notifications.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setPermissionState(result);
+    if (result === "granted") {
+      toast({ title: "Browser notifications enabled" });
+    } else if (result === "denied") {
+      toast({
+        title: "Notifications blocked",
+        description: "Open your browser's site settings to re-enable.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // URL state hydration once on mount + loop-guarded sync so the
   // ?filter=unread bookmark works.
@@ -165,39 +168,8 @@ export default function SeekerNotifications() {
   };
 
   const handleNavigate = (notification: SeekerNotification) => {
-    if (notification.link) {
-      navigate(notification.link);
-      return;
-    }
-    const metadata = notification.metadata as Record<string, unknown> | null;
-    if (metadata?.link && typeof metadata.link === "string") {
-      navigate(metadata.link);
-      return;
-    }
-    // Type-based fallback routing
-    const typeRoutes: Record<string, string> = {
-      request_update: "/account/requests",
-      request_confirmation: "/account/requests",
-      review_response: "/account/reviews",
-      review_approved: "/account/reviews",
-      review_rejected: "/account/reviews",
-      concierge_intake_received: "/account/concierge",
-      concierge_matches_found: "/account/concierge",
-      concierge_provider_interested: "/account/concierge",
-      concierge_provider_confirmed: "/account/concierge",
-      concierge_placement_complete: "/account/concierge",
-      concierge_message_received: "/account/concierge",
-      concierge_tour_proposed: "/account/concierge",
-      concierge_tour_confirmed: "/account/concierge",
-      concierge_tour_cancelled: "/account/concierge",
-      saved_facility: "/account/saved",
-      facility_update: "/account/saved",
-      tour_proposed: "/account/requests",
-      tour_confirmed: "/account/requests",
-      tour_cancelled: "/account/requests",
-    };
-    const route = typeRoutes[notification.type];
-    if (route) navigate(route);
+    const route = resolveNotificationRoute(notification);
+    navigate(route);
   };
 
   // Auth guard
@@ -264,6 +236,45 @@ export default function SeekerNotifications() {
             </Button>
           </div>
         </div>
+
+        {/* Fetch error banner — surfaces underlying error.message so a
+            transient network / RLS failure doesn't masquerade as
+            "no notifications yet". */}
+        {fetchError && (
+          <Card className="border-destructive/50 bg-destructive/5 mb-4">
+            <CardContent className="p-4 flex items-start justify-between gap-3">
+              <div className="text-sm min-w-0">
+                <p className="font-medium text-destructive">Couldn't load notifications</p>
+                <p className="text-xs text-muted-foreground mt-1 break-words">{fetchError}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Desktop-notification opt-in. Only rendered when:
+            - browser supports Notification API
+            - permission is currently 'default' (never asked / never set)
+            We never auto-prompt on mount (Chrome/Firefox penalize that)
+            — this is a user-gesture trigger. Hidden once granted or
+            denied; deny state surfaces a hint elsewhere. */}
+        {permissionState === "default" && (
+          <Card className="border-primary/30 bg-primary/5 mb-4">
+            <CardContent className="p-4 flex items-start justify-between gap-3">
+              <div className="text-sm min-w-0">
+                <p className="font-medium">Get desktop notifications</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Hear a chime and see a popup when a facility responds, your review is approved, or a concierge match arrives — even while you're in another tab.
+                </p>
+              </div>
+              <Button size="sm" onClick={handleEnableBrowserNotifications}>
+                Enable
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filter Tabs + Mark All Read */}
         <div className="flex items-center justify-between gap-2 mb-4">

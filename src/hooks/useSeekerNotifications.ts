@@ -17,6 +17,35 @@ export interface SeekerNotification {
 // Simple notification sound (base64 encoded short beep)
 const NOTIFICATION_SOUND_URL = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleA0AFQN/kI6sxr2UXQAAxuzXooRCBgmQx+/FeSQNTfj3vE8PFq3s7qF1IkJ1wdbhoF4XLpG/xaCJTitdoNm6qXlPVYCgzcDBm2s5RnKUwdDFvJFfRFZ9l7bRzcKqeE1Laz5LWnSUqbXCzL+pgV1AMDlXboSZq7q+xb6uhFk6LkNedI6iu8XDu65/VDAsOlV5lq3Cx7+0qIhfQC8yTGJ+mbO/wruzqopiQy4sRV12j6S2wcS7t6+JYEQsKUBYcoabrrzAuba1qotgRCsmP1RvgoySnaWtsLe4ubaxqp+ThntuZV5bXmNqc4CQnq20uLy6tq+ij3xrX1NLSkpOVl9sdIiXpay0trStpJqOgnZqYFhTUldaX2hxgI2Zoa2ys7Cvqp2PhHpvZ2JfX2FlaXJ5g4+Yoqqvs7OvrKaclIqBd3FtaWpsb3R5gImRmqGnq66vraqknpaNhH15dnV1dnh7foSKkJebnqOlp6elo5+blo+JhIB9fHt7fH6Bh4yRlpmcnqCgo6OioJ2ZlpKOioeDgYGBgoWIjJCTlpmbnZ+goaKioaCemZaRjYqIhoWEhYaHioyPkpWYmpydn5+goKCfnpyZl5SSj4yLioqKi4yNj5KUlpianJ2en5+fnp2cm5mWk5GQjo2NjY2OjpCSlJaYmZudnZ6enp2cm5qYlpSTkZCPj4+Pj5CRkpSVl5mam5ycnZ2dnJuamJeVk5KRkJCQkJCRkpOUlZaXmJmanJycnJybmpmYl5WUk5KRkZGRkZGSkpOUlZaXmJmampubm5uamZiXlpWUk5OSkpKSkpOTk5SVlpaXmJmZmpqampqZmZiXlpWVlJSUk5OTk5SUlJWVlpaXl5iYmZmZmZmYmJeWlpWVlJSUlJSUlJSVlZWWlpeXl5iYmJiYmJeXlpaWlZWVlZWVlZWVlZaWlpaWl5eXl5eXl5eXlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eXl5aWlpaWlpaWlpaWlpaWlpaWlpaWlpeXl5eXl5eX";
 
+// Window-scoped dedup set. The hook is mounted in TWO places when the
+// user is on /account/notifications (the SeekerHeader dropdown AND the
+// page itself), and Supabase realtime delivers the INSERT event to
+// BOTH subscriptions. Without dedup, the audio beep doubles and a
+// second browser-Notification fires. Using a window-scoped Set keys
+// the dedup by notification id across every hook instance in the
+// process, and we cap its size so a long session can't grow it
+// unboundedly. The actual STATE updates still run per-instance — only
+// the audible / desktop side effects are deduped.
+const SIDE_EFFECT_DEDUP_LIMIT = 500;
+const seenNotificationSideEffects: Set<string> = ((): Set<string> => {
+  const w = window as unknown as { __seekerNotifSeen?: Set<string> };
+  if (!w.__seekerNotifSeen) w.__seekerNotifSeen = new Set<string>();
+  return w.__seekerNotifSeen;
+})();
+
+function recordSideEffect(id: string): boolean {
+  if (seenNotificationSideEffects.has(id)) return false;
+  seenNotificationSideEffects.add(id);
+  // Bound the set so long sessions don't accumulate forever. Cheap
+  // FIFO eviction via the iterator.
+  if (seenNotificationSideEffects.size > SIDE_EFFECT_DEDUP_LIMIT) {
+    const it = seenNotificationSideEffects.values();
+    const oldest = it.next().value;
+    if (oldest) seenNotificationSideEffects.delete(oldest);
+  }
+  return true;
+}
+
 // Get stored user ID from localStorage (non-blocking)
 function getStoredUserId(): string | null {
   try {
@@ -37,9 +66,9 @@ export function useSeekerNotifications() {
   const [notifications, setNotifications] = useState<SeekerNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const previousNotificationsRef = useRef<string[]>([]);
   const userIdRef = useRef<string | null>(getStoredUserId());
 
   // Initialize audio element on mount. Browser-notification permission is
@@ -94,11 +123,13 @@ export function useSeekerNotifications() {
     if (!uid) {
       setNotifications([]);
       setUnreadCount(0);
+      setFetchError(null);
       setIsLoading(false);
       return;
     }
     userIdRef.current = uid;
 
+    setFetchError(null);
     try {
       const { data, error } = await supabase
         .from("seeker_notifications")
@@ -109,15 +140,20 @@ export function useSeekerNotifications() {
 
       if (error) {
         console.error("[useSeekerNotifications] Fetch error:", error);
+        setFetchError(error.message || "Couldn't load notifications.");
         return;
       }
 
       const notifs = (data || []) as SeekerNotification[];
       setNotifications(notifs);
       setUnreadCount(notifs.filter(n => !n.read).length);
-      previousNotificationsRef.current = notifs.map(n => n.id);
+      // Seed the side-effect dedup set with the existing rows so a
+      // realtime INSERT that races the initial fetch doesn't double-
+      // play sound for an id that was already in the fetched list.
+      for (const n of notifs) seenNotificationSideEffects.add(n.id);
     } catch (err) {
       console.error("[useSeekerNotifications] Unexpected error:", err);
+      setFetchError(err instanceof Error ? err.message : "Couldn't load notifications.");
     } finally {
       setIsLoading(false);
     }
@@ -175,20 +211,29 @@ export function useSeekerNotifications() {
           },
           (payload) => {
             const newNotification = payload.new as SeekerNotification;
-            
-            // Check if this is a genuinely new notification
-            if (!previousNotificationsRef.current.includes(newNotification.id)) {
+
+            // Per-instance state update — always run (header + page each
+            // maintain their own notifications array; both need to be
+            // in sync with realtime). De-dupe inside the setter so a
+            // refetch racing with the realtime event can't create a
+            // visible duplicate in either array.
+            setNotifications(prev => {
+              if (prev.some(n => n.id === newNotification.id)) return prev;
+              return [newNotification, ...prev];
+            });
+            setUnreadCount(prev => prev + 1);
+
+            // Audio + desktop notification: ONCE per id across every
+            // hook instance in the window (header + page when both
+            // mounted). recordSideEffect returns false on the second
+            // call so the beep doesn't double.
+            if (recordSideEffect(newNotification.id)) {
               playNotificationSound();
               showBrowserNotification(
                 newNotification.title,
                 newNotification.message,
-                newNotification.link
+                newNotification.link,
               );
-              
-              // Update local state immediately
-              setNotifications(prev => [newNotification, ...prev]);
-              setUnreadCount(prev => prev + 1);
-              previousNotificationsRef.current = [newNotification.id, ...previousNotificationsRef.current];
             }
           }
         )
@@ -224,7 +269,11 @@ export function useSeekerNotifications() {
               setUnreadCount(updated.filter(n => !n.read).length);
               return updated;
             });
-            previousNotificationsRef.current = previousNotificationsRef.current.filter(id => id !== deletedId);
+            // Drop from the side-effect set so if the same id is
+            // hypothetically re-issued (it shouldn't be, but the row
+            // could be re-inserted with a fresh uuid that happens to
+            // collide), the audio fires again.
+            seenNotificationSideEffects.delete(deletedId);
           }
         )
         .subscribe();
@@ -340,6 +389,7 @@ export function useSeekerNotifications() {
     notifications,
     unreadCount,
     isLoading,
+    fetchError,
     markAsRead,
     markAllAsRead,
     deleteNotification,

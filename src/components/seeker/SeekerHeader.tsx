@@ -2,10 +2,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import logoDarkBg from "@/assets/logo-dark-bg.webp";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { 
-  Home, Send, Heart, Star, Settings, LogOut, LogIn, 
+import {
+  Home, Send, Heart, Star, Settings, LogOut, LogIn,
   Search, Bell, BellOff, X, MapPin, Building2, ChevronRight, HeartHandshake,
-  Calendar, CheckCircle, UserCheck
+  CheckCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,9 +19,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 import { useSeekerNotifications } from "@/hooks/useSeekerNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { prefetchRoute } from "@/lib/routePrefetch";
+import { notificationIconCompact, resolveNotificationRoute } from "@/lib/seekerNotificationRouting";
 
 export interface SeekerHeaderProps {
   userName?: string;
@@ -45,38 +47,8 @@ const navItems = [
   { to: "/account/reviews", icon: Star, label: "My Reviews" },
 ];
 
-const notificationTypeIcons: Record<string, React.ReactNode> = {
-  // System & Welcome
-  system: <Bell className="h-4 w-4 text-primary" />,
-  welcome: <Bell className="h-4 w-4 text-success" />,
-  // Facility Related
-  facility_update: <Building2 className="h-4 w-4 text-primary" />,
-  saved_facility: <Heart className="h-4 w-4 text-primary" />,
-  facility_contacted_you: <Send className="h-4 w-4 text-primary" />,
-  // Request Related
-  request_update: <Send className="h-4 w-4 text-success" />,
-  request_confirmation: <Send className="h-4 w-4 text-success" />,
-  // Review Related
-  review_response: <Star className="h-4 w-4 text-warning" />,
-  review_approved: <Star className="h-4 w-4 text-success" />,
-  review_rejected: <Star className="h-4 w-4 text-destructive" />,
-  // Tour Related
-  tour_proposed: <Calendar className="h-4 w-4 text-primary" />,
-  tour_confirmed: <Calendar className="h-4 w-4 text-success" />,
-  tour_cancelled: <Calendar className="h-4 w-4 text-destructive" />,
-  // Concierge-specific
-  concierge_intake_received: <HeartHandshake className="h-4 w-4 text-primary" />,
-  concierge_matches_found: <MapPin className="h-4 w-4 text-success" />,
-  concierge_provider_interested: <UserCheck className="h-4 w-4 text-primary" />,
-  concierge_provider_confirmed: <Building2 className="h-4 w-4 text-success" />,
-  concierge_placement_complete: <CheckCircle className="h-4 w-4 text-success" />,
-  concierge_tour_proposed: <Calendar className="h-4 w-4 text-primary" />,
-  concierge_tour_confirmed: <Calendar className="h-4 w-4 text-success" />,
-  concierge_tour_cancelled: <Calendar className="h-4 w-4 text-destructive" />,
-  concierge_message_received: <Send className="h-4 w-4 text-primary" />,
-};
-
 export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = false }: SeekerHeaderProps) {
+  const { toast } = useToast();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -89,8 +61,18 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
     prefetchRoute(path);
   }, []);
   
-  const { notifications, unreadCount, markAsRead, isLoading: notificationsLoading } = useSeekerNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading: notificationsLoading } = useSeekerNotifications();
   const recentNotifications = notifications.slice(0, 5);
+  // Track Notification permission so we can dim the bell with a BellOff
+  // overlay when the user has explicitly denied desktop notifications.
+  // Re-checked when the dropdown opens so a settings change in another
+  // tab propagates without a full reload.
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | "unsupported">(
+    typeof Notification !== "undefined" ? Notification.permission : "unsupported",
+  );
+  const refreshPermission = useCallback(() => {
+    if (typeof Notification !== "undefined") setNotifPermission(Notification.permission);
+  }, []);
 
   const initials = userName
     ?.split(" ")
@@ -116,7 +98,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
         // Sanitize search query to prevent PostgREST filter injection
         const sanitized = searchQuery.replace(/[%_(),.]/g, "").trim().slice(0, 100);
         if (!sanitized) { setIsSearching(false); return; }
-        
+
         const { data, error } = await supabase
           .from('facilities')
           .select('id, name, city, state, slug')
@@ -124,11 +106,28 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
           .or(`name.ilike.%${sanitized}%,city.ilike.%${sanitized}%,state.ilike.%${sanitized}%`)
           .limit(6);
 
-        if (!error && data) {
-          setSearchResults(data);
+        if (error) {
+          // Surface the underlying message — previously this was a bare
+          // `catch {}` that left the user staring at "No results found"
+          // when the real cause was RLS / network. Empty array still
+          // renders below; the toast distinguishes "no matches" from
+          // "the search failed".
+          toast({
+            title: "Search failed",
+            description: error.message || "Couldn't search facilities. Try again.",
+            variant: "destructive",
+          });
+          setSearchResults([]);
+          return;
         }
-      } catch {
-        // Silent fail for search
+        setSearchResults(data || []);
+      } catch (err) {
+        toast({
+          title: "Search failed",
+          description: err instanceof Error ? err.message : "Couldn't search facilities. Try again.",
+          variant: "destructive",
+        });
+        setSearchResults([]);
       } finally {
         setIsSearching(false);
       }
@@ -180,29 +179,13 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    if (notification.link) {
-      navigate(notification.link);
-      return;
-    }
-    // Route by notification type when no explicit link
-    const metadata = notification.metadata as Record<string, any> | null;
-    if (metadata?.link) {
-      navigate(metadata.link);
-      return;
-    }
-    const inquiryTypes = ["inquiry_update", "inquiry_status", "placement_update", "placement_matched", "placement_confirmed", "introduction_sent"];
-    const facilityTypes = ["facility_update", "facility_approved", "tour_confirmed", "tour_request"];
-    const reviewTypes = ["review_response", "review_helpful"];
-    
-    if (inquiryTypes.includes(notification.type)) {
-      navigate("/account/requests");
-    } else if (facilityTypes.includes(notification.type)) {
-      navigate("/account/saved");
-    } else if (reviewTypes.includes(notification.type)) {
-      navigate("/account/reviews");
-    } else {
-      navigate("/account/notifications");
-    }
+    // Use the same routing resolution as the full notifications page
+    // so the dropdown and the page never disagree about where a given
+    // notification type should land. Previously the header had its own
+    // stale tables (e.g. it routed "inquiry_update" / "inquiry_status"
+    // which no edge function actually emits, while concierge types fell
+    // through to /account/notifications instead of /account/concierge).
+    navigate(resolveNotificationRoute(notification));
   };
 
   return (
@@ -345,30 +328,63 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
 
           {/* Notifications */}
           {isAuthenticated && (
-            <DropdownMenu>
+            <DropdownMenu
+              onOpenChange={(open) => {
+                if (open) refreshPermission();
+              }}
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="relative h-9 w-9 text-white hover:text-white hover:bg-white/15 rounded-lg transition-all duration-200 active:scale-95"
-                  aria-label="Notifications"
+                  aria-label={
+                    unreadCount > 0
+                      ? `Notifications, ${unreadCount} unread`
+                      : "Notifications"
+                  }
                 >
-                  <Bell className="h-5 w-5" />
+                  {notifPermission === "denied" ? (
+                    <BellOff className="h-5 w-5" />
+                  ) : (
+                    <Bell className="h-5 w-5" />
+                  )}
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-white ring-2 ring-primary">
+                    <span
+                      aria-live="polite"
+                      className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-white ring-2 ring-primary"
+                    >
                       {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                   )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80 bg-card" sideOffset={8}>
-                <div className="flex items-center justify-between py-3 px-3">
+                <div className="flex items-center justify-between py-3 px-3 gap-2">
                   <span className="font-semibold text-sm">Notifications</span>
-                  {unreadCount > 0 && (
-                    <Badge variant="secondary" className="text-xs h-5 px-2">
-                      {unreadCount} new
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <>
+                        <Badge variant="secondary" className="text-xs h-5 px-2">
+                          {unreadCount} new
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs gap-1 px-2"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            markAllAsRead();
+                          }}
+                          aria-label="Mark all notifications as read"
+                        >
+                          <CheckCheck className="h-3.5 w-3.5" />
+                          <span>Mark all read</span>
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <DropdownMenuSeparator />
                 {notificationsLoading ? (
@@ -389,7 +405,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                         onClick={() => handleNotificationClick(notification)}
                       >
                         <div className="mt-0.5 shrink-0">
-                          {notificationTypeIcons[notification.type] || notificationTypeIcons.system}
+                          {notificationIconCompact(notification.type)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between w-full gap-2">
