@@ -71,6 +71,7 @@ import { BreadcrumbNav } from "@/components/seo/BreadcrumbNav";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { loadFacilityBySlug } from "@/hooks/useFacilityBySlug";
+import { loadFacilityDetails } from "@/hooks/useFacilityDetails";
 // Premium facility-profile augmentation components (Phase 3 v2). The
 // existing CenterProfile already derives services/insurance/ageGroups
 // inside its queryFn via a Promise.all batched fetch — these components
@@ -400,15 +401,11 @@ const CenterProfile = () => {
       const base = loaded.facility;
       if (!base) return null;
 
-      // Joined detail tables (anon-readable) in parallel.
+      // Joined detail tables (anon-readable) — shared loader so both
+      // /center/[slug] and /account/facility/[id] stay in sync if the
+      // column lists ever change.
       const facilityId = base.id as string;
-      const [services, insurance, ageGroups, credentials, accreditations] = await Promise.all([
-        supabase.from("facility_services").select("service_name").eq("facility_id", facilityId),
-        supabase.from("facility_insurance").select("insurance_name").eq("facility_id", facilityId),
-        supabase.from("facility_age_groups").select("age_group").eq("facility_id", facilityId),
-        supabase.from("facility_credentials").select("accreditations, licensing_info").eq("facility_id", facilityId),
-        supabase.from("facility_accreditations").select("accreditation_type, verified").eq("facility_id", facilityId),
-      ]);
+      const joins = await loadFacilityDetails(facilityId);
 
       return {
         ...base,
@@ -419,11 +416,7 @@ const CenterProfile = () => {
         user_id: null,
         concierge_network_opted_in: null,
         accepts_international_patients: base.accepts_international_patients ?? null,
-        facility_services: services.data ?? [],
-        facility_insurance: insurance.data ?? [],
-        facility_age_groups: ageGroups.data ?? [],
-        facility_credentials: credentials.data ?? [],
-        facility_accreditations: accreditations.data ?? [],
+        ...joins,
         is_claimed: loaded.flags?.is_claimed,
         is_pro: loaded.flags?.is_pro,
         is_premium_visible: loaded.flags?.is_premium_visible,

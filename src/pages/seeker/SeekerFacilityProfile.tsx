@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { loadFacilityBySlug } from "@/hooks/useFacilityBySlug";
+import { loadFacilityDetails } from "@/hooks/useFacilityDetails";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/ui/RatingBadge";
@@ -243,19 +244,17 @@ export default function SeekerFacilityProfile() {
         } as unknown as FacilityData;
       }
 
-      // Snapshot path — fetch joined detail tables + Pro-gated contact RPC.
+      // Snapshot path — fetch joined detail tables + Pro-gated contact
+      // RPC. The joined-tables fetch is shared with /center/[slug] via
+      // loadFacilityDetails so both pages stay in sync on column lists.
       const facilityId = base.id;
-      const [services, insurance, ageGroups, credentials, accreditations] = await Promise.all([
-        supabase.from("facility_services").select("service_name").eq("facility_id", facilityId),
-        supabase.from("facility_insurance").select("insurance_name").eq("facility_id", facilityId),
-        supabase.from("facility_age_groups").select("age_group").eq("facility_id", facilityId),
-        supabase.from("facility_credentials").select("accreditations, licensing_info").eq("facility_id", facilityId),
-        supabase.from("facility_accreditations").select("accreditation_type, verified").eq("facility_id", facilityId),
+      const [joins, publicDataResult] = await Promise.all([
+        loadFacilityDetails(facilityId),
+        supabase.rpc("get_public_facility_data", { facility_id: facilityId }).maybeSingle(),
       ]);
-
-      const { data: publicData } = await supabase
-        .rpc("get_public_facility_data", { facility_id: facilityId })
-        .maybeSingle();
+      const publicData = publicDataResult.data as
+        | { phone?: string | null; email?: string | null; website?: string | null }
+        | null;
 
       return {
         ...base,
@@ -263,11 +262,7 @@ export default function SeekerFacilityProfile() {
         phone: publicData?.phone || null,
         email: publicData?.email || null,
         website: publicData?.website || null,
-        facility_services: services.data ?? [],
-        facility_insurance: insurance.data ?? [],
-        facility_age_groups: ageGroups.data ?? [],
-        facility_credentials: credentials.data ?? [],
-        facility_accreditations: accreditations.data ?? [],
+        ...joins,
         is_claimed: loaded.flags?.is_claimed,
         is_pro: loaded.flags?.is_pro,
         is_premium_visible: loaded.flags?.is_premium_visible,
