@@ -14,7 +14,11 @@ const logStep = (step: string, details?: unknown) => {
 type EmailType =
   | "welcome"
   | "welcome_followup"
-  | "request_confirmation"
+  // NOTE: `request_confirmation` was removed (Gap G1 cleanup). The
+  // live inquiry-confirmation email goes out from submit-qualified-
+  // lead/index.ts via a direct sendEmailWithRetry call keyed by
+  // lead.id — that path was always the truth; the case branch here
+  // was orphan dead code.
   | "request_followup"
   | "facility_contacted_you"
   | "tips_finding_treatment"
@@ -165,7 +169,6 @@ Deno.serve(async (req) => {
     const emailTypePreferenceMap: Record<string, keyof typeof defaultPrefs> = {
       "welcome": "email_lead_alerts", // Always send welcome
       "welcome_followup": "email_product_updates",
-      "request_confirmation": "email_lead_alerts",
       "request_followup": "followup_reminders_enabled",
       "facility_contacted_you": "email_lead_alerts",
       "tips_finding_treatment": "email_product_updates",
@@ -218,12 +221,6 @@ Deno.serve(async (req) => {
       case "welcome_followup":
         subject = "Quick Tips to Find the Right Treatment Center";
         html = generateWelcomeFollowupEmail(displayName);
-        break;
-
-      case "request_confirmation":
-        const facilityName = metadata?.facilityName as string || "the treatment center";
-        subject = `Your Request to ${facilityName} Was Sent`;
-        html = generateRequestConfirmationEmail(displayName, facilityName, metadata);
         break;
 
       case "request_followup":
@@ -332,7 +329,7 @@ Deno.serve(async (req) => {
 
     // Create in-app notification for certain email types (respect browser_notifications preference)
     const shouldCreateInAppNotification = prefs.browser_notifications !== false;
-    if (seekerId && shouldCreateInAppNotification && ["facility_contacted_you", "request_confirmation", "welcome", "placement_intro"].includes(type)) {
+    if (seekerId && shouldCreateInAppNotification && ["facility_contacted_you", "welcome", "placement_intro"].includes(type)) {
       let notificationTitle = subject;
       let notificationMessage = "";
       let notificationLink: string | null = null;
@@ -346,11 +343,6 @@ Deno.serve(async (req) => {
         case "facility_contacted_you":
           notificationTitle = `${metadata?.facilityName || "A facility"} responded`;
           notificationMessage = `${metadata?.facilityName || "A facility"} has responded to your request. Check your phone and email for their message.`;
-          notificationLink = "/account/requests";
-          break;
-        case "request_confirmation":
-          notificationTitle = "Request Sent Successfully";
-          notificationMessage = `Your request to ${metadata?.facilityName || "the facility"} has been sent. They typically respond within 24-48 hours.`;
           notificationLink = "/account/requests";
           break;
         case "placement_intro":
@@ -577,84 +569,6 @@ function generateWelcomeFollowupEmail(name: string): string {
               
               <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569;">
                 You've got this,<br>
-                <strong>The RehabLookup Team</strong>
-              </p>
-            </td>
-          </tr>
-          
-          ${generateEmailFooter()}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function generateRequestConfirmationEmail(name: string, facilityName: string, metadata?: Record<string, unknown>): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-          
-          <!-- Header -->
-          <tr>
-            <td style="background-color: #059669; background: #059669; padding: 36px 32px; text-align: center;">
-              <div style="width: 64px; height: 64px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 32px;">✓</span>
-              </div>
-              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 700;">
-                Your Request Was Sent!
-              </h1>
-            </td>
-          </tr>
-          
-          <!-- Body -->
-          <tr>
-            <td style="padding: 40px 32px;">
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; color: #1B365D; font-weight: 600;">
-                Hi ${name},
-              </p>
-              
-              <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                Great news! Your request to <strong>${facilityName}</strong> has been sent successfully. The facility will review your information and reach out to you soon.
-              </p>
-              
-              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 12px; margin: 24px 0;">
-                <p style="margin: 0 0 12px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #166534; font-weight: 600;">
-                  What happens next?
-                </p>
-                <ul style="margin: 0; padding-left: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #166534; line-height: 1.8;">
-                  <li>The facility typically responds within 24-48 hours</li>
-                  <li>They may call, email, or text you</li>
-                  <li>Prepare any questions you have about their program</li>
-                </ul>
-              </div>
-              
-              <p style="margin: 24px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #475569; line-height: 1.6;">
-                <strong>Tip:</strong> Don't put all your eggs in one basket. Consider reaching out to 2-3 facilities to compare options.
-              </p>
-              
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px auto;">
-                <tr>
-                  <td style="background-color: #1B365D; background: #1B365D; border-radius: 8px;">
-                    <a href="https://rehablookup.com/account/requests" style="display: inline-block; padding: 16px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none;">
-                      View Your Requests
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              
-              <p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569;">
-                Rooting for you,<br>
                 <strong>The RehabLookup Team</strong>
               </p>
             </td>
