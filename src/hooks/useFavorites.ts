@@ -217,10 +217,23 @@ export function useFavorites() {
   // `favorites` so the bookmark toggled on one device shows up on
   // another within ~200ms. Filtered server-side by user_id; RLS also
   // gates the row visibility independently.
+  //
+  // Channel name is per-instance (random suffix appended) — every
+  // FacilityCard mounts useFavorites independently, and Supabase
+  // Realtime returns a CACHED channel object when `.channel()` is
+  // called with a name that already has an active subscription. The
+  // second instance would then call `.on()` on the already-subscribed
+  // channel, which throws "cannot add postgres_changes callbacks
+  // after subscribe()" and trips the SeekerErrorBoundary, blacking
+  // out the entire panel on production (see 2026-05-21 incident).
+  // Per-instance channels are cheap (Supabase handles the topic
+  // multiplexing server-side) and reliably isolate the on()/subscribe()
+  // call ordering.
+  const channelIdRef = useRef<string>(`uf-${Math.random().toString(36).slice(2, 10)}`);
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel(`user-favorites-${user.id}`)
+      .channel(`user-favorites-${user.id}-${channelIdRef.current}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'user_favorites', filter: `user_id=eq.${user.id}` },
@@ -241,7 +254,7 @@ export function useFavorites() {
       )
       .subscribe();
     return () => {
-      supabase.removeChannel(channel);
+      try { supabase.removeChannel(channel); } catch { /* noop */ }
     };
   }, [user]);
 
