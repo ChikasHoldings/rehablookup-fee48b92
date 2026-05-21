@@ -138,12 +138,13 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
   const proximityConfig = proximityTier ? proximityBadgeConfig[proximityTier] : null;
   const ProximityIcon = proximityConfig?.icon;
   
-  // Check if provider has paid plan - show phone only for paid providers
-  const hasPaidPlan = center.hasPaidPlan || center.hasFeaturedSubscription || !center.isFromDatabase;
-
-  // Format phone number for display and tel link (only for paid plans)
-  const formattedPhone = hasPaidPlan && center.phone ? formatPhoneNumber(center.phone) : null;
-  const phoneDigits = hasPaidPlan && center.phone ? getPhoneDigits(center.phone) : null;
+  // PII gate removed 2026-05-21 — phone shows for every approved
+  // facility, not just paid plans. The Pro / Featured badges are
+  // still surfaced via showFeaturedBadge for sort ordering + marketing
+  // signal, but they no longer control whether the visitor can see
+  // the public business contact number.
+  const formattedPhone = center.phone ? formatPhoneNumber(center.phone) : null;
+  const phoneDigits = center.phone ? getPhoneDigits(center.phone) : null;
   const telLink = phoneDigits ? `tel:+1${phoneDigits}` : null;
 
   useEffect(() => {
