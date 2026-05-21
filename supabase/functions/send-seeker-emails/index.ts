@@ -24,7 +24,11 @@ type EmailType =
   // Security signal — confirms a successful password change so an
   // unauthorized rotation can be detected. Transactional; NOT
   // preference-gated.
-  | "password_changed";
+  | "password_changed"
+  // Security signal — fires when a seeker signs in from a browser /
+  // OS / device fingerprint they've never used before. Excludes the
+  // very-first session (signup auto-login). Transactional.
+  | "security_alert";
 
 interface SeekerEmailRequest {
   type: EmailType;
@@ -190,7 +194,7 @@ Deno.serve(async (req) => {
     // creation (the user just opted in by signing up); password_changed
     // is a security signal that the user needs to see regardless of
     // their marketing opt-outs.
-    const TRANSACTIONAL_TYPES = new Set(["welcome", "password_changed"]);
+    const TRANSACTIONAL_TYPES = new Set(["welcome", "password_changed", "security_alert"]);
     if (!TRANSACTIONAL_TYPES.has(type) && prefKey && !prefs[prefKey]) {
       logStep("Email skipped due to user preferences", { type, prefKey, enabled: prefs[prefKey] });
       return new Response(
@@ -258,6 +262,11 @@ Deno.serve(async (req) => {
         html = generatePasswordChangedEmail(displayName, metadata);
         break;
 
+      case "security_alert":
+        subject = "New sign-in to your RehabLookup account";
+        html = generateSecurityAlertEmail(displayName, metadata);
+        break;
+
       default:
         logStep("Unknown email type", { type });
         return new Response(
@@ -279,6 +288,20 @@ Deno.serve(async (req) => {
     } else if (type === "password_changed" && seekerId) {
       const minuteWindow = Math.floor(Date.now() / 60000);
       idempotencyKey = `seeker-${type}-${seekerId}-${minuteWindow}`;
+    } else if (type === "security_alert" && seekerId) {
+      // Per-day per-fingerprint dedup. Multiple sign-ins from the same
+      // new device within 24h send ONE email; a sign-in tomorrow from
+      // the same device that has now been "seen" would not trigger the
+      // alert at all (client gates on fingerprint-first-seen, not on
+      // the email cooldown). A different new device on the same day
+      // produces a different fingerprint string → fresh key → second
+      // email. Fingerprint defaults to "unknown" if metadata is empty
+      // so we still dedup per-day at the user level.
+      const dayStamp = new Date().toISOString().slice(0, 10);
+      const fp = `${(metadata?.browser as string) || "unknown"}-${(metadata?.os as string) || "unknown"}-${(metadata?.device as string) || "unknown"}`
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, "_");
+      idempotencyKey = `seeker-${type}-${seekerId}-${dayStamp}-${fp}`;
     } else if (seekerId) {
       idempotencyKey = `seeker-${type}-${seekerId}`;
     } else {
@@ -1285,6 +1308,103 @@ function generatePasswordChangedEmail(name: string, metadata?: Record<string, un
 
               <p style="margin: 18px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #64748b; line-height: 1.5; text-align: center;">
                 You can also review recent activity in <a href="https://rehablookup.com/account/settings" style="color: #1B365D; text-decoration: underline;">Settings → Account</a>.
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter()}
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function generateSecurityAlertEmail(name: string, metadata?: Record<string, unknown>): string {
+  const browser = (metadata?.browser as string | undefined) || null;
+  const os = (metadata?.os as string | undefined) || null;
+  const device = (metadata?.device as string | undefined) || null;
+  const now = new Date();
+  const whenLine = `${now.toUTCString()} (UTC)`;
+  const deviceLine = device || [browser, os].filter(Boolean).join(" · ") || "Unknown device";
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Header — neutral palette; security signal, not marketing -->
+          <tr>
+            <td style="background-color: #1B365D; background: #1B365D; padding: 36px 32px; text-align: center;">
+              <div style="width: 56px; height: 56px; background: rgba(255,255,255,0.18); border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 28px;">🛡️</span>
+              </div>
+              <h1 style="margin: 0; color: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 700;">
+                New sign-in to your account
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 36px 32px;">
+              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; color: #1B365D; font-weight: 600;">
+                Hi ${name},
+              </p>
+
+              <p style="margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; color: #475569; line-height: 1.6;">
+                Your RehabLookup account was just accessed from a new device. If this was you, no action is needed.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 18px 0; border: 1px solid #e5e7eb; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">When</p>
+                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">${whenLine}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 16px;">
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Device</p>
+                    <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1B365D; font-weight: 600;">${deviceLine}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Wasn't-you panel -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef2f2; border-left: 4px solid #dc2626; border-radius: 6px; margin: 18px 0;">
+                <tr>
+                  <td style="padding: 14px 16px;">
+                    <p style="margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #991b1b; font-weight: 600;">
+                      Didn't sign in?
+                    </p>
+                    <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #991b1b; line-height: 1.5;">
+                      Someone else may have your password. Reset it now and review active sessions in Settings.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 24px auto;">
+                <tr>
+                  <td style="background-color: #dc2626; background: #dc2626; border-radius: 8px;">
+                    <a href="https://rehablookup.com/forgot-password" style="display: inline-block; padding: 13px 28px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none;">
+                      Secure my account
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 18px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; color: #64748b; line-height: 1.5; text-align: center;">
+                You can also revoke active sessions in <a href="https://rehablookup.com/account/settings" style="color: #1B365D; text-decoration: underline;">Settings → Account</a>.
               </p>
             </td>
           </tr>

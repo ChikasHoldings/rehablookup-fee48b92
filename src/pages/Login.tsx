@@ -501,7 +501,52 @@ export default function Login() {
             event_description: `Signed in to account${rememberMe ? " (remembered)" : ""} from ${browser} on ${os}`,
           },
         }).catch(() => {});
-        
+
+        // New-device security alert for seekers. Fires when a seeker
+        // signs in from a browser/os/device fingerprint they've never
+        // used before. Suppresses the very-first session (signup
+        // auto-login). Server-side idempotency key includes the
+        // day-stamp + fingerprint so multiple logins from the SAME
+        // new device within a 24-hour window dedupe to one email.
+        // Fire-and-forget; this never blocks the login redirect.
+        if (accountResult.type === "seeker") {
+          void (async () => {
+            try {
+              // Count prior sessions (excluding the one just inserted).
+              // Zero → very-first login → skip the alert (signup flow).
+              const { count: priorTotal } = await supabase
+                .from("user_sessions")
+                .select("*", { count: "exact", head: true })
+                .eq("user_id", data.session!.user.id)
+                .neq("session_token", sessionToken);
+              if (!priorTotal || priorTotal === 0) return;
+
+              // Count prior sessions matching THIS device fingerprint.
+              // If any exist, this isn't a new device — no alert.
+              const { count: priorMatching } = await supabase
+                .from("user_sessions")
+                .select("*", { count: "exact", head: true })
+                .eq("user_id", data.session!.user.id)
+                .eq("browser", browser)
+                .eq("os", os)
+                .eq("device_name", device)
+                .neq("session_token", sessionToken);
+              if (priorMatching && priorMatching > 0) return;
+
+              await supabase.functions.invoke("send-seeker-emails", {
+                body: {
+                  type: "security_alert",
+                  seekerId: data.session!.user.id,
+                  email: data.session!.user.email,
+                  metadata: { browser, os, device },
+                },
+              });
+            } catch (err) {
+              console.warn("[Login] new-device security alert failed", err);
+            }
+          })();
+        }
+
         // Redirect based on account type
         if (accountResult.type === "provider") {
           // Prefetch provider data
