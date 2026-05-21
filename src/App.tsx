@@ -12,7 +12,6 @@ import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
 import { StaticFileRedirect } from "@/components/seo/StaticFileRedirect";
 // CookieConsentBanner removed — US site, no opt-in required. GA4 tracks unconditionally.
 import { useTelClickTracking } from "@/hooks/useTelClickTracking";
-import { useGAInternalTrafficFlag } from "@/hooks/useGAInternalTrafficFlag";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
@@ -419,12 +418,17 @@ const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
  */
 function AppGlobals() {
   useTelClickTracking();
-  // Tags the GA4 session with `traffic_type` (internal/external) once the
-  // user's role is known. Lets GA4 reports exclude staff sessions via the
-  // user property filter (Admin → Data Filters), mirroring the
-  // `is_internal` flag the `track-provider-event` edge function writes to
-  // `provider_events`. See src/lib/ga.ts + src/hooks/useGAInternalTrafficFlag.ts.
-  useGAInternalTrafficFlag();
+  // ROLLED BACK 2026-05-21: `useGAInternalTrafficFlag()` was suspected of
+  // causing the cross-route SEORouteBoundary / SeekerErrorBoundary crashes
+  // that took down the seeker panel after the analytics hardening pass.
+  // The hook calls supabase.auth.onAuthStateChange and unsubscribes on
+  // unmount — the cleanup path threw on some sessions. The hook + helper
+  // live in src/hooks/useGAInternalTrafficFlag.ts so they can be re-mounted
+  // once we attach a precise repro. Until then GA4 reports treat all
+  // sessions as `traffic_type=external`, which is the pre-hardening
+  // behavior. Configure the GA4 staff-exclusion via the IP-based
+  // "Internal traffic" filter in Admin → Property → Data Filters as the
+  // interim workaround.
   return null;
 }
 
