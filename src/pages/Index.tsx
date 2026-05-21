@@ -15,7 +15,6 @@ import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { useCountUp } from "@/hooks/useCountUp";
 import { cn } from "@/lib/utils";
-import { analytics } from "@/lib/analytics";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
 const heroImage = "/hero-recovery.webp";
@@ -243,30 +242,8 @@ const Index = () => {
               <SearchForm variant="directory" />
             </div>
 
-            {/* Risk-reversal chip row — surfaces the strongest selling
-                points right under the search. */}
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 animate-fade-in" style={{ animationDelay: "120ms" }}>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 ring-1 ring-emerald-400/25 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-100">
-                100% free
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/10 ring-1 ring-white/15 px-2.5 py-0.5 text-[11px] font-semibold text-white/85">
-                Confidential
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/10 ring-1 ring-white/15 px-2.5 py-0.5 text-[11px] font-semibold text-white/85">
-                24/7 help
-              </span>
-            </div>
-
             {/* Quick Links */}
             <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 animate-fade-in relative z-0" style={{ animationDelay: "150ms" }}>
-              <Link
-                to="/concierge"
-                onClick={() => analytics.ctaClick("Get Free Help", "homepage_hero_quicklink")}
-                className="inline-flex items-center gap-1 text-sm font-semibold text-white hover:text-white underline underline-offset-4 transition-colors"
-              >
-                Talk to a placement specialist
-              </Link>
-              <span className="text-white/40">•</span>
               <Link
                 to="/for-providers"
                 className="inline-flex items-center gap-1 text-sm text-white/75 hover:text-white underline underline-offset-4 transition-colors"
