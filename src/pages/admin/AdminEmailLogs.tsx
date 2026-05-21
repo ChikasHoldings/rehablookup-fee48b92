@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +8,23 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Mail, CheckCircle2, XCircle, AlertTriangle, Clock, Search, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Mail,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Clock,
+  Search,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Link as LinkIcon,
+  Check as CheckIcon,
+  X,
+} from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { usePagination } from "@/hooks/usePagination";
@@ -26,6 +42,30 @@ type StatusFilter =
   | "suppressed"
   | "dlq"
   | "retry";
+
+const TIME_RANGES = new Set<TimeRange>(["24h", "7d", "30d", "all"]);
+const STATUS_FILTERS = new Set<StatusFilter>([
+  "all", "sent", "delivered", "opened", "clicked",
+  "bounced", "complained", "failed", "suppressed", "dlq", "retry",
+]);
+
+// CSV cell escape with formula-injection guard. Cells starting with
+// =/+/-/@/\t/\r get a leading single-quote so Excel / Sheets treat the
+// value as text. Email logs contain recipient addresses and event-data
+// JSON — both attacker-controllable via the wider system.
+function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const raw = String(value);
+  const needsQuote =
+    /^[=+\-@\t\r]/.test(raw) ||
+    raw.includes(",") ||
+    raw.includes('"') ||
+    raw.includes("\n") ||
+    raw.includes("\r");
+  const prefixed = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+  if (!needsQuote) return prefixed;
+  return `"${prefixed.replace(/"/g, '""')}"`;
+}
 
 
 
@@ -66,10 +106,13 @@ function statusBadge(status: string) {
 }
 
 export default function AdminEmailLogs() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hydratedRef = useRef(false);
   const [timeRange, setTimeRange] = useState<TimeRange>("7d");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [copiedLink, setCopiedLink] = useState(false);
   const { page: pageOneBased, pageSize: PAGE_SIZE, totalPages, setPage: setPageOneBased, setPageSize } = usePagination({
     tableId: "admin-email-logs",
     defaultPageSize: 50,
@@ -80,6 +123,71 @@ export default function AdminEmailLogs() {
     const resolved = typeof next === "function" ? (next as (p: number) => number)(page) : next;
     setPageOneBased(resolved + 1);
   };
+
+  // URL state hydration (once on mount).
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    const r = searchParams.get("range");
+    const s = searchParams.get("status");
+    const t = searchParams.get("type");
+    const q = searchParams.get("q");
+    if (r && TIME_RANGES.has(r as TimeRange)) setTimeRange(r as TimeRange);
+    if (s && STATUS_FILTERS.has(s as StatusFilter)) setStatusFilter(s as StatusFilter);
+    if (t) setTypeFilter(t);
+    if (q) setSearchQuery(q);
+  }, [searchParams]);
+
+  // Loop-guarded URL sync.
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const next = new URLSearchParams(searchParams);
+    const setOrDelete = (key: string, value: string, defaultValue: string) => {
+      if (value && value !== defaultValue) next.set(key, value);
+      else next.delete(key);
+    };
+    setOrDelete("range", timeRange, "7d");
+    setOrDelete("status", statusFilter, "all");
+    setOrDelete("type", typeFilter, "all");
+    setOrDelete("q", searchQuery, "");
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [timeRange, statusFilter, typeFilter, searchQuery, searchParams, setSearchParams]);
+
+  const filtersActive =
+    timeRange !== "7d" || statusFilter !== "all" || typeFilter !== "all" || searchQuery !== "";
+
+  const handleClearFilters = () => {
+    setTimeRange("7d");
+    setStatusFilter("all");
+    setTypeFilter("all");
+    setSearchQuery("");
+    setPage(0);
+  };
+
+  const handleCopyLink = useCallback(async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = url;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopiedLink(true);
+      toast.success("Filtered view link copied");
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch (err) {
+      toast.error(`Failed to copy link: ${err instanceof Error ? err.message : "unknown error"}`);
+    }
+  }, []);
 
   // Fetch all email types for filter dropdown
   const { data: emailTypes = [] } = useQuery({
@@ -174,17 +282,78 @@ export default function AdminEmailLogs() {
     staleTime: 30_000,
   });
 
+  const handleExportCsv = useCallback(() => {
+    if (logs.length === 0) {
+      toast.error("No rows in current view to export");
+      return;
+    }
+    const headers = ["timestamp", "email_type", "recipient_email", "event_type", "error_message", "email_id"];
+    const rows = logs.map((log) => {
+      const eventData = log.event_data as Record<string, unknown> | null;
+      const errorMsg = eventData && typeof eventData.error === "string" ? (eventData.error as string) : "";
+      return [
+        log.created_at,
+        log.email_type ?? "",
+        log.recipient_email,
+        log.event_type,
+        errorMsg,
+        log.email_id ?? "",
+      ].map(csvCell).join(",");
+    });
+    const csv = [headers.map(csvCell).join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `email-logs-${new Date().toISOString().slice(0, 10)}-page${pageOneBased}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${logs.length} email log entries`);
+  }, [logs, pageOneBased]);
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Email Logs</h1>
           <p className="text-muted-foreground text-sm">Monitor all platform email delivery, failures, and retries</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopyLink}
+            disabled={!filtersActive}
+            aria-label="Copy link to filtered view"
+            className="gap-2"
+          >
+            {copiedLink ? <CheckIcon className="h-4 w-4 text-success" /> : <LinkIcon className="h-4 w-4" />}
+            Copy link
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={logs.length === 0}
+            aria-label="Export current page to CSV"
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="gap-2"
+            aria-label="Refresh email logs"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Summary Stats */}
@@ -294,8 +463,22 @@ export default function AdminEmailLogs() {
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
                 className="pl-9"
+                aria-label="Search by recipient email"
               />
             </div>
+
+            {filtersActive && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearFilters}
+                aria-label="Clear all filters"
+                className="gap-2"
+              >
+                <X className="h-4 w-4" />
+                Clear
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

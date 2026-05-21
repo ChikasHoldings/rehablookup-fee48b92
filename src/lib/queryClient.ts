@@ -97,12 +97,30 @@ export function warmQueryCache(): void {
 }
 
 /**
- * Clear sensitive data from cache (for logout)
+ * Clear sensitive data from cache (for logout).
+ *
+ * Bug fix: previously called `removeQueries({ queryKey: ["admin-"] })`
+ * which is an EXACT-array match against the QueryKey. Since real keys
+ * are like `["admin-audit-log"]` (one element, a single string), the
+ * array `["admin-"]` never matched anything — the function was a
+ * silent no-op for every cache it intended to clear.
+ *
+ * React Query's queryKey filter matches partial PREFIX at the array
+ * level, not by string-prefix within an element. For string-prefix
+ * matching on the first element we need a `predicate` filter.
+ *
+ * Note: the canonical logout flow in useAdminAuth calls
+ * `queryClient.clear()` which nukes everything, so this helper is
+ * currently a defence-in-depth for partial-logout flows (e.g.
+ * impersonation stop, role change) and any future callers.
  */
 export function clearSensitiveCache(): void {
-  // Clear user-specific queries
-  queryClient.removeQueries({ queryKey: ["provider-"] });
-  queryClient.removeQueries({ queryKey: ["admin-"] });
-  queryClient.removeQueries({ queryKey: ["seeker-"] });
-  queryClient.removeQueries({ queryKey: ["user-"] });
+  const PREFIXES = ["admin-", "provider-", "seeker-", "user-"];
+  queryClient.removeQueries({
+    predicate: (query) => {
+      const first = query.queryKey[0];
+      if (typeof first !== "string") return false;
+      return PREFIXES.some((p) => first.startsWith(p));
+    },
+  });
 }
