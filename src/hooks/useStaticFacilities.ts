@@ -10,12 +10,6 @@ import {
   type PublicFacilitySnapshot,
 } from "@/lib/publicFacilitiesSnapshot";
 
-/**
- * React-Query key for the public facility snapshot. Exposed so other
- * surfaces (admin approval flow, provider self-publish handler) can
- * trigger a manual invalidation immediately after they know a row
- * just changed, without waiting for the realtime event.
- */
 export const PUBLIC_FACILITIES_QUERY_KEY = ["static-public-facilities"] as const;
 
 const REALTIME_INVALIDATION_DEBOUNCE_MS = 1500;
@@ -81,14 +75,21 @@ export const useStaticFacilities = () => {
     gcTime: 1000 * 60 * 30,
   });
 
-  // Realtime invalidation. Anon RLS on `facilities` permits SELECT on
-  // approved+unsuspended rows, so anon visitors receive change events for
-  // exactly the rows the snapshot would include. We debounce because a
-  // single admin "bulk approve" action can fire dozens of UPDATE events
-  // back-to-back; debouncing collapses the burst into a single refetch.
+  // Realtime invalidation. Wrapped in a try/catch + per-hook unique
+  // channel name so a Supabase Realtime hiccup (transport error, channel
+  // collision when multiple `useStaticFacilities` consumers mount in the
+  // same session, missing publication on a non-prod project) NEVER crashes
+  // the page. Pre-hotfix 2026-05-21 we shared the same channel name across
+  // every mount and didn't wrap the cleanup, which surfaced as the entire
+  // route rendering the SEORouteBoundary fallback when any subscription
+  // setup or teardown threw.
   const invalidateTimer = useRef<number | null>(null);
+  const channelIdRef = useRef<string>(
+    `public-facilities-realtime-${Math.random().toString(36).slice(2, 10)}`,
+  );
   useEffect(() => {
     const scheduleInvalidate = () => {
+      if (typeof window === "undefined") return;
       if (invalidateTimer.current !== null) {
         window.clearTimeout(invalidateTimer.current);
       }
@@ -98,31 +99,39 @@ export const useStaticFacilities = () => {
       }, REALTIME_INVALIDATION_DEBOUNCE_MS);
     };
 
-    const channel = supabase
-      .channel("public-facilities-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "facilities" },
-        scheduleInvalidate,
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "facility_services" },
-        scheduleInvalidate,
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "facility_insurance" },
-        scheduleInvalidate,
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        .channel(channelIdRef.current)
+        .on(
+          "postgres_changes" as never,
+          { event: "*", schema: "public", table: "facilities" } as never,
+          scheduleInvalidate as never,
+        )
+        .on(
+          "postgres_changes" as never,
+          { event: "*", schema: "public", table: "facility_services" } as never,
+          scheduleInvalidate as never,
+        )
+        .on(
+          "postgres_changes" as never,
+          { event: "*", schema: "public", table: "facility_insurance" } as never,
+          scheduleInvalidate as never,
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("[useStaticFacilities] realtime subscribe failed; falling back to polling", err);
+      channel = null;
+    }
 
     return () => {
       if (invalidateTimer.current !== null) {
-        window.clearTimeout(invalidateTimer.current);
+        try { window.clearTimeout(invalidateTimer.current); } catch { /* noop */ }
         invalidateTimer.current = null;
       }
-      supabase.removeChannel(channel);
+      if (channel) {
+        try { supabase.removeChannel(channel); } catch { /* noop */ }
+      }
     };
   }, [queryClient]);
 
