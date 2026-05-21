@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2, Search, Reply, ThumbsUp, AlertTriangle, RefreshCw, Filter } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -106,7 +106,12 @@ function ReviewCard({
     formatDistanceToNow(new Date(dateString), { addSuffix: true });
 
   const canEdit = review.status === 'pending';
-  const facilityLink = review.facility_slug ? `/center/${review.facility_slug}` : `/center/${review.facility_id}`;
+  // Only render the facility link if we actually resolved the facility
+  // (slug present). When facility is null (deleted, RLS-hidden, or join
+  // failed), the previous fallback `/center/${facility_id}` led to a
+  // 404 page — render the name as plain text instead.
+  const hasFacility = !!review.facility_slug;
+  const facilityLink = hasFacility ? `/center/${review.facility_slug}` : null;
 
   return (
     <article className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-lg hover:border-primary/40 transition-all duration-300">
@@ -138,12 +143,21 @@ function ReviewCard({
           <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <Link 
-                  to={facilityLink}
-                  className="font-display text-base font-bold leading-tight hover:text-primary transition-colors"
-                >
-                  {review.facility_name}
-                </Link>
+                {facilityLink ? (
+                  <Link
+                    to={facilityLink}
+                    className="font-display text-base font-bold leading-tight hover:text-primary transition-colors"
+                  >
+                    {review.facility_name}
+                  </Link>
+                ) : (
+                  <span
+                    className="font-display text-base font-bold leading-tight text-muted-foreground"
+                    title="This facility is no longer listed"
+                  >
+                    {review.facility_name}
+                  </span>
+                )}
                 {getStatusBadge(review.status)}
               </div>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
@@ -235,8 +249,12 @@ function ReviewCard({
   );
 }
 
+const VALID_STATUS_FILTERS = new Set<StatusFilter>(["all", "approved", "pending", "rejected"]);
+
 export default function SeekerReviews() {
   const { userId, isAuthenticated, isReady } = useSeekerSession();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hydratedRef = useRef(false);
   const [reviews, setReviews] = useState<UserReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingReview, setEditingReview] = useState<UserReview | null>(null);
@@ -248,6 +266,27 @@ export default function SeekerReviews() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const { toast } = useToast();
+
+  // URL state hydration once on mount + loop-guarded sync so
+  // `?status=pending` bookmarks restore the filter.
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    const s = searchParams.get("status");
+    if (s && VALID_STATUS_FILTERS.has(s as StatusFilter)) {
+      setStatusFilter(s as StatusFilter);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const next = new URLSearchParams(searchParams);
+    if (statusFilter !== "all") next.set("status", statusFilter);
+    else next.delete("status");
+    if (next.toString() !== searchParams.toString()) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [statusFilter, searchParams, setSearchParams]);
 
   const fetchReviews = useCallback(async (uid: string) => {
     setIsLoading(true);
@@ -263,7 +302,7 @@ export default function SeekerReviews() {
 
       if (reviewsError) {
         console.error('[SeekerReviews] Error fetching reviews:', reviewsError);
-        setError('Could not load your reviews');
+        setError(reviewsError.message || 'Could not load your reviews');
         setIsLoading(false);
         return;
       }
@@ -325,6 +364,58 @@ export default function SeekerReviews() {
     }
   }, [isReady, userId, fetchReviews]);
 
+  // Realtime: a seeker's review can change state in three ways without
+  // any action on this page —
+  //   1. Admin moderates pending → approved/rejected (UPDATE on
+  //      facility_reviews)
+  //   2. Admin or admin-bulk deletes the review (DELETE)
+  //   3. Facility responds to an approved review (INSERT on
+  //      review_responses for review_id = our review)
+  // All three should refetch the list. facility_reviews and
+  // review_responses are both in the supabase_realtime publication
+  // (verified). RLS gates delivery — seekers see their own review
+  // changes via the "Users can view their own reviews" policy, and
+  // responses to approved reviews via "Public can view active
+  // responses".
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`seeker-reviews-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "facility_reviews",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          fetchReviews(userId);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          // No filter possible on review_responses (no user_id column) —
+          // we listen to all INSERTs and let the refetch resolve which
+          // of the seeker's reviews now have responses. RLS limits
+          // delivery to responses on approved reviews the user can see.
+          event: "INSERT",
+          schema: "public",
+          table: "review_responses",
+        },
+        () => {
+          fetchReviews(userId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, fetchReviews]);
+
   const handleEdit = (review: UserReview) => {
     if (review.status !== 'pending') {
       toast({ title: "Cannot edit", description: "Only pending reviews can be edited.", variant: "destructive" });
@@ -374,7 +465,11 @@ export default function SeekerReviews() {
         .eq('user_id', userId);
 
       if (error) {
-        toast({ title: "Error saving", description: "Could not update your review. Please try again.", variant: "destructive" });
+        toast({
+          title: "Error saving",
+          description: error.message || "Could not update your review. Please try again.",
+          variant: "destructive",
+        });
       } else {
         toast({
           title: "Review updated",
@@ -404,7 +499,11 @@ export default function SeekerReviews() {
         .eq('user_id', userId);
 
       if (error) {
-        toast({ title: "Error deleting", description: "Could not delete your review. Please try again.", variant: "destructive" });
+        toast({
+          title: "Error deleting",
+          description: error.message || "Could not delete your review. Please try again.",
+          variant: "destructive",
+        });
       } else {
         toast({ title: "Review deleted", description: "Your review has been removed successfully." });
         setReviews(prev => prev.filter(r => r.id !== deleteReviewId));
