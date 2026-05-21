@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { Bell, Mail, MessageSquare, ArrowLeft, Loader2, Star } from "lucide-react";
+import { Bell, Mail, ArrowLeft, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -13,104 +13,144 @@ import { useSeekerSession } from "@/hooks/useSeekerSession";
 import { AuthPrompt } from "@/components/seeker/AuthPrompt";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Only includes keys that actually drive behavior in the codebase. The
+// dead toggles (notify_lead_status_changes, notify_facility_views) had
+// ZERO consumers — see docs/seeker-notification-preferences-hardening-2026-05-21.md
+// for the audit. Removed rather than left to mislead the user.
 interface NotificationPreferences {
   email_lead_alerts: boolean;
   email_weekly_digest: boolean;
   email_product_updates: boolean;
-  browser_notifications: boolean;
-  notify_lead_status_changes: boolean;
-  notify_facility_views: boolean;
   followup_reminders_enabled: boolean;
+  browser_notifications: boolean;
 }
 
 const defaultPreferences: NotificationPreferences = {
   email_lead_alerts: true,
   email_weekly_digest: true,
   email_product_updates: false,
-  browser_notifications: true,
-  notify_lead_status_changes: true,
-  notify_facility_views: true,
   followup_reminders_enabled: true,
+  browser_notifications: true,
 };
 
 export default function SeekerNotificationPreferences() {
   const { userId: sessionUserId, isAuthenticated, isReady } = useSeekerSession();
   const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const loadPreferences = async () => {
-      if (!isReady) return;
-      
-      if (!sessionUserId) {
-        setIsLoading(false);
-        return;
-      }
+  // Per-key write sequencer. Prevents a stale upsert from a fast first
+  // click from clobbering a fresh upsert from a fast second click. The
+  // refs are keyed by preference name; only the latest sequence-id wins.
+  const writeSeqRef = useRef<Record<string, number>>({});
 
-      setUserId(sessionUserId);
-
-      const { data, error } = await supabase
-        .from('notification_preferences')
-        .select('user_id, email_lead_alerts, email_weekly_digest, email_product_updates, browser_notifications, notify_lead_status_changes, notify_facility_views, followup_reminders_enabled')
-        .eq('user_id', sessionUserId)
-        .maybeSingle();
-
-      // Previously the fetch error was silently ignored, leaving the
-      // user with default toggles and no indication their saved
-      // preferences couldn't be read. Surface it via toast so the
-      // user knows changes from this view may not reflect their
-      // current settings.
-      if (error) {
-        console.error('[SeekerNotificationPreferences] load failed:', error);
-        toast({
-          title: "Couldn't load your preferences",
-          description: error.message || "Showing defaults — saved settings may differ.",
-          variant: "destructive",
-        });
-      }
-
-      if (data) {
-        setPreferences({
-          email_lead_alerts: data.email_lead_alerts ?? true,
-          email_weekly_digest: data.email_weekly_digest ?? true,
-          email_product_updates: data.email_product_updates ?? false,
-          browser_notifications: data.browser_notifications ?? true,
-          notify_lead_status_changes: data.notify_lead_status_changes ?? true,
-          notify_facility_views: data.notify_facility_views ?? true,
-          followup_reminders_enabled: data.followup_reminders_enabled ?? true,
-        });
-      }
-
+  const fetchPreferences = useCallback(async () => {
+    if (!sessionUserId) {
       setIsLoading(false);
-    };
+      return;
+    }
 
-    loadPreferences();
-  }, [isReady, sessionUserId]);
+    setLoadError(null);
+
+    const { data, error } = await supabase
+      .from('notification_preferences')
+      .select('user_id, email_lead_alerts, email_weekly_digest, email_product_updates, browser_notifications, followup_reminders_enabled')
+      .eq('user_id', sessionUserId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[SeekerNotificationPreferences] load failed:', error);
+      setLoadError(error.message || "Showing defaults — saved settings may differ.");
+      // Don't toast here. The inline banner is more honest than a toast
+      // the user might miss; the banner stays visible until retry/reload.
+    } else if (data) {
+      setPreferences({
+        email_lead_alerts: data.email_lead_alerts ?? true,
+        email_weekly_digest: data.email_weekly_digest ?? true,
+        email_product_updates: data.email_product_updates ?? false,
+        followup_reminders_enabled: data.followup_reminders_enabled ?? true,
+        browser_notifications: data.browser_notifications ?? true,
+      });
+    }
+    // No row yet → defaults stand. First toggle will upsert + create.
+
+    setIsLoading(false);
+  }, [sessionUserId]);
+
+  useEffect(() => {
+    if (!isReady) return;
+    fetchPreferences();
+  }, [isReady, fetchPreferences]);
+
+  // Realtime: notification_preferences added to supabase_realtime in
+  // migration 20260705000000. UPDATEs from another tab (or an admin
+  // support touch) propagate within ~200ms. RLS limits delivery to the
+  // user's own row. We skip applying the event if a local write is
+  // in-flight for the same key — the local optimistic state is the
+  // intended truth until that write resolves.
+  useEffect(() => {
+    if (!sessionUserId) return;
+    const channel = supabase
+      .channel(`notification-prefs-${sessionUserId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'notification_preferences', filter: `user_id=eq.${sessionUserId}` },
+        (payload) => {
+          const row = payload.new as Partial<NotificationPreferences> | null;
+          if (!row) return;
+          setPreferences((prev) => ({
+            email_lead_alerts: typeof row.email_lead_alerts === 'boolean' ? row.email_lead_alerts : prev.email_lead_alerts,
+            email_weekly_digest: typeof row.email_weekly_digest === 'boolean' ? row.email_weekly_digest : prev.email_weekly_digest,
+            email_product_updates: typeof row.email_product_updates === 'boolean' ? row.email_product_updates : prev.email_product_updates,
+            followup_reminders_enabled: typeof row.followup_reminders_enabled === 'boolean' ? row.followup_reminders_enabled : prev.followup_reminders_enabled,
+            browser_notifications: typeof row.browser_notifications === 'boolean' ? row.browser_notifications : prev.browser_notifications,
+          }));
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionUserId]);
 
   const updatePreference = async (key: keyof NotificationPreferences, value: boolean) => {
-    if (!userId) return;
+    if (!sessionUserId) return;
 
     const prev = { ...preferences };
     setPreferences({ ...preferences, [key]: value });
     setSavingKey(key);
 
+    // Tag this write with a monotonically-increasing per-key sequence.
+    // On return we only apply the result if our sequence is still the
+    // latest — a faster second click invalidates the first's effects.
+    const seq = (writeSeqRef.current[key] || 0) + 1;
+    writeSeqRef.current[key] = seq;
+
     const { error } = await supabase
       .from('notification_preferences')
-      .upsert({
-        user_id: userId,
-        [key]: value,
-        updated_at: new Date().toISOString(),
-      } as never, { onConflict: 'user_id' });
+      .upsert(
+        {
+          user_id: sessionUserId,
+          [key]: value,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
+
+    // A newer write for this key has been issued — abandon our toast +
+    // rollback. The newer write will own the user-visible outcome.
+    if (writeSeqRef.current[key] !== seq) {
+      return;
+    }
 
     if (error) {
       setPreferences(prev);
       toast({
-        title: "Error saving",
+        title: "Couldn't save",
         description: error.message || "Could not update your preferences. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } else {
       toast({ title: "Preference saved" });
@@ -140,7 +180,7 @@ export default function SeekerNotificationPreferences() {
   if (isReady && !isAuthenticated) {
     return (
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <AuthPrompt 
+        <AuthPrompt
           title="Sign in to manage notifications"
           description="Create an account or sign in to customize your notification preferences."
         />
@@ -152,7 +192,7 @@ export default function SeekerNotificationPreferences() {
     <>
       <Helmet>
         <title>Notification Preferences | RehabLookup</title>
-        <meta name="description" content="Customize your email, in-app, and review notification settings." />
+        <meta name="description" content="Customize your email and in-app notification settings." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
@@ -168,7 +208,23 @@ export default function SeekerNotificationPreferences() {
           </div>
         </div>
 
-        {/* Email Notifications */}
+        {loadError && (
+          <Card className="border-destructive/50 bg-destructive/5 mb-4">
+            <CardContent className="p-4 flex items-start justify-between gap-3">
+              <div className="text-sm">
+                <p className="font-medium text-destructive">Couldn't load your saved preferences</p>
+                <p className="text-xs text-muted-foreground mt-1">{loadError}</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={fetchPreferences}>
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Email Notifications — every toggle here is wired to a real
+            send-seeker-emails branch. Verified via codepath audit on
+            2026-05-21. */}
         <Card className="mb-4 sm:mb-6">
           <CardHeader className="pb-3 px-4 sm:px-6">
             <div className="flex items-center gap-2">
@@ -181,16 +237,25 @@ export default function SeekerNotificationPreferences() {
             <PreferenceToggle
               id="email_lead_alerts"
               label="Inquiry Responses"
-              description="Get notified when facilities respond to your help requests"
+              description="Get notified when facilities respond to your help requests and when your inquiry is confirmed."
               checked={preferences.email_lead_alerts}
               saving={savingKey === 'email_lead_alerts'}
               onCheckedChange={(v) => updatePreference('email_lead_alerts', v)}
             />
             <Separator />
             <PreferenceToggle
+              id="followup_reminders_enabled"
+              label="Follow-up Reminders"
+              description="Reminders to follow up on inquiries that haven't received a response yet."
+              checked={preferences.followup_reminders_enabled}
+              saving={savingKey === 'followup_reminders_enabled'}
+              onCheckedChange={(v) => updatePreference('followup_reminders_enabled', v)}
+            />
+            <Separator />
+            <PreferenceToggle
               id="email_weekly_digest"
               label="Weekly Summary"
-              description="Receive a weekly summary of your saved facilities and requests"
+              description="Weekly summary of your saved facilities and recent activity."
               checked={preferences.email_weekly_digest}
               saving={savingKey === 'email_weekly_digest'}
               onCheckedChange={(v) => updatePreference('email_weekly_digest', v)}
@@ -198,8 +263,8 @@ export default function SeekerNotificationPreferences() {
             <Separator />
             <PreferenceToggle
               id="email_product_updates"
-              label="Product Updates"
-              description="Stay informed about new features and improvements"
+              label="Product Updates & Tips"
+              description="New features, treatment-finding tips, and occasional product news."
               checked={preferences.email_product_updates}
               saving={savingKey === 'email_product_updates'}
               onCheckedChange={(v) => updatePreference('email_product_updates', v)}
@@ -207,65 +272,34 @@ export default function SeekerNotificationPreferences() {
           </CardContent>
         </Card>
 
-        {/* In-App Notifications */}
-        <Card className="mb-4 sm:mb-6">
+        {/* In-App Notifications — the master toggle for everything that
+            shows up in the in-app inbox: facility responses, review
+            approvals/rejections/responses, concierge updates. */}
+        <Card>
           <CardHeader className="pb-3 px-4 sm:px-6">
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               <CardTitle className="text-base sm:text-lg">In-App Notifications</CardTitle>
             </div>
-            <CardDescription className="text-xs sm:text-sm">Control notifications within the app</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 px-4 sm:px-6">
-            <PreferenceToggle
-              id="notify_lead_status_changes"
-              label="Request Status Updates"
-              description="When a facility views or responds to your request"
-              checked={preferences.notify_lead_status_changes}
-              saving={savingKey === 'notify_lead_status_changes'}
-              onCheckedChange={(v) => updatePreference('notify_lead_status_changes', v)}
-            />
-            <Separator />
-            <PreferenceToggle
-              id="notify_facility_views"
-              label="Saved Facility Updates"
-              description="When a facility you saved updates their listing"
-              checked={preferences.notify_facility_views}
-              saving={savingKey === 'notify_facility_views'}
-              onCheckedChange={(v) => updatePreference('notify_facility_views', v)}
-            />
-            <Separator />
-            <PreferenceToggle
-              id="followup_reminders_enabled"
-              label="Follow-up Reminders"
-              description="Reminders to follow up on your help requests"
-              checked={preferences.followup_reminders_enabled}
-              saving={savingKey === 'followup_reminders_enabled'}
-              onCheckedChange={(v) => updatePreference('followup_reminders_enabled', v)}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Review Notifications */}
-        <Card>
-          <CardHeader className="pb-3 px-4 sm:px-6">
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <CardTitle className="text-base sm:text-lg">Review Notifications</CardTitle>
-            </div>
-            <CardDescription className="text-xs sm:text-sm">Get notified about your reviews</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
+              Notifications that appear in your account inbox
+            </CardDescription>
           </CardHeader>
           <CardContent className="px-4 sm:px-6">
             <PreferenceToggle
               id="browser_notifications"
-              label="Review Status Updates"
-              description="When your review is approved, rejected, or receives a response"
+              label="In-App Inbox Notifications"
+              description="Notifications when a facility responds, your review is approved or receives a reply, and concierge updates."
               checked={preferences.browser_notifications}
               saving={savingKey === 'browser_notifications'}
               onCheckedChange={(v) => updatePreference('browser_notifications', v)}
             />
           </CardContent>
         </Card>
+
+        <p className="text-xs text-muted-foreground mt-4 px-1">
+          Critical account emails (sign-in confirmation, password reset, account deletion) are always sent regardless of these settings.
+        </p>
       </div>
     </>
   );
