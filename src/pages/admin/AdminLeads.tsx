@@ -319,6 +319,7 @@ export default function AdminLeads() {
       };
     },
     refetchInterval: 60_000,
+    // Keep the larger of the two previously-duplicated staleTimes; the 60s refetchInterval handles freshness, this just avoids needless refetches on remount.
     staleTime: 1000 * 60 * 2,
   });
 
