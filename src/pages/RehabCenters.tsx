@@ -8,6 +8,7 @@ import { LocationStatTile } from "@/components/seo/LocationStatTile";
 import { SearchForm } from "@/components/search/SearchForm";
 import { NoResultsConciergeCTA } from "@/components/search/NoResultsConciergeCTA";
 import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
+import { TreatmentCenterCardSkeletonGrid } from "@/components/skeletons/TreatmentCenterCardSkeleton";
 import { PaginationFooter } from "@/components/common/PaginationFooter";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
@@ -89,7 +90,11 @@ const BROWSE_PAGE_SIZE = 12;
 
 
 const RehabCenters = () => {
-  const { data: approvedFacilities = [] } = useStaticFacilities();
+  const { data: approvedFacilities = [], isLoading: isFacilitiesLoading } = useStaticFacilities();
+  // Static seed data is empty in production; show skeleton cards while the
+  // database snapshot is loading so the page isn't blank for ~3s on cold
+  // load (the lazy chunk arrives long before the data does).
+  const showSkeletonCards = isFacilitiesLoading && approvedFacilities.length === 0;
 
   // Combine static data with approved facilities from database
   const allCenters = useMemo(() => {
@@ -462,15 +467,19 @@ const RehabCenters = () => {
             </Link>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {topRatedCenters.map((center) => (
-              <TreatmentCenterCard
-                key={center.id}
-                center={center}
-                featured={center.featured}
-              />
-            ))}
-          </div>
+          {showSkeletonCards ? (
+            <TreatmentCenterCardSkeletonGrid count={6} />
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {topRatedCenters.map((center) => (
+                <TreatmentCenterCard
+                  key={center.id}
+                  center={center}
+                  featured={center.featured}
+                />
+              ))}
+            </div>
+          )}
 
           <div className="mt-6 text-center sm:hidden">
             <Link to="/search-results?sort=rating-high">

@@ -23,13 +23,42 @@ const injectGaId: PluginOption = {
   },
 };
 
+// Add `<link rel="modulepreload">` for the main entry chunk into the built
+// index.html. Vite emits the `<script type="module" src="/assets/index-XXX.js">`
+// but does NOT add a corresponding preload hint, so the browser only starts
+// fetching the entry once it parses down to the script tag. The preload hint
+// lets it begin fetching the entry while the rest of the head is still parsing,
+// shaving ~100–300 ms off LCP on cold loads.
+//
+// The hash in the entry filename is content-addressed and changes per build,
+// so we resolve it from the actual emitted <script> tag rather than hardcoding.
+const preloadMainEntry: PluginOption = {
+  name: "preload-main-entry",
+  apply: "build",
+  transformIndexHtml: {
+    order: "post",
+    handler(html: string) {
+      const m = html.match(/<script[^>]*type="module"[^>]*src="(\/assets\/index-[^"]+\.js)"/);
+      if (!m) return html;
+      const entryHref = m[1];
+      const preloadTag = `<link rel="modulepreload" as="script" href="${entryHref}" crossorigin />`;
+      // Insert just before the script tag so the browser sees the hint first
+      // (head is parsed top-to-bottom; even a few bytes earlier helps).
+      return html.replace(
+        /(<script[^>]*type="module"[^>]*src="\/assets\/index-[^"]+\.js"[^>]*>)/,
+        `${preloadTag}\n    $1`,
+      );
+    },
+  },
+};
+
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
   server: {
     host: "::",
     port: 8080,
   },
-  plugins: [react(), injectGaId],
+  plugins: [react(), injectGaId, preloadMainEntry],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
