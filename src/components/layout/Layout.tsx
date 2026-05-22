@@ -39,13 +39,11 @@ export function Layout({ children }: LayoutProps) {
     // parent's actual width — the html/body clip above is the global
     // guarantee.
     <div className="flex min-h-screen flex-col w-full max-w-full [overflow-x:clip]">
-      {/* Skip-to-content link — visible only while focused via keyboard.
-          The `.skip-link` styles in src/index.css were already defined
-          but had no element actually using them; this wires the WCAG
-          2.1 "Bypass Blocks" requirement (success criterion 2.4.1). */}
-      <a href="#main" className="skip-link">
-        Skip to main content
-      </a>
+      {/* Skip-to-main-content link lives in index.html (line ~417) so it's
+          present BEFORE React hydrates and remains present after — it sits
+          outside #root, so the SPA's root render never touches it. Having
+          it here too produced a second focusable skip target in tab order,
+          which axe-core flags (axe-clean top 20 routes, 2026-05-22). */}
       <InternationalBanner />
       <MemoizedHeader />
       {/* tabIndex=-1 lets the skip-link actually move keyboard focus to
