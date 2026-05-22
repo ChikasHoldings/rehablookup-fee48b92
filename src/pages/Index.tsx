@@ -2,6 +2,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
+import { TITLES, DESCRIPTIONS } from "@/lib/seo/titles";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Button } from "@/components/ui/button";
 // HomepageFeaturedSection retired 2026-05-20 — replaced by
@@ -142,8 +143,8 @@ const Index = () => {
   return (
     <Layout>
       <SEO
-        title="Find Drug & Alcohol Rehab Centers Near You"
-        description="Search 3,800+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help."
+        title={TITLES.home}
+        description={DESCRIPTIONS.home}
         canonical="/"
         keywords={[
           "drug rehab near me",

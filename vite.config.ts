@@ -1,6 +1,7 @@
 import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { TITLES, DESCRIPTIONS, withSiteName } from "./src/lib/seo/titles";
 
 // Single source of truth for the GA4 measurement ID exposed to the SPA via
 // index.html. Mirrors scripts/_ga.mjs which is used by the SEO generators.
@@ -20,6 +21,49 @@ const injectGaId: PluginOption = {
   name: "inject-ga-measurement-id",
   transformIndexHtml(html: string) {
     return html.replace(/%VITE_GA_MEASUREMENT_ID%/g, GA_MEASUREMENT_ID);
+  },
+};
+
+// Substitute the canonical homepage title + description from src/lib/seo/titles
+// into index.html so the cold-load (pre-hydration) title matches what
+// react-helmet-async writes once <SEO /> mounts. Without this, the homepage
+// shell renders "Find Trusted Addiction Treatment Centers" then the SPA
+// hydrates to "Find Drug & Alcohol Rehab Centers Near You" — a visible flash
+// and an SSR↔SPA parity break that scripts/check-spa-titles.mjs flags.
+const syncHomepageTitle: PluginOption = {
+  name: "sync-homepage-title-with-spa",
+  transformIndexHtml(html: string) {
+    const fullTitle = withSiteName(TITLES.home);
+    const description = DESCRIPTIONS.home;
+    return html
+      .replace(
+        /<title>[^<]*<\/title>/,
+        `<title>${fullTitle}</title>`,
+      )
+      .replace(
+        /<meta name="title" content="[^"]*"\s*\/>/,
+        `<meta name="title" content="${fullTitle}" />`,
+      )
+      .replace(
+        /<meta name="description" content="[^"]*"\s*\/>/,
+        `<meta name="description" content="${description}" />`,
+      )
+      .replace(
+        /<meta property="og:title" content="[^"]*"\s*\/>/,
+        `<meta property="og:title" content="${fullTitle}" />`,
+      )
+      .replace(
+        /<meta property="og:description" content="[^"]*"\s*\/>/,
+        `<meta property="og:description" content="${description}" />`,
+      )
+      .replace(
+        /<meta name="twitter:title" content="[^"]*"\s*\/>/,
+        `<meta name="twitter:title" content="${fullTitle}" />`,
+      )
+      .replace(
+        /<meta name="twitter:description" content="[^"]*"\s*\/>/,
+        `<meta name="twitter:description" content="${description}" />`,
+      );
   },
 };
 
@@ -58,7 +102,7 @@ export default defineConfig(() => ({
     host: "::",
     port: 8080,
   },
-  plugins: [react(), injectGaId, preloadMainEntry],
+  plugins: [react(), injectGaId, syncHomepageTitle, preloadMainEntry],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
