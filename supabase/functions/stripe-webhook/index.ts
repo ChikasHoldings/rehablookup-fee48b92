@@ -2029,8 +2029,13 @@ Deno.serve(async (req) => {
       logStep("Event verified with signature", { type: event.type, id: event.id });
     } catch (signatureError) {
       logStep("Webhook signature verification failed", { error: String(signatureError) });
+      // 401 (not 400): the stripe-signature header IS the auth credential
+      // for this endpoint. An invalid HMAC means the caller can't prove
+      // they're Stripe, so it's an authentication failure, not a malformed
+      // body. Matches the contract documented in supabase/functions/
+      // _tests/stripe-webhook-e2e_test.ts.
       return new Response(JSON.stringify({ error: "Invalid signature" }), {
-        status: 400,
+        status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
