@@ -277,7 +277,31 @@ if (READY) Deno.test("E2E: Featured subscription.created → has_featured + plac
   }
 });
 
-if (READY) Deno.test("E2E: invalid stripe-signature → 400", async () => {
+if (READY) Deno.test("E2E: missing stripe-signature header → 401", async () => {
+  // No Stripe-Signature header at all. The webhook must reject this
+  // BEFORE any DB write — otherwise an attacker who guesses event
+  // shapes could plant rows in stripe_webhook_events / fire downstream
+  // notifications.
+  const args = baseArgs();
+  const event = subscriptionCreated(args);
+  const payload = JSON.stringify(event);
+  const res = await fetch(env.url!, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: payload,
+  });
+  assertEquals(res.status, 401);
+  // Belt-and-suspenders: ensure no stripe_webhook_events row was
+  // created for this event id.
+  const { data } = await svc()
+    .from("stripe_webhook_events")
+    .select("event_id")
+    .eq("event_id", args.eventId)
+    .maybeSingle();
+  assertEquals(data, null);
+});
+
+if (READY) Deno.test("E2E: invalid stripe-signature → 401", async () => {
   const args = baseArgs();
   const event = subscriptionCreated(args);
   const payload = JSON.stringify(event);
@@ -288,7 +312,45 @@ if (READY) Deno.test("E2E: invalid stripe-signature → 400", async () => {
     headers: { "Content-Type": "application/json", "Stripe-Signature": sig },
     body: payload,
   });
-  assertEquals(res.status, 400);
+  assertEquals(res.status, 401);
+  // Same belt-and-suspenders: an invalid-signature request must not
+  // leave a trail in stripe_webhook_events.
+  const { data } = await svc()
+    .from("stripe_webhook_events")
+    .select("event_id")
+    .eq("event_id", args.eventId)
+    .maybeSingle();
+  assertEquals(data, null);
+});
+
+if (READY) Deno.test("E2E: valid signature → 200 + stripe_webhook_events row", async () => {
+  // Asserts the happy-path observability contract: a correctly-signed
+  // event lands in stripe_webhook_events with status='received' and an
+  // event_type that matches the payload.
+  const args = baseArgs();
+  try {
+    const event = subscriptionCreated(args);
+    const res = await postEvent(event);
+    assertEquals(res.status, 200);
+
+    const { data, error } = await svc()
+      .from("stripe_webhook_events")
+      .select("event_id, event_type, status")
+      .eq("event_id", args.eventId)
+      .maybeSingle();
+    if (error) throw error;
+    assert(data, `expected stripe_webhook_events row for ${args.eventId}`);
+    assertEquals(data.event_id, args.eventId);
+    assertEquals(data.event_type, event.type);
+    // status may be 'received' or 'processed' depending on whether the
+    // function has finished the downstream work by the time we query.
+    assert(
+      data.status === "received" || data.status === "processed",
+      `unexpected status ${data.status}`,
+    );
+  } finally {
+    await cleanupBySubscription(args.subscriptionId);
+  }
 });
 
 if (READY) Deno.test("E2E: past_due transition flips status + stamps past_due_since", async () => {

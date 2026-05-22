@@ -27,6 +27,7 @@
 // Service-role gate via JWT role claim (format-agnostic across legacy +
 // sb_secret_*).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { assertCronSecret } from "../_shared/cron-auth.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 
 const VERSION = "1.0.0";
@@ -143,6 +144,8 @@ ${noActivityNudge}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const __cronAuth = assertCronSecret(req);
+  if (!__cronAuth.ok) return __cronAuth.response;
 
   // Service-role-only gate (format-agnostic JWT role claim). Same pattern
   // as send-provider-weekly-digest so the scheduled.call_edge_function

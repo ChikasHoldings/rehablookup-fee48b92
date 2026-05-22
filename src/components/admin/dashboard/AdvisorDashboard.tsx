@@ -197,7 +197,7 @@ export function AdvisorDashboard() {
     queryFn: async () => {
       let query = supabase
         .from("concierge_inquiries")
-        .select("id, user_name, user_phone, status, created_at, timeline_urgency, level_of_care, desired_location_state, preferred_state, payment_status, assigned_advisor_id")
+        .select("id, user_name, user_phone, status, created_at, timeline_urgency, level_of_care, desired_location_state, preferred_state, assigned_advisor_id")
         .order("created_at", { ascending: false })
         .limit(10);
 
@@ -306,7 +306,7 @@ export function AdvisorDashboard() {
       // runtime and the UI conditionals handle that.
       const { data, error } = await (supabase as any)
         .from("concierge_inquiries")
-        .select("id, user_name, user_email, user_phone, status, payment_status, payment_amount_cents, intake_data, created_at, updated_at, admin_notes, assigned_advisor_id, matched_facility_ids, placed_facility_id, level_of_care, primary_concern, insurance_carrier, budget_range, timeline_urgency, preferred_state, preferred_city, gender, age_range, tour_coordination_status, admission_status, admission_substatus, notes, admin_matched_facility_ids, admission_notes, introductions_sent_at, introductions_sent_count, matched_at, closed_at, seeker_rating, seeker_feedback, draft_id, checkout_session_id, stripe_payment_intent_id, payment_type, idempotency_key, user_id, match_scores, referral_source, placement_confirmed, placement_confirmed_at, alternative_contact_name, alternative_contact_phone, amenity_preferences, assessment_preference, benefits_verified, best_time_to_call, co_occurring_concerns, current_living_situation, current_medications, decision_maker_name, decision_maker_phone, desired_location_city, desired_location_state, desired_radius_miles, detox_needed, email_verified_at, emergency_contact_name, emergency_contact_phone, employer_name, faith_based_preference, form_completed_at, hipaa_consent, holistic_interest, insurance_group_number, insurance_member_id, intake_submitted_at, match_count, mobility_needs, move_in_date, needs_transport_help, payment_reminder_count, preferred_environment, preferred_language, prior_treatment_history, prior_treatment_notes, relationship_to_decision_maker, relationship_to_seeker, scholarship_interest, seeker_confirmed, seeker_confirmed_at, stripe_customer_id, substance_use_duration, substance_use_frequency, suicide_history, willing_to_travel, sms_consent, sms_callback_requested_at, contact_channel")
+        .select("id, user_name, user_email, user_phone, status, intake_data, created_at, updated_at, admin_notes, assigned_advisor_id, matched_facility_ids, placed_facility_id, level_of_care, primary_concern, insurance_carrier, budget_range, timeline_urgency, preferred_state, preferred_city, gender, age_range, tour_coordination_status, admission_status, admission_substatus, notes, admin_matched_facility_ids, admission_notes, introductions_sent_at, introductions_sent_count, matched_at, closed_at, seeker_rating, seeker_feedback, draft_id, idempotency_key, user_id, match_scores, referral_source, placement_confirmed, placement_confirmed_at, alternative_contact_name, alternative_contact_phone, amenity_preferences, assessment_preference, benefits_verified, best_time_to_call, co_occurring_concerns, current_living_situation, current_medications, decision_maker_name, decision_maker_phone, desired_location_city, desired_location_state, desired_radius_miles, detox_needed, email_verified_at, emergency_contact_name, emergency_contact_phone, employer_name, faith_based_preference, form_completed_at, hipaa_consent, holistic_interest, insurance_group_number, insurance_member_id, intake_submitted_at, match_count, mobility_needs, move_in_date, needs_transport_help, preferred_environment, preferred_language, prior_treatment_history, prior_treatment_notes, relationship_to_decision_maker, relationship_to_seeker, scholarship_interest, seeker_confirmed, seeker_confirmed_at, substance_use_duration, substance_use_frequency, suicide_history, willing_to_travel, sms_consent, sms_callback_requested_at, contact_channel")
         .eq("id", selectedCaseId)
         .single();
       if (error) throw error;
@@ -466,7 +466,6 @@ export function AdvisorDashboard() {
               <div className="space-y-2.5">
                 {recentInquiries.map((inquiry: any) => {
                   const status = statusConfig[inquiry.status] || statusConfig.intake_submitted;
-                  const isPaid = inquiry.payment_status === 'paid' || inquiry.payment_status === 'succeeded' || inquiry.payment_status === 'free';
                   const location = inquiry.desired_location_state || inquiry.preferred_state;
                   const isUnassigned = !inquiry.assigned_advisor_id;
                   const isClaiming = claimingId === inquiry.id;
@@ -486,11 +485,6 @@ export function AdvisorDashboard() {
                           <Badge variant="outline" className={`text-[10px] ${status.bgColor} ${status.color}`}>
                             {status.label}
                           </Badge>
-                          {!isPaid && (
-                            <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/30">
-                              Unpaid
-                            </Badge>
-                          )}
                           {inquiry.timeline_urgency === "immediate" && (
                             <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/30">
                               Urgent

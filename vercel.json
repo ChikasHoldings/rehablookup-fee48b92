@@ -597,6 +597,11 @@
       "statusCode": 301
     },
     {
+      "source": "/outpatient-rehab",
+      "destination": "/treatment-types/outpatient-rehab",
+      "statusCode": 301
+    },
+    {
       "source": "/dual-diagnosis-rehab-near-me",
       "destination": "/dual-diagnosis-near-me",
       "statusCode": 301

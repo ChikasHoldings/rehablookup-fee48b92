@@ -8,12 +8,17 @@ import { warmQueryCache } from "./lib/queryClient";
 // Initialize security (HTTPS enforcement)
 initSecurity();
 
-// Lazy-load Sentry to avoid blocking initial render (231KB)
-if (import.meta.env.PROD) {
+// Lazy-load Sentry to avoid blocking initial render (231KB).
+// DSN comes from VITE_SENTRY_DSN (set on Vercel + locally).
+// Release tag is the git SHA, injected by the syncSentryRelease plugin
+// in vite.config.ts from VERCEL_GIT_COMMIT_SHA at build time. Falls back
+// to "unknown-dev" for local dev so Sentry doesn't reject the event.
+if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
   requestIdleCallback(() => {
     import("@sentry/react").then((Sentry) => {
       Sentry.init({
-        dsn: "https://abdc24cee3c128456792112215a29cf6@o4510548371046400.ingest.us.sentry.io/4510548375961600",
+        dsn: import.meta.env.VITE_SENTRY_DSN,
+        release: import.meta.env.VITE_SENTRY_RELEASE || "unknown-dev",
         integrations: [],
         tracesSampleRate: 0.1,
         environment: import.meta.env.MODE,

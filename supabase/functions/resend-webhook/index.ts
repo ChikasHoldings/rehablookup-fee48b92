@@ -159,7 +159,10 @@ async function resolveEmailType(
   return "unknown";
 }
 
-Deno.serve(async (req) => {
+import { initSentry, withSentry, captureEdgeException } from "../_shared/sentry.ts";
+initSentry({ functionSlug: "resend-webhook" });
+
+Deno.serve(withSentry("resend-webhook", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -297,15 +300,60 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Failure log — mirrors the rows that the outbound senders (send-lead-
+    // email, notify-payment-failed, resend-lead-confirmation) drop when
+    // Resend rejects the handoff. Bounces and complaints are post-handoff
+    // delivery failures the admin daily digest needs to see in the same
+    // place as pre-handoff failures so on-call doesn't have to scan two
+    // tables. Unsubscribes are an explicit recipient choice — not a
+    // failure — so we skip them here.
+    //
+    // idempotency_key is unique per (email_id, event_type) so a retried
+    // webhook delivery never produces a duplicate failure row, even if
+    // the email_tracking_events idempotency check above has been
+    // bypassed by a transient race.
+    if ((eventType === "bounced" || eventType === "complained") && recipientEmail) {
+      const idempotencyKey = `resend:${emailId}:${eventType}`;
+      const { error: failureErr } = await supabaseClient
+        .from("email_send_failures")
+        .upsert(
+          {
+            email_type: emailType,
+            recipient_email: recipientEmail,
+            error_message: `Resend ${rawEventType} (post-delivery)`,
+            attempts: 1,
+            idempotency_key: idempotencyKey,
+            metadata: {
+              source: "resend_webhook",
+              email_id: emailId,
+              event_type: eventType,
+              raw_event_type: rawEventType,
+              event_data: payload.data || {},
+            },
+          },
+          { onConflict: "idempotency_key", ignoreDuplicates: true },
+        );
+      if (failureErr) {
+        logStep("Failure-log upsert failed (non-fatal)", {
+          error: failureErr.message,
+          emailId,
+          eventType,
+        });
+      } else {
+        logStep("Failure logged", { emailId, eventType, recipientEmail });
+      }
+    }
+
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
+    await captureEdgeException(error, { functionSlug: "resend-webhook" });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }
-});
+}));

@@ -16,7 +16,6 @@ interface CaseRow {
   id: string;
   user_name: string;
   status: string;
-  payment_status: string;
   assigned_advisor_id: string | null;
   match_count: number | null;
   placement_confirmed?: boolean | null;

@@ -242,24 +242,12 @@ export function ConciergeActionsTab({ caseData, onRefresh, onClose, isAdvisor = 
     },
   });
 
-  const isUnpaid = caseData.payment_status !== 'paid' && caseData.payment_status !== 'succeeded' && caseData.payment_status !== 'free';
   const statusOptions = getStatusOptions(caseData.status, isAdvisor);
   const isAssignedToMe = caseData.assigned_advisor_id === user?.id;
   const isUnassigned = !caseData.assigned_advisor_id;
 
   return (
     <div className="space-y-4">
-      {/* Unpaid Warning */}
-      {isUnpaid && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Legacy Unpaid Case</AlertTitle>
-          <AlertDescription>
-            This is an older case that was created when the $29 intake fee was active and was never paid. Domestic placement is now free for clients — review before proceeding.
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Self-assign card for advisors on unassigned cases */}
       {isAdvisor && isUnassigned && (
         <Card className="border-primary/50 bg-primary/5">

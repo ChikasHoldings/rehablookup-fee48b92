@@ -182,7 +182,7 @@ export default function AdminConcierge() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("concierge_inquiries")
-        .select("id, user_name, user_email, user_phone, status, payment_status, level_of_care, desired_location_state, preferred_state, preferred_city, match_count, assigned_advisor_id, created_at, updated_at, tour_coordination_status, placement_confirmed, placement_confirmed_at, placed_facility_id, introductions_sent_at, introductions_sent_count, timeline_urgency, primary_concern, closed_at, seeker_confirmed, matched_at, routing_mode, originating_facility_id")
+        .select("id, user_name, user_email, user_phone, status, level_of_care, desired_location_state, preferred_state, preferred_city, match_count, assigned_advisor_id, created_at, updated_at, tour_coordination_status, placement_confirmed, placement_confirmed_at, placed_facility_id, introductions_sent_at, introductions_sent_count, timeline_urgency, primary_concern, closed_at, seeker_confirmed, matched_at, routing_mode, originating_facility_id")
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;

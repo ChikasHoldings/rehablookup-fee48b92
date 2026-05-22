@@ -14,7 +14,9 @@ real deployed `stripe-webhook` and asserts the downstream DB state.
 | Featured `customer.subscription.created` with `metadata.type='featured_addon'` | `has_featured=true`, `featured_stripe_subscription_id` set |
 | `customer.subscription.updated` → `past_due` | `status=past_due`, `past_due_since` stamped by the `sync_dunning_state` trigger, `dunning_milestones_sent=[]` |
 | `checkout.session.completed` (Pro) | 200 |
-| Invalid `stripe-signature` | 400 |
+| Missing `stripe-signature` header | 401 + no `stripe_webhook_events` row |
+| Invalid `stripe-signature` | 401 + no `stripe_webhook_events` row |
+| Valid `stripe-signature` (Pro create) | 200 + `stripe_webhook_events` row with matching `event_id`/`event_type` |
 
 ## Running
 

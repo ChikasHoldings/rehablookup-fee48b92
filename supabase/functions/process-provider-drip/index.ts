@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { assertCronSecret } from "../_shared/cron-auth.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import {
   emailStart,
@@ -365,6 +366,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+  const __cronAuth = assertCronSecret(req);
+  if (!__cronAuth.ok) return __cronAuth.response;
 
   // POST-only enforcement
   if (req.method !== "POST") {

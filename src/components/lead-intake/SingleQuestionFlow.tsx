@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle2, Loader2, Mail, RefreshCw, AlertCircle, MapPin, User, Users, Clock, Heart, Shield, Calendar, UserCircle, Stethoscope, Send } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Mail, RefreshCw, AlertCircle, MapPin, Clock, Shield, Stethoscope, Send } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -18,17 +19,15 @@ import { cn } from "@/lib/utils";
 import {
   LeadIntakeFormData,
   URGENCY_OPTIONS,
-  AGE_RANGE_OPTIONS,
-  GENDER_OPTIONS,
-  RELATIONSHIP_OPTIONS,
   LEVEL_OF_CARE_OPTIONS,
   INSURANCE_TYPE_OPTIONS,
-  PREVIOUS_TREATMENT_OPTIONS,
-  BEST_TIME_OPTIONS,
 } from "./types";
 
 // Zod schema for the contact step. Mirrors UI rules + adds length caps to
 // prevent abuse and align with backend Zod validation in the edge function.
+// Phone is OPTIONAL per the May-2026 friction-reduction directive — if
+// the user types nothing, we accept the inquiry email-only. If they DO
+// type something, it must still be a valid 10-digit US number.
 const NAME_REGEX = /^[\p{L}\p{M}'’\-.\s]+$/u;
 const contactSchema = z.object({
   firstName: z
@@ -46,15 +45,22 @@ const contactSchema = z.object({
   phone: z
     .string()
     .trim()
-    .min(1, { message: "Phone number is required" })
     .max(32, { message: "Phone number is too long" })
-    .refine(isValidPhoneNumber, { message: "Please enter a valid 10-digit US phone number" }),
+    .refine((v) => v === "" || isValidPhoneNumber(v), {
+      message: "Enter a valid 10-digit US phone number or leave blank",
+    }),
   email: z
     .string()
     .trim()
     .min(1, { message: "Email is required" })
     .max(254, { message: "Email is too long" })
     .refine(isValidEmail, { message: "Please enter a valid email address" }),
+  message: z
+    .string()
+    .trim()
+    .max(2000, { message: "Message must be under 2000 characters" })
+    .optional()
+    .or(z.literal("")),
   consentToContact: z.literal(true, {
     errorMap: () => ({ message: "Please agree to be contacted to continue" }),
   }),
@@ -86,31 +92,16 @@ interface Question {
   skipIf?: (formData: LeadIntakeFormData) => boolean;
 }
 
-// Define the question flow - prioritized for provider value
+// Define the question flow.
+//
+// May-2026 friction-reduction pass: cut from 11 questions to 6 (urgency,
+// level of care, insurance, location, contact, verify). The dropped
+// demographic / clinical-history questions (who-seeking-help, relationship,
+// age, gender, previous-treatment, best-time-to-call) were padding the
+// pipeline without materially improving match quality — facilities can
+// gather those during their callback. Inquiry spec: "Minimal required
+// fields (name, email, optional phone, message)".
 const QUESTIONS: Question[] = [
-  {
-    id: "who",
-    type: "choice",
-    title: "Who needs help?",
-    subtitle: "We'll tailor the experience based on your situation",
-    icon: <User className="h-6 w-6" />,
-    field: "whoSeekingHelp",
-    required: true,
-    options: [
-      { value: "self", label: "Myself", description: "I'm looking for treatment", icon: <User className="h-5 w-5" /> },
-      { value: "loved-one", label: "A Loved One", description: "I'm helping someone else", icon: <Users className="h-5 w-5" /> },
-    ],
-  },
-  {
-    id: "relationship",
-    type: "choice",
-    title: "What's your relationship to them?",
-    subtitle: "This helps us communicate effectively",
-    icon: <Users className="h-6 w-6" />,
-    field: "relationshipToPatient",
-    skipIf: (data) => data.whoSeekingHelp !== "loved-one",
-    options: RELATIONSHIP_OPTIONS.filter(o => o.value !== "self").map(o => ({ value: o.value, label: o.label })),
-  },
   {
     id: "urgency",
     type: "choice",
@@ -126,15 +117,6 @@ const QUESTIONS: Question[] = [
             o.value === "within-week" ? <span className="h-2 w-2 rounded-full bg-amber-500" /> :
             <span className="h-2 w-2 rounded-full bg-blue-500" />,
     })),
-  },
-  {
-    id: "location",
-    type: "location",
-    title: "Where are you located?",
-    subtitle: "We'll find treatment centers near you",
-    icon: <MapPin className="h-6 w-6" />,
-    field: "locationZip",
-    required: true,
   },
   {
     id: "levelOfCare",
@@ -157,44 +139,13 @@ const QUESTIONS: Question[] = [
     options: INSURANCE_TYPE_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
-    id: "ageRange",
-    type: "choice",
-    title: "What is the patient's age range?",
-    subtitle: "Age-appropriate care makes a difference",
-    icon: <Calendar className="h-6 w-6" />,
-    field: "ageRange",
+    id: "location",
+    type: "location",
+    title: "Where are you located?",
+    subtitle: "We'll find treatment centers near you",
+    icon: <MapPin className="h-6 w-6" />,
+    field: "locationZip",
     required: true,
-    options: AGE_RANGE_OPTIONS.map(o => ({ value: o.value, label: o.label })),
-  },
-  {
-    id: "gender",
-    type: "choice",
-    title: "What is the patient's gender?",
-    subtitle: "Some programs are gender-specific",
-    icon: <UserCircle className="h-6 w-6" />,
-    field: "gender",
-    required: true,
-    options: GENDER_OPTIONS.map(o => ({ value: o.value, label: o.label })),
-  },
-  {
-    id: "previousTreatment",
-    type: "choice",
-    title: "Any previous treatment experience?",
-    subtitle: "This helps connect you with the right approach",
-    icon: <Heart className="h-6 w-6" />,
-    field: "previousTreatment",
-    required: true,
-    options: PREVIOUS_TREATMENT_OPTIONS.map(o => ({ value: o.value, label: o.label })),
-  },
-  {
-    id: "bestTime",
-    type: "choice",
-    title: "When's the best time to reach you?",
-    subtitle: "The facility will reach out at your preferred time",
-    icon: <Clock className="h-6 w-6" />,
-    field: "bestTimeToCall",
-    required: true,
-    options: BEST_TIME_OPTIONS.map(o => ({ value: o.value, label: o.label })),
   },
   {
     id: "contact",
@@ -354,6 +305,7 @@ export function SingleQuestionFlow({
       lastName: formData.lastName,
       phone: formData.phone,
       email: formData.email,
+      message: formData.message,
       consentToContact,
     });
 
@@ -606,26 +558,9 @@ export function SingleQuestionFlow({
             </div>
             
             <div className="space-y-1.5 sm:space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Phone Number *</Label>
-              <PhoneInput
-                value={formData.phone}
-                onChange={(value) => {
-                  updateFormData({ phone: value });
-                  setErrors(prev => ({ ...prev, phone: "" }));
-                }}
-                onBlur={() => {
-                  const msg = validatePhoneNumber(formData.phone, true);
-                  if (msg) setErrors(prev => ({ ...prev, phone: msg }));
-                }}
-                className={cn("h-11 sm:h-12", errors.phone && "border-destructive")}
-                aria-invalid={!!errors.phone}
-                aria-describedby={errors.phone ? "phone-error" : undefined}
-              />
-              {errors.phone && <p id="phone-error" className="text-xs text-destructive">{errors.phone}</p>}
-            </div>
-            
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Email Address *</Label>
+              <Label className="text-xs sm:text-sm font-medium">
+                Email Address <span className="text-destructive">*</span>
+              </Label>
               <EmailInput
                 placeholder="you@example.com"
                 value={formData.email}
@@ -645,6 +580,57 @@ export function SingleQuestionFlow({
                 aria-describedby={errors.email ? "email-error" : undefined}
               />
               {errors.email && <p id="email-error" className="text-xs text-destructive">{errors.email}</p>}
+            </div>
+
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm font-medium flex items-center justify-between">
+                <span>Phone Number</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">Optional</span>
+              </Label>
+              <PhoneInput
+                value={formData.phone}
+                onChange={(value) => {
+                  updateFormData({ phone: value });
+                  setErrors(prev => ({ ...prev, phone: "" }));
+                }}
+                onBlur={() => {
+                  // Only validate format when user actually typed something.
+                  if (formData.phone && formData.phone.trim().length > 0) {
+                    const msg = validatePhoneNumber(formData.phone, true);
+                    if (msg) setErrors(prev => ({ ...prev, phone: msg }));
+                  }
+                }}
+                className={cn("h-11 sm:h-12", errors.phone && "border-destructive")}
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? "phone-error" : "phone-hint"}
+              />
+              {errors.phone ? (
+                <p id="phone-error" className="text-xs text-destructive">{errors.phone}</p>
+              ) : (
+                <p id="phone-hint" className="text-[11px] text-muted-foreground">
+                  Add a phone if you'd prefer a callback — otherwise we'll respond by email.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm font-medium flex items-center justify-between">
+                <span>How can we help?</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">Optional</span>
+              </Label>
+              <Textarea
+                placeholder="Briefly describe what you're looking for (level of care, timing, insurance, anything else that's relevant)…"
+                value={formData.message}
+                onChange={(e) => {
+                  updateFormData({ message: e.target.value });
+                  setErrors(prev => ({ ...prev, message: "" }));
+                }}
+                className={cn("min-h-[90px] sm:min-h-[100px] text-sm sm:text-base rounded-lg", errors.message && "border-destructive")}
+                maxLength={2000}
+                aria-invalid={!!errors.message}
+                aria-describedby={errors.message ? "message-error" : undefined}
+              />
+              {errors.message && <p id="message-error" className="text-xs text-destructive">{errors.message}</p>}
             </div>
             
             {/* Privacy notice — concise reassurance above consent */}

@@ -318,8 +318,8 @@ export default function AdminLeads() {
         allOpen: allOpenRes.count || 0,
       };
     },
-    staleTime: 60_000,
     refetchInterval: 60_000,
+    // Keep the larger of the two previously-duplicated staleTimes; the 60s refetchInterval handles freshness, this just avoids needless refetches on remount.
     staleTime: 1000 * 60 * 2,
   });
 

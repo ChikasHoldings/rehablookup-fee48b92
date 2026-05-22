@@ -7,6 +7,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { fuzzyMatchPaths, type PathSuggestion } from "@/lib/seo/fuzzyMatchPaths";
 import {
   Select,
   SelectContent,
@@ -90,7 +91,41 @@ const NotFound = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [treatment, setTreatment] = useState("");
   const [insurance, setInsurance] = useState("");
+  const [suggestions, setSuggestions] = useState<PathSuggestion[]>([]);
   const reportedRef = useRef<string | null>(null);
+
+  // Lazy-fetch the prerender manifest (~2 MB uncompressed, ~200 KB gzipped,
+  // served from /prerender-manifest.json as a static asset at the CDN edge)
+  // and run a token-based fuzzy match against the requested path. Only
+  // touches the network when the user actually lands on a 404, so the
+  // main bundle stays unaffected.
+  useEffect(() => {
+    const path = location.pathname;
+    // Skip the self-referential / well-known cases we already exclude from
+    // logging — no point computing suggestions for an iOS probe.
+    if (
+      path === "/404" ||
+      path === "/apple-app-site-association" ||
+      path.startsWith("/.well-known/")
+    ) {
+      return;
+    }
+    let cancelled = false;
+    fetch("/prerender-manifest.json", { credentials: "omit" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((paths: unknown) => {
+        if (cancelled) return;
+        if (!Array.isArray(paths)) return;
+        setSuggestions(fuzzyMatchPaths(path, paths as string[], 3));
+      })
+      .catch(() => {
+        // Manifest fetch failed (offline, CDN miss). Fall back to no
+        // suggestions; the static "Popular pages" cards still render.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     // Strict-Mode guard: only report each unique pathname once per mount.
@@ -297,6 +332,40 @@ const NotFound = () => {
             <h1 className="mb-3 font-display text-3xl font-bold text-foreground md:text-4xl">
               Page Not Found
             </h1>
+            {/* Echo the path the user tried. Helps them spot a typo and lets
+                support staff quickly understand which URL was wrong if the
+                user takes a screenshot. */}
+            {location.pathname &&
+              location.pathname !== "/404" &&
+              location.pathname !== "/" && (
+                <p className="mb-4 text-sm text-muted-foreground">
+                  We couldn&apos;t find{" "}
+                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground break-all">
+                    {location.pathname}
+                  </code>
+                  .
+                </p>
+              )}
+            {suggestions.length > 0 && (
+              <div className="mb-6 max-w-2xl mx-auto">
+                <p className="mb-2 text-sm text-muted-foreground">
+                  Did you mean:
+                </p>
+                <ul className="flex flex-wrap justify-center gap-2">
+                  {suggestions.map((s) => (
+                    <li key={s.path}>
+                      <Link
+                        to={s.path}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        <MapPin className="h-3 w-3" />
+                        {s.path}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <p className="mb-8 text-muted-foreground leading-relaxed max-w-md mx-auto">
               The page you're looking for may have been moved or no longer exists.
               Let us help you find the treatment resources you need.

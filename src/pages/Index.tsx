@@ -2,6 +2,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
+import { TITLES, DESCRIPTIONS } from "@/lib/seo/titles";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Button } from "@/components/ui/button";
 // HomepageFeaturedSection retired 2026-05-20 — replaced by
@@ -14,6 +15,7 @@ import { useNewCtaSystem } from "@/hooks/useNewCtaSystem";
 import { LazySection } from "@/components/ui/lazy-section";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { useCountUp } from "@/hooks/useCountUp";
+import { useDirectoryStats } from "@/hooks/useDirectoryStats";
 import { cn } from "@/lib/utils";
 // Hero image moved to public folder for FCP optimization - preloaded in index.html
 // Using WebP for ~70% smaller file size
@@ -113,13 +115,17 @@ const Index = () => {
   const [seekerTestimonials, setSeekerTestimonials] = useState<any[]>([]);
   const [homeFaqs, setHomeFaqs] = useState<any[]>([]);
 
-  // Trust-bar count-up animations. Animate once when the bar enters
-  // the viewport. The hooks honor prefers-reduced-motion (set to the
-  // final value immediately when the user prefers less motion).
-  // Target = live approved-facility count in `public_facilities`
-  // (~3,804 as of last SAMHSA ingest).
-  const facilitiesCount = useCountUp({ to: 3800 });
-  const statesCount = useCountUp({ to: 50 });
+  // Live directory stats — single source of truth shared with TrustRibbon.
+  // The hook reads the build-time-inlined `<meta name="rl:stats">` for an
+  // instant first paint, then refreshes from `public.get_directory_stats`
+  // on mount. Floor of 3800/50 if the live value looks broken so the
+  // badge never undersells. See src/hooks/useDirectoryStats.ts.
+  const { stats, isLoading: statsLoading } = useDirectoryStats();
+  // Count-up animations are now keyed off the resolved stats target,
+  // not a hardcoded constant. When stats are still loading we pass 0 and
+  // let the JSX render a skeleton in its place rather than "0+".
+  const facilitiesCount = useCountUp({ to: stats?.facilityCount ?? 0 });
+  const statesCount = useCountUp({ to: stats?.stateCount ?? 0 });
   // Geo-derived location string (e.g. "Boise, ID") forwarded to /concierge
   // so the intake form can prefill the visitor's preferred location without
   // asking them to retype it. Falls back gracefully when geo isn't ready.
@@ -137,8 +143,8 @@ const Index = () => {
   return (
     <Layout>
       <SEO
-        title="Find Drug & Alcohol Rehab Centers Near You"
-        description="Search 3,800+ verified addiction treatment centers. Compare drug rehab, alcohol treatment, detox programs. Free insurance verification. 24/7 confidential help."
+        title={TITLES.home}
+        description={DESCRIPTIONS.home}
         canonical="/"
         keywords={[
           "drug rehab near me",
@@ -268,9 +274,17 @@ const Index = () => {
               <CheckCircle className="h-4 w-4 text-accent shrink-0" aria-hidden />
               <span className="text-sm md:text-base text-primary-foreground/90">
                 {/* inline-block + min-w keeps the row from jittering while
-                    the digit count grows from 1 → 5 during the count-up. */}
-                <strong className="inline-block min-w-[3.5em] text-right font-semibold text-white tabular-nums">
-                  {facilitiesCount.value.toLocaleString()}+
+                    the digit count grows from 1 → 5 during the count-up.
+                    While stats are loading we render a width-matched
+                    skeleton instead of "0+" so the badge never undersells
+                    on first paint. */}
+                <strong
+                  className="inline-block min-w-[3.5em] text-right font-semibold text-white tabular-nums"
+                  aria-busy={statsLoading || !stats}
+                >
+                  {stats ? `${facilitiesCount.value.toLocaleString()}+` : (
+                    <span className="inline-block h-[1em] w-[3em] align-middle rounded bg-white/20" aria-hidden />
+                  )}
                 </strong>{" "}
                 Verified Facilities
               </span>
@@ -278,8 +292,13 @@ const Index = () => {
             <div ref={statesCount.ref as React.RefObject<HTMLDivElement>} className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-accent shrink-0" aria-hidden />
               <span className="text-sm md:text-base text-primary-foreground/90">
-                <strong className="inline-block min-w-[2.5em] text-right font-semibold text-white tabular-nums">
-                  {statesCount.value === 50 ? "All 50" : statesCount.value}
+                <strong
+                  className="inline-block min-w-[2.5em] text-right font-semibold text-white tabular-nums"
+                  aria-busy={statsLoading || !stats}
+                >
+                  {stats ? (statesCount.value >= 50 ? "All 50" : statesCount.value) : (
+                    <span className="inline-block h-[1em] w-[2.2em] align-middle rounded bg-white/20" aria-hidden />
+                  )}
                 </strong>{" "}
                 States Covered
               </span>

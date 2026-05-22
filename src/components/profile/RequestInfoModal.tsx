@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
 import {
   Building2,
@@ -28,10 +27,13 @@ import {
   MessageSquare,
   User,
   Clock,
+  Lock,
+  BadgeCheck,
+  LifeBuoy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LeadIntakeForm } from "@/components/lead-intake";
-import { ResendConfirmationButton } from "@/components/lead-intake/ResendConfirmationButton";
+import { formatPhoneNumber, getPhoneDigits } from "@/lib/phoneUtils";
 
 interface NearbyFacility {
   id: string;
@@ -64,6 +66,10 @@ interface RequestInfoModalProps {
     slug?: string | null;
     logo_url?: string | null;
     featured?: boolean;
+    /** Public business phone (already PII-ungated in public_facilities view). */
+    phone?: string | null;
+    /** Admin-verified accreditation flag — drives the "Verified" header badge. */
+    verified?: boolean | null;
   } | null;
   facilityPlan?: "free" | "pro";
   prefillData?: {
@@ -460,9 +466,24 @@ export function RequestInfoModal({
   const safeCity = facility?.city?.trim() || "";
   const safeState = facility?.state?.trim() || "";
   const safeLogoUrl = facility?.logo_url ?? null;
+  const safePhone = facility?.phone?.trim() || null;
+  const safeVerified = facility?.verified === true;
+  const formattedPhone = safePhone ? formatPhoneNumber(safePhone) : null;
+  const phoneDigits = safePhone ? getPhoneDigits(safePhone) : null;
+  const telLink = phoneDigits && phoneDigits.length >= 10 ? `tel:+1${phoneDigits}` : null;
   const hasFacilityRecord = Boolean(safeFacilityId);
   const isFacilityDataIncomplete =
     !facility || !facility.name || !facility.city || !facility.state;
+
+  // Tap-to-call analytics — fire on click but never block the tel: handler.
+  const handleCallClick = () => {
+    if (safeFacilityId) {
+      trackAnalyticsEvent("inquiry_modal_call_click", safeFacilityId, {
+        facilityName: safeFacilityName,
+        facilityPlan,
+      });
+    }
+  };
 
   // Reset state when modal closes
   useEffect(() => {
@@ -643,54 +664,101 @@ export function RequestInfoModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto p-0 gap-0">
         <DialogHeader className="sr-only">
           <DialogTitle>Request Information from {safeFacilityName}</DialogTitle>
           <DialogDescription>
-            Fill out the form to connect with this treatment center
+            Call the admissions team directly or send a confidential message to connect with this treatment center.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Compact Facility Header */}
-        <div className="px-6 pr-12 pt-5 pb-3">
-          <div className="flex items-start gap-3">
+        {/* ─── Facility identity strip ─────────────────────────────────────
+            Standard rehab-directory header: prominent logo, name with
+            verification + Pro badges, location. Bigger than the prior
+            compact header so the seeker is reassured they're contacting
+            the right center before they fill anything out. */}
+        <div className="px-5 sm:px-6 pr-12 pt-5 pb-4 border-b bg-gradient-to-b from-muted/40 to-transparent">
+          <div className="flex items-start gap-3.5">
             <div className={cn(
-              "h-10 w-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden",
-              isPro ? "bg-gradient-to-br from-amber-100 to-amber-50 border border-amber-200/50" : "bg-muted"
+              "h-14 w-14 sm:h-16 sm:w-16 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border",
+              isPro
+                ? "bg-gradient-to-br from-amber-100 to-amber-50 border-amber-200/70"
+                : "bg-muted border-border"
             )}>
               {safeLogoUrl ? (
-                <img src={safeLogoUrl} alt={`${safeFacilityName} logo`} className="h-full w-full object-contain p-1" />
+                <img src={safeLogoUrl} alt={`${safeFacilityName} logo`} className="h-full w-full object-contain p-1.5" />
               ) : (
-                <Building2 className={cn("h-4 w-4", isPro ? "text-amber-600" : "text-muted-foreground")} />
+                <Building2 className={cn("h-6 w-6 sm:h-7 sm:w-7", isPro ? "text-amber-600" : "text-muted-foreground")} />
               )}
             </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <h3 className="font-medium text-foreground text-sm truncate flex-1 min-w-0 max-w-[220px] sm:max-w-[320px]" title={safeFacilityName}>{safeFacilityName}</h3>
-                {isPro && (
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs px-1.5 py-0.5 shrink-0">
-                    <Crown className="h-2.5 w-2.5 mr-0.5" />
-                    Pro
-                  </Badge>
-                )}
+            <div className="flex-1 min-w-0 pt-0.5">
+              <div className="flex items-start gap-2 min-w-0 flex-wrap">
+                <h3
+                  className="font-semibold text-foreground text-base sm:text-lg leading-tight min-w-0 flex-1"
+                  title={safeFacilityName}
+                >
+                  {safeFacilityName}
+                </h3>
               </div>
               {(safeCity || safeState) ? (
-                <p className="text-xs text-muted-foreground truncate">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 flex items-center gap-1">
+                  <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
                   {[safeCity, safeState].filter(Boolean).join(", ")}
                 </p>
               ) : (
-                <p className="text-xs text-muted-foreground truncate">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Location details unavailable
                 </p>
+              )}
+              {(safeVerified || isPro) && (
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  {safeVerified && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] sm:text-xs px-1.5 py-0.5">
+                      <BadgeCheck className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
+                      Verified
+                    </Badge>
+                  )}
+                  {isPro && (
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] sm:text-xs px-1.5 py-0.5">
+                      <Crown className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
+                      Pro Provider
+                    </Badge>
+                  )}
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Friendly fallback banner when center details failed to load */}
-        {isFacilityDataIncomplete && (
-          <div className="mx-6 mb-2 rounded-md border border-amber-200/60 bg-amber-50/60 px-3 py-2.5 text-xs text-amber-900">
+        {/* ─── Trust strip ──────────────────────────────────────────────────
+            Industry-standard reassurance bar shown above the fold —
+            mirrors what major rehab directories surface (Confidential,
+            HIPAA-compliant, Free). Kept minimal so it scans in <1s. */}
+        {!formSubmitted && !isAtCapacity && (
+          <div className="px-5 sm:px-6 py-2.5 bg-primary/5 border-b border-primary/10">
+            <div className="flex items-center justify-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-foreground/80 flex-wrap">
+              <span className="flex items-center gap-1 font-medium">
+                <Lock className="h-3 w-3 text-primary" />
+                100% Confidential
+              </span>
+              <span className="text-border" aria-hidden="true">·</span>
+              <span className="flex items-center gap-1 font-medium">
+                <Shield className="h-3 w-3 text-primary" />
+                HIPAA Compliant
+              </span>
+              <span className="text-border" aria-hidden="true">·</span>
+              <span className="flex items-center gap-1 font-medium">
+                <CheckCircle className="h-3 w-3 text-emerald-600" />
+                Free · No Obligation
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Friendly fallback banner ─────────────────────────────────── */}
+        {isFacilityDataIncomplete && !formSubmitted && (
+          <div className="mx-5 sm:mx-6 mt-3 rounded-md border border-amber-200/60 bg-amber-50/60 px-3 py-2.5 text-xs text-amber-900">
             <p className="font-medium">We're having trouble loading this center's details.</p>
             <p className="mt-0.5 text-amber-800/90">
               You can still send your information below — our team will match you
@@ -699,8 +767,53 @@ export function RequestInfoModal({
           </div>
         )}
 
-        {/* Content */}
-        <div className="px-6 py-4">
+        {/* ─── Call-first CTA ───────────────────────────────────────────────
+            Standard rehab-directory pattern: a prominent tap-to-call
+            button as the primary action. Most crisis-mode seekers want
+            to talk to someone immediately. Form path is offered below
+            as the secondary action via the "or send a message" divider.
+            Hidden after submit and during capacity-warning state. */}
+        {telLink && formattedPhone && !formSubmitted && !isAtCapacity && (
+          <div className="px-5 sm:px-6 pt-4 pb-2">
+            <a
+              href={telLink}
+              onClick={handleCallClick}
+              className="group flex items-center justify-between gap-3 w-full p-3.5 sm:p-4 rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 active:scale-[0.99] transition-all"
+              aria-label={`Call ${safeFacilityName} at ${formattedPhone}`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                  <Phone className="h-5 w-5 sm:h-5.5 sm:w-5.5" />
+                </div>
+                <div className="text-left min-w-0">
+                  <div className="text-[11px] sm:text-xs uppercase tracking-wide opacity-90 font-medium">
+                    Call admissions now
+                  </div>
+                  <div className="text-base sm:text-lg font-bold leading-tight tabular-nums">
+                    {formattedPhone}
+                  </div>
+                </div>
+              </div>
+              <ArrowRight className="h-5 w-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </a>
+            <p className="text-[11px] sm:text-xs text-muted-foreground text-center mt-2">
+              Speak with an admissions specialist · Typically answers in under 2 minutes
+            </p>
+
+            {/* "or send a message" divider — only when the form is the
+                secondary path (i.e., we also have a phone CTA above). */}
+            <div className="flex items-center gap-3 mt-4">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                or send a message
+              </span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+          </div>
+        )}
+
+        {/* ─── Form / capacity / success area ─────────────────────────────── */}
+        <div className="px-1 sm:px-2 pb-2">
           {isAtCapacity ? (
             <CapacityWarning
               facility={{
@@ -720,6 +833,25 @@ export function RequestInfoModal({
             />
           )}
         </div>
+
+        {/* ─── Crisis footer ────────────────────────────────────────────────
+            Required for a treatment-directory inquiry surface: every
+            major rehab platform surfaces the 988 / 911 disclaimer so
+            users in acute crisis don't try to wait on an inquiry
+            response. Hidden after a successful submit to keep the
+            success view uncluttered. */}
+        {!formSubmitted && (
+          <div className="border-t bg-muted/30 px-5 sm:px-6 py-3">
+            <div className="flex items-start gap-2 text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+              <LifeBuoy className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500 mt-0.5 shrink-0" aria-hidden="true" />
+              <p>
+                <span className="font-semibold text-foreground">In crisis or need immediate help?</span>{" "}
+                Call <a href="tel:988" className="font-semibold text-primary hover:underline">988</a> (Suicide &amp; Crisis Lifeline)
+                {" "}or <a href="tel:911" className="font-semibold text-primary hover:underline">911</a> for emergencies.
+              </p>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

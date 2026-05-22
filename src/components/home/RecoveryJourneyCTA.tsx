@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Search, ArrowRight, Sparkles, MapPin, Building2 } from "lucide-react";
 import { buildConciergeHref } from "@/lib/conciergeHref";
+import { useDirectoryStats } from "@/hooks/useDirectoryStats";
 
 interface RecoveryJourneyCTAProps {
   /** Optional location string (e.g. "Boise, ID") forwarded to /concierge
@@ -26,9 +27,19 @@ interface RecoveryJourneyCTAProps {
  * ~1.5KB markup, no external fetch, no CLS.
  */
 export function RecoveryJourneyCTA({ conciergeLocation = "" }: RecoveryJourneyCTAProps) {
+  // Same source of truth as the hero trust bar and TrustRibbon so the
+  // three surfaces never disagree on the count.
+  const { stats } = useDirectoryStats();
+  const facilitiesLabel = stats
+    ? `${stats.facilityCount.toLocaleString()}+ verified facilities`
+    : "Verified facilities";
+  const statesLabel =
+    stats && stats.stateCount < 50
+      ? `${stats.stateCount} states covered`
+      : "All 50 states covered";
   const trustRow = [
-    { Icon: Building2, label: "3,800+ verified facilities" },
-    { Icon: MapPin, label: "All 50 states covered" },
+    { Icon: Building2, label: facilitiesLabel },
+    { Icon: MapPin, label: statesLabel },
     { Icon: Sparkles, label: "Free to use" },
   ];
 

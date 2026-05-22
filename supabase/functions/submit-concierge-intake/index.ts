@@ -312,7 +312,7 @@ Deno.serve(async (req) => {
     // Check if already submitted
     const { data: existingByKey } = await supabase
       .from('concierge_inquiries')
-      .select('id, intake_submitted_at, payment_status')
+      .select('id, intake_submitted_at')
       .eq('idempotency_key', idempotencyKey)
       .maybeSingle();
 
@@ -351,12 +351,7 @@ Deno.serve(async (req) => {
       user_phone: sanitizedPhone,
       preferred_state: sanitizeString(intakeData.desiredState, 50),
       preferred_city: sanitizeString(intakeData.desiredCity || currentCity, 100),
-      payment_status: 'free',
-      payment_amount_cents: 0, // Domestic concierge is free for clients ($0).
       status: 'intake_submitted',
-      checkout_session_id: null,
-      stripe_payment_intent_id: null,
-      stripe_customer_id: null,
       idempotency_key: idempotencyKey,
       intake_submitted_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -541,7 +536,6 @@ Deno.serve(async (req) => {
         event_type: 'case_created',
         event_data: {
           source: effectiveUserId ? 'account_concierge' : 'public_concierge',
-          payment_status: 'free',
         },
         actor_type: effectiveUserId ? 'seeker' : 'system',
         actor_id: effectiveUserId || null,

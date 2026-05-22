@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AccessDenied } from "./AccessDenied";
 import { ProviderHeader } from "./ProviderHeader";
 import { ProviderSidebar } from "./ProviderSidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
@@ -64,11 +65,13 @@ function ProviderShellContent() {
       return;
     }
     
-    // If not authenticated, redirect to login
+    // If not authenticated, redirect to login (render-phase guard handles the
+    // first render; this effect handles the case where the session expires
+    // while the provider panel is already mounted).
     if (!isAuthenticated) {
       hasRedirected.current = true;
       clearSentryUser();
-      navigate("/login?type=provider", { replace: true });
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`, { replace: true });
       return;
     }
     
@@ -219,11 +222,38 @@ function ProviderShellContent() {
   const profile = providerData?.profile;
   const facility = selectedFacility || providerData?.facility;
 
-  // NEVER show skeleton - render shell immediately
-  // Redirects happen via useEffect, show null only during active redirect
-  if (hasRedirected.current || role === "admin" || role === "seeker") {
-    return null;
+  // Render-phase guards — evaluated synchronously on every render so the
+  // <Outlet /> (and anything above it like ProviderHeader) never renders
+  // for callers who shouldn't be here.  useEffect-based navigates are kept
+  // as a backup for role changes that happen *after* the shell is mounted.
+
+  // 1. Auth still resolving — render nothing rather than flash the full shell
+  if (isRoleLoading) return null;
+
+  // 2. Anonymous → login with destination preserved
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}
+        replace
+      />
+    );
   }
+
+  // 3. Admin — redirect to admin panel (admins arriving via bookmark etc.)
+  if (role === "admin") return <Navigate to="/admin" replace />;
+
+  // 4. Seeker or any other non-provider authenticated role → access denied
+  //    (distinguished from anonymous so the message is accurate)
+  if (role === "seeker") return <AccessDenied requiredRole="provider" />;
+
+  // 5. role === null + isAuthenticated: new-signup race — profile trigger
+  //    hasn't resolved yet.  Return null while the polling useEffect retries.
+  if (role === null) return null;
+
+  // role === "provider" falls through to the full shell below.
+  // Also suppress while a useEffect redirect is in flight.
+  if (hasRedirected.current) return null;
 
   return (
     <div

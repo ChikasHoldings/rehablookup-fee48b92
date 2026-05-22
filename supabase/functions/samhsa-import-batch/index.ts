@@ -34,6 +34,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
+import { assertCronSecret } from "../_shared/cron-auth.ts";
 const VERSION = "1.0.0";
 const LOG = `[SAMHSA-IMPORT v${VERSION}]`;
 
@@ -253,6 +254,8 @@ async function processOne(
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const __cronAuth = assertCronSecret(req);
+  if (!__cronAuth.ok) return __cronAuth.response;
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405, headers: corsHeaders });
   }

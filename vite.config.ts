@@ -1,6 +1,7 @@
 import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { TITLES, DESCRIPTIONS, withSiteName } from "./src/lib/seo/titles";
 
 // Single source of truth for the GA4 measurement ID exposed to the SPA via
 // index.html. Mirrors scripts/_ga.mjs which is used by the SEO generators.
@@ -23,13 +24,102 @@ const injectGaId: PluginOption = {
   },
 };
 
+// Substitute the canonical homepage title + description from src/lib/seo/titles
+// into index.html so the cold-load (pre-hydration) title matches what
+// react-helmet-async writes once <SEO /> mounts. Without this, the homepage
+// shell renders "Find Trusted Addiction Treatment Centers" then the SPA
+// hydrates to "Find Drug & Alcohol Rehab Centers Near You" — a visible flash
+// and an SSR↔SPA parity break that scripts/check-spa-titles.mjs flags.
+const syncHomepageTitle: PluginOption = {
+  name: "sync-homepage-title-with-spa",
+  transformIndexHtml(html: string) {
+    const fullTitle = withSiteName(TITLES.home);
+    const description = DESCRIPTIONS.home;
+    return html
+      .replace(
+        /<title>[^<]*<\/title>/,
+        `<title>${fullTitle}</title>`,
+      )
+      .replace(
+        /<meta name="title" content="[^"]*"\s*\/>/,
+        `<meta name="title" content="${fullTitle}" />`,
+      )
+      .replace(
+        /<meta name="description" content="[^"]*"\s*\/>/,
+        `<meta name="description" content="${description}" />`,
+      )
+      .replace(
+        /<meta property="og:title" content="[^"]*"\s*\/>/,
+        `<meta property="og:title" content="${fullTitle}" />`,
+      )
+      .replace(
+        /<meta property="og:description" content="[^"]*"\s*\/>/,
+        `<meta property="og:description" content="${description}" />`,
+      )
+      .replace(
+        /<meta name="twitter:title" content="[^"]*"\s*\/>/,
+        `<meta name="twitter:title" content="${fullTitle}" />`,
+      )
+      .replace(
+        /<meta name="twitter:description" content="[^"]*"\s*\/>/,
+        `<meta name="twitter:description" content="${description}" />`,
+      );
+  },
+};
+
+// Add `<link rel="modulepreload">` for the main entry chunk into the built
+// index.html. Vite emits the `<script type="module" src="/assets/index-XXX.js">`
+// but does NOT add a corresponding preload hint, so the browser only starts
+// fetching the entry once it parses down to the script tag. The preload hint
+// lets it begin fetching the entry while the rest of the head is still parsing,
+// shaving ~100–300 ms off LCP on cold loads.
+//
+// The hash in the entry filename is content-addressed and changes per build,
+// so we resolve it from the actual emitted <script> tag rather than hardcoding.
+const preloadMainEntry: PluginOption = {
+  name: "preload-main-entry",
+  apply: "build",
+  transformIndexHtml: {
+    order: "post",
+    handler(html: string) {
+      const m = html.match(/<script[^>]*type="module"[^>]*src="(\/assets\/index-[^"]+\.js)"/);
+      if (!m) return html;
+      const entryHref = m[1];
+      const preloadTag = `<link rel="modulepreload" as="script" href="${entryHref}" crossorigin />`;
+      // Insert just before the script tag so the browser sees the hint first
+      // (head is parsed top-to-bottom; even a few bytes earlier helps).
+      return html.replace(
+        /(<script[^>]*type="module"[^>]*src="\/assets\/index-[^"]+\.js"[^>]*>)/,
+        `${preloadTag}\n    $1`,
+      );
+    },
+  },
+};
+
+// Forward Vercel's git SHA into the SPA bundle as VITE_SENTRY_RELEASE so
+// Sentry can attribute every event to the exact commit it was emitted from.
+// Vite only exposes env vars prefixed `VITE_`, but Vercel's build env uses
+// `VERCEL_GIT_COMMIT_SHA` (unprefixed). This config-time `define` rewrites
+// `import.meta.env.VITE_SENTRY_RELEASE` to the literal SHA at build time.
+// Locally (no Vercel env) it stringifies to `undefined`, and main.tsx falls
+// back to "unknown-dev" so Sentry.init doesn't error.
+const SENTRY_RELEASE =
+  process.env.VITE_SENTRY_RELEASE?.trim() ||
+  process.env.VERCEL_GIT_COMMIT_SHA?.trim() ||
+  "";
+
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
+  define: {
+    "import.meta.env.VITE_SENTRY_RELEASE": SENTRY_RELEASE
+      ? JSON.stringify(SENTRY_RELEASE)
+      : "undefined",
+  },
   server: {
     host: "::",
     port: 8080,
   },
-  plugins: [react(), injectGaId],
+  plugins: [react(), injectGaId, syncHomepageTitle, preloadMainEntry],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

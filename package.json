@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-   "scripts": {
+  "packageManager": "pnpm@10.13.1",
+  "scripts": {
     "dev": "vite",
     "generate:sitemaps": "node scripts/generate-sitemaps.mjs",
     "generate:seo-html": "node scripts/generate-seo-html.mjs",
@@ -34,9 +35,12 @@
     "check:edge-fn-no-star": "node scripts/audit/check-edge-functions-no-star-select.mjs",
     "check:no-placeholder-phone": "node scripts/check-no-placeholder-phone.mjs",
     "check:no-fake-inventory": "node scripts/check-no-fake-inventory.mjs",
+    "check:no-duplicate-keys": "node scripts/check-no-duplicate-keys.mjs",
+    "check:pnpm-lockfile": "node scripts/check-pnpm-lockfile.mjs",
     "check:redirect-targets": "node scripts/check-redirect-targets.mjs",
     "backfill:ga-snippet": "node scripts/backfill-ga-snippet.mjs",
-    "validate:blocking": "npm run check:no-placeholder-phone && npm run check:no-fake-inventory",
+    "inline:directory-stats": "node scripts/inline-directory-stats.mjs",
+    "validate:blocking": "npm run check:no-placeholder-phone && npm run check:no-fake-inventory && npm run check:no-duplicate-keys && npm run check:pnpm-lockfile",
     "validate:vercel-deploy": "node scripts/validate-vercel-deploy.mjs",
     "cleanup:orphan-prerenders": "node scripts/cleanup-orphan-prerenders.mjs",
     "cleanup:orphan-prerenders:apply": "node scripts/cleanup-orphan-prerenders.mjs --apply",
@@ -55,7 +59,7 @@
     "build": "npm run clean && npm run check:no-placeholder-phone && npm run check:no-fake-inventory && npm run validate:seo-schema && npm run generate:seo-html && npm run generate:county-pages && npm run generate:missing-html && npm run generate:gsc-recovery-html && npm run generate:facility-profiles-html && npm run generate:resources-html && npm run patch:og-image && npm run generate:sitemaps && npm run generate:prerender-manifest && npm run check:facility-sitemap-sync && npm run validate:sitemap-robots && npm run check:sitemap-coverage && npm run check:gsc-indexing && npm run check:structured-data && npm run check:faq-jsonld && npm run check:aggregate-rating && npm run check:responsive && npm run check:seo-meta && npm run check:unique-meta && npm run check:canonical-ga && npm run check:internal-links && npm run check:no-undef-jsx && npm run check:redirect-targets && npm run check:leads-view-rls && npm run check:provider-leads-masking && npm run check:edge-fn-no-star && npm run test && vite build && npm run check:no-placeholder-phone && npm run check:no-fake-inventory",
     "build:dev": "npm run clean && npm run validate:seo-schema && npm run generate:seo-html && npm run generate:county-pages && npm run generate:missing-html && npm run generate:gsc-recovery-html && npm run generate:facility-profiles-html && npm run patch:og-image && npm run generate:sitemaps && npm run check:facility-sitemap-sync && npm run validate:sitemap-robots && npm run check:sitemap-coverage && npm run check:gsc-indexing && npm run check:structured-data && npm run check:faq-jsonld && npm run check:aggregate-rating && npm run check:responsive && npm run check:seo-meta && npm run check:unique-meta && npm run check:canonical-ga && npm run check:leads-view-rls && npm run check:provider-leads-masking && npm run check:edge-fn-no-star && npm run test && vite build --mode development",
     "prebuild:vercel": "npm run validate:blocking",
-    "build:vercel": "npm run generate:seo-html && npm run generate:county-pages && npm run generate:missing-html && npm run generate:gsc-recovery-html && npm run generate:facility-profiles-html && npm run generate:resources-html && npm run generate:all-missing-html && npm run generate:remaining-nearme && npm run generate:missing-nearme && npm run patch:og-image && npm run backfill:ga-snippet && npm run generate:sitemaps && npm run generate:prerender-manifest && npm run check:redirect-targets && npm run check:canonical-ga && vite build && npm run validate:blocking",
+    "build:vercel": "npm run generate:seo-html && npm run generate:county-pages && npm run generate:missing-html && npm run generate:gsc-recovery-html && npm run generate:facility-profiles-html && npm run generate:resources-html && npm run generate:all-missing-html && npm run generate:remaining-nearme && npm run generate:missing-nearme && npm run patch:og-image && npm run backfill:ga-snippet && npm run inline:directory-stats && npm run generate:sitemaps && npm run generate:prerender-manifest && npm run check:redirect-targets && npm run check:canonical-ga && vite build && npm run validate:blocking",
     "lint": "eslint .",
     "preview": "vite preview",
     "check:hub-routes": "node scripts/check-hub-routes.mjs",
@@ -133,6 +137,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@eslint/js": "^9.32.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "20.17.0",

@@ -18,6 +18,7 @@
 // send) so single-file deploy works.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
+import { assertCronSecret } from "../_shared/cron-auth.ts";
 const VERSION = "1.0.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,6 +29,8 @@ const LOG = "[SEEKER-FOLLOWUP]";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const __cronAuth = assertCronSecret(req);
+  if (!__cronAuth.ok) return __cronAuth.response;
 
   // Service-role-only gate — only the cron wrapper should hit this.
   const authHeader = req.headers.get("authorization") ?? "";

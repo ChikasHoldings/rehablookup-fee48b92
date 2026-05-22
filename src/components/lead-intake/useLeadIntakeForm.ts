@@ -416,12 +416,14 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       return;
     }
     
-    // Normalize phone to digits only for submission
+    // Phone is OPTIONAL per the May-2026 friction-reduction directive.
+    // Normalize to digits only for submission. If provided, it must be at
+    // least 10 digits; if blank, we route the lead email-only.
     const phoneDigits = formData.phone.replace(/\D/g, "");
-    if (phoneDigits.length < 10) {
+    if (phoneDigits.length > 0 && phoneDigits.length < 10) {
       toast({
         title: "Invalid phone",
-        description: "Please provide a valid 10-digit phone number",
+        description: "Please enter a valid 10-digit phone number or leave it blank.",
         variant: "destructive",
       });
       return;
@@ -453,9 +455,10 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
           name: fullName,
           firstName: formData.firstName.trim(),
           lastName: formData.lastName.trim(),
-          phone: phoneDigits, // Send normalized phone
+          phone: phoneDigits, // Send normalized phone (may be empty string)
           email: formData.email.toLowerCase().trim(),
-          preferredContact: formData.preferredContact,
+          // If the seeker skipped the optional phone, force email-only contact.
+          preferredContact: phoneDigits.length >= 10 ? formData.preferredContact : "email",
           message: formData.message?.trim() || undefined,
           source,
           specialNeeds: formData.specialNeeds,
