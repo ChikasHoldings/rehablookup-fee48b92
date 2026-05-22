@@ -146,17 +146,23 @@ export function SearchForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setShowSuggestions(false);
-    
+
+    // Prefer React state; fall back to the DOM ref's value for the case where
+    // a browser extension, autofill script, or test automation sets the input
+    // value via JavaScript without firing React's onChange.  JS-assigned values
+    // bypass the controlled-input binding, leaving `location` state empty even
+    // though the input appears filled in.
+    const rawLocation = location || inputRef.current?.value || "";
+
     // Sanitize location input - strip HTML/JS, limit length
-    const sanitizedLocation = location
+    const sanitizedLocation = rawLocation
       .replace(/<[^>]*>/g, "")
       .replace(/javascript:/gi, "")
       .replace(/data:/gi, "")
       .trim()
       .slice(0, 200);
     
-    // Track search in GA — include filter context + originating page so we
-    // can see which entry surfaces drive the most directory traffic.
+    // Track search — include filter context + originating page.
     analytics.search(sanitizedLocation || "all locations", undefined, {
       treatment: selectedTreatmentTypes.slice(0, 10).join(",") || undefined,
       insurance: selectedInsurance.slice(0, 10).join(",") || undefined,
