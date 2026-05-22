@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
 
+import { assertCronSecret } from "../_shared/cron-auth.ts";
 const VERSION = "5.0.0";
 
 const corsHeaders = {
@@ -185,6 +186,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+  const __cronAuth = assertCronSecret(req);
+  if (!__cronAuth.ok) return __cronAuth.response;
 
   try {
     logStep(requestId, "Function started", { version: VERSION });

@@ -12,6 +12,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { assertCronSecret } from "../_shared/cron-auth.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0?target=denonext";
 import { sendEmailWithRetry } from "../_shared/resilient-email-sender.ts";
 
@@ -51,6 +52,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+  const __cronAuth = assertCronSecret(req);
+  if (!__cronAuth.ok) return __cronAuth.response;
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

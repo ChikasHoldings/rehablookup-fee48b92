@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2?target=denonext";
+import { assertCronSecret } from "../_shared/cron-auth.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0?target=denonext";
 import {
   getProviderPlan,
@@ -151,6 +152,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+  const __cronAuth = assertCronSecret(req);
+  if (!__cronAuth.ok) return __cronAuth.response;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
