@@ -97,7 +97,11 @@ try {
 }
 
 const html = readFileSync(INDEX_HTML, 'utf8')
-const metaRe = /<meta\s+name=["']rl:stats["']\s+content=(['"])[^'"]*\1\s*\/?\s*>/
+// content=(['"])(.*?)\1 — captures the outer quote and then lazily matches up to
+// the next instance of the SAME quote. Using ['"] in the character class
+// (the old pattern) would reject any opposite-quote inside the value, which
+// breaks when the content is single-quoted JSON like `'{"facilities":3800}'`.
+const metaRe = /<meta\s+name=["']rl:stats["']\s+content=(['"]).*?\1\s*\/?\s*>/
 
 if (!metaRe.test(html)) {
   console.error(
