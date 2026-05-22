@@ -156,7 +156,6 @@ const nearMePages = [
   { slug: "dual-diagnosis-near-me", title: "Dual Diagnosis Treatment Near Me", metaDescription: "Find dual diagnosis treatment centers near you treating addiction and mental health disorders simultaneously." },
   { slug: "dual-diagnosis-rehab-near-me", title: "Dual Diagnosis Rehab Near Me", metaDescription: "Find dual diagnosis rehab centers near you treating addiction and mental health conditions simultaneously." },
   { slug: "inpatient-rehab-near-me", title: "Inpatient Rehab Near Me", metaDescription: "Find inpatient rehab facilities near you with 24/7 residential care and comprehensive treatment programs." },
-  { slug: "outpatient-near-me", title: "Outpatient Rehab Near Me", metaDescription: "Find flexible outpatient rehab programs near you. IOP, PHP, and standard outpatient options available." },
   { slug: "outpatient-rehab-near-me", title: "Outpatient Rehab Programs Near Me", metaDescription: "Find outpatient rehabilitation programs near you with flexible scheduling and evidence-based treatment." },
   { slug: "free-rehab-near-me", title: "Free Rehab Centers Near Me", metaDescription: "Find free and low-cost rehab centers near you. State-funded, Medicaid, and nonprofit treatment options." },
   { slug: "luxury-rehab-near-me", title: "Luxury Rehab Centers Near Me", metaDescription: "Find luxury rehab centers near you with premium amenities and world-class addiction treatment programs." },
