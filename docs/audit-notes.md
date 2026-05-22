@@ -165,3 +165,37 @@ coordinate with the router and live outside `App.tsx`:
   duplicate-key bug now fixed.
 - `npm run validate:blocking` — exits 0 with the new
   `check:no-duplicate-keys` step wired in.
+
+---
+
+## Manual dashboard changes — 2026-05-22
+
+Track here anything the Supabase MCP / CLI can't change. These are
+**operator action items** — apply them in the Supabase Dashboard,
+then re-run `get_advisors` to confirm the lint clears.
+
+### Auth → DB connection pool: switch from Absolute to Percentage
+
+**Advisor lint:** `auth_db_connections_absolute` (performance, WARN).
+
+**What:** Supabase's GoTrue Auth server has its DB connection pool sized as
+"Absolute 10". On larger Postgres instances this becomes a bottleneck
+during login spikes (login flow, password reset, JWT refresh) because
+GoTrue can't grow the pool with the instance.
+
+**Where to change it:**
+- Supabase Dashboard → Project Settings → Auth → Connection Pool
+- Toggle from **Absolute (10)** to **Percentage (20%)**
+- Save. The setting takes effect within a few seconds; no restart.
+
+**Why 20%:** Supabase's recommended default for Auth. With a 60-connection
+Postgres instance that's 12 connections (slightly above the current
+absolute 10); on a 200-connection instance it's 40, which scales
+without further intervention.
+
+**Verification:** Run `get_advisors(performance)`. The
+`auth_db_connections_absolute` warning should drop off (1 → 0).
+
+**Owner:** project admin with Dashboard access (Claude Code MCP can't
+toggle this — the Auth config sits behind the GoTrue control plane,
+not in the SQL surface).
