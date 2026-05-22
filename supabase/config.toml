@@ -1,292 +1,62 @@
 project_id = "mldbxpntzcjalgjmwnqa"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Edge-function JWT verification policy
+#
+# Every function under supabase/functions/ is classified into one of 5 buckets:
+#
+#   A. Webhook (signature-verified)        — verify_jwt = false  (vendor signature)
+#   B. Anonymous public                    — verify_jwt = false  (rate-limited)
+#   C. Authenticated user                  — verify_jwt = true
+#   D. Admin-only                          — verify_jwt = true + in-fn admin check
+#   E. Cron-triggered                      — verify_jwt = false + X-Cron-Secret
+#
+# CI: `node scripts/check-edge-function-auth.mjs` validates this policy.
+# Documentation: docs/edge-function-auth-audit-2026-05-22.md
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ═════════════════════════════════════════════════════════════════════════════
+# BUCKET A — Webhooks (signature-verified inside the function)
+# ═════════════════════════════════════════════════════════════════════════════
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.twilio-sms-inbound]
+verify_jwt = false
+
+[functions.resend-webhook]
+verify_jwt = false
+
+[functions.provider-emails-unsubscribe]
+verify_jwt = false
+
+[functions.og-share]
+verify_jwt = false
+
+[functions.og-state-image]
+verify_jwt = false
+
 [functions.serve-badge]
 verify_jwt = false
 
-[functions.track-view]
-verify_jwt = false
+# ═════════════════════════════════════════════════════════════════════════════
+# BUCKET B — Anonymous public (rate-limited; no JWT)
+# ═════════════════════════════════════════════════════════════════════════════
 
-[functions.track-interaction]
-verify_jwt = false
-
-[functions.send-lead-email]
-verify_jwt = true
-
-[functions.check-subscription]
-verify_jwt = true
-
-[functions.create-checkout]
-verify_jwt = true
-
-[functions.customer-portal]
-verify_jwt = true
-
-[functions.send-verification-code]
-verify_jwt = false
-
-[functions.verify-code]
-verify_jwt = false
-
-[functions.check-email-verified]
-verify_jwt = false
-
-[functions.submit-qualified-lead]
-verify_jwt = false
-
-[functions.resend-lead-confirmation]
+[functions.submit-marketing-lead]
 verify_jwt = false
 
 [functions.submit-page-issue-report]
 verify_jwt = false
 
-[functions.get-featured-facilities]
-verify_jwt = false
-
-[functions.send-approval-email]
-verify_jwt = false
-
-[functions.send-subscription-alerts]
-verify_jwt = false
-
-[functions.log-activity]
-verify_jwt = false
-
-[functions.send-support-request]
-verify_jwt = true
-
-[functions.send-profile-reminders]
-verify_jwt = false
-
-[functions.send-profile-complete-email]
-verify_jwt = true
-
-[functions.notify-admin-provider-signup]
-verify_jwt = false
-
-[functions.notify-payment-failed]
-verify_jwt = false
-
-[functions.stripe-webhook]
-verify_jwt = false
-
-[functions.get-revenue-stats]
-verify_jwt = true
-
-[functions.get-provider-subscription]
-verify_jwt = true
-
-[functions.send-admin-notification]
-verify_jwt = true
-
-[functions.notify-flagged-image]
-verify_jwt = false
-
-[functions.check-churn-alerts]
-verify_jwt = false
-
-[functions.send-admin-daily-summary]
-verify_jwt = false
-
-[functions.send-reply-email-verification]
-verify_jwt = true
-
-[functions.verify-reply-email-code]
-verify_jwt = true
-
-[functions.get-facility-plan]
-verify_jwt = false
-
-[functions.cleanup-rate-limit-logs]
-verify_jwt = false
-
-[functions.check-brute-force-alerts]
-verify_jwt = false
-
-[functions.send-contact-form]
-verify_jwt = false
-
-[functions.check-provider-health-alerts]
-verify_jwt = true
-
-[functions.send-retention-outreach]
-verify_jwt = true
-
-[functions.resend-webhook]
-verify_jwt = false
-
-[functions.track-featured-analytics]
-verify_jwt = false
-
-[functions.report-image]
+[functions.provider-interest-submit]
 verify_jwt = false
 
 [functions.lookup-ip-location]
 verify_jwt = false
 
-[functions.create-admin-user]
-verify_jwt = true
-
-[functions.manage-admin-user]
-verify_jwt = true
-
-[functions.send-lead-confirmation]
-verify_jwt = false
-
-[functions.send-security-block-notification]
-verify_jwt = false
-
-[functions.log-login-attempt]
-verify_jwt = false
-
-[functions.cleanup-audit-logs]
-verify_jwt = false
-
-[functions.send-provider-welcome-email]
-verify_jwt = false
-
-[functions.manage-mfa-recovery]
-verify_jwt = true
-
-[functions.manage-subscription]
-verify_jwt = true
-
-[functions.validate-promo-code]
-verify_jwt = true
-
-[functions.send-provider-support]
-verify_jwt = false
-
-[functions.get-billing-history]
-verify_jwt = true
-
-[functions.get-payment-method]
-verify_jwt = true
-
-[functions.track-provider-event]
-verify_jwt = false
-
-[functions.send-credential-notification]
-verify_jwt = true
-
-[functions.delete-provider-account]
-verify_jwt = true
-
-[functions.delete-seeker-account]
-verify_jwt = true
-
-[functions.send-review-notification]
-verify_jwt = false
-
-[functions.send-seeker-emails]
-verify_jwt = false
-
-[functions.send-sms-verification-code]
-verify_jwt = false
-
-[functions.verify-sms-code]
-verify_jwt = false
-
-[functions.send-sms-notification]
-verify_jwt = false
-
-[functions.admin-delete-provider]
-verify_jwt = true
-
-[functions.admin-delete-seeker]
-verify_jwt = true
-
-[functions.send-message-notifications]
-verify_jwt = false
-
-[functions.create-concierge-checkout]
-verify_jwt = false
-
-[functions.verify-concierge-payment]
-verify_jwt = false
-
-[functions.submit-concierge-intake]
-verify_jwt = false
-
-[functions.send-concierge-notifications]
-verify_jwt = false
-
-[functions.send-concierge-introduction]
-verify_jwt = false
-
-[functions.auto-status-transition]
-verify_jwt = false
-
-[functions.send-tour-notifications]
-verify_jwt = false
-
-[functions.get-public-facilities]
-verify_jwt = false
-
-[functions.setup-provider-payment-method]
-verify_jwt = true
-
-[functions.save-provider-payment-method]
-verify_jwt = true
-
-[functions.confirm-placement]
-verify_jwt = true
-
-[functions.charge-placement-fee]
-verify_jwt = false
-
-[functions.unlock-lead]
-verify_jwt = true
-
-[functions.purchase-credits]
-verify_jwt = true
-
-[functions.subscribe-pro]
-verify_jwt = true
-
-[functions.match-concierge-intake]
-verify_jwt = false
-
-[functions.submit-placement-case]
-verify_jwt = false
-
-[functions.calculate-ranking-scores]
-verify_jwt = false
-
-[functions.admin-manage-invoice]
-verify_jwt = true
-
-[functions.retry-failed-payments]
-verify_jwt = false
-
-[functions.send-payment-reminder]
-verify_jwt = false
-
 [functions.sitemap-facilities]
-verify_jwt = false
-
-[functions.submit-indexnow]
-verify_jwt = false
-
-
-[functions.purchase-listing-slot]
-verify_jwt = true
-
-[functions.send-unlock-reminders]
-verify_jwt = false
-
-[functions.process-lead-redistribution]
-verify_jwt = false
-
-[functions.cleanup-orphan-storage]
-verify_jwt = true
-
-[functions.submit-marketing-lead]
-verify_jwt = false
-
-[functions.request-facility-from-marketing]
-verify_jwt = false
-
-[functions.send-marketing-followup]
 verify_jwt = false
 
 [functions.prerender-for-bots]
@@ -295,34 +65,434 @@ verify_jwt = false
 [functions.detect-and-prerender]
 verify_jwt = false
 
-[functions.create-international-checkout]
+[functions.log-not-found]
 verify_jwt = false
+
+[functions.log-not-found-search]
+verify_jwt = false
+
+[functions.log-analytics-event]
+verify_jwt = false
+
+[functions.log-phone-click]
+verify_jwt = false
+
+[functions.log-strip-impression]
+verify_jwt = false
+
+[functions.get-public-facilities]
+verify_jwt = false
+
+[functions.get-featured-facilities]
+verify_jwt = false
+
+[functions.get-featured-rotation]
+verify_jwt = false
+
+[functions.request-facility-from-marketing]
+verify_jwt = false
+
+[functions.submit-indexnow]
+verify_jwt = false
+
+[functions.send-contact-form]
+verify_jwt = false
+
+[functions.send-provider-support]
+verify_jwt = false
+
+[functions.send-support-request]
+verify_jwt = false
+
+[functions.check-email-verified]
+verify_jwt = false
+
+[functions.send-sms-verification-code]
+verify_jwt = false
+
+[functions.send-verification-code]
+verify_jwt = false
+
+[functions.send-password-reset]
+verify_jwt = false
+
+[functions.confirm-password-reset]
+verify_jwt = false
+
+[functions.initiate-claim-email-verification]
+verify_jwt = false
+
+[functions.initiate-claim-sms-verification]
+verify_jwt = false
+
+[functions.confirm-claim-verification-code]
+verify_jwt = false
+
+[functions.match-concierge-intake]
+verify_jwt = false
+
+[functions.assess-login-risk]
+verify_jwt = false
+
+[functions.log-login-attempt]
+verify_jwt = false
+
+[functions.log-activity]
+verify_jwt = false
+
+[functions.register-provider-account]
+verify_jwt = false
+
+[functions.create-signup-checkout]
+verify_jwt = false
+
+[functions.send-provider-welcome-email]
+verify_jwt = false
+
+[functions.send-security-block-notification]
+verify_jwt = false
+
+[functions.send-lead-confirmation]
+verify_jwt = false
+
+[functions.resend-lead-confirmation]
+verify_jwt = false
+
+[functions.send-approval-email]
+verify_jwt = false
+
+[functions.send-claim-approval-email]
+verify_jwt = false
+
+[functions.send-claim-rejection-email]
+verify_jwt = false
+
+[functions.send-review-notification]
+verify_jwt = false
+
+[functions.notify-free-tier-inquiry-redirect]
+verify_jwt = false
+
+[functions.notify-admin-provider-signup]
+verify_jwt = false
+
+[functions.notify-flagged-image]
+verify_jwt = false
+
+[functions.notify-payment-failed]
+verify_jwt = false
+
+[functions.track-featured-analytics]
+verify_jwt = false
+
+[functions.send-message-notifications]
+verify_jwt = false
+
+[functions.send-tour-notifications]
+verify_jwt = false
+
+[functions.send-concierge-notifications]
+verify_jwt = false
+
+[functions.send-concierge-introduction]
+verify_jwt = false
+
+[functions.send-sms-notification]
+verify_jwt = false
+
+[functions.send-seeker-emails]
+verify_jwt = false
+
+[functions.send-profile-complete-email]
+verify_jwt = false
+
+[functions.send-lead-email]
+verify_jwt = false
+
+[functions.send-credential-notification]
+verify_jwt = false
+
+[functions.send-admin-notification]
+verify_jwt = false
+
+[functions.report-image]
+verify_jwt = false
+
+# Retired tombstone — returns 410 Gone for everything. Was a cron in bucket E
+# pre-2026-05-18; the monetization rebuild deleted the underlying tables.
+[functions.retry-failed-payments]
+verify_jwt = false
+
+# ═════════════════════════════════════════════════════════════════════════════
+# BUCKET C — Authenticated user (verify_jwt = true)
+# ═════════════════════════════════════════════════════════════════════════════
+
+[functions.submit-concierge-intake]
+verify_jwt = true
+
+[functions.submit-insurance-verification]
+verify_jwt = true
+
+[functions.submit-facility-claim]
+verify_jwt = true
+
+[functions.submit-qualified-lead]
+verify_jwt = true
 
 [functions.submit-international-intake]
-verify_jwt = false
+verify_jwt = true
+
+[functions.verify-code]
+verify_jwt = true
+
+[functions.verify-sms-code]
+verify_jwt = true
+
+[functions.verify-admission]
+verify_jwt = true
+
+[functions.create-checkout]
+verify_jwt = true
+
+[functions.create-checkout-session]
+verify_jwt = true
+
+[functions.create-international-checkout]
+verify_jwt = true
+
+[functions.customer-portal]
+verify_jwt = true
+
+[functions.manage-subscription]
+verify_jwt = true
 
 [functions.manage-international-case]
+verify_jwt = true
+
+[functions.manage-mfa-recovery]
+verify_jwt = true
+
+[functions.provider-self-cancel-subscription]
+verify_jwt = true
+
+[functions.switch-to-annual]
+verify_jwt = true
+
+[functions.preview-cancellation-refund]
+verify_jwt = true
+
+[functions.set-renewal-switch-flag]
+verify_jwt = true
+
+[functions.delete-seeker-account]
+verify_jwt = true
+
+[functions.delete-provider-account]
+verify_jwt = true
+
+[functions.save-placement-draft]
+verify_jwt = true
+
+[functions.save-international-placement-draft]
 verify_jwt = true
 
 [functions.respond-international-case]
 verify_jwt = true
 
-[functions.send-abandoned-placement-email]
-verify_jwt = false
+[functions.track-interaction]
+verify_jwt = true
 
-[functions.save-placement-draft]
-verify_jwt = false
+[functions.track-view]
+verify_jwt = true
 
-[functions.save-international-placement-draft]
-verify_jwt = false
+[functions.track-provider-event]
+verify_jwt = true
 
-[functions.seed-blog-articles]
-verify_jwt = false
+[functions.link-inquiry-to-user]
+verify_jwt = true
+
+[functions.record-introduction-decision]
+verify_jwt = true
+
+[functions.check-subscription]
+verify_jwt = true
+
+[functions.get-billing-history]
+verify_jwt = true
+
+[functions.get-payment-method]
+verify_jwt = true
+
+[functions.get-provider-subscription]
+verify_jwt = true
+
+[functions.get-revenue-stats]
+verify_jwt = true
+
+[functions.get-facility-analytics]
+verify_jwt = true
+
+[functions.get-facility-plan]
+verify_jwt = true
+
+[functions.get-advisor-partner-distribution]
+verify_jwt = true
+
+[functions.get-inquiry-match-candidates]
+verify_jwt = true
+
+[functions.setup-provider-payment-method]
+verify_jwt = true
+
+[functions.save-provider-payment-method]
+verify_jwt = true
+
+[functions.validate-promo-code]
+verify_jwt = true
+
+[functions.send-reply-email-verification]
+verify_jwt = true
+
+[functions.verify-reply-email-code]
+verify_jwt = true
+
+[functions.request-concierge-sms-callback]
+verify_jwt = true
+
+[functions.data-export]
+verify_jwt = true
+
+[functions.audit-review-mark-resolved]
+verify_jwt = true
+
+# ═════════════════════════════════════════════════════════════════════════════
+# BUCKET D — Admin-only (verify_jwt = true + in-function admin check)
+# ═════════════════════════════════════════════════════════════════════════════
+
+[functions.admin-attach-stripe-lookup-keys]
+verify_jwt = true
+
+[functions.admin-bulk-ban-seekers]
+verify_jwt = true
+
+[functions.admin-bulk-moderate-reviews]
+verify_jwt = true
+
+[functions.admin-bulk-reassign-concierge-advisor]
+verify_jwt = true
+
+[functions.admin-bulk-reassign-leads]
+verify_jwt = true
+
+[functions.admin-bulk-update-admin-users]
+verify_jwt = true
+
+[functions.admin-bulk-update-blog-articles]
+verify_jwt = true
+
+[functions.admin-bulk-update-concierge-status]
+verify_jwt = true
+
+[functions.admin-bulk-update-escalations]
+verify_jwt = true
+
+[functions.admin-bulk-update-ivr-status]
+verify_jwt = true
+
+[functions.admin-bulk-update-lead-status]
+verify_jwt = true
+
+[functions.admin-bulk-update-marketing-leads]
+verify_jwt = true
+
+[functions.admin-bulk-update-provider-flags]
+verify_jwt = true
+
+[functions.admin-bulk-update-provider-status]
+verify_jwt = true
+
+[functions.admin-bulk-update-support-tickets]
+verify_jwt = true
+
+[functions.admin-cancel-subscription]
+verify_jwt = true
 
 [functions.admin-delete-lead]
 verify_jwt = true
 
-[functions.link-inquiry-to-user]
+[functions.admin-delete-provider]
+verify_jwt = true
+
+[functions.admin-delete-seeker]
+verify_jwt = true
+
+[functions.admin-manage-invoice]
+verify_jwt = true
+
+[functions.admin-register-stripe-webhook]
+verify_jwt = true
+
+[functions.admin-register-twilio-inbound-webhook]
+verify_jwt = true
+
+[functions.admin-resend-lead-notification]
+verify_jwt = true
+
+[functions.create-admin-user]
+verify_jwt = true
+
+[functions.manage-admin-user]
+verify_jwt = true
+
+[functions.run-smoke-tests]
+verify_jwt = true
+
+[functions.seed-blog-articles]
+verify_jwt = true
+
+[functions.send-admin-daily-summary]
+verify_jwt = true
+
+# ═════════════════════════════════════════════════════════════════════════════
+# BUCKET E — Cron-triggered (verify_jwt = false + X-Cron-Secret header)
+#   Code-level enforcement: each function MUST call assertCronSecret() from
+#   supabase/functions/_shared/cron-auth.ts before any side effect.
+# ═════════════════════════════════════════════════════════════════════════════
+
+[functions.auto-status-transition]
+verify_jwt = false
+
+[functions.calculate-ranking-scores]
+verify_jwt = false
+
+[functions.check-brute-force-alerts]
+verify_jwt = false
+
+[functions.check-churn-alerts]
+verify_jwt = false
+
+[functions.check-not-found-alerts]
+verify_jwt = false
+
+[functions.check-provider-health-alerts]
+verify_jwt = false
+
+[functions.cleanup-audit-logs]
+verify_jwt = false
+
+[functions.cleanup-orphan-storage]
+verify_jwt = false
+
+[functions.cleanup-rate-limit-logs]
+verify_jwt = false
+
+[functions.drain-addon-waitlist]
+verify_jwt = false
+
+[functions.placement-cron]
+verify_jwt = false
+
+[functions.process-onboarding-emails]
 verify_jwt = false
 
 [functions.process-provider-drip]
@@ -331,11 +501,44 @@ verify_jwt = false
 [functions.process-seeker-drip]
 verify_jwt = false
 
+[functions.process-seeker-followup-reminders]
+verify_jwt = false
+
+[functions.revenue-enforcement-cron]
+verify_jwt = false
+
+[functions.samhsa-import-batch]
+verify_jwt = false
+
+[functions.send-dunning-emails]
+verify_jwt = false
+
 [functions.send-new-facility-alerts]
 verify_jwt = false
 
-[functions.send-password-reset]
+[functions.send-profile-reminders]
 verify_jwt = false
 
-[functions.assess-login-risk]
+[functions.send-provider-weekly-digest]
+verify_jwt = false
+
+[functions.send-renewal-reminder]
+verify_jwt = false
+
+[functions.send-retention-outreach]
+verify_jwt = false
+
+[functions.send-saved-search-alerts]
+verify_jwt = false
+
+[functions.send-seeker-weekly-digest]
+verify_jwt = false
+
+[functions.send-subscription-alerts]
+verify_jwt = false
+
+[functions.send-marketing-followup]
+verify_jwt = false
+
+[functions.signup-rollback-cleanup]
 verify_jwt = false
