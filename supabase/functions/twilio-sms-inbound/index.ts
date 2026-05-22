@@ -106,7 +106,10 @@ function normalizePhone(raw: string): string {
   return raw;
 }
 
-Deno.serve(async (req) => {
+import { initSentry, withSentry } from "../_shared/sentry.ts";
+initSentry({ functionSlug: "twilio-sms-inbound" });
+
+Deno.serve(withSentry("twilio-sms-inbound", async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405, headers: corsHeaders });
@@ -272,4 +275,4 @@ Deno.serve(async (req) => {
   });
 
   return twiml(replyMessage);
-});
+}));

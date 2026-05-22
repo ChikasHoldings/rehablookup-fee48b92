@@ -159,7 +159,10 @@ async function resolveEmailType(
   return "unknown";
 }
 
-Deno.serve(async (req) => {
+import { initSentry, withSentry, captureEdgeException } from "../_shared/sentry.ts";
+initSentry({ functionSlug: "resend-webhook" });
+
+Deno.serve(withSentry("resend-webhook", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -347,9 +350,10 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
+    await captureEdgeException(error, { functionSlug: "resend-webhook" });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }
-});
+}));

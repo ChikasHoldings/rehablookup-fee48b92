@@ -96,8 +96,25 @@ const preloadMainEntry: PluginOption = {
   },
 };
 
+// Forward Vercel's git SHA into the SPA bundle as VITE_SENTRY_RELEASE so
+// Sentry can attribute every event to the exact commit it was emitted from.
+// Vite only exposes env vars prefixed `VITE_`, but Vercel's build env uses
+// `VERCEL_GIT_COMMIT_SHA` (unprefixed). This config-time `define` rewrites
+// `import.meta.env.VITE_SENTRY_RELEASE` to the literal SHA at build time.
+// Locally (no Vercel env) it stringifies to `undefined`, and main.tsx falls
+// back to "unknown-dev" so Sentry.init doesn't error.
+const SENTRY_RELEASE =
+  process.env.VITE_SENTRY_RELEASE?.trim() ||
+  process.env.VERCEL_GIT_COMMIT_SHA?.trim() ||
+  "";
+
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
+  define: {
+    "import.meta.env.VITE_SENTRY_RELEASE": SENTRY_RELEASE
+      ? JSON.stringify(SENTRY_RELEASE)
+      : "undefined",
+  },
   server: {
     host: "::",
     port: 8080,

@@ -1978,7 +1978,13 @@ function deriveTierFlagsFromSubscription(sub: Stripe.Subscription) {
   };
 }
 
-Deno.serve(async (req) => {
+// Sentry instrumentation. initSentry() is idempotent + no-ops when
+// SENTRY_DSN is unset, so this is safe to leave wired even before the
+// operator sets the env var.
+import { initSentry, withSentry, captureEdgeException } from "../_shared/sentry.ts";
+initSentry({ functionSlug: "stripe-webhook" });
+
+Deno.serve(withSentry("stripe-webhook", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -3799,9 +3805,12 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
+    // Stripe-side will retry on 500 anyway — but the operator needs to
+    // see the original exception in Sentry to debug WHY it 500'd.
+    await captureEdgeException(error, { functionSlug: "stripe-webhook" });
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-});
+}));
