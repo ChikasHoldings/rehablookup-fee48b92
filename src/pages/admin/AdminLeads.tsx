@@ -318,7 +318,6 @@ export default function AdminLeads() {
         allOpen: allOpenRes.count || 0,
       };
     },
-    staleTime: 60_000,
     refetchInterval: 60_000,
     staleTime: 1000 * 60 * 2,
   });
