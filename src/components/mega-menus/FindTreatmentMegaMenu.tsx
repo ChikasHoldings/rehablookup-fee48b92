@@ -41,19 +41,26 @@ const nearMePages = [
 
 export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [validationError, setValidationError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setValidationError("Enter a city, treatment type, or facility name.");
+      return;
+    }
+    setValidationError(null);
     onNavigate?.();
-    navigate(`/search-results${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`);
+    navigate(`/search-results?q=${encodeURIComponent(trimmed)}`);
   }, [searchQuery, navigate, onNavigate]);
 
   return (
     <div className="w-[min(740px,calc(100vw-2rem))]">
       {/* Premium search bar */}
       <div className="px-5 pt-4 pb-3">
-        <form onSubmit={handleSearch} className="relative group/search">
+        <form onSubmit={handleSearch} className="relative group/search" noValidate>
           <div className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-accent/15 flex items-center justify-center">
             <Search className="h-4 w-4 text-accent" />
           </div>
@@ -61,7 +68,12 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             type="text"
             placeholder="Search by city, state, or treatment type..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              if (validationError && e.target.value.trim()) setValidationError(null);
+            }}
+            aria-invalid={!!validationError}
+            aria-describedby={validationError ? "mega-search-error" : undefined}
             className="w-full h-12 pl-14 pr-28 rounded-xl border-2 border-accent/30 bg-accent/[0.04] text-sm text-foreground placeholder:text-muted-foreground/80 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 focus:bg-background transition-all shadow-sm"
           />
           <button
@@ -71,6 +83,11 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
             Search
           </button>
         </form>
+        {validationError && (
+          <p id="mega-search-error" role="alert" className="mt-1.5 text-xs text-rose-600 dark:text-rose-400 font-medium">
+            {validationError}
+          </p>
+        )}
       </div>
 
       <div className="flex">
@@ -175,18 +192,25 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
 
 export function FindTreatmentMegaMenuMobile({ onNavigate }: MegaMenuProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [validationError, setValidationError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setValidationError("Enter a city, treatment type, or facility name.");
+      return;
+    }
+    setValidationError(null);
     onNavigate?.();
-    navigate(`/search-results${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`);
+    navigate(`/search-results?q=${encodeURIComponent(trimmed)}`);
   };
 
   return (
     <div className="space-y-1">
       {/* Search bar */}
-      <form onSubmit={handleSearch} className="px-2 pb-2">
+      <form onSubmit={handleSearch} className="px-2 pb-2" noValidate>
         <div className="relative">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md bg-accent/15 flex items-center justify-center">
             <Search className="h-3 w-3 text-accent" />
@@ -195,10 +219,20 @@ export function FindTreatmentMegaMenuMobile({ onNavigate }: MegaMenuProps) {
             type="text"
             placeholder="Search by city or treatment..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              if (validationError && e.target.value.trim()) setValidationError(null);
+            }}
+            aria-invalid={!!validationError}
+            aria-describedby={validationError ? "mega-mobile-search-error" : undefined}
             className="w-full h-10 pl-11 pr-3 rounded-lg border border-accent/20 bg-accent/[0.04] text-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30 transition-all"
           />
         </div>
+        {validationError && (
+          <p id="mega-mobile-search-error" role="alert" className="mt-1 px-1 text-xs text-rose-600 dark:text-rose-400 font-medium">
+            {validationError}
+          </p>
+        )}
       </form>
 
       {/* Treatment Types */}

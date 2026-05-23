@@ -129,14 +129,18 @@ describe("SearchForm hero (variant=directory) — submit behaviour", () => {
     expect(locationParam).toBe("Los Angeles, CA");
   });
 
-  it("still navigates when submitted empty (lands on /search-results, no location param)", async () => {
+  it("blocks empty submits and shows a validation error", async () => {
+    // Behavior changed 2026-05-23: empty submits used to silently
+    // redirect to /search-results, which felt like a no-op to the user.
+    // The hero form now requires at least one of {location, treatment,
+    // insurance} and surfaces a role="alert" message until the user
+    // adds an input.
     renderForm();
 
     await userEvent.click(screen.getByRole("button", { name: /search centers/i }));
 
-    expect(mockNavigate).toHaveBeenCalledOnce();
-    const calledUrl: string = mockNavigate.mock.calls[0][0];
-    expect(calledUrl).toContain("/search-results");
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert").textContent).toMatch(/Enter a ZIP|treatment|insurance/i);
   });
 
   it("respects a custom targetPath", async () => {

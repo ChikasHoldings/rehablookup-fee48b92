@@ -38,6 +38,7 @@ export function SearchForm({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [lookupTimeout, setLookupTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const { data: zipcodeData, isLoading: isZipLookupLoading, error: zipError, lookup: lookupZipcode, reset: resetZipLookup } = useZipcodeLookup();
@@ -161,7 +162,21 @@ export function SearchForm({
       .replace(/data:/gi, "")
       .trim()
       .slice(0, 200);
-    
+
+    // Empty-search validation — at least one of {location, treatment,
+    // insurance} must be supplied. Empty submits used to silently
+    // redirect to /search-results with no querystring, which surfaced
+    // every facility nationwide and felt like a no-op to the user.
+    const hasAnyInput =
+      !!sanitizedLocation || selectedTreatmentTypes.length > 0 || selectedInsurance.length > 0;
+    if (!hasAnyInput) {
+      setValidationError("Enter a ZIP, city, or pick a treatment / insurance to search.");
+      // Focus the location field so the user can act on the error.
+      inputRef.current?.focus();
+      return;
+    }
+    setValidationError(null);
+
     // Track search — include filter context + originating page.
     analytics.search(sanitizedLocation || "all locations", undefined, {
       treatment: selectedTreatmentTypes.slice(0, 10).join(",") || undefined,
@@ -169,13 +184,13 @@ export function SearchForm({
       source:
         typeof window !== "undefined" ? window.location.pathname : undefined,
     });
-    
+
     const params = new URLSearchParams();
     if (sanitizedLocation) params.set("location", sanitizedLocation);
     if (selectedTreatmentTypes.length > 0) params.set("treatment", selectedTreatmentTypes.slice(0, 10).join(","));
     if (selectedInsurance.length > 0) params.set("insurance", selectedInsurance.slice(0, 10).join(","));
     navigate(`${targetPath}?${params.toString()}`);
-    
+
     // Delay scroll to allow navigation/render
     if (onSearchComplete) {
       setTimeout(() => {
@@ -184,10 +199,31 @@ export function SearchForm({
     }
   };
 
+  // Clear the validation error as soon as the user starts adding any input.
+  useEffect(() => {
+    if (!validationError) return;
+    if (location.trim() || selectedTreatmentTypes.length > 0 || selectedInsurance.length > 0) {
+      setValidationError(null);
+    }
+  }, [location, selectedTreatmentTypes, selectedInsurance, validationError]);
+
   // Directory variant - enterprise-grade horizontal search bar
+  // Inline error message for empty submits. Shared across all variants
+  // so the message + ARIA semantics stay identical regardless of where
+  // the form is mounted (homepage hero, /rehab-centers, near-me, etc.).
+  const errorBanner = validationError ? (
+    <p
+      role="alert"
+      aria-live="polite"
+      className="mx-auto max-w-4xl mt-2 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 px-3 py-2 text-sm text-rose-700 dark:text-rose-300 text-center font-medium"
+    >
+      {validationError}
+    </p>
+  ) : null;
+
   if (variant === "directory") {
     return (
-      <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
+      <form onSubmit={handleSubmit} className="mx-auto max-w-4xl" noValidate aria-describedby={validationError ? "search-form-error" : undefined}>
         <div className="flex flex-col rounded-2xl bg-card/95 backdrop-blur-sm shadow-2xl ring-1 ring-white/15 md:flex-row">
           {/* Where */}
           <div className="group relative flex-[1.2] border-b border-border/40 transition-colors hover:bg-muted/15 md:border-b-0 md:border-r">
@@ -276,6 +312,7 @@ export function SearchForm({
             </Button>
           </div>
         </div>
+        {errorBanner}
       </form>
     );
   }
@@ -364,6 +401,7 @@ export function SearchForm({
             <span className="sm:hidden">Search</span>
           </Button>
         </div>
+        {errorBanner}
       </form>
     );
   }
@@ -462,6 +500,7 @@ export function SearchForm({
           <Search className="h-5 w-5 md:h-4 md:w-4" />
           Search
         </Button>
+        {errorBanner}
       </form>
     );
   }
@@ -560,6 +599,7 @@ export function SearchForm({
           </div>
         </div>
       </div>
+      {errorBanner}
     </form>
   );
 }
