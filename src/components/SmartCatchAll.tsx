@@ -3,6 +3,14 @@ import { Navigate, useLocation } from "react-router-dom";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { ALL_ROUTABLE_NEAR_ME_SLUGS } from "@/data/nearMeTypes";
 import { usStates } from "@/data/usStates";
+// 2026-05-23: NotFound is rendered eagerly (no lazy/Suspense) so a
+// genuine 404 doesn't flash a blank `min-h-screen` placeholder while
+// the chunk downloads. Users were reading that blank as "the whole
+// platform is stuck"; on slow networks or post-deploy chunk-rotation
+// the wait could stretch to several seconds. The dependency chain
+// (Layout, SEO, supabase, analytics, ui primitives) is already in
+// the main bundle so the eager import adds only NotFound's own code.
+import NotFound from "@/pages/NotFound";
 
 /**
  * Map of legacy hyphenated slug prefixes to canonical /treatment-types/* paths.
@@ -31,7 +39,6 @@ const CityTreatmentProviderPage = lazy(() => import("@/pages/provider-guides/Cit
 const CityInsuranceProviderPage = lazy(() => import("@/pages/provider-guides/CityInsuranceProviderPage"));
 const NearMeCityPage = lazy(() => import("@/pages/near-me/NearMeCityPage"));
 const NearMeCountyPage = lazy(() => import("@/pages/near-me/NearMeCountyPage"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
 
 /**
  * City+Treatment combo prefixes for seeker-facing pages.
@@ -295,9 +302,5 @@ export function SmartCatchAll() {
     );
   }
 
-  return (
-    <Suspense fallback={<div className="min-h-screen" />}>
-      <NotFound />
-    </Suspense>
-  );
+  return <NotFound />;
 }
