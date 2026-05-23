@@ -144,6 +144,17 @@ Deno.serve(async (req) => {
     const messageBody = `RehabLookup: Your claim verification code is ${code}. It expires in ${OTP_TTL_MIN} minutes. If you didn't request this, ignore this message. Claim for: ${facName}`;
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`;
     const authStr = btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`);
+    // See send-sms-verification-code/index.ts for full rationale on
+    // why HTTP-2xx + status="failed" is treated as a hard error.
+    // Short version: Twilio queues messages first and reports
+    // carrier-level rejection (A2P 10DLC, trial restrictions, etc.) in
+    // the response body — not the HTTP status.
+    const statusCallback = Deno.env.get("TWILIO_STATUS_CALLBACK_URL");
+    const twBody = new URLSearchParams({ To: e164, From: TWILIO_FROM, Body: messageBody.slice(0, 320) });
+    if (statusCallback) twBody.append("StatusCallback", statusCallback);
+
+    let twResultStatus: string | undefined;
+    let twResultSid: string | undefined;
     try {
       const twRes = await fetch(twilioUrl, {
         method: "POST",
@@ -151,19 +162,61 @@ Deno.serve(async (req) => {
           "Authorization": `Basic ${authStr}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({ To: e164, From: TWILIO_FROM, Body: messageBody.slice(0, 320) }),
+        body: twBody,
       });
+      // Parse body whether OK or not — Twilio embeds failure details
+      // in the response payload alongside 2xx responses.
+      let twResult: {
+        sid?: string;
+        status?: string;
+        error_code?: number | null;
+        error_message?: string | null;
+        message?: string;
+        code?: number;
+      } = {};
+      try {
+        twResult = await twRes.json();
+      } catch {
+        twResult = {};
+      }
+      twResultStatus = twResult.status;
+      twResultSid = twResult.sid;
+
       if (!twRes.ok) {
-        const t = await twRes.text();
-        log("ERROR", "twilio error", { status: twRes.status, body: t.slice(0, 200) });
-        return json(502, { error: "Failed to send verification SMS", code: "SMS_SEND_FAILED" });
+        log("ERROR", "twilio HTTP error", {
+          status: twRes.status,
+          twilioCode: twResult.code,
+          twilioMessage: twResult.message?.slice(0, 200),
+        });
+        return json(502, {
+          error: "Failed to send verification SMS",
+          code: "SMS_SEND_FAILED",
+          twilioCode: twResult.code ?? null,
+          twilioMessage: twResult.message ?? null,
+        });
+      }
+
+      if (twResult.status === "failed" || twResult.status === "undelivered") {
+        log("ERROR", "twilio reported message failed in body", {
+          twilioStatus: twResult.status,
+          twilioErrorCode: twResult.error_code,
+          twilioErrorMessage: twResult.error_message,
+          sid: twResult.sid,
+        });
+        return json(502, {
+          error: "Twilio reported delivery failure. Check the Twilio console for the message status.",
+          code: "SMS_DELIVERY_FAILED",
+          twilioStatus: twResult.status,
+          twilioErrorCode: twResult.error_code ?? null,
+          twilioErrorMessage: twResult.error_message ?? null,
+        });
       }
     } catch (sendErr) {
       log("ERROR", "twilio exception", { error: String(sendErr) });
       return json(502, { error: "Failed to send verification SMS", code: "SMS_SEND_FAILED" });
     }
 
-    log("INFO", "Code sent", { claimRequestId, last4: e164.slice(-4) });
+    log("INFO", "Code queued at Twilio", { claimRequestId, last4: e164.slice(-4), twilioStatus: twResultStatus, sid: twResultSid });
     return json(200, {
       success: true,
       method: "sms_phone",

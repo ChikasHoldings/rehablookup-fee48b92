@@ -124,11 +124,43 @@ Deno.serve(async (req) => {
 
     logStep("Verification code created", { requestId, expiresAt });
 
-    // Send SMS via Twilio
+    // Send SMS via Twilio.
+    //
+    // Twilio's POST /Messages.json returns HTTP 201 the moment the
+    // message is accepted into Twilio's queue — that is NOT the same
+    // as "the carrier delivered it." The response body's `status`
+    // field tells the real story:
+    //   - queued / accepted / sending / sent / delivered  → in flight or good
+    //   - failed / undelivered                            → won't reach phone
+    // We treat the latter as a hard failure and surface Twilio's
+    // `error_code` + `error_message` so the admin can diagnose without
+    // digging through the Twilio console.
+    //
+    // Why this matters here: the same HTTP-201-on-failure pattern is
+    // what made codes silently never arrive when A2P 10DLC wasn't
+    // registered — Twilio queued the messages, carriers filtered them,
+    // and our function logged "sent successfully."
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
     const authHeader = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
 
     const messageBody = `Your RehabLookup verification code is: ${code}. This code expires in 10 minutes. Do not share this code.`;
+
+    // StatusCallback so Twilio pings us when the message transitions
+    // out of `queued`. Webhook is optional — function still works
+    // without it — but if the env var is wired, we'll get
+    // delivered/undelivered/failed updates posted back, which is the
+    // only reliable way to detect carrier-level filtering after the
+    // fact.
+    const statusCallback = Deno.env.get("TWILIO_STATUS_CALLBACK_URL");
+
+    const twilioBody = new URLSearchParams({
+      To: phone,
+      From: twilioPhoneNumber,
+      Body: messageBody,
+    });
+    if (statusCallback) {
+      twilioBody.append("StatusCallback", statusCallback);
+    }
 
     const twilioResponse = await fetch(twilioUrl, {
       method: "POST",
@@ -136,48 +168,94 @@ Deno.serve(async (req) => {
         "Authorization": `Basic ${authHeader}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({
-        To: phone,
-        From: twilioPhoneNumber,
-        Body: messageBody,
-      }),
+      body: twilioBody,
     });
 
-    if (!twilioResponse.ok) {
-      const twilioError = await twilioResponse.text();
-      logStep("Twilio API error", { requestId, status: twilioResponse.status, error: twilioError.slice(0, 200) });
+    // Parse the response body once. We need it for both error and
+    // success paths because Twilio embeds failure details in the body
+    // alongside 2xx responses.
+    let twilioResult: {
+      sid?: string;
+      status?: string;
+      error_code?: number | null;
+      error_message?: string | null;
+      message?: string;
+      code?: number;
+    } = {};
+    try {
+      twilioResult = await twilioResponse.json();
+    } catch {
+      const raw = await twilioResponse.text().catch(() => "");
+      logStep("Twilio non-JSON response", { requestId, status: twilioResponse.status, raw: raw.slice(0, 200) });
+    }
 
-      // Soft-expire the code row instead of DELETE. Two reasons:
-      //   1. If Twilio actually delivered the SMS but then returned a
-      //      5xx, the user could type the code from the message but
-      //      we'd have nothing to verify against → "code expired"
-      //      surprise. Soft-expire keeps the row available for any
-      //      late-arriving verify-sms-code call.
-      //   2. The rate-limit query at line 84-101 counts on
-      //      created_at, not the deleted flag. Hard-deleting reset
-      //      the abuse budget on every failed send, letting a
-      //      malicious caller hit Twilio indefinitely.
+    // Soft-expire helper (DRY between the error branches below).
+    const softExpire = async () => {
       await supabase
         .from("phone_verification_codes")
         .update({ expires_at: new Date().toISOString() })
         .eq("phone", phone)
         .eq("code", code);
+    };
 
+    if (!twilioResponse.ok) {
+      logStep("Twilio HTTP error", {
+        requestId,
+        status: twilioResponse.status,
+        twilioCode: twilioResult.code,
+        twilioMessage: twilioResult.message?.slice(0, 200),
+      });
+      await softExpire();
       return new Response(
-        JSON.stringify({ error: "Failed to send SMS. Please try again.", requestId }),
+        JSON.stringify({
+          error: "Failed to send SMS. Please try again.",
+          requestId,
+          twilioStatus: twilioResponse.status,
+          twilioCode: twilioResult.code ?? null,
+          twilioMessage: twilioResult.message ?? null,
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const twilioResult = await twilioResponse.json();
-    logStep("SMS sent successfully", { requestId, messageId: twilioResult.sid });
+    // Twilio accepted the request but reported failure in the body.
+    // This is the carrier-filter / A2P-unregistered case that looks
+    // like success at the HTTP layer.
+    if (twilioResult.status === "failed" || twilioResult.status === "undelivered") {
+      logStep("Twilio reported message failed in response body", {
+        requestId,
+        twilioStatus: twilioResult.status,
+        twilioErrorCode: twilioResult.error_code,
+        twilioErrorMessage: twilioResult.error_message,
+        sid: twilioResult.sid,
+      });
+      await softExpire();
+      return new Response(
+        JSON.stringify({
+          error: "Twilio reported delivery failure. Check the Twilio console for the message status.",
+          requestId,
+          twilioStatus: twilioResult.status,
+          twilioErrorCode: twilioResult.error_code ?? null,
+          twilioErrorMessage: twilioResult.error_message ?? null,
+        }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    logStep("Verification SMS queued at Twilio", {
+      requestId,
+      messageId: twilioResult.sid,
+      twilioStatus: twilioResult.status ?? "unknown",
+    });
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: "Verification code sent",
         expiresAt,
-        requestId
+        requestId,
+        twilioStatus: twilioResult.status ?? "queued",
+        twilioSid: twilioResult.sid ?? null,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
