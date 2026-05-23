@@ -153,31 +153,16 @@ export function VerifyEmailStep({ onAdvance }: { onAdvance: () => void }) {
         plan: null,
       });
 
-      // Fire the welcome email now that the email is confirmed. We use
-      // the wizard's pre-plan-selection signal — the function v3.0.0
-      // accepts plan-less calls and defaults to Free copy; if the user
-      // later upgrades to Pro the upgrade email path takes over. The
-      // welcome edge function uses Idempotency-Key=`welcome-<email>-<plan>`
-      // so re-mounting this step never re-sends. Best-effort, never blocks.
-      try {
-        const { data: profileRow } = await supabase
-          .from("profiles")
-          .select("first_name")
-          .eq("email", email)
-          .maybeSingle();
-        void supabase.functions
-          .invoke("send-provider-welcome-email", {
-            body: {
-              providerEmail: email,
-              firstName: profileRow?.first_name ?? "there",
-            },
-          })
-          .catch((e) =>
-            console.warn("[VerifyEmailStep] welcome email failed", e),
-          );
-      } catch (e) {
-        console.warn("[VerifyEmailStep] welcome email lookup failed", e);
-      }
+      // Welcome email moved out of this step on 2026-05-23. The old
+      // place to fire it was here, right after email verification —
+      // but at this point the provider hasn't picked Free vs Pro yet
+      // (and may not even have built a listing). Firing now always
+      // sent the Free-tier copy, and providers who later picked Pro
+      // got the wrong first-impression email. The welcome email now
+      // fires from PlanStep — once per plan, after the plan choice
+      // is committed (Free via complete_provider_onboarding_with_plan,
+      // Pro via the subscription-confirmation poll). See
+      // src/components/provider/onboarding/PlanStep.tsx.
 
       toast.success("Email verified.");
       onAdvance();

@@ -10,6 +10,40 @@ import { PLANS, type Plan } from "@/lib/planConstants";
 import { trackEvent } from "@/lib/analytics";
 import { useProviderOnboardingState } from "@/hooks/useProviderOnboardingState";
 
+/**
+ * Fire the plan-aware provider welcome email exactly once per
+ * (email, plan) pair. The edge function is idempotent on
+ * Idempotency-Key=`welcome-<email>-<plan>`, so repeat calls with the
+ * same plan are no-ops; if the user switches plan later (free → pro
+ * upgrade), the upgrade flow handles its own email path. Best-effort:
+ * we never block the user's progress on this. Failures are logged
+ * to console for ops to see in browser logs / Sentry.
+ */
+async function fireProviderWelcomeEmail(plan: "free" | "pro") {
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData.session?.user;
+    const email = user?.email;
+    if (!email) return;
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("first_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    void supabase.functions
+      .invoke("send-provider-welcome-email", {
+        body: {
+          providerEmail: email,
+          firstName: (profileRow as { first_name?: string } | null)?.first_name ?? "there",
+          selectedPlan: plan,
+        },
+      })
+      .catch((e) => console.warn("[PlanStep] welcome email send failed", e));
+  } catch (e) {
+    console.warn("[PlanStep] welcome email setup failed", e);
+  }
+}
+
 interface PlanStepProps {
   onAdvance: () => void;
   onBack: () => void;
@@ -101,6 +135,8 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
         if (sub?.tier === "pro") {
           await advance({ plan: "pro", current_step: "completed" });
           try { await supabase.rpc("complete_provider_onboarding"); } catch { /* ignore */ }
+          // Fire the Pro-tier welcome email exactly once on completion.
+          void fireProviderWelcomeEmail("pro");
           toast.success("Pro is active. Welcome to RehabLookup.");
           navigate("/provider/dashboard", { replace: true });
         }
@@ -152,6 +188,10 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
           mode: null,
           plan: "pro",
         });
+        // Fire the Pro-tier welcome email exactly once on Stripe
+        // confirmation. Idempotent on (email, "pro"), so the
+        // fast-track branch above firing it first is fine.
+        void fireProviderWelcomeEmail("pro");
         toast.success("Pro is active. Welcome to RehabLookup.");
         const next = new URLSearchParams(searchParams);
         next.delete("checkout");
@@ -224,6 +264,8 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
         mode: null,
         plan: "free",
       });
+      // Fire the Free-tier welcome email exactly once on completion.
+      void fireProviderWelcomeEmail("free");
       toast.success("You're all set. Welcome to RehabLookup.");
       onAdvance();
       navigate("/provider/dashboard", { replace: true });

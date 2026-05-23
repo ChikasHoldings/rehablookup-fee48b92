@@ -942,15 +942,16 @@ export default function ProviderSignup({
         // Non-blocking - continue even if notification fails
       }
 
-      // 12. Welcome email — round-30 merge removed this duplicate.
-      // VerifyEmailStep fires send-provider-welcome-email with
-      // idempotency key `welcome-<email>-<plan>` the moment OTP
-      // verification succeeds (works for both new-list AND claim flows
-      // since both go through wizard verify_email). Firing again here
-      // with a facilityId-keyed idempotency key delivered a second
-      // welcome email to every new-listing provider — friction, not
-      // value. The post-publish offer email below is the right surface
-      // for facility-aware messaging.
+      // 12. Welcome email — handled downstream by PlanStep (2026-05-23).
+      // Both new-list AND claim flows route success → /provider/onboarding
+      // ?step=plan, where the provider picks Free vs Pro. PlanStep fires
+      // send-provider-welcome-email with selectedPlan + Idempotency-Key
+      // `welcome-<email>-<plan>` after the plan choice is committed —
+      // so the welcome email always reflects the right tier and the
+      // provider isn't greeted as "Free" before they've decided.
+      // Earlier rounds fired this on email-verify, then duplicated it
+      // here on publish; both were premature. Single emission at
+      // onboarding-complete is the correct surface.
 
       // 12b. The legacy welcome-credits offer email was retired with the
       //   flat-fee Pro $99/mo monetization. PlanStep + WelcomeModal handle
