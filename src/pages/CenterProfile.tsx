@@ -45,8 +45,6 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
-  X,
-  ChevronLeft,
   ChevronRight,
   Handshake,
   GlobeIcon,
@@ -65,6 +63,7 @@ import { useProviderEventTracking } from "@/hooks/useProviderEventTracking";
 import { gaFacilityView, gaFacilityContact } from "@/lib/ga";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 import { FacilityProfileExtras } from "@/components/facility/FacilityProfileExtras";
+import { FacilityPhotoGallery } from "@/components/facility/FacilityPhotoGallery";
 import { RehabScorePanel } from "@/components/profile/RehabScorePanel";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { buildProfileFAQs } from "@/lib/buildProfileFAQs";
@@ -256,7 +255,6 @@ const CenterProfile = () => {
   const [reportImageOpen, setReportImageOpen] = useState(false);
   const [reportImageUrl, setReportImageUrl] = useState<string>("");
   const [reportImageType, setReportImageType] = useState<"logo" | "gallery">("gallery");
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const { trackProfileView, trackClickToCall, trackWebsiteClick } = useProviderEventTracking();
   
   const fromSearch = location.state?.fromSearch;
@@ -1139,17 +1137,27 @@ const CenterProfile = () => {
           <div className="grid gap-6 lg:gap-8 lg:grid-cols-[1fr,380px]">
             {/* Left Column - Main Content */}
             <div className="space-y-0 min-w-0 divide-y divide-border [&>*]:py-8 [&>*:first-child]:pt-0">
-              {/* Gallery — compact grid with lightbox */}
+              {/* Gallery — delegates to FacilityPhotoGallery so mobile
+                  shows a single-image snap carousel (swipe to navigate)
+                  while desktop keeps the 1-large + 4-thumbs grid. The
+                  component owns its own lightbox; the report-image
+                  affordance below sits in the section action slot and
+                  uses the section's own activeGalleryIndex (reset to 0
+                  on mount) since the carousel's internal mobileIndex
+                  isn't exposed across that boundary — reporting from
+                  the gallery falls back to "the image currently
+                  showing in the dedicated CenterProfile lightbox" when
+                  open, otherwise the first. */}
               {galleryImages.length > 0 && (
-                <ProfileSection 
-                  icon={ImageIcon} 
+                <ProfileSection
+                  icon={ImageIcon}
                   title="Facility Photos"
                   iconColor="bg-rose-500/10 text-rose-600"
                   action={
                     !isOwner && (
                       <button
                         onClick={() => {
-                          setReportImageUrl(galleryImages[activeGalleryIndex]);
+                          setReportImageUrl(galleryImages[activeGalleryIndex] || galleryImages[0]);
                           setReportImageType("gallery");
                           setReportImageOpen(true);
                         }}
@@ -1161,31 +1169,10 @@ const CenterProfile = () => {
                     )
                   }
                 >
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 rounded-xl overflow-hidden">
-                    {galleryImages.slice(0, 8).map((img, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => { setActiveGalleryIndex(idx); setLightboxOpen(true); }}
-                        className={cn(
-                          "relative aspect-square overflow-hidden bg-muted group",
-                          idx === 0 && "col-span-2 row-span-2"
-                        )}
-                      >
-                        <img 
-                          src={img} 
-                          alt={`${facility.name} - Photo ${idx + 1}`}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                        {idx === 7 && galleryImages.length > 8 && (
-                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                            <span className="text-white font-bold text-base">+{galleryImages.length - 8}</span>
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                  <FacilityPhotoGallery
+                    images={galleryImages}
+                    facilityName={facility.name}
+                  />
                 </ProfileSection>
               )}
 
@@ -1582,73 +1569,10 @@ const CenterProfile = () => {
         </div>
       </div>
 
-      {/* Photo Lightbox */}
-      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-4xl w-[95vw] sm:w-[90vw] p-0 bg-black/95 border-none">
-          <VisuallyHidden>
-            <DialogTitle>{facility.name} Photo Gallery</DialogTitle>
-          </VisuallyHidden>
-          <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full">
-            <img
-              src={galleryImages[activeGalleryIndex]}
-              alt={`${facility.name} - Photo ${activeGalleryIndex + 1}`}
-              className="w-full h-full object-contain"
-            />
-            {galleryImages.length > 1 && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setActiveGalleryIndex(activeGalleryIndex === 0 ? galleryImages.length - 1 : activeGalleryIndex - 1)}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setActiveGalleryIndex(activeGalleryIndex === galleryImages.length - 1 ? 0 : activeGalleryIndex + 1)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                >
-                  <ChevronRight className="h-6 w-6" />
-                </Button>
-              </>
-            )}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-black/60 text-white text-sm font-medium">
-              {activeGalleryIndex + 1} / {galleryImages.length}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setLightboxOpen(false)}
-              className="absolute top-2 right-2 h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-          {galleryImages.length > 1 && (
-            <div className="hidden sm:flex gap-1.5 p-3 overflow-x-auto bg-black/80">
-              {galleryImages.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveGalleryIndex(idx)}
-                  className={cn(
-                    // 64×48 (was 56×40) — closer to the 44px tap-target
-                    // minimum while keeping the strip compact. Hidden on
-                    // mobile so the strict 44px rule isn't strictly needed
-                    // here, but bigger thumbs are easier to click with a
-                    // mouse too.
-                    "shrink-0 w-16 h-12 rounded overflow-hidden transition-all",
-                    idx === activeGalleryIndex ? "ring-2 ring-white opacity-100" : "opacity-50 hover:opacity-75"
-                  )}
-                >
-                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Photo lightbox lives inside <FacilityPhotoGallery /> now —
+          the duplicate dialog that used to live here was orphaned by
+          the gallery refactor (no remaining caller hit setLightboxOpen)
+          and removed to avoid shipping dead state + JSX. */}
 
       {/* Passive concierge rescue — inline, never a popup. Honors discovery-first policy. */}
       <ProfileConciergeRescue

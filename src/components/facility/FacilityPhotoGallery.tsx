@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X, Image as ImageIcon } from "lucide-react";
@@ -13,6 +13,37 @@ interface FacilityPhotoGalleryProps {
 export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGalleryProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  // Mobile snap-carousel state: which image is currently centered in
+  // the scroll-snap viewport, so the dots and counter update as the
+  // user swipes. Updated on scroll via the snapped item's clientWidth
+  // (rather than IntersectionObserver — simpler, no observer plumbing
+  // for what is effectively a 1-axis snap container).
+  const [mobileIndex, setMobileIndex] = useState(0);
+  const mobileScrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = mobileScrollRef.current;
+    if (!el) return;
+    let raf = 0;
+    const onScroll = () => {
+      // Coalesce scroll events through rAF — `scroll` fires every frame
+      // on iOS momentum scroll, and setState on every one of those would
+      // thrash React for no benefit.
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const w = el.clientWidth || 1;
+        const idx = Math.min(images.length - 1, Math.max(0, Math.round(el.scrollLeft / w)));
+        setMobileIndex(idx);
+      });
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [images.length]);
 
   if (images.length === 0) return null;
 
@@ -34,20 +65,27 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
 
   return (
     <>
-      {/* Mobile: Horizontal scroll gallery.
-          The first (hero) image gets eager loading + high fetchpriority
-          for LCP. Off-screen images stay lazy so the network burst on
-          mount stays small. */}
+      {/* Mobile: single-image snap carousel.
+          ONE image visible at a time, full-width within the gallery
+          container. Horizontal-snap means the swipe rests on the next
+          image's edge rather than scrolling fluidly past it
+          (Instagram / Airbnb / Yelp pattern, what users expect on
+          phones). Tap any image to open the lightbox at that index.
+          The first image is the LCP candidate so it gets eager loading
+          + high fetchpriority; off-screen images stay lazy. */}
       <div className="sm:hidden">
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide">
-          {images.slice(0, 8).map((img, idx) => (
+        <div
+          ref={mobileScrollRef}
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide rounded-xl bg-muted"
+          style={{ scrollbarWidth: "none" }}
+          aria-label={`${facilityName} photo gallery — swipe to navigate`}
+        >
+          {images.map((img, idx) => (
             <button
               key={idx}
               onClick={() => openLightbox(idx)}
-              className={cn(
-                "relative shrink-0 snap-start overflow-hidden rounded-lg bg-muted",
-                idx === 0 ? "w-[70vw] aspect-[4/3]" : "w-32 aspect-square"
-              )}
+              className="relative shrink-0 snap-center w-full aspect-[4/3] overflow-hidden"
+              aria-label={`Open photo ${idx + 1} of ${images.length}`}
             >
               <img
                 src={img}
@@ -56,27 +94,46 @@ export function FacilityPhotoGallery({ images, facilityName }: FacilityPhotoGall
                 loading={idx === 0 ? "eager" : "lazy"}
                 fetchPriority={idx === 0 ? "high" : "auto"}
                 decoding={idx === 0 ? "sync" : "async"}
+                draggable={false}
               />
-              {idx === 7 && images.length > 8 && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <span className="text-white font-bold text-base">
-                    +{images.length - 8}
-                  </span>
-                </div>
-              )}
             </button>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground text-center mt-2">
-          Swipe to see more • Tap to enlarge
-        </p>
+
+        {/* Pagination — dots + counter. Dots widen on the active
+            position (Instagram-style "expanded pill") so the active
+            position is visible without color reliance. */}
+        {images.length > 1 && (
+          <div className="flex flex-col items-center gap-1.5 mt-2.5">
+            <div className="flex items-center gap-1.5" role="presentation" aria-hidden="true">
+              {images.map((_, idx) => (
+                <span
+                  key={idx}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-200",
+                    idx === mobileIndex ? "w-5 bg-primary" : "w-1.5 bg-muted-foreground/30",
+                  )}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <span className="tabular-nums font-medium text-foreground">
+                {mobileIndex + 1}
+              </span>{" "}
+              of {images.length} · Swipe to navigate, tap to enlarge
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Desktop: Grid layout (1 large + 4 small).
-          Main image is the LCP candidate — eager + high priority + sync
-          decode so it paints with the rest of the layout instead of
-          arriving a beat late. */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 grid-rows-2 sm:grid-rows-2 gap-2 h-[220px] md:h-[260px] rounded-xl overflow-hidden">
+      {/* Desktop: Grid layout (1 large + 4 small). HIDDEN on mobile —
+          previously this branch was missing `hidden sm:grid` and the
+          two layouts were stacking on mobile, doubling render cost
+          and producing a strange "swipe strip then 2×2 thumbnails"
+          presentation.
+          Main image is the LCP candidate — eager + high priority +
+          sync decode so it paints with the rest of the layout. */}
+      <div className="hidden sm:grid sm:grid-cols-4 sm:grid-rows-2 gap-2 h-[220px] md:h-[260px] rounded-xl overflow-hidden">
         {/* Main large image */}
         <button
           onClick={() => openLightbox(0)}
