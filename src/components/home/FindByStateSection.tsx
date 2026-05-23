@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { US_STATES } from "@/lib/facilityConstants";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { stateCapitalImages } from "@/data/locationImages";
@@ -124,51 +124,6 @@ export function FindByStateSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countByState]);
 
-  // ── Horizontal scroll plumbing ────────────────────────────────────
-  // Refs to the scroll container so the prev/next arrow buttons can
-  // call .scrollBy({ left, behavior: "smooth" }). State tracks whether
-  // we're at either edge so the arrows can grey out when there's
-  // nothing left to scroll toward.
-  const scrollRef = useRef<HTMLUListElement | null>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    let raf = 0;
-    const onScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        // 4-pixel slack on both edges absorbs sub-pixel scroll positions
-        // after a snap-stop so the arrows don't flicker on/off.
-        setCanScrollLeft(el.scrollLeft > 4);
-        setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-      });
-    };
-    onScroll();
-    el.addEventListener("scroll", onScroll, { passive: true });
-    // Re-check edges on resize — clientWidth changes when the viewport
-    // resizes past a Tailwind breakpoint and changes the card width.
-    const ro = new ResizeObserver(onScroll);
-    ro.observe(el);
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      ro.disconnect();
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [allStates.length]);
-
-  const scrollBy = (direction: "prev" | "next") => {
-    const el = scrollRef.current;
-    if (!el) return;
-    // Scroll by ~one card width × 2 — gives a noticeable jump without
-    // overshooting past the next snap-stop on smaller cards.
-    const step = Math.max(el.clientWidth * 0.6, 240);
-    el.scrollBy({ left: direction === "next" ? step : -step, behavior: "smooth" });
-  };
-
   return (
     <section
       aria-labelledby="find-by-state-heading"
@@ -216,79 +171,29 @@ export function FindByStateSection() {
           </Link>
         </header>
 
-        {/* Card row — horizontal snap-scroll. Same per-card design as
-            before (aspect-[4/5], gradient overlay, glassy chip, drop-
-            shadow title); only the container layout changed from a
-            5-col grid to a snap-x flex row. Fixed card width per
-            breakpoint so cards stay legible while letting the user
-            scroll through all 50 states without bloating vertical
-            space. */}
+        {/* Card row — single horizontal row of 5 curated cards.
+            ──────────────────────────────────────────────────────────
+            Previously this section showed all 50 states and shipped a
+            scroll-chrome overlay (prev/next arrows, edge-fade
+            gradients, mobile swipe hint) on top of the snap-scroll
+            container. With the strip capped at the top 5 states the
+            chrome was a leftover from the wider design and felt like
+            visual noise — there's nothing for the arrows to scroll to
+            on desktop, and on mobile the native horizontal-snap
+            gesture is universally understood for short card rows.
+
+            Behavior now:
+              - Mobile: cards still snap-scroll horizontally
+                (overflow-x-auto + snap-mandatory). Native iOS/Android
+                swipe handles the affordance.
+              - Desktop (lg+): overflow-x-visible + justify-center
+                centers the strip in the container.
+        */}
         <div className="relative">
-          {/* Edge arrows — desktop only. Mobile relies on the native
-              swipe gesture + the gradient fade at each edge. */}
-          <button
-            type="button"
-            onClick={() => scrollBy("prev")}
-            disabled={!canScrollLeft}
-            aria-label="Scroll states left"
-            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white text-[#1B365D] shadow-lg ring-1 ring-black/5 transition-opacity hover:bg-white/95 disabled:pointer-events-none disabled:opacity-0"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollBy("next")}
-            disabled={!canScrollRight}
-            aria-label="Scroll states right"
-            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white text-[#1B365D] shadow-lg ring-1 ring-black/5 transition-opacity hover:bg-white/95 disabled:pointer-events-none disabled:opacity-0"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-
-          {/* Edge fades — visual cue that there's more to scroll. The
-              left fade only appears once the user has scrolled away
-              from start; the right fade hides at the end. Both stay
-              behind the cards (pointer-events-none) so they don't
-              steal taps. */}
-          <div
-            className={`pointer-events-none absolute left-0 top-0 z-[5] h-full w-12 bg-gradient-to-r from-[#1B365D] to-transparent transition-opacity duration-300 ${
-              canScrollLeft ? "opacity-100" : "opacity-0"
-            }`}
-            aria-hidden
-          />
-          <div
-            className={`pointer-events-none absolute right-0 top-0 z-[5] h-full w-12 bg-gradient-to-l from-[#1B365D] to-transparent transition-opacity duration-300 ${
-              canScrollRight ? "opacity-100" : "opacity-0"
-            }`}
-            aria-hidden
-          />
-
-          {/* Card row layout:
-              - Mobile / tablet: horizontal snap-scroll. Cards overflow
-                the viewport; user swipes through them. Edge fades and
-                arrow buttons (above) handle the affordance.
-              - Desktop (lg+): the 5 cards comfortably fit inline at
-                240 px wide each + 16 px gaps = ~1,200 px (within the
-                container max-width). `lg:justify-center` centers them
-                so the strip doesn't read as left-justified with empty
-                space on the right.
-
-              Previously had aggressive negative margins (`-mx-3
-              sm:-mx-4 md:-mx-6 lg:-mx-8 px-3 ...`) to bleed cards to
-              the viewport edge — that was intentional when this
-              section showed all 50 states (mobile users always
-              scrolled, edge-bleed was a swipe cue). With only 5 cards
-              the edge-bleed left a half-clipped card on the far right
-              of desktop viewports and made the desktop layout feel
-              left-anchored. Removed in favor of normal container
-              padding + lg-centering. Mobile users still see the
-              scroll-affordance (cards extend off-screen, arrows + fade
-              cue more content). */}
           <ul
-            ref={scrollRef}
             className="flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2 lg:justify-center lg:overflow-x-visible"
             style={{ scrollbarWidth: "none" }}
-            aria-label="States with treatment centers — swipe to navigate"
+            aria-label="Top 5 states with treatment centers"
           >
             {allStates.map((s, idx) => {
               const img = getImageForState(s.name);
@@ -376,16 +281,6 @@ export function FindByStateSection() {
               );
             })}
           </ul>
-
-          {/* Mobile-only swipe hint. Hidden once the user has scrolled
-              past the first card — they understood. */}
-          <p
-            className={`md:hidden mt-3 text-center text-xs text-white/60 transition-opacity duration-300 ${
-              canScrollLeft ? "opacity-0" : "opacity-100"
-            }`}
-          >
-            Swipe to see top 5 states →
-          </p>
         </div>
       </div>
     </section>
