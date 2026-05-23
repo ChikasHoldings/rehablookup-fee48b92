@@ -1,4 +1,4 @@
-import { createContext, useContext, useTransition, useCallback, useEffect, ReactNode } from "react";
+import { createContext, useContext, useTransition, useCallback, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface NavigationContextType {
@@ -8,6 +8,31 @@ interface NavigationContextType {
 
 const NavigationContext = createContext<NavigationContextType | null>(null);
 
+/**
+ * NavigationProvider — exposes an opt-in transition-wrapped navigate
+ * helper. No global behavior, no click interceptor.
+ *
+ * 2026-05-23 bugfix: an earlier version of this provider installed a
+ * global `document.addEventListener("click", ...)` interceptor that
+ * wrapped EVERY internal anchor click in `React.startTransition`. The
+ * intent was to keep the previous page visible while a lazy chunk
+ * loaded — no "blank flash." The side effect: a transition keeps the
+ * OLD UI on screen until the new route is "ready" (chunk loaded +
+ * commit). On a 404 page, "ready" means lazy chunks for the next route
+ * have to land before React reveals them — until then the 404 itself
+ * stays painted, and mobile users with no concept of hard-refresh read
+ * the sticky 404 as "the whole platform is broken."
+ *
+ * The interceptor was also doing nothing useful for the 95% of routes
+ * that are NOT lazy (homepage, /search-results, /provider/*, etc.) —
+ * those committed instantly anyway. Removing it makes navigation feel
+ * responsive: clicks immediately move the URL, and the route-level
+ * Suspense fallbacks render their loading state if a chunk is still
+ * downloading.
+ *
+ * Consumers that want the transition-aware navigate can still opt in
+ * via `const { navigateWithTransition } = useNavigation()`.
+ */
 export function NavigationProvider({ children }: { children: ReactNode }) {
   const [isPending, startTransition] = useTransition();
   const navigate = useNavigate();
@@ -16,43 +41,6 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     startTransition(() => {
       navigate(to);
     });
-  }, [navigate, startTransition]);
-
-  // Global click interceptor: wraps ALL internal link clicks in startTransition
-  // This keeps the old page visible while lazy chunks load — no blank flashes.
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      // Only left-clicks without modifiers
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-      if (e.defaultPrevented) return;
-
-      // Walk up from target to find an <a> element
-      let anchor = e.target as HTMLElement | null;
-      while (anchor && anchor.tagName !== "A") {
-        anchor = anchor.parentElement;
-      }
-      if (!anchor) return;
-
-      const a = anchor as HTMLAnchorElement;
-      const href = a.getAttribute("href");
-      if (!href) return;
-
-      // Skip external, hash-only, mailto, tel links
-      if (href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:") || href.startsWith("#")) return;
-      // Skip links that open in new tab
-      if (a.target === "_blank") return;
-      // Skip download links
-      if (a.hasAttribute("download")) return;
-
-      // This is an internal SPA link — intercept it
-      e.preventDefault();
-      startTransition(() => {
-        navigate(href);
-      });
-    }
-
-    document.addEventListener("click", handleClick, true);
-    return () => document.removeEventListener("click", handleClick, true);
   }, [navigate, startTransition]);
 
   return (

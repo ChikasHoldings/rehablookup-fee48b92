@@ -10,6 +10,7 @@ import { RouteChangeTracker } from "@/components/RouteChangeTracker";
 import { TrailingSlashRedirect } from "@/components/TrailingSlashRedirect";
 import { SEORouteBoundary } from "@/components/seo/SEORouteBoundary";
 import { StaticFileRedirect } from "@/components/seo/StaticFileRedirect";
+import { RouteLoadingFallback } from "@/components/RouteLoadingFallback";
 // CookieConsentBanner removed — US site, no opt-in required. GA4 tracks unconditionally.
 import { useTelClickTracking } from "@/hooks/useTelClickTracking";
 import { useGAInternalTrafficFlag } from "@/hooks/useGAInternalTrafficFlag";
@@ -652,8 +653,11 @@ const AppInner = () => {
         {/* min-h-screen reserves the viewport during lazy route chunk loads
             so the layout doesn't shift downward when the route bundle lands.
             Was fallback={null} — caused visible CLS on slow networks when
-            any route's lazy chunk took a frame to mount. */}
-        <Suspense fallback={<div className="min-h-screen" />}>
+            any route's lazy chunk took a frame to mount.
+            2026-05-23: replaced the previous blank min-h-screen div with
+            RouteLoadingFallback so users see a spinner during chunk loads
+            instead of a blank screen they might read as "stuck." */}
+        <Suspense fallback={<RouteLoadingFallback />}>
           <TrailingSlashRedirect>
           <SEORouteBoundary>
           <Routes>

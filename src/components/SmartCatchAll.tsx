@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { PublicRouteGuard } from "@/components/PublicRouteGuard";
+import { RouteLoadingFallback } from "@/components/RouteLoadingFallback";
 import { ALL_ROUTABLE_NEAR_ME_SLUGS } from "@/data/nearMeTypes";
 import { usStates } from "@/data/usStates";
 // 2026-05-23: NotFound is rendered eagerly (no lazy/Suspense) so a
@@ -183,7 +184,7 @@ export function SmartCatchAll() {
   if (pathname.startsWith("/best-rehab-centers-in-")) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={<div className="min-h-screen" />}>
+        <Suspense fallback={<RouteLoadingFallback />}>
           <BestInStatePage />
         </Suspense>
       </PublicRouteGuard>
@@ -200,7 +201,7 @@ export function SmartCatchAll() {
     if (STATE_SLUGS.has(slug)) {
       return (
         <PublicRouteGuard>
-          <Suspense fallback={<div className="min-h-screen" />}>
+          <Suspense fallback={<RouteLoadingFallback />}>
             <ListYourFacilityState />
           </Suspense>
         </PublicRouteGuard>
@@ -210,7 +211,7 @@ export function SmartCatchAll() {
     if (slug.includes("-")) {
       return (
         <PublicRouteGuard>
-          <Suspense fallback={<div className="min-h-screen" />}>
+          <Suspense fallback={<RouteLoadingFallback />}>
             <ListYourFacilityCity />
           </Suspense>
         </PublicRouteGuard>
@@ -219,7 +220,7 @@ export function SmartCatchAll() {
     // Unknown single-token slug — fall back to the State page (renders its own 404 if missing).
     return (
       <PublicRouteGuard>
-        <Suspense fallback={<div className="min-h-screen" />}>
+        <Suspense fallback={<RouteLoadingFallback />}>
           <ListYourFacilityState />
         </Suspense>
       </PublicRouteGuard>
@@ -230,7 +231,7 @@ export function SmartCatchAll() {
   if (pathname.startsWith("/for-providers-in-")) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={<div className="min-h-screen" />}>
+        <Suspense fallback={<RouteLoadingFallback />}>
           <ForProvidersState />
         </Suspense>
       </PublicRouteGuard>
@@ -241,7 +242,7 @@ export function SmartCatchAll() {
   if (CITY_TREATMENT_PROVIDER_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={<div className="min-h-screen" />}>
+        <Suspense fallback={<RouteLoadingFallback />}>
           <CityTreatmentProviderPage />
         </Suspense>
       </PublicRouteGuard>
@@ -252,7 +253,7 @@ export function SmartCatchAll() {
   if (CITY_INSURANCE_PROVIDER_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={<div className="min-h-screen" />}>
+        <Suspense fallback={<RouteLoadingFallback />}>
           <CityInsuranceProviderPage />
         </Suspense>
       </PublicRouteGuard>
@@ -263,7 +264,7 @@ export function SmartCatchAll() {
   if (CITY_TREATMENT_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={<div className="min-h-screen" />}>
+        <Suspense fallback={<RouteLoadingFallback />}>
           <CityTreatmentPage />
         </Suspense>
       </PublicRouteGuard>
@@ -274,7 +275,7 @@ export function SmartCatchAll() {
   if (pathname.startsWith("/get-more-patients-in-")) {
     return (
       <PublicRouteGuard>
-        <Suspense fallback={<div className="min-h-screen" />}>
+        <Suspense fallback={<RouteLoadingFallback />}>
           <CityProviderPage />
         </Suspense>
       </PublicRouteGuard>
@@ -287,7 +288,7 @@ export function SmartCatchAll() {
     if (nearMeParsed.type === "county") {
       return (
         <PublicRouteGuard>
-          <Suspense fallback={<div className="min-h-screen" />}>
+          <Suspense fallback={<RouteLoadingFallback />}>
             <NearMeCountyPage />
           </Suspense>
         </PublicRouteGuard>
@@ -295,7 +296,7 @@ export function SmartCatchAll() {
     }
     return (
       <PublicRouteGuard>
-        <Suspense fallback={<div className="min-h-screen" />}>
+        <Suspense fallback={<RouteLoadingFallback />}>
           <NearMeCityPage />
         </Suspense>
       </PublicRouteGuard>
