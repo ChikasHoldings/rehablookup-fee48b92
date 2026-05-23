@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
-import { MapPin, Search, Building2, Shield, Navigation } from "lucide-react";
+import { MapPin, Search, Building2, Shield, Navigation, Loader2, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { TREATMENT_FILTERS, INSURANCE_FILTERS } from "@/lib/searchFilters";
+import { useZipcodeLookup } from "@/hooks/useZipcodeLookup";
 
 // Treatment + insurance options come from the canonical filter library so
 // the sticky refinement form, the sidebar multi-select, and the
@@ -55,6 +56,14 @@ export function SearchResultsForm() {
   });
   const [distance, setDistance] = useState<string>(searchParams.get("distance") ?? "");
 
+  // ZIP-code autocomplete: when the user types a 5-digit numeric in the
+  // location field, debounce-lookup the ZIP and surface the resolved
+  // city/state as inline feedback. On submit we send the resolved
+  // "City, ST" to the URL (still falls back to raw ZIP if Zippopotam.us
+  // is unreachable so the post-submit SearchResults effect can try).
+  const { data: zipcodeData, isLoading: isZipLookupLoading, lookup: lookupZipcode, reset: resetZipLookup } = useZipcodeLookup();
+  const lookupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     setLocation(searchParams.get("location") ?? "");
     const t = (searchParams.get("treatmentTypes") ?? "").split(",").filter(Boolean)[0] ?? "";
@@ -64,11 +73,44 @@ export function SearchResultsForm() {
     setDistance(searchParams.get("distance") ?? "");
   }, [searchParams]);
 
+  // Debounced ZIP detection — runs whenever the location string changes.
+  useEffect(() => {
+    if (lookupTimeoutRef.current) {
+      clearTimeout(lookupTimeoutRef.current);
+      lookupTimeoutRef.current = null;
+    }
+    const cleanZip = location.trim().replace(/\D/g, "");
+    if (cleanZip.length === 5 && /^\d{5}$/.test(location.trim())) {
+      lookupTimeoutRef.current = setTimeout(() => {
+        lookupZipcode(cleanZip);
+      }, 300);
+    } else {
+      resetZipLookup();
+    }
+    return () => {
+      if (lookupTimeoutRef.current) {
+        clearTimeout(lookupTimeoutRef.current);
+        lookupTimeoutRef.current = null;
+      }
+    };
+  }, [location, lookupZipcode, resetZipLookup]);
+
+  const isCompleteZipcode = /^\d{5}$/.test(location.trim());
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const next = new URLSearchParams(searchParams);
 
-    const trimmedLocation = location.trim();
+    // If the user typed a 5-digit ZIP and we've resolved it, send the
+    // expanded "City, ST" form. The downstream SearchResults effect still
+    // calls lookupZipcode on raw 5-digit input (defense in depth), but
+    // landing on "Brooklyn, NY" rather than "11201" gives the proximity
+    // sorter a usable city + state match immediately on first render,
+    // before the secondary lookup completes.
+    let trimmedLocation = location.trim();
+    if (isCompleteZipcode && zipcodeData?.city && zipcodeData?.stateAbbr) {
+      trimmedLocation = `${zipcodeData.city}, ${zipcodeData.stateAbbr}`;
+    }
     if (trimmedLocation) {
       next.set("location", trimmedLocation);
     } else {
@@ -119,8 +161,33 @@ export function SearchResultsForm() {
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Enter ZIP, city, or state"
             aria-label="Location: ZIP code, city, or state"
-            className="h-11 pl-9 text-sm lg:h-12 lg:pl-5 lg:pr-4 lg:pt-5 lg:pb-1 lg:text-base lg:font-medium lg:border-0 lg:bg-transparent lg:shadow-none lg:rounded-full lg:focus-visible:ring-0 lg:placeholder:text-muted-foreground/60"
+            aria-describedby={isCompleteZipcode ? "zip-resolved" : undefined}
+            className="h-11 pl-9 pr-9 text-sm lg:h-12 lg:pl-5 lg:pr-9 lg:pt-5 lg:pb-1 lg:text-base lg:font-medium lg:border-0 lg:bg-transparent lg:shadow-none lg:rounded-full lg:focus-visible:ring-0 lg:placeholder:text-muted-foreground/60"
           />
+          {/* ZIP-resolution indicator: spinner while in flight, check
+              when resolved. The resolved city/state is announced via the
+              aria-describedby slot for screen readers. */}
+          {isCompleteZipcode && isZipLookupLoading && (
+            <Loader2
+              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground"
+              aria-hidden="true"
+            />
+          )}
+          {isCompleteZipcode && !isZipLookupLoading && zipcodeData?.city && (
+            <CheckCircle2
+              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500"
+              aria-hidden="true"
+            />
+          )}
+          {isCompleteZipcode && zipcodeData?.city && zipcodeData?.stateAbbr && (
+            <p
+              id="zip-resolved"
+              className="mt-1 text-xs text-emerald-700 dark:text-emerald-400 lg:absolute lg:left-5 lg:bottom-0 lg:translate-y-full lg:mt-0 lg:pt-0.5"
+            >
+              <span className="lg:hidden">Searching near </span>
+              <span className="font-medium">{zipcodeData.city}, {zipcodeData.stateAbbr}</span>
+            </p>
+          )}
         </div>
 
         {/* Vertical divider on desktop */}
