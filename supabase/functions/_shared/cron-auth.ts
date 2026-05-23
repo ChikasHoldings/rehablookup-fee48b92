@@ -74,10 +74,10 @@ export function assertCronSecret(req: Request): CronAuthResult {
     return { ok: false, response: deny(500, "Server misconfigured: CRON_SECRET not set") };
   }
 
-  const provided =
-    req.headers.get("x-cron-secret") ||
-    req.headers.get("X-Cron-Secret") ||
-    "";
+  // Headers in Deno's Request are case-insensitive per the Fetch spec, so
+  // the second `X-Cron-Secret` lookup was redundant. Single normalized
+  // get is sufficient.
+  const provided = req.headers.get("x-cron-secret") || "";
 
   if (!provided) {
     return { ok: false, response: deny(401, "Missing cron secret") };
