@@ -1022,7 +1022,13 @@ export function LeadDetailPanel({ lead, onClose, facilityName, exclusivity }: Le
                   <div key={note.id} className="group p-4 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
                     <div className="flex justify-between gap-3">
                       <p className="text-sm flex-1">{note.note}</p>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100" onClick={() => deleteNote.mutate(note.id)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+                        onClick={() => deleteNote.mutate(note.id)}
+                        aria-label="Delete note"
+                      >
                         <Trash2 className="h-3.5 w-3.5 text-destructive" />
                       </Button>
                     </div>

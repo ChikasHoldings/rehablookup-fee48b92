@@ -380,12 +380,24 @@ export function ProviderOverviewTab({
                         onClick={() => onPreviewImage(img.url)}
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-1">
-                        <Button size="icon" variant="secondary" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onPreviewImage(img.url); }}>
-                          <ZoomIn className="h-3 w-3" />
+                        <Button
+                          size="icon"
+                          variant="secondary"
+                          className="h-7 w-7"
+                          onClick={(e) => { e.stopPropagation(); onPreviewImage(img.url); }}
+                          aria-label="Preview image"
+                        >
+                          <ZoomIn className="h-3.5 w-3.5" />
                         </Button>
                         {!isImageFlagged(img.url) && (
-                          <Button size="icon" variant="destructive" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onFlagImage(img.url, "gallery"); }}>
-                            <Flag className="h-3 w-3" />
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            className="h-7 w-7"
+                            onClick={(e) => { e.stopPropagation(); onFlagImage(img.url, "gallery"); }}
+                            aria-label="Flag image"
+                          >
+                            <Flag className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>

@@ -42,6 +42,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -1712,9 +1713,17 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
                         <Label className="text-sm font-medium flex items-center gap-2"><Globe className="h-4 w-4 text-primary" />Accept International Patients</Label>
                         <p className="text-xs text-muted-foreground">Enable if you accept patients from outside the US</p>
                       </div>
-                      <button type="button" role="switch" aria-checked={facility.accepts_international_patients || false} onClick={() => updateField("accepts_international_patients", !facility.accepts_international_patients)} className={cn("relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", facility.accepts_international_patients ? "bg-primary" : "bg-muted-foreground/30")}>
-                        <span className={cn("inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform", facility.accepts_international_patients ? "translate-x-6" : "translate-x-1")} />
-                      </button>
+                      {/* Hand-rolled `role="switch"` replaced with the
+                          shared <Switch /> primitive (24×44, accessible).
+                          Behavior is identical: toggles
+                          `accepts_international_patients` via updateField.
+                          Switching to the primitive gives the keyboard +
+                          screen-reader semantics for free. */}
+                      <Switch
+                        checked={facility.accepts_international_patients || false}
+                        onCheckedChange={(checked) => updateField("accepts_international_patients", checked)}
+                        aria-label="Accept International Patients"
+                      />
                     </div>
                     {facility.accepts_international_patients && (
                       <div className="mt-3 p-3 rounded-md bg-primary/5 border border-primary/10"><p className="text-xs text-primary">Your facility will be visible to international clients.</p></div>

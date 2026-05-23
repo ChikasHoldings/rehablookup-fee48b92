@@ -1490,12 +1490,19 @@ const CenterProfile = () => {
                     </Button>
 
                     {showContactDetails && (
-                      <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")} className="block">
-                        <Button variant="outline" size="lg" className="w-full gap-2 h-10 text-xs font-semibold">
+                      // Was <a><Button>...</Button></a> — invalid HTML
+                      // (nested interactive). Use Button's asChild to
+                      // mount the <a> as the root element instead.
+                      <Button asChild variant="outline" size="lg" className="w-full gap-2 h-11 text-xs font-semibold">
+                        <a
+                          href={`tel:${facility.phone}`}
+                          onClick={() => trackInteraction("call")}
+                          aria-label={`Call ${facility.name} at ${formatPhoneNumber(facility.phone)}`}
+                        >
                           <Phone className="h-3.5 w-3.5" />
                           {formatPhoneNumber(facility.phone)}
-                        </Button>
-                      </a>
+                        </a>
+                      </Button>
                     )}
                   </div>
 
@@ -1542,12 +1549,18 @@ const CenterProfile = () => {
                   Get Started
                 </Button>
                 {showContactDetails && (
-                  <a href={`tel:${facility.phone}`} onClick={() => trackInteraction("call")} className="block">
-                    <Button variant="outline" size="lg" className="w-full gap-2 h-10 text-xs font-semibold">
+                  // Same asChild fix as the sidebar Call CTA above —
+                  // avoid <a><Button></Button></a> nested interactive.
+                  <Button asChild variant="outline" size="lg" className="w-full gap-2 h-11 text-xs font-semibold">
+                    <a
+                      href={`tel:${facility.phone}`}
+                      onClick={() => trackInteraction("call")}
+                      aria-label={`Call ${facility.name} at ${formatPhoneNumber(facility.phone)}`}
+                    >
                       <Phone className="h-3.5 w-3.5" />
                       {formatPhoneNumber(facility.phone)}
-                    </Button>
-                  </a>
+                    </a>
+                  </Button>
                 )}
               </div>
             </div>

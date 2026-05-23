@@ -461,7 +461,12 @@ export default function ProviderAnalyticsPage() {
               <Badge variant="secondary" className="gap-1.5 text-xs py-1 px-2.5">
                 <Building2 className="h-3 w-3" />
                 {approvedFacilities.find(f => f.id === selectedFacilityId)?.name || "Facility"}
-                <button onClick={() => setSelectedFacilityId("all")} className="ml-1 hover:text-destructive transition-colors">
+                <button
+                  type="button"
+                  onClick={() => setSelectedFacilityId("all")}
+                  className="ml-1 hover:text-destructive transition-colors"
+                  aria-label="Clear facility filter"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
