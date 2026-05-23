@@ -26,14 +26,11 @@ const heroImage = "/hero-recovery.webp";
 const InternalLinkBlock = lazy(() => import("@/components/seo/InternalLinkBlock").then(m => ({ default: m.InternalLinkBlock })));
 const ProvidersCTA = lazy(() => import("@/components/home/ProvidersCTA").then(m => ({ default: m.ProvidersCTA })));
 const RecoveryJourneyCTA = lazy(() => import("@/components/home/RecoveryJourneyCTA").then(m => ({ default: m.RecoveryJourneyCTA })));
-// CommonQuestionsSection replaced TestimonialsSection on 2026-05-23.
-// The testimonials were 58 stock-portrait, marketing-voice quotes that
-// claimed clinical recovery outcomes — FTC + 42 CFR Part 2 risk and
-// off-brand for a transparency-first directory. The replacement
-// surfaces real seeker questions (cost, speed, confidentiality,
-// insurance) with plain-English answers + links to long-form Resources
-// articles, building trust through substance.
-const CommonQuestionsSection = lazy(() => import("@/components/home/CommonQuestionsSection").then(m => ({ default: m.CommonQuestionsSection })));
+// CommonQuestionsSection (testimonials replacement) was removed from
+// the homepage on 2026-05-23 — the four objections it surfaced are
+// covered by the insurance band, the state + top-facilities grids,
+// and the end-of-page PageFAQ. Component file is kept for now in
+// case it's reused elsewhere.
 const PageFAQ = lazy(() => import("@/components/seo/PageFAQ").then(m => ({ default: m.PageFAQ })));
 const homeFaqsPromise = import("@/data/pageFaqs").then(m => m.homeFaqs);
 import {
@@ -531,19 +528,16 @@ const Index = () => {
           state grid) carries the directory-discovery weight in this
           slot instead. */}
 
-      {/* "Before you reach out" — answers the four objections that
-          actually block a seeker from submitting the inquiry form:
-          insurance coverage, admission speed, affordability, and
-          confidentiality. Each card deep-links to the long-form
-          Resources article that handles the question in depth, so the
-          section also drives content engagement. Sits below the
-          "Find Treatment Near You" SEO grid (swapped 2026-05-23) so it
-          lands closer to the end-of-page conversion CTAs. */}
-      <LazySection fallbackHeight="400px">
-        <Suspense fallback={<div style={{ minHeight: "400px" }} aria-hidden="true" />}>
-          <CommonQuestionsSection />
-        </Suspense>
-      </LazySection>
+      {/* CommonQuestionsSection ("Four questions families ask most")
+          was removed 2026-05-23. The four objections it surfaced
+          (insurance, speed, cost, confidentiality) are already
+          addressed elsewhere on the homepage: insurance has a
+          dedicated band, the new HomepageTopFacilitiesGrid + the
+          state grid give the visitor concrete next steps, and the
+          end-of-page PageFAQ block still answers FAQ-style queries
+          via the homeFaqs data set. Dropping the section tightens
+          the homepage flow and removes a band the team felt was
+          slowing down the scroll-to-CTA path. */}
 
       {/* SEO Internal Links Section */}
       <LazySection fallbackHeight="600px">
