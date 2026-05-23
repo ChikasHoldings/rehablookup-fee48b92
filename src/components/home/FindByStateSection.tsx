@@ -298,7 +298,7 @@ export function FindByStateSection() {
               return (
                 <li
                   key={s.name}
-                  className="snap-start shrink-0 w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px]"
+                  className="snap-start shrink-0 w-[200px] sm:w-[220px] md:w-[240px] lg:w-[260px]"
                 >
                   <Link
                     to={`/rehab-centers/${stateSlug(s.name)}`}
