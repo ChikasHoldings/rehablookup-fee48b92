@@ -64,6 +64,7 @@ import { gaFacilityView, gaFacilityContact } from "@/lib/ga";
 import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection";
 import { FacilityProfileExtras } from "@/components/facility/FacilityProfileExtras";
 import { FacilityPhotoGallery } from "@/components/facility/FacilityPhotoGallery";
+import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
 import { RehabScorePanel } from "@/components/profile/RehabScorePanel";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { buildProfileFAQs } from "@/lib/buildProfileFAQs";
@@ -1590,6 +1591,23 @@ const CenterProfile = () => {
           the duplicate dialog that used to live here was orphaned by
           the gallery refactor (no remaining caller hit setLightboxOpen)
           and removed to avoid shipping dead state + JSX. */}
+
+      {/* End-of-page Featured rotation — OTHER paid Featured facilities
+          in the SAME CITY. Mounted at the bottom (not under hero)
+          because this page is dedicated to one specific facility;
+          surfacing a "Featured near here" strip would compete with
+          the focused profile if placed above the fold. Placed AFTER
+          the profile content (above the passive concierge rescue) so
+          users who scrolled the whole profile see "More Featured
+          facilities in {city}" as a natural next step. Renders nothing
+          when the city bucket has no active Featured subscribers. */}
+      <LandingFeaturedSection
+        placement_type="city"
+        placement_value={facility.city ? facility.city.toLowerCase().replace(/\s+/g, "-") : null}
+        slot_count={6}
+        title={`More Featured Facilities in ${facility.city}`}
+        subtitle="Other verified centers near here, sponsored by their providers."
+      />
 
       {/* Passive concierge rescue — inline, never a popup. Honors discovery-first policy. */}
       <ProfileConciergeRescue

@@ -678,18 +678,14 @@ const ArticleDetail = () => {
         </div>
       </section>
 
-      {/* Featured rotation — paid Featured pool for this article's
-          bucket, mounted directly under the hero. Same visual as the
-          homepage Featured section for cross-site consistency.
-          Renders nothing when blog_articles.featured_placement_bucket
-          is NULL OR when the bucket has no active Featured
-          subscribers. */}
-      <LandingFeaturedSection
-        placement_type="article"
-        placement_value={article.featured_placement_bucket}
-        slot_count={6}
-        title="Featured Treatment Facilities"
-      />
+      {/* Featured rotation lives at the END of the article (after the
+          share bar, before Related Articles) instead of under the
+          hero. Under-the-hero placement broke article reading flow:
+          users hit a CTA strip before they'd read a word, and the
+          mid-article scroll past the strip felt like an ad they had
+          to skip. End-of-article is the natural "you've read this,
+          here's a next step" moment.
+          See the LandingFeaturedSection mount further down. */}
 
       {/* Content */}
       <section className="py-12 md:py-16">
@@ -724,11 +720,24 @@ const ArticleDetail = () => {
                 />
               </div>
 
-              {/* (Featured rotation moved to top of page — see
-                  LandingFeaturedSection mount above, directly under
-                  the hero. Single Featured surface per page keeps
-                  visual treatment consistent with the homepage and
-                  every other landing page in the site.) */}
+              {/* Featured rotation — paid Featured pool for THIS
+                  article's bucket. Mounted here (end of article,
+                  before Related Articles) instead of under the hero
+                  so it doesn't break reading flow on landing. The
+                  reader has invested time in the article and is
+                  primed for a tangible next step; surfacing the
+                  paid Featured pool here converts better than an
+                  above-the-fold strip the user has to scroll past.
+                  Renders nothing when blog_articles.featured_placement_bucket
+                  is NULL OR when the bucket has no active Featured
+                  subscribers. */}
+              <LandingFeaturedSection
+                placement_type="article"
+                placement_value={article.featured_placement_bucket}
+                slot_count={6}
+                title="Featured Treatment Facilities"
+                className="mt-12"
+              />
 
               {/* Enhanced Related Articles with Smart Linking */}
               {smartRelatedArticles && smartRelatedArticles.length > 0 && (
