@@ -380,8 +380,15 @@ const RehabCenters = () => {
       
       {/* Hero — main DIRECTORY hub. Distinct from every other archetype
           by leading with a SEARCH FORM. Smaller footprint than the
-          State page hero per the brief. */}
-      <section className="relative overflow-hidden border-b border-white/5">
+          State page hero per the brief.
+          NOTE: `overflow-hidden` removed because it clipped the
+          SearchForm directory-variant dropdowns (treatment + insurance
+          MultiSelectDropdown + ZIP LocationSuggestionsDropdown) when
+          they extended below the hero's bottom edge. The background
+          image already has `inset-0` + the section has its own
+          rounded-2xl content card, so nothing visual relies on the
+          clip. */}
+      <section className="relative border-b border-white/5">
         <img
           src="https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=1920&q=80"
           alt=""
