@@ -206,60 +206,16 @@ const Locations = () => {
         </div>
       </section>
 
-      {/* Top Cities Section */}
-      <section className="border-b bg-card py-10 md:py-14">
-        <div className="container">
-          <div className="mb-8 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
-              <TrendingUp className="h-4.5 w-4.5 text-accent" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-foreground md:text-2xl">Popular Treatment Cities</h2>
-              <p className="text-sm text-muted-foreground">Top locations with the most comprehensive care options</p>
-            </div>
-          </div>
-          
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-            {topCities.slice(0, 10).map((city, index) => (
-              <Link
-                key={`${city.stateSlug}-${city.slug}`}
-                to={`/rehab-centers/${city.stateSlug}/${city.slug}`}
-                className="group relative flex items-center gap-3 rounded-xl border bg-background p-4 transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:-translate-y-0.5"
-              >
-                {index < 3 && (
-                  <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground shadow-sm">
-                    <Star className="h-3 w-3" />
-                  </div>
-                )}
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  {city.stateAbbr}
-                </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                    {city.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{city.stateName}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {/* Show remaining top cities as compact links */}
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground mr-1">Also popular:</span>
-            {topCities.slice(10, 20).map((city) => (
-              <Link
-                key={`${city.stateSlug}-${city.slug}`}
-                to={`/rehab-centers/${city.stateSlug}/${city.slug}`}
-                className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs text-muted-foreground transition-all hover:border-primary/30 hover:text-primary hover:bg-primary/5"
-              >
-                <MapPin className="h-2.5 w-2.5" />
-                {city.name}, {city.stateAbbr}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Featured Centers — moved here from below the Browse-by-Region
+          block. Surfacing real facility cards earlier on /locations
+          (right after the hero) gives seekers a tangible "look at the
+          centers" entry point before they pick a state/region/city. */}
+      <FeaturedCentersSection
+        title="Featured Treatment Centers"
+        description="Top-rated facilities across the country"
+        limit={8}
+        className="border-b border-border"
+      />
 
       {/* Region Filter + All States Directory */}
       <section className="bg-background py-10 md:py-16">
@@ -435,13 +391,65 @@ const Locations = () => {
         </div>
       </section>
 
-      {/* Featured Centers */}
-      <FeaturedCentersSection 
-        title="Featured Treatment Centers"
-        description="Top-rated facilities across the country"
-        limit={8}
-        className="border-t border-border"
-      />
+      {/* Popular Treatment Cities — moved here from above the
+          Region Filter block. The city tiles work better as a
+          "drill down by city" affordance AFTER the seeker has been
+          shown featured centers + the state directory; surfacing them
+          first felt like a parallel taxonomy that competed with the
+          state browse. */}
+      <section className="border-t bg-card py-10 md:py-14">
+        <div className="container">
+          <div className="mb-8 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10">
+              <TrendingUp className="h-4.5 w-4.5 text-accent" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-foreground md:text-2xl">Popular Treatment Cities</h2>
+              <p className="text-sm text-muted-foreground">Top locations with the most comprehensive care options</p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            {topCities.slice(0, 10).map((city, index) => (
+              <Link
+                key={`${city.stateSlug}-${city.slug}`}
+                to={`/rehab-centers/${city.stateSlug}/${city.slug}`}
+                className="group relative flex items-center gap-3 rounded-xl border bg-background p-4 transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:-translate-y-0.5"
+              >
+                {index < 3 && (
+                  <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground shadow-sm">
+                    <Star className="h-3 w-3" />
+                  </div>
+                )}
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  {city.stateAbbr}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                    {city.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{city.stateName}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Show remaining top cities as compact links */}
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground mr-1">Also popular:</span>
+            {topCities.slice(10, 20).map((city) => (
+              <Link
+                key={`${city.stateSlug}-${city.slug}`}
+                to={`/rehab-centers/${city.stateSlug}/${city.slug}`}
+                className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs text-muted-foreground transition-all hover:border-primary/30 hover:text-primary hover:bg-primary/5"
+              >
+                <MapPin className="h-2.5 w-2.5" />
+                {city.name}, {city.stateAbbr}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* SEO Internal Linking */}
       <InternalLinkingSection
