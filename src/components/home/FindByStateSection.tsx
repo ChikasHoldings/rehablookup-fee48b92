@@ -263,9 +263,30 @@ export function FindByStateSection() {
             aria-hidden
           />
 
+          {/* Card row layout:
+              - Mobile / tablet: horizontal snap-scroll. Cards overflow
+                the viewport; user swipes through them. Edge fades and
+                arrow buttons (above) handle the affordance.
+              - Desktop (lg+): the 5 cards comfortably fit inline at
+                240 px wide each + 16 px gaps = ~1,200 px (within the
+                container max-width). `lg:justify-center` centers them
+                so the strip doesn't read as left-justified with empty
+                space on the right.
+
+              Previously had aggressive negative margins (`-mx-3
+              sm:-mx-4 md:-mx-6 lg:-mx-8 px-3 ...`) to bleed cards to
+              the viewport edge — that was intentional when this
+              section showed all 50 states (mobile users always
+              scrolled, edge-bleed was a swipe cue). With only 5 cards
+              the edge-bleed left a half-clipped card on the far right
+              of desktop viewports and made the desktop layout feel
+              left-anchored. Removed in favor of normal container
+              padding + lg-centering. Mobile users still see the
+              scroll-affordance (cards extend off-screen, arrows + fade
+              cue more content). */}
           <ul
             ref={scrollRef}
-            className="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2 -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 px-3 sm:px-4 md:px-6 lg:px-8"
+            className="flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2 lg:justify-center lg:overflow-x-visible"
             style={{ scrollbarWidth: "none" }}
             aria-label="States with treatment centers — swipe to navigate"
           >
@@ -277,7 +298,7 @@ export function FindByStateSection() {
               return (
                 <li
                   key={s.name}
-                  className="snap-start shrink-0 w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
+                  className="snap-start shrink-0 w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px]"
                 >
                   <Link
                     to={`/rehab-centers/${stateSlug(s.name)}`}
