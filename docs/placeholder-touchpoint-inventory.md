@@ -2,9 +2,17 @@
 
 **Date:** 2026-05-23  
 **Purpose:** Pre-rollout audit of every place the current single
-`src/assets/facility-placeholder.webp` is referenced. Use this list as
-the checklist when swapping in the 6-variant `<FacilityPlaceholder />`
-component (per the rollout plan).
+`src/assets/facility-placeholder.webp` is referenced.
+
+**Status (2026-05-23 16:50 UTC):** **Phase 2 shipped** in commit
+`ddfe7d428` (`feat(placeholders): 18 building variants + deterministic
+per-facility assignment`). The user's actual preview HTML carried
+**18** building variants, not 6 — see
+[`docs/uploads/...PREVIE1.HTM`](../) and
+[`src/assets/facility-placeholders/`](../src/assets/facility-placeholders/).
+This doc is kept as the inventory record; the API spec below has been
+superseded by the simpler function-style API in
+`src/lib/facilityPlaceholder.ts`.
 
 ## TL;DR
 
@@ -167,12 +175,43 @@ distribution will skew toward whichever variant maps to the dominant
 `facility_type` values (residential / outpatient are the most common
 in the directory).
 
-## Next steps (Phase 2 onward — not done here)
+## What actually shipped (Phase 2 — ddfe7d428)
 
-1. Drop the 6 SVGs into `src/assets/placeholders/<variant>.svg` (or
-   wherever the `FacilityPlaceholder` component imports from).
-2. Add `src/components/FacilityPlaceholder.tsx` with the API above.
-3. Apply the per-site edit pattern at the 8 call sites in this list.
-4. Drop the unused `src/assets/facility-placeholder.webp` import +
-   asset in a follow-up commit once the new component has soaked.
-5. No script / edge-function / HTML changes required.
+Instead of the `<FacilityPlaceholder />` React component the inventory
+above sketched, a simpler function-style API landed:
+
+```ts
+import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
+// at each call site:
+<img src={getFacilityPlaceholder(facility)} alt="..." className="..." />
+```
+
+Differences from the original sketch:
+
+- **18 variants, not 6.** The preview HTML the user uploaded was the
+  v3 "18 buildings" iteration. All 18 extracted to
+  `src/assets/facility-placeholders/01-18-*.svg`.
+- **Function not component.** Callers already wrap the placeholder in
+  `<img>` (or `<AvatarImage>`) with their own `className`, loading
+  hints, width/height. Returning a URL string is the least-invasive
+  swap: zero changes to surrounding attributes, no `<AvatarImage>`
+  string-src issue (#4 risk above resolved).
+- **Single SVG asset per variant**, not separate aspect-ratio assets.
+  All 18 use 1600×1200 viewBox + `preserveAspectRatio="xMidYMid slice"`,
+  so the existing CSS `object-cover`/`object-contain` at each call
+  site crops cleanly at 4:3, 16:9, or 1:1 with no extra work.
+- **Hash is FNV-1a 32-bit**, modulo 18. Confirmed distribution within
+  ±14 % of the mean on a 3,803-facility simulation; verified on the
+  first 20 production IDs (13 distinct variants, no consecutive
+  collisions).
+- **Smart-pinning via `variantForFacilityType()` not implemented.**
+  Deferred — pure deterministic-random was sufficient to break the
+  visual repetition that motivated the rollout. The function
+  signature accepts `facility_type` (kept on the loose
+  `FacilityForPlaceholder` interface) so we can light it up later
+  without touching call sites.
+- **`facility-placeholder.webp` retained** in `src/assets/` for now.
+  No live code references it, but leaving it in place hedges against
+  any external link / cached page / unindexed edge function pointing
+  at the file. Safe to delete in a follow-up cleanup once we confirm
+  zero traffic.
