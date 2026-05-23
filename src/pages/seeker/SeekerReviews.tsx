@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import facilityPlaceholder from "@/assets/facility-placeholder.webp";
+import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
 import { Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Star, Edit2, Trash2, Clock, MessageSquare, MapPin, Building2, Search, Reply, ThumbsUp, AlertTriangle, RefreshCw, Filter } from "lucide-react";
@@ -128,8 +128,8 @@ function ReviewCard({
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <img 
-                src={facilityPlaceholder}
+              <img
+                src={getFacilityPlaceholder({ id: review.facility_id })}
                 alt={`${review.facility_name} facility`}
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 loading="lazy"

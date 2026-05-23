@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { pluckNonNull } from "@/lib/nullableRows";
-import facilityPlaceholder from "@/assets/facility-placeholder.webp";
+import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
 import { Link, useSearchParams } from "react-router-dom";
 
 // Keep the localStorage "viewed leads" set bounded so it doesn't grow
@@ -155,7 +155,7 @@ function RequestCard({ request, onClick, isNew }: { request: SubmittedRequest; o
             />
           ) : (
             <img
-              src={facilityPlaceholder}
+              src={getFacilityPlaceholder({ id: request.facility_id })}
               alt={`${request.facility_name} placeholder`}
               className="h-full w-full object-cover"
               loading="lazy"

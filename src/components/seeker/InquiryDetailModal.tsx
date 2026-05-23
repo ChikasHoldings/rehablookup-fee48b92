@@ -29,7 +29,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import facilityPlaceholder from "@/assets/facility-placeholder.webp";
+import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
 
 interface InquiryDetailModalProps {
   open: boolean;
@@ -259,7 +259,7 @@ export function InquiryDetailModal({ open, onOpenChange, leadId }: Omit<InquiryD
                           />
                         ) : (
                           <img
-                            src={facilityPlaceholder}
+                            src={getFacilityPlaceholder(facility)}
                             alt={`${facility.name} placeholder`}
                             className="h-full w-full object-cover"
                           />

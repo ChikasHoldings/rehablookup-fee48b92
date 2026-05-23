@@ -1,4 +1,4 @@
-import facilityPlaceholder from "@/assets/facility-placeholder.webp";
+import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -366,7 +366,7 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
         ) : (
           <>
             <img
-              src={facilityPlaceholder}
+              src={getFacilityPlaceholder(center)}
               alt={`${center.name} treatment facility placeholder image`}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"

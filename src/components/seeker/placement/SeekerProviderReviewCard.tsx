@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import facilityPlaceholder from "@/assets/facility-placeholder.webp";
+import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
 
 // ── Types ──────────────────────────────────────────────
 
@@ -437,7 +437,7 @@ function FacilityCard({
   onSelect: () => void;
   onDismiss: () => void;
 }) {
-  const heroImage = facility.gallery_urls?.[0] || facility.logo_url || facilityPlaceholder;
+  const heroImage = facility.gallery_urls?.[0] || facility.logo_url || getFacilityPlaceholder(facility);
   const typeLabel = FACILITY_TYPE_LABELS[facility.facility_type] || facility.facility_type;
   const shortDescription = facility.description
     ? facility.description.length > 160

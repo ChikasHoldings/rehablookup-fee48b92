@@ -1,6 +1,6 @@
 import { useParams, Link, useLocation, useNavigate, Navigate } from "react-router-dom";
 import CenterNotFound from "@/pages/CenterNotFound";
-import facilityPlaceholder from "@/assets/facility-placeholder.webp";
+import { getFacilityPlaceholder } from "@/lib/facilityPlaceholder";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
 import { StickyMobileCallBar } from "@/components/profile/StickyMobileCallBar";
@@ -856,8 +856,8 @@ const CenterProfile = () => {
                   fetchPriority="high"
                 />
               ) : (
-                <img 
-                  src={facilityPlaceholder} 
+                <img
+                  src={getFacilityPlaceholder(facility)}
                   alt={`${facility.name} facility`}
                   className="w-full h-full object-cover"
                   width={800}
