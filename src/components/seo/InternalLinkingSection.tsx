@@ -68,15 +68,17 @@ export const topStateLinks: LinkItem[] = [
   { title: "Colorado Rehab", href: "/rehab-centers/colorado", icon: MapPin },
 ];
 
+// All hrefs below point directly at slugs that exist in blog_articles.
+// Previously these relied on App.tsx Navigate-redirect shims (which were
+// occasionally rendering as 404s); the direct slugs eliminate the
+// extra hop and the failure mode.
 export const resourceLinks: LinkItem[] = [
-  { title: "Types of Treatment", href: "/resources/types-of-addiction-treatment", icon: BookOpen },
-  { title: "Choosing a Rehab", href: "/resources/choosing-rehab-center", icon: BookOpen },
-  // Phase AD: canonical published article (insurance-coverage-guide
-  // didn't exist; legacy redirect handles other in-flight references).
+  { title: "Treatment Types", href: "/resources/category/treatment", icon: BookOpen },
+  { title: "Choosing a Rehab", href: "/resources/how-to-find-good-rehab", icon: BookOpen },
   { title: "Insurance Guide", href: "/resources/insurance-appeal-rehab-denial", icon: BookOpen },
-  { title: "Dual Diagnosis Guide", href: "/resources/understanding-dual-diagnosis", icon: Brain },
-  { title: "What to Expect", href: "/resources/first-week-treatment", icon: BookOpen },
-  { title: "Supporting a Loved One", href: "/resources/supporting-loved-one", icon: Heart },
+  { title: "Dual Diagnosis Guide", href: "/resources/dual-diagnosis-explained", icon: Brain },
+  { title: "What to Expect", href: "/resources/what-happens-after-detox", icon: BookOpen },
+  { title: "Supporting a Loved One", href: "/resources/how-to-help-loved-one", icon: Heart },
 ];
 
 interface InternalLinkingSectionProps {

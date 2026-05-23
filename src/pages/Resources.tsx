@@ -463,14 +463,14 @@ export default function Resources() {
               links={[
                 { title: "Detox Timeline Guide", href: "/resources/detox-timeline" },
                 { title: "Alcohol Withdrawal Guide", href: "/resources/alcohol-withdrawal-guide" },
-                { title: "What to Expect in Detox", href: "/resources/what-to-expect-in-detox" },
+                { title: "Drug Withdrawal Symptoms", href: "/resources/drug-withdrawal-symptoms-timeline" },
               ]}
             />
             <TopicLinkCard
               title="Treatment Types"
               links={[
-                { title: "Inpatient vs Outpatient", href: "/resources/inpatient-vs-outpatient" },
-                { title: "PHP vs IOP Programs", href: "/resources/php-vs-iop" },
+                { title: "Inpatient vs Outpatient", href: "/resources/outpatient-vs-inpatient" },
+                { title: "PHP vs IOP Programs", href: "/resources/php-vs-iop-vs-outpatient" },
                 { title: "MAT Treatment Guide", href: "/resources/medication-assisted-treatment-guide" },
               ]}
             />
@@ -478,16 +478,16 @@ export default function Resources() {
               title="Getting Help"
               links={[
                 { title: "How to Help a Loved One", href: "/resources/how-to-help-loved-one" },
-                { title: "Intervention Guide", href: "/resources/intervention-guide" },
-                { title: "Questions to Ask Rehab", href: "/resources/questions-to-ask-rehab" },
+                { title: "Intervention Guide", href: "/resources/how-to-stage-an-intervention" },
+                { title: "Questions to Ask Rehab", href: "/resources/questions-to-ask-before-rehab" },
               ]}
             />
             <TopicLinkCard
               title="Paying for Treatment"
               links={[
-                { title: "Insurance Coverage Guide", href: "/resources/insurance-coverage-guide" },
-                { title: "Paying for Rehab", href: "/resources/paying-for-rehab" },
-                { title: "Free Rehab Options", href: "/resources/free-rehab-options" },
+                { title: "Insurance Appeal Guide", href: "/resources/insurance-appeal-rehab-denial" },
+                { title: "Cost of Rehab Per Day", href: "/resources/how-much-does-rehab-cost-per-day" },
+                { title: "Paying Without Insurance", href: "/resources/how-to-pay-for-rehab-without-insurance" },
               ]}
             />
           </div>

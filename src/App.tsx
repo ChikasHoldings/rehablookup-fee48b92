@@ -1297,6 +1297,15 @@ const AppInner = () => {
             <Route path="/resources/types-of-addiction-treatment" element={<Navigate to="/resources/category/treatment" replace />} />
             <Route path="/resources/understanding-dual-diagnosis" element={<Navigate to="/resources/dual-diagnosis-explained" replace />} />
             <Route path="/resources/what-to-expect-in-detox" element={<Navigate to="/resources/detox-timeline" replace />} />
+            {/* Phase AF: two more legacy /resources/<slug> URLs that
+                were only referenced from inside published article
+                content (embedded [[slug|label]] wiki links). The
+                migration 20260721000000_repair_broken_article_wiki_links
+                rewrote the embedded refs, but external sites / Google
+                may still hold the old URLs. Redirect to the same
+                canonical targets the migration used. */}
+            <Route path="/resources/family-support-guide" element={<Navigate to="/resources/how-to-support-someone-in-recovery" replace />} />
+            <Route path="/resources/non-12-step-alternatives" element={<Navigate to="/resources/rehab-vs-aa-na" replace />} />
             <Route path="/resources/:id" element={<PublicRouteGuard><ArticleDetail /></PublicRouteGuard>} />
             <Route path="/authors" element={<PublicRouteGuard><Authors /></PublicRouteGuard>} />
             <Route path="/authors/:slug" element={<PublicRouteGuard><AuthorProfile /></PublicRouteGuard>} />
