@@ -3,6 +3,7 @@ import CenterNotFound from "@/pages/CenterNotFound";
 import facilityPlaceholder from "@/assets/facility-placeholder.webp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
+import { StickyMobileCallBar } from "@/components/profile/StickyMobileCallBar";
 import { SEO, generateLocalBusinessSchema } from "@/components/SEO";
 import { normalizeSlug, resolveFacilitySlug } from "@/lib/slugUtils";
 import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
@@ -791,7 +792,7 @@ const CenterProfile = () => {
       />
 
       {/* Main Content */}
-      <div className="bg-gradient-to-b from-muted/40 via-background to-background min-h-screen pb-8">
+      <div className="bg-gradient-to-b from-muted/40 via-background to-background min-h-screen pb-24 md:pb-8">
         <div className="container max-w-7xl px-4 py-6 md:px-6 md:py-10">
           {(() => {
             const stateSlug = facility.state.toLowerCase().replace(/\s+/g, "-");
@@ -1755,6 +1756,26 @@ const CenterProfile = () => {
         imageUrl={reportImageUrl}
         imageType={reportImageType}
       />
+
+      {/* Mobile sticky call CTA — Yelp/Healthgrades pattern. Keeps the
+          primary conversion action one tap away through the full scroll.
+          Hidden at md: where the in-page CTA stays in viewport. Uses
+          the same phone-selection rule as the in-page Call button
+          (verified_phone when has_facility_verified_contact, else
+          public phone). */}
+      {(() => {
+        const callPhone =
+          facility.has_facility_verified_contact && facility.verified_phone
+            ? facility.verified_phone
+            : facility.phone;
+        return (
+          <StickyMobileCallBar
+            facilityName={facility.name}
+            phone={callPhone}
+            onCallClick={() => trackInteraction("call")}
+          />
+        );
+      })()}
     </Layout>
   );
 };

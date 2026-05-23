@@ -275,7 +275,7 @@ const Index = () => {
           height is unchanged, only the content is denser. */}
       <section className="relative bg-primary border-y border-primary-foreground/10">
         <div className="container py-2 md:py-2.5 px-4 md:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-8 lg:gap-x-14">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 md:flex md:items-center md:justify-center md:gap-x-8 md:gap-y-0 lg:gap-x-14">
             <div ref={facilitiesCount.ref as React.RefObject<HTMLDivElement>} className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-accent shrink-0" aria-hidden />
               <span className="text-sm md:text-base text-primary-foreground/90">
