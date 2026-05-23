@@ -62,8 +62,10 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
       <SheetOverlay />
       <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
         {children}
-        <SheetPrimitive.Close className="absolute right-3.5 top-3.5 z-[60] inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 transition-all duration-150 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:pointer-events-none">
-          <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+        {/* Close affordance: bumped from h-6 w-6 to h-9 w-9. Mirrors
+            the change in src/components/ui/dialog.tsx — see comment there. */}
+        <SheetPrimitive.Close className="absolute right-3 top-3 z-[60] inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:pointer-events-none">
+          <X className="h-4 w-4" strokeWidth={2.5} />
           <span className="sr-only">Close</span>
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>

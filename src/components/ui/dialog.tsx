@@ -53,8 +53,12 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-3.5 top-3.5 z-[60] inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 transition-all duration-150 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:pointer-events-none">
-        <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+      {/* Close affordance: bumped from h-6 w-6 (24px) to h-9 w-9 (36px)
+          so it's actually hittable with a thumb on phones. Rest color
+          also bumped from /60 → full muted-foreground so the icon is
+          visible at rest; hover settles to bg-muted + text-foreground. */}
+      <DialogPrimitive.Close className="absolute right-3 top-3 z-[60] inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:pointer-events-none">
+        <X className="h-4 w-4" strokeWidth={2.5} />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
