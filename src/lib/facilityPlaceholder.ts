@@ -33,10 +33,42 @@ import coastal from "@/assets/facility-placeholders/18-coastal.svg";
  * directory feel thin. With 18 variants the gallery now reads as a
  * diverse network even before any provider uploads photos.
  *
+ * USAGE CONTRACT (load-bearing):
+ *
+ *   This function returns a FALLBACK image. Only call it when the
+ *   facility has no real image to show. Never use it as a default
+ *   for `<img src={getFacilityPlaceholder(f)} />` unconditionally —
+ *   that would mask any real uploads the provider has made.
+ *
+ *   Idiomatic patterns (all eight current call sites follow one of
+ *   these — keep new sites consistent):
+ *
+ *     // 1. Branch on whether a real image exists.
+ *     {hasRealImage ? (
+ *       <img src={realImageUrl} ... />
+ *     ) : (
+ *       <img src={getFacilityPlaceholder(facility)} ... />
+ *     )}
+ *
+ *     // 2. Short-circuit chain with placeholder last.
+ *     const hero = facility.gallery_urls?.[0]
+ *               || facility.logo_url
+ *               || getFacilityPlaceholder(facility);
+ *
+ *   The CI guard `scripts/check-facility-placeholder.mjs` enforces
+ *   the related contracts at build time (no legacy webp imports;
+ *   no INSERT writes a placeholder URL into gallery_urls / logo_url).
+ *
  * Assignment is DETERMINISTIC per facility ID — same facility always
  * gets the same illustration so the seeker doesn't see the building
  * change between page loads, but different facilities are spread
  * across all 18 variants via a stable hash.
+ *
+ * Newly-listed facilities (provider onboarding + SAMHSA bulk imports)
+ * get a placeholder automatically without any code change at the
+ * insertion path: the DB defaults `logo_url = NULL` and
+ * `gallery_urls = '{}'::text[]`, so cards naturally fall through to
+ * this resolver when rendering.
  */
 
 const VARIANTS = [
