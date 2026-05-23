@@ -54,7 +54,18 @@ import { PasswordStrengthIndicator, calculatePasswordStrength } from "@/componen
 import { PLAN_LIMITS, resolvePlan } from "@/lib/planLimits";
 import { UpgradeDialog } from "@/components/provider/onboarding/UpgradeDialog";
 
-// Clear all provider-related caches from any previous session
+// Clear all provider-related caches from any previous session.
+//
+// Both prefixes ARE live (a pre-launch audit briefly flagged them as
+// dead code — they are not). Sources:
+//   - "provider-facilities-cache-<userId>"  written by useProviderFacilities
+//     and by ProviderSignup itself (line ~870, end-of-publish warm-fill).
+//   - "provider-data-<facilityId|default>"  written by useProviderData
+//     and read on first paint to seed the provider portal before the
+//     network round-trip lands.
+// Wiping both at the start of a NEW signup is correct — the old
+// userId's snapshot is irrelevant to whoever is signing up now, and
+// leaving it in place pollutes the seed for the next first-paint.
 const clearProviderCaches = () => {
   try {
     if (import.meta.env.DEV) console.log("[ProviderSignup] Clearing provider caches...");

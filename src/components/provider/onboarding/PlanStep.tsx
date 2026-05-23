@@ -69,7 +69,13 @@ interface PlanStepProps {
 export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { advance } = useProviderOnboardingState();
+  // Pull stateRow so we can tag the completion analytics with the
+  // mode the user took (list vs claim). Without this, the funnel
+  // attribution for "Pro signup" loses the upstream branch every
+  // event ships with — analytics shows mode=null for 100% of Pro
+  // completions, breaking claim-vs-list reporting.
+  const { advance, data: stateRow } = useProviderOnboardingState();
+  const onboardingMode = stateRow?.mode ?? null;
   const [busy, setBusy] = useState<"free" | "pro" | null>(null);
   const [confirmingPro, setConfirmingPro] = useState(false);
   const confirmPollRef = useRef<number | null>(null);
@@ -185,7 +191,7 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
         }
         trackEvent("provider_onboarding_step_submit", {
           step_name: "plan",
-          mode: null,
+          mode: onboardingMode,
           plan: "pro",
         });
         // Fire the Pro-tier welcome email exactly once on Stripe
@@ -261,7 +267,7 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
       }
       trackEvent("provider_onboarding_step_submit", {
         step_name: "plan",
-        mode: null,
+        mode: onboardingMode,
         plan: "free",
       });
       // Fire the Free-tier welcome email exactly once on completion.

@@ -93,7 +93,16 @@ export function VerifyEmailStep({ onAdvance }: { onAdvance: () => void }) {
       }
       if (data?.error) {
         if (data.errorCode === "RATE_LIMITED") {
-          setError("Too many codes requested. Please wait a few minutes before trying again.");
+          // Drive the resend button's existing countdown UI off this
+          // rate-limit hit instead of leaving the user with a static
+          // "wait a few minutes" string and no clock. The edge fn's
+          // limit is 3 sends per ~10 min, so a 120s pause is enough
+          // for one re-send to clear the budget without making the
+          // user wait the full window. The cooldown effect at the
+          // top of this component flips the button into a live
+          // "Resend code in Ns" label automatically.
+          setCooldown(120);
+          setError("Too many codes requested. Try again when the countdown ends.");
         } else if (data.errorCode === "EMAIL_BLOCKED" || data.errorCode === "EMAIL_SUPPRESSED") {
           // Phase R added EMAIL_SUPPRESSED for hard-bounce / unsubscribe
           // hits; treat the same as EMAIL_BLOCKED for the user.

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, AlertTriangle } from "lucide-react";
@@ -37,12 +37,16 @@ interface FacilityName {
  *     render an explainer + "Pick a different facility" CTA that
  *     advances state back to find_or_list rather than dead-ending in
  *     a spinner.
- *   - mode is null (state row missing the mode): render a similar
- *     "back to find_or_list" CTA.
+ *   - mode is null (state row missing the mode): render a recovery
+ *     panel with both a back-nav button AND an explicit reset that
+ *     clears the row so canReach() can't bounce the user back. The
+ *     reset has a hard-reload fallback so a write failure still
+ *     escapes.
  */
 export function BuildStep({ onAdvance: _onAdvance, onBack }: BuildStepProps) {
   const navigate = useNavigate();
   const { data: stateRow, advance } = useProviderOnboardingState();
+  const [resetting, setResetting] = useState(false);
 
   const selectedFacilityId = stateRow?.selected_facility_id ?? null;
   const {
@@ -60,7 +64,11 @@ export function BuildStep({ onAdvance: _onAdvance, onBack }: BuildStepProps) {
         .maybeSingle();
       return (data as unknown as FacilityName) ?? null;
     },
-    staleTime: Infinity,
+    // Capped (was Infinity) so admin-side edits to the facility's
+    // name/slug/status that happen mid-onboarding are picked up next
+    // time this step mounts. Five minutes is long enough that the
+    // common build → back → build cycle re-uses the cache.
+    staleTime: 5 * 60 * 1000,
   });
 
   const mode = stateRow?.mode ?? null;
@@ -82,9 +90,38 @@ export function BuildStep({ onAdvance: _onAdvance, onBack }: BuildStepProps) {
     navigate("/provider/onboarding?step=find_or_list", { replace: true });
   }, [advance, navigate]);
 
+  // Explicit reset from the mode-missing recovery panel. Unsticks the
+  // user when the row's server state somehow ended up at 'build'
+  // without a matching mode/facility — without this, the canReach
+  // gate could keep bouncing them back here after Back. Hard reload
+  // fallback if the advance() write itself fails (RLS regression,
+  // session expired, etc.).
+  const handleHardReset = useCallback(async () => {
+    if (resetting) return;
+    setResetting(true);
+    try {
+      await advance({
+        mode: null,
+        selected_facility_id: null,
+        initial_facility_name: null,
+        draft_facility_data: {},
+        current_step: "find_or_list",
+      } as Partial<ProviderOnboardingStateRow>);
+      navigate("/provider/onboarding?step=find_or_list", { replace: true });
+    } catch (e) {
+      console.error("[BuildStep] mode-missing reset failed", e);
+      if (typeof window !== "undefined") {
+        window.location.href = "/provider/onboarding?step=find_or_list";
+      }
+    }
+  }, [advance, navigate, resetting]);
+
   // Mode missing — defensive fallback. FindOrListStep should always
   // set this before advancing to 'build'; if it's null here, the
-  // user got into an inconsistent state. Offer a one-click recovery.
+  // user got into an inconsistent state. Two recovery paths:
+  // (1) onBack just navigates back (lighter touch, preserves draft).
+  // (2) handleHardReset clears the row entirely (heavier, escapes
+  //     even a canReach bounce-loop).
   if (mode === null) {
     return (
       <div className="space-y-4">
@@ -95,13 +132,25 @@ export function BuildStep({ onAdvance: _onAdvance, onBack }: BuildStepProps) {
               We don't have a facility selected yet.
             </p>
             <p className="text-xs text-amber-700 mt-1">
-              Head back to the previous step to pick or list one.
+              Go back to pick or list one — or reset to start over fresh.
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={onBack}>
-          Back to find or list
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={onBack} disabled={resetting}>
+            Back to find or list
+          </Button>
+          <Button variant="ghost" onClick={() => void handleHardReset()} disabled={resetting}>
+            {resetting ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                Resetting…
+              </span>
+            ) : (
+              "Reset and start over"
+            )}
+          </Button>
+        </div>
       </div>
     );
   }

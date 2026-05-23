@@ -126,7 +126,14 @@ function useSeedFacility(facilityId: string | null) {
       }
       return (data as unknown as FacilityRow) ?? null;
     },
-    staleTime: Infinity,
+    // Capped at 5 minutes — long enough that returning to this step
+    // mid-onboarding re-uses the same fetch, short enough that if the
+    // selected facility's name/slug changed (admin edit) or it was
+    // deprecated (status flip), the next mount picks up the fresh
+    // copy instead of rendering a stale label that conflicts with
+    // what the user sees on the live profile. Previously Infinity,
+    // which masked deletes / renames until a hard reload.
+    staleTime: 5 * 60 * 1000,
   });
 }
 
