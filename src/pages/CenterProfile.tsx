@@ -955,7 +955,11 @@ const CenterProfile = () => {
                           <TooltipTrigger asChild>
                             <Badge
                               variant="secondary"
-                              className="gap-1 cursor-help bg-white/15 text-white border-white/25 backdrop-blur-sm hover:bg-white/25"
+                              // Hover bg bumped from white/25 → white/35 so
+                              // the white "Unclaimed listing" text has visible
+                              // settle on hover instead of disappearing into a
+                              // near-same-shade white wash over the navy hero.
+                              className="gap-1 cursor-help bg-white/15 text-white border-white/25 backdrop-blur-sm hover:bg-white/35"
                             >
                               <Info className="h-3 w-3" aria-hidden />
                               Unclaimed listing

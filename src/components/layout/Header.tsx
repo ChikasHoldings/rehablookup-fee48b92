@@ -447,11 +447,17 @@ export function Header({
                 </PrefetchLink>
               ) : (
                 <>
+                  {/* Header CTAs bumped from h-8 (32px) to default size
+                      (h-11 on mobile via primitive). "List Your Facility"
+                      and "Sign In" are primary global-nav CTAs — sub-tap-
+                      target sizing was hostile on phones. The PrefetchLink
+                      wrapping pattern is preserved so route-prefetch still
+                      runs on hover. */}
                   <PrefetchLink to="/provider/onboarding" className="hidden lg:block">
-                    <Button size="sm" variant="outline" className="h-8 text-sm">List Your Facility</Button>
+                    <Button size="sm" variant="outline">List Your Facility</Button>
                   </PrefetchLink>
                   <PrefetchLink to="/login">
-                    <Button size="sm" className="h-8 text-sm gap-1.5">
+                    <Button size="sm" className="gap-1.5">
                       <User className="h-4 w-4" />
                       Sign In
                     </Button>

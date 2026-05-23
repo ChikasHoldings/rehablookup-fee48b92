@@ -149,18 +149,25 @@ export function TreatmentStateHero({
                   By city:
                 </span>
                 {cities.slice(0, 12).map((city) => (
+                  // Hover bg bumped from white/20 → white/30 so the white
+                  // city-chip text doesn't fade into the hover background
+                  // (10% bg vs 90% text was a same-shade collision).
                   <Link
                     key={city.slug}
                     to={`${treatmentHubHref}/${stateSlug}/${city.slug}`}
-                    className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
+                    className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 ring-1 ring-white/15 transition hover:bg-white/30 hover:text-white"
                   >
                     {city.name}
                   </Link>
                 ))}
                 {cities.length > 12 && (
+                  // Same bump for the "+N more" chip. Was white/70 text on
+                  // white/15 hover → near-invisible. Now white/80 text on
+                  // white/25 hover, both bumped for the same-color collision
+                  // fix.
                   <Link
                     to={`/rehab-centers/${stateSlug}`}
-                    className="shrink-0 rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-white/70 ring-1 ring-white/10 transition hover:bg-white/15 hover:text-white inline-flex items-center gap-1"
+                    className="shrink-0 rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-white/80 ring-1 ring-white/10 transition hover:bg-white/25 hover:text-white inline-flex items-center gap-1"
                   >
                     +{cities.length - 12} more <ArrowRight className="h-3 w-3" />
                   </Link>

@@ -124,7 +124,7 @@ export function ResourcesMegaMenu({ onNavigate }: MegaMenuProps) {
                 Free confidential treatment matching.
               </p>
               <Link to="/concierge" onClick={onNavigate}>
-                <Button size="sm" className="w-full h-8 bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-semibold gap-1.5">
+                <Button size="sm" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-semibold gap-1.5">
                   Get Matched <ArrowRight className="h-3 w-3" />
                 </Button>
               </Link>

@@ -306,7 +306,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden h-9 w-9 text-white hover:text-white hover:bg-white/15 rounded-lg transition-all duration-200 active:scale-95"
+            className="lg:hidden text-white hover:text-white hover:bg-white/15 rounded-lg transition-all duration-200 active:scale-95"
             onClick={() => navigate("/account/search")}
             aria-label="Search"
           >
@@ -318,7 +318,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 text-white hover:text-white hover:bg-white/15 rounded-lg transition-all duration-200 active:scale-95"
+              className="text-white hover:text-white hover:bg-white/15 rounded-lg transition-all duration-200 active:scale-95"
               aria-label="Saved"
               onClick={() => navigate("/account/saved")}
             >
@@ -337,7 +337,7 @@ export function SeekerHeader({ userName, avatarUrl, onLogout, isAuthenticated = 
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="relative h-9 w-9 text-white hover:text-white hover:bg-white/15 rounded-lg transition-all duration-200 active:scale-95"
+                  className="relative text-white hover:text-white hover:bg-white/15 rounded-lg transition-all duration-200 active:scale-95"
                   aria-label={
                     unreadCount > 0
                       ? `Notifications, ${unreadCount} unread`

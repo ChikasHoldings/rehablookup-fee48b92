@@ -126,7 +126,7 @@ export function InternationalMegaMenu({ onNavigate }: MegaMenuProps) {
                   Our advisors match international seekers with US programs
                   that handle travel and admissions directly.
                 </p>
-                <Button size="sm" className="w-full h-8 bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-semibold gap-1.5">
+                <Button size="sm" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-semibold gap-1.5">
                   Start Free Intake <ArrowRight className="h-3 w-3" />
                 </Button>
               </div>

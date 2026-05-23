@@ -325,7 +325,7 @@ const CityPage = () => {
                 <Link
                   key={chip.label}
                   to={chip.href}
-                  className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
+                  className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 ring-1 ring-white/15 transition hover:bg-white/30 hover:text-white"
                 >
                   {chip.label}
                 </Link>

@@ -78,7 +78,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
           />
           <button
             type="submit"
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-5 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold hover:bg-accent/90 transition-colors shadow-sm"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-10 sm:h-9 px-5 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold hover:bg-accent/90 transition-colors shadow-sm"
           >
             Search
           </button>

@@ -167,23 +167,27 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
         {/* Right - Actions */}
         <div className="flex items-center gap-0.5 sm:gap-1 md:gap-1.5 shrink-0 min-w-0">
 
-          {/* Mobile Search Toggle */}
+          {/* Mobile Search Toggle. Size now inherited from primitive
+              (h-11 w-11 on mobile, h-10 w-10 desktop) — was h-9 w-9 (36px)
+              below tap-target. Visual h/w overrides removed. */}
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden h-9 w-9 sm:h-10 sm:w-10 text-white hover:text-white hover:bg-white/15 transition-all duration-200 hover:scale-105 active:scale-95"
+            className="lg:hidden text-white hover:text-white hover:bg-white/15 transition-all duration-200 hover:scale-105 active:scale-95"
             onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+            aria-label={mobileSearchOpen ? "Close search" : "Open search"}
           >
             {mobileSearchOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Search className="h-4 w-4 sm:h-5 sm:w-5" />}
           </Button>
 
-          {/* Notifications */}
+          {/* Notifications — size also inherited from primitive. */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
-                className="relative h-9 w-9 sm:h-10 sm:w-10 text-white hover:text-white hover:bg-white/15 transition-all duration-200 hover:scale-105 active:scale-95"
+                className="relative text-white hover:text-white hover:bg-white/15 transition-all duration-200 hover:scale-105 active:scale-95"
+                aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
               >
                 <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                 {unreadCount > 0 && (
@@ -262,7 +266,7 @@ export function ProviderHeader({ facilityName, facilityId, facilitySlug, facilit
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="gap-1.5 sm:gap-2 text-white hover:text-white hover:bg-white/15 h-9 sm:h-10 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                className="gap-1.5 sm:gap-2 text-white hover:text-white hover:bg-white/15 h-10 sm:h-10 pl-1.5 sm:pl-2 pr-2 sm:pr-3 rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-white/30 border border-white/30 flex items-center justify-center text-xs sm:text-sm font-semibold text-white overflow-hidden">
                   {selectedFacility?.logo_url ? (
