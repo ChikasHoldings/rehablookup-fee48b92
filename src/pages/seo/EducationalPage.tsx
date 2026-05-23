@@ -5,6 +5,7 @@ import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { whatIsPages, withdrawalSignsPages, type EducationalPageConfig } from "@/data/seoEducationalConfig";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 const allPages: EducationalPageConfig[] = [...whatIsPages, ...withdrawalSignsPages];
 

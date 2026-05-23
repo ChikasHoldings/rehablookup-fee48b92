@@ -7,6 +7,7 @@ import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 export interface CoOccurringConfig {
   slug: string;

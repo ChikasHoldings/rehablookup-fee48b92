@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { InlineNotFound } from "@/components/InlineNotFound";
 import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { seekerGuidePages } from "@/data/seoSeekerGuidesConfig";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 export default function SeekerGuidePage() {
   const location = useLocation();

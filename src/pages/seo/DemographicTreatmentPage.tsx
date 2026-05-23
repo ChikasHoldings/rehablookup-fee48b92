@@ -7,6 +7,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { demographicPages } from "@/data/seoDemographicConfig";
 import { topCities, seoTreatmentTypes, getCityTreatmentSlug } from "@/data/seoPageConfig";
 import { validatePage } from "@/utils/seoPageValidator";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 export default function DemographicTreatmentPage() {
   const location = useLocation();

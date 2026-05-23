@@ -7,6 +7,7 @@ import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { statesData } from "@/data/locationSeoData";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 interface ExpandedHubConfig {
   slug: string;

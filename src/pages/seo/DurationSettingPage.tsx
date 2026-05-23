@@ -6,6 +6,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { statesData } from "@/data/locationSeoData";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 interface DurationConfig {
   slug: string;

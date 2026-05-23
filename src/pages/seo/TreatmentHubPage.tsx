@@ -5,6 +5,7 @@ import { SEOLandingTemplate } from "@/components/seo/SEOLandingTemplate";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
 import { treatmentHubPages, topCities, seoTreatmentTypes, getCityTreatmentSlug } from "@/data/seoPageConfig";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 export default function TreatmentHubPage() {
   const location = useLocation();

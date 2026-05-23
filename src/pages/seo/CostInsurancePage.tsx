@@ -11,6 +11,7 @@ import {
   matchesTreatmentFilter,
   asSearchableFacility,
 } from "@/lib/searchFilters";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 export default function CostInsurancePage() {
   const location = useLocation();

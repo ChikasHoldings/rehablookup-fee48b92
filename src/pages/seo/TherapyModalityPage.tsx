@@ -6,6 +6,7 @@ import { treatmentCenters } from "@/data/treatmentCenters";
 import { SmartInternalLinks } from "@/components/seo/SmartInternalLinks";
 import { shouldEmitFAQSchema } from "@/utils/seoPageValidator";
 import { NotFoundInPlace } from "@/components/seo/NotFoundInPlace";
+import { TOPIC_HERO_IMAGES } from "@/data/locationImages";
 
 interface ModalityConfig {
   slug: string;
