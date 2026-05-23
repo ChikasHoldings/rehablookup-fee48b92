@@ -25,9 +25,15 @@ const heroImage = "/hero-recovery.webp";
 const InternalLinkBlock = lazy(() => import("@/components/seo/InternalLinkBlock").then(m => ({ default: m.InternalLinkBlock })));
 const ProvidersCTA = lazy(() => import("@/components/home/ProvidersCTA").then(m => ({ default: m.ProvidersCTA })));
 const RecoveryJourneyCTA = lazy(() => import("@/components/home/RecoveryJourneyCTA").then(m => ({ default: m.RecoveryJourneyCTA })));
-const TestimonialsSection = lazy(() => import("@/components/testimonials/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
+// CommonQuestionsSection replaced TestimonialsSection on 2026-05-23.
+// The testimonials were 58 stock-portrait, marketing-voice quotes that
+// claimed clinical recovery outcomes — FTC + 42 CFR Part 2 risk and
+// off-brand for a transparency-first directory. The replacement
+// surfaces real seeker questions (cost, speed, confidentiality,
+// insurance) with plain-English answers + links to long-form Resources
+// articles, building trust through substance.
+const CommonQuestionsSection = lazy(() => import("@/components/home/CommonQuestionsSection").then(m => ({ default: m.CommonQuestionsSection })));
 const PageFAQ = lazy(() => import("@/components/seo/PageFAQ").then(m => ({ default: m.PageFAQ })));
-const seekerTestimonialsPromise = import("@/data/testimonials").then(m => m.seekerTestimonials);
 const homeFaqsPromise = import("@/data/pageFaqs").then(m => m.homeFaqs);
 import {
   ArrowRight,
@@ -112,7 +118,6 @@ const Index = () => {
   const newCtaEnabled = useNewCtaSystem();
 
   // Lazy-loaded data for below-fold sections
-  const [seekerTestimonials, setSeekerTestimonials] = useState<any[]>([]);
   const [homeFaqs, setHomeFaqs] = useState<any[]>([]);
 
   // Live directory stats — single source of truth shared with TrustRibbon.
@@ -136,7 +141,6 @@ const Index = () => {
       : homepageGeo.regionCode || "";
 
   useEffect(() => {
-    seekerTestimonialsPromise.then(setSeekerTestimonials);
     homeFaqsPromise.then(setHomeFaqs);
   }, []);
 
@@ -408,9 +412,12 @@ const Index = () => {
           FindByStateSection (Centers / States / Families / Support). */}
       <FindByStateSection />
 
-      {/* Insurance Coverage Section — moved here from above per the
-          directory-refocus pass so seekers see the verification ramp
-          right before reading testimonials. */}
+      {/* Insurance Coverage Section — sits between the state-strip and
+          the Common-Questions section. Verification-ramp (carrier
+          logos) leads directly into the "Will my insurance cover this?"
+          card below, so the page flows from "you have options" →
+          "your insurance probably works" → "here are the four real
+          questions families ask first." */}
       <section className="py-10 md:py-12 lg:py-16 bg-gradient-to-b from-muted/20 to-muted/30">
         <div className="container px-4 md:px-6 lg:px-8">
           <div className="rounded-2xl border border-border bg-card p-5 md:p-6 lg:p-10 shadow-sm">
@@ -496,13 +503,15 @@ const Index = () => {
         </div>
       </section>
 
+      {/* "Before you reach out" — replaces the prior TestimonialsSection.
+          Answers the four objections that actually block a seeker from
+          submitting the inquiry form: insurance coverage, admission
+          speed, affordability, and confidentiality. Each card deep-links
+          to the long-form Resources article that handles the question
+          in depth, so the section also drives content engagement. */}
       <LazySection fallbackHeight="400px">
         <Suspense fallback={<div style={{ minHeight: "400px" }} aria-hidden="true" />}>
-          <TestimonialsSection
-            testimonials={seekerTestimonials}
-            title="Real Stories from Families We've Helped"
-            subtitle="Hear from people who found the right treatment through RehabLookup"
-          />
+          <CommonQuestionsSection />
         </Suspense>
       </LazySection>
 
