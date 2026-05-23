@@ -237,7 +237,7 @@ export function FeaturedCentersSection({
                 </div>
                 {showViewAll && (
                   <Link
-                    to="/rehab-centers"
+                    to="/search-results"
                     className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                   >
                     View all
@@ -268,7 +268,7 @@ export function FeaturedCentersSection({
         {/* Mobile CTA */}
         {showViewAll && (
           <div className="mt-4 sm:hidden">
-            <Link to="/rehab-centers">
+            <Link to="/search-results">
               <Button variant="outline" size="sm" className="w-full gap-2 font-medium">
                 View All Centers
                 <ArrowRight className="h-4 w-4" />

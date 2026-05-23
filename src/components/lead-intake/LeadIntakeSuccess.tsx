@@ -273,7 +273,7 @@ export function LeadIntakeSuccess({ facilityName, facilityId, leadId, firstName,
         </div>
 
         {/* Secondary Action */}
-        <Link to="/rehab-centers">
+        <Link to="/search-results">
           <Button variant="ghost" className="w-full text-muted-foreground hover:text-foreground">
             Browse Treatment Centers
           </Button>

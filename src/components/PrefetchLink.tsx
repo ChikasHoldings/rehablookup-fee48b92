@@ -5,7 +5,7 @@ import { prefetchRoute } from "@/lib/routePrefetch";
 // Route to lazy import mapping for prefetching (only for lazy-loaded routes)
 const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   // Public routes (lazy loaded)
-  "/rehab-centers": () => import("@/pages/RehabCenters"),
+  "/rehab-centers": () => import("@/pages/SearchResults"),
   "/search-results": () => import("@/pages/SearchResults"),
   "/locations": () => import("@/pages/Locations"),
   "/treatment-types": () => import("@/pages/TreatmentTypes"),

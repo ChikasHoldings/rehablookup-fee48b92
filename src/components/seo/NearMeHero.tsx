@@ -104,7 +104,7 @@ export function NearMeHero({
                 Get Matched Instantly
               </Button>
             </Link>
-            <Link to="/rehab-centers">
+            <Link to="/search-results">
               <Button
                 size="default"
                 variant="outline"

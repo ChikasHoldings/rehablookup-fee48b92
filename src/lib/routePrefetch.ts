@@ -27,7 +27,7 @@ const prefetchedRoutes = new Set<string>();
 // warning. Other pages remain lazy so hover-prefetch + adjacent-route
 // prefetch can pre-load them off the critical path.
 const publicPageMap: Record<string, () => Promise<unknown>> = {
-  "/rehab-centers": () => import("@/pages/RehabCenters"),
+  "/rehab-centers": () => import("@/pages/SearchResults"),
   "/locations": () => import("@/pages/Locations"),
   "/treatment-types": () => import("@/pages/TreatmentTypes"),
   "/how-it-works": () => import("@/pages/HowItWorks"),
@@ -266,7 +266,7 @@ export function preloadPublicPages(): void {
   preloadedPanels.add("public");
   
   const pages = [
-    () => import("@/pages/RehabCenters"),
+    () => import("@/pages/SearchResults"),
     () => import("@/pages/concierge/ConciergeLanding"),
     () => import("@/pages/Insurance"),
     // InternationalLanding prefetch retired 2026-05-20.

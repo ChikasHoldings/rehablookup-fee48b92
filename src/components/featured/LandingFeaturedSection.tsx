@@ -107,7 +107,7 @@ export function LandingFeaturedSection({
       placement_value={placement_value}
       title={title ?? defaultTitle}
       subtitle={subtitle ?? defaultSubtitle}
-      view_all_href={view_all_href ?? "/rehab-centers"}
+      view_all_href={view_all_href ?? "/search-results"}
       className={className}
       is_fallback={isFallback}
     />

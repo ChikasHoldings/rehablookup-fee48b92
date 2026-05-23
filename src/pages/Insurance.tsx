@@ -1013,7 +1013,7 @@ export default function Insurance() {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/rehab-centers">
+                <Link to="/search-results">
                   <Button size="lg" variant="outline" className="gap-2">
                     Browse Treatment Centers
                   </Button>

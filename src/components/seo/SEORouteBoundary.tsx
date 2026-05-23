@@ -97,7 +97,7 @@ export class SEORouteBoundary extends React.Component<Props, State> {
             </p>
             <div className="flex flex-wrap justify-center gap-3 pt-2">
               <Button asChild>
-                <Link to="/rehab-centers">
+                <Link to="/search-results">
                   <Search className="h-4 w-4 mr-1.5" />
                   Browse Treatment Centers
                 </Link>

@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useParams, useSearchParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { RouteChangeTracker } from "@/components/RouteChangeTracker";
@@ -25,7 +25,10 @@ const InquiryConfirmationPage = lazy(() => import("./pages/InquiryConfirmation")
 import { SmartCatchAll } from "./components/SmartCatchAll";
 
 // Lazy load all other public pages for reduced initial bundle
-const RehabCenters = lazy(() => import("./pages/RehabCenters"));
+// RehabCenters page is no longer routed — bare /rehab-centers redirects to
+// /search-results (see RehabCentersToSearchResultsRedirect). The file is
+// retained in src/pages/ as documentation of the prior browse-directory UX;
+// safe to delete in a follow-up cleanup once the redirect has propagated.
 const SearchResults = lazy(() => import("./pages/SearchResults"));
 const StatePage = lazy(() => import("./pages/StatePage"));
 const CityPage = lazy(() => import("./pages/CityPage"));
@@ -526,6 +529,14 @@ function LocationToRehabCentersRedirect() {
   return <Navigate to={`/rehab-centers/${stateSlug}/${citySlug}`} replace />;
 }
 
+// Bare /rehab-centers → /search-results, preserving the querystring so
+// in-app navigations that still build `/rehab-centers?q=foo` (or external
+// bookmarks bypassing the Vercel-edge 301) don't drop the user's filters.
+function RehabCentersToSearchResultsRedirect() {
+  const loc = useLocation();
+  return <Navigate to={`/search-results${loc.search}`} replace />;
+}
+
 // Some tooling injects `ref` into top-level elements; these wrappers safely absorb refs
 // so we don't get noisy "Function components cannot be given refs" warnings.
 //
@@ -657,7 +668,14 @@ const AppInner = () => {
             <Route path="/" element={<PublicRouteGuard><Index /></PublicRouteGuard>} />
             <Route path="/inquiry/confirmation/:inquiryId" element={<PublicRouteGuard><InquiryConfirmationPage /></PublicRouteGuard>} />
             <Route path="/locations" element={<PublicRouteGuard><Locations /></PublicRouteGuard>} />
-            <Route path="/rehab-centers" element={<PublicRouteGuard><RehabCenters /></PublicRouteGuard>} />
+            {/* Bare /rehab-centers is redundant with /search-results and now
+                redirects to it. The state/city/county/treatment SUBTREE under
+                /rehab-centers/<state>/... remains intact as the SEO directory
+                — those are distinct pages (StatePage / CityPage / CountyPage)
+                and are individually indexed by Google. The querystring is
+                preserved so legacy in-app navigations that built
+                `/rehab-centers?q=foo` keep the user's filters. */}
+            <Route path="/rehab-centers" element={<RehabCentersToSearchResultsRedirect />} />
             <Route path="/compare" element={<PublicRouteGuard><FacilityCompare /></PublicRouteGuard>} />
             <Route path="/search-results" element={<PublicRouteGuard><SearchResults /></PublicRouteGuard>} />
             <Route path="/rehab-centers/:stateSlug/articles/:articleSlug" element={<PublicRouteGuard><StateArticlePage /></PublicRouteGuard>} />
@@ -1226,7 +1244,7 @@ const AppInner = () => {
             
             {/* Legacy center URLs redirect */}
             <Route path="/centers/:slug" element={<LegacyCenterRedirect />} />
-            <Route path="/centers" element={<Navigate to="/rehab-centers" replace />} />
+            <Route path="/centers" element={<Navigate to="/search-results" replace />} />
 
             {/* Legacy slug rescue — common backlink patterns */}
             {/* "Seeker" → "Client" terminology rename (preserves sub-path) */}
@@ -1239,11 +1257,11 @@ const AppInner = () => {
             <Route path="/state/:stateSlug" element={<StateToRehabCentersRedirect />} />
             <Route path="/location/:stateSlug/:citySlug" element={<LocationToRehabCentersRedirect />} />
             {/* Common search shorthand */}
-            <Route path="/find-rehab" element={<Navigate to="/rehab-centers" replace />} />
-            <Route path="/find-treatment" element={<Navigate to="/rehab-centers" replace />} />
-            <Route path="/rehab" element={<Navigate to="/rehab-centers" replace />} />
+            <Route path="/find-rehab" element={<Navigate to="/search-results" replace />} />
+            <Route path="/find-treatment" element={<Navigate to="/search-results" replace />} />
+            <Route path="/rehab" element={<Navigate to="/search-results" replace />} />
             <Route path="/treatment" element={<Navigate to="/treatment-types" replace />} />
-            <Route path="/directory" element={<Navigate to="/rehab-centers" replace />} />
+            <Route path="/directory" element={<Navigate to="/search-results" replace />} />
 
             {/* Ad Landing Pages */}
             <Route path="/ads/:slug" element={<PublicRouteGuard><AdLanding /></PublicRouteGuard>} />

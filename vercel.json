@@ -18,7 +18,7 @@
     },
     {
       "source": "/centers",
-      "destination": "/rehab-centers",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
@@ -38,17 +38,17 @@
     },
     {
       "source": "/directory",
-      "destination": "/rehab-centers",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
       "source": "/find-rehab",
-      "destination": "/rehab-centers",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
       "source": "/find-treatment",
-      "destination": "/rehab-centers",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {
@@ -183,7 +183,12 @@
     },
     {
       "source": "/rehab",
-      "destination": "/rehab-centers",
+      "destination": "/search-results",
+      "statusCode": 301
+    },
+    {
+      "source": "/rehab-centers",
+      "destination": "/search-results",
       "statusCode": 301
     },
     {

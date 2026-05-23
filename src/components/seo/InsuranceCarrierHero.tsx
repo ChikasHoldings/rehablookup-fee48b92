@@ -63,7 +63,7 @@ export function InsuranceCarrierHero({
           )}
           <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2.5">
             <Button asChild size="default" variant="secondary" className="font-semibold gap-2 shadow-lg shadow-black/20">
-              <Link to="/rehab-centers">
+              <Link to="/search-results">
                 <MapPin className="h-4 w-4" />
                 Find {carrierName}-Accepting Centers
               </Link>

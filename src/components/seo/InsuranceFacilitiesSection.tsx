@@ -240,7 +240,7 @@ export function InsuranceFacilitiesSection({
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/rehab-centers">Browse All Facilities</Link>
+                <Link to="/search-results">Browse All Facilities</Link>
               </Button>
             </div>
           </div>

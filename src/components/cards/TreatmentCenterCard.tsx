@@ -82,7 +82,7 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
   // Always prefer slug → /center/{slug}. Fall back to safe directory listing
   // instead of a UUID-based dead-end (legacy /rehab-centers/{uuid}). Slug is
   // normalized via the shared util so URLs and SEO tags always agree.
-  const detailsUrl = buildFacilityPath(center) ?? "/rehab-centers";
+  const detailsUrl = buildFacilityPath(center) ?? "/search-results";
 
   const initials = getInitials(center.name);
   const hasValidLogo = center.logo_url && !logoError;

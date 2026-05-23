@@ -33,7 +33,7 @@ export const ROUTES_PUBLIC = {
   providerSupport: "/provider-support",
   providerROICalculator: "/provider-roi-calculator",
   centerBySlug: (slug: string) => `/center/${slug}`,
-  rehabCenters: "/rehab-centers",
+  rehabCenters: "/search-results",
   resourceById: (id: string) => `/resources/${id}`,
   account: "/account",
   medicalDisclaimer: "/medical-disclaimer",

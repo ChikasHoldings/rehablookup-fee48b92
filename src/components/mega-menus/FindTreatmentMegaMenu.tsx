@@ -46,7 +46,7 @@ export function FindTreatmentMegaMenu({ onNavigate }: MegaMenuProps) {
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     onNavigate?.();
-    navigate(`/rehab-centers${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`);
+    navigate(`/search-results${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`);
   }, [searchQuery, navigate, onNavigate]);
 
   return (
@@ -180,7 +180,7 @@ export function FindTreatmentMegaMenuMobile({ onNavigate }: MegaMenuProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     onNavigate?.();
-    navigate(`/rehab-centers${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`);
+    navigate(`/search-results${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`);
   };
 
   return (

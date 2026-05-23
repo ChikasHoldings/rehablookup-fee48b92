@@ -57,7 +57,7 @@ const CenterNotFound = ({ attemptedSlug, reason = "missing" }: CenterNotFoundPro
     e.preventDefault();
     const trimmed = query.trim();
     if (!trimmed) {
-      navigate("/rehab-centers");
+      navigate("/search-results");
       return;
     }
     // Reuse the existing search-results page; it accepts a free-text

@@ -60,7 +60,7 @@ const megaMenuItems: MegaMenuItem[] = [
   {
     id: "find-treatment",
     label: "Find Rehab",
-    isActive: (p) => p.startsWith("/rehab-centers") || p.startsWith("/treatment-types") || p.includes("-near-me"),
+    isActive: (p) => p === "/search-results" || p.startsWith("/rehab-centers") || p.startsWith("/treatment-types") || p.includes("-near-me"),
   },
   {
     id: "resources",
@@ -397,7 +397,7 @@ export function Header({
           {/* CTA & Mobile Actions */}
           <div className="flex items-center gap-2 md:gap-3">
             <PrefetchLink
-              to="/rehab-centers"
+              to="/search-results"
               className="flex h-11 w-11 items-center justify-center rounded-lg md:hidden text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               aria-label="Search facilities"
             >

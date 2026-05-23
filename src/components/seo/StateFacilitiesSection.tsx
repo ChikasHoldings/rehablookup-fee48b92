@@ -135,7 +135,7 @@ export function StateFacilitiesSection({
                 <Link to="/concierge">Get Matched Now</Link>
               </Button>
               <Button asChild variant="outline">
-                <Link to="/rehab-centers">Browse Nationwide</Link>
+                <Link to="/search-results">Browse Nationwide</Link>
               </Button>
             </div>
           </div>

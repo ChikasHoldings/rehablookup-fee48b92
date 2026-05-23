@@ -271,7 +271,7 @@ export function SEOLandingTemplate({
                 size="default"
                 className="gap-2 border-white/25 bg-white/5 text-white hover:bg-white/15 backdrop-blur-sm"
               >
-                <Link to="/rehab-centers">
+                <Link to="/search-results">
                   <Search className="h-4 w-4" />
                   Browse All Centers
                 </Link>
@@ -407,7 +407,7 @@ export function SEOLandingTemplate({
                     <Link to="/concierge">Get Matched Now</Link>
                   </Button>
                   <Button asChild variant="outline">
-                    <Link to="/rehab-centers">Browse Nationwide</Link>
+                    <Link to="/search-results">Browse Nationwide</Link>
                   </Button>
                 </div>
               </div>
@@ -463,7 +463,7 @@ export function SEOLandingTemplate({
                     <p className="text-xs text-muted-foreground truncate">Check your coverage</p>
                   </div>
                 </Link>
-                <Link to="/rehab-centers" className="flex items-center gap-3 rounded-xl border bg-card p-3 hover:border-primary/40 hover:shadow-sm transition-all group">
+                <Link to="/search-results" className="flex items-center gap-3 rounded-xl border bg-card p-3 hover:border-primary/40 hover:shadow-sm transition-all group">
                   <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <Search className="h-4 w-4 text-primary" />
                   </div>

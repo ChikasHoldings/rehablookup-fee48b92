@@ -84,7 +84,7 @@ export function TreatmentHubHero({
                 Get Personalized Help
               </Button>
             </Link>
-            <Link to="/rehab-centers">
+            <Link to="/search-results">
               <Button
                 size="default"
                 variant="outline"
