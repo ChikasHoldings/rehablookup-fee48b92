@@ -4,8 +4,13 @@ import { Building2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStaticFacilities } from "@/hooks/useStaticFacilities";
 import { treatmentCenters } from "@/data/treatmentCenters";
-import { TreatmentCenterCard } from "@/components/cards/TreatmentCenterCard";
-import { Skeleton } from "@/components/ui/skeleton";
+// Use the same SearchResultCard as /search-results so the listing
+// design on the state/city SEO pages matches the canonical card
+// design seekers see everywhere else. Previously this section used
+// `TreatmentCenterCard variant="compact"` in a 3-column grid — a
+// different visual treatment that broke cross-page consistency.
+import { SearchResultCard } from "@/components/cards/SearchResultCard";
+import { SearchResultCardSkeleton } from "@/components/skeletons/SearchResultSkeleton";
 import {
   TREATMENT_FILTERS,
   matchesTreatmentFilter,
@@ -84,7 +89,12 @@ export function StateFacilitiesSection({
         if (!a.featured && b.featured) return 1;
         return 0;
       })
-      .slice(0, 12);
+      // 8 cards in a list view is a comfortable above-the-fold-ish
+      // length; was 12 in a 3-col grid (4 rows). The 33% reduction
+      // keeps the section from becoming a long scroll while still
+      // showing meaningful selection. CTA to /rehab-centers/<state>
+      // below the list opens the full directory.
+      .slice(0, 8);
   }, [approvedFacilities, stateName, treatmentFilter]);
 
   return (
@@ -107,17 +117,23 @@ export function StateFacilitiesSection({
         </div>
 
         {isLoading ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-            {[1,2,3].map(i => <Skeleton key={i} className="h-64 rounded-xl" />)}
+          // Vertical list of full-width SearchResultCard skeletons
+          // matches the live list below, no layout shift on hydration.
+          <div className="flex flex-col gap-4 max-w-5xl mx-auto">
+            {[1, 2, 3].map((i) => <SearchResultCardSkeleton key={i} />)}
           </div>
         ) : facilities.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+          // Vertical list layout (matches /search-results) — each
+          // SearchResultCard is horizontal on desktop (image left,
+          // content right) and stacks vertically internally on mobile.
+          // max-w-5xl gives the cards room to breathe without going
+          // edge-to-edge on large displays.
+          <div className="flex flex-col gap-4 max-w-5xl mx-auto">
             {facilities.map((facility) => (
-              <TreatmentCenterCard
+              <SearchResultCard
                 key={facility.id}
                 center={facility}
                 featured={facility.featured}
-                variant="compact"
               />
             ))}
           </div>
