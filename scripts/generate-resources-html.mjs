@@ -26,6 +26,7 @@ import { writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { gtagSnippet } from "./_ga.mjs";
+import { seoStyles, seoHeader, seoCtaStrip, seoFooter } from "./_seo-page-shell.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -398,81 +399,68 @@ function renderArticleHtml(article) {
   <script type="application/ld+json">${jsonLd(articleSchema)}</script>
   <script type="application/ld+json">${jsonLd(breadcrumbSchema)}</script>${faqSchema ? `
   <script type="application/ld+json">${jsonLd(faqSchema)}</script>` : ""}
+  ${seoStyles()}
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 1rem 1.5rem; color: #1a1a2e; line-height: 1.6; }
-    header { border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem; margin-bottom: 1.5rem; }
-    nav { font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem; }
-    nav a { color: #2563eb; text-decoration: none; }
-    nav a:hover { text-decoration: underline; }
-    h1 { font-size: 1.875rem; font-weight: 700; color: #111827; margin: 0 0 0.75rem; line-height: 1.3; }
-    .meta { font-size: 0.875rem; color: #6b7280; display: flex; gap: 1rem; flex-wrap: wrap; }
-    .category { background: #dbeafe; color: #1d4ed8; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
-    .excerpt { font-size: 1.125rem; color: #374151; margin: 1.25rem 0; padding: 1rem; background: #f9fafb; border-left: 4px solid #2563eb; border-radius: 0 0.5rem 0.5rem 0; }
-    .cta { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.75rem; padding: 1.5rem; margin: 2rem 0; text-align: center; }
-    .cta h2 { font-size: 1.25rem; color: #1e40af; margin: 0 0 0.5rem; }
-    .cta p { color: #374151; margin: 0 0 1rem; }
-    .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; text-decoration: none; font-size: 0.9375rem; }
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-secondary { background: #fff; color: #2563eb; border: 1px solid #2563eb; margin-left: 0.5rem; }
-    .related { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; }
-    .related h2 { font-size: 1.125rem; color: #111827; margin-bottom: 0.75rem; }
-    .related ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .related li a { display: inline-block; padding: 0.4rem 0.85rem; background: #f3f4f6; border-radius: 9999px; font-size: 0.875rem; color: #374151; text-decoration: none; }
-    .related li a:hover { background: #dbeafe; color: #1d4ed8; }
-    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; font-size: 0.8125rem; color: #9ca3af; text-align: center; }
-    footer a { color: #6b7280; text-decoration: none; }
+    /* Article-specific styling layered on top of the shared SEO shell.
+       Keeps the article body legible (max width, comfortable line-height)
+       while inheriting the branded header/footer/CTA chrome. */
+    .article-shell { max-width: 800px; margin: 0 auto; }
+    .article-shell .category { display:inline-block; background:#dbeafe; color:#1d4ed8; padding:0.2rem 0.7rem; border-radius:9999px; font-size:0.75rem; font-weight:600; letter-spacing:.02em; text-transform:uppercase; margin-bottom:0.75rem; }
+    .article-shell .meta { font-size:0.875rem; color:var(--rl-muted); display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem; }
+    .article-shell .excerpt { font-size:1.125rem; color:var(--rl-text); margin:1.5rem 0 2rem; padding:1rem 1.25rem; background:var(--rl-primary-soft); border-left:4px solid var(--rl-primary); border-radius:0 0.5rem 0.5rem 0; line-height:1.6; }
     .article-body { margin: 1.5rem 0; }
-    .article-body h2 { font-size: 1.375rem; font-weight: 700; color: #111827; margin: 2rem 0 0.75rem; }
-    .article-body h3 { font-size: 1.125rem; font-weight: 600; color: #1f2937; margin: 1.5rem 0 0.5rem; }
-    .article-body p { color: #374151; margin: 0 0 1rem; }
-    .article-body ul { color: #374151; margin: 0 0 1rem; padding-left: 1.5rem; }
-    .article-body li { margin-bottom: 0.35rem; }
-    .article-body blockquote { border-left: 4px solid #2563eb; padding: 0.75rem 1rem; background: #f9fafb; margin: 1.25rem 0; color: #4b5563; font-style: italic; }
-    .article-body a { color: #2563eb; }
+    .article-body h2 { font-size:1.5rem; font-weight:700; color:var(--rl-primary); margin:2.25rem 0 0.85rem; line-height:1.25; }
+    .article-body h3 { font-size:1.15rem; font-weight:600; color:var(--rl-text); margin:1.5rem 0 0.5rem; }
+    .article-body p { color:#333; margin:0 0 1rem; }
+    .article-body ul { color:#333; margin:0.5rem 0 1.25rem; padding-left:1.5rem; }
+    .article-body li { margin-bottom:0.4rem; }
+    .article-body blockquote { border-left:4px solid var(--rl-primary); padding:0.85rem 1.25rem; background:var(--rl-primary-soft); margin:1.5rem 0; color:var(--rl-text); font-style:italic; border-radius:0 0.5rem 0.5rem 0; }
+    .article-body a { color:#2563eb; }
+    .article-shell .related { margin-top:2.5rem; padding-top:1.5rem; border-top:1px solid var(--rl-border); }
+    .article-shell .related h2 { font-size:1.125rem; color:var(--rl-primary); margin:0 0 0.75rem; }
+    .article-shell .related ul { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:0.5rem; }
+    .article-shell .related li a { display:inline-block; padding:0.45rem 0.95rem; background:#f3f4f6; border-radius:9999px; font-size:0.875rem; color:var(--rl-text); }
+    .article-shell .related li a:hover { background:#dbeafe; color:var(--rl-primary); text-decoration:none; }
   </style>
 ${gtagSnippet()}
 </head>
 <body>
-  <header>
-    <nav aria-label="Breadcrumb">
-      <a href="/">Home</a> &rsaquo; <a href="/resources">Resources</a> &rsaquo; ${displayTitle}
-    </nav>
-    <span class="category">${categoryLabel}</span>
-    <h1>${displayTitle}</h1>
-    <div class="meta">
-      <span>By ${author}</span>
-      ${displayDate ? `<span>${displayDate}</span>` : ""}
-      ${readTime ? `<span>${readTime}</span>` : ""}
+  ${seoHeader()}
+  <main class="rl-main">
+    <div class="rl-container">
+      <article class="article-shell">
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+          <ul>
+            <li><a href="/">Home</a> &rsaquo;&nbsp;</li>
+            <li><a href="/resources">Resources</a> &rsaquo;&nbsp;</li>
+            <li>${displayTitle}</li>
+          </ul>
+        </nav>
+        <span class="category">${categoryLabel}</span>
+        <h1>${displayTitle}</h1>
+        <div class="meta">
+          <span>By ${author}</span>
+          ${displayDate ? `<span>${displayDate}</span>` : ""}
+          ${readTime ? `<span>${readTime}</span>` : ""}
+        </div>
+        ${displayExcerpt ? `<div class="excerpt">${displayExcerpt}</div>` : ""}
+        ${article.content ? `<div class="article-body">
+        ${renderContentBlocks(article.content)}
+        </div>` : ""}
+        ${seoCtaStrip({ blurb: "Free, confidential matching to verified treatment centers that fit your needs." })}
+        <section class="related" aria-label="Related resources">
+          <h2>Explore More Resources</h2>
+          <ul>
+            <li><a href="/resources">All Recovery Resources</a></li>
+            <li><a href="/rehab-centers">Find Rehab Centers</a></li>
+            <li><a href="/treatment-types">Treatment Types</a></li>
+            <li><a href="/concierge">Free Placement Help</a></li>
+          </ul>
+        </section>
+      </article>
     </div>
-  </header>
-  <main>
-    ${displayExcerpt ? `<div class="excerpt">${displayExcerpt}</div>` : ""}
-    ${article.content ? `<div class="article-body">
-    ${renderContentBlocks(article.content)}
-    </div>` : ""}
-    <div class="cta">
-      <h2>Find the Right Treatment Program</h2>
-      <p>Our free matching service connects you with verified addiction treatment centers that meet your specific needs.</p>
-      <a class="btn btn-primary" href="/concierge">Get Free Help Now</a>
-      <a class="btn btn-secondary" href="/rehab-centers">Browse All Centers</a>
-    </div>
-    <section class="related">
-      <h2>Explore More Resources</h2>
-      <ul>
-        <li><a href="/resources">All Recovery Resources</a></li>
-        <li><a href="/rehab-centers">Find Rehab Centers</a></li>
-        <li><a href="/treatment-types">Treatment Types</a></li>
-        <li><a href="/concierge">Free Placement Help</a></li>
-      </ul>
-    </section>
   </main>
-  <footer>
-    <p>&copy; ${new Date().getFullYear()} RehabLookup. All rights reserved.
-      <a href="/privacy-policy">Privacy</a> &middot;
-      <a href="/terms-of-service">Terms</a> &middot;
-      <a href="/editorial-policy">Editorial Policy</a>
-    </p>
-  </footer>
+  ${seoFooter()}
 </body>
 </html>
 `;
