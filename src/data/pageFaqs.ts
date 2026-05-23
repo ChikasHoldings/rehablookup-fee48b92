@@ -45,7 +45,7 @@ export const insuranceFaqs: FAQItem[] = [
 export const locationsFaqs: FAQItem[] = [
   { question: "How do I find rehab centers in my state?", answer: "Use our state directory pages to browse verified treatment centers organized by location. You can filter by treatment type, insurance accepted, and specialty programs to find the best fit near you." },
   { question: "Should I go to rehab near home or travel to another state?", answer: "Both options have benefits. Staying local keeps you close to family support. Traveling can provide distance from triggers and a fresh environment. The best choice depends on your personal situation, insurance coverage, and treatment needs." },
-  { question: "Which states have the most rehab centers?", answer: "California, Florida, Texas, New York, and Pennsylvania have the highest concentration of treatment facilities. However, quality treatment is available in every state, and our directory covers all 50 states." },
+  { question: "Which states have the most rehab centers?", answer: "California, Florida, Texas, New York, and Pennsylvania have the highest concentration of treatment facilities. However, quality treatment is available in every state, and our directory covers all 50 states and Washington, D.C." },
   { question: "Are there rehab centers in rural areas?", answer: "Yes. While major metro areas have more options, many states have quality treatment facilities in suburban and rural communities. Our search tools help you find facilities regardless of your location." },
 ];
 

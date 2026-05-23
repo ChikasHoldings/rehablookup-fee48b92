@@ -1035,6 +1035,10 @@
       "destination": "https://mldbxpntzcjalgjmwnqa.supabase.co/functions/v1/sitemap-facilities?type=facilities"
     },
     {
+      "source": "/notice-of-privacy-practices",
+      "destination": "/notice-of-privacy-practices.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

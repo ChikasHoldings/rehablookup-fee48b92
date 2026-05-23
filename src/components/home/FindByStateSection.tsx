@@ -159,7 +159,7 @@ export function FindByStateSection() {
               Find Treatment Center by State
             </h2>
             <p className="mt-1.5 text-sm md:text-base text-white/75">
-              Browse verified addiction treatment centers in all 50 states.
+              Browse verified addiction treatment centers in all 50 states and Washington, D.C.
             </p>
           </div>
           <Link

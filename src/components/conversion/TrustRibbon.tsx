@@ -43,7 +43,7 @@ export function TrustRibbon() {
             <span>
               {stats && stats.stateCount < 50
                 ? `${stats.stateCount} states covered`
-                : "All 50 states covered"}
+                : "All 50 states + D.C. covered"}
             </span>
           </li>
           <li className="hidden sm:block w-px h-4 bg-slate-300" aria-hidden />

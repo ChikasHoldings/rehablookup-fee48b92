@@ -11,15 +11,18 @@ export interface DirectoryStats {
 // almost certainly means a query error / partial state, not a real drop,
 // so we fall back to the floor to avoid undermining the YMYL trust signal.
 const FACILITY_FLOOR = 3800;
-const STATE_FLOOR = 50;
+// 51 = 50 states + Washington, D.C. The directory carries facilities in
+// D.C., so user-visible counts include it. Prose elsewhere reads
+// "50 states and Washington, D.C." against this value.
+const STATE_FLOOR = 51;
 const SANITY_MIN_FACILITIES = 100;
 
 /**
  * Apply sanity floors to a raw stats reading.
  * - If facility count looks broken (< 100), substitute the safe pair.
- * - Otherwise pass facility count through, and clamp state count to a
- *   minimum of 50 (the directory covers all 50 + DC; rendering 47 / 51
- *   would be inconsistent with the long-standing "All 50" trust copy).
+ * - Otherwise pass facility count through, and clamp state count to the
+ *   floor (rendering anything below 51 would be inconsistent with the
+ *   "50 states + D.C." trust copy).
  */
 function applyFloors(s: DirectoryStats): DirectoryStats {
   if (s.facilityCount < SANITY_MIN_FACILITIES) {

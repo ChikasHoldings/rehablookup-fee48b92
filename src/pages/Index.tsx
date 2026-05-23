@@ -306,8 +306,8 @@ const Index = () => {
                   className="inline-block min-w-[2.5em] text-right font-semibold text-white tabular-nums"
                   aria-busy={statsLoading || !stats}
                 >
-                  {stats ? (statesCount.value >= 50 ? "All 50" : statesCount.value) : (
-                    <span className="inline-block h-[1em] w-[2.2em] align-middle rounded bg-white/20" aria-hidden />
+                  {stats ? (statesCount.value >= 50 ? "50 + D.C." : statesCount.value) : (
+                    <span className="inline-block h-[1em] w-[2.6em] align-middle rounded bg-white/20" aria-hidden />
                   )}
                 </strong>{" "}
                 States Covered

@@ -40,7 +40,11 @@ const ROOT = resolve(__dirname, '..')
 const INDEX_HTML = resolve(ROOT, 'index.html')
 
 const FACILITY_FLOOR = 3800
-const STATE_FLOOR = 50
+// 51 jurisdictions = 50 states + Washington, D.C. The directory carries
+// facilities in D.C., so the state count exposed to users via
+// `<meta name="rl:stats">` should reflect that. UI prose elsewhere
+// renders "50 states and Washington, D.C." against this value.
+const STATE_FLOOR = 51
 const SANITY_MIN_FACILITIES = 100
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL

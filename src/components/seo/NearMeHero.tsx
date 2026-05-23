@@ -101,7 +101,7 @@ export function NearMeHero({
             <Link to="/concierge">
               <Button size="default" className="gap-2 w-full sm:w-auto shadow-lg shadow-black/20">
                 <Heart className="h-4 w-4" />
-                Get Matched Instantly
+                Get a Free Match
               </Button>
             </Link>
             <Link to="/search-results">

@@ -292,10 +292,19 @@ async function main() {
     }
 
     const content = `<p>${escHtml(p.desc)}</p>`;
+    // Brand-suffix dedup: many PAGES entries already include "RehabLookup"
+    // inside the title string ("About RehabLookup", "How RehabLookup Works",
+    // etc.). Naive `${title} | RehabLookup` produced
+    // "About RehabLookup | RehabLookup" — the launch-readiness audit
+    // flagged this as a title-tag bug. Append the suffix only when the
+    // title doesn't already contain the brand.
+    const metaTitle = /rehablookup/i.test(p.title)
+      ? p.title
+      : `${p.title} | RehabLookup`;
     const h = html({
       urlPath: p.path,
       title: p.title,
-      metaTitle: `${p.title} | RehabLookup`,
+      metaTitle,
       metaDescription: p.desc,
       h1: p.title,
       content,

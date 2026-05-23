@@ -36,7 +36,7 @@ export function RecoveryJourneyCTA({ conciergeLocation = "" }: RecoveryJourneyCT
   const statesLabel =
     stats && stats.stateCount < 50
       ? `${stats.stateCount} states covered`
-      : "All 50 states covered";
+      : "All 50 states + D.C. covered";
   const trustRow = [
     { Icon: Building2, label: facilitiesLabel },
     { Icon: MapPin, label: statesLabel },

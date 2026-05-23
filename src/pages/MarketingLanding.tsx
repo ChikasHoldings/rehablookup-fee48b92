@@ -183,16 +183,16 @@ export default function MarketingLanding() {
           <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-2xl py-5 sm:py-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 text-center gap-4">
               <div>
-                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary tabular-nums">15,000+</div>
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary tabular-nums">3,800+</div>
                 <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">Verified Centers</div>
               </div>
               <div className="border-x border-border/50">
-                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary tabular-nums">50</div>
-                <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">States Covered</div>
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary tabular-nums">51</div>
+                <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">50 States + D.C.</div>
               </div>
               <div>
-                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary tabular-nums">98%</div>
-                <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">Satisfaction</div>
+                <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary tabular-nums">24/7</div>
+                <div className="text-xs sm:text-sm text-muted-foreground mt-0.5">Free Concierge</div>
               </div>
             </div>
           </div>

@@ -432,10 +432,10 @@ const About = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
             {[
-              { value: "1,000+", label: "Verified Facilities", sub: "Across all 50 states" },
+              { value: "3,800+", label: "Verified Facilities", sub: "50 states + Washington, D.C." },
               { value: "10K+", label: "Families Helped", sub: "Monthly connections" },
-              { value: "50", label: "States Covered", sub: "Nationwide reach" },
-              { value: "98%", label: "Lead Accuracy", sub: "Verified contact info" },
+              { value: "51", label: "Jurisdictions", sub: "All 50 states + D.C." },
+              { value: "100%", label: "Free for Seekers", sub: "No fees, no upsells" },
             ].map((stat) => (
               <div key={stat.label} className="text-center p-5 rounded-xl bg-primary-foreground/5 border border-primary-foreground/10">
                 <div className="font-display text-3xl md:text-4xl font-bold text-accent tabular-nums mb-1">{stat.value}</div>
