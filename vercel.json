@@ -522,7 +522,6 @@
       "statusCode": 301
     },
     {
-      "_comment": "TOP-LEVEL treatment+state SHORTCUTS — users guess these instead of typing the /treatment-types/ prefix. Per the not_found_events log + user report 2026-05-23 (/drug-addiction-treatment/texas → 404). Each redirects to the canonical /treatment-types/<slug>/<state> route.",
       "source": "/drug-addiction-treatment/:state",
       "destination": "/treatment-types/drug-addiction/:state",
       "statusCode": 301
@@ -693,7 +692,6 @@
       "statusCode": 301
     },
     {
-      "_comment": "Legacy /treatment/<slug>/<state> shortcuts — observed in not_found_events logs. Older URL prefix from before the /treatment-types/ rename.",
       "source": "/treatment/outpatient/:state",
       "destination": "/treatment-types/outpatient-programs/:state",
       "statusCode": 301
