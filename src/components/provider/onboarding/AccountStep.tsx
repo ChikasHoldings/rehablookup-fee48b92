@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { validateEmail } from "@/lib/facilitySanitization";
 import { trackEvent } from "@/lib/analytics";
+import { safeReturnTo } from "@/lib/safeReturnTo";
 import { useProviderOnboardingState } from "@/hooks/useProviderOnboardingState";
 
 /**
@@ -31,6 +32,23 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
   const claimFacilityId = searchParams.get("facility_id") || null;
   const claimFacilitySlug = searchParams.get("facility_slug") || null;
   const intent = searchParams.get("intent"); // "claim" | null
+
+  // Audit fix (2026-05-23): the "Sign in" link previously sent users to
+  // `/login?return_to=/provider/onboarding` — wrong param name
+  // (`return_to` vs `returnTo`, Login.tsx only reads the latter) AND
+  // dropped the original `?intent=claim&facility_id=…` so a returning
+  // provider lost their facility context on the round-trip. Now we
+  // forward the entire current URL (path + search) through a sanitized
+  // `?returnTo=`, so Login can route them back to the same wizard
+  // entry point with the claim deep link intact.
+  const signInHref = useMemo(() => {
+    const here =
+      typeof window !== "undefined"
+        ? window.location.pathname + window.location.search
+        : "/provider/onboarding";
+    const sanitized = safeReturnTo(here) ?? "/provider/onboarding";
+    return `/login?returnTo=${encodeURIComponent(sanitized)}`;
+  }, [searchParams]);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -136,6 +154,15 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
       // when register-provider-account called admin.createUser, but
       // the wizard's downstream writes assume a row exists. A
       // duplicate-key error here is the happy path.
+      //
+      // Audit fix (2026-05-23): previously this only logged a warning
+      // on failure, which masked the rare case where the trigger and
+      // this fallback both fail — downstream verify-code / plan-set /
+      // onboarding-complete writes would silently no-op against a
+      // missing row, and the user would appear to progress while their
+      // profile remained un-flagged. Treat any non-duplicate error as
+      // fatal so the user is told to retry instead of marching forward
+      // into a broken state.
       const userId = data.userId as string;
       const { error: profileErr } = await supabase
         .from("profiles")
@@ -149,15 +176,35 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
           { onConflict: "user_id" },
         );
       if (profileErr) {
-        console.warn("[AccountStep] profile upsert warning", profileErr);
+        const code = (profileErr as { code?: string }).code;
+        // 23505 = duplicate key — expected when the trigger already
+        // inserted the row before us. Anything else is an actual
+        // failure (RLS, FK, network, etc.) we shouldn't paper over.
+        if (code !== "23505") {
+          console.error("[AccountStep] profile upsert failed", profileErr);
+          toast.error(
+            "We created your account but couldn't finish setting it up. Please retry — or sign in from the login page if the issue persists.",
+          );
+          setSubmitting(false);
+          return;
+        }
+        console.warn("[AccountStep] profile upsert duplicate (expected)", profileErr);
       }
 
       // Seed onboarding state. If the user entered with ?intent=claim
       // and EITHER ?facility_id=<uuid> or ?facility_slug=<slug>, resolve
       // the slug to an id (if needed) and prefill selected_facility_id
       // so FindOrListStep jumps straight to "Continue with this facility".
-      // Legacy /provider/claim/:slug redirects pass facility_slug; the
-      // facility-page "Claim listing" modal still passes facility_id.
+      // Legacy /provider/claim/:slug redirects pass facility_slug.
+      //
+      // Audit fix (2026-05-23): when the slug/id can't be resolved we
+      // used to fall through silently and seed the row WITHOUT a
+      // facility — the user would then advance to VerifyEmailStep
+      // believing they were claiming something, only to hit a generic
+      // "facility not found" on BuildStep. Now we surface a toast at
+      // signup time so the user knows their deep link is dead and can
+      // continue with the regular "search after signup" flow without
+      // wasting time on email verification under false pretenses.
       let resolvedClaimFacilityId = claimFacilityId;
       if (intent === "claim" && !resolvedClaimFacilityId && claimFacilitySlug) {
         try {
@@ -170,6 +217,12 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
         } catch (e) {
           console.warn("[AccountStep] facility_slug→id lookup failed", e);
         }
+      }
+      if (intent === "claim" && (claimFacilityId || claimFacilitySlug) && !resolvedClaimFacilityId) {
+        toast.message(
+          "We couldn't find the facility from your link — you can search for it after verifying your email.",
+          { duration: 6000 },
+        );
       }
       await advance({
         current_step: "verify_email",
@@ -307,7 +360,7 @@ export function AccountStep({ onAdvance }: { onAdvance: () => void }) {
       <p className="text-xs text-slate-600 text-center">
         Already have an account?{" "}
         <Link
-          to="/login?return_to=/provider/onboarding"
+          to={signInHref}
           className="text-[#1B365D] hover:underline font-medium"
         >
           Sign in

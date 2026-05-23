@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import headerLogo from "@/assets/logo-header.webp";
 import { resolveProviderPostLoginPath } from "@/lib/providerLanding";
+import { safeReturnTo } from "@/lib/safeReturnTo";
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Please enter a valid email address" }).max(255),
@@ -129,7 +130,14 @@ const generateSessionToken = (): string => {
 
 export default function Login() {
   const [searchParams] = useSearchParams();
-  const returnTo = searchParams.get("redirect") || searchParams.get("returnTo");
+  // Audit fix (2026-05-23): sanitize the raw param so a crafted
+  // `?returnTo=//evil.com` or `?returnTo=/\evil.com` can't redirect
+  // off-origin after sign-in. Onboarding.tsx and App.tsx already
+  // route their reads through the same helper; Login was the lone
+  // unguarded consumer.
+  const returnTo = safeReturnTo(
+    searchParams.get("redirect") || searchParams.get("returnTo"),
+  );
   const typeHint = searchParams.get("type") as "seeker" | "provider" | null;
   
   const [email, setEmail] = useState("");

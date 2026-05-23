@@ -170,7 +170,20 @@ export function PlanStep({ onAdvance, onBack }: PlanStepProps) {
     // dashboard where the fallback fast-track runs on mount and will
     // pick up a late-arriving subscription. Leaving them stranded on
     // the plan step was the round-30 audit's #1 critical issue.
+    //
+    // Audit fix (2026-05-23): strip ?checkout=success + ?session_id
+    // BEFORE navigating away. Previously these params were only
+    // stripped on the success branch (line 156-159), so a user who
+    // timed out and hit Back / reloaded landed back on PlanStep with
+    // the success param still in the URL and the poll re-fired from
+    // zero — potentially looping a "Confirming your subscription…"
+    // spinner every visit. The dashboard fallback handles the late
+    // webhook landing without needing the param to persist.
     setConfirmingPro(false);
+    const next = new URLSearchParams(searchParams);
+    next.delete("checkout");
+    next.delete("session_id");
+    setSearchParams(next, { replace: true });
     toast.message(
       "Your payment is being processed — heading to your dashboard. If Pro doesn't activate within a minute, reload the dashboard or contact support.",
     );

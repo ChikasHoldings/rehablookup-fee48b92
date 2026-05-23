@@ -28,12 +28,13 @@
  *    selected_facility_id when the row is created.
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { trackEvent } from "@/lib/analytics";
+import { safeReturnTo } from "@/lib/safeReturnTo";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Loader2 } from "lucide-react";
@@ -81,16 +82,6 @@ function useProviderProfile() {
   });
 }
 
-// Reject absolute, protocol-relative, and backslash-escaped paths so a
-// crafted `?returnTo=` can't redirect off-origin once email verifies.
-function safeReturnTo(raw: string | null): string | null {
-  if (!raw) return null;
-  if (!raw.startsWith("/")) return null;
-  if (raw.startsWith("//")) return null;
-  if (raw.startsWith("/\\")) return null;
-  return raw;
-}
-
 export default function ProviderOnboarding() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -107,9 +98,16 @@ export default function ProviderOnboarding() {
   // resume directly on FindOrListStep's "Continue with this facility"
   // affordance instead of having to re-search. AccountStep handles the
   // same for new signups; this effect is the signed-in mirror.
+  //
+  // Audit fix (2026-05-23): also surface a toast when the URL points at
+  // a slug/id that can't be resolved, and re-seed when the URL param
+  // changes to a *different* facility than the one already in state.
+  // Previously the effect short-circuited whenever any selected_facility_id
+  // was set, which left users stuck on a stale facility if they followed
+  // a fresh claim deep link mid-flow.
+  const slugErrorToastedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!stateRow) return;
-    if (stateRow.selected_facility_id) return; // already seeded
     if (searchParams.get("intent") !== "claim") return;
     const slug = searchParams.get("facility_slug");
     const id = searchParams.get("facility_id");
@@ -130,7 +128,24 @@ export default function ProviderOnboarding() {
           console.warn("[Onboarding] facility_slug→id lookup failed", e);
         }
       }
-      if (cancelled || !resolvedId) return;
+      if (cancelled) return;
+      if (!resolvedId) {
+        // Surface a one-time toast so the user understands their deep
+        // link is dead before sitting through Account + VerifyEmail
+        // and discovering the facility doesn't exist on BuildStep.
+        const key = slug ?? id ?? "";
+        if (slugErrorToastedRef.current !== key) {
+          slugErrorToastedRef.current = key;
+          toast.error(
+            "We couldn't find that facility — it may have been removed. You can search for it after signing in.",
+            { duration: 6000 },
+          );
+        }
+        return;
+      }
+      // Skip the upsert when the row already points at this exact
+      // facility — avoids a redundant write on every render.
+      if (stateRow.selected_facility_id === resolvedId) return;
       try {
         await advance({
           mode: "claim",
@@ -147,17 +162,36 @@ export default function ProviderOnboarding() {
   // already-onboarded providers adding another facility (replaces the
   // retired /provider/onboarding/new-listing page). Reset the state
   // row so the wizard resumes at FindOrListStep, with no pre-seed from
-  // the user's last onboarding run. The reset happens ONCE per visit;
-  // subsequent advances are normal.
+  // the user's last onboarding run.
+  //
+  // Audit fix (2026-05-23): the previous guard required
+  // `current_step === "completed"`, which silently skipped the reset
+  // for already-onboarded users whose state row was stuck mid-flow
+  // (e.g. cursor at "build" from an abandoned earlier session). They'd
+  // resume the abandoned facility's draft data instead of getting a
+  // fresh add-listing flow. We now reset whenever the user is onboarded
+  // (profiles.onboarding_completed_at is the canonical "finished
+  // onboarding" flag) AND the row isn't already pointing at a
+  // post-reset cursor. The reset is a no-op when the row's state
+  // already matches the target.
+  const addListingResetRef = useRef(false);
   useEffect(() => {
     if (!addListingIntent) return;
     if (!profile?.onboarding_completed_at) return; // only for onboarded users
     if (!stateRow) return;
-    // Already reset (cursor sitting at find_or_list/build with the
-    // new flow data) → do nothing.
-    if (stateRow.current_step !== "completed") return;
+    if (addListingResetRef.current) return; // run at most once per mount
+    // Row already in a clean post-reset state — no write needed.
+    if (
+      stateRow.current_step === "find_or_list" &&
+      !stateRow.selected_facility_id &&
+      !stateRow.mode
+    ) {
+      addListingResetRef.current = true;
+      return;
+    }
 
     let cancelled = false;
+    addListingResetRef.current = true;
     (async () => {
       try {
         await advance({
@@ -169,10 +203,50 @@ export default function ProviderOnboarding() {
         } as Partial<ProviderOnboardingStateRow>);
       } catch (e) {
         console.error("[Onboarding] add-listing state reset failed", e);
+        addListingResetRef.current = false; // allow retry on next render
       }
     })();
     return () => { cancelled = true; };
   }, [addListingIntent, profile?.onboarding_completed_at, stateRow, advance]);
+
+  // Anonymous-visitor slug guard: when a signed-out user arrives with
+  // ?intent=claim&facility_slug=<slug>, the signed-in pre-seed effect
+  // above doesn't run (no stateRow yet) — so the slug-lookup fallback
+  // only happens later inside AccountStep on first submit. Do a
+  // preflight here and toast immediately if the slug is dead, so the
+  // user knows before filling out the AccountStep form.
+  const anonSlugCheckedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (stateRow) return; // signed-in path handled by the effect above
+    if (profileLoading) return;
+    if (searchParams.get("intent") !== "claim") return;
+    const slug = searchParams.get("facility_slug");
+    const id = searchParams.get("facility_id");
+    const key = slug ?? id ?? "";
+    if (!key) return;
+    if (anonSlugCheckedRef.current === key) return;
+    anonSlugCheckedRef.current = key;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const base = supabase.from("public_facilities").select("id");
+        const { data } = slug
+          ? await base.eq("slug", slug).maybeSingle()
+          : await base.eq("id", id!).maybeSingle();
+        if (cancelled) return;
+        if (!data) {
+          toast.error(
+            "We couldn't find that facility — it may have been removed. You can search for it after signing in.",
+            { duration: 6000 },
+          );
+        }
+      } catch (e) {
+        console.warn("[Onboarding] anon slug preflight failed", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [stateRow, profileLoading, searchParams]);
 
   const queryStep = searchParams.get("step") as OnboardingStep | null;
   // Round-30 merge: when a signed-in user with a profile lands here

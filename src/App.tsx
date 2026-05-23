@@ -17,6 +17,7 @@ import { PublicRouteGuard } from "@/components/PublicRouteGuard";
 import { Layout } from "@/components/layout/Layout";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import { queryClient } from "@/lib/queryClient";
+import { safeReturnTo } from "@/lib/safeReturnTo";
  import { NavigationProvider } from "@/contexts/NavigationContext";
 
 // Eagerly load homepage for instant LCP
@@ -463,14 +464,6 @@ function NavigateOutpatientNearMe() {
 // previously-separate page files (AuthSignup.tsx, NewListingForm.tsx,
 // LegacyClaimRedirect.tsx, ClaimSubmitted.tsx) so the unified wizard is
 // the single page for the entire sign-up/claim/list workflow.
-
-function safeReturnTo(raw: string | null): string | null {
-  if (!raw) return null;
-  if (!raw.startsWith("/")) return null;
-  if (raw.startsWith("//")) return null;
-  if (raw.startsWith("/\\")) return null;
-  return raw;
-}
 
 /** /auth/signup → /provider/onboarding, preserving query params so deep
  *  links (intent=claim, facility_id=…, facility_slug=…) still trickle
