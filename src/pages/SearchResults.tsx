@@ -830,30 +830,11 @@ const SearchResults = () => {
   // Hide-on-scroll-down for the sticky results header — frees vertical
   // space for the listing cards once the user has committed to
   // browsing (mirrors the Yelp / Healthgrades sticky-bar pattern).
-  // Header reappears the instant the user scrolls back up so save /
-  // share / filter actions stay one swipe away.
-  const [headerHidden, setHeaderHidden] = useState(false);
-  const lastScrollY = useRef(0);
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      const delta = y - lastScrollY.current;
-      // Always show within 120px of the top so the bar doesn't blink
-      // away during small jitter.
-      if (y < 120) {
-        setHeaderHidden(false);
-      } else if (delta > 6) {
-        // Scrolling down — hide.
-        setHeaderHidden(true);
-      } else if (delta < -6) {
-        // Scrolling up — show.
-        setHeaderHidden(false);
-      }
-      lastScrollY.current = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  // Hide-on-scroll behavior removed in the 2026-05-23 directory-style
+  // rebuild — modern directory pages keep the search bar visible at
+  // the top of the page (non-sticky) and use a separate sticky toolbar
+  // for sort + filters. Auto-hiding chrome on scroll felt jittery and
+  // hid the inline search form right when the user might want it.
 
   const toggleFilterSection = useCallback((section: string) => {
     setOpenFilterSection(prev => prev === section ? null : section);
@@ -1138,119 +1119,77 @@ const SearchResults = () => {
         }) : undefined}
       />
 
-      {/* Directory results header — Healthgrades-style sticky bar with
-          result-count chip, location context, and quick actions. Card-
-          surface background + accent dividers give it a premium feel
-          while staying performant during scroll.
-          Hide-on-scroll-down: when the user scrolls down to browse,
-          the bar slides up and out so the listing cards get the full
-          viewport. Scroll up at any time to bring it back. */}
-      <div
-        className={cn(
-          "sticky top-[68px] z-30 border-b border-border bg-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-card/85 shadow-sm transition-transform duration-200 will-change-transform",
-          headerHidden && "-translate-y-full",
-        )}
-      >
+      {/* DIRECTORY HERO — top of the page, non-sticky. Replaces the old
+          Healthgrades-style sticky header that crammed back-link +
+          count-chip + filter pills + save + share + filter-toggle +
+          search form into one bar. New layout puts the SEARCH FORM
+          front-and-center (the page's primary affordance), then a
+          single line announcing the result count + location context.
+          Save / Share / Sort / Filters all live in a separate toolbar
+          inside the results column (rebuilt below). */}
+      <section className="border-b border-border bg-gradient-to-b from-secondary/30 via-secondary/15 to-background py-4 sm:py-5 md:py-7">
         <div className="container">
-          <div className="flex items-center justify-between gap-2 sm:gap-4 py-2.5">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <Link
-                to="/rehab-centers"
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors group shrink-0"
-                aria-label="Back to all centers"
-              >
-                <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
-                <span className="hidden sm:inline font-medium">Back</span>
-              </Link>
-              <div className="h-5 w-px bg-border shrink-0 hidden xs:block" />
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/20">
-                  <Search className="h-3 w-3" />
-                  <span className="tabular-nums">{filteredCenters.length}</span>
-                  <span className="hidden xs:inline">{filteredCenters.length === 1 ? "Center" : "Centers"}</span>
-                </div>
-                {(location || queryParam) && (
-                  <p className="text-xs text-muted-foreground hidden sm:block truncate">
-                    {queryParam ? `for "${queryParam}"` : (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {location}
-                      </span>
-                    )}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Active filter pills — compact, directory-style */}
-            {hasFilters && (
-              <div className="hidden md:flex items-center gap-1.5 flex-1 justify-center overflow-hidden max-w-md mx-4">
-                {queryParam && (
-                  <button onClick={() => clearFilter("q")} className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/8 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/15 transition-colors shrink-0">
-                    "{queryParam}" <X className="h-2.5 w-2.5" />
-                  </button>
-                )}
-                {location && (
-                  <button onClick={() => clearFilter("location")} className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/8 px-2.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/15 transition-colors shrink-0">
-                    <MapPin className="h-2.5 w-2.5" />{location} <X className="h-2.5 w-2.5" />
-                  </button>
-                )}
-                {activeFiltersCount > 0 && (
-                  <span className="text-xs text-muted-foreground shrink-0">+{activeFiltersCount} active</span>
-                )}
-              </div>
-            )}
-
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Save this search — opens dialog with alert frequency */}
-              <SaveSearchButton
-                criteria={savedSearchCriteria}
-                suggestedName={savedSearchSuggestedName}
-                searchUrl={savedSearchUrl}
-                resultCount={filteredCenters.length}
-              />
-
-              {/* Share search button — preserves all filters in URL */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={handleShare}
-                aria-label="Copy a shareable link to this search"
-                title="Share this search"
-              >
-                {shareCopied ? (
-                  <Check className="h-4 w-4 text-primary" />
-                ) : (
-                  <Share2 className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline">{shareCopied ? "Copied" : "Share"}</span>
-              </Button>
-
-              {/* Mobile filter toggle */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="lg:hidden gap-2"
-                onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                Filters
-                {activeFiltersCount > 0 && (
-                  <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-primary text-primary-foreground">
-                    {activeFiltersCount}
-                  </Badge>
-                )}
-              </Button>
-            </div>
+          {/* Back link — small, secondary, on its own row above the
+              search form so it doesn't compete for prominence. */}
+          <div className="mb-3 flex items-center gap-3">
+            <Link
+              to="/rehab-centers"
+              className="group inline-flex items-center gap-1 text-xs sm:text-sm text-muted-foreground hover:text-primary transition-colors"
+              aria-label="Back to all centers"
+            >
+              <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:-translate-x-0.5 transition-transform" />
+              <span className="font-medium">All centers</span>
+            </Link>
           </div>
 
-          {/* Inline search form — location + treatment + insurance */}
-          <div className="pb-3">
-            <SearchResultsForm />
+          {/* Search form — full width, prominent. The hero pattern. */}
+          <SearchResultsForm />
+
+          {/* Result-count + location summary. Replaces the old "Search
+              Results" h2 + chip pair AND the inline location subtitle
+              that used to live inside the result column header. */}
+          <div className="mt-4 flex items-end justify-between gap-3 flex-wrap">
+            <div className="min-w-0">
+              <h1 className="font-display text-xl sm:text-2xl md:text-[1.7rem] font-bold leading-tight tracking-tight text-foreground tabular-nums">
+                {filteredCenters.length.toLocaleString()}{" "}
+                <span className="font-bold">
+                  treatment {filteredCenters.length === 1 ? "center" : "centers"}
+                </span>
+                {queryParam && (
+                  <span className="text-muted-foreground font-medium">
+                    {" "}for &ldquo;{queryParam}&rdquo;
+                  </span>
+                )}
+              </h1>
+              {(location || effectiveLocation) && (
+                <p className="mt-1 text-xs sm:text-sm text-muted-foreground inline-flex items-center gap-1.5">
+                  <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary shrink-0" />
+                  {location ? (
+                    <>
+                      Near{" "}
+                      <span className="font-semibold text-foreground">
+                        {resolvedZipData
+                          ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr}`
+                          : location}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      Near{" "}
+                      <span className="font-semibold text-foreground">
+                        {effectiveLocation}
+                      </span>{" "}
+                      <span className="text-muted-foreground/70">
+                        (auto-detected)
+                      </span>
+                    </>
+                  )}
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Mobile Filter Overlay */}
       {mobileFiltersOpen && (
@@ -1378,143 +1317,168 @@ const SearchResults = () => {
                     </div>
                   )}
 
-                  {/* Active-filter chips — mobile-only. Lets seekers see and
-                      remove individual filters without re-opening the slide-
-                      out sheet. Desktop has the always-visible FilterSidebar
-                      so chips would be redundant there. (Phase 6C) */}
-                  {activeFiltersCount > 0 && (
-                    // -webkit-overflow-scrolling:touch gives iOS Safari its
-                    // momentum scroll; without it the chip strip felt locked
-                    // on touch even though it actually scrolled. The right
-                    // edge fade (mask-image) is the visual hint that more
-                    // chips exist past the viewport edge — replaces the
-                    // missing scrollbar.
-                    <div
-                      className="lg:hidden mb-3 -mx-3 px-3 overflow-x-auto no-scrollbar"
-                      style={{
-                        WebkitOverflowScrolling: "touch",
-                        maskImage: "linear-gradient(to right, black calc(100% - 24px), transparent)",
-                        WebkitMaskImage: "linear-gradient(to right, black calc(100% - 24px), transparent)",
-                      }}
-                    >
-                      <div className="flex items-center gap-1.5 min-w-min">
-                        {selectedTreatmentTypes.map((value) => (
-                          <button
-                            key={`tt-${value}`}
-                            type="button"
-                            onClick={() => toggleFilter("treatmentTypes", value, selectedTreatmentTypes)}
-                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
-                            aria-label={`Remove ${value} filter`}
-                          >
-                            <span className="truncate max-w-[140px]">{value}</span>
-                            <X className="h-3 w-3" />
-                          </button>
-                        ))}
-                        {selectedInsuranceTypes.map((value) => (
-                          <button
-                            key={`ins-${value}`}
-                            type="button"
-                            onClick={() => toggleFilter("insuranceTypes", value, selectedInsuranceTypes)}
-                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
-                            aria-label={`Remove ${value} filter`}
-                          >
-                            <span className="truncate max-w-[140px]">{value}</span>
-                            <X className="h-3 w-3" />
-                          </button>
-                        ))}
-                        {selectedAmenities.map((value) => (
-                          <button
-                            key={`am-${value}`}
-                            type="button"
-                            onClick={() => toggleFilter("amenities", value, selectedAmenities)}
-                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
-                            aria-label={`Remove ${value} filter`}
-                          >
-                            <span className="truncate max-w-[140px]">{value}</span>
-                            <X className="h-3 w-3" />
-                          </button>
-                        ))}
-                        {selectedDistance && (
-                          <button
-                            type="button"
-                            onClick={() => setSingleFilter("distance", "")}
-                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
-                            aria-label="Remove distance filter"
-                          >
-                            <span>Within {selectedDistance} mi</span>
-                            <X className="h-3 w-3" />
-                          </button>
-                        )}
-                        {verifiedOnly && (
-                          <button
-                            type="button"
-                            onClick={() => toggleBooleanFilter("verified", true)}
-                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
-                            aria-label="Remove verified-only filter"
-                          >
-                            <span>Verified only</span>
-                            <X className="h-3 w-3" />
-                          </button>
-                        )}
-                        {featuredOnly && (
-                          <button
-                            type="button"
-                            onClick={() => toggleBooleanFilter("featuredOnly", true)}
-                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
-                            aria-label="Remove featured-only filter"
-                          >
-                            <span>Featured only</span>
-                            <X className="h-3 w-3" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={clearAllFilters}
-                          className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40"
-                          aria-label="Clear all filters"
-                        >
-                          Clear all
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  {/* TOOLBAR — directory-style controls row. Unifies the
+                      old mobile-only chip strip + desktop-only filter
+                      pills + results-summary header + action buttons
+                      into ONE row. Renders above the cards on every
+                      breakpoint. On lg+ it sits under the FeaturedRail
+                      (or directly under the hero if no featured pool).
 
-                  {/* Results Summary — directory-style header with
-                      result-range chip + sorted-by line. */}
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="font-display text-lg font-bold text-foreground">
-                          Search Results
-                        </h2>
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/20 tabular-nums">
-                          {(safePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safePage * ITEMS_PER_PAGE, filteredCenters.length)} of {filteredCenters.length}
+                      Layout:
+                        LEFT  — page indicator (N of M, range chip)
+                                + active filter chips (horizontally
+                                scrollable on mobile when overflowing)
+                                + "Clear all" pill when any filter is set
+                        RIGHT — Filters trigger (mobile only), Save,
+                                Share. Sort lives inside the filter
+                                sidebar (and the mobile sheet) so it
+                                doesn't compete here.
+
+                      `sticky top-[68px] z-20` keeps the toolbar pinned
+                      to the top of the main scroll area on lg+ so the
+                      controls remain reachable during long-list scroll.
+                      On mobile the toolbar is in normal flow — the
+                      browser scroll-to-top is the recovery affordance. */}
+                  <div className="mb-4 lg:sticky lg:top-[68px] lg:z-20 lg:bg-background/95 lg:backdrop-blur-sm lg:py-2 lg:-mx-2 lg:px-2">
+                    <div className="flex items-center justify-between gap-3">
+                      {/* LEFT cluster: range + chips */}
+                      <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                        <span className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary ring-1 ring-primary/20 tabular-nums">
+                          {(safePage - 1) * ITEMS_PER_PAGE + 1}–
+                          {Math.min(safePage * ITEMS_PER_PAGE, filteredCenters.length)}
+                          {" "}of {filteredCenters.length.toLocaleString()}
                         </span>
+
+                        {/* Active filter chips — single horizontal
+                            row, scrollable on overflow. Replaces both
+                            the old desktop pills and mobile chip
+                            strip (which were redundant). */}
+                        {activeFiltersCount > 0 && (
+                          <div
+                            className="flex items-center gap-1.5 overflow-x-auto no-scrollbar -my-1 py-1"
+                            style={{
+                              WebkitOverflowScrolling: "touch",
+                              maskImage: "linear-gradient(to right, black calc(100% - 24px), transparent)",
+                              WebkitMaskImage: "linear-gradient(to right, black calc(100% - 24px), transparent)",
+                            }}
+                          >
+                            {selectedTreatmentTypes.map((value) => (
+                              <button
+                                key={`tt-${value}`}
+                                type="button"
+                                onClick={() => toggleFilter("treatmentTypes", value, selectedTreatmentTypes)}
+                                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
+                                aria-label={`Remove ${value} filter`}
+                              >
+                                <span className="truncate max-w-[140px]">{value}</span>
+                                <X className="h-3 w-3" />
+                              </button>
+                            ))}
+                            {selectedInsuranceTypes.map((value) => (
+                              <button
+                                key={`ins-${value}`}
+                                type="button"
+                                onClick={() => toggleFilter("insuranceTypes", value, selectedInsuranceTypes)}
+                                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
+                                aria-label={`Remove ${value} filter`}
+                              >
+                                <span className="truncate max-w-[140px]">{value}</span>
+                                <X className="h-3 w-3" />
+                              </button>
+                            ))}
+                            {selectedAmenities.map((value) => (
+                              <button
+                                key={`am-${value}`}
+                                type="button"
+                                onClick={() => toggleFilter("amenities", value, selectedAmenities)}
+                                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
+                                aria-label={`Remove ${value} filter`}
+                              >
+                                <span className="truncate max-w-[140px]">{value}</span>
+                                <X className="h-3 w-3" />
+                              </button>
+                            ))}
+                            {selectedDistance && (
+                              <button
+                                type="button"
+                                onClick={() => setSingleFilter("distance", "")}
+                                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
+                                aria-label="Remove distance filter"
+                              >
+                                <span>Within {selectedDistance} mi</span>
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                            {verifiedOnly && (
+                              <button
+                                type="button"
+                                onClick={() => toggleBooleanFilter("verified", true)}
+                                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
+                                aria-label="Remove verified-only filter"
+                              >
+                                <span>Verified</span>
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                            {featuredOnly && (
+                              <button
+                                type="button"
+                                onClick={() => toggleBooleanFilter("featuredOnly", true)}
+                                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
+                                aria-label="Remove featured-only filter"
+                              >
+                                <span>Featured</span>
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={clearAllFilters}
+                              className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                              aria-label="Clear all filters"
+                            >
+                              Clear all
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      {(location || effectiveLocation) && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                          <Compass className="h-3 w-3 text-primary" />
-                          {location ? (
-                            <>Near <span className="font-medium text-foreground">{resolvedZipData ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr}` : location}</span> · sorted by relevance</>
-                          ) : (
-                            <>Near <span className="font-medium text-foreground">{effectiveLocation}</span> <span className="text-muted-foreground/60">(auto)</span></>
+
+                      {/* RIGHT cluster: Filters (mobile) · Save · Share */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="lg:hidden gap-1.5"
+                          onClick={() => setMobileFiltersOpen(true)}
+                          aria-label="Open filters and sort"
+                        >
+                          <SlidersHorizontal className="h-4 w-4" />
+                          <span className="hidden xs:inline">Filters</span>
+                          {activeFiltersCount > 0 && (
+                            <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-primary text-primary-foreground">
+                              {activeFiltersCount}
+                            </Badge>
                           )}
-                        </p>
-                      )}
-                    </div>
-                    {(location || effectiveLocation) && (
-                      <div className="hidden xl:flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
-                          <MapPin className="h-2.5 w-2.5" /> Exact
-                        </span>
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-blue-100 text-blue-700">
-                          <Building2 className="h-2.5 w-2.5" /> City
-                        </span>
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-purple-100 text-purple-700">
-                          <Navigation className="h-2.5 w-2.5" /> State
-                        </span>
+                        </Button>
+                        <SaveSearchButton
+                          criteria={savedSearchCriteria}
+                          suggestedName={savedSearchSuggestedName}
+                          searchUrl={savedSearchUrl}
+                          resultCount={filteredCenters.length}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={handleShare}
+                          aria-label="Copy a shareable link to this search"
+                          title="Share this search"
+                        >
+                          {shareCopied ? <Check className="h-4 w-4 text-primary" /> : <Share2 className="h-4 w-4" />}
+                          <span className="hidden sm:inline">{shareCopied ? "Copied" : "Share"}</span>
+                        </Button>
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* Results List */}
