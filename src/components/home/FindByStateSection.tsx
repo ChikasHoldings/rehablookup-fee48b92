@@ -100,14 +100,14 @@ export function FindByStateSection() {
     );
   }
 
-  // Top 10 states by facility count, descending. The card row is
-  // horizontally scrollable but capped at 10 so the homepage strip
-  // stays curated — a directory of all 50 would dilute the "top
-  // states" signal seekers want from the homepage. Full 50-state
-  // browse remains one click away via the "Browse all 50 states"
-  // CTA in the section header.
+  // Top 5 states by facility count, descending. The card row remains
+  // horizontally scrollable for narrow viewports but caps at 5 so the
+  // homepage strip stays curated and lean — 5 hero states is the
+  // canonical "top states" surface seekers expect on a directory
+  // homepage. Full 50-state browse remains one click away via the
+  // "Browse all 50 states" CTA in the section header.
   //
-  // Falls back to a curated 10-state "high-quality imagery" list
+  // Falls back to a curated 5-state "high-quality imagery" list
   // before the snapshot resolves so first paint isn't a wall of
   // remote Unsplash thumbnails on cold load.
   const allStates = useMemo(() => {
@@ -118,9 +118,9 @@ export function FindByStateSection() {
     const ranked = [...withCounts].sort((a, b) => b.count - a.count);
     const allZero = ranked.every((s) => s.count === 0);
     if (allZero) {
-      return FALLBACK_TOP.slice(0, 10).map((name) => ({ name, count: 0 }));
+      return FALLBACK_TOP.slice(0, 5).map((name) => ({ name, count: 0 }));
     }
-    return ranked.slice(0, 10);
+    return ranked.slice(0, 5);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countByState]);
 
@@ -363,7 +363,7 @@ export function FindByStateSection() {
               canScrollLeft ? "opacity-0" : "opacity-100"
             }`}
           >
-            Swipe to see top {allStates.length} states →
+            Swipe to see top 5 states →
           </p>
         </div>
       </div>
