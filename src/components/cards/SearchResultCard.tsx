@@ -122,9 +122,19 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
   const initials = getInitials(center.name);
   const hasValidLogo = center.logo_url && !logoError;
   const showFeaturedBadge = center.hasFeaturedSubscription || featured;
-  
+
   const heroImage = center.gallery_urls?.[0] || center.image;
   const hasValidHeroImage = heroImage && !heroImageError;
+  // 2026-05-23: once a facility has any uploaded photo/logo, the
+  // "stock building" placeholder should never appear on its card —
+  // even if the configured URL fails to load (broken storage signature,
+  // 404, etc.). For that case we fall back to an initials block keyed
+  // to the facility name (consistent with the logo fallback below)
+  // instead of the generic building illustration. The building
+  // placeholder is reserved for facilities with NO real image
+  // configured at all.
+  const hasAnyRealImageConfigured =
+    !!center.gallery_urls?.[0] || !!center.image || !!center.logo_url;
   
   const yearsInBusiness = center.year_established 
     ? new Date().getFullYear() - center.year_established 
@@ -202,8 +212,8 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
           <div className="aspect-[16/10] md:aspect-auto md:h-full md:min-h-[180px]">
             {hasValidHeroImage ? (
               <>
-                <img 
-                  src={heroImage!} 
+                <img
+                  src={heroImage!}
                   alt={`${center.name} treatment facility exterior in ${center.city}, ${center.state}`}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
@@ -211,14 +221,27 @@ export const SearchResultCard = memo(forwardRef<HTMLElement, SearchResultCardPro
                   fetchPriority="auto"
                   onError={() => setHeroImageError(true)}
                 />
-                {/* Subtle overlay for text readability */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" aria-hidden="true" />
               </>
+            ) : hasAnyRealImageConfigured ? (
+              // Real image WAS uploaded by the provider but the URL
+              // failed to load. Skip the stock building placeholder
+              // (would be misleading — "this facility has no photos"
+              // when it actually does) and render the facility-
+              // identity block instead.
+              <div
+                aria-label={`${center.name} — uploaded image temporarily unavailable`}
+                className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5"
+              >
+                <span className="font-display text-3xl font-bold text-primary">
+                  {initials}
+                </span>
+              </div>
             ) : (
               <>
                 <img
                   src={getFacilityPlaceholder(center)}
-                  alt={`${center.name} treatment facility placeholder image`}
+                  alt={`${center.name} treatment facility illustration`}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
                   decoding="async"

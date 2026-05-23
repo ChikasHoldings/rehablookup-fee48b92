@@ -690,6 +690,13 @@ const CenterProfile = () => {
   const galleryImages = facility.gallery_urls?.filter(Boolean) || [];
   const initials = getInitials(facility.name);
   const hasValidLogo = facility.logo_url && !logoError;
+  // 2026-05-23: same fallback ladder as the directory cards — when
+  // the facility has uploaded any photo/logo, never fall back to the
+  // generic stock-building placeholder on this profile (would
+  // misleadingly imply the provider hasn't added any media). The
+  // building illustration is reserved for never-uploaded facilities.
+  const hasAnyRealImageConfigured =
+    galleryImages.length > 0 || !!facility.logo_url;
   // The public profile route never resolves `facility.user_id` (the view
   // doesn't expose it and the queryFn forces it to null), so ownership can
   // never be detected here. Owners who want an "edit my listing" experience
@@ -842,8 +849,8 @@ const CenterProfile = () => {
             {/* Hero Image — bg-muted reserves a colored placeholder so swap-in is invisible */}
             <div className="relative h-52 md:h-72 overflow-hidden bg-muted">
               {galleryImages.length > 0 ? (
-                <img 
-                  src={galleryImages[0]} 
+                <img
+                  src={galleryImages[0]}
                   alt={facility.name}
                   className="w-full h-full object-cover"
                   width={800}
@@ -852,10 +859,24 @@ const CenterProfile = () => {
                   decoding="async"
                   fetchPriority="high"
                 />
+              ) : hasAnyRealImageConfigured ? (
+                // The facility has a logo uploaded (just no gallery
+                // photos yet). Render an initials block keyed to the
+                // facility name rather than a generic stock-building
+                // illustration — keeps the hero identity-consistent
+                // with the logo + name already present below.
+                <div
+                  aria-label={`${facility.name} — header image`}
+                  className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5"
+                >
+                  <span className="font-display text-5xl md:text-6xl font-bold text-primary">
+                    {initials}
+                  </span>
+                </div>
               ) : (
                 <img
                   src={getFacilityPlaceholder(facility)}
-                  alt={`${facility.name} facility`}
+                  alt={`${facility.name} facility illustration`}
                   className="w-full h-full object-cover"
                   width={800}
                   height={400}

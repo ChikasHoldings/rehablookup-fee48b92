@@ -3,6 +3,12 @@ import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getCachedSession } from "@/lib/sessionCache";
+// 2026-05-23: import the public-snapshot query key so save handlers
+// can invalidate it alongside the provider-scoped keys. Without this,
+// homepage Featured + /search-results cards kept the cached
+// (placeholder-fallback) row for up to 5 minutes after a provider
+// uploaded photos, even though the DB row was already updated.
+import { PUBLIC_FACILITIES_QUERY_KEY } from "@/hooks/useStaticFacilities";
 import { sanitizeText, sanitizeFacilityName, validateFacilityType, validateState, validateZipCode, validatePhone, validateEmail, sanitizeDescription, sanitizeWebsite, validateYearEstablished } from "@/lib/facilitySanitization";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -608,6 +614,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         queryClient.invalidateQueries({ queryKey: ["provider-data"] });
         queryClient.invalidateQueries({ queryKey: ["provider-facilities"] });
         queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        queryClient.invalidateQueries({ queryKey: PUBLIC_FACILITIES_QUERY_KEY });
         queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
         setHasChanges(false);
         setShowSaved(true);
@@ -769,6 +776,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
         queryClient.invalidateQueries({ queryKey: ["facility-services-count", currentFacilityId] });
         queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", currentFacilityId] });
         queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        queryClient.invalidateQueries({ queryKey: PUBLIC_FACILITIES_QUERY_KEY });
         queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
         setTimeout(() => setShowSaved(false), 2000);
 
@@ -943,6 +951,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       refetchServices();
       queryClient.invalidateQueries({ queryKey: ["facility-services-count", facility.id] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+      queryClient.invalidateQueries({ queryKey: PUBLIC_FACILITIES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       toast({ title: toAdd.length > 0 ? "Services updated" : "Service removed" });
     } catch (err) {
@@ -980,6 +989,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       refetchInsurance();
       queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+      queryClient.invalidateQueries({ queryKey: PUBLIC_FACILITIES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       toast({ title: toAdd.length > 0 ? "Insurance updated" : "Insurance removed" });
     } catch (err) {
@@ -1016,6 +1026,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
 
       refetchAgeGroups();
       queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+      queryClient.invalidateQueries({ queryKey: PUBLIC_FACILITIES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       toast({ title: toAdd.length > 0 ? "Age groups updated" : "Age group removed" });
     } catch (err) {
@@ -1037,6 +1048,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       if (facility) {
         queryClient.invalidateQueries({ queryKey: ["facility-services-count", facility.id] });
         queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        queryClient.invalidateQueries({ queryKey: PUBLIC_FACILITIES_QUERY_KEY });
         queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       }
     }
@@ -1055,6 +1067,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       if (facility) {
         queryClient.invalidateQueries({ queryKey: ["facility-insurance-count", facility.id] });
         queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        queryClient.invalidateQueries({ queryKey: PUBLIC_FACILITIES_QUERY_KEY });
         queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       }
     }
@@ -1072,6 +1085,7 @@ export default function ListingEditor({ facilityId: propFacilityId }: ListingEdi
       refetchAgeGroups();
       if (facility) {
         queryClient.invalidateQueries({ queryKey: ["approved-facilities"] });
+        queryClient.invalidateQueries({ queryKey: PUBLIC_FACILITIES_QUERY_KEY });
         queryClient.invalidateQueries({ queryKey: ["facility", facility.slug] });
       }
     }

@@ -91,7 +91,15 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
   
   const heroImage = center.gallery_urls?.[0] || center.image;
   const hasValidHeroImage = heroImage && !heroImageError;
-  
+  // 2026-05-23: see SearchResultCard for the same fallback ladder.
+  // When the provider has uploaded anything but the URL fails to
+  // load, render an initials block keyed to the facility — never the
+  // generic stock-building placeholder, which would misleadingly
+  // imply the facility has no photos uploaded.
+  const hasAnyRealImageConfigured =
+    !!center.gallery_urls?.[0] || !!center.image || !!center.logo_url;
+
+
   const yearsInBusiness = center.year_established 
     ? new Date().getFullYear() - center.year_established 
     : null;
@@ -352,22 +360,32 @@ export const TreatmentCenterCard = memo(forwardRef<HTMLElement, TreatmentCenterC
       <div className="relative aspect-[16/9] overflow-hidden bg-muted">
         {hasValidHeroImage ? (
           <>
-            <img 
-              src={heroImage!} 
+            <img
+              src={heroImage!}
               alt={`${center.name} treatment facility exterior in ${center.city}, ${center.state}`}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
               decoding="async"
               onError={() => setHeroImageError(true)}
             />
-            {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
           </>
+        ) : hasAnyRealImageConfigured ? (
+          // Real image WAS uploaded but the URL failed to load — fall
+          // back to an initials block, not the stock building.
+          <div
+            aria-label={`${center.name} — uploaded image temporarily unavailable`}
+            className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5"
+          >
+            <span className="font-display text-4xl font-bold text-primary">
+              {initials}
+            </span>
+          </div>
         ) : (
           <>
             <img
               src={getFacilityPlaceholder(center)}
-              alt={`${center.name} treatment facility placeholder image`}
+              alt={`${center.name} treatment facility illustration`}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
               decoding="async"
