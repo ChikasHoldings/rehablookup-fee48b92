@@ -124,7 +124,12 @@ export function CompareTray() {
                 <button
                   type="button"
                   onClick={() => removeFromCompare(f.id)}
-                  className="flex h-8 w-8 items-center justify-center rounded-md opacity-60 hover:opacity-100 hover:text-rose-500 hover:bg-muted/40 transition-all"
+                  // Hardening (2026-05-23): h-10 on mobile satisfies the
+                  // iOS 44px-ish tap-target floor (40px is the practical
+                  // minimum the rest of the codebase aims for via
+                  // Button primitive `sm:h-9` ladder). Desktop stays
+                  // compact so the tray row doesn't bloat.
+                  className="flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-md opacity-60 hover:opacity-100 hover:text-rose-500 hover:bg-muted/40 transition-all"
                   aria-label={`Remove ${f.name} from compare`}
                 >
                   <X className="h-4 w-4" />

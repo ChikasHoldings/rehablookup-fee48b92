@@ -472,12 +472,20 @@ export function Header({
           (Was h-[68px] when header was position: fixed.) */}
 
       {/* Mobile Menu Overlay */}
-      <div 
+      <div
         className={cn(
           "fixed inset-0 z-[100] md:hidden transition-all duration-400",
           mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
-        onClick={() => setMobileMenuOpen(false)}
+        // Hardening (2026-05-23): also reset the expanded-submenu state
+        // on backdrop click. Without this, reopening the menu shows
+        // whichever sub-section ("Find Rehab", "Resources", etc.) was
+        // expanded when the user dismissed it — violating the
+        // "menu closed = state reset" expectation.
+        onClick={() => {
+          setMobileMenuOpen(false);
+          setMobileExpandedMenu(null);
+        }}
       >
         <div className={cn(
           "absolute inset-0 bg-foreground/50 backdrop-blur-sm transition-all duration-400",
