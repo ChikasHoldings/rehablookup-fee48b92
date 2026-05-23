@@ -33,7 +33,6 @@ import {
   ChevronDown,
   Navigation,
   CreditCard,
-  Compass,
   Share2,
   Check
 } from "lucide-react";
@@ -840,26 +839,31 @@ const SearchResults = () => {
     setOpenFilterSection(prev => prev === section ? null : section);
   }, []);
 
-  // Collapsible filter section component
+  // Collapsible filter section. Hairline-divided rows (no per-section
+  // border/rounded box) — each section is a button-header + collapsible
+  // body separated from siblings by the divide-y on the parent. Result
+  // is a clean tabular feel, similar to Airbnb / Yelp's filter panels.
   const FilterSection = ({ id, icon, label, children, count }: { id: string; icon: ReactNode; label: string; children: ReactNode; count?: number }) => {
     const isOpen = openFilterSection === id;
     return (
-      <div className="border border-border/60 rounded-xl overflow-hidden transition-all">
+      <div>
         <button
+          type="button"
           onClick={() => toggleFilterSection(id)}
-          className="w-full flex items-center justify-between px-3.5 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors"
+          className="w-full flex items-center justify-between py-3.5 text-sm font-semibold text-foreground hover:text-primary transition-colors"
+          aria-expanded={isOpen}
         >
           <span className="flex items-center gap-2.5">
-            {icon}
+            <span className="text-muted-foreground">{icon}</span>
             {label}
             {count && count > 0 ? (
-              <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-bold bg-primary/10 text-primary">{count}</Badge>
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground tabular-nums">{count}</span>
             ) : null}
           </span>
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
         </button>
         <div className={`overflow-hidden transition-all duration-200 ${isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}>
-          <div className="px-3.5 pb-3.5 pt-1">
+          <div className="pb-4 pt-0">
             {children}
           </div>
         </div>
@@ -867,17 +871,18 @@ const SearchResults = () => {
     );
   };
 
-  // Sidebar filter content — reused for desktop and mobile
+  // Sidebar filter content — reused for desktop card and mobile sheet.
+  // `divide-y` between sections gives the hairline structure; sort sits
+  // at the top as a FilterSection (consistent chrome) instead of its
+  // own special heading + Select.
   const FilterSidebar = () => (
-    <div className="space-y-2">
-      {/* Sort — always visible */}
-      <div className="pb-3 mb-1">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-          <ArrowUpDown className="h-3.5 w-3.5" />
-          Sort By
-        </h3>
+    <div className="divide-y divide-border/70">
+      {/* Sort — same FilterSection chrome as everything else so the
+          sidebar reads as one consistent column. Defaults open since
+          sort is the most likely first interaction. */}
+      <FilterSection id="sort" icon={<ArrowUpDown className="h-3.5 w-3.5" />} label="Sort by">
         <Select value={sortParam} onValueChange={(v) => handleSortChange(v as SortOption)}>
-          <SelectTrigger className="w-full h-9 text-sm border-border bg-card">
+          <SelectTrigger className="w-full h-10 text-sm border-border bg-background">
             <SelectValue placeholder="Sort" />
           </SelectTrigger>
           <SelectContent className="bg-card border-border shadow-lg">
@@ -888,7 +893,7 @@ const SearchResults = () => {
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </FilterSection>
 
       {/* Treatment Type — single-select dropdown. Options come from
           src/lib/searchFilters.ts; facet badge shows how many facilities
@@ -1054,40 +1059,46 @@ const SearchResults = () => {
         </div>
       </FilterSection>
 
-      {/* Clear All */}
+      {/* Clear-all — appears at the bottom of the divider stack as
+          its own row when any filter is active. */}
       {activeFiltersCount > 0 && (
-        <>
-          <div className="h-px bg-border" />
-          <Button
-            variant="ghost"
-            size="sm"
+        <div className="pt-3">
+          <button
+            type="button"
             onClick={clearAllFilters}
-            className="w-full text-muted-foreground hover:text-destructive gap-2"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-colors"
           >
             <X className="h-4 w-4" />
-            Clear All Filters ({activeFiltersCount})
-          </Button>
-        </>
-      )}
-
-      {/* Concierge CTA */}
-      <div className="rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 border border-primary/15">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
-            <img src={supportSpecialistImg} alt="RehabLookup support specialist" className="w-full h-full object-cover object-top scale-110" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-foreground">Need Help?</p>
-            <p className="text-xs text-muted-foreground">Free guidance</p>
-          </div>
+            Clear all filters ({activeFiltersCount})
+          </button>
         </div>
-        <Link to="/concierge">
-          <Button size="sm" className="w-full gap-2 text-xs">
-            <Heart className="h-3.5 w-3.5" />
-            Get Matched Free
-          </Button>
-        </Link>
+      )}
+    </div>
+  );
+
+  // Concierge CTA — rendered OUTSIDE the FilterSidebar component so it
+  // sits below the divider stack with its own breathing room. Was
+  // previously the last child of FilterSidebar which made it inherit
+  // the new divide-y rule and stack visually adjacent to the filter
+  // sections; the standalone block reads more like a contextual
+  // affordance, less like another filter.
+  const ConciergeSidebarCTA = () => (
+    <div className="mt-5 rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 border border-primary/15">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="relative h-10 w-10 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
+          <img src={supportSpecialistImg} alt="RehabLookup support specialist" className="h-full w-full object-cover object-top scale-110" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-foreground">Need help choosing?</p>
+          <p className="text-xs text-muted-foreground">Free, confidential guidance</p>
+        </div>
       </div>
+      <Link to="/concierge">
+        <Button size="sm" className="w-full gap-2 text-xs">
+          <Heart className="h-3.5 w-3.5" />
+          Get Matched Free
+        </Button>
+      </Link>
     </div>
   );
 
@@ -1142,52 +1153,31 @@ const SearchResults = () => {
             </Link>
           </div>
 
-          {/* Search form — full width, prominent. The hero pattern. */}
+          {/* Search form — the page's primary affordance, hero-treated
+              with full-width prominence. */}
           <SearchResultsForm />
 
-          {/* Result-count + location summary. Replaces the old "Search
-              Results" h2 + chip pair AND the inline location subtitle
-              that used to live inside the result column header. */}
-          <div className="mt-4 flex items-end justify-between gap-3 flex-wrap">
-            <div className="min-w-0">
-              <h1 className="font-display text-xl sm:text-2xl md:text-[1.7rem] font-bold leading-tight tracking-tight text-foreground tabular-nums">
-                {filteredCenters.length.toLocaleString()}{" "}
-                <span className="font-bold">
-                  treatment {filteredCenters.length === 1 ? "center" : "centers"}
-                </span>
-                {queryParam && (
-                  <span className="text-muted-foreground font-medium">
-                    {" "}for &ldquo;{queryParam}&rdquo;
-                  </span>
-                )}
-              </h1>
-              {(location || effectiveLocation) && (
-                <p className="mt-1 text-xs sm:text-sm text-muted-foreground inline-flex items-center gap-1.5">
-                  <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary shrink-0" />
-                  {location ? (
-                    <>
-                      Near{" "}
-                      <span className="font-semibold text-foreground">
-                        {resolvedZipData
-                          ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr}`
-                          : location}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      Near{" "}
-                      <span className="font-semibold text-foreground">
-                        {effectiveLocation}
-                      </span>{" "}
-                      <span className="text-muted-foreground/70">
-                        (auto-detected)
-                      </span>
-                    </>
-                  )}
-                </p>
-              )}
-            </div>
-          </div>
+          {/* Location subtitle. Single quiet line under the search
+              form. Renders "Near <city, state>" whether the location
+              came from the user (explicit `?location=`) or geo-IP
+              (effectiveLocation fallback) — the chrome no longer
+              distinguishes the two ("(auto-detected)" label removed
+              per the 2026-05-23 cleanup). Result count + queryParam
+              context are NOT surfaced here anymore — they live
+              inside the toolbar's range chip below. */}
+          {(location || effectiveLocation) && (
+            <p className="mt-4 text-xs sm:text-sm text-muted-foreground inline-flex items-center gap-1.5">
+              <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary shrink-0" aria-hidden />
+              Near{" "}
+              <span className="font-semibold text-foreground">
+                {location
+                  ? (resolvedZipData
+                      ? `${resolvedZipData.city}, ${resolvedZipData.stateAbbr}`
+                      : location)
+                  : effectiveLocation}
+              </span>
+            </p>
+          )}
         </div>
       </section>
 
@@ -1211,6 +1201,7 @@ const SearchResults = () => {
             </div>
             <div className="p-4 flex-1 overflow-y-auto">
               <FilterSidebar />
+              <ConciergeSidebarCTA />
             </div>
             {/* Sticky "Show results" footer — closes the sheet and confirms the
                 filter set is applied. Matches iOS / Android filter-sheet
@@ -1233,44 +1224,48 @@ const SearchResults = () => {
       <div className="bg-gradient-to-b from-secondary/20 to-background min-h-screen">
         <div className="container py-6">
           <div className="flex gap-6 xl:gap-8">
-            {/* Left Sidebar — Desktop Only */}
-            <aside className="hidden lg:block w-[300px] xl:w-[340px] shrink-0">
-              <div className="sticky top-[188px] max-h-[calc(100vh-200px)] overflow-y-auto rounded-2xl border border-border bg-card shadow-sm p-5 xl:p-6 scrollbar-thin">
-                {/* Sidebar Header */}
-                <div className="flex items-center gap-2 mb-5 pb-4 border-b border-border">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shrink-0">
-                    <SlidersHorizontal className="h-4 w-4 text-primary-foreground" />
+            {/* Left Sidebar — Desktop Only.
+                Sticky `top-[88px]` aligns the sidebar's top with the
+                viewport area just below the global nav (~68 px) +
+                a small breathing buffer. Previous `top-[188px]` was
+                inherited from the old sticky directory header which
+                no longer exists, so the sidebar started awkwardly
+                far down the page.
+
+                Visual chrome simplified: single hairline card
+                (`border` + `rounded-2xl` only — no shadow stack)
+                with a tighter header that drops the "Narrow your
+                results" filler subtitle. The sidebar now reads as a
+                clean controls panel, not a card-on-card. */}
+            <aside className="hidden lg:block w-[290px] xl:w-[320px] shrink-0">
+              <div className="sticky top-[88px] max-h-[calc(100vh-110px)] overflow-y-auto scrollbar-thin">
+                <div className="rounded-2xl border border-border bg-card p-5">
+                  {/* Sidebar header — compact, single-line */}
+                  <div className="flex items-center justify-between mb-2 pb-3 border-b border-border">
+                    <h2 className="text-sm font-bold text-foreground inline-flex items-center gap-2">
+                      <SlidersHorizontal className="h-4 w-4 text-primary" />
+                      Filters
+                    </h2>
+                    {activeFiltersCount > 0 && (
+                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground tabular-nums">
+                        {activeFiltersCount}
+                      </span>
+                    )}
                   </div>
-                  <div className="min-w-0">
-                    <h2 className="text-sm font-bold text-foreground">Filters</h2>
-                    <p className="text-xs text-muted-foreground">Narrow your results</p>
-                  </div>
+                  <FilterSidebar />
                 </div>
-                <FilterSidebar />
+                <ConciergeSidebarCTA />
               </div>
             </aside>
 
             {/* Right Content — Results */}
             <main className="flex-1 min-w-0">
-              {/* Auto-detected-location banner. Renders when the user did
-                  NOT supply a `?location=` AND has no seeker-profile city/state,
-                  but geo-IP successfully resolved to a US state. Tells the
-                  visitor *why* their results look local. The "Change" CTA
-                  scrolls to (or focuses) the inline SearchResultsForm so
-                  they can override without hunting for the field. */}
-              {!location && !seekerProfile?.state && !geo.isLoading && geo.regionCode && geo.isUS && effectiveLocation && (
-                <div className="mb-4 rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 flex items-start gap-3">
-                  <Compass className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">
-                      Showing facilities near <span className="font-semibold">{effectiveLocation}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Detected from your location. Type a ZIP code or city above to search a different area.
-                    </p>
-                  </div>
-                </div>
-              )}
+              {/* Auto-detected-location banner removed per the
+                  2026-05-23 cleanup. The geo-IP detection itself
+                  still runs (effectiveLocation drives the proximity
+                  sort) — the chrome around it is gone. The hero's
+                  "Near <city, state>" subtitle is the only surface
+                  that hints at the detected location. */}
 
               {/* Featured rail — bucket resolved from current filters.
                   city+state → (city, slug); state only → (state, abbr);
