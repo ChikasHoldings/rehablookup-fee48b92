@@ -268,17 +268,21 @@ const CenterProfile = () => {
   // empty segments, query-style noise, path traversal, etc.) is treated
   // as an invalid route and redirected to the directory rather than
   // attempting a DB lookup that will always miss.
-  const SLUG_FORMAT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+  // Consecutive hyphens are allowed because the persisted-slug generator
+  // emits "company-name-inc--city-state-hash" for facilities whose legal
+  // name ends in punctuation (INC., LLC,, MMRS )). 537 of 3,803 approved
+  // rows have this shape — see the matching note on normalizeSlug.
+  const SLUG_FORMAT = /^[a-z0-9]+(?:-+[a-z0-9]+)*$/;
 
   // Runtime route validation:
   //   1. Decode any percent-encoded segment (so `/center/Foo%20Bar` becomes
   //      `Foo Bar` and can be normalized).
   //   2. Run through `normalizeSlug` — trims whitespace, lowercases,
   //      collapses internal whitespace runs into single hyphens, strips
-  //      leading/trailing hyphens.
+  //      leading/trailing hyphens. (Does NOT collapse `--`, see slugUtils.)
   //   3. If the normalized form differs from the raw param AND is valid,
   //      we redirect (replace) to the canonical lowercase URL. This covers
-  //      mixed-case, whitespace, and accidental double-hyphens.
+  //      mixed-case and whitespace differences; double-hyphens flow through.
   //   4. If even the normalized form fails `SLUG_FORMAT`, the slug
   //      contains illegal characters (punctuation, unicode, traversal
   //      attempts, etc.) and we fall through to the CenterNotFound

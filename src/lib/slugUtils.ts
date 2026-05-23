@@ -23,8 +23,15 @@
  * - Trims surrounding whitespace
  * - Lowercases
  * - Collapses internal whitespace runs to a single hyphen
- * - Collapses repeated hyphens to a single hyphen
  * - Strips leading/trailing hyphens
+ *
+ * Does NOT collapse repeated internal hyphens — the persisted slug
+ * generator emits "company-name-inc--city-state-hash" for facilities
+ * whose legal name ends in "INC.," / "LLC," / "MMRS )" (537 of 3,803
+ * approved rows as of 2026-05-23). Collapsing `--` to `-` here would
+ * canonical-redirect every one of those slugs to a URL that doesn't
+ * exist in the DB → "We couldn't find this center" on 14% of the
+ * directory. Trust the DB slug as authoritative.
  *
  * Does NOT remove non-ASCII characters — slugs in our DB are already
  * ASCII-safe; if a caller needs to *create* a slug from arbitrary text,
@@ -38,7 +45,6 @@ export function normalizeSlug(slug: string | null | undefined): string {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
 
