@@ -378,10 +378,6 @@ export default function HowWeMakeMoney() {
                 About RehabLookup
               </Link>
               {" · "}
-              <Link to="/rehab-score" className="underline underline-offset-2 hover:text-[#1B365D]">
-                Rehab Score methodology
-              </Link>
-              {" · "}
               <Link to="/editorial-policy" className="underline underline-offset-2 hover:text-[#1B365D]">
                 Editorial policy
               </Link>

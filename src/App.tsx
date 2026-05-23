@@ -253,7 +253,6 @@ const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const EditorialPolicy = lazy(() => import("./pages/EditorialPolicy"));
-const RehabScore = lazy(() => import("./pages/RehabScore"));
 const HowWeMakeMoney = lazy(() => import("./pages/HowWeMakeMoney"));
 const MedicalDisclaimer = lazy(() => import("./pages/MedicalDisclaimer"));
 const SeekerSignup = lazy(() => import("./pages/SeekerSignup"));
@@ -1352,7 +1351,9 @@ const AppInner = () => {
             <Route path="/terms-of-service" element={<PublicRouteGuard><TermsOfService /></PublicRouteGuard>} />
             <Route path="/terms" element={<Navigate to="/terms-of-service" replace />} />
             <Route path="/editorial-policy" element={<PublicRouteGuard><EditorialPolicy /></PublicRouteGuard>} />
-            <Route path="/rehab-score" element={<PublicRouteGuard><RehabScore /></PublicRouteGuard>} />
+            {/* /rehab-score retired 2026-05-23 (composite score deprecated).
+                Redirect to the editorial policy where the methodology lives. */}
+            <Route path="/rehab-score" element={<Navigate to="/editorial-policy" replace />} />
             <Route path="/medical-disclaimer" element={<PublicRouteGuard><MedicalDisclaimer /></PublicRouteGuard>} />
             <Route path="/how-we-make-money" element={<PublicRouteGuard><HowWeMakeMoney /></PublicRouteGuard>} />
             <Route path="/ekra" element={<Navigate to="/how-we-make-money" replace />} />

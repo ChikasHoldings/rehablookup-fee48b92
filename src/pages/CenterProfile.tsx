@@ -48,7 +48,6 @@ import {
   ChevronRight,
   Handshake,
   GlobeIcon,
-  Scale,
   Info,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
@@ -65,7 +64,6 @@ import { FacilityStaffSection } from "@/components/facility/FacilityStaffSection
 import { FacilityProfileExtras } from "@/components/facility/FacilityProfileExtras";
 import { FacilityPhotoGallery } from "@/components/facility/FacilityPhotoGallery";
 import { LandingFeaturedSection } from "@/components/featured/LandingFeaturedSection";
-import { RehabScorePanel } from "@/components/profile/RehabScorePanel";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { buildProfileFAQs } from "@/lib/buildProfileFAQs";
 import { ConciergeCTACard } from "@/components/concierge/ConciergeCTACard";
@@ -1365,28 +1363,16 @@ const CenterProfile = () => {
                   hiding the section entirely. */}
               <InsuranceShowcase insurance={insuranceList} />
 
-              {/* Rehab Score — public transparency summary, links to /rehab-score methodology */}
-              <ProfileSection
-                icon={Scale}
-                title="Rehab Score"
-                iconColor="bg-primary/10 text-primary"
-              >
-                <RehabScorePanel
-                  input={{
-                    verified: facility.verified,
-                    yearEstablished: facility.year_established,
-                    description: facility.description,
-                    galleryUrls: facility.gallery_urls,
-                    facilityServices: facility.facility_services,
-                    facilityInsurance: facility.facility_insurance,
-                    facilityAgeGroups: facility.facility_age_groups,
-                    facilityAccreditations: facility.facility_accreditations,
-                    facilityCredentials: facility.facility_credentials,
-                    googleRating: ratingData.averageRating,
-                    googleReviewCount: ratingData.reviewCount,
-                  }}
-                />
-              </ProfileSection>
+              {/* Rehab Score panel removed 2026-05-23. The composite score
+                  combined raw verification flags, service count, Google
+                  reviews, and profile completeness into a single number
+                  that implied clinical predictive validity it could not
+                  support — and penalized unclaimed listings (most of the
+                  directory) for not yet being marketed by their owners.
+                  The underlying signals (accreditation badges, verified
+                  pill, Google rating, service list) all still render in
+                  their own dedicated sections below — they were always
+                  the truth the score was glossing over. */}
 
               {/* Accreditations & Licensing — per-credential cards with
                   authoritative external verification links (Joint Commission,

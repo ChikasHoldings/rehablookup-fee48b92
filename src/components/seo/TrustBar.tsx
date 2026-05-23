@@ -13,8 +13,8 @@ const trustItems: TrustItem[] = [
   {
     icon: CheckCircle,
     text: "Verified Rehab Facilities",
-    href: "/rehab-score",
-    ariaLabel: "Learn how facilities are verified and ranked — Rehab Score methodology",
+    href: "/editorial-policy",
+    ariaLabel: "Learn how RehabLookup verifies treatment facilities",
   },
   { icon: Lock, text: "Private & Secure Inquiries" },
   { icon: Clock, text: "Fast Provider Response" },

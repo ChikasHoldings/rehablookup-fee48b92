@@ -1474,12 +1474,9 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
-  <url>
-    <loc>https://rehablookup.com/rehab-score</loc>
-    <lastmod>2026-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
+  <!-- /rehab-score retired 2026-05-23 — composite score removed.
+       Removed from sitemap to avoid GSC "Page with redirect" noise
+       (the URL now 301s to /editorial-policy). -->
   <url>
     <loc>https://rehablookup.com/womens-rehab-centers</loc>
     <lastmod>2026-05-20</lastmod>

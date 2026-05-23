@@ -113,7 +113,6 @@ const companyLinks: FooterLink[] = [
   { name: "Contact Us", path: "/contact" },
   { name: "Treatment Placement", path: "/concierge" },
   { name: "Editorial Team", path: "/authors", badge: "New" },
-  { name: "Rehab Score Methodology", path: "/rehab-score" },
   { name: "Editorial Policy", path: "/editorial-policy" },
   { name: "Medical Disclaimer", path: "/medical-disclaimer" },
 ];
