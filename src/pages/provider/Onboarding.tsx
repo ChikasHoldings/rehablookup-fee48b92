@@ -311,6 +311,16 @@ export default function ProviderOnboarding() {
     return queryStep;
   }, [queryStep, serverStep]);
 
+  // Scroll back to the top of the wizard on every step transition.
+  // The step CTAs sit at the bottom of each panel and the stepper is
+  // anchored above; without this the next step renders mid-page and
+  // the user has to scroll up to see the heading + form fields.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [resolved]);
+
   // Strip a stale ?step= if the user tried to jump ahead. Surfaced as a
   // toast so the redirect isn't silent.
   useEffect(() => {

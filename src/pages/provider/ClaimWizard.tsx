@@ -409,6 +409,13 @@ export default function ClaimWizard({ embedded = false, slugProp, onCancel }: Cl
 
   const setStep = useCallback((next: number) => {
     setState((prev) => ({ ...prev, currentStep: next }));
+    // Always scroll back to the top of the wizard when the step
+    // changes — the back/next CTAs sit at the bottom of each step,
+    // so without this the user lands mid-page on the next step's
+    // form and has to scroll up to read the heading and instructions.
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
   }, []);
 
   if (authChecking) {

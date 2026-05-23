@@ -215,6 +215,23 @@ export function useLeadIntakeForm(options: UseLeadIntakeFormOptions = {}) {
       stepViewsTracked.current.add(currentStep);
     }
   }, [currentStep, facilityId, source]);
+
+  // Scroll the form back into view on step change — Next/Back CTAs sit
+  // at the bottom of each step, so without this the user lands mid-page
+  // on the next step and has to scroll up to see the new question.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [currentStep]);
+
+  // Scroll to top once the form transitions to its success state so the
+  // confirmation message is visible without the user having to scroll.
+  useEffect(() => {
+    if (isSubmitted && typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [isSubmitted]);
   
   // Cooldown timer
   useEffect(() => {

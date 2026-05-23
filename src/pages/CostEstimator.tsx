@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { PageFAQ } from "@/components/seo/PageFAQ";
 import { costEstimatorFaqs } from "@/data/pageFaqs";
 import { Calculator, DollarSign, Shield, Clock, AlertCircle, CheckCircle2, Info, MapPin, Building2, ArrowRight, RotateCcw, TrendingDown, Heart, Stethoscope } from "lucide-react";
@@ -123,6 +123,16 @@ const CostEstimator = () => {
   const [selectedInsurance, setSelectedInsurance] = useState<string>("");
   const [hasDeductibleMet, setHasDeductibleMet] = useState<string>("no");
   const [currentStep, setCurrentStep] = useState(1);
+
+  // Scroll back to the top of the page whenever the step changes —
+  // each step's "Next" / "Back" CTAs sit at the bottom of the panel,
+  // so without this the next step lands mid-scroll and the user has
+  // to scroll up to see the new question + radio options.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [currentStep]);
 
   const treatment = treatmentOptions.find((t) => t.id === selectedTreatment);
   const insurance = insuranceOptions.find((i) => i.id === selectedInsurance);
