@@ -894,8 +894,18 @@ export default function ConciergeIntake() {
   const handleSubmitFree = async () => {
     if (isSubmitting) return;
 
-    // Validate all previous steps (incl. email + phone verification)
-    for (let step = 1; step <= 6; step++) {
+    // Audit fix (2026-05-23): validate steps 1 THROUGH 7 inclusive.
+    // Step 7 is phone verification (see validateStep case 7). Previously
+    // the loop only ran through step 6, which meant a user who reached
+    // step 8 via the auto-advance from email verification could fire the
+    // submit handler without phoneVerification.verified being true —
+    // server then received phoneVerifiedAt=null and stored an unverified
+    // phone on the inquiry. The normal forward navigation gates step 7,
+    // but `handleEditStep` lets users jump around, opening a path where
+    // a previously-verified phone could have its verification cleared
+    // (via "Edit phone") and then submit could be reached without a
+    // fresh verification round-trip.
+    for (let step = 1; step <= 7; step++) {
       if (!validateStep(step)) {
         setCurrentStep(step);
         toast.error("Please complete all required fields before submitting");
