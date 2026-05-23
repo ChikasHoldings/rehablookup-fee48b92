@@ -491,12 +491,35 @@ export default function AdminProviders() {
 
       const { data: facility, error: fetchErr } = await supabase
         .from("facilities")
-        .select("name, user_id, status")
+        .select("name, user_id, status, data_source, claimed_at, verified")
         .eq("id", id)
         .single();
       if (fetchErr) throw fetchErr;
 
-      const { error } = await supabase.from("facilities").update(updates).eq("id", id);
+      // Stamp verified=true when the admin transitions a facility into
+      // 'approved' AND the row meets the platform's verified-badge gate
+      // (a claimed row OR a provider/self-listed/manual entry). Mirrors
+      // the DB-side enforce_facility_verified_gate trigger so the badge
+      // appears the moment admin approval completes, without a second
+      // toggle. SAMHSA-imported unclaimed rows do not auto-verify here
+      // — they only flip on through claim approval.
+      const finalUpdates: Partial<Facility> = { ...updates };
+      const transitioningToApproved =
+        updates.status === "approved" && facility.status !== "approved";
+      const isClaimed = !!facility.user_id && !!facility.claimed_at;
+      const isProviderListed = ["provider", "self_listed", "manual", "admin_created"].includes(
+        facility.data_source ?? "",
+      );
+      if (
+        transitioningToApproved &&
+        !facility.verified &&
+        (isClaimed || isProviderListed) &&
+        finalUpdates.verified === undefined
+      ) {
+        finalUpdates.verified = true;
+      }
+
+      const { error } = await supabase.from("facilities").update(finalUpdates).eq("id", id);
       if (error) throw error;
 
       // 2. Send approval email when status transitions to approved. Return
@@ -526,7 +549,7 @@ export default function AdminProviders() {
           action_type: actionType,
           target_type: "facility",
           target_id: id,
-          details: { ...updates, prev_status: facility?.status ?? null },
+          details: { ...finalUpdates, prev_status: facility?.status ?? null },
         });
       } catch (auditError) {
         console.warn("[AdminProviders] audit log write failed", auditError);
