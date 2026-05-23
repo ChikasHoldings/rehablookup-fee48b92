@@ -1625,28 +1625,40 @@ const CenterProfile = () => {
         }}
       />
 
-      {/* Request Info Modal — gated on claimed-state. Unclaimed listings
-          surface the "Unclaimed listing" badge + "Claim This Listing"
-          button instead of an inquiry path. */}
-      {(!claimFlags || claimFlags.is_claimed) && (
-        <RequestInfoModal
-          open={requestModalOpen}
-          onOpenChange={setRequestModalOpen}
-          facility={{
-            id: facility.id,
-            name: facility.name,
-            city: facility.city,
-            state: facility.state,
-            slug: facility.slug,
-            logo_url: facility.logo_url,
-            featured: facility.featured,
-            phone: facility.phone ?? null,
-            verified: facility.verified ?? null,
-          }}
-          facilityPlan={facilityPlan === "pro" ? "pro" : "free"}
-          prefillData={prefillDataFromNav}
-        />
-      )}
+      {/* Request Info / Message Center Modal.
+          ────────────────────────────────────────────────────────────
+          2026-05-23 bugfix: previously gated to claimed listings only,
+          which meant clicking "Message Center" / "Get matched" on an
+          unclaimed facility set requestModalOpen=true but the modal
+          was never mounted — the button looked broken. The
+          submit-qualified-lead edge function already handles the
+          unclaimed case server-side: it sees no active Pro
+          subscription, creates a concierge_inquiries row with
+          routing_mode='free_tier_redirect' and originating_facility_id
+          pinned to this facility, then returns a redirect to
+          /concierge/thank-you so the seeker lands on the canonical
+          post-submit page. The seeker is then matched with verified
+          providers signed up for the concierge network — which is the
+          intended workflow for unclaimed listings.
+          Mount the modal unconditionally so the Message Center button
+          is functional regardless of claim state. */}
+      <RequestInfoModal
+        open={requestModalOpen}
+        onOpenChange={setRequestModalOpen}
+        facility={{
+          id: facility.id,
+          name: facility.name,
+          city: facility.city,
+          state: facility.state,
+          slug: facility.slug,
+          logo_url: facility.logo_url,
+          featured: facility.featured,
+          phone: facility.phone ?? null,
+          verified: facility.verified ?? null,
+        }}
+        facilityPlan={facilityPlan === "pro" ? "pro" : "free"}
+        prefillData={prefillDataFromNav}
+      />
 
       {/* Tour Request Modal — schedule a visit. Reachable from the sticky
           mobile CTA bar below + the "Schedule a Tour" link on the sidebar.
