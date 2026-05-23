@@ -1,16 +1,11 @@
 [
-  "supabase/functions/manage-international-case/index.ts:167",
   "supabase/functions/match-concierge-intake/index.ts:222",
-  "supabase/functions/process-provider-drip/index.ts:401",
-  "supabase/functions/process-seeker-drip/index.ts:74",
+  "supabase/functions/process-seeker-drip/index.ts:77",
   "supabase/functions/request-facility-from-marketing/index.ts:52",
-  "supabase/functions/send-concierge-introduction/index.ts:136",
-  "supabase/functions/send-marketing-followup/index.ts:51",
-  "supabase/functions/send-marketing-followup/index.ts:79",
-  "supabase/functions/send-review-notification/index.ts:76",
-  "supabase/functions/send-seeker-emails/index.ts:70",
-  "supabase/functions/send-seeker-emails/index.ts:75",
-  "supabase/functions/verify-code/index.ts:72",
-  "supabase/functions/verify-reply-email-code/index.ts:39",
-  "supabase/functions/verify-sms-code/index.ts:73"
+  "supabase/functions/send-marketing-followup/index.ts:54",
+  "supabase/functions/send-marketing-followup/index.ts:82",
+  "supabase/functions/send-review-notification/index.ts:97",
+  "supabase/functions/send-seeker-emails/index.ts:147",
+  "supabase/functions/send-seeker-emails/index.ts:152",
+  "supabase/functions/verify-reply-email-code/index.ts:39"
 ]
