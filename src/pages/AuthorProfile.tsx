@@ -277,10 +277,29 @@ export default function AuthorProfile() {
           </div>
 
           {author.bio && (
-            <p className="mt-6 max-w-3xl text-[15px] leading-relaxed text-foreground/85">{author.bio}</p>
+            <p className="mt-5 max-w-3xl text-sm md:text-[15px] leading-relaxed text-white/85 whitespace-pre-line">
+              {author.bio.split(/\n\n+/)[0]}
+            </p>
           )}
         </div>
       </section>
+
+      {/* Full bio — moved out of the dark hero so the long multi-
+          paragraph text reads as proper body copy on a light bg
+          instead of squeezing into the hero. The first paragraph
+          appears in the hero (above) as a preview; the rest renders
+          here in full. */}
+      {author.bio && author.bio.split(/\n\n+/).length > 1 && (
+        <section className="border-b border-border bg-card/40">
+          <div className="container py-8 md:py-10">
+            <div className="max-w-3xl space-y-4 text-[15px] leading-relaxed text-foreground/85">
+              {author.bio.split(/\n\n+/).slice(1).map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Articles */}
       <section className="container py-10">

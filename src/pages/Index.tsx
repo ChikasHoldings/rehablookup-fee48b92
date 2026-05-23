@@ -503,18 +503,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* "Before you reach out" — replaces the prior TestimonialsSection.
-          Answers the four objections that actually block a seeker from
-          submitting the inquiry form: insurance coverage, admission
-          speed, affordability, and confidentiality. Each card deep-links
-          to the long-form Resources article that handles the question
-          in depth, so the section also drives content engagement. */}
-      <LazySection fallbackHeight="400px">
-        <Suspense fallback={<div style={{ minHeight: "400px" }} aria-hidden="true" />}>
-          <CommonQuestionsSection />
-        </Suspense>
-      </LazySection>
-
       {/* For Treatment Providers CTA — repurposed from the previous
           International Patients block on the homepage. The dedicated
           /us-rehab/international-patients page remains untouched and
@@ -525,7 +513,12 @@ const Index = () => {
         </Suspense>
       </LazySection>
 
-      {/* Find Treatment Near You - SEO Section */}
+      {/* Find Treatment Near You - SEO Section.
+          Moved above CommonQuestionsSection (2026-05-23) so the visitor
+          sees treatment-type CTAs immediately after the providers band,
+          and the "four questions families ask most" block lands closer
+          to the end-of-page recovery-journey CTA where it acts as a
+          final pre-action reassurance. */}
       <section className="py-10 md:py-12 lg:py-20 border-t border-border/50">
         <div className="container px-4 md:px-6 lg:px-8">
           <div className="mb-6 md:mb-8 lg:mb-10 text-center">
@@ -649,6 +642,20 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* "Before you reach out" — answers the four objections that
+          actually block a seeker from submitting the inquiry form:
+          insurance coverage, admission speed, affordability, and
+          confidentiality. Each card deep-links to the long-form
+          Resources article that handles the question in depth, so the
+          section also drives content engagement. Sits below the
+          "Find Treatment Near You" SEO grid (swapped 2026-05-23) so it
+          lands closer to the end-of-page conversion CTAs. */}
+      <LazySection fallbackHeight="400px">
+        <Suspense fallback={<div style={{ minHeight: "400px" }} aria-hidden="true" />}>
+          <CommonQuestionsSection />
+        </Suspense>
+      </LazySection>
 
       {/* SEO Internal Links Section */}
       <LazySection fallbackHeight="600px">

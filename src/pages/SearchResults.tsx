@@ -1517,6 +1517,158 @@ const SearchResults = () => {
                     onPageChange={handlePageChange}
                     className="mt-10 justify-center"
                   />
+
+                  {/* End-of-results helper bands. Two compact sections
+                      that catch the visitor who scrolled the full list
+                      without clicking through:
+                       (1) "What to do next" — concierge match + cost
+                           estimator + insurance verification — three
+                           lateral actions that don't require picking a
+                           specific facility yet.
+                       (2) "Common questions about this search" — short
+                           plain-English answers tied to the things
+                           seekers ask after browsing (verified means
+                           what, who pays, how fast). */}
+                  <section className="mt-14 border-t border-border pt-10">
+                    <header className="mb-6 text-center max-w-2xl mx-auto">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                        Not seeing the right fit?
+                      </span>
+                      <h2 className="mt-1.5 font-display text-xl md:text-2xl font-bold text-foreground tracking-tight">
+                        What to do next
+                      </h2>
+                      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                        Three options that don't require picking a specific facility yet —
+                        sometimes the right next step is a phone call, an insurance check,
+                        or a clear sense of cost.
+                      </p>
+                    </header>
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <Link
+                        to="/concierge"
+                        className="group flex flex-col rounded-2xl border border-border bg-card p-5 hover:border-primary/40 hover:shadow-md transition-all"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 mb-3">
+                          <Heart className="h-5 w-5" />
+                        </div>
+                        <h3 className="font-semibold text-foreground text-base mb-1.5 group-hover:text-primary transition-colors">
+                          Talk to our placement team
+                        </h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                          Five-minute call — we match you with verified facilities that take
+                          your insurance, have a bed available, and fit your situation.
+                          Free, confidential.
+                        </p>
+                        <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
+                          Start a free match
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </span>
+                      </Link>
+
+                      <Link
+                        to="/insurance"
+                        className="group flex flex-col rounded-2xl border border-border bg-card p-5 hover:border-primary/40 hover:shadow-md transition-all"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700 mb-3">
+                          <Shield className="h-5 w-5" />
+                        </div>
+                        <h3 className="font-semibold text-foreground text-base mb-1.5 group-hover:text-primary transition-colors">
+                          Verify your insurance
+                        </h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                          Most major plans cover addiction treatment by federal parity law.
+                          See which carriers we work with and check your specific benefits
+                          before you commit.
+                        </p>
+                        <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
+                          Check coverage
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </span>
+                      </Link>
+
+                      <Link
+                        to="/cost-estimator"
+                        className="group flex flex-col rounded-2xl border border-border bg-card p-5 hover:border-primary/40 hover:shadow-md transition-all"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700 mb-3">
+                          <DollarSign className="h-5 w-5" />
+                        </div>
+                        <h3 className="font-semibold text-foreground text-base mb-1.5 group-hover:text-primary transition-colors">
+                          Estimate the cost
+                        </h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                          Inpatient, outpatient, and detox cost ranges with and without
+                          insurance — plus payment-without-insurance routes if you don't
+                          have coverage.
+                        </p>
+                        <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
+                          See cost ranges
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </span>
+                      </Link>
+                    </div>
+                  </section>
+
+                  <section className="mt-12 mb-2 rounded-2xl border border-border bg-muted/30 p-6 md:p-8">
+                    <header className="mb-5 max-w-2xl">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                        Quick answers
+                      </span>
+                      <h2 className="mt-1.5 font-display text-xl md:text-2xl font-bold text-foreground tracking-tight">
+                        About these search results
+                      </h2>
+                    </header>
+                    <dl className="grid gap-5 md:grid-cols-2">
+                      <div>
+                        <dt className="font-semibold text-foreground text-[15px] mb-1.5 flex items-center gap-2">
+                          <Check className="h-4 w-4 text-emerald-600" />
+                          What does &ldquo;verified&rdquo; mean?
+                        </dt>
+                        <dd className="text-sm text-muted-foreground leading-relaxed pl-6">
+                          A verified facility is one that has either been claimed and
+                          ownership-verified by its operator, or admin-approved after a
+                          provider sign-up. Unclaimed SAMHSA-sourced records are listed
+                          but not marked as verified.
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-semibold text-foreground text-[15px] mb-1.5 flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-amber-600" />
+                          Do you charge me to use this?
+                        </dt>
+                        <dd className="text-sm text-muted-foreground leading-relaxed pl-6">
+                          No. RehabLookup is free for seekers and families. We don't take
+                          placement fees to rank facilities higher in organic results.
+                          Featured Placements are clearly labeled when they appear.
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-semibold text-foreground text-[15px] mb-1.5 flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-blue-600" />
+                          Is my browsing private?
+                        </dt>
+                        <dd className="text-sm text-muted-foreground leading-relaxed pl-6">
+                          Yes. Substance-use treatment records are protected by 42 CFR
+                          Part 2 — stronger than HIPAA. Our directory does not share
+                          your search or inquiry data with employers, family members,
+                          or the public.
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-semibold text-foreground text-[15px] mb-1.5 flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-rose-600" />
+                          What if I'm in crisis right now?
+                        </dt>
+                        <dd className="text-sm text-muted-foreground leading-relaxed pl-6">
+                          Call <strong>911</strong> for a medical emergency. For mental-
+                          health or suicide crisis, call or text <strong>988</strong>.
+                          For substance-use help 24/7, call SAMHSA at{" "}
+                          <strong>1-800-662-4357</strong>.
+                        </dd>
+                      </div>
+                    </dl>
+                  </section>
                 </>
               ) : (
                 /* Empty State */

@@ -10,7 +10,6 @@ import { RelatedLinksSection } from "@/components/seo/RelatedLinksSection";
 import { buildProfileRelatedLinks } from "@/lib/profileRelatedLinks";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RatingBadge } from "@/components/ui/RatingBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { RequestInfoModal } from "@/components/profile/RequestInfoModal";
@@ -48,7 +47,6 @@ import {
   ChevronRight,
   Handshake,
   GlobeIcon,
-  Info,
 } from "lucide-react";
 import { CenterProfileSkeleton } from "@/components/skeletons/CenterProfileSkeleton";
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
@@ -975,28 +973,17 @@ const CenterProfile = () => {
                       <MapPin className="h-3.5 w-3.5 text-white/70 shrink-0" />
                       <span className="text-sm text-white/85 font-medium truncate">{facility.city}, {facility.state}</span>
                     </div>
-                    {claimFlags && !claimFlags.is_claimed && (
-                      <div className="mt-1.5">
-                        <Tooltip delayDuration={150}>
-                          <TooltipTrigger asChild>
-                            <Badge
-                              variant="secondary"
-                              // Hover bg bumped from white/25 → white/35 so
-                              // the white "Unclaimed listing" text has visible
-                              // settle on hover instead of disappearing into a
-                              // near-same-shade white wash over the navy hero.
-                              className="gap-1 cursor-help bg-white/15 text-white border-white/25 backdrop-blur-sm hover:bg-white/35"
-                            >
-                              <Info className="h-3 w-3" aria-hidden />
-                              Unclaimed listing
-                            </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="max-w-xs text-xs leading-snug">
-                            This listing was created from public SAMHSA records and hasn't been claimed by the facility yet. Contact information may be outdated. Need help? Call our concierge at 214-639-6420.
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    )}
+                    {/* "Unclaimed listing" badge intentionally hidden on
+                        the public profile. The claimFlags state is still
+                        fetched + used downstream — unclaimed inquiries
+                        route through the concierge match flow, the
+                        provider "Claim This Listing" CTA still appears
+                        for facility operators, and the admin panel
+                        continues to surface claim status. The badge
+                        itself was creating reader confusion ("is this
+                        place real?") on what is otherwise a verified
+                        SAMHSA-sourced record, without giving the seeker
+                        anything actionable. */}
                   </div>
                 </div>
               </div>
